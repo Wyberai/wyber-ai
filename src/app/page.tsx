@@ -274,10 +274,10 @@ export default function Page() {
           </Link>
         </div>
 
-        <div style={{ ...fade(240), display: 'flex', gap: 0, paddingTop: 44, borderTop: `1px solid ${C.border}`, flexWrap: 'wrap' }}>
-          {[['50', 'Free credits/month'], ['$15', 'Starter plan'], ['4', 'Frameworks'], ['0', 'Charges for AI errors']].map(([n, l], i) => (
-            <div key={l} style={{ paddingRight: 36, marginRight: 36, borderRight: i < 3 ? `1px solid ${C.border}` : 'none' }}>
-              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 28, fontWeight: 400, letterSpacing: '-0.04em', color: C.sky, lineHeight: 1 }}>{n}</div>
+        <div style={{ ...fade(240), display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '24px 0', paddingTop: 44, borderTop: `1px solid ${C.border}` }}>
+          {[['50', 'Free credits/month'], ['$15', 'Starter plan'], ['4', 'Frameworks'], ['0', 'AI error charges']].map(([n, l], i) => (
+            <div key={l} style={{ paddingRight: 24, borderRight: i < 3 ? `1px solid ${C.border}` : 'none' }}>
+              <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(22px, 4vw, 30px)', fontWeight: 400, letterSpacing: '-0.04em', color: C.sky, lineHeight: 1 }}>{n}</div>
               <div style={{ fontSize: 12, color: C.text3, marginTop: 5, fontWeight: 500 }}>{l}</div>
             </div>
           ))}
