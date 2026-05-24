@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --bg-base: #0d0d0f;
+  --bg-surface: #141416;
+  --bg-elevated: #1a1a1e;
+  --bg-overlay: #222228;
+  --bg-hover: #2a2a32;
+  --border: #2e2e38;
+  --border-light: #3a3a46;
+  --text-primary: #f0f0f4;
+  --text-secondary: #8888a0;
+  --text-muted: #555566;
+  --accent: #7c3aed;
+  --accent-dim: #4a2a8a;
+  --accent-glow: rgba(124, 58, 237, 0.15);
+  --green: #22c55e;
+  --green-dim: #14532d;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  min-height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ide-root {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+.tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 14px; height: 36px;
+  font-size: 12px; color: var(--text-secondary);
+  border-right: 1px solid var(--border);
+  cursor: pointer; white-space: nowrap;
+  transition: all 0.15s;
+  position: relative;
+  user-select: none;
+}
+.tab:hover { color: var(--text-primary); background: var(--bg-hover); }
+.tab.active { color: var(--text-primary); background: var(--bg-surface); }
+.tab.active::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 2px; background: var(--accent);
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 6px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-elevated);
+  color: var(--text-primary); transition: all 0.15s;
+}
+.btn:hover { border-color: var(--border-light); background: var(--bg-overlay); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-ghost { border-color: transparent; background: transparent; color: var(--text-secondary); }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); border-color: transparent; }
