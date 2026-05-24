@@ -207,15 +207,29 @@ export default function Page() {
         @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
         ::-webkit-scrollbar{width:4px}
         ::-webkit-scrollbar-thumb{background:${C.border2};border-radius:2px}
+        @media(max-width:768px){
+          .mobile-nav-links{display:none!important}
+          .mobile-pad{padding-left:20px!important;padding-right:20px!important}
+          .mobile-stack{flex-direction:column!important}
+          .mobile-grid-1{grid-template-columns:1fr!important}
+          .mobile-grid-2{grid-template-columns:1fr 1fr!important}
+          .mobile-text-sm{font-size:clamp(38px,10vw,56px)!important}
+          .mobile-stats{gap:20px!important;flex-wrap:wrap!important}
+          .mobile-stat{padding-right:20px!important;margin-right:20px!important}
+          .mobile-hero-min{min-width:unset!important;width:100%!important}
+          .mobile-chat{width:calc(100vw - 32px)!important;right:16px!important}
+          .mobile-hide{display:none!important}
+          .mobile-full{width:100%!important}
+        }
       `}</style>
 
       {/* NAV */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: 58, background: scrolled ? (isDark ? 'rgba(6,13,24,0.94)' : 'rgba(246,248,251,0.94)') : C.bg, backdropFilter: scrolled ? 'blur(20px)' : 'none', borderBottom: `1px solid ${C.border}`, transition: 'all 0.35s' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px,4vw,40px)', height: 58, background: scrolled ? (isDark ? 'rgba(6,13,24,0.94)' : 'rgba(246,248,251,0.94)') : C.bg, backdropFilter: scrolled ? 'blur(20px)' : 'none', borderBottom: `1px solid ${C.border}`, transition: 'all 0.35s' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <WyberLogo size={30} dark={isDark} />
           <Wordmark size={16} dark={isDark} />
         </Link>
-        <div style={{ display: 'flex', gap: 28 }}>
+        <div className='mobile-nav-links' style={{ display: 'flex', gap: 28 }}>
           {[['Pricing', '/pricing'], ['Templates', '/templates'], ['Docs', '/docs'], ['Status', '/status']].map(([l, h]) => (
             <Link key={h} href={h} className="nh" style={{ fontSize: 13, color: C.text3, fontWeight: 500 }}>{l}</Link>
           ))}
@@ -232,7 +246,7 @@ export default function Page() {
       </nav>
 
       {/* HERO */}
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '88px 40px 68px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px) clamp(40px,6vw,68px)' }}>
         <div style={{ ...fade(0), display: 'inline-flex', alignItems: 'center', gap: 8, background: C.bg2, border: `1px solid ${C.border}`, borderRadius: 20, padding: '5px 14px', marginBottom: 32, fontSize: 12, color: C.text2, fontWeight: 500 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.green, flexShrink: 0, boxShadow: `0 0 6px ${C.green}` }} />
           Now live — build your first app free, no card required
@@ -240,7 +254,7 @@ export default function Page() {
 
         <h1 style={{ ...fade(60), fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(50px, 7vw, 84px)', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 1.0, margin: '0 0 22px', color: C.text }}>
           Turn your idea into<br />
-          <span style={{ color: C.sky, fontStyle: 'italic', display: 'inline-block', minWidth: 'clamp(240px, 38vw, 500px)' }}>
+          <span style={{ color: C.sky, fontStyle: 'italic', display: 'inline-block', minWidth: 'clamp(160px, 38vw, 500px)' }}>
             {typed || '\u00A0'}
           </span>
           <span style={{ borderRight: `4px solid ${C.sky}`, marginLeft: 3, animation: 'blink 1s step-end infinite', display: 'inline-block', height: '0.8em', verticalAlign: '-0.06em' }} /><br />
@@ -260,7 +274,7 @@ export default function Page() {
           </Link>
         </div>
 
-        <div style={{ ...fade(240), display: 'flex', gap: 0, paddingTop: 44, borderTop: `1px solid ${C.border}` }}>
+        <div style={{ ...fade(240), display: 'flex', gap: 0, paddingTop: 44, borderTop: `1px solid ${C.border}`, flexWrap: 'wrap' }}>
           {[['50', 'Free credits/month'], ['$15', 'Starter plan'], ['4', 'Frameworks'], ['0', 'Charges for AI errors']].map(([n, l], i) => (
             <div key={l} style={{ paddingRight: 36, marginRight: 36, borderRight: i < 3 ? `1px solid ${C.border}` : 'none' }}>
               <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 28, fontWeight: 400, letterSpacing: '-0.04em', color: C.sky, lineHeight: 1 }}>{n}</div>
@@ -272,7 +286,7 @@ export default function Page() {
 
       {/* MARQUEE */}
       <div style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, background: C.bg2, overflow: 'hidden', paddingBottom: 12 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '10px 40px 0' }}>What people are building right now</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.text3, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '10px clamp(16px,4vw,40px) 0' }}>What people are building right now</div>
         <div style={{ display: 'flex', animation: 'marquee 32s linear infinite', whiteSpace: 'nowrap', padding: '10px 0' }}>
           {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
             <div key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, margin: '0 6px', background: C.card, border: `1px solid ${C.border}`, borderRadius: 24, padding: '5px 14px', fontSize: 12, color: C.text2, fontWeight: 500, boxShadow: C.shadow }}>
@@ -284,7 +298,7 @@ export default function Page() {
       </div>
 
       {/* PROOF BAR */}
-      <div style={{ borderBottom: `1px solid ${C.border}`, background: C.bg, padding: '14px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-around', flexWrap: 'wrap', gap: 10 }}>
+      <div style={{ borderBottom: `1px solid ${C.border}`, background: C.bg, padding: '14px clamp(16px,4vw,40px)', display: 'flex', alignItems: 'center', justifyContent: 'space-around', flexWrap: 'wrap', gap: 10 }}>
         {['Your code — export or push to GitHub, always', 'AI errors fixed free — pay only for what works', 'Live preview on every generation', 'Deploy to production in one click'].map(t => (
           <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: C.text2, fontWeight: 500 }}>
             <span style={{ color: C.green, fontWeight: 700 }}>✓</span> {t}
@@ -293,14 +307,14 @@ export default function Page() {
       </div>
 
       {/* HOW IT WORKS */}
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '88px 40px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px)' }}>
         <Up>
           <div style={{ fontSize: 11, fontWeight: 700, color: C.sky, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
           <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(32px, 4.5vw, 52px)', fontWeight: 400, letterSpacing: '-0.025em', color: C.text, margin: '0 0 44px', lineHeight: 1.1 }}>
             Idea to live URL.<br /><em style={{ color: C.sky }}>Four steps. Minutes.</em>
           </h2>
         </Up>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 8 }}>
           {STEPS.map((s, i) => (
             <Up key={s.n} delay={i * 60}>
               <div className="bc" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: '36px 32px', height: '100%', boxShadow: C.shadow, transition: 'all 0.22s' }}>
@@ -317,7 +331,7 @@ export default function Page() {
       </div>
 
       {/* POWER STATEMENT */}
-      <div style={{ background: C.navy, padding: '88px 40px', textAlign: 'center', transition: 'background 0.35s' }}>
+      <div style={{ background: C.navy, padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px)', textAlign: 'center', transition: 'background 0.35s' }}>
         <Up>
           <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(36px, 5.5vw, 66px)', fontWeight: 400, letterSpacing: '-0.025em', color: isDark ? C.text : '#fff', lineHeight: 1.06, maxWidth: 760, margin: '0 auto 20px' }}>
             The idea in your head is worth<br />more than the code<br /><em style={{ color: C.sky }}>needed to build it.</em>
@@ -332,7 +346,7 @@ export default function Page() {
       </div>
 
       {/* FEATURES */}
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '88px 40px' }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px)' }}>
         <Up>
           <div style={{ fontSize: 11, fontWeight: 700, color: C.sky, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>What you get</div>
           <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(32px, 4.5vw, 52px)', fontWeight: 400, letterSpacing: '-0.025em', color: C.text, margin: '0 0 8px', lineHeight: 1.1 }}>
@@ -340,7 +354,7 @@ export default function Page() {
           </h2>
           <p style={{ fontSize: 16, color: C.text2, maxWidth: 480, lineHeight: 1.65, marginBottom: 44 }}>Everything a serious builder needs. Nothing that slows you down or locks you in.</p>
         </Up>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 8 }}>
           {FEATURES.map((f, i) => (
             <Up key={f.t} delay={i * 40}>
               <div className="bc" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '28px 24px', height: '100%', boxShadow: C.shadow }}>
@@ -357,13 +371,13 @@ export default function Page() {
 
       {/* TRUST STRIP */}
       <div style={{ background: C.bg2, borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
           {[
             { t: 'No lock-in. Ever.', b: 'Export everything as a ZIP anytime. Standard tools, standard code — no proprietary formats, no migration.' },
             { t: 'Transparent billing. Always.', b: 'See credit cost before and after every generation. No hidden multipliers, no surprise invoices, ever.' },
             { t: 'Built for the long run.', b: 'Wyber AI is part of the SignalPulse Technologies product family — a focused company building tools that last.' },
           ].map((item, i) => (
-            <div key={item.t} style={{ padding: '32px 28px', borderRight: i < 2 ? `1px solid ${C.border}` : 'none', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div key={item.t} style={{ padding: '32px 28px', borderRight: i < 2 ? `1px solid ${C.border}` : 'none', borderBottom: i < 2 ? `1px solid ${C.border}` : 'none', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div style={{ width: 26, height: 26, borderRadius: 6, background: `rgba(5,150,105,0.1)`, border: `1px solid rgba(5,150,105,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: C.green, flexShrink: 0, marginTop: 2 }}>✓</div>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 5, letterSpacing: '-0.02em' }}>{item.t}</div>
@@ -375,7 +389,7 @@ export default function Page() {
       </div>
 
       {/* PRICING */}
-      <div style={{ padding: '88px 40px', background: C.bg }}>
+      <div style={{ padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px)', background: C.bg }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <Up>
             <div style={{ textAlign: 'center', marginBottom: 48 }}>
@@ -394,7 +408,7 @@ export default function Page() {
             </div>
           </Up>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
             {plans.map((plan, i) => (
               <Up key={plan.id} delay={i * 50}>
                 <div style={{ background: plan.featured ? C.navy : C.card, border: `1.5px solid ${plan.featured ? C.sky : C.border}`, borderRadius: 16, padding: '28px 22px', position: 'relative', boxShadow: plan.featured ? `0 8px 32px ${C.skyGlow}` : C.shadow, height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.22s' }}>
@@ -430,7 +444,7 @@ export default function Page() {
       </div>
 
       {/* FINAL CTA */}
-      <div style={{ maxWidth: 880, margin: '0 auto', padding: '96px 40px 108px' }}>
+      <div style={{ maxWidth: 880, margin: '0 auto', padding: 'clamp(56px,8vw,96px) clamp(20px,5vw,40px) clamp(64px,8vw,108px)' }}>
         <Up>
           <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(46px, 6.5vw, 80px)', fontWeight: 400, letterSpacing: '-0.03em', lineHeight: 0.98, margin: '0 0 36px', color: C.text }}>
             The fastest path from<br />idea to <em style={{ color: C.sky }}>live product</em><br />is one prompt.
@@ -442,14 +456,14 @@ export default function Page() {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: `1px solid ${C.border}`, padding: '36px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
+      <footer style={{ borderTop: `1px solid ${C.border}`, padding: '36px clamp(20px,5vw,40px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 24 }}>
         <div>
           <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <WyberLogo size={24} dark={isDark} />
             <Wordmark size={14} dark={isDark} />
           </Link>
           <div style={{ fontSize: 12, color: C.text3, lineHeight: 1.7 }}>
-            A product by <a href="https://signalpulsehq.com" target="_blank" rel="noreferrer" style={{ color: C.sky, fontWeight: 500 }}>SignalPulse Technologies</a> · Bengaluru, India<br />
+            A product by <a href="https://signalpulsehq.com" target="_blank" rel="noreferrer" style={{ color: C.sky, fontWeight: 500 }}>SignalPulse Technologies</a> · Wyoming, USA<br />
             <a href="mailto:hello@wyberai.com" style={{ color: C.text3 }}>hello@wyberai.com</a> · © 2026 SignalPulse Technologies Pvt. Ltd.
           </div>
         </div>
@@ -466,7 +480,7 @@ export default function Page() {
       </button>
 
       {chatOpen && (
-        <div style={{ position: 'fixed', bottom: 82, right: 22, zIndex: 300, width: 336, background: C.card, border: `1px solid ${C.border2}`, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 490, boxShadow: `0 20px 60px ${isDark ? 'rgba(0,0,0,0.6)' : 'rgba(11,22,39,0.16)'}` }}>
+        <div style={{ position: 'fixed', bottom: 82, right: 22, zIndex: 300, width: 'min(336px, calc(100vw - 32px))', background: C.card, border: `1px solid ${C.border2}`, borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 490, boxShadow: `0 20px 60px ${isDark ? 'rgba(0,0,0,0.6)' : 'rgba(11,22,39,0.16)'}` }}>
           {/* Chat header */}
           <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.bg2 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
