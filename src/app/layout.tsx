@@ -49,22 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           {children}
         </ThemeProvider>
-        {/* Crisp Chat Support */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.$crisp=[];
-              window.CRISP_WEBSITE_ID="wyber-ai-crisp";
-              (function(){
-                var d=document;
-                var s=d.createElement("script");
-                s.src="https://client.crisp.chat/l.js";
-                s.async=1;
-                d.getElementsByTagName("head")[0].appendChild(s);
-              })();
-            `,
-          }}
-        />
+
       </body>
     </html>
   );

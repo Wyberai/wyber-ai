@@ -333,13 +333,13 @@ export default function Page() {
       {/* POWER STATEMENT */}
       <div style={{ background: C.navy, padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px)', textAlign: 'center', transition: 'background 0.35s' }}>
         <Up>
-          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(36px, 5.5vw, 66px)', fontWeight: 400, letterSpacing: '-0.025em', color: isDark ? C.text : '#fff', lineHeight: 1.06, maxWidth: 760, margin: '0 auto 20px' }}>
+          <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(36px, 5.5vw, 66px)', fontWeight: 400, letterSpacing: '-0.025em', color: '#fff', lineHeight: 1.06, maxWidth: 760, margin: '0 auto 20px' }}>
             The idea in your head is worth<br />more than the code<br /><em style={{ color: C.sky }}>needed to build it.</em>
           </h2>
-          <p style={{ fontSize: 18, color: isDark ? C.text2 : 'rgba(255,255,255,0.5)', maxWidth: 480, margin: '0 auto 44px', lineHeight: 1.65 }}>
+          <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.55)', maxWidth: 480, margin: '0 auto 44px', lineHeight: 1.65 }}>
             Stop letting technical barriers stand between you and what you can create.
           </p>
-          <Link href="/signup" className="bh" style={{ display: 'inline-block', padding: '15px 34px', borderRadius: 10, background: isDark ? C.sky : '#fff', color: isDark ? '#fff' : C.navy, fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', letterSpacing: '-0.01em' }}>
+          <Link href="/signup" className="bh" style={{ display: 'inline-block', padding: '15px 34px', borderRadius: 10, background: '#fff', color: '#0B1627', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', letterSpacing: '-0.01em' }}>
             Start building free →
           </Link>
         </Up>
