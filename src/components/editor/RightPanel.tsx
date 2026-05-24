@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChatPanel } from './ChatPanel';
 import { AgentMode } from '@/components/agent/AgentMode';
 import { ThemePanel } from '@/components/themes/ThemePanel';
@@ -11,8 +11,9 @@ import { ErrorFixPanel } from './ErrorFixPanel';
 import { SupabaseGenerator } from '@/components/supabase-gen/SupabaseGenerator';
 import { VersionHistory } from '@/components/history/VersionHistory';
 import { DeployPanel } from '@/components/deploy/DeployPanel';
+import { ProjectSettings } from './ProjectSettings';
 
-type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'deploy';
+type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'deploy' | 'settings';
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'chat',      icon: '⚡', label: 'Chat' },
@@ -26,6 +27,7 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'security',  icon: '🛡', label: 'Security' },
   { id: 'knowledge', icon: '⚙', label: 'Knowledge' },
   { id: 'fix',       icon: '✕', label: 'Fix Error' },
+  { id: 'settings',  icon: '◈', label: 'Settings' },
 ];
 
 interface Props {
@@ -39,13 +41,21 @@ interface Props {
 export function RightPanel({ projectId, userId, projectName, githubRepo, lastCommitSha }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail as Tab;
+      if (TABS.find(t => t.id === tab)) setActiveTab(tab);
+    };
+    window.addEventListener('wyber:switch-tab', handler);
+    return () => window.removeEventListener('wyber:switch-tab', handler);
+  }, []);
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)' }}>
-      {/* Scrollable tab strip */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', flexShrink: 0, overflowX: 'auto' }}>
         {TABS.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: '7px 10px', border: 'none', background: 'transparent', cursor: 'pointer', borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent)' : 'transparent'}`, color: activeTab === tab.id ? 'var(--accent)' : 'var(--text-muted)', transition: 'all 0.12s', minWidth: 46 }}>
+            style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: '7px 10px', border: 'none', background: 'transparent', cursor: 'pointer', borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent)' : 'transparent'}`, color: activeTab === tab.id ? 'var(--accent)' : 'var(--ide-text3)', transition: 'all 0.12s', minWidth: 46 }}>
             <span style={{ fontSize: 12 }}>{tab.icon}</span>
             <span style={{ fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap' }}>{tab.label}</span>
           </button>
@@ -64,6 +74,7 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
         {activeTab === 'security'  && <div style={{ flex:1, overflow:'auto' }}><SecurityScanner /></div>}
         {activeTab === 'knowledge' && <div style={{ flex:1, overflow:'auto' }}><KnowledgePanel /></div>}
         {activeTab === 'fix'       && <div style={{ flex:1, overflow:'auto' }}><ErrorFixPanel /></div>}
+        {activeTab === 'settings'  && <div style={{ flex:1, overflow:'auto' }}><ProjectSettings projectId={projectId} /></div>}
       </div>
     </div>
   );
