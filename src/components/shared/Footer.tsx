@@ -41,7 +41,7 @@ export function Footer() {
         <div>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Company</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[['About', '/about'], ['Privacy', '/privacy'], ['Terms', '/terms'], ['Contact', 'mailto:hello@wyberai.com']].map(([l, h]) => (
+            {[['About', '/about'], ['Privacy', '/privacy'], ['Terms', '/terms'], ['Cookies', '/cookies'], ['Contact', 'mailto:hello@wyberai.com']].map(([l, h]) => (
               <Link key={h} href={h} style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500, transition: 'color 0.12s' }} className="wy-nav-link">{l}</Link>
             ))}
           </div>

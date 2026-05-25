@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from '@/lib/theme';
+import { CookieBanner } from '@/components/shared/CookieBanner';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://wyberai.com'),
@@ -48,9 +49,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           {children}
+          <CookieBanner />
         </ThemeProvider>
-
-      {/* Tawk.to Live Chat */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
