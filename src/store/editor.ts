@@ -24,52 +24,40 @@ export interface Project {
   name: string;
   framework: Framework;
   createdAt: number;
+  is_public?: boolean;
+  deployed_url?: string;
 }
 
 interface EditorState {
-  // Project
   project: Project | null;
   framework: Framework;
-
-  // Files
   files: Record<string, FileNode>;
   activeFile: string | null;
   openTabs: string[];
-
-  // Chat
   messages: ChatMessage[];
   isGenerating: boolean;
   streamingContent: string;
-
-  // UI
   previewUrl: string | null;
   previewMode: 'preview' | 'console';
-  leftPanelWidth: number;   // px
-  rightPanelWidth: number;  // px
+  leftPanelWidth: number;
+  rightPanelWidth: number;
   showFileTree: boolean;
   credits: number;
 
-  // Actions
   setProject: (p: Project) => void;
   setFramework: (f: Framework) => void;
-
-  // File actions
   setFile: (path: string, content: string) => void;
   setFiles: (files: Record<string, FileNode>) => void;
   openFile: (path: string) => void;
   closeTab: (path: string) => void;
   setActiveFile: (path: string) => void;
   markFileDirty: (path: string, dirty: boolean) => void;
-
-  // Chat actions
   addMessage: (msg: ChatMessage) => void;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
   setIsGenerating: (v: boolean) => void;
   setStreamingContent: (v: string) => void;
   appendStreamingContent: (chunk: string) => void;
   clearStreamingContent: () => void;
-
-  // UI actions
   setPreviewUrl: (url: string | null) => void;
   setPreviewMode: (mode: 'preview' | 'console') => void;
   setLeftPanelWidth: (w: number) => void;
@@ -154,7 +142,6 @@ export const useEditorStore = create<EditorState>()(
     setStreamingContent: (v) => set((s) => { s.streamingContent = v; }),
     appendStreamingContent: (chunk) => set((s) => { s.streamingContent += chunk; }),
     clearStreamingContent: () => set((s) => { s.streamingContent = ''; }),
-
     setPreviewUrl: (url) => set((s) => { s.previewUrl = url; }),
     setPreviewMode: (mode) => set((s) => { s.previewMode = mode; }),
     setLeftPanelWidth: (w) => set((s) => { s.leftPanelWidth = w; }),
