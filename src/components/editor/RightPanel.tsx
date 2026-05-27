@@ -112,7 +112,7 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
         {activeTab === 'history'    && <VersionHistory projectId={projectId} />}
         {activeTab === 'knowledge'  && <KnowledgePanel />}
         {activeTab === 'fix'        && <ErrorFixPanel />}
-        {activeTab === 'settings'   && <ProjectSettings projectId={projectId} userId={userId} />}
+        {activeTab === 'settings'   && <ProjectSettings projectId={projectId} />}
       </div>
     </div>
   );
