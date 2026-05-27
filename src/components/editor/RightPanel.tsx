@@ -12,22 +12,34 @@ import { SupabaseGenerator } from '@/components/supabase-gen/SupabaseGenerator';
 import { VersionHistory } from '@/components/history/VersionHistory';
 import { DeployPanel } from '@/components/deploy/DeployPanel';
 import { ProjectSettings } from './ProjectSettings';
+import { PublishButton } from './PublishButton';
+import { ImageGenPanel } from './ImageGenPanel';
+import { BrowserTestPanel } from './BrowserTestPanel';
+import { ConnectorsPanel } from './ConnectorsPanel';
+import { SEOAuditPanel } from './SEOAuditPanel';
+import { SkillsPanel } from './SkillsPanel';
 
-type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'deploy' | 'settings';
+type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'deploy' | 'publish' | 'images' | 'connectors' | 'test' | 'seo' | 'skills' | 'settings';
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'chat',      icon: '⚡', label: 'Chat' },
-  { id: 'agent',     icon: '◎', label: 'Agent' },
-  { id: 'templates', icon: '⊞', label: 'Templates' },
-  { id: 'themes',    icon: '✦', label: 'Themes' },
-  { id: 'supabase',  icon: '🗄', label: 'Backend' },
-  { id: 'github',    icon: '⌥', label: 'GitHub' },
-  { id: 'deploy',    icon: '↥', label: 'Deploy' },
-  { id: 'history',   icon: '⟳', label: 'History' },
-  { id: 'security',  icon: '🛡', label: 'Security' },
-  { id: 'knowledge', icon: '⚙', label: 'Knowledge' },
-  { id: 'fix',       icon: '✕', label: 'Fix Error' },
-  { id: 'settings',  icon: '◈', label: 'Settings' },
+  { id: 'chat',       icon: '⚡', label: 'Chat' },
+  { id: 'agent',      icon: '◎', label: 'Agent' },
+  { id: 'templates',  icon: '⊞', label: 'Templates' },
+  { id: 'themes',     icon: '✦', label: 'Themes' },
+  { id: 'images',     icon: '🖼', label: 'Images' },
+  { id: 'connectors', icon: '⬡', label: 'Connect' },
+  { id: 'supabase',   icon: '🗄', label: 'Backend' },
+  { id: 'github',     icon: '⌥', label: 'GitHub' },
+  { id: 'publish',    icon: '↑',  label: 'Publish' },
+  { id: 'deploy',     icon: '↥',  label: 'Deploy' },
+  { id: 'test',       icon: '▶',  label: 'Tests' },
+  { id: 'seo',        icon: '🔍', label: 'SEO' },
+  { id: 'security',   icon: '🛡', label: 'Security' },
+  { id: 'skills',     icon: '📋', label: 'Skills' },
+  { id: 'history',    icon: '⟳',  label: 'History' },
+  { id: 'knowledge',  icon: '⚙',  label: 'Knowledge' },
+  { id: 'fix',        icon: '✕',  label: 'Fix Error' },
+  { id: 'settings',   icon: '⚙',  label: 'Settings' },
 ];
 
 interface Props {
@@ -36,9 +48,15 @@ interface Props {
   projectName?: string;
   githubRepo?: string | null;
   lastCommitSha?: string | null;
+  publishedUrl?: string | null;
+  subdomain?: string | null;
+  projectFiles?: Record<string, { path: string; content: string; language: string }>;
+  onChatMessage?: (msg: string) => void;
+  onPublish?: (url: string) => void;
+  onUnpublish?: () => void;
 }
 
-export function RightPanel({ projectId, userId, projectName, githubRepo, lastCommitSha }: Props) {
+export function RightPanel({ projectId, userId, projectName, githubRepo, lastCommitSha, publishedUrl, subdomain, projectFiles, onChatMessage, onPublish, onUnpublish }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('chat');
 
   useEffect(() => {
@@ -50,31 +68,51 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
     return () => window.removeEventListener('wyber:switch-tab', handler);
   }, []);
 
+  const scrollStyle: React.CSSProperties = { flex: 1, overflowY: 'auto', padding: '0 12px 12px' };
+
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)', borderLeft: '1px solid var(--border)' }}>
-      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', flexShrink: 0, overflowX: 'auto' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
+      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', flexShrink: 0, scrollbarWidth: 'none' }}>
         {TABS.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-            style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, padding: '7px 10px', border: 'none', background: 'transparent', cursor: 'pointer', borderBottom: `2px solid ${activeTab === tab.id ? 'var(--accent)' : 'transparent'}`, color: activeTab === tab.id ? 'var(--accent)' : 'var(--ide-text3)', transition: 'all 0.12s', minWidth: 46 }}>
-            <span style={{ fontSize: 12 }}>{tab.icon}</span>
-            <span style={{ fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap' }}>{tab.label}</span>
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab ${activeTab === tab.id ? 'active' : ''}`} title={tab.label} style={{ minWidth: 'auto', padding: '0 10px', gap: 4 }}>
+            <span>{tab.icon}</span>
+            <span style={{ fontSize: 10 }}>{tab.label}</span>
           </button>
         ))}
       </div>
 
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'chat'      && <ChatPanel projectId={projectId} />}
-        {activeTab === 'agent'     && <div style={{ flex:1, overflow:'auto' }}><AgentMode /></div>}
-        {activeTab === 'templates' && <TemplateGallery />}
-        {activeTab === 'themes'    && <div style={{ flex:1, overflow:'auto' }}><ThemePanel /></div>}
-        {activeTab === 'supabase'  && <div style={{ flex:1, overflow:'auto' }}><SupabaseGenerator /></div>}
-        {activeTab === 'github'    && <div style={{ flex:1, overflow:'auto' }}><GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} /></div>}
-        {activeTab === 'deploy'    && <div style={{ flex:1, overflow:'auto' }}><DeployPanel projectId={projectId} userId={userId} projectName={projectName} /></div>}
-        {activeTab === 'history'   && <div style={{ flex:1, overflow:'auto' }}><VersionHistory projectId={projectId} /></div>}
-        {activeTab === 'security'  && <div style={{ flex:1, overflow:'auto' }}><SecurityScanner /></div>}
-        {activeTab === 'knowledge' && <div style={{ flex:1, overflow:'auto' }}><KnowledgePanel /></div>}
-        {activeTab === 'fix'       && <div style={{ flex:1, overflow:'auto' }}><ErrorFixPanel /></div>}
-        {activeTab === 'settings'  && <div style={{ flex:1, overflow:'auto' }}><ProjectSettings projectId={projectId} /></div>}
+        {activeTab === 'chat'       && <ChatPanel projectId={projectId} />}
+        {activeTab === 'agent'      && <AgentMode />}
+        {activeTab === 'templates'  && <TemplateGallery />}
+        {activeTab === 'themes'     && <ThemePanel />}
+        {activeTab === 'images'     && <div style={scrollStyle}><ImageGenPanel onInsert={(url, alt) => onChatMessage?.(`Add this image to the app: <img src="${url}" alt="${alt}" />`)} /></div>}
+        {activeTab === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
+        {activeTab === 'supabase'   && <SupabaseGenerator />}
+        {activeTab === 'github'     && <GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} />}
+        {activeTab === 'publish'    && (
+          <div style={scrollStyle}>
+            <div style={{ paddingTop: 12 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Publish to web</div>
+              <PublishButton projectId={projectId || ''} projectName={projectName || ''} publishedUrl={publishedUrl} subdomain={subdomain} onPublish={onPublish} onUnpublish={onUnpublish} />
+              {publishedUrl && (
+                <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Share your app</div>
+                  <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>Anyone with the link can view your published app. No sign-in required.</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {activeTab === 'deploy'     && <DeployPanel projectId={projectId} userId={userId} projectName={projectName} />}
+        {activeTab === 'test'       && <div style={scrollStyle}><BrowserTestPanel projectUrl={publishedUrl || undefined} /></div>}
+        {activeTab === 'seo'        && <div style={scrollStyle}><SEOAuditPanel projectUrl={publishedUrl || undefined} projectFiles={projectFiles} /></div>}
+        {activeTab === 'security'   && <SecurityScanner />}
+        {activeTab === 'skills'     && <div style={scrollStyle}><SkillsPanel onApply={msg => onChatMessage?.(msg)} /></div>}
+        {activeTab === 'history'    && <VersionHistory projectId={projectId} />}
+        {activeTab === 'knowledge'  && <KnowledgePanel />}
+        {activeTab === 'fix'        && <ErrorFixPanel />}
+        {activeTab === 'settings'   && <ProjectSettings projectId={projectId} userId={userId} />}
       </div>
     </div>
   );

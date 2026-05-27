@@ -24,6 +24,8 @@ export interface Project {
   files: Record<string, { path: string; content: string; language: string }>;
   is_public: boolean;
   share_slug: string | null;
+  subdomain: string | null;
+  published_url: string | null;
   thumbnail_url: string | null;
   deployed_url: string | null;
   vercel_project_id: string | null;
@@ -53,6 +55,6 @@ export interface Generation {
 
 export const PLAN_LIMITS: Record<Plan, { credits: number; privateProjects: boolean; customDomain: boolean; badge: boolean; collaborators: number }> = {
   free:  { credits: 50,   privateProjects: false, customDomain: false, badge: true,  collaborators: 1 },
-  pro:   { credits: 400,  privateProjects: true,  customDomain: true,  badge: false, collaborators: 3 },
-  teams: { credits: 1500, privateProjects: true,  customDomain: true,  badge: false, collaborators: 20 },
+  pro:   { credits: 1200, privateProjects: true,  customDomain: true,  badge: false, collaborators: 3 },
+  teams: { credits: 3000, privateProjects: true,  customDomain: true,  badge: false, collaborators: 20 },
 };
