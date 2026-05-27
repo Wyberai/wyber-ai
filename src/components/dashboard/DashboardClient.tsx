@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/client';
 import { Profile, Project, PLAN_LIMITS } from '@/lib/supabase/types';
 import Link from 'next/link';
 
-const FW_LABELS: Record<string, string> = { 'react-vite':'React', 'vue':'Vue', 'vanilla':'JS', 'next':'Next.js' };
-const FW_COLORS: Record<string, string> = { 'react-vite':'#61dafb', 'vue':'#42b883', 'vanilla':'#f0db4f', 'next':'#ffffff' };
+const FW_LABELS: Record<string, string> = { 'react-vite': 'React', 'vue': 'Vue', 'vanilla': 'JS', 'next': 'Next.js' };
+const FW_COLORS: Record<string, string> = { 'react-vite': '#61dafb', 'vue': '#42b883', 'vanilla': '#f0db4f', 'next': '#ffffff' };
+const FW_SSR: Record<string, boolean> = { 'react-vite': false, 'vue': false, 'vanilla': false, 'next': true };
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
@@ -16,6 +17,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [projects, setProjects] = useState(initialProjects);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
+  const [framework, setFramework] = useState('next');
   const [showNew, setShowNew] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importStatus, setImportStatus] = useState('');
@@ -31,16 +33,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     try {
       const { data } = await supabase
         .from('projects')
-        .insert({ name: newName.trim(), framework: 'react-vite', user_id: profile?.id ?? '00000000-0000-0000-0000-000000000000' })
+        .insert({ name: newName.trim(), framework, user_id: profile?.id ?? '00000000-0000-0000-0000-000000000000' })
         .select('id')
         .single();
-      if (data) {
-        router.push(`/project/${data.id}`);
-      } else {
-        throw new Error('No data returned');
-      }
+      if (data) router.push(`/project/${data.id}`);
+      else throw new Error('No data returned');
     } catch {
-      // Local dev fallback — go to IDE with a generated ID
       const fakeId = Math.random().toString(36).slice(2, 11);
       router.push(`/project/${fakeId}?name=${encodeURIComponent(newName.trim())}`);
     }
@@ -60,21 +58,16 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   };
 
   const importZip = async (file: File) => {
-    setImporting(true);
-    setImportStatus('Reading ZIP...');
+    setImporting(true); setImportStatus('Reading ZIP...');
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', file.name.replace('.zip', ''));
     try {
       const res = await fetch('/api/projects/import', { method: 'POST', body: formData });
       const data = await res.json();
-      if (data.project) {
-        setImportStatus(`Imported ${data.fileCount} files`);
-        setTimeout(() => router.push(`/project/${data.project.id}`), 800);
-      } else {
-        setImportStatus(data.error ?? 'Import failed');
-      }
-    } catch (e) { setImportStatus('Import failed'); }
+      if (data.project) { setImportStatus(`Imported ${data.fileCount} files`); setTimeout(() => router.push(`/project/${data.project.id}`), 800); }
+      else setImportStatus(data.error ?? 'Import failed');
+    } catch { setImportStatus('Import failed'); }
     setImporting(false);
   };
 
@@ -105,7 +98,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4 }}>{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            {/* Import ZIP */}
             <input ref={fileInputRef} type="file" accept=".zip" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) importZip(f); e.target.value = ''; }} />
             <button onClick={() => fileInputRef.current?.click()} disabled={importing} className="btn" style={{ fontSize: 12 }}>
               {importing ? importStatus : '↥ Import ZIP'}
@@ -121,7 +113,19 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
               <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="App name" onKeyDown={e => e.key === 'Enter' && createProject()}
                 style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 13, outline: 'none' }} />
+              <select value={framework} onChange={e => setFramework(e.target.value)}
+                style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 13, outline: 'none', cursor: 'pointer' }}>
+                <option value="next">Next.js (SSR) ★ Recommended</option>
+                <option value="react-vite">React + Vite</option>
+                <option value="vue">Vue 3</option>
+                <option value="vanilla">Vanilla JS</option>
+              </select>
             </div>
+            {FW_SSR[framework] && (
+              <div style={{ padding: '7px 10px', borderRadius: 7, background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)', marginBottom: 10, fontSize: 11, color: '#34D399' }}>
+                ✓ Server-side rendering — your app will rank on Google and AI search engines
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={createProject} disabled={creating || !newName.trim()} className="btn btn-primary" style={{ fontSize: 13 }}>{creating ? 'Creating...' : 'Create'}</button>
               <button onClick={() => setShowNew(false)} className="btn btn-ghost" style={{ fontSize: 13 }}>Cancel</button>
@@ -140,17 +144,15 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 14 }}>
             {projects.map(p => (
               <div key={p.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }} className="project-card">
-                {/* Thumbnail */}
                 <div style={{ height: 130, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
                   {p.thumbnail_url ? (
                     <img src={p.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ fontSize: 28, opacity: 0.15 }}>⚡</div>
                   )}
-                  {p.deployed_url && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10, padding: '2px 7px', borderRadius: 8, background: 'var(--green-dim)', color: 'var(--green)', fontWeight: 500 }}>Live</span>}
+                  {FW_SSR[p.framework!] && <span style={{ position: 'absolute', top: 8, left: 8, fontSize: 9, padding: '2px 6px', borderRadius: 6, background: 'rgba(52,211,153,0.15)', color: '#34D399', fontWeight: 700 }}>SSR</span>}
+                  {(p.deployed_url || p.published_url) && <span style={{ position: 'absolute', top: 8, right: 8, fontSize: 10, padding: '2px 7px', borderRadius: 8, background: 'var(--green-dim)', color: 'var(--green)', fontWeight: 500 }}>Live</span>}
                 </div>
-
-                {/* Info */}
                 <div style={{ padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                     <div>
@@ -159,15 +161,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 700, color: FW_COLORS[p.framework!], fontFamily: 'monospace' }}>{FW_LABELS[p.framework!]}</span>
                   </div>
-
-                  {/* Actions */}
                   <div style={{ display: 'flex', gap: 6 }}>
                     <Link href={`/project/${p.id}`} style={{ flex: 1, textAlign: 'center', padding: '6px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: 12, textDecoration: 'none', fontWeight: 500 }}>
                       Open
                     </Link>
                     <button onClick={() => duplicateProject(p.id!, p.name!)} title="Duplicate" style={{ padding: '6px 9px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>⊕</button>
-                    {p.deployed_url && (
-                      <a href={p.deployed_url} target="_blank" rel="noreferrer" style={{ padding: '6px 9px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, textDecoration: 'none' }}>↗</a>
+                    {(p.deployed_url || p.published_url) && (
+                      <a href={p.published_url || p.deployed_url || '#'} target="_blank" rel="noreferrer" style={{ padding: '6px 9px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, textDecoration: 'none' }}>↗</a>
                     )}
                     <button onClick={() => deleteProject(p.id!)} title="Delete" style={{ padding: '6px 9px', borderRadius: 7, border: '1px solid transparent', background: 'transparent', color: 'var(--text-muted)', fontSize: 12, cursor: 'pointer' }}>✕</button>
                   </div>
@@ -177,12 +177,11 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           </div>
         )}
 
-        {/* Upgrade banner */}
         {plan === 'free' && (
           <div style={{ marginTop: 40, background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)', borderRadius: 12, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
             <div>
               <p style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0, fontSize: 15 }}>Upgrade to Pro</p>
-              <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '4px 0 0' }}>400 credits · Private projects · Custom domains · No Wyber badge — $15/month</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: '4px 0 0' }}>1,200 credits · Private projects · Custom domains · $39/month</p>
             </div>
             <Link href="/pricing" className="btn btn-primary" style={{ fontSize: 13, whiteSpace: 'nowrap', textDecoration: 'none' }}>Upgrade ↗</Link>
           </div>
