@@ -1,3 +1,4 @@
+'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import Link from 'next/link';
@@ -9,12 +10,12 @@ export const metadata: Metadata = {
 };
 
 const FEATURES = [
-  { icon: '◈', title: 'Figma import', desc: 'Paste a Figma URL and Wyber AI converts your design to a production React component. Design in Figma, ship in Wyber.' },
-  { icon: '✦', title: 'AI image generation', desc: 'Generate hero illustrations, product mockups, and UI assets directly in the IDE. DALL-E 3 built in.' },
-  { icon: '🎨', title: '3 design directions', desc: 'Before building, choose from 3 visual directions — color palettes, typography, layout style — before a line of code is written.' },
-  { icon: '✏', title: 'Draw on screenshots', desc: 'Upload a screenshot, draw on what to change, describe your edit. AI fixes exactly the area you marked.' },
-  { icon: '◎', title: '8 premium themes', desc: 'Start from a polished design system. Switch themes across your entire project in one click.' },
-  { icon: '🚀', title: 'Production-ready code', desc: 'Your designs ship as real Next.js components. Not screenshots. Real, interactive, deployable code.' },
+  { icon: 'â—ˆ', title: 'Figma import', desc: 'Paste a Figma URL and Wyber AI converts your design to a production React component. Design in Figma, ship in Wyber.' },
+  { icon: 'âœ¦', title: 'AI image generation', desc: 'Generate hero illustrations, product mockups, and UI assets directly in the IDE. DALL-E 3 built in.' },
+  { icon: 'ðŸŽ¨', title: '3 design directions', desc: 'Before building, choose from 3 visual directions â€” color palettes, typography, layout style â€” before a line of code is written.' },
+  { icon: 'âœ', title: 'Draw on screenshots', desc: 'Upload a screenshot, draw on what to change, describe your edit. AI fixes exactly the area you marked.' },
+  { icon: 'â—Ž', title: '8 premium themes', desc: 'Start from a polished design system. Switch themes across your entire project in one click.' },
+  { icon: 'ðŸš€', title: 'Production-ready code', desc: 'Your designs ship as real Next.js components. Not screenshots. Real, interactive, deployable code.' },
 ];
 
 export default function DesignersPage() {
@@ -26,10 +27,10 @@ export default function DesignersPage() {
         <div className="wy-sec-tag">For Designers</div>
         <h1 className="wy-h2">Your designs, <em>shipped</em></h1>
         <p style={{ fontSize: 17, color: 'var(--text2)', maxWidth: 520, lineHeight: 1.75, marginBottom: 36 }}>
-          Turn your Figma designs into production code. Generate UI from descriptions. Ship real apps — not just mockups.
+          Turn your Figma designs into production code. Generate UI from descriptions. Ship real apps â€” not just mockups.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 56 }}>
-          <Link href="/signup" className="wy-btn-primary">Start building free →</Link>
+          <Link href="/signup" className="wy-btn-primary">Start building free â†’</Link>
           <Link href="/blog/build-saas-without-code" className="wy-btn-ghost">Read the guide</Link>
         </div>
       </div>
@@ -50,7 +51,7 @@ export default function DesignersPage() {
             Design it. Build it. Ship it.
           </h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 28 }}>50 free credits/month. No card required.</p>
-          <Link href="/signup" className="wy-btn-primary">Start for free →</Link>
+          <Link href="/signup" className="wy-btn-primary">Start for free â†’</Link>
         </div>
       </div>
 

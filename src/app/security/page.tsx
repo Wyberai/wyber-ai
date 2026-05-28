@@ -1,21 +1,22 @@
+'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Security — Wyber AI',
+  title: 'Security â€” Wyber AI',
   description: 'How Wyber AI keeps your code, data, and credentials secure.',
 };
 
 const CHECKS = [
-  { icon: '🔒', title: 'HTTPS everywhere', desc: 'All traffic encrypted in transit via TLS 1.3. No exceptions.' },
-  { icon: '🛡', title: 'Row Level Security', desc: 'Every Supabase table has RLS policies. Your data is only accessible to you.' },
-  { icon: '🔑', title: 'Encrypted secrets', desc: 'API keys stored encrypted at rest. Never exposed in logs or interfaces.' },
-  { icon: '🚫', title: 'No training on your data', desc: 'Your prompts, code, and projects are never used to train AI models. Your work stays yours.' },
-  { icon: '⚡', title: 'Auth by Supabase', desc: 'Battle-tested auth infrastructure. Email verification, password hashing, session management.' },
-  { icon: '🔍', title: 'Automatic security scanning', desc: 'Every generated app is scanned for exposed keys, missing auth, and open endpoints before deploy.' },
-  { icon: '◎', title: 'Isolated workspaces', desc: 'Each project is logically separated. No cross-account data access.' },
-  { icon: '↻', title: 'Continuous monitoring', desc: 'Platform activity monitored for anomalous behavior and abuse detection.' },
+  { icon: 'ðŸ”’', title: 'HTTPS everywhere', desc: 'All traffic encrypted in transit via TLS 1.3. No exceptions.' },
+  { icon: 'ðŸ›¡', title: 'Row Level Security', desc: 'Every Supabase table has RLS policies. Your data is only accessible to you.' },
+  { icon: 'ðŸ”‘', title: 'Encrypted secrets', desc: 'API keys stored encrypted at rest. Never exposed in logs or interfaces.' },
+  { icon: 'ðŸš«', title: 'No training on your data', desc: 'Your prompts, code, and projects are never used to train AI models. Your work stays yours.' },
+  { icon: 'âš¡', title: 'Auth by Supabase', desc: 'Battle-tested auth infrastructure. Email verification, password hashing, session management.' },
+  { icon: 'ðŸ”', title: 'Automatic security scanning', desc: 'Every generated app is scanned for exposed keys, missing auth, and open endpoints before deploy.' },
+  { icon: 'â—Ž', title: 'Isolated workspaces', desc: 'Each project is logically separated. No cross-account data access.' },
+  { icon: 'â†»', title: 'Continuous monitoring', desc: 'Platform activity monitored for anomalous behavior and abuse detection.' },
 ];
 
 const COMPLIANCE = [
@@ -58,7 +59,7 @@ export default function SecurityPage() {
           {COMPLIANCE.map(c => (
             <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, background: 'var(--card)', border: '1px solid var(--border)' }}>
               <div style={{ width: 20, height: 20, borderRadius: '50%', background: c.status ? 'rgba(5,150,105,0.12)' : 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 11, color: c.status ? 'var(--green)' : 'var(--amber)', fontWeight: 700 }}>{c.status ? '✓' : '◷'}</span>
+                <span style={{ fontSize: 11, color: c.status ? 'var(--green)' : 'var(--amber)', fontWeight: 700 }}>{c.status ? 'âœ“' : 'â—·'}</span>
               </div>
               <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{c.label}</span>
               {c.note && <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 'auto' }}>{c.note}</span>}
