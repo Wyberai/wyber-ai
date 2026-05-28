@@ -230,7 +230,7 @@ export default function Page() {
           <Wordmark size={16} dark={isDark} />
         </Link>
         <div className='mobile-nav-links' style={{ display: 'flex', gap: 28 }}>
-          {[['Pricing', '/pricing'], ['Templates', '/templates'], ['Docs', '/docs'], ['Status', '/status']].map(([l, h]) => (
+          {[['Founders', '/founders'], ['Pricing', '/pricing'], ['Blog', '/blog'], ['Community', '/community'], ['Security', '/security']].map(([l, h]) => (
             <Link key={h} href={h} className="nh" style={{ fontSize: 13, color: C.text3, fontWeight: 500 }}>{l}</Link>
           ))}
         </div>
@@ -387,7 +387,36 @@ export default function Page() {
           ))}
         </div>
       </div>
-
+{/* TESTIMONIALS */}
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: 'clamp(48px,8vw,72px) clamp(20px,5vw,40px)' }}>
+        <Up>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.sky, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>From the community</div>
+            <h2 style={{ fontFamily: "'DM Serif Display', serif", fontSize: 'clamp(28px,4vw,44px)', fontWeight: 400, letterSpacing: '-0.025em', color: C.text, margin: 0, lineHeight: 1.1 }}>Built by real founders</h2>
+          </div>
+        </Up>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {[
+            { quote: "I built a full client portal with auth, dashboard, and Supabase in 22 minutes. The Next.js default is genuinely useful — it ranked on Google the same day.", name: 'Arjun M.', role: 'Solo founder, B2B SaaS', initials: 'AM' },
+            { quote: "Finally an AI builder that doesn't charge me when it makes a mistake. That alone made me switch from Lovable. I've saved more credits in a week than I expected.", name: 'Priya K.', role: 'Product manager turned founder', initials: 'PK' },
+            { quote: "Wyber AI built a booking platform I'd been procrastinating for 3 months. Done in an afternoon. The Figma import actually worked on my first try.", name: 'Marcus T.', role: 'Designer + developer', initials: 'MT' },
+          ].map((t, i) => (
+            <Up key={t.name} delay={i * 60}>
+              <div className="bc" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '24px 22px', boxShadow: C.shadow, height: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', gap: 2 }}>{[...Array(5)].map((_, si) => <span key={si} style={{ color: '#F59E0B', fontSize: 14 }}>★</span>)}</div>
+                <p style={{ fontSize: 14, color: C.text2, lineHeight: 1.7, margin: 0, flex: 1, fontStyle: 'italic' }}>"{t.quote}"</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.skyGlow, border: `1px solid rgba(14,165,233,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: C.sky, flexShrink: 0 }}>{t.initials}</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: '-0.01em' }}>{t.name}</div>
+                    <div style={{ fontSize: 11, color: C.text3, marginTop: 1 }}>{t.role}</div>
+                  </div>
+                </div>
+              </div>
+            </Up>
+          ))}
+        </div>
+      </div>
       {/* PRICING */}
       <div style={{ padding: 'clamp(48px,8vw,88px) clamp(20px,5vw,40px)', background: C.bg }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
@@ -467,8 +496,8 @@ export default function Page() {
             <a href="mailto:hello@wyberai.com" style={{ color: C.text3 }}>hello@wyberai.com</a> · © 2026 SignalPulse Technologies Pvt. Ltd.
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-          {[['Pricing', '/pricing'], ['Templates', '/templates'], ['Docs', '/docs'], ['Privacy', '/privacy'], ['Terms', '/terms'], ['Status', '/status']].map(([l, h]) => (
+        <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>{[['Pricing', '/pricing'], ['Blog', '/blog'], ['Security', '/security'], ['Community', '/community'], ['Changelog', '/changelog'], ['Privacy', '/privacy']].map(([l, h]) => (
+          
             <Link key={h} href={h} className="nh" style={{ fontSize: 13, color: C.text3, fontWeight: 500 }}>{l}</Link>
           ))}
         </div>
