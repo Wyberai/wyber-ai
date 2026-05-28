@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (webhookSecret && signature) {
       const { createHmac } = await import('crypto');
       const expected = createHmac('sha256', webhookSecret).update(body).digest('hex');
-      if (!signature.includes(expected)) {
+      if (signature !== expected && !signature.includes(expected)) {
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
       }
     }
