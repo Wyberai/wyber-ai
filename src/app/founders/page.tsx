@@ -1,4 +1,3 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import Link from 'next/link';
@@ -10,12 +9,12 @@ export const metadata: Metadata = {
 };
 
 const FEATURES = [
-  { icon: 'âš¡', title: 'MVP in hours, not months', desc: 'Describe your product in plain English. Get a working full-stack app with auth, database, and live preview today.' },
-  { icon: 'ðŸ’°', title: 'No technical co-founder needed', desc: 'Build the first version yourself. Keep 100% of your equity. Bring in developers when you have real traction.' },
-  { icon: 'ðŸ”„', title: 'Iterate at idea speed', desc: 'Pivot without throwing away months of work. Change your product direction in minutes, not sprints.' },
-  { icon: 'ðŸ“Š', title: 'Validate before you invest', desc: 'Ship to your first 10 users this week. Get real feedback before committing to an architecture or a hire.' },
-  { icon: 'âŒ¥', title: 'GitHub sync from day one', desc: 'Every generation auto-commits. When you hire developers, hand them clean, real code â€” not a prototype.' },
-  { icon: 'ðŸš€', title: 'Deploy to production today', desc: 'Share a live URL with investors before your next meeting. No DevOps, no infra setup, no waiting.' },
+  { icon: 'Ã¢Å¡Â¡', title: 'MVP in hours, not months', desc: 'Describe your product in plain English. Get a working full-stack app with auth, database, and live preview today.' },
+  { icon: 'Ã°Å¸â€™Â°', title: 'No technical co-founder needed', desc: 'Build the first version yourself. Keep 100% of your equity. Bring in developers when you have real traction.' },
+  { icon: 'Ã°Å¸â€â€ž', title: 'Iterate at idea speed', desc: 'Pivot without throwing away months of work. Change your product direction in minutes, not sprints.' },
+  { icon: 'Ã°Å¸â€œÅ ', title: 'Validate before you invest', desc: 'Ship to your first 10 users this week. Get real feedback before committing to an architecture or a hire.' },
+  { icon: 'Ã¢Å’Â¥', title: 'GitHub sync from day one', desc: 'Every generation auto-commits. When you hire developers, hand them clean, real code Ã¢â‚¬â€ not a prototype.' },
+  { icon: 'Ã°Å¸Å¡â‚¬', title: 'Deploy to production today', desc: 'Share a live URL with investors before your next meeting. No DevOps, no infra setup, no waiting.' },
 ];
 
 export default function FoundersPage() {
@@ -30,7 +29,7 @@ export default function FoundersPage() {
           Build your MVP, validate fast, and get to market without a technical co-founder. Your idea deserves to be built.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 56 }}>
-          <Link href="/signup" className="wy-btn-primary">Start building free â†’</Link>
+          <Link href="/signup" className="wy-btn-primary">Start building free Ã¢â€ â€™</Link>
           <Link href="/pricing" className="wy-btn-ghost">See pricing</Link>
         </div>
       </div>
@@ -51,7 +50,7 @@ export default function FoundersPage() {
             Your idea deserves to be built
           </h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 28 }}>50 free credits/month. No credit card. No co-founder required.</p>
-          <Link href="/signup" className="wy-btn-primary">Start for free â†’</Link>
+          <Link href="/signup" className="wy-btn-primary">Start for free Ã¢â€ â€™</Link>
         </div>
       </div>
 

@@ -1,25 +1,24 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Community â€” Wyber AI',
+  title: 'Community Ã¢â‚¬â€ Wyber AI',
   description: 'Join the Wyber AI community. Connect with founders, designers, and developers building with AI.',
 };
 
 const CHANNELS = [
-  { icon: 'ðŸ’¬', name: 'Discord', desc: 'Real-time help, share what you\'re building, connect with other builders.', cta: 'Join Discord', href: 'https://discord.gg/A5KsFv2P', color: '#5865F2' },
-  { icon: 'ð•', name: 'Twitter / X', desc: 'Product updates, tips, and what the community is shipping.', cta: 'Follow @wyberai', href: 'https://twitter.com/wyberai', color: '#000000' },
-  { icon: 'âŒ¥', name: 'GitHub', desc: 'Open source components, templates, and integrations.', cta: 'View GitHub', href: 'https://github.com/Wyberai', color: '#24292E' },
-  { icon: 'ðŸ“‹', name: 'Reddit', desc: 'r/wyberai â€” share your builds, ask questions, get feedback.', cta: 'Join subreddit', href: 'https://reddit.com/r/wyberai', color: '#FF4500' },
+  { icon: 'Ã°Å¸â€™Â¬', name: 'Discord', desc: 'Real-time help, share what you\'re building, connect with other builders.', cta: 'Join Discord', href: 'https://discord.gg/A5KsFv2P', color: '#5865F2' },
+  { icon: 'Ã°Ââ€¢Â', name: 'Twitter / X', desc: 'Product updates, tips, and what the community is shipping.', cta: 'Follow @wyberai', href: 'https://twitter.com/wyberai', color: '#000000' },
+  { icon: 'Ã¢Å’Â¥', name: 'GitHub', desc: 'Open source components, templates, and integrations.', cta: 'View GitHub', href: 'https://github.com/Wyberai', color: '#24292E' },
+  { icon: 'Ã°Å¸â€œâ€¹', name: 'Reddit', desc: 'r/wyberai Ã¢â‚¬â€ share your builds, ask questions, get feedback.', cta: 'Join subreddit', href: 'https://reddit.com/r/wyberai', color: '#FF4500' },
 ];
 
 const PERKS = [
-  { emoji: 'ðŸŽŸ', title: 'Founding member badge', desc: 'Join early and get a permanent founding member badge on your profile.' },
-  { emoji: 'ðŸš€', title: 'First access to features', desc: 'Community members get early access to every new feature before public launch.' },
-  { emoji: 'ðŸ’¡', title: 'Shape the roadmap', desc: 'Vote on features and talk directly to the founder. Your input ships.' },
-  { emoji: 'ðŸ¤', title: 'Find collaborators', desc: 'Connect with designers, marketers, and developers to build together.' },
+  { emoji: 'Ã°Å¸Å½Å¸', title: 'Founding member badge', desc: 'Join early and get a permanent founding member badge on your profile.' },
+  { emoji: 'Ã°Å¸Å¡â‚¬', title: 'First access to features', desc: 'Community members get early access to every new feature before public launch.' },
+  { emoji: 'Ã°Å¸â€™Â¡', title: 'Shape the roadmap', desc: 'Vote on features and talk directly to the founder. Your input ships.' },
+  { emoji: 'Ã°Å¸Â¤Â', title: 'Find collaborators', desc: 'Connect with designers, marketers, and developers to build together.' },
 ];
 
 export default function CommunityPage() {
@@ -34,7 +33,7 @@ export default function CommunityPage() {
           Wyber AI is early. The community is small, tight, and growing fast. Join now and help shape what it becomes.
         </p>
         <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ display: 'inline-flex', marginBottom: 56 }}>
-          Join Discord â€” it's free â†’
+          Join Discord Ã¢â‚¬â€ it's free Ã¢â€ â€™
         </a>
       </div>
 
@@ -47,7 +46,7 @@ export default function CommunityPage() {
                 <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.02em' }}>{c.name}</span>
               </div>
               <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.65, marginBottom: 16 }}>{c.desc}</p>
-              <a href={c.href} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700, color: 'var(--sky)', textDecoration: 'none' }}>{c.cta} â†—</a>
+              <a href={c.href} target="_blank" rel="noreferrer" style={{ fontSize: 12, fontWeight: 700, color: 'var(--sky)', textDecoration: 'none' }}>{c.cta} Ã¢â€ â€”</a>
             </div>
           ))}
         </div>
@@ -67,8 +66,8 @@ export default function CommunityPage() {
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 400, color: 'var(--text)', letterSpacing: '-0.025em', marginBottom: 12 }}>
             Ready to build with others?
           </h2>
-          <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 28 }}>Join Discord and introduce yourself. The community is small â€” your voice matters.</p>
-          <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ display: 'inline-flex' }}>Join Discord â†’</a>
+          <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 28 }}>Join Discord and introduce yourself. The community is small Ã¢â‚¬â€ your voice matters.</p>
+          <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ display: 'inline-flex' }}>Join Discord Ã¢â€ â€™</a>
         </div>
       </div>
 

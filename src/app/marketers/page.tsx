@@ -1,4 +1,3 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import Link from 'next/link';
@@ -6,16 +5,16 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Wyber AI for Marketers',
-  description: 'Launch landing pages, run experiments, build marketing tools â€” without waiting on engineering.',
+  description: 'Launch landing pages, run experiments, build marketing tools Ã¢â‚¬â€ without waiting on engineering.',
 };
 
 const FEATURES = [
-  { icon: 'ðŸŽ¯', title: 'Landing pages in minutes', desc: 'Describe your campaign and get a conversion-optimized page live today. A/B test copy and CTAs without dev tickets.' },
-  { icon: 'ðŸ“ˆ', title: 'SEO-ready from day one', desc: 'Next.js SSR means every page is indexed by Google immediately. Meta tags, OG tags, and structured data generated automatically.' },
-  { icon: 'ðŸ”—', title: 'Connect your MarTech stack', desc: 'HubSpot, Mailgun, Brevo, PostHog, Mixpanel, Amplitude â€” wire in your tools directly from the IDE in one click.' },
-  { icon: 'âš¡', title: 'No dev tickets, ever', desc: 'Change the headline, add a section, update the CTA. Do it yourself in minutes without waiting on an engineering sprint.' },
-  { icon: 'ðŸ“Š', title: 'Analytics from day one', desc: 'Add PostHog or Mixpanel with one click. Track every interaction from the moment you launch.' },
-  { icon: 'ðŸŒ', title: 'Custom domains instantly', desc: 'Deploy to your domain in one click. Campaign pages live on your brand, not a Wyber subdomain.' },
+  { icon: 'Ã°Å¸Å½Â¯', title: 'Landing pages in minutes', desc: 'Describe your campaign and get a conversion-optimized page live today. A/B test copy and CTAs without dev tickets.' },
+  { icon: 'Ã°Å¸â€œË†', title: 'SEO-ready from day one', desc: 'Next.js SSR means every page is indexed by Google immediately. Meta tags, OG tags, and structured data generated automatically.' },
+  { icon: 'Ã°Å¸â€â€”', title: 'Connect your MarTech stack', desc: 'HubSpot, Mailgun, Brevo, PostHog, Mixpanel, Amplitude Ã¢â‚¬â€ wire in your tools directly from the IDE in one click.' },
+  { icon: 'Ã¢Å¡Â¡', title: 'No dev tickets, ever', desc: 'Change the headline, add a section, update the CTA. Do it yourself in minutes without waiting on an engineering sprint.' },
+  { icon: 'Ã°Å¸â€œÅ ', title: 'Analytics from day one', desc: 'Add PostHog or Mixpanel with one click. Track every interaction from the moment you launch.' },
+  { icon: 'Ã°Å¸Å’Â', title: 'Custom domains instantly', desc: 'Deploy to your domain in one click. Campaign pages live on your brand, not a Wyber subdomain.' },
 ];
 
 export default function MarketersPage() {
@@ -30,7 +29,7 @@ export default function MarketersPage() {
           Build landing pages, run experiments, and ship marketing tools without waiting on engineering. Move at the speed of your ideas.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 56 }}>
-          <Link href="/signup" className="wy-btn-primary">Start building free â†’</Link>
+          <Link href="/signup" className="wy-btn-primary">Start building free Ã¢â€ â€™</Link>
           <Link href="/connectors" className="wy-btn-ghost">See all integrations</Link>
         </div>
       </div>
@@ -51,7 +50,7 @@ export default function MarketersPage() {
             Stop waiting on engineering
           </h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 28 }}>Build it yourself. Ship today. 50 free credits/month.</p>
-          <Link href="/signup" className="wy-btn-primary">Start for free â†’</Link>
+          <Link href="/signup" className="wy-btn-primary">Start for free Ã¢â€ â€™</Link>
         </div>
       </div>
 

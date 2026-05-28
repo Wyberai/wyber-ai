@@ -1,10 +1,9 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy â€” Wyber AI',
+  title: 'Cookie Policy Ã¢â‚¬â€ Wyber AI',
   description: 'How Wyber AI uses cookies and similar technologies.',
 };
 
@@ -16,14 +15,14 @@ const COOKIES = [
 ];
 
 const SECTIONS = [
-  ['What are cookies?', 'Cookies are small text files stored on your device when you visit a website. They help websites remember information about your visit â€” like whether you\'re signed in, your preferences, and how you use the site.'],
+  ['What are cookies?', 'Cookies are small text files stored on your device when you visit a website. They help websites remember information about your visit Ã¢â‚¬â€ like whether you\'re signed in, your preferences, and how you use the site.'],
   ['What cookies do we use?', 'Wyber AI uses only essential and functional cookies. We do not use advertising cookies, tracking cookies, or third-party analytics cookies. We do not sell data to advertisers.'],
   ['Essential cookies', 'These cookies are required for Wyber AI to function. They enable core features like authentication and security. You cannot opt out of essential cookies while using the service.'],
   ['Functional cookies', 'These cookies remember your preferences (like dark/light mode) to improve your experience. They are not strictly necessary but make the product more comfortable to use.'],
   ['Third-party cookies', 'We use Supabase for authentication and Vercel for hosting. These services may set their own cookies necessary for their operation. We do not use Google Analytics, Facebook Pixel, or any advertising network cookies.'],
   ['How to control cookies', 'You can control cookies through the cookie consent banner shown on your first visit. You can also clear cookies through your browser settings at any time. Note that clearing essential cookies will sign you out of your account.'],
   ['Changes to this policy', 'We may update this cookie policy from time to time. We will notify you of significant changes via email or a notice on the site.'],
-  ['Contact', 'Questions about cookies? Email us at hello@wyberai.com Â· SignalPulse Technologies Â· Wyoming, USA'],
+  ['Contact', 'Questions about cookies? Email us at hello@wyberai.com Ã‚Â· SignalPulse Technologies Ã‚Â· Wyoming, USA'],
 ];
 
 export default function CookiePolicyPage() {
@@ -33,7 +32,7 @@ export default function CookiePolicyPage() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(48px,8vw,80px) clamp(16px,4vw,40px)' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Legal</div>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px,5vw,48px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 8px' }}>Cookie Policy</h1>
-        <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 56 }}>Last updated: May 2026 Â· Wyber AI Â· wyberai.com</p>
+        <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 56 }}>Last updated: May 2026 Ã‚Â· Wyber AI Ã‚Â· wyberai.com</p>
 
         {SECTIONS.map(([title, body]) => (
           <div key={title as string} style={{ marginBottom: 36, paddingBottom: 36, borderBottom: '1px solid var(--border)' }}>

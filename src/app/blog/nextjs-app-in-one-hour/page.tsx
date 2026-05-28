@@ -1,11 +1,10 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Build a production Next.js app in under an hour with AI â€” Wyber AI Blog',
+  title: 'Build a production Next.js app in under an hour with AI Ã¢â‚¬â€ Wyber AI Blog',
   description: 'Next.js is the default framework in Wyber AI. SSR, SEO, and performance out of the box. A step-by-step walkthrough.',
 };
 
@@ -14,10 +13,10 @@ export default function Post() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans)' }}>
       <Navbar />
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,40px)' }}>
-        <Link href="/blog" style={{ fontSize: 13, color: 'var(--text3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 32 }}>â† Back to blog</Link>
+        <Link href="/blog" style={{ fontSize: 13, color: 'var(--text3)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 32 }}>Ã¢â€ Â Back to blog</Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20 }}>
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(5,150,105,0.1)', color: 'var(--green)', fontWeight: 700, border: '1px solid rgba(5,150,105,0.2)' }}>Tutorial</span>
-          <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 26, 2026 Â· 5 min read</span>
+          <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 26, 2026 Ã‚Â· 5 min read</span>
         </div>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
           Build a production Next.js app in under an hour with AI
@@ -31,7 +30,7 @@ export default function Post() {
           <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', lineHeight: 1.7, margin: '16px 0' }}>
             "Build a Next.js landing page for a B2B SaaS called TaskFlow. Include: a hero with 'Ship projects without the chaos', a features section with 3 cards, a pricing section with Free/$0 and Pro/$29 tiers, and a footer. Dark navy color scheme, modern sans-serif typography."
           </div>
-          <p>The more details you include â€” colors, copy, structure, user roles â€” the closer the first generation will be to what you want.</p>
+          <p>The more details you include Ã¢â‚¬â€ colors, copy, structure, user roles Ã¢â‚¬â€ the closer the first generation will be to what you want.</p>
 
           <h2>Step 2: Generate and iterate (20 minutes)</h2>
           <p>Hit Generate. You'll see a live preview alongside the code. The first generation usually gets the structure right. Use follow-up prompts to refine:</p>
@@ -43,18 +42,18 @@ export default function Post() {
           <p>Each successful refinement costs one credit. AI mistakes are always free to fix.</p>
 
           <h2>Step 3: Add your backend (15 minutes)</h2>
-          <p>Go to the Connect tab and add Supabase â€” full Postgres database, auth, and file storage. Then prompt:</p>
+          <p>Go to the Connect tab and add Supabase Ã¢â‚¬â€ full Postgres database, auth, and file storage. Then prompt:</p>
           <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', lineHeight: 1.7, margin: '16px 0' }}>
             "Add email/password auth using Supabase. After login, redirect to /dashboard."
           </div>
 
           <h2>Step 4: Publish (5 minutes)</h2>
-          <p>Click Publish. Get a live URL at yourapp.wyberai.app. Share it immediately. When ready, deploy to Vercel from the Deploy tab â€” one click, zero configuration.</p>
+          <p>Click Publish. Get a live URL at yourapp.wyberai.app. Share it immediately. When ready, deploy to Vercel from the Deploy tab Ã¢â‚¬â€ one click, zero configuration.</p>
           <p>Total: under an hour. From blank screen to live URL.</p>
 
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 50 free credits â€” no card required.</p>
-            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free â†’</Link>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 50 free credits Ã¢â‚¬â€ no card required.</p>
+            <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free Ã¢â€ â€™</Link>
           </div>
         </div>
       </div>

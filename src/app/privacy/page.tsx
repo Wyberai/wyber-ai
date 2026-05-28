@@ -1,4 +1,3 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 
@@ -10,7 +9,7 @@ export default function PrivacyPage() {
     ['Your rights', 'You can export all your project code at any time. You can delete your account and all associated data by emailing hello@wyberai.com. We process deletions within 30 days.'],
     ['Third-party services', 'We use Anthropic (AI generation), Supabase (database), Stripe (billing), E2B (sandboxes), Vercel (deployment), Resend (email). Each has their own privacy policy.'],
     ['AI-generated content', 'Wyber AI uses Claude Sonnet (Anthropic) for code generation. Your prompts are sent to Anthropic for processing per their privacy policy. We do not share your code with other users.'],
-    ['Contact', 'For privacy questions: hello@wyberai.com Â· wyberai.com Â· SignalPulse Technologies, Wyoming, USA'],
+    ['Contact', 'For privacy questions: hello@wyberai.com Ã‚Â· wyberai.com Ã‚Â· SignalPulse Technologies, Wyoming, USA'],
   ];
 
   return (
@@ -19,7 +18,7 @@ export default function PrivacyPage() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(48px,8vw,80px) clamp(16px,4vw,40px)' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Legal</div>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px,5vw,48px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 8px' }}>Privacy Policy</h1>
-        <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 56 }}>Last updated: May 2026 Â· Wyber AI Â· wyberai.com</p>
+        <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 56 }}>Last updated: May 2026 Ã‚Â· Wyber AI Ã‚Â· wyberai.com</p>
         {SECTIONS.map(([title, body]) => (
           <div key={title} style={{ marginBottom: 36, paddingBottom: 36, borderBottom: '1px solid var(--border)' }}>
             <h2 style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', margin: '0 0 10px' }}>{title}</h2>

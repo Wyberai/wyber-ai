@@ -1,44 +1,43 @@
-'use client';
 import { Navbar } from '@/components/shared/Navbar';
 import { Footer } from '@/components/shared/Footer';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Changelog â€” Wyber AI',
-  description: 'Every feature, fix, and improvement â€” logged as we ship.',
+  title: 'Changelog Ã¢â‚¬â€ Wyber AI',
+  description: 'Every feature, fix, and improvement Ã¢â‚¬â€ logged as we ship.',
 };
 
 const RELEASES = [
   { date: 'May 28, 2026', version: 'v0.9', tag: 'Major release', color: '#0EA5E9', items: [
-    { type: 'new', text: 'MCP server â€” connect to Claude Desktop, Cursor at wyberai.com/api/mcp' },
-    { type: 'new', text: 'Wyber API + API key management â€” build on top of Wyber AI' },
-    { type: 'new', text: '35 app connectors â€” Airtable, Notion, HubSpot, Slack, Anthropic, ElevenLabs, BigQuery, Snowflake and 27 more' },
-    { type: 'new', text: 'Draw on images â€” upload a screenshot, draw what to change, AI fixes exactly that area' },
-    { type: 'new', text: 'Test / Live environments â€” promote builds to live without breaking production' },
-    { type: 'new', text: 'Figma import â€” paste a URL, get a production React component' },
-    { type: 'new', text: 'Project subdomains â€” one-click publish to projectname.wyberai.app' },
-    { type: 'new', text: 'Image generation (DALL-E 3) â€” generate assets directly in the IDE' },
-    { type: 'new', text: 'SEO + AI search audit â€” score, fix recommendations, AI crawler optimization' },
-    { type: 'new', text: 'Voice input â€” mic button in chat, powered by Whisper' },
-    { type: 'improved', text: 'ChatPanel â€” bubble UI, AI avatar, dot-pulse loading' },
-    { type: 'improved', text: 'PreviewPanel â€” live indicator, glass overlay, premium empty state' },
-    { type: 'improved', text: 'Design system â€” consistent tokens, skeleton loading, smooth transitions' },
+    { type: 'new', text: 'MCP server Ã¢â‚¬â€ connect to Claude Desktop, Cursor at wyberai.com/api/mcp' },
+    { type: 'new', text: 'Wyber API + API key management Ã¢â‚¬â€ build on top of Wyber AI' },
+    { type: 'new', text: '35 app connectors Ã¢â‚¬â€ Airtable, Notion, HubSpot, Slack, Anthropic, ElevenLabs, BigQuery, Snowflake and 27 more' },
+    { type: 'new', text: 'Draw on images Ã¢â‚¬â€ upload a screenshot, draw what to change, AI fixes exactly that area' },
+    { type: 'new', text: 'Test / Live environments Ã¢â‚¬â€ promote builds to live without breaking production' },
+    { type: 'new', text: 'Figma import Ã¢â‚¬â€ paste a URL, get a production React component' },
+    { type: 'new', text: 'Project subdomains Ã¢â‚¬â€ one-click publish to projectname.wyberai.app' },
+    { type: 'new', text: 'Image generation (DALL-E 3) Ã¢â‚¬â€ generate assets directly in the IDE' },
+    { type: 'new', text: 'SEO + AI search audit Ã¢â‚¬â€ score, fix recommendations, AI crawler optimization' },
+    { type: 'new', text: 'Voice input Ã¢â‚¬â€ mic button in chat, powered by Whisper' },
+    { type: 'improved', text: 'ChatPanel Ã¢â‚¬â€ bubble UI, AI avatar, dot-pulse loading' },
+    { type: 'improved', text: 'PreviewPanel Ã¢â‚¬â€ live indicator, glass overlay, premium empty state' },
+    { type: 'improved', text: 'Design system Ã¢â‚¬â€ consistent tokens, skeleton loading, smooth transitions' },
   ]},
   { date: 'May 23, 2026', version: 'v0.8', tag: 'IDE overhaul', color: '#7C3AED', items: [
-    { type: 'new', text: 'Agent Mode â€” describe a full feature, Agent builds each step autonomously' },
-    { type: 'new', text: 'Version history â€” auto-commit on every generation, restore any state' },
-    { type: 'new', text: 'GitHub sync â€” push to any repo, branch management, commit history' },
-    { type: 'new', text: 'Security scanner â€” scan for exposed keys, missing auth before deploy' },
-    { type: 'new', text: 'Theme panel â€” 8 premium themes, dark/light mode per project' },
-    { type: 'new', text: '33 starter templates â€” dashboard, auth, landing page, CRM, and more' },
-    { type: 'improved', text: 'Deploy to Vercel â€” one-click production deployment from the IDE' },
+    { type: 'new', text: 'Agent Mode Ã¢â‚¬â€ describe a full feature, Agent builds each step autonomously' },
+    { type: 'new', text: 'Version history Ã¢â‚¬â€ auto-commit on every generation, restore any state' },
+    { type: 'new', text: 'GitHub sync Ã¢â‚¬â€ push to any repo, branch management, commit history' },
+    { type: 'new', text: 'Security scanner Ã¢â‚¬â€ scan for exposed keys, missing auth before deploy' },
+    { type: 'new', text: 'Theme panel Ã¢â‚¬â€ 8 premium themes, dark/light mode per project' },
+    { type: 'new', text: '33 starter templates Ã¢â‚¬â€ dashboard, auth, landing page, CRM, and more' },
+    { type: 'improved', text: 'Deploy to Vercel Ã¢â‚¬â€ one-click production deployment from the IDE' },
   ]},
   { date: 'May 15, 2026', version: 'v0.7', tag: 'Launch', color: '#059669', items: [
-    { type: 'new', text: 'Public launch â€” Wyber AI is live at wyberai.com' },
-    { type: 'new', text: 'Core AI generation â€” React, Vue, Next.js, Vanilla JS from plain English' },
-    { type: 'new', text: 'E2B sandbox â€” live preview of every generation' },
-    { type: 'new', text: 'Free tier â€” 50 credits/month, no card required' },
-    { type: 'new', text: 'Export as ZIP â€” download your full project anytime' },
+    { type: 'new', text: 'Public launch Ã¢â‚¬â€ Wyber AI is live at wyberai.com' },
+    { type: 'new', text: 'Core AI generation Ã¢â‚¬â€ React, Vue, Next.js, Vanilla JS from plain English' },
+    { type: 'new', text: 'E2B sandbox Ã¢â‚¬â€ live preview of every generation' },
+    { type: 'new', text: 'Free tier Ã¢â‚¬â€ 50 credits/month, no card required' },
+    { type: 'new', text: 'Export as ZIP Ã¢â‚¬â€ download your full project anytime' },
     { type: 'new', text: 'AI error fixes always free' },
   ]},
 ];
@@ -57,14 +56,14 @@ export default function ChangelogPage() {
         <div className="wy-sec-tag">Changelog</div>
         <h1 className="wy-h2">What's new in <em>Wyber AI</em></h1>
         <p style={{ fontSize: 15, color: 'var(--text2)', maxWidth: 480, lineHeight: 1.7, marginBottom: 52 }}>
-          Every feature, improvement, and fix â€” logged as we ship.
+          Every feature, improvement, and fix Ã¢â‚¬â€ logged as we ship.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {RELEASES.map(r => (
             <div key={r.version} className="wy-card" style={{ padding: '28px 32px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', padding: '3px 12px', borderRadius: 20, background: `${r.color}15`, border: `1px solid ${r.color}30`, fontSize: 11, fontWeight: 700, color: r.color }}>
-                  {r.version} â€” {r.tag}
+                  {r.version} Ã¢â‚¬â€ {r.tag}
                 </div>
                 <span style={{ fontSize: 12, color: 'var(--text3)' }}>{r.date}</span>
               </div>
