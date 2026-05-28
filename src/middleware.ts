@@ -29,7 +29,8 @@ export async function middleware(request: NextRequest) {
     '/privacy', '/terms', '/status', '/vs', '/about',
     '/blog', '/security', '/changelog', '/community',
     '/connectors', '/founders', '/marketers', '/designers',
-    '/affiliates', '/api/webhooks', '/api/dodo',
+    '/affiliates', '/api/webhooks', '/api/dodo', '/api/mcp',
+    '/api/wyber-api', '/p',
   ];
 
   const isPublic =
@@ -38,12 +39,10 @@ export async function middleware(request: NextRequest) {
     path.startsWith('/favicon') ||
     path.startsWith('/api/auth');
 
-  // Already logged in + hitting login/signup → go to dashboard
   if (user && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Not logged in + private route → go to login
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
