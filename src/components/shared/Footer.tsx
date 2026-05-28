@@ -55,7 +55,7 @@ export function Footer() {
             <br />Wyoming, USA · hello@wyberai.com
           </p>
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            {[['𝕏', 'https://twitter.com/wyberai'], ['⌥', 'https://github.com/Wyberai'], ['💬', 'https://discord.gg/wyberai']].map(([icon, href]) => (
+            {[['𝕏', 'https://twitter.com/wyberai'], ['⌥', 'https://github.com/Wyberai'], ['💬', 'https://discord.gg/A5KsFv2P']].map(([icon, href]) => (
               <a key={href as string} href={href as string} target="_blank" rel="noreferrer"
                 style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text3)', textDecoration: 'none' }}>
                 {icon}

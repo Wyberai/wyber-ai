@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 const CHANNELS = [
-  { icon: '💬', name: 'Discord', desc: 'Get real-time help, share what you\'re building, and connect with other builders.', cta: 'Join Discord', href: 'https://discord.gg/wyberai', color: '#5865F2' },
+  { icon: '💬', name: 'Discord', desc: 'Get real-time help, share what you\'re building, and connect with other builders.', cta: 'Join Discord', href: 'https://discord.gg/A5KsFv2P', color: '#5865F2' },
   { icon: '𝕏', name: 'Twitter / X', desc: 'Follow for product updates, tips, and what the community is shipping.', cta: 'Follow @wyberai', href: 'https://twitter.com/wyberai', color: '#000' },
   { icon: '⌥', name: 'GitHub', desc: 'Open source components, templates, and integrations. Star and contribute.', cta: 'View GitHub', href: 'https://github.com/Wyberai', color: '#333' },
   { icon: '📋', name: 'Reddit', desc: 'r/wyberai — share your builds, ask questions, and get feedback.', cta: 'Join subreddit', href: 'https://reddit.com/r/wyberai', color: '#FF4500' },
@@ -32,7 +32,7 @@ export default function CommunityPage() {
         <p style={{ fontSize: 16, color: 'var(--text2)', maxWidth: 480, lineHeight: 1.7, margin: '0 auto 32px', textAlign: 'center' }}>
           Wyber AI is early. The community is small, tight, and growing fast. Join now and help shape what it becomes.
         </p>
-        <a href="https://discord.gg/wyberai" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ fontSize: 14, padding: '11px 28px', borderRadius: 9, textDecoration: 'none', display: 'inline-block' }}>
+        <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ fontSize: 14, padding: '11px 28px', borderRadius: 9, textDecoration: 'none', display: 'inline-block' }}>
           Join Discord — it's free
         </a>
       </div>
@@ -72,7 +72,7 @@ export default function CommunityPage() {
         <div style={{ textAlign: 'center', padding: '48px 24px', borderRadius: 20, background: 'linear-gradient(135deg, var(--sky3), var(--bg2))', border: '1px solid var(--border)' }}>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(22px,3vw,36px)', fontWeight: 400, color: 'var(--text)', letterSpacing: '-0.025em', marginBottom: 12 }}>Ready to build with others?</h2>
           <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 24 }}>Join the Discord and introduce yourself. The community is small — your voice matters.</p>
-          <a href="https://discord.gg/wyberai" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ fontSize: 14, padding: '11px 28px', borderRadius: 9, textDecoration: 'none', display: 'inline-block' }}>
+          <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noreferrer" className="wy-btn-primary" style={{ fontSize: 14, padding: '11px 28px', borderRadius: 9, textDecoration: 'none', display: 'inline-block' }}>
             Join Discord →
           </a>
         </div>
