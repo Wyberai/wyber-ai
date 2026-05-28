@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme';
+import { DodoUpgradeButton } from '@/components/billing/DodoUpgradeButton';
 
 function WyberLogo({ size = 28 }: { size?: number }) {
   return (
@@ -12,6 +13,12 @@ function WyberLogo({ size = 28 }: { size?: number }) {
     </svg>
   );
 }
+
+const DODO_PRODUCTS: Record<string, string> = {
+  starter: 'pdt_0NfnMvcenlvmGBJG3DKpJ',
+  pro: 'pdt_0NfnN73bctRRChkZqR3uT',
+  teams: 'pdt_0NfnNGhdMsGVy4XcSsPUq',
+};
 
 const PLANS = {
   monthly: [
@@ -24,19 +31,19 @@ const PLANS = {
     {
       id: 'starter', tier: 'Starter', price: '$15', per: 'per month',
       credits: '400 credits / month', note: 'Credits roll over monthly',
-      featured: false, cta: 'Get Starter →', href: '/signup',
+      featured: false, cta: 'Get Starter →', href: null,
       features: ['Everything in Free', '400 generations/month', 'Private projects', 'Custom domain deploy', 'Remove Wyber branding', 'Priority generation speed'],
     },
     {
       id: 'pro', tier: 'Pro', price: '$39', per: 'per month',
       credits: '1,200 credits / month', note: '+5 bonus credits daily',
-      featured: true, cta: 'Get Pro →', href: '/signup',
+      featured: true, cta: 'Get Pro →', href: null,
       features: ['Everything in Starter', '1,200 generations/month', 'Agent Mode included', 'Supabase auto-backend', 'Security scanner', 'Unlimited version history'],
     },
     {
       id: 'teams', tier: 'Teams', price: '$79', per: 'per seat / month',
       credits: '3,000 credits / seat', note: 'Shared credit pool',
-      featured: false, cta: 'Get Teams →', href: '/signup',
+      featured: false, cta: 'Get Teams →', href: null,
       features: ['Everything in Pro', 'Shared team workspace', 'Multiplayer editing', 'SSO / SAML', 'Admin dashboard', 'Priority support'],
     },
   ],
@@ -50,19 +57,19 @@ const PLANS = {
     {
       id: 'starter', tier: 'Starter', price: '$11', per: 'per month, billed annually',
       credits: '400 credits / month', note: 'Credits roll over monthly',
-      featured: false, cta: 'Get Starter →', href: '/signup',
+      featured: false, cta: 'Get Starter →', href: null,
       features: ['Everything in Free', '400 generations/month', 'Private projects', 'Custom domain deploy', 'Remove Wyber branding', 'Priority generation speed'],
     },
     {
       id: 'pro', tier: 'Pro', price: '$29', per: 'per month, billed annually',
       credits: '1,200 credits / month', note: '+5 bonus credits daily',
-      featured: true, cta: 'Get Pro →', href: '/signup',
+      featured: true, cta: 'Get Pro →', href: null,
       features: ['Everything in Starter', '1,200 generations/month', 'Agent Mode included', 'Supabase auto-backend', 'Security scanner', 'Unlimited version history'],
     },
     {
       id: 'teams', tier: 'Teams', price: '$59', per: 'per seat / month, billed annually',
       credits: '3,000 credits / seat', note: 'Shared credit pool',
-      featured: false, cta: 'Get Teams →', href: '/signup',
+      featured: false, cta: 'Get Teams →', href: null,
       features: ['Everything in Pro', 'Shared team workspace', 'Multiplayer editing', 'SSO / SAML', 'Admin dashboard', 'Priority support'],
     },
   ],
@@ -112,8 +119,6 @@ export default function PricingPage() {
         <p style={{ fontSize: 17, color: 'var(--text2)', marginBottom: 32 }}>
           Start free. Upgrade when you're ready. Cancel anytime.
         </p>
-
-        {/* Billing toggle */}
         <div style={{ display: 'inline-flex', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, gap: 4, marginBottom: 'clamp(40px,6vw,64px)' }}>
           {(['monthly', 'annual'] as const).map(b => (
             <button key={b} onClick={() => setBilling(b)}
@@ -152,10 +157,25 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href={plan.href}
-                style={{ display: 'block', textAlign: 'center', padding: '11px', borderRadius: 9, background: plan.featured ? '#fff' : 'var(--bg2)', color: plan.featured ? 'var(--navy)' : 'var(--text)', fontWeight: 700, fontSize: 14, border: `1px solid ${plan.featured ? 'transparent' : 'var(--border)'}`, textDecoration: 'none', transition: 'all 0.15s', letterSpacing: '-0.01em' }}>
-                {plan.cta}
-              </Link>
+
+              {/* CTA — Free uses Link, paid plans use Dodo */}
+              {plan.id === 'free' ? (
+                <Link href="/signup" style={{ display: 'block', textAlign: 'center', padding: '11px', borderRadius: 9, background: 'var(--bg2)', color: 'var(--text)', fontWeight: 700, fontSize: 14, border: '1px solid var(--border)', textDecoration: 'none', transition: 'all 0.15s' }}>
+                  {plan.cta}
+                </Link>
+              ) : (
+                <DodoUpgradeButton
+                  productId={DODO_PRODUCTS[plan.id]}
+                  planName={plan.id}
+                  label={plan.cta}
+                  variant={plan.featured ? 'primary' : 'outline'}
+                  style={{
+                    background: plan.featured ? '#fff' : 'transparent',
+                    color: plan.featured ? 'var(--navy)' : 'var(--sky)',
+                    border: plan.featured ? 'none' : '1px solid var(--sky)',
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>
@@ -201,7 +221,7 @@ export default function PricingPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 24 }}>
-          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Status', '/status'], ['Dashboard', '/dashboard']].map(([l, h]) => (
+          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Security', '/security'], ['Dashboard', '/dashboard']].map(([l, h]) => (
             <Link key={h} href={h} style={{ fontSize: 13, color: 'var(--text3)', textDecoration: 'none', fontWeight: 500 }}>{l}</Link>
           ))}
         </div>
