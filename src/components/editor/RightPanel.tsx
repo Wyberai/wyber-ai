@@ -26,28 +26,24 @@ import { FigmaImportPanel } from './FigmaImportPanel';
 type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'deploy' | 'publish' | 'images' | 'connectors' | 'test' | 'seo' | 'skills' | 'settings' | 'annotate' | 'environments' | 'cross' | 'figma';
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'chat',         icon: '⚡', label: 'Chat' },
-  { id: 'agent',        icon: '◎', label: 'Agent' },
-  { id: 'templates',    icon: '⊞', label: 'Templates' },
-  { id: 'themes',       icon: '✦', label: 'Themes' },
-  { id: 'images',       icon: '🖼', label: 'Images' },
-  { id: 'annotate',     icon: '✏', label: 'Draw' },
-  { id: 'figma',        icon: '◈', label: 'Figma' },
-  { id: 'connectors',   icon: '⬡', label: 'Connect' },
-  { id: 'supabase',     icon: '🗄', label: 'Backend' },
-  { id: 'github',       icon: '⌥', label: 'GitHub' },
-  { id: 'publish',      icon: '↑',  label: 'Publish' },
-  { id: 'environments', icon: '⚗',  label: 'Envs' },
-  { id: 'deploy',       icon: '↥',  label: 'Deploy' },
-  { id: 'test',         icon: '▶',  label: 'Tests' },
-  { id: 'seo',          icon: '🔍', label: 'SEO' },
-  { id: 'security',     icon: '🛡', label: 'Security' },
-  { id: 'skills',       icon: '📋', label: 'Skills' },
-  { id: 'cross',        icon: '⊕',  label: 'Reuse' },
-  { id: 'history',      icon: '⟳',  label: 'History' },
-  { id: 'knowledge',    icon: '⚙',  label: 'Knowledge' },
-  { id: 'fix',          icon: '✕',  label: 'Fix Error' },
-  { id: 'settings',     icon: '⚙',  label: 'Settings' },
+  { id: 'chat',       icon: '⚡', label: 'Chat' },
+  { id: 'agent',      icon: '◎', label: 'Agent' },
+  { id: 'templates',  icon: '⊞', label: 'Templates' },
+  { id: 'themes',     icon: '✦', label: 'Themes' },
+  { id: 'images',     icon: '🖼', label: 'Images' },
+  { id: 'connectors', icon: '⬡', label: 'Connect' },
+  { id: 'supabase',   icon: '🗄', label: 'Backend' },
+  { id: 'github',     icon: '⌥', label: 'GitHub' },
+  { id: 'publish',    icon: '↑', label: 'Publish' },
+  { id: 'deploy',     icon: '↥', label: 'Deploy' },
+  { id: 'test',       icon: '▶', label: 'Tests' },
+  { id: 'seo',        icon: '🔍', label: 'SEO' },
+  { id: 'security',   icon: '🛡', label: 'Security' },
+  { id: 'skills',     icon: '📋', label: 'Skills' },
+  { id: 'history',    icon: '⟳', label: 'History' },
+  { id: 'knowledge',  icon: '⚙', label: 'Knowledge' },
+  { id: 'fix',        icon: '✕', label: 'Fix Error' },
+  { id: 'settings',   icon: '⚙', label: 'Settings' },
 ];
 
 interface Props {
@@ -81,41 +77,44 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
+      {/* Tab bar */}
       <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', flexShrink: 0, scrollbarWidth: 'none' }}>
         {TABS.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab ${activeTab === tab.id ? 'active' : ''}`} title={tab.label} style={{ minWidth: 'auto', padding: '0 10px', gap: 4 }}>
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+            title={tab.label}
+            style={{ minWidth: 'auto', padding: '0 10px', gap: 4 }}
+          >
             <span>{tab.icon}</span>
             <span style={{ fontSize: 10 }}>{tab.label}</span>
           </button>
         ))}
       </div>
 
+      {/* Panel content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'chat'         && <ChatPanel projectId={projectId} />}
-        {activeTab === 'agent'        && <AgentMode />}
-        {activeTab === 'templates'    && <TemplateGallery />}
-        {activeTab === 'themes'       && <ThemePanel />}
-        {activeTab === 'images'       && <div style={scrollStyle}><ImageGenPanel onInsert={(url, alt) => onChatMessage?.(`Add this image to the app: <img src="${url}" alt="${alt}" />`)} /></div>}
-        {activeTab === 'annotate'     && (
-          <div style={scrollStyle}>
-            <div style={{ paddingTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Draw on Images</div>
-              <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 12, lineHeight: 1.6 }}>Upload a screenshot, draw on what to change, and let AI fix exactly that area.</div>
-              <button onClick={() => setShowAnnotator(true)} style={{ width: '100%', padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                ✏ Open image annotator
-              </button>
-            </div>
-          </div>
-        )}
-        {activeTab === 'figma'        && <div style={scrollStyle}><FigmaImportPanel onImport={(code, name) => onChatMessage?.(`Add this Figma-converted component to the project as ${name}.tsx:\n\n${code}`)} /></div>}
-        {activeTab === 'connectors'   && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
-        {activeTab === 'supabase'     && <SupabaseGenerator />}
-        {activeTab === 'github'       && <GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} />}
-        {activeTab === 'publish'      && (
+        {activeTab === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
+        {activeTab === 'agent'      && <AgentMode />}
+        {activeTab === 'templates'  && <TemplateGallery />}
+        {activeTab === 'themes'     && <ThemePanel />}
+        {activeTab === 'images'     && <div style={scrollStyle}><ImageGenPanel onInsert={(url, alt) => onChatMessage?.(`Add this image to the app: <img src="${url}" alt="${alt}" />`)} /></div>}
+        {activeTab === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
+        {activeTab === 'supabase'   && <SupabaseGenerator />}
+        {activeTab === 'github'     && <GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} />}
+        {activeTab === 'publish'    && (
           <div style={scrollStyle}>
             <div style={{ paddingTop: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Publish to web</div>
-              <PublishButton projectId={projectId || ''} projectName={projectName || ''} publishedUrl={publishedUrl} subdomain={subdomain} onPublish={onPublish} onUnpublish={onUnpublish} />
+              <PublishButton
+                projectId={projectId || ''}
+                projectName={projectName || ''}
+                publishedUrl={publishedUrl}
+                subdomain={subdomain}
+                onPublish={onPublish}
+                onUnpublish={onUnpublish}
+              />
               {publishedUrl && (
                 <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Share your app</div>
@@ -125,28 +124,16 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
             </div>
           </div>
         )}
-        {activeTab === 'environments' && <div style={scrollStyle}><EnvironmentsPanel projectId={projectId || ''} publishedUrl={publishedUrl} /></div>}
-        {activeTab === 'deploy'       && <DeployPanel projectId={projectId} userId={userId} projectName={projectName} />}
-        {activeTab === 'test'         && <div style={scrollStyle}><BrowserTestPanel projectUrl={publishedUrl || undefined} /></div>}
-        {activeTab === 'seo'          && <div style={scrollStyle}><SEOAuditPanel projectUrl={publishedUrl || undefined} projectFiles={projectFiles} /></div>}
-        {activeTab === 'security'     && <SecurityScanner />}
-        {activeTab === 'skills'       && <div style={scrollStyle}><SkillsPanel onApply={msg => onChatMessage?.(msg)} /></div>}
-        {activeTab === 'cross'        && <div style={scrollStyle}><CrossProjectPanel projectId={projectId || ''} /></div>}
-        {activeTab === 'history'      && <VersionHistory projectId={projectId} />}
-        {activeTab === 'knowledge'    && <KnowledgePanel />}
-        {activeTab === 'fix'          && <ErrorFixPanel />}
-        {activeTab === 'settings'     && <ProjectSettings projectId={projectId} />}
+        {activeTab === 'deploy'     && <DeployPanel projectId={projectId} userId={userId} projectName={projectName} />}
+        {activeTab === 'test'       && <div style={scrollStyle}><BrowserTestPanel projectUrl={publishedUrl || undefined} /></div>}
+        {activeTab === 'seo'        && <div style={scrollStyle}><SEOAuditPanel projectUrl={publishedUrl || undefined} projectFiles={projectFiles} /></div>}
+        {activeTab === 'security'   && <SecurityScanner />}
+        {activeTab === 'skills'     && <div style={scrollStyle}><SkillsPanel onApply={msg => onChatMessage?.(msg)} /></div>}
+        {activeTab === 'history'    && <VersionHistory projectId={projectId} />}
+        {activeTab === 'knowledge'  && <KnowledgePanel />}
+        {activeTab === 'fix'        && <ErrorFixPanel />}
+        {activeTab === 'settings'   && <ProjectSettings projectId={projectId} userId={userId} />}
       </div>
-
-      {showAnnotator && (
-        <ImageAnnotator
-          onSubmit={(imageDataUrl, annotations, prompt) => {
-            setShowAnnotator(false);
-            onChatMessage?.(`I've annotated a screenshot with ${annotations.length} marked area(s). Here's what I want changed:\n\n${prompt}\n\nAnnotated areas: ${annotations.map(a => a.text).join(', ')}`);
-          }}
-          onClose={() => setShowAnnotator(false)}
-        />
-      )}
     </div>
   );
 }
