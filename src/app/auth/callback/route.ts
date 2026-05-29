@@ -24,32 +24,26 @@ export async function GET(request: Request) {
       }
     );
 
-    const { data: { user } } = await supabase.auth.exchangeCodeForSession(code);
+    const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (user) {
-      // Upsert profile -- create if missing, leave alone if exists
+      // Upsert profile -- always ensure 50 credits on first login
       await supabase.from('profiles').upsert({
         id: user.id,
-        email: user.email,
+        email: user.email ?? '',
         credits: 50,
         plan: 'free',
-        onboarded: false,
+        onboarded: true,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'id', ignoreDuplicates: true });
-
-      // Check if onboarded
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarded')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.onboarded) {
-        return NextResponse.redirect(`${origin}/onboarding`);
-      }
+      }, {
+        onConflict: 'id',
+        ignoreDuplicates: false,
+      });
 
       return NextResponse.redirect(`${origin}${next}`);
     }
+
+    console.error('Auth callback error:', error);
   }
 
   return NextResponse.redirect(`${origin}/login?error=auth`);
