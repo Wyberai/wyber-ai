@@ -124,15 +124,14 @@ export function ChatPanel({ projectId, userId }: Props) {
     if (file) handleImageFile(file);
   }, [handleImageFile]);
 
-  const launchSandbox = useCallback(async (updatedFiles: typeof files) => {
-    setIsSandboxing(true);
-    try {
-      const res = await fetch('/api/sandbox', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ projectId: projectId ?? 'local', files: updatedFiles, framework }) });
-      const data = await res.json();
-      if (data.previewUrl) setPreviewUrl(data.previewUrl);
-    } catch {}
+  const launchSandbox = useCallback((updatedFiles: typeof files) => {
+    // Notify PreviewPanel via custom event - it handles postMessage to WebContainer iframe
+    window.dispatchEvent(new CustomEvent('wyber:files-updated', {
+      detail: { files: updatedFiles, framework }
+    }));
+    setPreviewUrl('preview://webcontainer');
     setIsSandboxing(false);
-  }, [projectId, framework, setPreviewUrl]);
+  }, [framework, setPreviewUrl]);
 
   const saveProject = useCallback(async (updatedFiles: typeof files) => {
     if (!projectId) return;
