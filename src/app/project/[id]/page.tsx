@@ -1,4 +1,5 @@
 import { IDELayout } from '@/components/editor/IDELayout';
+import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 export default async function ProjectPage({
@@ -11,8 +12,6 @@ export default async function ProjectPage({
   if (id === 'test' || id === 'demo' || id === 'new') {
     redirect('/dashboard');
   }
-
-  const { createClient } = await import('@/lib/supabase/server');
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
