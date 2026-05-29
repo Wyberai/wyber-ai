@@ -23,22 +23,22 @@ export default function Post() {
         </h1>
         <div className="wy-prose">
           <p>The barrier to building software has collapsed. In 2024, shipping a SaaS product required a technical co-founder, months of development, and a significant budget. In 2026, a solo founder with a clear idea and an afternoon can have something live.</p>
-          <p>AI app builders - tools that turn plain English into working full-stack code - have gotten remarkably good. And the output is real code that you own.</p>
+          <p>AI app builders -- tools that turn plain English into working full-stack code -- have gotten remarkably good. And the output is real code that you own.</p>
           <h2>What no-code actually means now</h2>
-          <p>It does not mean drag-and-drop. It means you describe what you want in plain English, and a production-ready React or Next.js app gets generated - complete with database schema, auth flows, API routes, and a live preview. Export it, push it to GitHub, self-host it. No lock-in.</p>
+          <p>It does not mean drag-and-drop. It means you describe what you want in plain English, and a production-ready React or Next.js app gets generated -- complete with database schema, auth flows, API routes, and a live preview. Export it, push it to GitHub, self-host it. No lock-in.</p>
           <h2>A practical walkthrough</h2>
           <ol>
-            <li><strong>Start with a specific prompt.</strong> Instead of "build a client portal", try: "Build a client portal with email/password auth, a dashboard showing active projects, and a settings page."</li>
+            <li><strong>Start with a specific prompt.</strong> Instead of "build a client portal", try: "Build a client portal with email/password auth, a dashboard showing active projects, and a settings page where clients can update their profile."</li>
             <li><strong>Pick Next.js as your framework.</strong> SSR means your app ranks on Google from day one.</li>
             <li><strong>Iterate for free.</strong> AI error fixes never cost credits. You only pay for successful generations.</li>
-            <li><strong>Connect your backend.</strong> Add Supabase in one click - database, auth, and file storage in minutes.</li>
-            <li><strong>Publish and share.</strong> One click gives you a live URL.</li>
+            <li><strong>Connect your backend.</strong> Add Supabase in one click -- database, auth, and file storage in minutes.</li>
+            <li><strong>Publish and share.</strong> One click gives you a live URL before you have spent a cent on infrastructure.</li>
           </ol>
           <h2>The bottom line</h2>
-          <p>The bottleneck is no longer technical - it is clarity. Know what you are building and for whom, and the rest is fast.</p>
+          <p>The bottleneck is no longer technical -- it is clarity. Know what you are building and for whom, and the rest is fast.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Try it yourself</div>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>50 credits/month free - no card required.</p>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>50 credits/month free -- no card required.</p>
             <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free</Link>
           </div>
         </div>

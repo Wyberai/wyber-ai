@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Build a production Next.js app in under an hour with AI - Wyber AI Blog',
-  description: 'Next.js is the default in Wyber AI. SSR, SEO, performance out of the box.',
+  description: 'Next.js is the default in Wyber AI. SSR, SEO, performance out of the box. A step-by-step walkthrough.',
 };
 
 export default function Post() {
@@ -26,19 +26,25 @@ export default function Post() {
           <h2>Step 1: Write a specific prompt (5 minutes)</h2>
           <p>Be specific. Instead of "build a landing page" try:</p>
           <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', lineHeight: 1.7, margin: '16px 0' }}>
-            "Build a Next.js landing page for a B2B SaaS called TaskFlow. Hero with 'Ship projects without the chaos', 3 feature cards, pricing with Free and Pro tiers, footer. Dark navy color scheme."
+            "Build a Next.js landing page for a B2B SaaS called TaskFlow. Hero with 'Ship projects without the chaos', 3 feature cards, pricing with Free and Pro/$29 tiers, footer. Dark navy color scheme."
           </div>
           <h2>Step 2: Generate and iterate (20 minutes)</h2>
-          <p>Hit Generate. Live preview loads alongside the code. Refine with follow-up prompts - AI mistakes are always free to fix.</p>
+          <p>Hit Generate. A live preview loads alongside the code. Use follow-up prompts to refine -- AI mistakes are always free to fix, you only pay for successful generations.</p>
+          <ul>
+            <li>"Make the hero section taller with more padding"</li>
+            <li>"Change the CTA button to sky blue"</li>
+            <li>"Add a testimonials section between features and pricing"</li>
+          </ul>
           <h2>Step 3: Add your backend (15 minutes)</h2>
-          <p>Connect tab - add Supabase for database, auth, and file storage. Then prompt:</p>
+          <p>Connect tab -- add Supabase for database, auth, and file storage. Then prompt:</p>
           <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', lineHeight: 1.7, margin: '16px 0' }}>
             "Add email/password auth using Supabase. After login redirect to /dashboard."
           </div>
           <h2>Step 4: Publish (5 minutes)</h2>
-          <p>Click Publish - get a live URL at yourapp.wyberai.app instantly. Deploy to Vercel with your own domain from the Deploy tab when ready.</p>
+          <p>Click Publish -- get a live URL at yourapp.wyberai.app instantly. Deploy to Vercel with your own domain from the Deploy tab when ready.</p>
+          <p>Total: under an hour. From blank screen to live URL.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 50 free credits - no card required.</p>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 50 free credits -- no card required.</p>
             <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free</Link>
           </div>
         </div>

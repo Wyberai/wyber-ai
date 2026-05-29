@@ -5,13 +5,13 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Wyber AI vs Lovable - Wyber AI Blog',
-  description: 'Both tools build full-stack apps from plain English. An honest comparison.',
+  description: 'Both tools build full-stack apps from plain English. An honest comparison for developers and founders.',
 };
 
 const COMPARISON = [
   { feature: 'Frameworks', wyber: 'React, Next.js, Vue, Vanilla JS', lovable: 'React / TanStack only' },
   { feature: 'Free tier', wyber: '50 credits/month', lovable: '5 daily (~30/month)' },
-  { feature: 'Starting price', wyber: '/month', lovable: '/month' },
+  { feature: 'Starting price', wyber: '$15/month', lovable: '$25/month' },
   { feature: 'AI error fixes', wyber: 'Always free', lovable: 'Costs credits' },
   { feature: 'MCP server', wyber: 'Yes', lovable: 'Yes' },
   { feature: 'Figma import', wyber: 'Yes', lovable: 'Yes' },
@@ -33,7 +33,7 @@ export default function Post() {
           Wyber AI vs Lovable: Which AI app builder is right for you?
         </h1>
         <div className="wy-prose">
-          <p>Lovable is the market leader - 2.3 million users,  raised, 160,000-member Discord. Wyber AI is newer, smaller, and built for a different kind of builder. This is an honest comparison.</p>
+          <p>Lovable is the market leader -- 2.3 million users, $330M raised, 160,000-member Discord. Wyber AI is newer, smaller, and built for a different kind of builder. This is an honest comparison written by the Wyber AI team.</p>
           <h2>Side by side</h2>
         </div>
         <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', margin: '24px 0' }}>
@@ -52,14 +52,15 @@ export default function Post() {
           <h2>Where Wyber AI wins</h2>
           <p><strong>Framework flexibility.</strong> Lovable generates React/TanStack only. Wyber AI supports 4 frameworks.</p>
           <p><strong>Free AI error fixes.</strong> In Lovable, AI mistakes cost credits. In Wyber AI, fixing errors is always free.</p>
-          <p><strong>Price.</strong> Wyber AI Starter is /month vs Lovable's /month.</p>
+          <p><strong>Price.</strong> Wyber AI Starter is $15/month vs Lovable's $25/month.</p>
           <h2>Where Lovable wins</h2>
           <p><strong>Community.</strong> 160K Discord members. Unmatched for learning alongside other builders.</p>
           <p><strong>Visual editor.</strong> Click any element to edit without prompting. Coming soon to Wyber AI.</p>
+          <p><strong>Enterprise maturity.</strong> SOC2 Type II, ISO 27001. More mature for large organizations.</p>
           <h2>The bottom line</h2>
           <p>Choose Lovable for the largest community and most mature tooling. Choose Wyber AI for framework flexibility, free error fixes, and better pricing.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Try Wyber AI free - 50 credits/month, no card required.</p>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Try Wyber AI free -- 50 credits/month, no card required.</p>
             <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free</Link>
           </div>
         </div>
