@@ -64,6 +64,7 @@ interface EditorState {
   setRightPanelWidth: (w: number) => void;
   toggleFileTree: () => void;
   consumeCredit: () => void;
+  setCredits: (n: number) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -148,5 +149,6 @@ export const useEditorStore = create<EditorState>()(
     setRightPanelWidth: (w) => set((s) => { s.rightPanelWidth = w; }),
     toggleFileTree: () => set((s) => { s.showFileTree = !s.showFileTree; }),
     consumeCredit: () => set((s) => { s.credits = Math.max(0, s.credits - 1); }),
+    setCredits: (n) => set((s) => { s.credits = n; }),
   }))
 );
