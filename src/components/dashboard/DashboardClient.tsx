@@ -39,8 +39,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       if (data) router.push(`/project/${data.id}`);
       else throw new Error('No data returned');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      alert('Could not create project: ' + msg);
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      alert('Error: ' + msg);
     }
     setCreating(false);
   };
