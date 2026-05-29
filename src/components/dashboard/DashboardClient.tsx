@@ -38,9 +38,9 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         .single();
       if (data) router.push(`/project/${data.id}`);
       else throw new Error('No data returned');
-    } catch {
-      const fakeId = Math.random().toString(36).slice(2, 11);
-      router.push(`/project/${fakeId}?name=${encodeURIComponent(newName.trim())}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      alert('Could not create project: ' + msg);
     }
     setCreating(false);
   };
