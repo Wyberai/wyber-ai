@@ -36,7 +36,15 @@ export default function OnboardingPage() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').update({ full_name: name, onboarded: true }).eq('id', user!.id);
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        full_name: name,
+        onboarded: true,
+        credits: 50,
+        plan: 'free',
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
     }
     // Create first project with selected idea
     if (selectedIdea || customPrompt) {

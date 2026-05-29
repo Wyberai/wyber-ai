@@ -27,14 +27,23 @@ export async function GET(request: Request) {
     const { data: { user } } = await supabase.auth.exchangeCodeForSession(code);
 
     if (user) {
-      // Check if user has been onboarded
+      // Upsert profile -- create if missing, leave alone if exists
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        credits: 50,
+        plan: 'free',
+        onboarded: false,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id', ignoreDuplicates: true });
+
+      // Check if onboarded
       const { data: profile } = await supabase
         .from('profiles')
         .select('onboarded')
-        .eq('id', user!.id)
+        .eq('id', user.id)
         .single();
 
-      // New user - redirect to onboarding
       if (!profile?.onboarded) {
         return NextResponse.redirect(`${origin}/onboarding`);
       }
