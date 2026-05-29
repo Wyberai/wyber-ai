@@ -1,6 +1,5 @@
-'use client';
-import { Navbar } from '@/components/shared/Navbar';
-import { Footer } from '@/components/shared/Footer';
+﻿import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
+import { Footer } from '@/components/shared/FooterClient';
 
 const DOCS = [
   { icon: '⚡', title: 'Getting started', desc: 'Sign up, get 50 free credits, build your first app in 2 minutes.', href: '#getting-started' },

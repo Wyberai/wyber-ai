@@ -1,5 +1,5 @@
-﻿import { Navbar } from '@/components/shared/Navbar';
-import { Footer } from '@/components/shared/Footer';
+﻿import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
+import { Footer } from '@/components/shared/FooterClient';
 
 export default function TermsPage() {
   const SECTIONS = [
