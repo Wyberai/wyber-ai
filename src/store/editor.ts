@@ -112,7 +112,7 @@ export const useEditorStore = create<EditorState>()(
     showFileTree: true,
     credits: 100,
 
-    setProject: (p) => set((s) => { s.project = p; }),
+    setProject: (p) => set((s) => { s.project = p; s.hasGeneratedFiles = false; s.files = {}; s.messages = []; s.openTabs = []; s.activeFile = null; }),
     setFramework: (f) => set((s) => { s.framework = f; }),
 
     setFile: (path, content) => set((s) => {

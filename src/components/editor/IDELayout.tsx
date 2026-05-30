@@ -19,20 +19,12 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   const {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
-    setProject, setFiles, setFramework, setCredits,
+    setProject, setFiles, setFramework,
   } = useEditorStore();
 
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
 
-  // Sync credits from profile to store on mount
-  useEffect(() => {
-    if (initialProfile?.credits !== undefined) {
-      setCredits(initialProfile.credits);
-    }
-  }, [initialProfile?.id]);
-
-  // Sync project data to store on mount
   useEffect(() => {
     if (!initialProject) return;
     setProject({
@@ -51,7 +43,6 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     (delta: number) => setLeftPanelWidth(Math.max(160, Math.min(400, leftPanelWidth + delta))),
     [leftPanelWidth, setLeftPanelWidth]
   );
-
   const resizeRight = useCallback(
     (delta: number) => setRightPanelWidth(Math.max(320, Math.min(700, rightPanelWidth - delta))),
     [rightPanelWidth, setRightPanelWidth]
@@ -72,7 +63,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
         {showFileTree && (
           <>
-            <div style={{ width: leftPanelWidth, flexShrink: 0, overflow: 'hidden', background: 'var(--bg-surface)', borderRight: '1px solid var(--ide-border)', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ width: leftPanelWidth, flexShrink: 0, overflow: 'hidden', background: 'var(--bg-surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
               <FileTree />
             </div>
             <ResizableDivider onResize={resizeLeft} />
