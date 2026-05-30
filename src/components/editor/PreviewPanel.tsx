@@ -22,54 +22,93 @@ function getTemplate(framework: string) {
   return 'react' as const; // react-vite and next both use react template for preview
 }
 
+function stripNextImports(code: string): string {
+  return code
+    .replace(/'use client';?\n?/g, '')
+    .replace(/"use client";?\n?/g, '')
+    .replace(/import[^;]+from ['"]next\/link['"];?\n?/g, '')
+    .replace(/import[^;]+from ['"]next\/image['"];?\n?/g, '')
+    .replace(/import[^;]+from ['"]next\/navigation['"];?\n?/g, '')
+    .replace(/import[^;]+from ['"]next\/router['"];?\n?/g, '')
+    .replace(/<Link href=([^>]+)>/g, '<a href=$1>')
+    .replace(/<\/Link>/g, '</a>')
+    .replace(/<Image([^/]+)\/>/g, '<img$1/>')
+    .replace(/useRouter\(\)/g, '{ push: (p: string) => {}, back: () => {} }')
+    .replace(/usePathname\(\)/g, "''")
+    .replace(/useSearchParams\(\)/g, 'new URLSearchParams()');
+}
+
 function getSandpackFiles(files: Record<string, { content: string }>, framework: string) {
   const result: Record<string, string> = {};
 
-  // Skip config files Sandpack handles internally
-  const SKIP = new Set(['package.json', 'vite.config.ts', 'vite.config.js', 'next.config.ts', 'next.config.js', 'tsconfig.json', 'tsconfig.node.json', '.gitignore']);
+  const SKIP = new Set(['package.json', 'vite.config.ts', 'vite.config.js', 'next.config.ts', 'next.config.js', 'tsconfig.json', 'tsconfig.node.json', '.gitignore', 'tailwind.config.ts', 'tailwind.config.js', 'postcss.config.js']);
 
   for (const [path, file] of Object.entries(files)) {
-    const clean = path.replace(/^\//, ''); // remove leading slash
+    const clean = path.replace(/^\//, '');
     if (SKIP.has(clean)) continue;
     if (!file.content || !file.content.trim()) continue;
-    // Sandpack needs leading slash
-    const p = '/' + clean;
-    result[p] = file.content;
+    let fileContent = file.content;
+    // Strip Next.js-specific syntax for preview
+    if (framework === 'next') fileContent = stripNextImports(fileContent);
+    result['/' + clean] = fileContent;
   }
 
-  if (framework === 'vanilla') return result;
+  if (framework === 'vanilla') {
+    // For vanilla, just return the HTML file
+    return result;
+  }
 
-  // Check what we have
-  const hasApp = result['/App.tsx'] || result['/App.jsx'] || result['/src/App.tsx'] || result['/src/App.jsx'];
-  const hasIndex = result['/index.tsx'] || result['/index.jsx'] || result['/src/main.tsx'] || result['/src/main.jsx'];
-  const hasCss = result['/index.css'] || result['/src/index.css'] || result['/styles.css'] || result['/App.css'];
+  // Find the main App component - check multiple possible paths
+  const APP_CANDIDATES = [
+    '/App.tsx', '/App.jsx', '/App.js',
+    '/src/App.tsx', '/src/App.jsx',
+    '/app/page.tsx', '/app/page.jsx',   // Next.js app router
+    '/pages/index.tsx', '/pages/index.jsx', // Next.js pages router
+  ];
 
-  // If no App, pick the first tsx/jsx component file as App
-  if (!hasApp) {
-    const firstComponent = Object.entries(result).find(([p, content]) =>
+  let appPath = APP_CANDIDATES.find(p => result[p]);
+
+  // If still no app, find first component with export default
+  if (!appPath) {
+    const found = Object.entries(result).find(([p, c]) =>
       (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
-      !p.includes('main') && !p.includes('index') &&
-      (content.includes('export default') || content.includes('export function'))
+      !p.includes('layout') &&
+      (c.includes('export default') || c.includes('export function'))
     );
-    if (firstComponent) {
-      result['/App.tsx'] = firstComponent[1];
-    }
+    if (found) appPath = found[0];
   }
 
-  // Ensure index entry point exists
+  // Normalize app to /App.tsx at root for Sandpack
+  if (appPath && appPath !== '/App.tsx') {
+    result['/App.tsx'] = result[appPath];
+  }
+
+  // Compute relative import path from /index.tsx to /App.tsx
+  const appImport = './App';
+
+  // Check existing CSS
+  const cssPath = ['/index.css', '/src/index.css', '/styles.css', '/app/globals.css', '/styles/globals.css']
+    .find(p => result[p]);
+
+  // Ensure index entry exists
+  const hasIndex = result['/index.tsx'] || result['/index.jsx'] || result['/src/main.tsx'];
   if (!hasIndex) {
-    result['/index.tsx'] = `import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import App from './App';
-${hasCss ? "import './index.css';" : ''}
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);`;
+    result['/index.tsx'] = [
+      "import { StrictMode } from 'react';",
+      "import { createRoot } from 'react-dom/client';",
+      `import App from '${appImport}';`,
+      cssPath ? `import '${cssPath.slice(1)}';` : '',
+      "createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);",
+    ].filter(Boolean).join('\n');
   }
 
-  // Ensure base CSS exists
-  if (!hasCss) {
-    result['/index.css'] = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }`;
+  // Ensure base CSS
+  if (!cssPath) {
+    result['/index.css'] = [
+      '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }',
+      'html, body { height: 100%; }',
+      "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }",
+    ].join('\n');
   }
 
   return result;
