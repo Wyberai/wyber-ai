@@ -271,4 +271,3 @@ export function TemplateGallery({ onClose }: Props) {
     </div>
   )
 }
-

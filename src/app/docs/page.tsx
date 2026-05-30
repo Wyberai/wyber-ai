@@ -1,5 +1,7 @@
-﻿import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
+'use client';
+import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
+import Link from 'next/link';
 
 const DOCS = [
   { icon: '⚡', title: 'Getting started', desc: 'Sign up, get 50 free credits, build your first app in 2 minutes.', href: '#getting-started' },
@@ -20,15 +22,18 @@ export default function DocsPage() {
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>Documentation</div>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px,5vw,48px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 14px' }}>Docs</h1>
         <p style={{ fontSize: 16, color: 'var(--text2)', marginBottom: 56, lineHeight: 1.65 }}>Everything you need to build faster with Wyber AI.</p>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 10, marginBottom: 64 }}>
           {DOCS.map(d => (
-            <a key={d.title} href={d.href} className="wy-card" style={{ padding: '24px 20px', display: 'block', textDecoration: 'none' }}>
+            <a key={d.title} href={d.href} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: '24px 20px', display: 'block', transition: 'all 0.2s', boxShadow: 'var(--shadow)', textDecoration: 'none' }}
+className='wy-card'>
               <div style={{ fontSize: 22, marginBottom: 12 }}>{d.icon}</div>
               <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 6 }}>{d.title}</div>
               <div style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.55 }}>{d.desc}</div>
             </a>
           ))}
         </div>
+
         <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
           <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>Can't find what you need?</p>
           <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 16 }}>We're still writing the docs. Email us and we'll help directly.</p>

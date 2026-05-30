@@ -1,9 +1,9 @@
-﻿import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
+import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import { APIKeysPanel } from '@/components/settings/APIKeysPanel';
 import type { Metadata } from 'next';
 
-export const metadata: Metadata = { title: 'API Keys Ã¢â‚¬â€ Wyber AI' };
+export const metadata: Metadata = { title: 'API Keys — Wyber AI' };
 
 export default function APIKeysPage() {
   return (

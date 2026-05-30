@@ -1,7 +1,7 @@
-﻿'use client';
+'use client';
 import Link from 'next/link';
 
-function WyberLogo({ size = 24 }: { size?: number }) {
+function WyberLogo({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
       <rect width="32" height="32" rx="8" fill="var(--sky)"/>
@@ -11,82 +11,79 @@ function WyberLogo({ size = 24 }: { size?: number }) {
   );
 }
 
-const LINKS = {
-  Product: [
-    ['Pricing', '/pricing'],
-    ['Templates', '/templates'],
-    ['Connectors', '/connectors'],
-    ['Changelog', '/changelog'],
-    ['API Keys', '/api-keys'],
-  ],
-  Resources: [
-    ['Security', '/security'],
-    ['Community', '/community'],
-    ['Blog', '/blog'],
-    ['Docs', '/docs'],
-  ],
-  Company: [
-    ['About', '/about'],
-    ['Privacy', '/privacy'],
-    ['Terms', '/terms'],
-    ['Contact', 'mailto:hello@wyberai.com'],
-  ],
-};
+const COLS = [
+  { heading: 'Product',   links: [['Pricing','/pricing'],['Templates','/templates'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
+  { heading: 'Resources', links: [['Blog','/blog'],['Security','/security'],['Docs','/docs'],['API Keys','/api-keys']] },
+  { heading: 'Company',   links: [['Founders','/founders'],['Affiliates','/affiliates'],['Community','/community'],['Privacy','/privacy'],['Terms','/terms']] },
+];
 
 export function Footer() {
   return (
-    <footer style={{ borderTop: '1px solid var(--border)', padding: 'clamp(28px,4vw,44px) clamp(16px,4vw,40px)', fontFamily: 'var(--font-sans)' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', display: 'grid', gridTemplateColumns: '1.5fr repeat(3, 1fr)', gap: 32, flexWrap: 'wrap' }}>
-        <div>
-          <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <WyberLogo size={26} />
-            <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.055em', color: 'var(--text)' }}>
-              Wyber<span style={{ color: 'var(--sky)' }}>AI</span>
-            </span>
-          </Link>
-          <p style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.8, margin: '0 0 14px' }}>
-            Turn plain English into full-stack apps.<br />
-            Build, preview, and deploy — before lunch.
-          </p>
-          <p style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.7, margin: 0 }}>
-            A product by{' '}
-            <a href="https://signalpulsehq.com" target="_blank" rel="noreferrer" style={{ color: 'var(--sky)', fontWeight: 500 }}>
-              SignalPulse Technologies
-            </a>
-            <br />Wyoming, USA · hello@wyberai.com
-          </p>
-          <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-            {[['𝕏', 'https://twitter.com/wyberai'], ['⌥', 'https://github.com/Wyberai'], ['💬', 'https://discord.gg/A5KsFv2P']].map(([icon, href]) => (
-              <a key={href as string} href={href as string} target="_blank" rel="noreferrer"
-                style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text3)', textDecoration: 'none' }}>
-                {icon}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {Object.entries(LINKS).map(([section, items]) => (
-          <div key={section}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{section}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              {items.map(([label, href]) => (
-                href.startsWith('mailto') ? (
-                  <a key={href} href={href} style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500, textDecoration: 'none' }} className="wy-nav-link">{label}</a>
-                ) : (
-                  <Link key={href} href={href} style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500 }} className="wy-nav-link">{label}</Link>
-                )
+    <footer style={{
+      borderTop: '1px solid var(--border)',
+      background: 'var(--bg)',
+      padding: 'clamp(40px,5vw,60px) clamp(20px,5vw,40px) clamp(24px,3vw,32px)',
+    }}>
+      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+        {/* Top row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr repeat(3,1fr)', gap: 40, marginBottom: 40 }}>
+          {/* Brand */}
+          <div>
+            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+              <WyberLogo size={24} />
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--text)' }}>
+                Wyber<span style={{ color: 'var(--sky)' }}>AI</span>
+              </span>
+            </Link>
+            <p style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.7, marginBottom: 16, maxWidth: 220 }}>
+              Turn plain English into full-stack apps. Build, preview, and deploy — before lunch.
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.7 }}>
+              A product by{' '}
+              <a href="https://signalpulsehq.com" target="_blank" rel="noreferrer" style={{ color: 'var(--sky)', fontWeight: 500 }}>SignalPulse Technologies</a>
+              <br/>Wyoming, USA · hello@wyberai.com
+            </p>
+            {/* Socials */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+              {[
+                ['𝕏', 'https://twitter.com/wyberai', 'Twitter'],
+                ['⌥', 'https://github.com/Wyberai', 'GitHub'],
+                ['◉', 'https://discord.gg/A5KsFv2P', 'Discord'],
+              ].map(([icon, href, label]) => (
+                <a key={label} href={href} target="_blank" rel="noreferrer" title={label}
+                  style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--text3)', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--sky)'; (e.currentTarget as HTMLElement).style.color = 'var(--sky)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border2)'; (e.currentTarget as HTMLElement).style.color = 'var(--text3)'; }}
+                >{icon}</a>
               ))}
             </div>
           </div>
-        ))}
-      </div>
 
-      <div style={{ maxWidth: 1080, margin: '28px auto 0', paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-        <p style={{ fontSize: 12, color: 'var(--text3)', margin: 0 }}>© 2026 SignalPulse Technologies LLC. All rights reserved.</p>
-        <div style={{ display: 'flex', gap: 16 }}>
-          {[['Privacy', '/privacy'], ['Terms', '/terms']].map(([l, h]) => (
-            <Link key={h} href={h} style={{ fontSize: 12, color: 'var(--text3)' }}>{l}</Link>
+          {/* Link columns */}
+          {COLS.map(col => (
+            <div key={col.heading}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{col.heading}</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {col.links.map(([label, href]) => (
+                  <Link key={href} href={href}
+                    style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500, transition: 'color 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--text)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--text3)'}
+                  >{label}</Link>
+                ))}
+              </div>
+            </div>
           ))}
+        </div>
+
+        {/* Bottom row */}
+        <div style={{ paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <p style={{ fontSize: 12, color: 'var(--text3)' }}>© 2026 SignalPulse Technologies LLC. All rights reserved.</p>
+          <div style={{ display: 'flex', gap: 20 }}>
+            {[['Privacy','/privacy'],['Terms','/terms'],['Cookies','/cookies']].map(([l,h]) => (
+              <Link key={h} href={h} style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 400 }}>{l}</Link>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

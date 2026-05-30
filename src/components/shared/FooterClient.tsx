@@ -1,2 +1,2 @@
-﻿'use client';
+'use client';
 export { Footer } from './Footer';
