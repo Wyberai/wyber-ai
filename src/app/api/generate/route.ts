@@ -1,12 +1,12 @@
 import { NextRequest } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
+// Client initialized lazily inside handler
 
 const MODELS = {
-  fast:    { id: 'claude-sonnet-4-6',        credits: 1, label: 'Fast' },
-  default: { id: 'claude-opus-4-7',          credits: 2, label: 'Standard' },
-  premium: { id: 'claude-opus-4-7',          credits: 3, label: 'Premium' },
+  fast:    { id: 'claude-sonnet-4-6', credits: 1, label: 'Fast' },
+  default: { id: 'claude-sonnet-4-6', credits: 1, label: 'Standard' },
+  premium: { id: 'claude-sonnet-4-6', credits: 2, label: 'Premium' },
 };
 
 const FRAMEWORK_GUIDES: Record<string, string> = {
@@ -166,6 +166,9 @@ function selectRelevantFiles(
 
 export async function POST(req: NextRequest) {
   try {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    const client = new Anthropic({ apiKey });
     const body = await req.json();
     const { prompt, framework, fileContext, history, knowledge, image, modelTier = 'default' } = body;
 
