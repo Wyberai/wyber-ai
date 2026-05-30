@@ -48,6 +48,7 @@ DATA (always realistic, never Lorem Ipsum):
 - Status badges: Active=green bg, Pending=amber bg, Failed=red bg
 
 ARCHITECTURE:
+- ALWAYS use relative imports (./components/Header) never path aliases (@/components/Header)
 - Split into focused component files -- never dump everything in App.tsx
 - Every vite.config.ts MUST include: server: { host: '0.0.0.0', allowedHosts: true, port: 5173 }
 - CSS variables in :root, not inline per-component
