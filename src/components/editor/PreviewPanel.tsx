@@ -25,43 +25,51 @@ function getTemplate(framework: string) {
 function getSandpackFiles(files: Record<string, { content: string }>, framework: string) {
   const result: Record<string, string> = {};
 
+  // Skip config files Sandpack handles internally
+  const SKIP = new Set(['package.json', 'vite.config.ts', 'vite.config.js', 'next.config.ts', 'next.config.js', 'tsconfig.json', 'tsconfig.node.json', '.gitignore']);
+
   for (const [path, file] of Object.entries(files)) {
-    // Normalize paths for Sandpack
-    let p = path.startsWith('/') ? path : '/' + path;
-    // Skip files Sandpack handles internally
-    if (p === '/package.json' || p === '/vite.config.ts' || p === '/vite.config.js') continue;
-    if (p === '/next.config.ts' || p === '/next.config.js') continue;
-    if (p === '/tsconfig.json') continue;
+    const clean = path.replace(/^\//, ''); // remove leading slash
+    if (SKIP.has(clean)) continue;
+    if (!file.content || !file.content.trim()) continue;
+    // Sandpack needs leading slash
+    const p = '/' + clean;
     result[p] = file.content;
   }
 
-  // Ensure entry file exists for react
-  if (framework !== 'vanilla' && framework !== 'vue') {
-    const hasApp = result['/App.tsx'] || result['/src/App.tsx'] || result['/App.jsx'];
-    const hasIndex = result['/index.tsx'] || result['/src/main.tsx'];
+  if (framework === 'vanilla') return result;
 
-    if (!hasApp && !hasIndex) {
-      // Create a minimal entry from the first tsx file
-      const firstTsx = Object.entries(result).find(([p]) => p.endsWith('.tsx') || p.endsWith('.jsx'));
-      if (firstTsx) {
-        result['/App.tsx'] = firstTsx[1];
-      }
+  // Check what we have
+  const hasApp = result['/App.tsx'] || result['/App.jsx'] || result['/src/App.tsx'] || result['/src/App.jsx'];
+  const hasIndex = result['/index.tsx'] || result['/index.jsx'] || result['/src/main.tsx'] || result['/src/main.jsx'];
+  const hasCss = result['/index.css'] || result['/src/index.css'] || result['/styles.css'] || result['/App.css'];
+
+  // If no App, pick the first tsx/jsx component file as App
+  if (!hasApp) {
+    const firstComponent = Object.entries(result).find(([p, content]) =>
+      (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
+      !p.includes('main') && !p.includes('index') &&
+      (content.includes('export default') || content.includes('export function'))
+    );
+    if (firstComponent) {
+      result['/App.tsx'] = firstComponent[1];
     }
+  }
 
-    // Add minimal index if missing
-    if (!result['/index.tsx'] && !result['/src/main.tsx'] && !result['/index.html']) {
-      result['/index.tsx'] = `import { StrictMode } from 'react';
+  // Ensure index entry point exists
+  if (!hasIndex) {
+    result['/index.tsx'] = `import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './index.css';
+${hasCss ? "import './index.css';" : ''}
 createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);`;
-    }
+  }
 
-    // Add minimal CSS if missing
-    if (!result['/index.css'] && !result['/src/index.css']) {
-      result['/index.css'] = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }`;
-    }
+  // Ensure base CSS exists
+  if (!hasCss) {
+    result['/index.css'] = `*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }`;
   }
 
   return result;
@@ -73,18 +81,26 @@ export function PreviewPanel() {
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
   const [sandpackKey, setSandpackKey] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
-  const prevFileCount = useRef(0);
-  const hasFiles = Object.keys(files).length > 1;
+  const [hasGenerated, setHasGenerated] = useState(false);
+  const wasGenerating = useRef(false);
 
-  // Refresh Sandpack when new files come in after generation
+  // Only show preview after a real generation completes (not starter template)
   useEffect(() => {
-    const count = Object.keys(files).length;
-    if (count > 1 && count !== prevFileCount.current && !isGenerating) {
-      prevFileCount.current = count;
-      setSandpackKey(k => k + 1);
-      setLogs(l => [...l, `Loaded ${count} files into preview`]);
+    if (isGenerating) {
+      wasGenerating.current = true;
+    } else if (wasGenerating.current) {
+      // Generation just finished
+      wasGenerating.current = false;
+      const count = Object.keys(files).length;
+      if (count > 1) {
+        setHasGenerated(true);
+        setSandpackKey(k => k + 1);
+        setLogs(l => [...l, `Preview updated with ${count} files`]);
+      }
     }
-  }, [files, isGenerating]);
+  }, [isGenerating, files]);
+
+  const hasFiles = hasGenerated && Object.keys(files).length > 1;
 
   const vp = VIEWPORTS[viewport];
   const sandpackFiles = hasFiles ? getSandpackFiles(files, framework ?? 'react-vite') : {};
