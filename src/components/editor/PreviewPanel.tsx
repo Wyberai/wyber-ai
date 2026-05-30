@@ -250,7 +250,7 @@ export function PreviewPanel() {
             </div>
           </div>
         ) : (
-          <div style={{ width: vp.w as any, height: '100%', transition: 'width 0.3s ease', overflow: 'hidden', borderRadius: viewport !== 'desktop' ? 14 : 0, boxShadow: viewport !== 'desktop' ? '0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.6)' : 'none' }}>
+          <div style={{ width: vp.w as any, height: '100%', transition: 'width 0.3s ease', overflow: 'auto', borderRadius: viewport !== 'desktop' ? 14 : 0, boxShadow: viewport !== 'desktop' ? '0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.6)' : 'none', display: 'flex', flexDirection: 'column' }}>
             <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--ide-text3)', fontSize: 12 }}>Loading preview...</div>}>
               <SandpackProvider
                 key={sandpackKey}
@@ -277,7 +277,7 @@ export function PreviewPanel() {
                 }}
               >
                 <SandpackPreview
-                  style={{ height: '100%', width: '100%' }}
+                  style={{ height: '100%', width: '100%', minHeight: '100%' }}
                   showOpenInCodeSandbox={false}
                   showRefreshButton={true}
                 />
@@ -289,8 +289,10 @@ export function PreviewPanel() {
 
       <style>{`
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        .sp-preview-container { height: 100% !important; }
-        .sp-preview-iframe { height: 100% !important; }
+        .sp-wrapper { height: 100% !important; display: flex !important; flex-direction: column !important; }
+        .sp-preview-container { flex: 1 !important; height: 100% !important; display: flex !important; flex-direction: column !important; }
+        .sp-preview-iframe { flex: 1 !important; height: 100% !important; width: 100% !important; }
+        .sp-overlay { height: 100% !important; }
       `}</style>
     </div>
   );
