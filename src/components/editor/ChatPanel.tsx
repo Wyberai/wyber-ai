@@ -1,4 +1,5 @@
-'use client';
+'use client'
+import { VoiceButton } from './VoiceButton';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { parseGenerationOutput } from '@/lib/file-parser';
