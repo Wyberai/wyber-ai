@@ -24,7 +24,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(true);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   useEffect(() => {
     if (!initialProject) return;
@@ -60,54 +60,33 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
         onToggleFileTree={() => setShowFileTree(v => !v)}
       />
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0, position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
 
-        {showFileTree && (
-          <>
-            <div style={{ width: leftPanelWidth, flexShrink: 0, overflow: 'hidden', background: 'var(--bg-surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
-              <FileTree />
-            </div>
-            <ResizableDivider onResize={resizeLeft} />
-          </>
-        )}
-
-        {showCode && (
-          <>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', maxWidth: 600 }}>
-              <TabBar />
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <CodeEditor />
-              </div>
-            </div>
-            <ResizableDivider onResize={() => {}} />
-          </>
-        )}
-
-        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-          <PreviewPanel />
+        {/* CHAT — left side, fixed width */}
+        <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--ide-border)' }}>
+          <RightPanel
+            projectId={initialProject?.id}
+            userId={initialProfile?.id}
+            projectName={initialProject?.name}
+            githubRepo={initialProject?.github_repo}
+            lastCommitSha={initialProject?.last_commit_sha}
+          />
         </div>
 
-        {!rightCollapsed && <ResizableDivider onResize={resizeRight} />}
+        <ResizableDivider onResize={resizeRight} />
 
-        {!rightCollapsed && (
-          <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-            <RightPanel
-              projectId={initialProject?.id}
-              userId={initialProfile?.id}
-              projectName={initialProject?.name}
-              githubRepo={initialProject?.github_repo}
-              lastCommitSha={initialProject?.last_commit_sha}
-            />
+        {/* PREVIEW — right side, takes all remaining space */}
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {showCode && (
+            <div style={{ height: '40%', borderBottom: '1px solid var(--ide-border)', display: 'flex', flexDirection: 'column' }}>
+              <TabBar />
+              <div style={{ flex: 1, overflow: 'hidden' }}><CodeEditor /></div>
+            </div>
+          )}
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            <PreviewPanel />
           </div>
-        )}
-
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setRightCollapsed(c => !c)}
-          title={rightCollapsed ? 'Show chat panel' : 'Hide chat panel'}
-          style={{ position: 'absolute', right: rightCollapsed ? 0 : rightPanelWidth, top: '50%', transform: 'translateY(-50%)', zIndex: 50, width: 16, height: 48, background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRight: 'none', borderRadius: '6px 0 0 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ide-text3)', fontSize: 10, transition: 'right 0.2s' }}>
-          {rightCollapsed ? '◁' : '▷'}
-        </button>
+        </div>
       </div>
     </div>
   );
