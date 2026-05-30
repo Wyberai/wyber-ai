@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { TEMPLATE_GALLERY, CATEGORIES } from '@/lib/templates/gallery';
+import { EXTENDED_GALLERY, ALL_CATEGORIES } from '@/lib/templates/gallery';
 import { useEditorStore } from '@/store/editor';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 
@@ -43,7 +43,7 @@ export function TemplateGallery({ onClose }: Props) {
     setUpvoting(null);
   };
 
-  const filtered = category === 'All' ? TEMPLATE_GALLERY : TEMPLATE_GALLERY.filter(t => t.category === category);
+  const filtered = category === 'All' ? EXTENDED_GALLERY : EXTENDED_GALLERY.filter(t => t.category === category);
 
   const useTemplate = async (template: { framework: string; prompt: string; name: string }) => {
     if (loading) return;
@@ -104,7 +104,7 @@ export function TemplateGallery({ onClose }: Props) {
       {tab === 'curated' && (
         <>
           <div style={{ display: 'flex', gap: 5, padding: '8px 10px', borderBottom: '1px solid var(--border)', overflowX: 'auto', flexShrink: 0 }}>
-            {['All', ...CATEGORIES].map(cat => (
+            {['All', ...ALL_CATEGORIES].map(cat => (
               <button key={cat} onClick={() => setCategory(cat)}
                 style={{ padding: '3px 9px', borderRadius: 12, border: '1px solid var(--border)', background: category === cat ? 'var(--accent)' : 'transparent', color: category === cat ? 'white' : 'var(--text-secondary)', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: category === cat ? 500 : 400 }}>
                 {cat}
