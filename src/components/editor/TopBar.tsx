@@ -28,6 +28,8 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
   const [exporting, setExporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [deployUrl, setDeployUrl] = useState('');
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState(false);
 
   const handleExport = async () => {
     if (exporting) return;
@@ -67,6 +69,33 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
       if (data.url) { setDeployUrl(data.url); window.open(data.url, '_blank'); }
     } catch {}
     setDeploying(false);
+  };
+
+  const handlePublishTemplate = async () => {
+    if (publishing || Object.keys(files).length < 2) return;
+    const name = prompt('Template name:', project?.name ?? 'My App');
+    if (!name) return;
+    const description = prompt('Short description (what does this app do?):', '');
+    if (description === null) return;
+    setPublishing(true);
+    try {
+      const res = await fetch('/api/templates/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          name,
+          description,
+          category: 'SaaS',
+          tags: [],
+          files,
+          framework: 'react-vite',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) { setPublished(true); setTimeout(() => setPublished(false), 3000); }
+    } catch {}
+    setPublishing(false);
   };
 
   const S = {
@@ -149,6 +178,17 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
         {exporting ? 'Exporting...' : 'Export'}
       </button>
+
+      {/* Publish as template */}
+      {Object.keys(files).length > 2 && (
+        <button onClick={handlePublishTemplate} disabled={publishing} title="Save as community template"
+          style={{ ...S.exportBtn, color: published ? 'var(--success)' : 'var(--ide-text2)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = published ? 'var(--success)' : 'var(--ide-text2)'}
+        >
+          {published ? '✓ Published' : publishing ? 'Publishing...' : '◈ Template'}
+        </button>
+      )}
 
       {/* Deploy */}
       <button onClick={handleDeploy} disabled={deploying} title="Deploy to Vercel" style={S.deployBtn(deploying)}

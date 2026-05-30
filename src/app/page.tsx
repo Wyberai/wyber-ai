@@ -51,6 +51,12 @@ const INTEGRATIONS = [
 export default function HomePage() {
   const { theme, toggle } = useTheme();
   const typed = useTypewriter(WORDS);
+  const [stats, setStats] = useState({ projects: 1000, users: 500 });
+  useEffect(() => {
+    fetch('/api/stats').then(r => r.json()).then(d => {
+      if (d.projects) setStats(d);
+    }).catch(() => {});
+  }, []);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -242,7 +248,7 @@ export default function HomePage() {
           Start building free
         </Link>
         <div style={{ marginTop: 20, fontSize: 13, color: isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)' }}>
-          Join founders, designers, and developers building with AI
+          {stats.projects.toLocaleString()}+ apps built · {stats.users.toLocaleString()}+ builders · Free to start
         </div>
       </section>
 
