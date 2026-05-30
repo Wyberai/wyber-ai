@@ -106,7 +106,7 @@ export function SupportChat() {
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Wyber Support</div>
               <div style={{ fontSize: 11, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
-                Online · Powered by Claude AI
+                Online · Typically replies instantly
               </div>
             </div>
           </div>

@@ -25,7 +25,7 @@ import { EnvironmentsPanel } from './EnvironmentsPanel';
 import { CrossProjectPanel } from './CrossProjectPanel';
 import { FigmaImportPanel } from './FigmaImportPanel';
 
-type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'deploy' | 'publish' | 'images' | 'connectors' | 'test' | 'seo' | 'skills' | 'settings' | 'annotate' | 'environments' | 'cross' | 'figma';
+type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'clone' | 'deploy' | 'publish' | 'images' | 'connectors' | 'test' | 'seo' | 'skills' | 'settings' | 'annotate' | 'environments' | 'cross' | 'figma';
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'chat',       icon: '⚡', label: 'Chat' },
@@ -43,6 +43,7 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: 'security',   icon: '🛡', label: 'Security' },
   { id: 'skills',     icon: '📋', label: 'Skills' },
   { id: 'history',    icon: '⟳', label: 'History' },
+  { id: 'clone',      icon: '⎘', label: 'Clone' },
   { id: 'knowledge',  icon: '⚙', label: 'Knowledge' },
   { id: 'fix',        icon: '✕', label: 'Fix Error' },
   { id: 'settings',   icon: '⚙', label: 'Settings' },
