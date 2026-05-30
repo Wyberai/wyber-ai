@@ -29,6 +29,8 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
   const [deploying, setDeploying] = useState(false);
   const [deployUrl, setDeployUrl] = useState('');
   const [publishing, setPublishing] = useState(false);
+  const [pushing, setPushing] = useState(false);
+  const [pushUrl, setPushUrl] = useState('');
   const [published, setPublished] = useState(false);
 
   const handleExport = async () => {
@@ -96,6 +98,27 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
       if (data.success) { setPublished(true); setTimeout(() => setPublished(false), 3000); }
     } catch {}
     setPublishing(false);
+  };
+
+  const handleGitHubPush = async () => {
+    if (pushing || Object.keys(files).length < 2) return;
+    setPushing(true);
+    try {
+      const res = await fetch('/api/github/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files, projectName: project?.name || 'wyber-app' }),
+      });
+      const data = await res.json();
+      if (data.error === 'GitHub not connected') {
+        window.open(`/api/auth/github?projectId=${projectId}`, '_blank');
+      } else if (data.repoUrl) {
+        setPushUrl(data.repoUrl);
+        window.open(data.repoUrl, '_blank');
+        setTimeout(() => setPushUrl(''), 4000);
+      }
+    } catch {}
+    setPushing(false);
   };
 
   const S = {
@@ -178,6 +201,17 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
         {exporting ? 'Exporting...' : 'Export'}
       </button>
+
+      {/* GitHub Push */}
+      {Object.keys(files).length > 2 && (
+        <button onClick={handleGitHubPush} disabled={pushing} title={pushUrl ? 'Pushed to GitHub!' : 'Push to GitHub'}
+          style={{ ...S.exportBtn, color: pushUrl ? 'var(--success)' : pushing ? '#0EA5E9' : 'var(--ide-text2)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = pushUrl ? 'var(--success)' : 'var(--ide-text2)'}
+        >
+          {pushUrl ? '✓ GitHub' : pushing ? '...' : '⌥ GitHub'}
+        </button>
+      )}
 
       {/* Publish as template */}
       {Object.keys(files).length > 2 && (

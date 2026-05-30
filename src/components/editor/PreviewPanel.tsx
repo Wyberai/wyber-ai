@@ -1,4 +1,6 @@
-'use client';
+'use client'
+import { AutoFix } from './AutoFix'
+;
 import { useEditorStore } from '@/store/editor';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import dynamic from 'next/dynamic';
@@ -33,7 +35,6 @@ function resolveAliases(code: string, filePath: string): string {
 
 function stripNextImports(code: string): string {
   return code
-    .replace(/'use client';?\n?/g, '')
     .replace(/"use client";?\n?/g, '')
     .replace(/import[^;]+from ['"]next\/link['"];?\n?/g, '')
     .replace(/import[^;]+from ['"]next\/image['"];?\n?/g, '')
@@ -163,6 +164,8 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
       const compName = missing.split('/').pop() ?? 'Component';
       result[stubPath] = `export default function ${compName}() {
   return (
+    <>
+    <AutoFix />
     <div style={{ padding: '40px', textAlign: 'center', color: '#a1a1aa', fontFamily: 'sans-serif' }}>
       <p style={{ fontSize: '14px' }}>${compName} component</p>
     </div>
