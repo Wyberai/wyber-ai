@@ -1,47 +1,82 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { detectIntent } from '@/lib/templates/intent-detector'
-import { getPrebuilt } from '@/lib/templates/prebuilt'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-// Detect app type from prompt for design system tuning
-function detectAppType(prompt: string): string {
+// Inlined intent detection — no external imports needed
+const SKELETONS: Record<string, { files: Record<string, string> | null; accent: string }> = {}
+
+function detectSkeleton(prompt: string): string | null {
   const p = prompt.toLowerCase()
-  if (p.includes('dashboard') || p.includes('admin') || p.includes('crm') || p.includes('analytics')) return 'dashboard'
-  if (p.includes('landing') || p.includes('homepage') || p.includes('marketing')) return 'landing'
-  if (p.includes('shop') || p.includes('store') || p.includes('ecommerce')) return 'ecommerce'
-  if (p.includes('chat') || p.includes('messag')) return 'chat'
-  return 'app'
-}
-
-function getAccentForType(appType: string): string {
-  const map: Record<string, string> = {
-    dashboard: '#0EA5E9', landing: '#0EA5E9',
-    ecommerce: '#f97316', chat: '#8b5cf6', app: '#0EA5E9',
+  const patterns: Array<[string[], string]> = [
+    [['crm','sales','leads','pipeline','contacts','deals','prospects'], 'crm'],
+    [['kanban','board','sprint','agile','tasks','trello','jira','linear','project management'], 'kanban'],
+    [['shop','store','ecommerce','cart','checkout','marketplace','catalog','retail'], 'ecommerce'],
+    [['portfolio','personal site','resume','cv','showcase','developer profile'], 'portfolio'],
+    [['invoice','billing','receipt','quote','estimate'], 'invoice'],
+    [['chat','messaging','messenger','inbox','conversation'], 'chat'],
+    [['hr','human resources','employees','hiring','recruitment','payroll','workforce'], 'hr-dashboard'],
+    [['real estate','property','listings','homes','apartments','realty'], 'real-estate'],
+    [['restaurant','food','menu','kitchen','dining','cafe','bistro','pos'], 'restaurant'],
+    [['bank','banking','fintech','wallet','transactions','accounts','investment','finance','budget'], 'banking'],
+    [['landing','homepage','hero','startup','saas page','waitlist','coming soon'], 'saas-landing'],
+    [['dashboard','admin','analytics','metrics','kpi','reporting','monitor'], 'admin-dashboard'],
+  ]
+  for (const [keywords, skeleton] of patterns) {
+    if (keywords.some(k => p.includes(k))) return skeleton
   }
-  return map[appType] ?? '#0EA5E9'
+  return null
 }
 
-const SYSTEM_PROMPT = `You are the world's best product engineer. You make SURGICAL customizations to existing React code.
+function getAccent(skeleton: string): string {
+  const map: Record<string, string> = {
+    'crm': '#0EA5E9', 'kanban': '#0EA5E9', 'ecommerce': '#f97316',
+    'portfolio': '#0EA5E9', 'invoice': '#0EA5E9', 'chat': '#8b5cf6',
+    'hr-dashboard': '#8b5cf6', 'real-estate': '#f59e0b', 'restaurant': '#f97316',
+    'banking': '#10b981', 'saas-landing': '#0EA5E9', 'admin-dashboard': '#0EA5E9',
+  }
+  return map[skeleton] ?? '#0EA5E9'
+}
 
-You receive EXISTING working React files. Your job:
-1. Understand what the user wants to build
-2. Customize the existing code to match — change labels, data, colors, app name, nav items
-3. Keep ALL component structure, hooks, and layout intact
-4. Only output files you actually changed
+async function loadPrebuilt(skeleton: string): Promise<Record<string, string> | null> {
+  try {
+    const mod = await import(`@/lib/templates/prebuilt/${skeleton}`)
+    const key = Object.keys(mod)[0]
+    return mod[key] ?? null
+  } catch { return null }
+}
 
-OUTPUT FORMAT:
-<file path="src/...">complete file content</file>
+const SYSTEM_PROMPT = `You are the world's best product engineer. You build complete, beautiful React apps.
 
-After all files: one line starting with "Built:"
+CRITICAL FILE STRUCTURE — always use exactly this:
+src/index.css     — styles with CSS variables
+src/App.tsx       — main component with routing/layout  
+src/components/X.tsx — one component per file
+
+ENTRY POINT RULE: NEVER create src/index.js, src/main.tsx, or public/index.html — these exist already.
+
+OUTPUT FORMAT — only <file> blocks:
+<file path="src/index.css">complete css</file>
+<file path="src/App.tsx">complete component</file>
+<file path="src/components/Sidebar.tsx">complete component</file>
+
+After all files: one sentence starting with "Built:"
+
+DESIGN SYSTEM — always include in src/index.css:
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+:root { --bg:#09090b; --surface:#111113; --elevated:#18181b; --border:rgba(255,255,255,0.07); --text:#fafafa; --text-2:#a1a1aa; --text-3:#52525b; --accent:#0EA5E9; --accent-2:#0284C7; --success:#22c55e; --warning:#f59e0b; --error:#ef4444; --r:8px; --r-lg:12px; font-family:'Space Grotesk',sans-serif; }
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html, body, #root { min-height:100%; }
+body { background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+button { font-family:inherit; cursor:pointer; }
 
 RULES:
-- Change: app name, nav labels, stats, table headers, sample data, colors, copy text
-- Never change: component structure, useState/useEffect hooks, CSS variable names, layout
-- Use relative imports only — never @/ aliases
-- Complete files only — never truncate
-- If adding new pages, keep them simple and consistent with existing style`
+- All imports relative: ./components/X — NEVER @/ aliases
+- TypeScript .tsx files only — never .js
+- Max 6 files total
+- No truncation — complete files always
+- Realistic data — never lorem ipsum
+- Space Grotesk + Sora fonts always`
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,42 +87,38 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500 })
     }
 
-    // ── SMART SKELETON DETECTION ────────────────────────────────
-    // If no existing files, detect intent and load skeleton
-    const hasExistingFiles = fileContext && fileContext.length > 200
+    // Detect skeleton from prompt
+    const hasExisting = fileContext && fileContext.length > 200
     let skeletonContext = ''
+    let useHaiku = false
 
-    if (!hasExistingFiles) {
-      const intent = detectIntent(prompt)
-      if (intent) {
-        const prebuilt = getPrebuilt(intent.skeleton)
+    if (!hasExisting && modelTier !== 'fast') {
+      const skeletonKey = detectSkeleton(prompt)
+      if (skeletonKey) {
+        const prebuilt = await loadPrebuilt(skeletonKey)
         if (prebuilt) {
-          // Build a compact snapshot of the skeleton for context
           skeletonContext = Object.entries(prebuilt)
-            .map(([path, code]) => `<file path="${path}">\n${code.slice(0, 1500)}${code.length > 1500 ? '\n// ...' : ''}\n</file>`)
+            .slice(0, 4)
+            .map(([path, code]) => `<file path="${path}">\n${code.slice(0, 1200)}${code.length > 1200 ? '\n// ...' : ''}\n</file>`)
             .join('\n\n')
+          useHaiku = true
         }
       }
     }
 
-    // Build the user message
-    const context = fileContext ? `\n\nEXISTING FILES (modify these):\n${fileContext.slice(0, 8000)}` : ''
-    const skeleton = skeletonContext ? `\n\nSTARTER SKELETON (customize this — keep structure, change content):\n${skeletonContext}` : ''
+    const context = fileContext ? `\n\nEXISTING FILES (modify these):\n${fileContext.slice(0, 6000)}` : ''
+    const skeleton = skeletonContext
+      ? `\n\nSTARTER (customize this — KEEP all .tsx file paths and structure, change labels/data/colors for: ${prompt}):\n${skeletonContext}`
+      : ''
 
-    const userPrompt = `${prompt}${context}${skeleton}
+    const userPrompt = `${prompt}${context}${skeleton}`
 
-${skeletonContext ? `IMPORTANT: Start from the skeleton above. Keep its structure. Customize for: ${prompt}` : 'Build this from scratch with max 6 files. Use Space Grotesk + Sora fonts. Dark theme with sky blue #0EA5E9 accent.'}`
-
-    // Build message history
+    type ValidMime = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
     const trimmedHistory = ((history ?? []) as Array<{ role: string; content: string }>)
       .filter(m => m.content && !m.content.startsWith('[Image:'))
       .slice(-4)
-      .map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content.length > 1500 ? m.content.slice(0, 1500) + '...' : m.content,
-      }))
+      .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content.slice(0, 1500) }))
 
-    type ValidMime = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
     let userContent: Anthropic.MessageParam['content'] = userPrompt
     if (image?.base64 && ['image/jpeg','image/png','image/gif','image/webp'].includes(image.mimeType)) {
       userContent = [
@@ -96,21 +127,14 @@ ${skeletonContext ? `IMPORTANT: Start from the skeleton above. Keep its structur
       ]
     }
 
-    const messages: Anthropic.MessageParam[] = [
-      ...trimmedHistory,
-      { role: 'user', content: userContent },
-    ]
-
-    // Use fast model when skeleton is available (less to generate)
-    const useHaiku = skeletonContext.length > 0
     const model = useHaiku ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6'
-    const maxTokens = skeletonContext ? 6000 : modelTier === 'fast' ? 8000 : 16000
+    const maxTokens = useHaiku ? 6000 : modelTier === 'fast' ? 8000 : 16000
 
     const stream = await client.messages.stream({
       model,
       max_tokens: maxTokens,
       system: SYSTEM_PROMPT,
-      messages,
+      messages: [...trimmedHistory, { role: 'user', content: userContent }],
     })
 
     const encoder = new TextEncoder()
@@ -122,11 +146,8 @@ ${skeletonContext ? `IMPORTANT: Start from the skeleton above. Keep its structur
               controller.enqueue(encoder.encode(event.delta.text))
             }
           }
-        } catch (err) {
-          console.error('Stream error:', err)
-        } finally {
-          controller.close()
-        }
+        } catch (err) { console.error('Stream error:', err) }
+        finally { controller.close() }
       },
     })
 
@@ -134,13 +155,11 @@ ${skeletonContext ? `IMPORTANT: Start from the skeleton above. Keep its structur
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
-        'X-Used-Skeleton': skeletonContext ? 'true' : 'false',
+        'X-Skeleton': skeletonContext ? 'true' : 'false',
         'X-Model': model,
       },
     })
-
   } catch (err) {
-    console.error('Generate error:', err)
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
   }
 }

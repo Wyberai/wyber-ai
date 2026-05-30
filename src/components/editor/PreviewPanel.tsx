@@ -110,7 +110,8 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
 
   // Find App component
   const APP_CANDIDATES = [
-    '/App.tsx', '/App.jsx', '/src/App.tsx', '/src/App.jsx',
+    '/App.tsx', '/App.jsx', '/App.js',
+    '/src/App.tsx', '/src/App.jsx', '/src/App.js',
     '/app/page.tsx', '/pages/index.tsx',
   ];
   let appPath = APP_CANDIDATES.find(p => result[p]);
@@ -171,7 +172,7 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
   }
 
   // Ensure entry point
-  const hasIndex = result['/index.tsx'] || result['/index.jsx'] || result['/src/main.tsx'];
+  const hasIndex = result['/index.tsx'] || result['/index.jsx'] || result['/src/main.tsx'] || result['/src/index.js'] || result['/src/index.tsx'];
   if (!hasIndex) {
     const cssPath = ['/index.css', '/src/index.css', '/styles.css', '/app/globals.css']
       .find(p => result[p]);
@@ -325,7 +326,8 @@ export function PreviewPanel() {
                     "clsx": "^2.0.0",
                   },
                   entry: Object.keys(sandpackFiles).find(p =>
-                    p === '/index.tsx' || p === '/index.jsx' || p === '/src/main.tsx'
+                    p === '/src/main.tsx' || p === '/src/index.js' || p === '/src/index.tsx' ||
+                    p === '/index.tsx' || p === '/index.jsx'
                   ) ?? '/index.tsx',
                 }}
                 options={{
