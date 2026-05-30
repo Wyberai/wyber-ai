@@ -49,6 +49,8 @@ DATA (always realistic, never Lorem Ipsum):
 
 ARCHITECTURE:
 - ALWAYS use relative imports (./components/Header) never path aliases (@/components/Header)
+- ALWAYS put components in src/ folder for React projects, never in app/ folder
+- ALWAYS have a src/App.tsx as the main entry component
 - Split into focused component files -- never dump everything in App.tsx
 - Every vite.config.ts MUST include: server: { host: '0.0.0.0', allowedHosts: true, port: 5173 }
 - CSS variables in :root, not inline per-component

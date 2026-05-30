@@ -94,13 +94,15 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
     if (found) appPath = found[0];
   }
 
-  // Normalize app to /App.tsx at root for Sandpack
+  // Create a re-export wrapper at /App.tsx pointing to the real file
+  // This keeps the original file's relative imports intact
+  let appImport = './App';
   if (appPath && appPath !== '/App.tsx') {
-    result['/App.tsx'] = result[appPath];
+    // Calculate relative path from /App.tsx to the real file
+    const rel = appPath.startsWith('/') ? '.' + appPath.replace(/\.tsx$/, '').replace(/\.jsx$/, '') : './' + appPath.replace(/\.tsx$/, '').replace(/\.jsx$/, '');
+    result['/App.tsx'] = `export { default } from '${rel}';
+export * from '${rel}';`;
   }
-
-  // Compute relative import path from /index.tsx to /App.tsx
-  const appImport = './App';
 
   // Check existing CSS
   const cssPath = ['/index.css', '/src/index.css', '/styles.css', '/app/globals.css', '/styles/globals.css']
