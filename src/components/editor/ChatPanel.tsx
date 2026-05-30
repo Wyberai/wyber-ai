@@ -149,7 +149,17 @@ export function ChatPanel({ projectId, userId }: Props) {
   }, [projectId]);
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
-    consumeCredit();
+    consumeCredit(); // Optimistic local update
+    // Deduct from Supabase (real persistence)
+    fetch('/api/credits/deduct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: modelTier === 'premium' ? 2 : 1, reason: 'generation' }),
+    }).then(r => r.json()).then(data => {
+      if (data.credits !== undefined) {
+        useEditorStore.getState().setCredits(data.credits);
+      }
+    }).catch(() => {}); // fail silently — local state already updated
     addMessage({ id: uid(), role:'user', content: img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg, timestamp:Date.now(), status:'done' });
     const assistantId = uid();
     addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
