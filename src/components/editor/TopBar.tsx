@@ -69,41 +69,45 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
     setDeploying(false);
   };
 
-  const divider = { width: 1, height: 18, background: 'var(--ide-border)', margin: '0 4px', flexShrink: 0 } as const;
-
-  const toggleBtn = (active?: boolean) => ({
-    display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6,
-    border: `1px solid ${active ? 'var(--ide-border-light)' : 'transparent'}`,
-    background: active ? 'var(--bg-elevated)' : 'transparent',
-    color: active ? 'var(--ide-text)' : 'var(--ide-text2)',
-    fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'var(--t)',
-    fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em',
-  });
+  const S = {
+    bar: { display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: 44, flexShrink: 0, background: 'var(--bg-base)', borderBottom: '1px solid var(--ide-border)', zIndex: 20 } as const,
+    divider: { width: 1, height: 18, background: 'var(--ide-border)', margin: '0 4px', flexShrink: 0 } as const,
+    toggleBtn: (active?: boolean) => ({ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 6, border: `1px solid ${active ? 'var(--ide-border-light)' : 'transparent'}`, background: active ? 'var(--bg-elevated)' : 'transparent', color: active ? 'var(--ide-text)' : 'var(--ide-text2)', fontSize: 11, fontWeight: 500, cursor: 'pointer', transition: 'var(--t)', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em' }),
+    creditBadge: (ok: boolean) => ({ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: ok ? 'var(--ide-green)' : 'var(--ide-red)', fontWeight: 600, border: `1px solid ${ok ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`, letterSpacing: '-0.01em' }),
+    exportBtn: { display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '5px 11px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', transition: 'var(--t)', fontFamily: 'var(--font-sans)', fontWeight: 500, letterSpacing: '-0.01em' } as const,
+    deployBtn: (active: boolean) => ({ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '5px 13px', borderRadius: 6, border: 'none', background: active ? 'var(--bg-elevated)' : 'var(--accent)', color: active ? 'var(--ide-text2)' : 'white', cursor: active ? 'wait' : 'pointer', fontWeight: 700, transition: 'var(--t)', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em', boxShadow: active ? 'none' : '0 2px 12px rgba(14,165,233,0.35)' }),
+  };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', height: 44, flexShrink: 0, background: 'var(--bg-base)', borderBottom: '1px solid var(--ide-border)', zIndex: 20 }}>
-
+    <div style={S.bar}>
+      {/* Logo */}
       <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 7, textDecoration: 'none', marginRight: 4, flexShrink: 0 }}>
         <WyberIcon />
         <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ide-text)', letterSpacing: '-0.04em' }}>
-          Wyber<span style={{ color: '#7C3AED' }}>AI</span>
+          Wyber<span style={{ color: '#0EA5E9' }}>AI</span>
         </span>
       </Link>
 
-      <div style={divider} />
+      <div style={S.divider} />
 
-      <button onClick={onToggleFileTree} style={toggleBtn(showFileTree)}>
-        <svg width="12" height="10" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="0" width="16" height="2" rx="1"/><rect x="0" y="5" width="12" height="2" rx="1"/><rect x="0" y="10" width="14" height="2" rx="1"/></svg>
+      {/* View toggles */}
+      <button onClick={onToggleFileTree} style={S.toggleBtn(showFileTree)}
+        onMouseEnter={e => { if (!showFileTree) (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'; }}
+        onMouseLeave={e => { if (!showFileTree) (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'; }}>
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1 3h14v1.5H1zm2 4h10v1.5H3zm2 4h6v1.5H5z"/></svg>
         Files
       </button>
 
-      <button onClick={onToggleCode} style={toggleBtn(showCode)}>
-        <svg width="12" height="10" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2L1 6l4 4M11 2l4 4-4 4"/></svg>
+      <button onClick={onToggleCode} style={S.toggleBtn(showCode)}
+        onMouseEnter={e => { if (!showCode) (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'; }}
+        onMouseLeave={e => { if (!showCode) (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'; }}>
+        <svg width="12" height="10" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2L1 6l4 4M11 2l4 4-4 4M9 1l-2 10"/></svg>
         Code
       </button>
 
-      <div style={divider} />
+      <div style={S.divider} />
 
+      {/* Project name */}
       {project && (
         <span style={{ fontSize: 12, color: 'var(--ide-text)', fontWeight: 600, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.02em' }}>
           {project.name}
@@ -112,8 +116,9 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
 
       <div style={{ flex: 1 }} />
 
+      {/* Generating indicator */}
       {isGenerating && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 11, fontWeight: 600 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent)', fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em' }}>
           <div style={{ display: 'flex', gap: 3 }}>
             {[0,1,2].map(i => (
               <div key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--accent)', animation: `dot-pulse 1.2s ease-in-out ${i * 0.15}s infinite` }} />
@@ -123,30 +128,38 @@ export function TopBar({ initialProfile, projectId, showCode, showFileTree, onTo
         </div>
       )}
 
-      <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: displayCredits > 20 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: displayCredits > 20 ? 'var(--ide-green)' : 'var(--ide-red)', fontWeight: 600, border: `1px solid ${displayCredits > 20 ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
+      {/* Credits badge */}
+      <div style={S.creditBadge(displayCredits > 20)}>
         {displayCredits} cr
       </div>
 
+      {/* Plan badge */}
       {initialProfile?.plan && initialProfile.plan !== 'free' && (
         <div style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'var(--accent-glow)', color: 'var(--accent)', fontWeight: 700, border: '1px solid var(--accent-dim)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
           {initialProfile.plan}
         </div>
       )}
 
-      <div style={divider} />
+      <div style={S.divider} />
 
-      <button onClick={handleExport} disabled={exporting} title="Export as ZIP"
-        style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, padding: '5px 11px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: exporting ? 'wait' : 'pointer', transition: 'var(--t)', fontFamily: 'var(--font-sans)', fontWeight: 500 }}>
+      {/* Export */}
+      <button onClick={handleExport} disabled={exporting} title="Export as ZIP" style={S.exportBtn}
+        onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'}>
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
         {exporting ? 'Exporting...' : 'Export'}
       </button>
 
-      <button onClick={handleDeploy} disabled={deploying} title="Deploy to Vercel"
-        style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '5px 13px', borderRadius: 6, border: 'none', background: deploying ? 'var(--bg-elevated)' : 'var(--accent)', color: deploying ? 'var(--ide-text2)' : 'white', cursor: deploying ? 'wait' : 'pointer', fontWeight: 700, transition: 'var(--t)', fontFamily: 'var(--font-sans)', boxShadow: deploying ? 'none' : '0 2px 12px rgba(124,58,237,0.35)' }}>
+      {/* Deploy */}
+      <button onClick={handleDeploy} disabled={deploying} title="Deploy to Vercel" style={S.deployBtn(deploying)}
+        onMouseEnter={e => { if (!deploying) { (e.currentTarget as HTMLElement).style.filter = 'brightness(1.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = ''; (e.currentTarget as HTMLElement).style.transform = ''; }}>
         {deploying ? (
           <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying</>
+        ) : deployUrl ? (
+          <><svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L0 16h16L8 0z"/></svg>Deployed ↗</>
         ) : (
-          <><svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L0 16h16L8 0z"/></svg>{deployUrl ? 'Deployed ↗' : 'Deploy'}</>
+          <><svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0L0 16h16L8 0z"/></svg>Deploy</>
         )}
       </button>
     </div>
