@@ -3,16 +3,16 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   async headers() {
     return [
-      // WebContainer preview frame needs cross-origin isolation
-      // This MUST be on the preview-frame route only so Google OAuth still works everywhere else
+      // preview-frame needs full cross-origin isolation for WebContainers
       {
-        source: '/preview-frame/:path*',
+        source: '/preview-frame',
         headers: [
           { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
         ],
       },
-      // Main app headers
+      // Main app - no COOP/COEP so Google OAuth popup works
       {
         source: '/((?!preview-frame).*)',
         headers: [

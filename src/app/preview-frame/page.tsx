@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 
-type FileSystemTree = Record<string, any>;
+type FileTree = Record<string, any>;
 
-function filesToWebContainerTree(files: Record<string, { content: string }>): FileSystemTree {
-  const tree: FileSystemTree = {};
+function filesToTree(files: Record<string, { content: string }>): FileTree {
+  const tree: FileTree = {};
   for (const [path, file] of Object.entries(files)) {
-    const parts = path.split('/').filter(Boolean);
+    const parts = path.replace(/^\//, '').split('/').filter(Boolean);
     let node = tree;
     for (let i = 0; i < parts.length - 1; i++) {
       if (!node[parts[i]]) node[parts[i]] = { directory: {} };
@@ -17,163 +17,193 @@ function filesToWebContainerTree(files: Record<string, { content: string }>): Fi
   return tree;
 }
 
-function getDevCommand(framework: string): [string, string[]] {
+function getDevArgs(framework: string): [string, string[]] {
   if (framework === 'next') return ['npm', ['run', 'dev']];
   if (framework === 'vue') return ['npm', ['run', 'dev', '--', '--host']];
-  return ['npm', ['run', 'dev', '--', '--host', '0.0.0.0']];
+  return ['npm', ['run', 'dev', '--', '--host', '0.0.0.0', '--port', '3000']];
 }
+
+let wcInstance: any = null;
 
 export default function PreviewFrame() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const wcRef = useRef<any>(null);
-  const [status, setStatus] = useState<'idle' | 'booting' | 'installing' | 'starting' | 'ready' | 'error'>('idle');
-  const [error, setError] = useState('');
+  const [status, setStatus] = useState('Waiting for files...');
+  const [statusType, setStatusType] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [logs, setLogs] = useState<string[]>([]);
-  const serverStartedRef = useRef(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const initialized = useRef(false);
 
-  const addLog = (msg: string) => setLogs(prev => [...prev.slice(-50), msg]);
+  const log = (msg: string) => {
+    console.log('[WebContainer]', msg);
+    setLogs(prev => [...prev.slice(-80), msg]);
+  };
 
-  const initWebContainer = async (files: Record<string, { content: string }>, framework: string) => {
+  const boot = async (files: Record<string, { content: string }>, framework: string) => {
+    if (initialized.current && wcInstance) {
+      // Hot update files only
+      log(`Hot updating ${Object.keys(files).length} files...`);
+      for (const [path, file] of Object.entries(files)) {
+        try {
+          const dir = path.split('/').slice(0, -1).join('/');
+          if (dir) await wcInstance.fs.mkdir(dir, { recursive: true }).catch(() => {});
+          await wcInstance.fs.writeFile(path.replace(/^\//, ''), file.content);
+        } catch {}
+      }
+      log('Files updated - hot reload triggered');
+      return;
+    }
+
+    initialized.current = true;
+    setStatusType('loading');
+
     try {
-      setStatus('booting');
-      addLog('Booting WebContainer...');
-
+      setStatus('Booting WebContainer...');
+      log('Importing WebContainer API...');
       const { WebContainer } = await import('@webcontainer/api');
 
-      if (!wcRef.current) {
-        wcRef.current = await WebContainer.boot();
-        addLog('WebContainer booted');
+      if (!wcInstance) {
+        wcInstance = await WebContainer.boot();
+        log('WebContainer booted successfully');
       }
 
-      const wc = wcRef.current;
+      const wc = wcInstance;
 
-      // Listen for server ready
       wc.on('server-ready', (port: number, url: string) => {
-        addLog(`Server ready on port ${port}: ${url}`);
-        if (iframeRef.current) {
-          iframeRef.current.src = url;
-        }
-        setStatus('ready');
-        serverStartedRef.current = true;
-        window.parent.postMessage({ type: 'server-ready', url }, '*');
+        log(`Server ready on port ${port}: ${url}`);
+        setPreviewUrl(url);
+        setStatus(`Running on port ${port}`);
+        setStatusType('ready');
+        if (iframeRef.current) iframeRef.current.src = url;
       });
 
       wc.on('error', (err: Error) => {
-        addLog(`Error: ${err.message}`);
-        setError(err.message);
-        setStatus('error');
+        log(`Runtime error: ${err.message}`);
+        setStatus(`Error: ${err.message}`);
+        setStatusType('error');
       });
 
-      setStatus('installing');
-      addLog('Mounting files...');
-      const tree = filesToWebContainerTree(files);
-      await wc.mount(tree);
-      addLog(`Mounted ${Object.keys(files).length} files`);
+      setStatus('Mounting files...');
+      log(`Mounting ${Object.keys(files).length} files...`);
+      await wc.mount(filesToTree(files));
+      log('Files mounted');
 
-      // Run npm install
-      addLog('Running npm install...');
+      setStatus('Installing dependencies...');
+      log('Running npm install...');
       const install = await wc.spawn('npm', ['install']);
       install.output.pipeTo(new WritableStream({
-        write(data) { addLog(data); }
+        write(chunk) { log(chunk.toString().trim()); }
       }));
-      const installCode = await install.exit;
-      if (installCode !== 0) throw new Error(`npm install failed with code ${installCode}`);
-      addLog('npm install complete');
+      const installExit = await install.exit;
+      if (installExit !== 0) throw new Error(`npm install exited with code ${installExit}`);
+      log('npm install complete');
 
-      // Start dev server
-      setStatus('starting');
-      const [cmd, args] = getDevCommand(framework);
-      addLog(`Starting ${cmd} ${args.join(' ')}...`);
+      const [cmd, args] = getDevArgs(framework);
+      setStatus(`Starting ${framework} dev server...`);
+      log(`Running: ${cmd} ${args.join(' ')}`);
       const dev = await wc.spawn(cmd, args);
       dev.output.pipeTo(new WritableStream({
-        write(data) { addLog(data); }
+        write(chunk) { log(chunk.toString().trim()); }
       }));
 
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-      setStatus('error');
-      addLog(`Fatal error: ${msg}`);
-      window.parent.postMessage({ type: 'error', message: msg }, '*');
+      log(`Fatal: ${msg}`);
+      setStatus(`Error: ${msg}`);
+      setStatusType('error');
+      initialized.current = false;
     }
-  };
-
-  const updateFiles = async (files: Record<string, { content: string }>) => {
-    if (!wcRef.current) return;
-    for (const [path, file] of Object.entries(files)) {
-      try {
-        const dir = path.split('/').slice(0, -1).join('/');
-        if (dir) await wcRef.current.fs.mkdir(dir, { recursive: true }).catch(() => {});
-        await wcRef.current.fs.writeFile(path, file.content);
-      } catch {}
-    }
-    addLog(`Updated ${Object.keys(files).length} files (hot reload)`);
   };
 
   useEffect(() => {
-    const handler = async (e: MessageEvent) => {
-      if (e.data?.type === 'init') {
-        serverStartedRef.current = false;
-        await initWebContainer(e.data.files, e.data.framework);
-      }
-      if (e.data?.type === 'update-files' && serverStartedRef.current) {
-        await updateFiles(e.data.files);
+    // Receive files via BroadcastChannel (same origin)
+    const bc = new BroadcastChannel('wyber-preview');
+    bc.onmessage = (e) => {
+      if (e.data?.type === 'files') {
+        boot(e.data.files, e.data.framework);
       }
     };
-    window.addEventListener('message', handler);
-    window.parent.postMessage({ type: 'frame-ready' }, '*');
-    return () => window.removeEventListener('message', handler);
+
+    // Also receive via postMessage (for iframe embed fallback)
+    const msgHandler = (e: MessageEvent) => {
+      if (e.data?.type === 'init' || e.data?.type === 'files') {
+        boot(e.data.files, e.data.framework ?? 'react-vite');
+      }
+    };
+    window.addEventListener('message', msgHandler);
+
+    // Tell parent we are ready
+    window.parent?.postMessage({ type: 'frame-ready' }, '*');
+    bc.postMessage({ type: 'frame-ready' });
+
+    // Check if files were stored in sessionStorage (new tab flow)
+    try {
+      const stored = sessionStorage.getItem('wyber-preview-files');
+      if (stored) {
+        const { files, framework } = JSON.parse(stored);
+        sessionStorage.removeItem('wyber-preview-files');
+        boot(files, framework);
+      }
+    } catch {}
+
+    return () => { bc.close(); window.removeEventListener('message', msgHandler); };
   }, []);
 
-  const STATUS_LABELS: Record<string, string> = {
-    idle: 'Waiting for files...',
-    booting: 'Booting WebContainer...',
-    installing: 'Installing dependencies...',
-    starting: 'Starting dev server...',
-    ready: 'App is running',
-    error: 'Error occurred',
-  };
-
-  const STATUS_COLORS: Record<string, string> = {
-    idle: '#525252', booting: '#F59E0B', installing: '#F59E0B',
-    starting: '#0EA5E9', ready: '#22C55E', error: '#EF4444',
+  const COLOR: Record<string, string> = {
+    idle: '#525252', loading: '#F59E0B', ready: '#22C55E', error: '#EF4444'
   };
 
   return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#0A0A0A', fontFamily: 'system-ui, sans-serif' }}>
-      {status !== 'ready' && (
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {status !== 'idle' && status !== 'error' && (
-              <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.1)', borderTopColor: STATUS_COLORS[status], borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-            )}
-            <span style={{ fontSize: 14, fontWeight: 500, color: STATUS_COLORS[status] || '#F5F5F5' }}>
-              {STATUS_LABELS[status]}
-            </span>
-          </div>
-          {status === 'installing' && (
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>
-              This takes 30-60 seconds the first time.<br />
-              Subsequent changes will hot-reload instantly.
+    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', background: '#09090B', fontFamily: 'system-ui, sans-serif', overflow: 'hidden' }}>
+
+      {/* Status bar */}
+      <div style={{ height: 36, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111113' }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: COLOR[statusType], boxShadow: statusType === 'loading' ? `0 0 8px ${COLOR[statusType]}` : 'none', animation: statusType === 'loading' ? 'pulse 1.5s infinite' : 'none', flexShrink: 0 }} />
+        <span style={{ fontSize: 11, color: statusType === 'error' ? '#EF4444' : 'rgba(255,255,255,0.5)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{status}</span>
+        {previewUrl && <a href={previewUrl} target="_blank" rel="noreferrer" style={{ fontSize: 10, color: '#0EA5E9', textDecoration: 'none', flexShrink: 0 }}>Open ↗</a>}
+      </div>
+
+      {/* Loading screen */}
+      {statusType !== 'ready' && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: 24 }}>
+          {statusType === 'loading' && (
+            <div style={{ display: 'flex', gap: 5 }}>
+              {[0,1,2].map(i => (
+                <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: `bounce 1.2s ${i*0.15}s ease-in-out infinite` }} />
+              ))}
             </div>
           )}
-          {error && <div style={{ fontSize: 12, color: '#EF4444', maxWidth: 400, textAlign: 'center', lineHeight: 1.6 }}>{error}</div>}
-          {logs.length > 0 && (
-            <div style={{ maxWidth: 480, width: '100%', maxHeight: 200, overflow: 'auto', background: '#0F0F0F', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px' }}>
-              {logs.slice(-20).map((log, i) => (
-                <div key={i} style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace', lineHeight: 1.6, wordBreak: 'break-all' }}>{log}</div>
-              ))}
+          <div style={{ maxWidth: 480, width: '100%', maxHeight: 300, overflow: 'auto', background: '#0F0F11', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '12px 14px' }}>
+            {logs.length === 0
+              ? <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', padding: '12px 0' }}>Waiting for files...</div>
+              : logs.slice(-30).map((line, i) => (
+                <div key={i} style={{ fontSize: 10, fontFamily: 'monospace', lineHeight: 1.7, color: line.includes('error') || line.includes('Error') ? '#F87171' : line.includes('ready') || line.includes('complete') ? '#4ADE80' : 'rgba(255,255,255,0.4)', wordBreak: 'break-all' }}>
+                  {line}
+                </div>
+              ))
+            }
+          </div>
+          {statusType === 'loading' && (
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: 1.7 }}>
+              Installing dependencies — 30 to 60 seconds first time<br/>
+              <span style={{ color: 'rgba(255,255,255,0.15)' }}>Hot reload on every change after that</span>
             </div>
           )}
         </div>
       )}
+
+      {/* Live preview iframe */}
       <iframe
         ref={iframeRef}
-        style={{ flex: 1, border: 'none', display: status === 'ready' ? 'block' : 'none', background: '#fff' }}
+        style={{ flex: 1, border: 'none', display: statusType === 'ready' ? 'block' : 'none', background: '#fff' }}
         allow="cross-origin-isolated"
-        title="Live Preview"
+        title="Live App Preview"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
       />
-      <style>{`@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }`}</style>
+
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+      `}</style>
     </div>
   );
 }
