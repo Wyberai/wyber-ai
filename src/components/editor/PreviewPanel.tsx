@@ -22,6 +22,19 @@ function getTemplate(framework: string) {
   return 'react' as const; // react-vite and next both use react template for preview
 }
 
+function resolveAliases(code: string, filePath: string): string {
+  // Calculate depth of file to know how many ../ to use
+  // filePath like /App.tsx = depth 0, /components/Header.tsx = depth 1
+  const parts = filePath.split('/').filter(Boolean);
+  const depth = parts.length - 1; // subtract 1 for the filename
+  const prefix = depth === 0 ? './' : '../'.repeat(depth);
+
+  // Replace @/ with relative path
+  return code
+    .replace(/from ['"]@\/([^'"]+)['"]/g, (_, p) => `from '${prefix}${p}'`)
+    .replace(/import ['"]@\/([^'"]+)['"]/g, (_, p) => `import '${prefix}${p}'`);
+}
+
 function stripNextImports(code: string): string {
   return code
     .replace(/'use client';?\n?/g, '')
@@ -50,7 +63,10 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
     let fileContent = file.content;
     // Strip Next.js-specific syntax for preview
     if (framework === 'next') fileContent = stripNextImports(fileContent);
-    result['/' + clean] = fileContent;
+    // Resolve @/ path aliases to relative paths
+    const normalizedPath = '/' + clean;
+    fileContent = resolveAliases(fileContent, normalizedPath);
+    result[normalizedPath] = fileContent;
   }
 
   if (framework === 'vanilla') {
