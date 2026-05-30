@@ -34,7 +34,7 @@ export function ChatPanel({ projectId, userId }: Props) {
   const {
     messages, isGenerating, addMessage, updateMessage,
     setIsGenerating, setStreamingContent, appendStreamingContent, clearStreamingContent,
-    setFiles, files, framework, consumeCredit, credits, setPreviewUrl,
+    setFiles, files, framework, consumeCredit, credits, setPreviewUrl, setHasGeneratedFiles,
   } = useEditorStore();
 
   const [input, setInput] = useState('');
@@ -208,6 +208,7 @@ export function ChatPanel({ projectId, userId }: Props) {
           updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
         }
         setFiles(updatedFiles);
+        setHasGeneratedFiles(true);
         await saveProject(updatedFiles);
         launchSandbox(updatedFiles); // fire and forget -- preview loads async
       }

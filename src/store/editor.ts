@@ -29,42 +29,57 @@ export interface Project {
 }
 
 interface EditorState {
+  // Project
   project: Project | null;
   framework: Framework;
+
+  // Files
   files: Record<string, FileNode>;
   activeFile: string | null;
   openTabs: string[];
+
+  // Chat
   messages: ChatMessage[];
   isGenerating: boolean;
+  hasGeneratedFiles: boolean;
   streamingContent: string;
+
+  // UI
   previewUrl: string | null;
   previewMode: 'preview' | 'console';
-  leftPanelWidth: number;
-  rightPanelWidth: number;
+  leftPanelWidth: number;   // px
+  rightPanelWidth: number;  // px
   showFileTree: boolean;
   credits: number;
 
+  // Actions
   setProject: (p: Project) => void;
   setFramework: (f: Framework) => void;
+
+  // File actions
   setFile: (path: string, content: string) => void;
   setFiles: (files: Record<string, FileNode>) => void;
   openFile: (path: string) => void;
   closeTab: (path: string) => void;
   setActiveFile: (path: string) => void;
   markFileDirty: (path: string, dirty: boolean) => void;
+
+  // Chat actions
   addMessage: (msg: ChatMessage) => void;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
   setIsGenerating: (v: boolean) => void;
+  setHasGeneratedFiles: (v: boolean) => void;
   setStreamingContent: (v: string) => void;
   appendStreamingContent: (chunk: string) => void;
   clearStreamingContent: () => void;
+
+  // UI actions
   setPreviewUrl: (url: string | null) => void;
   setPreviewMode: (mode: 'preview' | 'console') => void;
   setLeftPanelWidth: (w: number) => void;
   setRightPanelWidth: (w: number) => void;
   toggleFileTree: () => void;
   consumeCredit: () => void;
-  setCredits: (n: number) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -87,6 +102,7 @@ export const useEditorStore = create<EditorState>()(
     openTabs: [],
     messages: [],
     isGenerating: false,
+    hasGeneratedFiles: false,
     streamingContent: '',
     previewUrl: null,
     previewMode: 'preview',
@@ -140,15 +156,16 @@ export const useEditorStore = create<EditorState>()(
     }),
 
     setIsGenerating: (v) => set((s) => { s.isGenerating = v; }),
+    setHasGeneratedFiles: (v) => set((s) => { s.hasGeneratedFiles = v; }),
     setStreamingContent: (v) => set((s) => { s.streamingContent = v; }),
     appendStreamingContent: (chunk) => set((s) => { s.streamingContent += chunk; }),
     clearStreamingContent: () => set((s) => { s.streamingContent = ''; }),
+
     setPreviewUrl: (url) => set((s) => { s.previewUrl = url; }),
     setPreviewMode: (mode) => set((s) => { s.previewMode = mode; }),
     setLeftPanelWidth: (w) => set((s) => { s.leftPanelWidth = w; }),
     setRightPanelWidth: (w) => set((s) => { s.rightPanelWidth = w; }),
     toggleFileTree: () => set((s) => { s.showFileTree = !s.showFileTree; }),
     consumeCredit: () => set((s) => { s.credits = Math.max(0, s.credits - 1); }),
-    setCredits: (n) => set((s) => { s.credits = n; }),
   }))
 );

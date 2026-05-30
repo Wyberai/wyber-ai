@@ -76,31 +76,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 }
 
 export function PreviewPanel() {
-  const { files, framework, isGenerating } = useEditorStore();
+  const { files, framework, isGenerating, hasGeneratedFiles } = useEditorStore();
   const [mode, setMode] = useState<Mode>('preview');
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
   const [sandpackKey, setSandpackKey] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
-  const [hasGenerated, setHasGenerated] = useState(false);
-  const wasGenerating = useRef(false);
+  const prevGenerated = useRef(false);
 
-  // Only show preview after a real generation completes (not starter template)
+  // Refresh Sandpack key when new generation completes
   useEffect(() => {
-    if (isGenerating) {
-      wasGenerating.current = true;
-    } else if (wasGenerating.current) {
-      // Generation just finished
-      wasGenerating.current = false;
-      const count = Object.keys(files).length;
-      if (count > 1) {
-        setHasGenerated(true);
-        setSandpackKey(k => k + 1);
-        setLogs(l => [...l, `Preview updated with ${count} files`]);
-      }
+    if (hasGeneratedFiles && !prevGenerated.current) {
+      prevGenerated.current = true;
+      setSandpackKey(k => k + 1);
+      setLogs(l => [...l, 'Preview loaded with generated files']);
+    } else if (hasGeneratedFiles && !isGenerating) {
+      setSandpackKey(k => k + 1);
     }
-  }, [isGenerating, files]);
+  }, [hasGeneratedFiles, isGenerating]);
 
-  const hasFiles = hasGenerated && Object.keys(files).length > 1;
+  const hasFiles = hasGeneratedFiles && Object.keys(files).length > 1;
 
   const vp = VIEWPORTS[viewport];
   const sandpackFiles = hasFiles ? getSandpackFiles(files, framework ?? 'react-vite') : {};
