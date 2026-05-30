@@ -237,7 +237,7 @@ export function TemplateGallery({ onClose }: Props) {
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: c.bg, border: `1px solid ${c.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {isLoading
                       ? <div style={{ width: 13, height: 13, border: `2px solid ${c.icon}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                      : <TemplateIcon name={t.icon ?? 'Layout'} size={15} color={c.icon} />
+                      : <TemplateIcon name={(t as any).icon ?? (t as any).emoji ?? 'Layout'} size={15} color={c.icon} />
                     }
                   </div>
                   {/* Speed badge */}
