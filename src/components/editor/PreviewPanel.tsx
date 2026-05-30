@@ -141,7 +141,14 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
     for (const imp of imports) {
       const resolved = resolveImportPath(filePath, imp);
       const candidates = [resolved + '.tsx', resolved + '.ts', resolved + '.jsx', resolved + '.js', resolved + '/index.tsx'];
-      const exists = candidates.some(c => allFiles.has('/' + c) || allFiles.has(c));
+      const exists = candidates.some(c => {
+      const key1 = '/' + c;
+      const key2 = c;
+      // File must exist AND have substantial content (not a truncated stub)
+      if (allFiles.has(key1) && (result[key1]?.length ?? 0) > 100) return true;
+      if (allFiles.has(key2) && (result[key2]?.length ?? 0) > 100) return true;
+      return false;
+    });
       if (!exists && !resolved.includes('node_modules')) {
         toStub.push(resolved);
       }

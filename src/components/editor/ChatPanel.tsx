@@ -227,6 +227,114 @@ export function ChatPanel({ projectId, userId }: Props) {
     }
   }, [credits, files, messages, framework, projectId, modelTier, addMessage, updateMessage, setIsGenerating, setStreamingContent, appendStreamingContent, clearStreamingContent, consumeCredit, setFiles, saveProject, launchSandbox]);
 
+  // Extract imports from a file's content
+  const extractFileImports = (code: string): string[] => {
+    const imports: string[] = [];
+    const re = /from ['"](\.[^'"]+)['"]/g;
+    let m;
+    while ((m = re.exec(code)) !== null) {
+      const p = m[1];
+      if (!p.endsWith('.css') && !p.endsWith('.svg') && !p.endsWith('.png') && !p.endsWith('.jpg')) {
+        imports.push(p);
+      }
+    }
+    return imports;
+  };
+
+  // Resolve import path relative to a source file
+  const resolveRelative = (fromFile: string, importPath: string): string => {
+    const fromParts = fromFile.split('/').slice(0, -1);
+    const importParts = importPath.split('/');
+    for (const part of importParts) {
+      if (part === '..') fromParts.pop();
+      else if (part !== '.') fromParts.push(part);
+    }
+    return fromParts.join('/');
+  };
+
+  // After generation: find missing imports and auto-generate them
+  const autoRepairMissingFiles = useCallback(async (currentFiles: Record<string, { content: string; path: string; language: string }>) => {
+    const allPaths = new Set(Object.keys(currentFiles));
+    const missing: string[] = [];
+
+    for (const [filePath, file] of Object.entries(currentFiles)) {
+      if (!filePath.endsWith('.tsx') && !filePath.endsWith('.jsx') && !filePath.endsWith('.ts')) continue;
+      if ((file.content?.length ?? 0) < 50) continue; // skip stubs
+
+      const imports = extractFileImports(file.content ?? '');
+      for (const imp of imports) {
+        const resolved = resolveRelative(filePath, imp);
+        const candidates = [resolved + '.tsx', resolved + '.ts', resolved + '.jsx', resolved + '/index.tsx'];
+        const exists = candidates.some(c => allPaths.has(c) || allPaths.has('/' + c));
+        if (!exists && !resolved.includes('node_modules')) {
+          const missingPath = resolved + '.tsx';
+          if (!missing.includes(missingPath)) missing.push(missingPath);
+        }
+      }
+    }
+
+    if (missing.length === 0) return;
+
+    // Auto-generate missing files
+    const missingList = missing.join(', ');
+    const repairPrompt = `The following files were imported but not generated. Generate ONLY these missing files, nothing else: ${missingList}. Each should be a complete, styled component matching the existing design system.`;
+
+    addMessage({ id: Date.now().toString(), role: 'assistant', content: '⚡ Auto-generating ' + missing.length + ' missing file' + (missing.length > 1 ? 's' : '') + ': ' + missingList, timestamp: Date.now(), status: 'done' });
+
+    try {
+      const topFiles = Object.entries(currentFiles)
+        .filter(([, f]) => (f.content?.length ?? 0) > 100)
+        .slice(0, 5)
+        .slice(0, 5)
+        .map(([p, f]) => '<file path="' + p + '">' + (f.content ?? '').slice(0, 1500) + '</file>')
+        .join('\n\n');
+
+
+
+
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: repairPrompt,
+          framework,
+          fileContext: topFiles,
+          history: [],
+          userId,
+          modelTier: 'fast',
+        }),
+      });
+
+      if (!res.body) return;
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let raw = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        raw += decoder.decode(value, { stream: true });
+      }
+
+      const fileRegex = /<file path="([^"]+)">([\s\S]*?)<\/file>/g;
+      let match;
+      const newFiles = { ...currentFiles };
+      while ((match = fileRegex.exec(raw)) !== null) {
+        const [, path, fileContent] = match;
+        const cleanContent = fileContent.replace(/^\n/, '').replace(/\n$/, '');
+        if (cleanContent.length > 50) {
+          newFiles[path] = { path, content: cleanContent, language: path.endsWith('.css') ? 'css' : 'typescript' };
+        }
+      }
+
+      if (Object.keys(newFiles).length > Object.keys(currentFiles).length) {
+        setFiles(newFiles);
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', content: '✓ Missing files generated. Preview updated.', timestamp: Date.now(), status: 'done' });
+      }
+    } catch (err) {
+      console.error('Auto-repair failed:', err);
+    }
+  }, [framework, userId, addMessage, setFiles]);
+
   const handleSend = useCallback(async () => {
     if ((!input.trim() && !attachedImage) || isGenerating || credits <= 0) return;
     const userMsg = input.trim();
