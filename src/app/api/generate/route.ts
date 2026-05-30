@@ -75,7 +75,7 @@ Visual element: a dark card/dashboard mockup at 60% opacity OR a grid of feature
 FEATURE CARDS (3 cards, mandatory):
 display: grid, grid-template-columns: repeat(3, 1fr), gap: 16px
 Each card: bg var(--surface), border 1px solid var(--border), border-radius var(--r-lg), padding 28px
-hover: transform translateY(-3px), border-color rgba(124,58,237,0.35), box-shadow var(--shadow-lg), transition all 0.2s
+hover: transform translateY(-3px), border-color color-mix(in srgb, var(--accent) 40%, transparent), box-shadow var(--shadow-lg), transition all 0.2s
 Icon container: width 44px, height 44px, border-radius var(--r), bg rgba(124,58,237,0.1), display flex, align-items center, justify-content center, margin-bottom 18px, font-size 20px
 Title: font-size 17px, font-weight 700, margin-bottom 8px, letter-spacing -0.02em
 Description: font-size 14px, color var(--text-2), line-height 1.65

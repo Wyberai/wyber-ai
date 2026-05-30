@@ -107,8 +107,8 @@ export const useEditorStore = create<EditorState>()(
     streamingContent: '',
     previewUrl: null,
     previewMode: 'preview',
-    leftPanelWidth: 260,
-    rightPanelWidth: 420,
+    leftPanelWidth: 220,
+    rightPanelWidth: 360,
     showFileTree: true,
     credits: 100,
 
