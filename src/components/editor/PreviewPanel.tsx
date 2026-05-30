@@ -265,12 +265,6 @@ export function PreviewPanel() {
             ↺
           </button>
         )}
-        <button
-          onClick={() => window.dispatchEvent(new CustomEvent('wyber:toggle-chat'))}
-          style={{ padding: '4px 10px', borderRadius: 5, border: '1px solid var(--ide-border)', background: 'var(--accent)', color: '#fff', fontSize: 11, cursor: 'pointer', fontWeight: 600, whiteSpace: 'nowrap', fontFamily: 'var(--font-sans)' }}
-          title="Toggle chat panel">
-          💬 Chat
-        </button>
       </div>
 
       {/* Content */}

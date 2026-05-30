@@ -19,14 +19,25 @@ interface Props {
 
 type Tab = 'chat' | 'templates' | 'database' | 'themes' | 'connectors' | 'history' | 'clone';
 
-const TABS: { id: Tab; icon: string; label: string; desc: string }[] = [
-  { id: 'chat',       icon: '💬', label: 'Chat',       desc: 'Build & edit with AI' },
-  { id: 'templates',  icon: '⊞',  label: 'Templates',  desc: '80+ instant templates' },
-  { id: 'database',   icon: '🗄',  label: 'Database',   desc: 'Add Supabase backend' },
-  { id: 'themes',     icon: '✦',  label: 'Themes',     desc: 'Colors & appearance' },
-  { id: 'connectors', icon: '⬡',  label: 'Connect',    desc: 'Stripe, APIs & more' },
-  { id: 'history',    icon: '⟳',  label: 'History',    desc: 'Save & restore versions' },
-  { id: 'clone',      icon: '⎘',  label: 'Clone URL',  desc: 'Clone any website' },
+// Purpose-made SVG icons for each tab
+const TAB_ICONS: Record<string, JSX.Element> = {
+  chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+  templates: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
+  database: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
+  themes: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10M12 2a15.3 15.3 0 00-4 10 15.3 15.3 0 004 10M2 12h20"/></svg>,
+  connectors: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 13.5l7 3.5M15.5 7l-7 3.5"/></svg>,
+  history: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>,
+  clone: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>,
+};
+
+const TABS: { id: Tab; label: string; desc: string }[] = [
+  { id: 'chat',       label: 'Chat',      desc: 'Build & edit with AI' },
+  { id: 'templates',  label: 'Templates', desc: '80+ instant templates' },
+  { id: 'database',   label: 'Database',  desc: 'Add Supabase backend' },
+  { id: 'themes',     label: 'Themes',    desc: 'Colors & appearance' },
+  { id: 'connectors', label: 'Connect',   desc: 'Stripe, APIs & more' },
+  { id: 'history',    label: 'History',   desc: 'Save & restore versions' },
+  { id: 'clone',      label: 'Clone URL', desc: 'Clone any website' },
 ];
 
 export function RightPanel({ projectId, userId, onClose }: Props) {
@@ -68,7 +79,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             onMouseEnter={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
             onMouseLeave={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
-            {tab.icon}
+            {TAB_ICONS[tab.id]}
           </button>
         ))}
 
@@ -88,7 +99,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* Panel header */}
         <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 15 }}>{TABS.find(t => t.id === active)?.icon}</span>
+          <span style={{ display:'flex', alignItems:'center' }}>{TAB_ICONS[active]}</span>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ide-text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
               {TABS.find(t => t.id === active)?.label}
