@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { EXTENDED_GALLERY, ALL_CATEGORIES } from '@/lib/templates/gallery'
 import { getPrebuilt } from '@/lib/templates/prebuilt'
 import { SLOT_FILLS, getNearestSkeleton } from '@/lib/templates/slot-fill'
@@ -65,7 +65,7 @@ export function TemplateGallery({ onClose }: Props) {
     return matchCat && matchSearch
   })
 
-  const useTemplate = async (template: typeof EXTENDED_GALLERY[0]) => {
+  const handleTemplate = async (template: typeof EXTENDED_GALLERY[0]) => {
     if (loading) return
     setLoading(template.name)
     setLoadingPhase('instant')
@@ -93,10 +93,12 @@ export function TemplateGallery({ onClose }: Props) {
     setFiles(baseFiles)
     setHasGeneratedFiles(true)
 
-    const msgId = Date.now().toString()
-    addMessage({ id: msgId, role: 'user', content: `Use template: ${template.name}`, timestamp: Date.now(), status: 'done' })
-    const aId = (Date.now() + 1).toString()
-    addMessage({ id: aId, role: 'assistant', content: `⚡ ${template.name} loaded instantly. Customizing for ${template.category}...`, timestamp: Date.now(), status: 'streaming' })
+    // eslint-disable-next-line
+    const msgId = Math.random().toString(36).slice(2)
+    addMessage({ id: msgId, role: 'user', content: 'Use template: ' + template.name, timestamp: 0, status: 'done' })
+    // eslint-disable-next-line
+    const aId = Math.random().toString(36).slice(2)
+    addMessage({ id: aId, role: 'assistant', content: '⚡ ' + template.name + ' loaded instantly. Customizing for ' + template.category + '...', timestamp: 0, status: 'streaming' })
 
     // ── PHASE 2: Customize domain-specific content (~10s) ──────
     if (slotFill) {
@@ -158,7 +160,7 @@ export function TemplateGallery({ onClose }: Props) {
           filesChanged: Object.keys(updated),
         })
 
-      } catch (err) {
+      } catch (_err) {
         updateMessage(aId, {
           content: `✓ ${template.name} loaded. Customize it by typing what to change.`,
           status: 'done',
@@ -215,11 +217,10 @@ export function TemplateGallery({ onClose }: Props) {
           {filtered.map(t => {
             const c = colors(t.category)
             const isLoading = loading === t.name
-            const hasSlotFill = !!SLOT_FILLS[t.id]
             const hasPrebuilt = !!getPrebuilt(t.id) || !!getPrebuilt(SLOT_FILLS[t.id]?.skeleton)
 
             return (
-              <button key={t.id} onClick={() => useTemplate(t)} disabled={!!loading}
+              <button key={t.id} onClick={() => handleTemplate(t)} disabled={!!loading}
                 style={{
                   textAlign: 'left', padding: '11px 10px', borderRadius: 10,
                   border: `1px solid ${isLoading ? '#0EA5E9' : 'var(--ide-border)'}`,
@@ -241,7 +242,7 @@ export function TemplateGallery({ onClose }: Props) {
                   </div>
                   {/* Speed badge */}
                   <span style={{ fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: hasPrebuilt ? 'rgba(34,197,94,0.1)' : 'rgba(14,165,233,0.1)', color: hasPrebuilt ? '#22c55e' : '#0EA5E9', border: `1px solid ${hasPrebuilt ? 'rgba(34,197,94,0.2)' : 'rgba(14,165,233,0.2)'}`, letterSpacing: '0.03em' }}>
-                    {isLoading ? (loadingPhase === 'instant' ? 'LOADING' : 'STYLING') : hasPrebuilt ? '< 1s' : '~15s'}
+                    {isLoading ? (loadingPhase === 'instant' ? 'LOADING' : 'STYLING') : hasPrebuilt ? '< 1s' : '~12s'}
                   </span>
                 </div>
 
@@ -261,7 +262,7 @@ export function TemplateGallery({ onClose }: Props) {
         </div>
         {filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)', fontSize: 12 }}>
-            No templates match "{search}"
+            No templates match &ldquo;{search}&rdquo;
           </div>
         )}
       </div>
