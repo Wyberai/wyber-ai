@@ -222,10 +222,26 @@ export function PreviewPanel() {
             <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--ide-text3)', fontSize: 12 }}>Loading preview...</div>}>
               <SandpackProvider
                 key={sandpackKey}
-                template={template}
                 files={sandpackFiles}
                 theme="dark"
-                options={{ externalResources: ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'] }}
+                customSetup={{
+                  dependencies: {
+                    "react": "^18.0.0",
+                    "react-dom": "^18.0.0",
+                    "lucide-react": "^0.383.0",
+                    "recharts": "^2.12.0",
+                    "react-router-dom": "^6.0.0",
+                    "clsx": "^2.0.0",
+                  },
+                  entry: Object.keys(sandpackFiles).find(p =>
+                    p === '/index.tsx' || p === '/index.jsx' || p === '/src/main.tsx'
+                  ) ?? '/index.tsx',
+                }}
+                options={{
+                  externalResources: ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap'],
+                  recompileMode: 'delayed',
+                  recompileDelay: 500,
+                }}
               >
                 <SandpackPreview
                   style={{ height: '100%', width: '100%' }}
