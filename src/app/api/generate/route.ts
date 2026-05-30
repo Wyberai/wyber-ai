@@ -76,7 +76,10 @@ RULES:
 - Max 6 files total
 - No truncation — complete files always
 - Realistic data — never lorem ipsum
-- Space Grotesk + Sora fonts always`
+- Space Grotesk + Sora fonts always
+
+SCREENSHOT/IMAGE INPUT:
+When given a screenshot or image: analyze the layout, colors, components, and text carefully. Recreate it pixel-perfect as React. Match the exact layout structure, color scheme, typography, spacing, and all visible UI elements. If it shows a specific app or website, clone its design faithfully.`
 
 export async function POST(req: NextRequest) {
   try {
