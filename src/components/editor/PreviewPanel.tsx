@@ -1,5 +1,6 @@
 'use client'
 import { AutoFix } from './AutoFix'
+import { VisualEdit } from './VisualEdit'
 ;
 import { useEditorStore } from '@/store/editor';
 import { useState, useEffect, useRef, Suspense } from 'react';
@@ -208,6 +209,8 @@ export function PreviewPanel() {
   const [viewport, setViewport] = useState<ViewportSize>('desktop');
   const [sandpackKey, setSandpackKey] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
+  const [visualEdit, setVisualEdit] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const prevGenerated = useRef(false);
 
   // Refresh Sandpack key when new generation completes
@@ -265,7 +268,18 @@ export function PreviewPanel() {
             ↺
           </button>
         )}
+        {hasGeneratedFiles && (
+          <button onClick={() => setVisualEdit(v => !v)}
+            title="Visual Edit — click any element to edit it"
+            style={{ padding: '4px 10px', borderRadius: 5, border: `1px solid ${visualEdit ? '#0EA5E9' : 'var(--ide-border)'}`, background: visualEdit ? 'rgba(14,165,233,0.1)' : 'transparent', color: visualEdit ? '#0EA5E9' : 'var(--ide-text3)', fontSize: 11, cursor: 'pointer', fontWeight: visualEdit ? 700 : 400, display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            {visualEdit ? 'Exit Edit' : 'Visual Edit'}
+          </button>
+        )}
       </div>
+
+      {/* Visual Edit overlay */}
+      {visualEdit && <div style={{ position: 'relative' }}><VisualEdit iframeRef={iframeRef} enabled={visualEdit} onDisable={() => setVisualEdit(false)} /></div>}
 
       {/* Content */}
       <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'stretch', justifyContent: 'center', background: viewport !== 'desktop' && mode === 'preview' ? '#0A0A10' : 'var(--bg-base)' }}>
