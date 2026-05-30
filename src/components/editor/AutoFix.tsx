@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { parseGenerationOutput } from '@/lib/file-parser'
 
 // Listens for preview errors via postMessage from Sandpack iframe
 // When an error is detected, fires a focused repair call to Claude
@@ -100,7 +101,6 @@ export function AutoFix() {
         raw += decoder.decode(value, { stream: true })
       }
 
-      const { parseGenerationOutput } = await import('@/lib/file-parser')
       const { files: fixed } = parseGenerationOutput(raw)
 
       if (fixed.length > 0) {

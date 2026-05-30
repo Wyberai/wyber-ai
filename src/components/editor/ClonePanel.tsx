@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { parseGenerationOutput } from '@/lib/file-parser'
 
 export function ClonePanel({ onClose }: { onClose?: () => void }) {
   const [url, setUrl] = useState('')
@@ -31,7 +32,6 @@ export function ClonePanel({ onClose }: { onClose?: () => void }) {
       if (data.error) throw new Error(data.error)
 
       // Parse files from response
-      const { parseGenerationOutput } = await import('@/lib/file-parser')
       const { files: newFiles } = parseGenerationOutput(data.code)
 
       if (newFiles.length > 0) {

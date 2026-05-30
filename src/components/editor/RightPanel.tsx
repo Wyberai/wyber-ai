@@ -9,7 +9,6 @@ import { KnowledgePanel } from '@/components/knowledge/KnowledgePanel';
 import { SecurityScanner } from '@/components/security/SecurityScanner';
 import { ErrorFixPanel } from './ErrorFixPanel';
 import { SupabaseGenerator } from '@/components/supabase-gen/SupabaseGenerator';
-import { VersionHistory } from '@/components/history/VersionHistory';
 import { DeployPanel } from '@/components/deploy/DeployPanel';
 import { ProjectSettings } from './ProjectSettings';
 import { PublishButton } from './PublishButton';
@@ -17,6 +16,8 @@ import { ImageGenPanel } from './ImageGenPanel';
 import { BrowserTestPanel } from './BrowserTestPanel';
 import { ConnectorsPanel } from './ConnectorsPanel';
 import { SupabasePanel } from './SupabasePanel';
+import { ClonePanel } from './ClonePanel';
+import { VersionHistory } from './VersionHistory';
 import { SEOAuditPanel } from './SEOAuditPanel';
 import { SkillsPanel } from './SkillsPanel';
 import { ImageAnnotator } from './ImageAnnotator';
@@ -103,6 +104,8 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
         {activeTab === 'images'     && <div style={scrollStyle}><ImageGenPanel onInsert={(url, alt) => onChatMessage?.(`Add this image to the app: <img src="${url}" alt="${alt}" />`)} /></div>}
         {activeTab === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
         {activeTab === 'supabase'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
+        {activeTab === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
+        {activeTab === 'clone'      && <div style={scrollStyle}><ClonePanel onClose={() => {}} /></div>}
         {activeTab === 'github'     && <GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} />}
         {activeTab === 'publish'    && (
           <div style={scrollStyle}>
@@ -130,7 +133,6 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
         {activeTab === 'seo'        && <div style={scrollStyle}><SEOAuditPanel projectUrl={publishedUrl || undefined} projectFiles={projectFiles} /></div>}
         {activeTab === 'security'   && <SecurityScanner />}
         {activeTab === 'skills'     && <div style={scrollStyle}><SkillsPanel onApply={msg => onChatMessage?.(msg)} /></div>}
-        {activeTab === 'history'    && <VersionHistory projectId={projectId} />}
         {activeTab === 'knowledge'  && <KnowledgePanel />}
         {activeTab === 'fix'        && <ErrorFixPanel />}
         {activeTab === 'settings'   && <ProjectSettings projectId={projectId} userId={userId} />}
