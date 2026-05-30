@@ -4,9 +4,9 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 const MODELS = {
-  fast:    { id: 'claude-haiku-4-5',  credits: 1, label: 'Fast' },
-  default: { id: 'claude-sonnet-4-5', credits: 1, label: 'Standard' },
-  premium: { id: 'claude-sonnet-4-5', credits: 2, label: 'Premium' },
+  fast:    { id: 'claude-sonnet-4-5', credits: 1, label: 'Fast' },
+  default: { id: 'claude-opus-4-7',   credits: 2, label: 'Standard' },
+  premium: { id: 'claude-opus-4-7',   credits: 3, label: 'Premium' },
 };
 
 const FRAMEWORK_GUIDES: Record<string, string> = {
@@ -47,9 +47,9 @@ CSS VARIABLES (copy exactly into src/index.css :root):
   --r-sm: 6px; --r: 8px; --r-lg: 12px; --r-xl: 16px;
   --shadow: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap');
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
 
@@ -63,8 +63,10 @@ CTA button: bg var(--accent), color white, padding 8px 18px, border-radius var(-
 HERO SECTION (mandatory pattern):
 min-height: 88vh, display flex, flex-direction column, align-items center, justify-content center
 padding: 0 20px, text-align: center, position: relative
-Badge/pill above headline: border 1px solid rgba(14,165,233,0.3), bg rgba(14,165,233,0.1), color #7DD3FC, border-radius 9999px, padding 4px 14px, font-size 12px, font-weight 500
-Headline: font-size clamp(40px,6vw,72px), font-weight 800, letter-spacing -0.04em, line-height 1.05
+Badge/pill above headline: border 1px solid rgba(14,165,233,0.3), bg rgba(14,165,233,0.08), color #7DD3FC, border-radius 9999px, padding 4px 14px, font-size 12px, font-weight 500, letter-spacing 0.02em
+Headline: font-family 'Sora', font-size clamp(40px,6vw,72px), font-weight 800, letter-spacing -0.03em, line-height 1.05
+  HEADLINE MUST USE gradient text: background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  For tech/productivity products use: linear-gradient(135deg, #ffffff 0%, #38BDF8 60%, #0EA5E9 100%)
 Subheadline: font-size clamp(16px,2vw,20px), color var(--text-2), max-width 560px, line-height 1.6, margin: 20px auto
 Buttons row: gap 12px, margin-top 36px
 Primary button: bg var(--accent), padding 13px 28px, border-radius var(--r-sm), font-weight 600, font-size 15px, hover bg var(--accent-2) + translateY(-1px) + box-shadow 0 4px 20px var(--accent-glow)

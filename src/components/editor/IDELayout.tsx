@@ -24,7 +24,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
-  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(true);
 
   useEffect(() => {
     if (!initialProject) return;
