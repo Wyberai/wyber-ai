@@ -16,6 +16,7 @@ import { PublishButton } from './PublishButton';
 import { ImageGenPanel } from './ImageGenPanel';
 import { BrowserTestPanel } from './BrowserTestPanel';
 import { ConnectorsPanel } from './ConnectorsPanel';
+import { SupabasePanel } from './SupabasePanel';
 import { SEOAuditPanel } from './SEOAuditPanel';
 import { SkillsPanel } from './SkillsPanel';
 import { ImageAnnotator } from './ImageAnnotator';
@@ -101,7 +102,7 @@ export function RightPanel({ projectId, userId, projectName, githubRepo, lastCom
         {activeTab === 'themes'     && <ThemePanel />}
         {activeTab === 'images'     && <div style={scrollStyle}><ImageGenPanel onInsert={(url, alt) => onChatMessage?.(`Add this image to the app: <img src="${url}" alt="${alt}" />`)} /></div>}
         {activeTab === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
-        {activeTab === 'supabase'   && <SupabaseGenerator />}
+        {activeTab === 'supabase'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
         {activeTab === 'github'     && <GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} />}
         {activeTab === 'publish'    && (
           <div style={scrollStyle}>
