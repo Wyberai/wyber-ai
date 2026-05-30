@@ -4,9 +4,9 @@ import Anthropic from '@anthropic-ai/sdk';
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 const MODELS = {
-  fast:    { id: 'claude-sonnet-4-5',        credits: 1, label: 'Fast' },
-  default: { id: 'claude-opus-4-5',          credits: 2, label: 'Standard' },
-  premium: { id: 'claude-opus-4-5',          credits: 3, label: 'Premium' },
+  fast:    { id: 'claude-sonnet-4-6',        credits: 1, label: 'Fast' },
+  default: { id: 'claude-opus-4-7',          credits: 2, label: 'Standard' },
+  premium: { id: 'claude-opus-4-7',          credits: 3, label: 'Premium' },
 };
 
 const FRAMEWORK_GUIDES: Record<string, string> = {
