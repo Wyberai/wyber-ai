@@ -23,13 +23,9 @@ function getTemplate(framework: string) {
 }
 
 function resolveAliases(code: string, filePath: string): string {
-  // Calculate depth of file to know how many ../ to use
-  // filePath like /App.tsx = depth 0, /components/Header.tsx = depth 1
   const parts = filePath.split('/').filter(Boolean);
-  const depth = parts.length - 1; // subtract 1 for the filename
+  const depth = parts.length - 1;
   const prefix = depth === 0 ? './' : '../'.repeat(depth);
-
-  // Replace @/ with relative path
   return code
     .replace(/from ['"]@\/([^'"]+)['"]/g, (_, p) => `from '${prefix}${p}'`)
     .replace(/import ['"]@\/([^'"]+)['"]/g, (_, p) => `import '${prefix}${p}'`);
@@ -42,103 +38,158 @@ function stripNextImports(code: string): string {
     .replace(/import[^;]+from ['"]next\/link['"];?\n?/g, '')
     .replace(/import[^;]+from ['"]next\/image['"];?\n?/g, '')
     .replace(/import[^;]+from ['"]next\/navigation['"];?\n?/g, '')
-    .replace(/import[^;]+from ['"]next\/router['"];?\n?/g, '')
     .replace(/<Link href=([^>]+)>/g, '<a href=$1>')
     .replace(/<\/Link>/g, '</a>')
     .replace(/<Image([^/]+)\/>/g, '<img$1/>')
-    .replace(/useRouter\(\)/g, '{ push: (p: string) => {}, back: () => {} }')
+    .replace(/useRouter\(\)/g, '{ push: (_:string) => {}, back: () => {}, replace: (_:string) => {} }')
     .replace(/usePathname\(\)/g, "''")
     .replace(/useSearchParams\(\)/g, 'new URLSearchParams()');
+}
+
+// Extract all import paths from a file
+function extractImports(code: string): string[] {
+  const imports: string[] = [];
+  const re = /from ['"](\.{1,2}\/[^'"]+)['"](?!\/)/g;
+  let m;
+  while ((m = re.exec(code)) !== null) {
+    let p = m[1];
+    if (!p.includes('.css') && !p.includes('.svg') && !p.includes('.png')) {
+      imports.push(p);
+    }
+  }
+  return imports;
+}
+
+// Resolve import path relative to a file
+function resolveImportPath(fromFile: string, importPath: string): string {
+  const fromParts = fromFile.split('/');
+  fromParts.pop(); // remove filename
+  const importParts = importPath.split('/');
+  for (const part of importParts) {
+    if (part === '..') fromParts.pop();
+    else if (part !== '.') fromParts.push(part);
+  }
+  return fromParts.join('/');
 }
 
 function getSandpackFiles(files: Record<string, { content: string }>, framework: string) {
   const result: Record<string, string> = {};
 
-  const SKIP = new Set(['package.json', 'vite.config.ts', 'vite.config.js', 'next.config.ts', 'next.config.js', 'tsconfig.json', 'tsconfig.node.json', '.gitignore', 'tailwind.config.ts', 'tailwind.config.js', 'postcss.config.js']);
+  const SKIP = new Set([
+    'package.json', 'vite.config.ts', 'vite.config.js',
+    'next.config.ts', 'next.config.js', 'tsconfig.json',
+    'tsconfig.node.json', '.gitignore', 'tailwind.config.ts',
+    'tailwind.config.js', 'postcss.config.js', 'src/vite-env.d.ts',
+  ]);
 
+  // Mount all generated files
   for (const [path, file] of Object.entries(files)) {
     const clean = path.replace(/^\//, '');
     if (SKIP.has(clean)) continue;
-    if (!file.content || !file.content.trim()) continue;
+    if (!file.content?.trim()) continue;
+
     let fileContent = file.content;
-    // Strip Next.js-specific syntax for preview
     if (framework === 'next') fileContent = stripNextImports(fileContent);
-    // Resolve @/ path aliases to relative paths
     const normalizedPath = '/' + clean;
     fileContent = resolveAliases(fileContent, normalizedPath);
     result[normalizedPath] = fileContent;
   }
 
-  // Detect actual content type regardless of framework setting
-  const hasHtml = !!result['/index.html'];
-  const hasTsx = Object.keys(result).some(p => p.endsWith('.tsx') || p.endsWith('.jsx'));
-
-  if (hasHtml && !hasTsx) {
-    // AI generated vanilla HTML even if React was selected - use static template
-    return { '__detected_template': 'static', ...result };
-  }
-
   if (framework === 'vanilla') {
+    const hasHtml = !!result['/index.html'];
+    if (hasHtml) return { '/__detected_template': 'static', ...result };
     return result;
   }
 
-  // Find the main App component - check multiple possible paths
-  const APP_CANDIDATES = [
-    '/App.tsx', '/App.jsx', '/App.js',
-    '/src/App.tsx', '/src/App.jsx',
-    '/app/page.tsx', '/app/page.jsx',   // Next.js app router
-    '/pages/index.tsx', '/pages/index.jsx', // Next.js pages router
-  ];
+  // Check if AI generated vanilla HTML instead of React
+  const hasHtml = !!result['/index.html'];
+  const hasTsx = Object.keys(result).some(p => p.endsWith('.tsx') || p.endsWith('.jsx') || p.endsWith('.ts'));
+  if (hasHtml && !hasTsx) {
+    return { '/__detected_template': 'static', ...result };
+  }
 
+  // Find App component
+  const APP_CANDIDATES = [
+    '/App.tsx', '/App.jsx', '/src/App.tsx', '/src/App.jsx',
+    '/app/page.tsx', '/pages/index.tsx',
+  ];
   let appPath = APP_CANDIDATES.find(p => result[p]);
 
-  // If still no app, find first component with export default
   if (!appPath) {
     const found = Object.entries(result).find(([p, c]) =>
       (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
-      !p.includes('layout') &&
+      !p.includes('main') && !p.includes('index') && !p.includes('layout') &&
       (c.includes('export default') || c.includes('export function'))
     );
     if (found) appPath = found[0];
   }
 
-  // Create a re-export wrapper at /App.tsx pointing to the real file
-  // This keeps the original file's relative imports intact
+  // Normalize App to /App.tsx root
   let appImport = './App';
   if (appPath && appPath !== '/App.tsx') {
-    // Calculate relative path from /App.tsx to the real file
-    const rel = appPath.startsWith('/') ? '.' + appPath.replace(/\.tsx$/, '').replace(/\.jsx$/, '') : './' + appPath.replace(/\.tsx$/, '').replace(/\.jsx$/, '');
-    result['/App.tsx'] = `export { default } from '${rel}';
-export * from '${rel}';`;
+    const rel = appPath.replace(/\.tsx$|\.jsx$/, '');
+    result['/App.tsx'] = `export { default } from '.${rel}';\nexport * from '.${rel}';`;
   }
 
-  // Check existing CSS
-  const cssPath = ['/index.css', '/src/index.css', '/styles.css', '/app/globals.css', '/styles/globals.css']
-    .find(p => result[p]);
+  // AUTO-STUB missing imports — this prevents "module not found" errors
+  const allFiles = new Set(Object.keys(result));
+  const toStub: string[] = [];
 
-  // Ensure index entry exists
+  for (const [filePath, code] of Object.entries(result)) {
+    if (!filePath.endsWith('.tsx') && !filePath.endsWith('.jsx') && !filePath.endsWith('.ts')) continue;
+    const imports = extractImports(code);
+    for (const imp of imports) {
+      const resolved = resolveImportPath(filePath, imp);
+      const candidates = [resolved + '.tsx', resolved + '.ts', resolved + '.jsx', resolved + '.js', resolved + '/index.tsx'];
+      const exists = candidates.some(c => allFiles.has('/' + c) || allFiles.has(c));
+      if (!exists && !resolved.includes('node_modules')) {
+        toStub.push(resolved);
+      }
+    }
+  }
+
+  // Create stubs for any missing components
+  for (const missing of [...new Set(toStub)]) {
+    const stubPath = '/' + missing + '.tsx';
+    if (!result[stubPath]) {
+      const compName = missing.split('/').pop() ?? 'Component';
+      result[stubPath] = `export default function ${compName}() {
+  return (
+    <div style={{ padding: '40px', textAlign: 'center', color: '#a1a1aa', fontFamily: 'sans-serif' }}>
+      <p style={{ fontSize: '14px' }}>${compName} component</p>
+    </div>
+  );
+}`;
+    }
+  }
+
+  // Ensure entry point
   const hasIndex = result['/index.tsx'] || result['/index.jsx'] || result['/src/main.tsx'];
   if (!hasIndex) {
+    const cssPath = ['/index.css', '/src/index.css', '/styles.css', '/app/globals.css']
+      .find(p => result[p]);
     result['/index.tsx'] = [
       "import { StrictMode } from 'react';",
       "import { createRoot } from 'react-dom/client';",
       `import App from '${appImport}';`,
-      cssPath ? `import './${cssPath.replace(/^\//, '')}';` : '',
-      "createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);",
-    ].filter(Boolean).join('\n');
+      cssPath ? `import '.${cssPath}';` : '',
+    ].filter(Boolean).join('\n') + "\ncreateRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);";
   }
 
   // Ensure base CSS
-  if (!cssPath) {
+  const hasCss = Object.keys(result).some(p => p.endsWith('.css'));
+  if (!hasCss) {
     result['/index.css'] = [
-      '*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }',
-      'html, body { height: 100%; }',
-      "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-font-smoothing: antialiased; }",
+      "@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap');",
+      "*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }",
+      "html, body { height: 100%; }",
+      "body { background: #09090b; color: #fafafa; font-family: 'Space Grotesk', sans-serif; -webkit-font-smoothing: antialiased; }",
     ].join('\n');
   }
 
   return result;
 }
+
 
 export function PreviewPanel() {
   const { files, framework, isGenerating, hasGeneratedFiles } = useEditorStore();
