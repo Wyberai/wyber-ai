@@ -16,14 +16,15 @@ const FRAMEWORK_GUIDES: Record<string, string> = {
   'next': 'Next.js 15 App Router + TypeScript. "use client" for interactive components.',
 };
 
+// Tight, high-signal system prompt - quality over length
 function buildSystemPrompt(framework: string, knowledge?: string): string {
   return `You are an elite UI engineer. Your output is indistinguishable from apps designed by senior designers at Linear, Vercel, or Stripe. You never produce tutorial-quality code.
 
 FRAMEWORK: ${FRAMEWORK_GUIDES[framework] ?? FRAMEWORK_GUIDES['react-vite']}
 
-OUTPUT -- strict format:
+OUTPUT — strict format:
 <file path="path/file.ext">
-full file content -- never truncated
+full file content — never truncated
 </file>
 Then 1-2 sentence summary.
 
@@ -48,19 +49,19 @@ DATA (always realistic, never Lorem Ipsum):
 - Status badges: Active=green bg, Pending=amber bg, Failed=red bg
 
 ARCHITECTURE:
-- ALWAYS use relative imports (./components/Header) never path aliases (@/components/Header)
-- ALWAYS put components in src/ folder for React projects, never in app/ folder
-- ALWAYS have a src/App.tsx as the main entry component
-- Split into focused component files -- never dump everything in App.tsx
+- Split into focused component files — never dump everything in App.tsx
+- For React/Next/Vue: ALWAYS output .tsx or .vue files. NEVER output index.html for component frameworks.
+- React file structure: src/App.tsx as root, src/components/ for sub-components, src/index.css for styles
+- ALWAYS use relative imports like ./components/Header -- NEVER use @/ path aliases
 - Every vite.config.ts MUST include: server: { host: '0.0.0.0', allowedHosts: true, port: 5173 }
 - CSS variables in :root, not inline per-component
 - Loading states, error states, empty states on every data view
 - Mobile responsive with CSS Grid auto-fit and clamp()
 
-QUALITY BAR:
+QUALITY BAR — ask yourself before outputting:
 Does this look like it was built by a funded startup? If not, make it better.
-Never: centered "hello world", rainbow colors, unstyled tables, forms without focus states.
-Always: proper navigation, realistic data, polished micro-interactions, consistent spacing.
+Never: centered "hello world" with a blue button, rainbow colors, Comic Sans energy, unstyled tables, forms without focus states.
+Always: proper navigation context, realistic data, polished micro-interactions, consistent spacing.
 ${knowledge ? `\nPROJECT CONTEXT (follow strictly):\n${knowledge}` : ''}`;
 }
 
@@ -69,44 +70,61 @@ function isValidMime(m: string): m is ValidMimeType {
   return ['image/jpeg','image/png','image/gif','image/webp'].includes(m);
 }
 
+// Smart file selection — only send files relevant to the request
+function selectRelevantFiles(
+  files: Record<string, { content: string }>,
+  prompt: string
+): string {
+  const allFiles = Object.entries(files);
+  if (allFiles.length === 0) return '';
+
+  const promptLower = prompt.toLowerCase();
+
+  // Always include these core files
+  const CORE = ['app.tsx', 'app.vue', 'index.html', 'index.css', 'app.css', 'main.tsx', 'main.js'];
+
+  // Score files by relevance to prompt
+  const scored = allFiles.map(([path, file]) => {
+    const pathLower = path.toLowerCase();
+    let score = 0;
+
+    // Core files always included
+    if (CORE.some(c => pathLower.endsWith(c))) score += 100;
+
+    // Prompt keywords match filename
+    const words = promptLower.split(/\s+/).filter(w => w.length > 3);
+    words.forEach(word => {
+      if (pathLower.includes(word)) score += 20;
+    });
+
+    // Recently modified files (shorter = more likely starter)
+    if (file.content.length < 500) score += 5;
+
+    return { path, content: file.content, score };
+  });
+
+  // Sort by score, take top 10, limit content size
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map(({ path, content }) =>
+      `<file path="${path}">\n${content.slice(0, 2000)}\n</file>`
+    )
+    .join('\n\n');
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { prompt, framework, fileContext, history, knowledge, image, modelTier = 'default', userId, projectId } = body;
+    const { prompt, framework, fileContext, history, knowledge, image, modelTier = 'default' } = body;
 
     const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default;
 
-    // Auth + credit check
-    if (userId) {
-      const { createClient } = await import('@/lib/supabase/server');
-      const supabase = await createClient();
+    // Use smart file selection instead of raw fileContext if files object available
+    const smartContext = fileContext
+      ? fileContext.slice(0, 20000) // hard cap to prevent token bloat
+      : '';
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('credits, plan')
-        .eq('id', userId)
-        .single();
-
-      if (!profile) {
-        return new Response(JSON.stringify({ error: 'User not found' }), {
-          status: 401, headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      if (profile.credits < model.credits) {
-        return new Response(JSON.stringify({ error: 'Insufficient credits' }), {
-          status: 402, headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Deduct credits immediately before generation
-      await supabase
-        .from('profiles')
-        .update({ credits: Math.max(0, profile.credits - model.credits) })
-        .eq('id', userId);
-    }
-
-    const smartContext = fileContext ? fileContext.slice(0, 20000) : '';
     const textContent = smartContext
       ? `Current project files:\n\n${smartContext}\n\n---\n\nUser request: ${prompt}`
       : prompt;
@@ -122,6 +140,7 @@ export async function POST(req: NextRequest) {
       lastUserContent = textContent;
     }
 
+    // Lean history — last 4 exchanges, 1500 char cap
     const trimmedHistory = ((history ?? []) as Array<{ role: string; content: string }>)
       .filter(m => !m.content.startsWith('[Image:'))
       .slice(-4)

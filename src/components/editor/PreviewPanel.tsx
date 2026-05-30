@@ -69,8 +69,16 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
     result[normalizedPath] = fileContent;
   }
 
+  // Detect actual content type regardless of framework setting
+  const hasHtml = !!result['/index.html'];
+  const hasTsx = Object.keys(result).some(p => p.endsWith('.tsx') || p.endsWith('.jsx'));
+
+  if (hasHtml && !hasTsx) {
+    // AI generated vanilla HTML even if React was selected - use static template
+    return { '__detected_template': 'static', ...result };
+  }
+
   if (framework === 'vanilla') {
-    // For vanilla, just return the HTML file
     return result;
   }
 
@@ -115,7 +123,7 @@ export * from '${rel}';`;
       "import { StrictMode } from 'react';",
       "import { createRoot } from 'react-dom/client';",
       `import App from '${appImport}';`,
-      cssPath ? `import '${cssPath.slice(1)}';` : '',
+      cssPath ? `import './${cssPath.replace(/^\//, '')}';` : '',
       "createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>);",
     ].filter(Boolean).join('\n');
   }
@@ -240,9 +248,10 @@ export function PreviewPanel() {
             <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--ide-text3)', fontSize: 12 }}>Loading preview...</div>}>
               <SandpackProvider
                 key={sandpackKey}
-                files={sandpackFiles}
+                template={sandpackFiles['/__detected_template'] === 'static' ? 'static' : undefined}
+                files={Object.fromEntries(Object.entries(sandpackFiles).filter(([k]) => k !== '/__detected_template'))}
                 theme="dark"
-                customSetup={{
+                customSetup={sandpackFiles['/__detected_template'] === 'static' ? undefined : {
                   dependencies: {
                     "react": "^18.0.0",
                     "react-dom": "^18.0.0",
