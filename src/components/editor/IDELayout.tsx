@@ -24,6 +24,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
 
   useEffect(() => {
     if (!initialProject) return;
@@ -59,7 +60,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
         onToggleFileTree={() => setShowFileTree(v => !v)}
       />
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0, position: 'relative' }}>
 
         {showFileTree && (
           <>
@@ -86,17 +87,27 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
           <PreviewPanel />
         </div>
 
-        <ResizableDivider onResize={resizeRight} />
+        {!rightCollapsed && <ResizableDivider onResize={resizeRight} />}
 
-        <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <RightPanel
-            projectId={initialProject?.id}
-            userId={initialProfile?.id}
-            projectName={initialProject?.name}
-            githubRepo={initialProject?.github_repo}
-            lastCommitSha={initialProject?.last_commit_sha}
-          />
-        </div>
+        {!rightCollapsed && (
+          <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <RightPanel
+              projectId={initialProject?.id}
+              userId={initialProfile?.id}
+              projectName={initialProject?.name}
+              githubRepo={initialProject?.github_repo}
+              lastCommitSha={initialProject?.last_commit_sha}
+            />
+          </div>
+        )}
+
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setRightCollapsed(c => !c)}
+          title={rightCollapsed ? 'Show chat panel' : 'Hide chat panel'}
+          style={{ position: 'absolute', right: rightCollapsed ? 0 : rightPanelWidth, top: '50%', transform: 'translateY(-50%)', zIndex: 50, width: 16, height: 48, background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRight: 'none', borderRadius: '6px 0 0 6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ide-text3)', fontSize: 10, transition: 'right 0.2s' }}>
+          {rightCollapsed ? '◁' : '▷'}
+        </button>
       </div>
     </div>
   );

@@ -42,8 +42,8 @@ CSS VARIABLES (copy exactly into src/index.css :root):
   --bg: #09090b; --surface: #111113; --elevated: #18181b;
   --border: rgba(255,255,255,0.07); --border-2: rgba(255,255,255,0.13);
   --text: #fafafa; --text-2: #a1a1aa; --text-3: #52525b;
-  --accent: #7c3aed; --accent-2: #6d28d9;
-  --accent-glow: rgba(124,58,237,0.3);
+  --accent: #0EA5E9; --accent-2: #0284C7;
+  --accent-glow: rgba(14,165,233,0.3);
   --r-sm: 6px; --r: 8px; --r-lg: 12px; --r-xl: 16px;
   --shadow: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 40px rgba(0,0,0,0.6);
@@ -63,7 +63,7 @@ CTA button: bg var(--accent), color white, padding 8px 18px, border-radius var(-
 HERO SECTION (mandatory pattern):
 min-height: 88vh, display flex, flex-direction column, align-items center, justify-content center
 padding: 0 20px, text-align: center, position: relative
-Badge/pill above headline: border 1px solid rgba(124,58,237,0.3), bg rgba(124,58,237,0.1), color #a78bfa, border-radius 9999px, padding 4px 14px, font-size 12px, font-weight 500
+Badge/pill above headline: border 1px solid rgba(14,165,233,0.3), bg rgba(14,165,233,0.1), color #7DD3FC, border-radius 9999px, padding 4px 14px, font-size 12px, font-weight 500
 Headline: font-size clamp(40px,6vw,72px), font-weight 800, letter-spacing -0.04em, line-height 1.05
 Subheadline: font-size clamp(16px,2vw,20px), color var(--text-2), max-width 560px, line-height 1.6, margin: 20px auto
 Buttons row: gap 12px, margin-top 36px
@@ -76,7 +76,7 @@ FEATURE CARDS (3 cards, mandatory):
 display: grid, grid-template-columns: repeat(3, 1fr), gap: 16px
 Each card: bg var(--surface), border 1px solid var(--border), border-radius var(--r-lg), padding 28px
 hover: transform translateY(-3px), border-color color-mix(in srgb, var(--accent) 40%, transparent), box-shadow var(--shadow-lg), transition all 0.2s
-Icon container: width 44px, height 44px, border-radius var(--r), bg rgba(124,58,237,0.1), display flex, align-items center, justify-content center, margin-bottom 18px, font-size 20px
+Icon container: width 44px, height 44px, border-radius var(--r), bg rgba(14,165,233,0.1), display flex, align-items center, justify-content center, margin-bottom 18px, font-size 20px
 Title: font-size 17px, font-weight 700, margin-bottom 8px, letter-spacing -0.02em
 Description: font-size 14px, color var(--text-2), line-height 1.65
 Metric below: font-size 24px font-weight 700 color var(--accent), label font-size 12px color var(--text-3)
@@ -103,7 +103,7 @@ INTERACTIONS (every interactive element must have these):
 button: transition all 0.15s ease; hover: translateY(-1px); active: scale(0.97)
 card: transition transform 0.2s, box-shadow 0.2s, border-color 0.2s
 link: transition color 0.15s; hover: color var(--text)
-input: transition border-color 0.15s; focus: border-color var(--accent), box-shadow 0 0 0 3px rgba(124,58,237,0.15)
+input: transition border-color 0.15s; focus: border-color var(--accent), box-shadow 0 0 0 3px rgba(14,165,233,0.15)
 
 BEFORE OUTPUTTING ASK:
 1. Does the navbar have logo + links + CTA? If not, fix it.
