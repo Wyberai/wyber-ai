@@ -124,14 +124,10 @@ export function ChatPanel({ projectId, userId }: Props) {
     if (file) handleImageFile(file);
   }, [handleImageFile]);
 
-  const launchSandbox = useCallback((updatedFiles: typeof files) => {
-    // Notify PreviewPanel via custom event - it handles postMessage to WebContainer iframe
-    window.dispatchEvent(new CustomEvent('wyber:files-updated', {
-      detail: { files: updatedFiles, framework }
-    }));
-    setPreviewUrl('preview://webcontainer');
+  const launchSandbox = useCallback((_updatedFiles: typeof files) => {
+    // Sandpack reads files directly from store - nothing to do here
     setIsSandboxing(false);
-  }, [framework, setPreviewUrl]);
+  }, []);
 
   const saveProject = useCallback(async (updatedFiles: typeof files) => {
     if (!projectId) return;
