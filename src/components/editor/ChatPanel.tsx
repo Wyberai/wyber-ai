@@ -8,8 +8,21 @@ import { PlanMode } from './PlanMode';
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
+function cleanMessage(text: string): string {
+  // Strip raw file blocks — never show code in chat
+  return text
+    .replace(/<file[^>]*>[\s\S]*?<\/file>/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0 && !l.startsWith('<file') && !l.startsWith('import ') && !l.startsWith('export ') && !l.startsWith('const ') && !l.startsWith('//'))
+    .join('\n')
+    .trim();
+}
+
 function renderMessage(text: string) {
-  const parts = text.split(/(```edited:[^`]+```|\*\*[^*]+\*\*|`[^`]+`)/g);
+  const cleaned = cleanMessage(text);
+  const parts = cleaned.split(/(```edited:[^`]+```|\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((part, i) => {
     if (part.startsWith('```edited:')) {
       const path = part.replace('```edited:', '').replace('```', '').trim();
@@ -434,7 +447,13 @@ export function ChatPanel({ projectId, userId }: Props) {
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:12, lineHeight:1.65, color: msg.status === 'error' ? 'var(--ide-red)' : 'var(--ide-text2)', letterSpacing:'-0.01em' }}>
-                    {renderMessage(msg.content)}
+                    {msg.status === 'streaming'
+                      ? <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)' }}>
+                          <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
+                          Building your app...
+                        </span>
+                      : renderMessage(msg.content)
+                    }
                   </div>
                   {msg.filesChanged && msg.filesChanged.length > 0 && (
                     <div style={{ marginTop:6, display:'flex', flexWrap:'wrap', gap:3 }}>
