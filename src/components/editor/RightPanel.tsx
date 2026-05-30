@@ -1,142 +1,114 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { ChatPanel } from './ChatPanel';
-import { AgentMode } from '@/components/agent/AgentMode';
-import { ThemePanel } from '@/components/themes/ThemePanel';
-import { GitHubPanel } from '@/components/github/GitHubPanel';
-import { TemplateGallery } from '@/components/templates/TemplateGallery';
-import { KnowledgePanel } from '@/components/knowledge/KnowledgePanel';
-import { SecurityScanner } from '@/components/security/SecurityScanner';
-import { ErrorFixPanel } from './ErrorFixPanel';
-import { SupabaseGenerator } from '@/components/supabase-gen/SupabaseGenerator';
-import { DeployPanel } from '@/components/deploy/DeployPanel';
-import { ProjectSettings } from './ProjectSettings';
-import { PublishButton } from './PublishButton';
-import { ImageGenPanel } from './ImageGenPanel';
-import { BrowserTestPanel } from './BrowserTestPanel';
-import { ConnectorsPanel } from './ConnectorsPanel';
-import { SupabasePanel } from './SupabasePanel';
-import { ClonePanel } from './ClonePanel';
-import { VersionHistory } from './VersionHistory';
-import { SEOAuditPanel } from './SEOAuditPanel';
-import { SkillsPanel } from './SkillsPanel';
-import { ImageAnnotator } from './ImageAnnotator';
-import { EnvironmentsPanel } from './EnvironmentsPanel';
-import { CrossProjectPanel } from './CrossProjectPanel';
-import { FigmaImportPanel } from './FigmaImportPanel';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
 
-type Tab = 'chat' | 'agent' | 'templates' | 'themes' | 'github' | 'knowledge' | 'security' | 'fix' | 'supabase' | 'history' | 'clone' | 'deploy' | 'publish' | 'images' | 'connectors' | 'test' | 'seo' | 'skills' | 'settings' | 'annotate' | 'environments' | 'cross' | 'figma';
-
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'chat',       icon: '⚡', label: 'Chat' },
-  { id: 'agent',      icon: '◎', label: 'Agent' },
-  { id: 'templates',  icon: '⊞', label: 'Templates' },
-  { id: 'themes',     icon: '✦', label: 'Themes' },
-  { id: 'images',     icon: '🖼', label: 'Images' },
-  { id: 'connectors', icon: '⬡', label: 'Connect' },
-  { id: 'supabase',   icon: '🗄', label: 'Backend' },
-  { id: 'github',     icon: '⌥', label: 'GitHub' },
-  { id: 'publish',    icon: '↑', label: 'Publish' },
-  { id: 'deploy',     icon: '↥', label: 'Deploy' },
-  { id: 'test',       icon: '▶', label: 'Tests' },
-  { id: 'seo',        icon: '🔍', label: 'SEO' },
-  { id: 'security',   icon: '🛡', label: 'Security' },
-  { id: 'skills',     icon: '📋', label: 'Skills' },
-  { id: 'history',    icon: '⟳', label: 'History' },
-  { id: 'clone',      icon: '⎘', label: 'Clone' },
-  { id: 'knowledge',  icon: '⚙', label: 'Knowledge' },
-  { id: 'fix',        icon: '✕', label: 'Fix Error' },
-  { id: 'settings',   icon: '⚙', label: 'Settings' },
-];
+// Lazy load panels
+const ChatPanel      = dynamic(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })), { ssr: false });
+const TemplateGallery = dynamic(() => import('../templates/TemplateGallery').then(m => ({ default: m.TemplateGallery })), { ssr: false });
+const ThemePanel     = dynamic(() => import('../themes/ThemePanel').then(m => ({ default: m.ThemePanel })), { ssr: false });
+const ConnectorsPanel = dynamic(() => import('./ConnectorsPanel').then(m => ({ default: m.ConnectorsPanel })), { ssr: false });
+const SupabasePanel  = dynamic(() => import('./SupabasePanel').then(m => ({ default: m.SupabasePanel })), { ssr: false });
+const VersionHistory = dynamic(() => import('./VersionHistory').then(m => ({ default: m.VersionHistory })), { ssr: false });
+const ClonePanel     = dynamic(() => import('./ClonePanel').then(m => ({ default: m.ClonePanel })), { ssr: false });
 
 interface Props {
   projectId?: string;
   userId?: string;
-  projectName?: string;
-  githubRepo?: string | null;
-  lastCommitSha?: string | null;
-  publishedUrl?: string | null;
-  subdomain?: string | null;
-  projectFiles?: Record<string, { path: string; content: string; language: string }>;
-  onChatMessage?: (msg: string) => void;
-  onPublish?: (url: string) => void;
-  onUnpublish?: () => void;
+  onClose?: () => void;
 }
 
-export function RightPanel({ projectId, userId, projectName, githubRepo, lastCommitSha, publishedUrl, subdomain, projectFiles, onChatMessage, onPublish, onUnpublish }: Props) {
-  const [activeTab, setActiveTab] = useState<Tab>('chat');
-  const [showAnnotator, setShowAnnotator] = useState(false);
+type Tab = 'chat' | 'templates' | 'database' | 'themes' | 'connectors' | 'history' | 'clone';
 
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const tab = (e as CustomEvent).detail as Tab;
-      if (TABS.find(t => t.id === tab)) setActiveTab(tab);
-    };
-    window.addEventListener('wyber:switch-tab', handler);
-    return () => window.removeEventListener('wyber:switch-tab', handler);
-  }, []);
+const TABS: { id: Tab; icon: string; label: string; desc: string }[] = [
+  { id: 'chat',       icon: '💬', label: 'Chat',       desc: 'Build & edit with AI' },
+  { id: 'templates',  icon: '⊞',  label: 'Templates',  desc: '80+ instant templates' },
+  { id: 'database',   icon: '🗄',  label: 'Database',   desc: 'Add Supabase backend' },
+  { id: 'themes',     icon: '✦',  label: 'Themes',     desc: 'Colors & appearance' },
+  { id: 'connectors', icon: '⬡',  label: 'Connect',    desc: 'Stripe, APIs & more' },
+  { id: 'history',    icon: '⟳',  label: 'History',    desc: 'Save & restore versions' },
+  { id: 'clone',      icon: '⎘',  label: 'Clone URL',  desc: 'Clone any website' },
+];
 
-  const scrollStyle: React.CSSProperties = { flex: 1, overflowY: 'auto', padding: '0 12px 12px' };
+export function RightPanel({ projectId, userId, onClose }: Props) {
+  const [active, setActive] = useState<Tab>('chat');
+
+  const scrollStyle = { height: '100%', overflowY: 'auto' as const };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
-      {/* Tab bar */}
-      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid var(--border)', background: 'var(--bg-base)', flexShrink: 0, scrollbarWidth: 'none' }}>
+    <div style={{
+      display: 'flex',
+      height: '100%',
+      background: 'var(--bg-base)',
+      borderLeft: '1px solid var(--ide-border)',
+    }}>
+
+      {/* Icon sidebar — always visible, 7 clear icons */}
+      <div style={{
+        width: 52,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        borderRight: '1px solid var(--ide-border)',
+        background: 'var(--bg-surface)',
+        padding: '8px 0',
+        gap: 2,
+        flexShrink: 0,
+      }}>
         {TABS.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-            title={tab.label}
-            style={{ minWidth: 'auto', padding: '0 10px', gap: 4 }}
+          <button key={tab.id} onClick={() => setActive(tab.id)} title={`${tab.label} — ${tab.desc}`}
+            style={{
+              width: 38, height: 38, borderRadius: 9, border: 'none',
+              background: active === tab.id ? 'rgba(14,165,233,0.12)' : 'transparent',
+              color: active === tab.id ? '#0EA5E9' : 'var(--ide-text3)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, transition: 'all 0.15s',
+              outline: active === tab.id ? '1px solid rgba(14,165,233,0.25)' : 'none',
+            }}
+            onMouseEnter={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
+            onMouseLeave={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
           >
-            <span>{tab.icon}</span>
-            <span style={{ fontSize: 10 }}>{tab.label}</span>
+            {tab.icon}
           </button>
         ))}
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* Close panel button */}
+        {onClose && (
+          <button onClick={onClose} title="Close panel"
+            style={{ width: 38, height: 38, borderRadius: 9, border: 'none', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            ✕
+          </button>
+        )}
       </div>
 
       {/* Panel content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
-        {activeTab === 'agent'      && <AgentMode />}
-        {activeTab === 'templates'  && <TemplateGallery />}
-        {activeTab === 'themes'     && <ThemePanel />}
-        {activeTab === 'images'     && <div style={scrollStyle}><ImageGenPanel onInsert={(url, alt) => onChatMessage?.(`Add this image to the app: <img src="${url}" alt="${alt}" />`)} /></div>}
-        {activeTab === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
-        {activeTab === 'supabase'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
-        {activeTab === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
-        {activeTab === 'clone'      && <div style={scrollStyle}><ClonePanel onClose={() => {}} /></div>}
-        {activeTab === 'github'     && <GitHubPanel projectId={projectId} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} />}
-        {activeTab === 'publish'    && (
-          <div style={scrollStyle}>
-            <div style={{ paddingTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Publish to web</div>
-              <PublishButton
-                projectId={projectId || ''}
-                projectName={projectName || ''}
-                publishedUrl={publishedUrl}
-                subdomain={subdomain}
-                onPublish={onPublish}
-                onUnpublish={onUnpublish}
-              />
-              {publishedUrl && (
-                <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>Share your app</div>
-                  <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>Anyone with the link can view your published app. No sign-in required.</div>
-                </div>
-              )}
+        {/* Panel header */}
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 15 }}>{TABS.find(t => t.id === active)?.icon}</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ide-text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+              {TABS.find(t => t.id === active)?.label}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--ide-text3)' }}>
+              {TABS.find(t => t.id === active)?.desc}
             </div>
           </div>
-        )}
-        {activeTab === 'deploy'     && <DeployPanel projectId={projectId} userId={userId} projectName={projectName} />}
-        {activeTab === 'test'       && <div style={scrollStyle}><BrowserTestPanel projectUrl={publishedUrl || undefined} /></div>}
-        {activeTab === 'seo'        && <div style={scrollStyle}><SEOAuditPanel projectUrl={publishedUrl || undefined} projectFiles={projectFiles} /></div>}
-        {activeTab === 'security'   && <SecurityScanner />}
-        {activeTab === 'skills'     && <div style={scrollStyle}><SkillsPanel onApply={msg => onChatMessage?.(msg)} /></div>}
-        {activeTab === 'knowledge'  && <KnowledgePanel />}
-        {activeTab === 'fix'        && <ErrorFixPanel />}
-        {activeTab === 'settings'   && <ProjectSettings projectId={projectId} userId={userId} />}
+        </div>
+
+        {/* Active panel */}
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          {active === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
+          {active === 'templates'  && <div style={scrollStyle}><TemplateGallery onClose={() => setActive('chat')} /></div>}
+          {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
+          {active === 'themes'     && <div style={scrollStyle}><ThemePanel /></div>}
+          {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
+          {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
+          {active === 'clone'      && <div style={scrollStyle}><ClonePanel /></div>}
+        </div>
       </div>
     </div>
   );
