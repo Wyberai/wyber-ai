@@ -1,23 +1,25 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
-const ThemeCtx = createContext<{ theme: Theme; toggle: () => void }>({ theme: 'light', toggle: () => {} });
+type Theme = 'dark' | 'light';
+const ThemeCtx = createContext<{ theme: Theme; toggle: () => void }>({ theme: 'dark', toggle: () => {} });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const saved = localStorage.getItem('wyber-theme') as Theme;
-    const preferred = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initial = saved || preferred;
+    // Always default to dark — Wyber AI is a dark product
+    // Only respect explicit user choice stored in localStorage
+    const saved = localStorage.getItem('wyber-theme') as Theme | null;
+    const initial: Theme = saved === 'light' ? 'light' : 'dark';
     setTheme(initial);
     document.documentElement.setAttribute('data-theme', initial);
+    // Never follow system preference — it causes unexpected theme switches
   }, []);
 
   const toggle = () => {
     setTheme(t => {
-      const next = t === 'light' ? 'dark' : 'light';
+      const next = t === 'dark' ? 'light' : 'dark';
       localStorage.setItem('wyber-theme', next);
       document.documentElement.setAttribute('data-theme', next);
       return next;

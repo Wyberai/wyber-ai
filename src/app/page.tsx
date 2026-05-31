@@ -1,4 +1,5 @@
 'use client';
+import { LiveDemo } from '@/components/shared/LiveDemo';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme';
@@ -160,6 +161,16 @@ export default function HomePage() {
             <div style={{ fontSize: 11, color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)', fontFamily: 'var(--font-mono)' }}>{'<video autoPlay muted loop src="/demo.mp4" />'}</div>
           </div>
         </div>
+      </section>
+
+      {/* Live Interactive Demo */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: 'var(--bg)' }}>
+        <div style={{ textAlign: 'center', marginBottom: 36, maxWidth: 600, margin: '0 auto 36px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Try it yourself — no sign-up needed</div>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>Type a prompt. Get a real app.</h2>
+          <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.65 }}>See exactly what Wyber AI builds. Describe your app and watch it generate live.</p>
+        </div>
+        <LiveDemo />
       </section>
 
       {/* HOW IT WORKS -- feature sections */}
