@@ -260,7 +260,7 @@ export default function HomePage() {
               <div style={{ fontSize: 13, color: '#71717a' }}>Ask questions, share what you're building, get early feature previews</div>
             </div>
           </div>
-          <a href="https://discord.gg/wyberai" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: '#5865F2', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: '#5865F2', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
             Join Discord →
           </a>
         </div>
@@ -289,7 +289,7 @@ export default function HomePage() {
           <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
         </div>
         <div style={{ display: 'flex', gap: 20 }}>
-          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Blog', '/blog'], ['Discord', 'https://discord.gg/wyberai']].map(([l, h]) => (
+          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Blog', '/blog'], ['Discord', 'https://discord.gg/A5KsFv2P']].map(([l, h]) => (
             <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>

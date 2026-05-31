@@ -321,7 +321,7 @@ export default function PricingPage() {
         {/* Special programs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 60 }}>
           {[
-            { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on Wyber AI Discord.', cta: 'Join free', href: 'https://discord.gg/wyberai' },
+            { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on Wyber AI Discord.', cta: 'Join free', href: 'https://discord.gg/A5KsFv2P' },
             { icon: '🎓', title: 'Wyber for Students', desc: '50% off Pro with valid student email. Learning to build? Build for less.', cta: 'Apply now', href: 'mailto:students@wyberai.com' },
             { icon: '🏢', title: 'Wyber for Startups', desc: '3 months free Pro for pre-seed startups. Build your MVP without burning runway.', cta: 'Apply now', href: 'mailto:startups@wyberai.com' },
             { icon: '🎁', title: 'Gift Credits', desc: 'Send credits to a builder you know. A great gift for founders and developers.', cta: 'Send a gift', href: 'mailto:hello@wyberai.com' },
