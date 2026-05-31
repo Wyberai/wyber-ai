@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@/lib/supabase/server'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -90,8 +91,73 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500 })
     }
 
-    // Detect skeleton from prompt
+    // ── PREBUILT DATABASE CHECK ──────────────────────────────────
+    // Check if we have an exact prebuilt match - serve instantly, 0 credits
     const hasExisting = fileContext && fileContext.length > 200
+    if (!hasExisting) {
+      try {
+        const supabase = await createClient()
+        const words = prompt.toLowerCase()
+          .replace(/[^a-z0-9 ]/g, ' ')
+          .split(' ')
+          .filter((w: string) => w.length > 3)
+          .slice(0, 8)
+
+        if (words.length > 0) {
+          const { data: matches } = await supabase
+            .from('prebuilt_apps')
+            .select('id, name, files, preview_color')
+            .overlaps('keywords', words)
+            .limit(5)
+
+          if (matches && matches.length > 0) {
+            // Score matches and find best
+            let best = matches[0]
+            let bestScore = 0
+            for (const m of matches) {
+              const score = words.filter((w: string) => m.name?.toLowerCase().includes(w)).length
+              if (score > bestScore) { bestScore = score; best = m }
+            }
+
+            if (bestScore >= 1 && best.files) {
+              // Increment use count
+              supabase.rpc('increment_app_use', { app_id: best.id }).catch(() => {})
+
+              // Stream the prebuilt files as if generated
+              const output = Object.entries(best.files as Record<string, string>)
+                .map(([path, code]) => '<file path="' + path + '">\n' + code + '\n</file>')
+                .join('\n\n')
+              const summary = `Built: Loaded "${best.name}" instantly from the Wyber AI app library.`
+              const full = output + '\n\n' + summary
+
+              const encoder = new TextEncoder()
+              return new Response(
+                new ReadableStream({
+                  start(controller) {
+                    // Stream in chunks to look natural
+                    const chunkSize = 100
+                    let i = 0
+                    const push = () => {
+                      if (i < full.length) {
+                        controller.enqueue(encoder.encode(full.slice(i, i + chunkSize)))
+                        i += chunkSize
+                        setTimeout(push, 5)
+                      } else {
+                        controller.close()
+                      }
+                    }
+                    push()
+                  }
+                }),
+                { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Source': 'prebuilt', 'X-Model': 'instant' } }
+              )
+            }
+          }
+        }
+      } catch { /* fall through to Claude generation */ }
+    }
+
+    // Detect skeleton from prompt
     let skeletonContext = ''
     let useHaiku = false
 
