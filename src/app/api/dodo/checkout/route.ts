@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get('origin') || 'https://wyberai.com'
     const isTopup = planKey.startsWith('topup_')
 
+    const apiKey = process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY || ''
+    console.log('Dodo key prefix:', apiKey.slice(0, 8) || 'NOT SET', '| mode:', process.env.DODO_MODE || 'live')
+    console.log('Product ID:', productId, '| Plan:', planKey)
+
     const session = await dodo.checkoutSessions.create({
       product_cart: [{ product_id: productId, quantity: 1 }],
       customer: {
