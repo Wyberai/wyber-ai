@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 function WyberLogo({ size = 24 }: { size?: number }) {
   return (
@@ -62,7 +61,7 @@ export default function GalleryPage() {
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--mkt-bg)', color: 'var(--mkt-text)', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -70,7 +69,7 @@ export default function GalleryPage() {
           <WyberLogo size={24} />
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><ThemeToggle /><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link></div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link></div>
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>

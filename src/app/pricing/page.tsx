@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 const PLANS = [
   {
@@ -150,7 +149,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--mkt-bg)', color: 'var(--mkt-text)', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
 
       {/* Nav */}
       <nav style={{ padding: '16px 40px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -158,9 +157,7 @@ export default function PricingPage() {
           <WyberLogo size={26} />
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <ThemeToggle />
-          {user
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>{user
             ? <>
                 <Link href="/dashboard" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Dashboard</Link>
                 <Link href="/settings?tab=billing" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>My Plan</Link>

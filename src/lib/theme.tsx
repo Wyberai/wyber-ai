@@ -8,13 +8,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    // Always default to dark — Wyber AI is a dark product
-    // Only respect explicit user choice stored in localStorage
-    const saved = localStorage.getItem('wyber-theme') as Theme | null;
-    const initial: Theme = saved === 'light' ? 'light' : 'dark';
-    setTheme(initial);
-    document.documentElement.setAttribute('data-theme', initial);
-    // Never follow system preference — it causes unexpected theme switches
+    // Wyber AI is dark-only — always dark
+    setTheme('dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    localStorage.setItem('wyber-theme', 'dark');
   }, []);
 
   const toggle = () => {
