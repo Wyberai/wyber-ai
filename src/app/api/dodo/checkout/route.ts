@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import DodoPayments from 'dodopayments'
 import { createClient } from '@/lib/supabase/server'
 
-const DODO_API = 'https://api.dodopayments.com'
-const DODO_KEY = process.env.DODO_API_KEY
+// Use official Dodo Payments SDK
+// Env var: DODO_PAYMENTS_API_KEY (not DODO_API_KEY)
+const dodo = new DodoPayments({
+  bearerToken: process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY || '',
+  environment: process.env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
+})
 
-// Product ID map — set these in Vercel env vars after creating products in Dodo dashboard
 const PRODUCT_IDS: Record<string, string | undefined> = {
   'pro_monthly':       process.env.DODO_PRODUCT_PRO,
   'pro_annual':        process.env.DODO_PRODUCT_PRO_ANNUAL,
@@ -24,36 +28,32 @@ export async function POST(req: NextRequest) {
     const { planKey } = await req.json()
     if (!planKey) return NextResponse.json({ error: 'planKey required' }, { status: 400 })
 
-    if (!DODO_KEY) return NextResponse.json({ error: 'Payments not configured' }, { status: 503 })
-
     const productId = PRODUCT_IDS[planKey]
-    if (!productId) return NextResponse.json({ error: `Product not configured for ${planKey}` }, { status: 503 })
+    if (!productId) {
+      console.error(`No product ID for planKey: ${planKey}`, PRODUCT_IDS)
+      return NextResponse.json({ error: `Product not configured for ${planKey}` }, { status: 503 })
+    }
 
     const origin = req.headers.get('origin') || 'https://wyberai.com'
     const isTopup = planKey.startsWith('topup_')
 
-    const res = await fetch(`${DODO_API}/payments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${DODO_KEY}`,
+    const session = await dodo.checkoutSessions.create({
+      product_cart: [{ product_id: productId, quantity: 1 }],
+      customer: {
+        email: user.email!,
+        name: user.email!.split('@')[0],
       },
-      body: JSON.stringify({
-        billing: { city: '', country: 'US', state: '', street: '', zipcode: '' },
-        customer: { email: user.email, name: user.email?.split('@')[0] || 'Customer' },
-        payment_link: true,
-        product_cart: [{ product_id: productId, quantity: 1 }],
-        return_url: `${origin}/dashboard?${isTopup ? 'topup=1' : 'upgraded=1'}`,
-        metadata: { user_id: user.id, plan: planKey },
-      }),
+      return_url: `${origin}/dashboard?${isTopup ? 'topup=1' : 'upgraded=1'}`,
+      metadata: {
+        user_id: user.id,
+        plan: planKey,
+      },
     })
 
-    const data = await res.json()
-    if (!res.ok) return NextResponse.json({ error: data.message || 'Payment failed' }, { status: 500 })
-
-    const paymentUrl = data.payment_link || data.url || data.checkout_url
-    return NextResponse.json({ url: paymentUrl })
+    console.log('Checkout session created:', session.session_id)
+    return NextResponse.json({ url: session.checkout_url, sessionId: session.session_id })
   } catch (err) {
+    console.error('Dodo checkout error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
