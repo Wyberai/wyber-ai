@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { LiveDemo } from '@/components/shared/LiveDemo';
+import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { GenerateAnimation, DeployAnimation, VisualEditAnimation, DatabaseAnimation } from '@/components/shared/ProductAnimations';
 
 function WyberLogo({ size = 28 }: { size?: number }) {
@@ -70,7 +71,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: 'var(--mkt-bg)', color: 'var(--mkt-text)', fontFamily: "'Space Grotesk', sans-serif" }}>
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -86,6 +87,7 @@ export default function HomePage() {
               {l}
             </Link>
           ))}
+          <ThemeToggle />
           <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 6px' }} />
           {user
             ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
