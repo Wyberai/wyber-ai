@@ -23,7 +23,7 @@ const ROWS = [
   { feature: 'Deploy to Vercel',        wyber: '✓',            lovable: '✗',            winner: 'wyber' },
   { feature: 'Export source code',      wyber: '✓ Always',     lovable: '✓',            winner: 'tie' },
   { feature: 'Remove branding',         wyber: '✓',            lovable: 'Pro+',         winner: 'wyber' },
-  { feature: 'AI model',                wyber: 'Claude Sonnet', lovable: 'Claude',      winner: 'tie' },
+  { feature: 'AI model',                wyber: 'Advanced AI',   lovable: 'Advanced AI', winner: 'tie' },
   { feature: 'Real-time collaboration', wyber: 'Coming soon',  lovable: '✓',            winner: 'lovable' },
   { feature: 'SSO',                     wyber: 'Business',     lovable: 'Business',     winner: 'tie' },
   { feature: 'India/APAC pricing',      wyber: '✓ INR soon',   lovable: 'USD only',     winner: 'wyber' },
@@ -67,7 +67,7 @@ export default function VSPage() {
             Wyber AI vs Lovable
           </h1>
           <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, maxWidth: 480, margin: '0 auto' }}>
-            Both tools build apps from prompts using Claude AI. Here's every meaningful difference, with no spin.
+            Both tools build apps from prompts using AI. Here's every meaningful difference, with no spin.
           </p>
         </div>
 

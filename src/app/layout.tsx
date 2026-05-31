@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://wyberai.com'),
   title: { default: 'Wyber AI — Build Apps with AI in 30 Seconds', template: '%s | Wyber AI' },
   description: 'Turn any idea into a live app in under a minute. 50% more credits than Lovable at 75% of the price. GitHub sync, Vercel deploy, Supabase database. Start free.',
-  keywords: ['AI app builder', 'Lovable alternative', 'build app with AI', 'vibe coding', 'no-code AI', 'AI coding tool', 'Claude AI builder', 'Wyber AI'],
+  keywords: ['AI app builder', 'Lovable alternative', 'build app with AI', 'vibe coding', 'no-code AI', 'AI coding tool', 'Wyber AI'],
   authors: [{ name: 'Wyber AI', url: 'https://wyberai.com' }],
   creator: 'SignalPulse Technologies',
   openGraph: {

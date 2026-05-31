@@ -37,7 +37,7 @@ const ROWS = [
   ['Supabase auto-provision','✓ One click',   'Manual',         'wyber'],
   ['Visual click-to-edit',   '✓',             '✗',              'wyber'],
   ['WebContainer runtime',   '✗',             '✓ In-browser',   'bolt'],
-  ['AI model',               'Claude Sonnet', 'Multiple',       'tie'],
+  ['AI model',               'Advanced AI',   'Multiple',       'tie'],
   ['India/APAC pricing',     '✓ INR soon',    'USD only',       'wyber'],
 ]
 
