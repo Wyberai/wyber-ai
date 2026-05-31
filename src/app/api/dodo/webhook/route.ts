@@ -20,17 +20,10 @@ export async function POST(req: NextRequest) {
     const body = await req.text()
     const webhookSecret = process.env.DODO_WEBHOOK_SECRET
 
-    // Log all headers for debugging
-    const allHeaders: Record<string, string> = {}
-    req.headers.forEach((val, key) => { allHeaders[key] = val })
-    console.log('Webhook headers:', JSON.stringify(allHeaders))
-
-    // Try both svix-* and webhook-* header names (Dodo uses both)
-    const headerId = req.headers.get('svix-id') || req.headers.get('webhook-id') || ''
-    const headerTs = req.headers.get('svix-timestamp') || req.headers.get('webhook-timestamp') || ''
-    const headerSig = req.headers.get('svix-signature') || req.headers.get('webhook-signature') || ''
-
-    console.log('Sig headers:', { headerId, headerTs, headerSig: headerSig.slice(0, 20) })
+    // Dodo uses webhook-* headers (Svix with custom prefix)
+    const headerId = req.headers.get('webhook-id') || req.headers.get('svix-id') || ''
+    const headerTs = req.headers.get('webhook-timestamp') || req.headers.get('svix-timestamp') || ''
+    const headerSig = req.headers.get('webhook-signature') || req.headers.get('svix-signature') || ''
 
     if (webhookSecret && headerId && headerTs && headerSig) {
       const wh = new Webhook(webhookSecret)
@@ -44,9 +37,6 @@ export async function POST(req: NextRequest) {
         console.error('Webhook signature invalid:', err)
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
       }
-    } else if (webhookSecret && (!headerId || !headerTs || !headerSig)) {
-      console.error('Missing headers - skipping verification for now')
-      // Don't reject - log and continue so we can see the payload
     }
 
     const event = JSON.parse(body)
