@@ -119,16 +119,24 @@ export default function PricingPage() {
   const handleCheckout = async (planKey: string) => {
     setLoading(planKey)
     try {
+      const key = annual && planKey.includes('monthly') ? planKey.replace('monthly', 'annual') : planKey
       const res = await fetch('/api/dodo/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey: annual && planKey.includes('monthly') ? planKey.replace('monthly', 'annual') : planKey }),
+        body: JSON.stringify({ planKey: key }),
       })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
-      else alert('Payment not available yet — contact hello@wyberai.com')
-    } catch {
-      alert('Something went wrong. Try again.')
+      if (data.url) {
+        window.location.href = data.url
+      } else if (res.status === 401) {
+        // Not logged in — redirect to signup then back
+        window.location.href = '/signup?next=/pricing'
+      } else {
+        console.error('Checkout error:', data)
+        alert(`Error: ${data.error || 'Unknown error'}. Contact hello@wyberai.com`)
+      }
+    } catch (err) {
+      alert('Network error. Please try again.')
     }
     setLoading(null)
   }
