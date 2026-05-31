@@ -1,6 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  const isLocal = appUrl.includes('localhost') || appUrl.includes('127.0.0.1');
+
+  // Local dev — bypass all auth
+  if (isLocal) {
+    return NextResponse.next();
+  }
+
+  // Production — enforce auth
   const { createServerClient } = await import('@supabase/ssr');
   let supabaseResponse = NextResponse.next({ request });
 
@@ -24,21 +33,10 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  const PUBLIC_ROUTES = [
-    '/', '/login', '/signup', '/pricing', '/templates',
-    '/privacy', '/terms', '/status', '/vs', '/about',
-    '/blog', '/security', '/changelog', '/community',
-    '/connectors', '/founders', '/marketers', '/designers',
-    '/affiliates', '/api/webhooks', '/api/dodo', '/api/mcp',
-    '/api/wyber-api', '/p',
-  ];
+  const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/templates', '/privacy', '/terms', '/status', '/vs', '/blog', '/security', '/changelog', '/community', '/connectors', '/founders', '/marketers', '/designers', '/affiliates', '/about', '/api/webhooks', '/api/dodo', '/api/admin', '/api/support', '/api/stats', '/api/referral', '/credits', '/docs'];
+  const isPublic = PUBLIC_ROUTES.some(r => path.startsWith(r)) || path.startsWith('/_next') || path.startsWith('/favicon');
 
-  const isPublic =
-    PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/')) ||
-    path.startsWith('/_next') ||
-    path.startsWith('/favicon') ||
-    path.startsWith('/api/auth');
-
+  // Already logged in hitting auth pages → dashboard
   if (user && (path === '/login' || path === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
