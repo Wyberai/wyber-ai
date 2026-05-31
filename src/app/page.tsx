@@ -79,7 +79,7 @@ export default function HomePage() {
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {[['Compare', '/vs/lovable'], ['Pricing', '/pricing'], ['Blog', '/blog']].map(([l, h]) => (
+          {[['Gallery', '/community'], ['Compare', '/vs/lovable'], ['Pricing', '/pricing'], ['Blog', '/blog']].map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
