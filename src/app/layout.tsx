@@ -6,28 +6,29 @@ import { CookieBanner } from '@/components/shared/CookieBanner';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://wyberai.com'),
-  title: { default: 'Wyber AI — Build Apps from a Prompt', template: '%s | Wyber AI' },
-  description: 'Turn your idea into a live app before lunch. Wyber AI generates production-ready full-stack code with live preview, GitHub sync, and one-click deploy. No coding experience required.',
-  keywords: ['AI app builder', 'vibe coding', 'no code app builder', 'React generator', 'full-stack AI', 'wyber ai', 'build apps with AI'],
-  authors: [{ name: 'SignalPulse Technologies', url: 'https://signalpulsehq.com' }],
+  title: { default: 'Wyber AI — Build Apps with AI in 30 Seconds', template: '%s | Wyber AI' },
+  description: 'Turn any idea into a live app in under a minute. 50% more credits than Lovable at 75% of the price. GitHub sync, Vercel deploy, Supabase database. Start free.',
+  keywords: ['AI app builder', 'Lovable alternative', 'build app with AI', 'vibe coding', 'no-code AI', 'AI coding tool', 'Claude AI builder', 'Wyber AI'],
+  authors: [{ name: 'Wyber AI', url: 'https://wyberai.com' }],
+  creator: 'SignalPulse Technologies',
   openGraph: {
-    type: 'website', locale: 'en_US', url: 'https://wyberai.com', siteName: 'Wyber AI',
-    title: 'Wyber AI — Turn your idea into a live app before lunch',
-    description: 'Generate production-ready full-stack apps from a single prompt. Live preview, GitHub sync, one-click deploy.',
-    images: [{ url: '/og.svg', width: 1200, height: 630, alt: 'Wyber AI' }],
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://wyberai.com',
+    siteName: 'Wyber AI',
+    title: 'Wyber AI — Build Apps with AI in 30 Seconds',
+    description: 'Turn any idea into a live app in under a minute. 50% more credits than Lovable at 75% of the price.',
+    images: [{ url: '/api/og?title=Build%20apps%20with%20AI%20in%2030%20seconds', width: 1200, height: 630, alt: 'Wyber AI' }],
   },
   twitter: {
-    card: 'summary_large_image', site: '@wyberai', creator: '@wyberai',
-    title: 'Wyber AI — Turn your idea into a live app before lunch',
-    description: 'Generate production-ready full-stack apps from a single prompt.',
-    images: ['/og.svg'],
+    card: 'summary_large_image',
+    title: 'Wyber AI — Build Apps with AI in 30 Seconds',
+    description: '50% more credits than Lovable at 75% of the price. Start free.',
+    images: ['/api/og?title=Build%20apps%20with%20AI%20in%2030%20seconds'],
   },
-  icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    shortcut: '/icon.svg', apple: '/icon.svg',
-  },
-  manifest: '/site.webmanifest',
-};
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  alternates: { canonical: 'https://wyberai.com' },
+}
 
 export const viewport = { themeColor: '#0EA5E9' };
 
