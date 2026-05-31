@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 // Env var: DODO_PAYMENTS_API_KEY (not DODO_API_KEY)
 const dodo = new DodoPayments({
   bearerToken: process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY || '',
-  environment: process.env.NODE_ENV === 'production' ? 'live_mode' : 'test_mode',
+  environment: process.env.DODO_MODE === 'test' ? 'test_mode' : 'live_mode',
 })
 
 const PRODUCT_IDS: Record<string, string | undefined> = {
