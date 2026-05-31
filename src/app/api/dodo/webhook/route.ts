@@ -43,10 +43,22 @@ export async function POST(req: NextRequest) {
     const admin = await createAdminClient()
     console.log('Dodo event:', event.type)
 
+    // Dodo puts metadata in different places depending on event type
     const userId =
-      event.data?.metadata?.user_id ||
-      event.metadata?.user_id ||
-      event.data?.customer?.metadata?.user_id
+      event.data?.metadata?.user_id ||        // subscription events
+      event.metadata?.user_id ||               // top-level metadata
+      event.data?.payment?.metadata?.user_id || // payment events
+      event.data?.customer?.metadata?.user_id || // customer metadata
+      event.data?.custom_data?.user_id ||      // custom_data field
+      event.custom_data?.user_id               // top-level custom_data
+
+    console.log('Event type:', event.type, '| product:', productId, '| userId:', userId || 'NOT FOUND')
+    console.log('Metadata check:', {
+      data_meta: event.data?.metadata,
+      top_meta: event.metadata,
+      payment_meta: event.data?.payment?.metadata,
+      custom: event.data?.custom_data || event.custom_data,
+    })
 
     const productId =
       event.data?.product_cart?.[0]?.product_id ||
