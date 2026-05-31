@@ -1,4 +1,5 @@
 'use client'
+import { captureThumbnail } from '@/lib/capture-thumbnail'
 import { AutoFix } from './AutoFix'
 import { VisualEdit } from './VisualEdit'
 ;
@@ -222,7 +223,18 @@ export function PreviewPanel() {
     } else if (hasGeneratedFiles && !isGenerating) {
       setSandpackKey(k => k + 1);
     }
-  }, [hasGeneratedFiles, isGenerating]);
+  }, [hasGeneratedFiles, isGenerating])
+
+  // Capture thumbnail after generation renders
+  const projectId = typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : null
+  useEffect(() => {
+    if (!hasGeneratedFiles || !projectId) return
+    const timer = setTimeout(async () => {
+      const iframe = document.querySelector('iframe[class*="sandpack"]') as HTMLIFrameElement
+      if (iframe) await captureThumbnail(iframe, projectId)
+    }, 4000) // wait 4s for app to fully render
+    return () => clearTimeout(timer)
+  }, [hasGeneratedFiles, sandpackKey]);
 
   const hasFiles = hasGeneratedFiles && Object.keys(files).length > 1;
 
