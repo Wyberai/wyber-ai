@@ -1,141 +1,128 @@
-﻿import Link from 'next/link';
-import type { Metadata } from 'next';
+import type { Metadata } from 'next'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Wyber AI vs Lovable — Better AI App Builder Alternative',
-  description: 'Wyber AI gives you more credits, better UI quality, zero vendor lock-in, and no charges for AI mistakes. The best Lovable alternative in 2025.',
-  keywords: ['Lovable alternative', 'better than Lovable', 'Lovable competitor', 'AI app builder', 'vibe coding alternative'],
-  openGraph: {
-    title: 'Wyber AI vs Lovable — The Better Alternative',
-    description: 'More credits. Better UI. Zero lock-in. No charges for AI mistakes.',
-  },
-};
+  title: 'Wyber AI vs Lovable — Honest Comparison',
+  description: 'Wyber AI vs Lovable: feature comparison, pricing, and credits. See why builders are switching to Wyber AI.',
+}
 
-const COMPARISONS = [
-  { feature: 'Free credits/month', wyber: '50', lovable: '30', winner: 'wyber' },
-  { feature: 'Pro plan price', wyber: '$15/month', lovable: '$25/month', winner: 'wyber' },
-  { feature: 'Pro plan credits', wyber: '400', lovable: '250', winner: 'wyber' },
-  { feature: 'Charge for AI errors', wyber: '✕ Never', lovable: '✓ Always', winner: 'wyber' },
-  { feature: 'Credit transparency', wyber: '✓ Per prompt', lovable: '✕ Hidden', winner: 'wyber' },
-  { feature: 'Frameworks supported', wyber: 'React, Vue, Vanilla, Next', lovable: 'React only', winner: 'wyber' },
-  { feature: 'Data export (pg_dump)', wyber: '✓ Self-serve', lovable: '✕ Needs support', winner: 'wyber' },
-  { feature: 'Vendor lock-in', wyber: 'Zero — export anytime', lovable: 'Trapped without support', winner: 'wyber' },
-  { feature: 'Weekend support', wyber: 'Self-serve architecture', lovable: '✕ No weekend support', winner: 'wyber' },
-  { feature: 'Security scan before deploy', wyber: '✓ Built-in, free', lovable: '✓ Paid only', winner: 'wyber' },
-  { feature: 'Mobile preview', wyber: '✓ 375/768/desktop', lovable: '✕ Manual check', winner: 'wyber' },
-  { feature: 'Plan Mode', wyber: '✓ Maps steps first', lovable: '✓', winner: 'tie' },
-  { feature: 'GitHub sync', wyber: '✓', lovable: '✓ Paid only', winner: 'wyber' },
-  { feature: 'Visual click-to-edit', wyber: '✓', lovable: '✓', winner: 'tie' },
-  { feature: 'One-click deploy', wyber: '✓ Vercel', lovable: '✓ Vercel', winner: 'tie' },
-];
+const ROWS = [
+  { feature: 'Starting price',         wyber: '$18.99/mo',    lovable: '$25/mo',       winner: 'wyber' },
+  { feature: 'Monthly credits',         wyber: '150 credits',  lovable: '100 credits',  winner: 'wyber' },
+  { feature: 'Daily bonus credits',     wyber: '8/day',        lovable: '5/day',        winner: 'wyber' },
+  { feature: 'Max credits/month',       wyber: '~390',         lovable: '~250',         winner: 'wyber' },
+  { feature: 'Credit rollovers',        wyber: '✓',            lovable: '✓',            winner: 'tie' },
+  { feature: 'Top-up credits',          wyber: 'Anyone',       lovable: 'Pro+ only',    winner: 'wyber' },
+  { feature: 'Top-up credits expire',   wyber: 'Never',        lovable: 'With sub',     winner: 'wyber' },
+  { feature: 'Credit estimate upfront', wyber: '✓ Unique',     lovable: '✗',            winner: 'wyber' },
+  { feature: 'Prebuilt app library',    wyber: '60+ instant',  lovable: 'Templates',    winner: 'wyber' },
+  { feature: 'Visual click-to-edit',    wyber: '✓',            lovable: '✓',            winner: 'tie' },
+  { feature: 'GitHub sync',             wyber: '✓',            lovable: '✓',            winner: 'tie' },
+  { feature: 'Custom domains',          wyber: '✓',            lovable: 'Pro+',         winner: 'wyber' },
+  { feature: 'Supabase auto-provision', wyber: '✓',            lovable: '✓',            winner: 'tie' },
+  { feature: 'Deploy to Vercel',        wyber: '✓',            lovable: '✗',            winner: 'wyber' },
+  { feature: 'Export source code',      wyber: '✓ Always',     lovable: '✓',            winner: 'tie' },
+  { feature: 'Remove branding',         wyber: '✓',            lovable: 'Pro+',         winner: 'wyber' },
+  { feature: 'AI model',                wyber: 'Claude Sonnet', lovable: 'Claude',      winner: 'tie' },
+  { feature: 'Real-time collaboration', wyber: 'Coming soon',  lovable: '✓',            winner: 'lovable' },
+  { feature: 'SSO',                     wyber: 'Business',     lovable: 'Business',     winner: 'tie' },
+  { feature: 'India/APAC pricing',      wyber: '✓ INR soon',   lovable: 'USD only',     winner: 'wyber' },
+]
 
-const PAIN_POINTS = [
-  {
-    title: 'Lovable charges you for their mistakes',
-    body: 'When Lovable\'s AI introduces a bug while fixing another, it still deducts credits. You pay for broken code. Wyber AI has a dedicated Fix Error mode that never charges credits — only successful new generations cost credits.',
-    stat: '91.5% of Lovable-generated apps contain at least one vulnerability',
-  },
-  {
-    title: 'Lovable traps your data',
-    body: 'Production apps on Lovable Cloud have no self-serve data export. No pg_dump access. No direct database credentials. Users have reported waiting hours for manual staff intervention just to disconnect their own database. Wyber AI gives you your Postgres credentials directly, one-click data export, and zero dependency on us to access your own data.',
-    stat: 'Users report 15+ hour outages waiting for Lovable weekend support',
-  },
-  {
-    title: 'Lovable\'s credits disappear faster than you expect',
-    body: 'As Lovable integrated heavier models, credits started costing 5-10x more than before. A simple UI edit that cost 2 credits now costs 6. Wyber AI gives you a model toggle — fast/cheap for simple edits, premium for complex work. You control the spend.',
-    stat: 'Lovable Pro: 250 credits for $25. Wyber Pro: 400 credits for $15.',
-  },
-  {
-    title: 'Lovable is React-only',
-    body: 'Every app Lovable generates is React + Tailwind. If your team uses Vue, or you want a vanilla JS tool, or you need Next.js with SSR — Lovable can\'t help. Wyber AI generates React, Vue 3, Vanilla JS, and Next.js from the same interface.',
-    stat: '4 frameworks vs 1',
-  },
-];
-
-export default function VsLovablePage() {
+function WyberLogo({ size = 26 }: { size?: number }) {
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');`}</style>
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
+      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
+    </svg>
+  )
+}
+
+export default function VSPage() {
+  const wyberWins = ROWS.filter(r => r.winner === 'wyber').length
+  const lovableWins = ROWS.filter(r => r.winner === 'lovable').length
+  const ties = ROWS.filter(r => r.winner === 'tie').length
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
 
       {/* Nav */}
-      <nav style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '0 48px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(12px)', zIndex: 50 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <span style={{ fontSize: 17, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>Wyber <span style={{ color: '#8b5cf6' }}>AI</span></span>
+      <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
+          <WyberLogo size={24} />
+          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
-        <Link href="/signup" style={{ padding: '8px 20px', borderRadius: 8, background: '#7c3aed', color: 'white', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
-          Start free →
-        </Link>
+        <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Try free →</Link>
       </nav>
 
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '80px 24px' }}>
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)' }}>
 
-        {/* Hero */}
-        <div style={{ textAlign: 'center', marginBottom: 80 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 20, padding: '5px 14px', marginBottom: 28, fontSize: 12, color: '#a78bfa', fontWeight: 500 }}>
-            Lovable alternative
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 52 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '4px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
+            Honest comparison · Updated May 2026
           </div>
-          <h1 style={{ fontSize: 'clamp(36px, 6vw, 60px)', fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.1, margin: '0 0 20px' }}>
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(30px,5vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14, lineHeight: 1.1 }}>
             Wyber AI vs Lovable
           </h1>
-          <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.65, maxWidth: 560, margin: '0 auto 40px' }}>
-            More credits. Better UI quality. Zero vendor lock-in. No charges for AI mistakes. Here's the honest comparison.
+          <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, maxWidth: 480, margin: '0 auto' }}>
+            Both tools build apps from prompts using Claude AI. Here's every meaningful difference, with no spin.
           </p>
-          <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 32px', borderRadius: 10, background: '#7c3aed', color: 'white', textDecoration: 'none', fontWeight: 600, fontSize: 16, boxShadow: '0 4px 32px rgba(124,58,237,0.4)' }}>
-            Try Wyber AI free →
-          </Link>
-          <p style={{ fontSize: 12, color: '#52525b', marginTop: 12 }}>50 free credits · No credit card</p>
+        </div>
+
+        {/* Score cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 12, marginBottom: 40, alignItems: 'center' }}>
+          <div style={{ padding: 20, borderRadius: 14, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', textAlign: 'center' }}>
+            <WyberLogo size={32} />
+            <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, color: '#0EA5E9', margin: '8px 0 2px' }}>{wyberWins}</div>
+            <div style={{ fontSize: 12, color: '#71717a' }}>categories won</div>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 13, color: '#52525b', fontWeight: 600 }}>
+            <div>{ties} tied</div>
+          </div>
+          <div style={{ padding: 20, borderRadius: 14, background: '#111113', border: '1px solid rgba(255,255,255,0.07)', textAlign: 'center' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: '#ff4545', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>♥</div>
+            <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, color: '#a1a1aa', margin: '8px 0 2px' }}>{lovableWins}</div>
+            <div style={{ fontSize: 12, color: '#71717a' }}>categories won</div>
+          </div>
         </div>
 
         {/* Comparison table */}
-        <div style={{ marginBottom: 80 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: 32 }}>Feature comparison</h2>
-          <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, overflow: 'hidden' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', padding: '12px 20px', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <span style={{ fontSize: 12, color: '#52525b', fontWeight: 500 }}>Feature</span>
-              <span style={{ fontSize: 12, color: '#8b5cf6', fontWeight: 700, textAlign: 'center' }}>⚡ Wyber AI</span>
-              <span style={{ fontSize: 12, color: '#52525b', textAlign: 'center', fontWeight: 500 }}>Lovable</span>
+        <div style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden', marginBottom: 40 }}>
+          {/* Header */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#111113', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Feature</div>
+            <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Wyber AI</div>
+            <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Lovable</div>
+          </div>
+          {ROWS.map((row, i) => (
+            <div key={row.feature} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: i < ROWS.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', background: row.winner === 'wyber' ? 'rgba(14,165,233,0.03)' : 'transparent', transition: 'background 0.15s' }}>
+              <div style={{ padding: '12px 16px', fontSize: 13, color: '#a1a1aa' }}>{row.feature}</div>
+              <div style={{ padding: '12px 16px', fontSize: 13, fontWeight: row.winner === 'wyber' ? 700 : 400, color: row.winner === 'wyber' ? '#0EA5E9' : '#fafafa', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {row.winner === 'wyber' && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="3"><polyline points="20,6 9,17 4,12"/></svg>}
+                {row.wyber}
+              </div>
+              <div style={{ padding: '12px 16px', fontSize: 13, color: row.winner === 'lovable' ? '#fafafa' : '#52525b' }}>{row.lovable}</div>
             </div>
-            {COMPARISONS.map((row, i) => (
-              <div key={row.feature} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', padding: '13px 20px', borderBottom: i < COMPARISONS.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', alignItems: 'center' }}>
-                <span style={{ fontSize: 13, color: '#a1a1aa' }}>{row.feature}</span>
-                <span style={{ fontSize: 13, color: row.winner === 'wyber' ? '#22c55e' : '#a1a1aa', fontWeight: row.winner === 'wyber' ? 600 : 400, textAlign: 'center' }}>{row.wyber}</span>
-                <span style={{ fontSize: 13, color: row.winner === 'wyber' ? '#52525b' : '#a1a1aa', textAlign: 'center' }}>{row.lovable}</span>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
 
-        {/* Pain points */}
-        <div style={{ marginBottom: 80 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: 12 }}>Why people leave Lovable</h2>
-          <p style={{ textAlign: 'center', color: '#a1a1aa', fontSize: 15, marginBottom: 40 }}>Based on real user complaints from Reddit and X.</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {PAIN_POINTS.map(point => (
-              <div key={point.title} style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '28px 28px' }}>
-                <h3 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 12px' }}>{point.title}</h3>
-                <p style={{ color: '#a1a1aa', fontSize: 14, lineHeight: 1.7, margin: '0 0 16px' }}>{point.body}</p>
-                <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#a78bfa', fontStyle: 'italic' }}>
-                  "{point.stat}"
-                </div>
-              </div>
-            ))}
+        {/* Bottom CTA */}
+        <div style={{ textAlign: 'center', padding: '40px 24px', borderRadius: 16, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.15)' }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>Ready to switch?</h2>
+          <p style={{ fontSize: 14, color: '#71717a', marginBottom: 24 }}>Import your Lovable projects or start fresh. 15 free credits, no card needed.</p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/signup" style={{ padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
+              Start free on Wyber AI →
+            </Link>
+            <Link href="/pricing" style={{ padding: '12px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 14, textDecoration: 'none' }}>
+              Compare pricing
+            </Link>
           </div>
-        </div>
-
-        {/* CTA */}
-        <div style={{ textAlign: 'center', background: 'linear-gradient(135deg, rgba(124,58,237,0.1), rgba(139,92,246,0.05))', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 16, padding: '56px 32px' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.04em', margin: '0 0 14px' }}>Ready to switch?</h2>
-          <p style={{ color: '#a1a1aa', fontSize: 16, margin: '0 0 32px' }}>50 free credits. No card. Export your code any time. Your data belongs to you.</p>
-          <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 36px', borderRadius: 12, background: '#7c3aed', color: 'white', textDecoration: 'none', fontWeight: 700, fontSize: 17, boxShadow: '0 8px 40px rgba(124,58,237,0.45)' }}>
-            ⚡ Start building free
-          </Link>
         </div>
       </div>
-
-      {/* Footer */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '24px 48px', textAlign: 'center' }}>
-        <p style={{ fontSize: 13, color: '#52525b' }}>© 2025 Wyber AI · <Link href="/" style={{ color: '#52525b', textDecoration: 'none' }}>wyberai.com</Link></p>
-      </footer>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
-  );
+  )
 }

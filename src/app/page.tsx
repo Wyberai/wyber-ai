@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { LiveDemo } from '@/components/shared/LiveDemo';
+import { GenerateAnimation, DeployAnimation, VisualEditAnimation, DatabaseAnimation } from '@/components/shared/ProductAnimations';
 
 function WyberLogo({ size = 28 }: { size?: number }) {
   return (
@@ -78,7 +79,7 @@ export default function HomePage() {
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {[['Pricing', '/pricing'], ['Templates', '/templates'], ['Blog', '/blog']].map(([l, h]) => (
+          {[['Gallery', '/community'], ['Compare', '/vs/lovable'], ['Pricing', '/pricing'], ['Blog', '/blog']].map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -173,6 +174,33 @@ export default function HomePage() {
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, letterSpacing: '-0.01em' }}>{f.title}</div>
                 <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 52 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.03em' }}>From idea to live app in minutes</h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+            {[
+              { num: '01', title: 'Describe your app', desc: 'Type what you want in plain English. Wyber AI generates production-ready React code instantly.', component: <GenerateAnimation /> },
+              { num: '02', title: 'Deploy with one click', desc: 'Get a live URL in seconds. GitHub sync, custom domains, full source code export included.', component: <DeployAnimation /> },
+              { num: '03', title: 'Edit visually', desc: 'Click any element in the preview to edit it directly. No code needed — just describe the change.', component: <VisualEditAnimation /> },
+              { num: '04', title: 'Add a real database', desc: 'One click provisions a Postgres database, auth, and storage. Your app becomes truly full-stack.', component: <DatabaseAnimation /> },
+            ].map(s => (
+              <div key={s.num} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {s.component}
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#0EA5E9', letterSpacing: '0.1em', marginBottom: 6 }}>{s.num}</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6, letterSpacing: '-0.01em' }}>{s.title}</div>
+                  <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65 }}>{s.desc}</div>
+                </div>
               </div>
             ))}
           </div>
