@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Profile, Project, PLAN_LIMITS } from '@/lib/supabase/types';
 import Link from 'next/link';
+import { ReferralCard } from '@/components/shared/ReferralCard';
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
@@ -149,6 +150,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           </>}
         </nav>
 
+        <ReferralCard />
         {/* Upgrade CTA */}
         {plan === 'free' && (
           <div style={{ padding: '10px 10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -257,11 +259,16 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   <div style={{ height: 160, borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', background: '#111113', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
-                    {/* Thumbnail placeholder with gradient */}
-                    <div style={{ height: 110, background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                        {p.framework === 'next' ? '▲' : p.framework === 'vue' ? '◆' : p.framework === 'vanilla' ? '⊡' : '⚛'}
-                      </div>
+                    {/* Thumbnail - real screenshot or gradient */}
+                    <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))` }}>
+                      {(p as any).thumbnail_url
+                        ? <img src={(p as any).thumbnail_url} alt={p.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                              {p.framework === 'next' ? '▲' : p.framework === 'vue' ? '◆' : p.framework === 'vanilla' ? '⊡' : '⚛'}
+                            </div>
+                          </div>
+                      }
                     </div>
                     <div style={{ padding: '8px 12px' }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
