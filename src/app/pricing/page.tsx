@@ -115,6 +115,13 @@ function WyberLogo({ size = 26 }: { size?: number }) {
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true)
   const [loading, setLoading] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    import('@/lib/supabase/client').then(({ createClient }) => {
+      createClient().auth.getUser().then(({ data }) => setUser(data.user))
+    })
+  }, [])
 
   const handleCheckout = async (planKey: string) => {
     setLoading(planKey)
@@ -151,8 +158,16 @@ export default function PricingPage() {
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/login" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Sign in</Link>
-          <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started free</Link>
+          {user
+            ? <>
+                <Link href="/dashboard" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Dashboard</Link>
+                <Link href="/settings?tab=billing" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>My Plan</Link>
+              </>
+            : <>
+                <Link href="/login" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Sign in</Link>
+                <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started free</Link>
+              </>
+          }
         </div>
       </nav>
 
