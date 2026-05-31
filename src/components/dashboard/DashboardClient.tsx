@@ -5,284 +5,288 @@ import { createClient } from '@/lib/supabase/client';
 import { Profile, Project, PLAN_LIMITS } from '@/lib/supabase/types';
 import Link from 'next/link';
 
-const FRAMEWORKS = [
-  { id: 'next', label: 'Next.js', desc: 'SEO-ready, server-side rendering. Best for production SaaS.', tag: 'Recommended', color: '#0EA5E9' },
-  { id: 'react-vite', label: 'React', desc: 'Fast single-page apps. Best for dashboards and tools.', tag: null, color: '#61DAFB' },
-  { id: 'vue', label: 'Vue 3', desc: 'Component-first. Best for interactive UI-heavy apps.', tag: null, color: '#42B883' },
-  { id: 'vanilla', label: 'Vanilla JS', desc: 'No framework. Best for landing pages and prototypes.', tag: null, color: '#F7DF1E' },
-];
-
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
+
+function WyberLogo({ size = 26 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
+      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
+    </svg>
+  );
+}
+
+const QUICK_PROMPTS = [
+  'Build a SaaS dashboard with analytics and user management',
+  'Create a landing page for my startup',
+  'Build a CRM for my sales team',
+  'Create an e-commerce store',
+  'Build a project management tool',
+  'Create a restaurant management system',
+];
 
 export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const [projects, setProjects] = useState(initialProjects);
-  const [creating, setCreating] = useState<string | null>(null);
-  const [createError, setCreateError] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [importStatus, setImportStatus] = useState('');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [showNameModal, setShowNameModal] = useState(false);
-  const [pendingFramework, setPendingFramework] = useState('next');
-  const [newName, setNewName] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [creating, setCreating] = useState(false);
+  const [promptInput, setPromptInput] = useState('');
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const credits = profile?.credits ?? 0;
-  const plan = (profile?.plan ?? 'free') as keyof typeof PLAN_LIMITS;
+  const plan = profile?.plan ?? 'free';
+  const name = profile?.full_name || profile?.email?.split('@')[0] || 'there';
+  const totalCredits = plan === 'starter' ? 500 : plan === 'pro' ? 2000 : plan === 'teams' ? 99999 : 50;
+  const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
-  const handleFrameworkClick = (fwId: string) => {
-    setPendingFramework(fwId);
-    setNewName('');
-    setCreateError('');
-    setShowNameModal(true);
-  };
-
-  const createProject = async () => {
-    if (!newName.trim() || !profile?.id) {
-      setCreateError(!profile?.id ? 'Session expired. Please refresh.' : 'Enter a project name.');
-      return;
-    }
-    setCreating(pendingFramework);
-    setCreateError('');
+  const startProject = async (prompt?: string) => {
+    if (!profile?.id || creating) return;
+    setCreating(true);
     try {
+      const projectName = prompt
+        ? prompt.slice(0, 40).trim()
+        : 'New Project ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
       const { data, error } = await supabase
         .from('projects')
-        .insert({ name: newName.trim(), framework: pendingFramework, user_id: profile.id })
+        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '' })
         .select('id');
-      if (error) throw new Error(error.message + ' (code: ' + error.code + ')');
-      if (data && data.length > 0) {
+
+      if (error) throw error;
+      if (data?.[0]?.id) {
+        if (prompt) sessionStorage.setItem(`wyber_prompt_${data[0].id}`, prompt);
         router.push(`/project/${data[0].id}`);
-        return;
       }
-      throw new Error('Project created but ID not returned. Check Supabase RLS SELECT policy.');
-    } catch (err: unknown) {
-      setCreateError(err instanceof Error ? err.message : String(err));
+    } catch (err) {
+      console.error(err);
+      setCreating(false);
     }
-    setCreating(null);
   };
 
-  const deleteProject = async (id: string) => {
-    if (!confirm('Delete this project? This cannot be undone.')) return;
-    await supabase.from('projects').delete().eq('id', id);
-    setProjects(p => p.filter(proj => proj.id !== id));
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      startProject(promptInput.trim() || undefined);
+    }
   };
 
-  const importZip = async (file: File) => {
-    setImporting(true); setImportStatus('Reading ZIP...');
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('name', file.name.replace('.zip', ''));
-    try {
-      const res = await fetch('/api/projects/import', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.project) {
-        setImportStatus('Imported');
-        setTimeout(() => router.push(`/project/${data.project.id}`), 600);
-      } else { setImportStatus(data.error ?? 'Import failed'); }
-    } catch { setImportStatus('Import failed'); }
-    setImporting(false);
-  };
-
-  const signOut = async () => { await supabase.auth.signOut(); router.push('/'); };
-
-  const FW_LABELS: Record<string, string> = { 'react-vite': 'React', 'vue': 'Vue', 'vanilla': 'JS', 'next': 'Next.js' };
-  const FW_COLORS: Record<string, string> = { 'react-vite': '#61DAFB', 'vue': '#42B883', 'vanilla': '#F7DF1E', 'next': '#0EA5E9' };
+  const NAV = [
+    { label: 'Home', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg> },
+    { label: 'Projects', href: '/dashboard/projects', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+    { label: 'Templates', href: '/templates', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
+    { label: 'Community', href: '/community', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> },
+    { label: 'Connectors', href: '/connectors', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/></svg> },
+    { label: 'Settings', href: '/settings', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> },
+  ];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: 'var(--bg-base)', fontFamily: 'var(--font-sans)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
 
-      {/* SIDEBAR */}
-      <div style={{ width: sidebarOpen ? 220 : 52, flexShrink: 0, borderRight: '1px solid var(--ide-border)', background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', transition: 'width 0.2s ease', overflow: 'hidden' }}>
-
-        {/* Logo + toggle */}
-        <div style={{ height: 54, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0 }}>
-          {sidebarOpen && (
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <svg width="22" height="22" viewBox="0 0 32 32" fill="none">
-                <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-                <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-              </svg>
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.04em' }}>Wyber<span style={{ color: '#0EA5E9' }}>AI</span></span>
-            </Link>
-          )}
-          <button onClick={() => setSidebarOpen(o => !o)} style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0 }}>
-            {sidebarOpen ? '◁' : '▷'}
-          </button>
-        </div>
-
-        {/* Nav items */}
-        <div style={{ flex: 1, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-          {[
-            { icon: '⌂', label: 'Home', href: '/dashboard', active: true },
-            { icon: '⊞', label: 'Templates', href: '/templates', active: false },
-            { icon: '⚿', label: 'Connectors', href: '/connectors', active: false },
-            { icon: '◎', label: 'API Keys', href: '/api-keys', active: false },
-          ].map(item => (
-            <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: item.active ? 'var(--accent-glow)' : 'transparent', color: item.active ? 'var(--accent)' : 'var(--text-secondary)', fontSize: 13, fontWeight: item.active ? 600 : 400, textDecoration: 'none', transition: 'all 0.15s', whiteSpace: 'nowrap', overflow: 'hidden' }}
-              onMouseEnter={e => { if (!item.active) (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'; }}
-              onMouseLeave={e => { if (!item.active) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
-              <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
-              {sidebarOpen && <span>{item.label}</span>}
-            </Link>
-          ))}
-
-          {sidebarOpen && <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 4px' }}>Resources</div>}
-          {[
-            { icon: '📖', label: 'Changelog', href: '/changelog' },
-            { icon: '💬', label: 'Community', href: '/community' },
-            { icon: '🔒', label: 'Security', href: '/security' },
-          ].map(item => (
-            <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, color: 'var(--text-secondary)', fontSize: 13, textDecoration: 'none', transition: 'background 0.15s', whiteSpace: 'nowrap', overflow: 'hidden' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-hover)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
-              <span style={{ fontSize: 15, flexShrink: 0 }}>{item.icon}</span>
-              {sidebarOpen && <span>{item.label}</span>}
-            </Link>
-          ))}
-        </div>
-
-        {/* User footer */}
-        <div style={{ padding: '10px 8px', borderTop: '1px solid var(--ide-border)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, background: 'var(--bg-elevated)' }}>
-            <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-              {profile?.email?.charAt(0).toUpperCase() ?? 'W'}
+      {/* Sidebar */}
+      <aside style={{ width: 220, height: '100vh', background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 }}>
+        {/* Logo */}
+        <div style={{ padding: '16px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <WyberLogo size={26} />
+            <div>
+              <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: '-0.03em' }}>Wyber AI</div>
             </div>
-            {sidebarOpen && (
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile?.email}</div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'capitalize' }}>{plan} plan</div>
-              </div>
-            )}
-            {sidebarOpen && (
-              <button onClick={signOut} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12, padding: 2, flexShrink: 0 }} title="Sign out">↩</button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* MAIN */}
-      <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Top bar */}
-        <div style={{ height: 54, borderBottom: '1px solid var(--ide-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', flexShrink: 0, background: 'var(--bg-surface)' }}>
-          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Dashboard</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <input ref={fileInputRef} type="file" accept=".zip" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) importZip(f); e.target.value = ''; }} />
-            <button onClick={() => fileInputRef.current?.click()} disabled={importing} className="btn" style={{ fontSize: 12 }}>
-              {importing ? importStatus : 'Import ZIP'}
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 8, background: credits > 10 ? 'rgba(22,163,74,0.08)' : 'rgba(220,38,38,0.08)', border: `1px solid ${credits > 10 ? 'rgba(22,163,74,0.2)' : 'rgba(220,38,38,0.2)'}` }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: credits > 10 ? 'var(--green)' : 'var(--red)' }} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: credits > 10 ? 'var(--green)' : 'var(--red)' }}>{credits} credits</span>
-            </div>
-            <Link href="/pricing" style={{ fontSize: 12, padding: '5px 12px', borderRadius: 7, background: '#0EA5E9', color: '#fff', fontWeight: 600, textDecoration: 'none' }}>Upgrade</Link>
           </div>
         </div>
 
-        {/* Hero */}
-        <div style={{ padding: 'clamp(32px,5vw,56px) clamp(20px,4vw,48px) 0' }}>
-          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 400, color: 'var(--text-primary)', letterSpacing: '-0.025em', marginBottom: 8, lineHeight: 1.1 }}>
-            What will you build today?
-          </h1>
-          <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 36 }}>Pick a framework to start a new project. Your code, your stack.</p>
+        {/* User workspace */}
+        <button onClick={() => setSidebarExpanded(v => !v)}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', border: 'none', background: 'transparent', color: '#fafafa', cursor: 'pointer', width: '100%', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #0EA5E9, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+            {name[0]?.toUpperCase()}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
+            <div style={{ fontSize: 10, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} plan</div>
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: sidebarExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>
+        </button>
 
-          {/* Framework cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: 48 }}>
-            {FRAMEWORKS.map(fw => (
-              <button key={fw.id} onClick={() => handleFrameworkClick(fw.id)} disabled={creating !== null}
-                style={{ padding: '20px', borderRadius: 12, border: `1px solid var(--ide-border)`, background: 'var(--bg-surface)', cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', position: 'relative', opacity: creating && creating !== fw.id ? 0.5 : 1 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = fw.color + '66'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-elevated)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg-surface)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}>
-                {fw.tag && <div style={{ position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(14,165,233,0.1)', color: '#0EA5E9', letterSpacing: '0.04em' }}>{fw.tag}</div>}
-                <div style={{ width: 36, height: 36, borderRadius: 9, background: fw.color + '15', border: `1px solid ${fw.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                  {creating === fw.id
-                    ? <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${fw.color}`, borderTopColor: 'transparent', animation: 'spin 0.7s linear infinite' }} />
-                    : <span style={{ fontSize: 14, fontWeight: 800, color: fw.color, fontFamily: 'var(--font-mono)' }}>{fw.label.charAt(0)}</span>
-                  }
-                </div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 5, letterSpacing: '-0.02em' }}>{fw.label}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{fw.desc}</div>
-              </button>
+        {/* Expanded workspace info */}
+        {sidebarExpanded && (
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ fontSize: 11, color: '#71717a', marginBottom: 8 }}>Credits</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{credits} left</span>
+              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Add credits</Link>
+            </div>
+            <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)' }}>
+              <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : '#0EA5E9', width: creditPct + '%', transition: 'width 0.5s ease' }} />
+            </div>
+            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>Low on credits — upgrade to continue building</div>}
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav style={{ padding: '8px 8px', flex: 1, overflow: 'auto' }}>
+          {NAV.map(n => (
+            <Link key={n.label} href={n.href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: '#a1a1aa', fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
+              {n.icon}{n.label}
+            </Link>
+          ))}
+
+          {/* Recents */}
+          {projects.length > 0 && <>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>Recent</div>
+            {projects.slice(0, 4).map(p => (
+              <Link key={p.id} href={`/project/${p.id}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: '#71717a', fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'all 0.15s', marginBottom: 1 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#71717a' }}>
+                <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />
+                {p.name || 'Untitled'}
+              </Link>
             ))}
-          </div>
+          </>}
+        </nav>
 
-          {/* Projects */}
-          {projects.length > 0 && (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Recent projects</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{projects.length} project{projects.length !== 1 ? 's' : ''}</div>
+        {/* Upgrade CTA */}
+        {plan === 'free' && (
+          <div style={{ padding: '10px 10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <Link href="/pricing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', textDecoration: 'none', transition: 'all 0.15s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.15)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.1)'}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#0EA5E9"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9' }}>Upgrade to Pro</div>
+                <div style={{ fontSize: 10, color: '#52525b' }}>2000 credits/month</div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 48 }}>
-                {projects.map(p => (
-                  <div key={p.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--ide-border)', borderRadius: 10, overflow: 'hidden', transition: 'border-color 0.15s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border-light)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'}>
-                    <div style={{ height: 100, background: 'var(--bg-elevated)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                      {p.thumbnail_url ? <img src={p.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (
-                        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ide-text3)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{FW_LABELS[p.framework!] ?? 'App'}</span>
-                      )}
-                      {(p.deployed_url || p.published_url) && <span style={{ position: 'absolute', top: 7, right: 7, fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(22,163,74,0.12)', color: 'var(--green)', fontWeight: 700 }}>Live</span>}
+            </Link>
+          </div>
+        )}
+      </aside>
+
+      {/* Main */}
+      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+
+        {/* Hero with gradient */}
+        <div style={{ position: 'relative', minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflow: 'hidden' }}>
+          {/* Animated mesh gradient */}
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 20% 40%, rgba(14,165,233,0.25) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 60%, rgba(139,92,246,0.2) 0%, transparent 60%), radial-gradient(ellipse 50% 50% at 50% 0%, rgba(16,185,129,0.1) 0%, transparent 70%)', animation: 'gradientShift 8s ease infinite' }} />
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
+          {/* Connector pill */}
+          <Link href="/connectors" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 20, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#a1a1aa', fontSize: 12, fontWeight: 600, textDecoration: 'none', marginBottom: 20, backdropFilter: 'blur(10px)', zIndex: 1, transition: 'all 0.2s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/></svg>
+            Power your app with connectors →
+          </Link>
+
+          {/* Greeting */}
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
+            What are we building, {name.split(' ')[0]}?
+          </h1>
+
+          {/* Prompt box */}
+          <div style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
+            <div style={{ background: 'rgba(17,17,19,0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+              <textarea
+                ref={textareaRef}
+                value={promptInput}
+                onChange={e => setPromptInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Describe the app you want to build..."
+                rows={3}
+                style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: '#fafafa', fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 14px' }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {/* Image attach */}
+                  <button style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#52525b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Attach image">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                  </button>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 11, color: '#3f3f46' }}>↵ Enter to build</span>
+                  <button
+                    onClick={() => startProject(promptInput.trim() || undefined)}
+                    disabled={creating}
+                    style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : '#0EA5E9', color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: !creating ? '0 4px 16px rgba(14,165,233,0.35)' : 'none', transition: 'all 0.15s' }}>
+                    {creating
+                      ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                      : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>
+                    }
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick prompts */}
+            <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+              {QUICK_PROMPTS.slice(0, 4).map(p => (
+                <button key={p} onClick={() => { setPromptInput(p); textareaRef.current?.focus() }}
+                  style={{ padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#71717a', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', backdropFilter: 'blur(10px)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#fafafa'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#71717a'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)' }}>
+                  {p.replace('Build a ', '').replace('Create a ', '').replace('Create an ', '')}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Projects grid */}
+        <div style={{ flex: 1, padding: '24px 28px' }}>
+          {projects.length > 0 ? <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Projects</h2>
+              <Link href="/dashboard/projects" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', fontWeight: 500 }} onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>View all →</Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+              {/* New project card */}
+              <button onClick={() => startProject()} disabled={creating}
+                style={{ height: 160, borderRadius: 12, border: '2px dashed rgba(255,255,255,0.08)', background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s', color: '#3f3f46' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; (e.currentTarget as HTMLElement).style.color = '#0EA5E9'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.04)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.color = '#3f3f46'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}>New Project</span>
+              </button>
+
+              {projects.slice(0, 7).map(p => (
+                <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                  <div style={{ height: 160, borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', background: '#111113', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                    {/* Thumbnail placeholder with gradient */}
+                    <div style={{ height: 110, background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                        {p.framework === 'next' ? '▲' : p.framework === 'vue' ? '◆' : p.framework === 'vanilla' ? '⊡' : '⚛'}
+                      </div>
                     </div>
-                    <div style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: 8 }}>{p.name}</span>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: FW_COLORS[p.framework!] ?? 'var(--text-muted)', fontFamily: 'monospace', flexShrink: 0 }}>{FW_LABELS[p.framework!]}</span>
-                      </div>
-                      <div style={{ display: 'flex', gap: 5 }}>
-                        <Link href={`/project/${p.id}`} style={{ flex: 1, textAlign: 'center', padding: '5px 8px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: 11, textDecoration: 'none', fontWeight: 500 }}>Open</Link>
-                        {(p.deployed_url || p.published_url) && (
-                          <a href={p.published_url || p.deployed_url || '#'} target="_blank" rel="noreferrer" style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, textDecoration: 'none' }}>↗</a>
-                        )}
-                        <button onClick={() => deleteProject(p.id!)} style={{ padding: '5px 8px', borderRadius: 6, border: '1px solid transparent', background: 'transparent', color: 'var(--text-muted)', fontSize: 11, cursor: 'pointer' }}>✕</button>
-                      </div>
+                    <div style={{ padding: '8px 12px' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
+                      <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {projects.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '40px 0 60px', color: 'var(--text-muted)' }}>
-              <p style={{ fontSize: 13 }}>No projects yet -- click a framework above to start</p>
+                </Link>
+              ))}
+            </div>
+          </> : (
+            <div style={{ textAlign: 'center', paddingTop: 40, color: '#52525b' }}>
+              <div style={{ fontSize: 14 }}>No projects yet — describe your first app above</div>
             </div>
           )}
         </div>
-      </div>
+      </main>
 
-      {/* NAME MODAL */}
-      {showNameModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }} onClick={() => setShowNameModal(false)}>
-          <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--ide-border)', borderRadius: 14, padding: 28, width: '100%', maxWidth: 420, boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.02em' }}>
-              New {FRAMEWORKS.find(f => f.id === pendingFramework)?.label} project
-            </h3>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>{FRAMEWORKS.find(f => f.id === pendingFramework)?.desc}</p>
-            <input
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && createProject()}
-              placeholder="Give your project a name..."
-              autoFocus
-              style={{ width: '100%', padding: '10px 13px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sans)', marginBottom: 12 }}
-              onFocus={e => (e.currentTarget as HTMLElement).style.borderColor = '#0EA5E9'}
-              onBlur={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'}
-            />
-            {createError && <div style={{ padding: '8px 12px', borderRadius: 7, background: 'var(--red2)', color: 'var(--red)', fontSize: 12, marginBottom: 12, lineHeight: 1.5 }}>{createError}</div>}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={createProject} disabled={creating !== null || !newName.trim()} className="btn btn-primary" style={{ flex: 1, fontSize: 13, justifyContent: 'center' }}>
-                {creating ? 'Creating...' : 'Create project'}
-              </button>
-              <button onClick={() => { setShowNameModal(false); setCreateError(''); }} className="btn btn-ghost" style={{ fontSize: 13 }}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`@keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+        @keyframes gradientShift {
+          0%,100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+      `}</style>
     </div>
   );
 }
