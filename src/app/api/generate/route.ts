@@ -136,13 +136,81 @@ OUTPUT FORMAT:
 
 After all files: one sentence starting with "Built:"
 
+QUALITY STANDARD — every app must look like it cost $50,000 to design.
+Study these principles from the best SaaS products (Linear, Vercel, Notion, Stripe):
+
+VISUAL QUALITY RULES:
+- Generous whitespace — padding minimum 24px, sections minimum 48px apart
+- Micro-details: hover states on every interactive element, smooth transitions (0.15s ease)
+- Data always looks real — use actual company names, real-sounding names, specific numbers
+- Cards have subtle shadows: box-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3)
+- Status badges with color: green for active/success, amber for pending, red for error
+- Tables with alternating row hover: rgba(255,255,255,0.02) on hover
+- Empty states with illustrations or icons — never just blank space
+- Numbers formatted: $12,450 not $12450, percentages with + or - prefix and color
+- Avatars with initials and colors when no image
+- Sidebar with active state highlighting
+
 DESIGN SYSTEM in src/index.css:
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
-:root { --bg:#09090b; --surface:#111113; --elevated:#18181b; --border:rgba(255,255,255,0.07); --text:#fafafa; --text-2:#a1a1aa; --text-3:#52525b; --accent:#0EA5E9; --accent-2:#0284C7; --success:#22c55e; --warning:#f59e0b; --error:#ef4444; --r:8px; --r-lg:12px; font-family:'Space Grotesk',sans-serif; }
-*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-html, body, #root { min-height:100%; }
-body { background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
-button { font-family:inherit; cursor:pointer; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cal+Sans:wght@600&display=swap');
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --elevated: #1a1a24;
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.12);
+  --text: #f0f0f5;
+  --text-2: #8b8b9a;
+  --text-3: #5a5a6e;
+  --accent: #6366f1;
+  --accent-hover: #5558e8;
+  --accent-glow: rgba(99,102,241,0.15);
+  --success: #22c55e;
+  --success-bg: rgba(34,197,94,0.08);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245,158,11,0.08);
+  --error: #ef4444;
+  --error-bg: rgba(239,68,68,0.08);
+  --r: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.6);
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; }
+body { background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+button { font-family: inherit; cursor: pointer; border: none; }
+input, select, textarea { font-family: inherit; background: var(--elevated); border: 1px solid var(--border); color: var(--text); border-radius: var(--r); padding: 8px 12px; font-size: 14px; outline: none; transition: border-color 0.15s; }
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+.badge-green { background: var(--success-bg); color: var(--success); }
+.badge-amber { background: var(--warning-bg); color: var(--warning); }
+.badge-red { background: var(--error-bg); color: var(--error); }
+.badge-purple { background: var(--accent-glow); color: var(--accent); }
+button.btn-primary { background: var(--accent); color: white; border-radius: var(--r); padding: 8px 16px; font-size: 13px; font-weight: 600; transition: background 0.15s, transform 0.1s; }
+button.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+button.btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); border-radius: var(--r); padding: 8px 16px; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+button.btn-ghost:hover { border-color: var(--border-hover); color: var(--text); background: var(--elevated); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 16px; font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text-2); }
+tr:hover td { background: rgba(255,255,255,0.015); }
+.sidebar { width: 220px; height: 100vh; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 16px 0; position: fixed; left: 0; top: 0; }
+.sidebar-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; margin: 1px 8px; border-radius: var(--r); font-size: 13px; font-weight: 500; color: var(--text-2); cursor: pointer; transition: all 0.15s; }
+.sidebar-item:hover { background: var(--elevated); color: var(--text); }
+.sidebar-item.active { background: var(--accent-glow); color: var(--accent); }
+.topbar { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 20px 24px; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; margin: 4px 0; }
+.stat-label { font-size: 12px; color: var(--text-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-change { font-size: 12px; font-weight: 600; }
+.stat-change.up { color: var(--success); }
+.stat-change.down { color: var(--error); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.comp-avatar { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
 
 CODING RULES:
 - Imports: ./components/X only — never @/ aliases
