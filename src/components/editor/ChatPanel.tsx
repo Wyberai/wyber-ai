@@ -623,7 +623,7 @@ setStreamingContent(chatContent || full);
 
       {/* Input */}
       <div style={{ padding:'8px 10px', borderTop:'1px solid var(--ide-border)', background:'var(--bg-base)', flexShrink:0 }}>
-        <div style={{ background:'var(--bg-elevated)', borderRadius:10, border:`1px solid ${input.trim() ? 'var(--ide-border-light)' : 'var(--ide-border)'}`, overflow:'hidden', transition:'border-color 0.15s' }}>
+        <div style={{ background:'var(--bg-elevated)', borderRadius:10, border:`1px solid ${input.trim() ? 'var(--ide-border-light)' : 'var(--ide-border)'}`, overflow:'hidden', transition:'border-color 0.15s', display:'flex', flexDirection:'column' }}>
           <textarea
             ref={textareaRef} value={input}
             onChange={e => setInput(e.target.value)}
@@ -634,8 +634,8 @@ setStreamingContent(chatContent || full);
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:12, color:'var(--ide-text)', lineHeight:1.55, minHeight:40, maxHeight:140, overflowY:'auto', letterSpacing:'-0.01em' }}
           />
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px' }}>
-            <div style={{ display:'flex', gap:4, alignItems:'center' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px', gap: 6 }}>
+            <div style={{ display:'flex', gap:4, alignItems:'center', flex: 1 }}>
               <input ref={fileInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value=''; }} />
               <button onClick={() => fileInputRef.current?.click()} title="Attach image"
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}
@@ -660,43 +660,7 @@ setStreamingContent(chatContent || full);
           </div>
         </div>
 
-        {/* Generate button — OUTSIDE input box, full width, clearly separate */}
-        <button
-          onClick={handleSend} data-send-button="true"
-          disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan}
-          style={{
-            width: '100%',
-            marginTop: 6,
-            padding: '9px',
-            borderRadius: 8,
-            border: 'none',
-            background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
-              ? 'var(--bg-overlay)'
-              : 'var(--accent)',
-            color: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
-              ? 'var(--ide-text3)'
-              : 'white',
-            cursor: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
-              ? 'not-allowed'
-              : 'pointer',
-            fontWeight: 700,
-            fontSize: 12,
-            fontFamily: 'var(--font-sans)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            transition: 'var(--t)',
-            letterSpacing: '-0.01em',
-          }}
-        >
-          {isGenerating ? (
-            <>
-              <div style={{ width:11, height:11, border:'1.5px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
-              Building...
-            </>
-          ) : planMode ? '◎ Create Plan' : '⚡ Generate'}
-        </button>
+
 
       </div>
     </div>
