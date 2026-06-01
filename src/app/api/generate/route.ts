@@ -47,6 +47,17 @@ async function loadPrebuilt(skeleton: string): Promise<Record<string, string> | 
   } catch { return null }
 }
 
+// Check if user is on free plan - add badge
+async function shouldShowBadge(userId?: string): Promise<boolean> {
+  if (!userId) return true;
+  try {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
+    return !data || data.plan === 'free'; // free users get badge
+  } catch { return true; }
+}
+
 const SYSTEM_PROMPT = `You are the world's best product engineer. You build complete, beautiful React apps.
 
 CRITICAL FILE STRUCTURE — always use exactly this:
@@ -55,6 +66,11 @@ src/App.tsx       — main component with routing/layout
 src/components/X.tsx — one component per file
 
 ENTRY POINT RULE: NEVER create src/index.js, src/main.tsx, or public/index.html — these exist already.
+
+WYBER BADGE: In src/App.tsx, add this tiny footer at the very bottom of the returned JSX (inside the outermost div, as the last child):
+<div style={{position:'fixed',bottom:12,right:12,zIndex:9999,opacity:0.6,fontSize:10,color:'#666',fontFamily:'sans-serif',letterSpacing:'0.05em',pointerEvents:'none'}}>
+  Built with <a href="https://wyberai.com" style={{color:'#0EA5E9',textDecoration:'none',pointerEvents:'all'}} target="_blank">Wyber AI</a>
+</div>
 
 OUTPUT FORMAT — only <file> blocks:
 <file path="src/index.css">complete css</file>

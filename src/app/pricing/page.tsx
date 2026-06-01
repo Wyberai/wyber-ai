@@ -13,8 +13,8 @@ const PLANS = [
     maxMonthly: 50,
     color: '#52525b',
     features: [
-      '10 monthly credits',
-      '5 daily credits (up to 50/month)',
+      '15 credits on signup',
+      '5 daily credits',
       'Unlimited projects',
       'Live preview & export',
       'Community support',
@@ -38,7 +38,7 @@ const PLANS = [
       'Credit rollovers',
       'On-demand credit top-ups',
       'GitHub sync',
-      'Custom domains',
+      'Custom subdomain (yourapp.wyberai.app)',
       'Remove Wyber badge',
       'Priority support',
     ],
@@ -59,9 +59,9 @@ const PLANS = [
     color: '#8b5cf6',
     features: [
       'Everything in Pro',
-      'SSO & team workspace',
+      'SSO & team workspace (Q3 2026)',
       'Role-based access',
-      'Audit logs',
+      'Audit logs (Q3 2026)',
       'Design templates',
       'Security center',
       'Personal projects',
@@ -374,7 +374,7 @@ export default function PricingPage() {
             { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on Wyber AI Discord.', cta: 'Join free', href: 'https://discord.gg/A5KsFv2P' },
             { icon: '🎓', title: 'Wyber for Students', desc: '50% off Pro with valid student email. Learning to build? Build for less.', cta: 'Apply now', href: 'mailto:students@wyberai.com' },
             { icon: '🏢', title: 'Wyber for Startups', desc: '3 months free Pro for pre-seed startups. Build your MVP without burning runway.', cta: 'Apply now', href: 'mailto:startups@wyberai.com' },
-            { icon: '🎁', title: 'Gift Credits', desc: 'Send credits to a builder you know. A great gift for founders and developers.', cta: 'Send a gift', href: 'mailto:hello@wyberai.com' },
+            { icon: '🎁', title: 'Gift Credits', desc: 'Send credits to a builder you know. Coming soon — join the waitlist.', cta: 'Notify me', href: 'mailto:hello@wyberai.com?subject=Gift Credits Waitlist' },
           ].map(p => (
             <div key={p.title} style={{ padding: 18, borderRadius: 12, background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ fontSize: 24, marginBottom: 10 }}>{p.icon}</div>
@@ -390,7 +390,7 @@ export default function PricingPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {[
             { q: 'Do credits expire?', a: 'Monthly credits reset on the 1st of each month with rollover included. Top-up credits never expire — they stay in your account indefinitely.' },
-            { q: 'What is a credit?', a: 'One credit roughly equals one AI generation. Simple edits cost 0.5 credits. Full apps cost 3–8 credits. We show you the estimate before you build so there are no surprises.' },
+            { q: 'What is a credit?', a: 'One credit = one AI generation (Standard). Premium mode = 2 credits per generation. Prebuilt templates from the gallery are free — 0 credits. We show the estimate before you build so there are no surprises.' },
             { q: 'Can I use top-ups on a free plan?', a: 'Yes. Unlike Lovable, top-ups are available to everyone — you don\'t need a subscription to buy extra credits.' },
             { q: 'How does daily credits work?', a: 'Pro and Business users get 8 bonus credits every day on top of their monthly allocation. Unused daily credits don\'t roll over, but your monthly credits do.' },
             { q: 'Can I switch plans?', a: 'Yes, upgrade or downgrade anytime. When upgrading, your credit balance is topped up immediately.' },

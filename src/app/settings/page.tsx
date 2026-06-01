@@ -28,7 +28,7 @@ const PLANS = [
   { id: 'free',    name: 'Free',    price: '$0',  credits: 50,    color: '#52525b', features: ['50 credits/month', '3 projects', 'Community support'] },
   { id: 'starter', name: 'Starter', price: '$15', credits: 500,   color: '#0EA5E9', features: ['500 credits/month', 'Unlimited projects', 'Email support', 'GitHub sync'] },
   { id: 'pro',     name: 'Pro',     price: '$39', credits: 2000,  color: '#8b5cf6', features: ['2000 credits/month', 'Everything in Starter', 'Priority support', 'Custom domains'] },
-  { id: 'teams',   name: 'Teams',   price: '$79', credits: 99999, color: '#f59e0b', features: ['Unlimited credits', 'Everything in Pro', 'Team members', 'SSO & audit logs'] },
+  { id: 'business', name: 'Business', price: '$49', credits: 500, color: '#f59e0b', features: ['500 monthly credits', 'Everything in Pro', 'Priority support', 'SSO & audit logs (Q3 2026)'] },
 ];
 
 export default function SettingsPage() {

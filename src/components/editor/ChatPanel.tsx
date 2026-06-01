@@ -183,17 +183,7 @@ export function ChatPanel({ projectId, userId }: Props) {
   }, [projectId]);
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
-    consumeCredit(); // Optimistic local update
-    // Deduct from Supabase (real persistence)
-    fetch('/api/credits/deduct', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: modelTier === 'premium' ? 2 : 1, reason: 'generation' }),
-    }).then(r => r.json()).then(data => {
-      if (data.credits !== undefined) {
-        useEditorStore.getState().setCredits(data.credits);
-      }
-    }).catch(() => {}); // fail silently — local state already updated
+    consumeCredit(); // Optimistic local update — will be corrected after generation
     addMessage({ id: uid(), role:'user', content: img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg, timestamp:Date.now(), status:'done' });
     const assistantId = uid();
     addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
@@ -240,11 +230,33 @@ export function ChatPanel({ projectId, userId }: Props) {
 
       if (!res.ok) throw new Error(await res.text());
 
-      // Read credit cost from headers
+      // Read source and cost from headers
+      const xSource = res.headers.get('X-Source'); // 'prebuilt' = 0 credits
       const creditsUsed = res.headers.get('X-Credits-Used');
       const modelUsed = res.headers.get('X-Model-Used');
       if (creditsUsed) setLastCreditCost(parseInt(creditsUsed));
       if (modelUsed) setLastModel(modelUsed);
+
+      // Deduct credits AFTER we know what was used
+      // Prebuilt apps cost 0 credits — refund the optimistic deduction
+      const isPrebuilt = xSource === 'prebuilt';
+      const creditAmount = isPrebuilt ? 0 : (modelTier === 'premium' ? 2 : 1);
+      
+      if (isPrebuilt) {
+        // Refund optimistic deduction — prebuilts are free
+        useEditorStore.getState().setCredits(credits + 1);
+      } else {
+        // Persist real deduction to Supabase
+        fetch('/api/credits/deduct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: creditAmount, reason: 'generation' }),
+        }).then(r => r.json()).then(data => {
+          if (data.credits !== undefined) {
+            useEditorStore.getState().setCredits(data.credits);
+          }
+        }).catch(() => {});
+      }
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
