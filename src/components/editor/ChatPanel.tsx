@@ -266,8 +266,27 @@ export function ChatPanel({ projectId, userId }: Props) {
         if (done) break;
         const chunk = decoder.decode(value, { stream:true });
         full += chunk;
-        appendStreamingContent(chunk);
-        setStreamingContent(full);
+        // Filter out file edit lines (✎ src/...) from chat display
+const displayChunk = chunk.split('\n')
+  .filter(line => !line.trim().startsWith('✎') && !line.trim().startsWith('📝'))
+  .join('\n')
+if (displayChunk) appendStreamingContent(displayChunk);
+        // Don't show raw file blocks in chat — show only the summary line
+// Strip file blocks and file edit lines — only show the summary
+const lines = full.split('\n');
+const filteredLines = lines.filter(l => {
+  const t = l.trim();
+  return !t.startsWith('<file ') && !t.startsWith('</file>') && !t.startsWith('✎') && !t.startsWith('📝');
+});
+// Also strip content inside file blocks
+let inFileBlock = false;
+const chatLines = filteredLines.filter(l => {
+  if (l.trim().startsWith('<file ')) { inFileBlock = true; return false; }
+  if (l.trim().startsWith('</file>')) { inFileBlock = false; return false; }
+  return !inFileBlock;
+});
+const chatContent = chatLines.join('\n').trim();
+setStreamingContent(chatContent || full);
       }
 
       const { files: newFiles, chatText } = parseGenerationOutput(full);

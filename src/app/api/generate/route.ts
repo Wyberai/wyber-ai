@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
       ]
     }
 
-    const model = useHaiku ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6'
+    const model = useHaiku ? 'claude-haiku-4-5-20251001' : modelTier === 'premium' ? 'claude-opus-4-7-20250514' : 'claude-sonnet-4-6'
     const maxTokens = useHaiku ? 6000 : modelTier === 'fast' ? 8000 : 16000
 
     const stream = await client.messages.stream({
