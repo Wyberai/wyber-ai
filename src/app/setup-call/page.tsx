@@ -17,7 +17,7 @@ const STEPS = [
 
 const FAQ = [
   { q:'Is the $99 refundable?',             a:'Yes — fully refunded if we decide on the call that your project isn\'t a fit.' },
-  { q:'Is it credited toward the build?',   a:'Yes. If you proceed, the $99 is deducted from your build quote.' },
+  { q:'Is it credited toward the build?',   a:'Yes. If you proceed with a build, the $99 consultation fee is applied toward your total — you only pay the remaining balance.' },
   { q:'What can be built in a session?',    a:'Anything Wyber AI can generate — SaaS dashboards, landing pages, booking systems, CRMs, e-commerce stores, internal tools.' },
   { q:'Do I need a Wyber AI account?',      a:'No. We build on our end and hand over the code via GitHub.' },
   { q:'Can I request a specific stack?',    a:'Our default is Next.js + Supabase + Vercel. Other stacks on request — mention it when booking.' },
