@@ -304,6 +304,13 @@ export default function HomePage() {
           <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
         </div>
         <div style={{ display: 'flex', gap: 20 }}>
+          {/* Product Hunt badge */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <a href="https://www.producthunt.com/products/wyber-ai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyber-ai" target="_blank" rel="noopener noreferrer">
+              <img alt="Wyber AI on Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1160357&theme=dark&t=1780291241806" />
+            </a>
+          </div>
+
           {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Blog', '/blog'], ['Discord', 'https://discord.gg/A5KsFv2P']].map(([l, h]) => (
             <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
