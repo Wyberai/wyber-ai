@@ -266,6 +266,21 @@ export default function HomePage() {
         </div>
       </section>
 
+
+      {/* Done for you strip */}
+      <section style={{ padding: 'clamp(32px,4vw,48px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 32px', borderRadius: 16, background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Done for you</div>
+            <div style={{ fontSize: 'clamp(16px,2.5vw,20px)', fontWeight: 800, marginBottom: 6, letterSpacing: '-0.02em' }}>Have an idea but don't want to build it yourself?</div>
+            <div style={{ fontSize: 13, color: '#71717a' }}>Book a $99 consultation — we scope, quote, and build your app. Simple in 24hrs, Medium in 3 days, Complex in 1 week.</div>
+          </div>
+          <a href="/setup-call" style={{ padding: '11px 22px', borderRadius: 9, background: '#8b5cf6', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            Book a session →
+          </a>
+        </div>
+      </section>
+
       {/* CTA */}
       <section style={{ padding: 'clamp(80px,10vw,140px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />

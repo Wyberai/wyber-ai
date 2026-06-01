@@ -318,11 +318,60 @@ export default function PricingPage() {
           </div>
         </div>
 
+
+        {/* Done For You */}
+        <div style={{ marginBottom: 60 }}>
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', fontSize: 11, fontWeight: 700, color: '#8b5cf6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>Done for you</div>
+            <h2 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>Have an idea? We'll build it for you.</h2>
+            <p style={{ fontSize: 14, color: '#71717a', maxWidth: 480, margin: '0 auto' }}>Start with a 60-minute consultation. We scope your app, agree on a price, then build and deliver it — no coding required from you.</p>
+          </div>
+
+          {/* Consultation card */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(14,165,233,0.08))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 14, padding: '20px 24px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Step 1 — Start here</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>60-Minute Build Consultation</div>
+              <div style={{ fontSize: 13, color: '#71717a' }}>We scope your app, agree on complexity tier, give you a firm quote and delivery date.</div>
+              <div style={{ fontSize: 12, color: '#71717a', marginTop: 4 }}>💳 Fee credited toward your build if you proceed</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 36, fontWeight: 800, color: '#8b5cf6', lineHeight: 1 }}>$99</div>
+              <Link href="/setup-call" style={{ display: 'inline-block', marginTop: 10, padding: '9px 20px', borderRadius: 9, background: '#8b5cf6', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Book a session →</Link>
+            </div>
+          </div>
+
+          {/* Build tiers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+            {[
+              { icon: '⚡', name: 'Simple Build', price: '$199', delivery: '24 hours', color: '#22c55e', examples: 'Landing pages, portfolios, tools', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4nveFV1qZ31hP5cR2d' },
+              { icon: '🔧', name: 'Medium Build', price: '$399', delivery: '3 working days', color: '#0EA5E9', examples: 'SaaS MVPs, booking systems, CRMs', badge: 'Most common', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4o4Slt7VZfJr1AS2mb' },
+              { icon: '🏗️', name: 'Complex Build', price: '$799', delivery: '1 week', color: '#8b5cf6', examples: 'Full SaaS with payments, multi-role apps', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4oEF3oofJnrbHmuuDO' },
+            ].map(tier => (
+              <div key={tier.name} style={{ background: '#111113', border: `1px solid ${tier.color}30`, borderRadius: 12, padding: 18, borderTop: `3px solid ${tier.color}`, position: 'relative' }}>
+                {tier.badge && <div style={{ position: 'absolute', top: -10, right: 14, padding: '2px 9px', borderRadius: 20, background: tier.color, color: '#fff', fontSize: 10, fontWeight: 700 }}>{tier.badge}</div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 20 }}>{tier.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: tier.color }}>{tier.name}</div>
+                    <div style={{ fontSize: 11, color: '#71717a' }}>⏱ {tier.delivery}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>{tier.price}</div>
+                <div style={{ fontSize: 12, color: '#71717a', marginBottom: 14, lineHeight: 1.5 }}>{tier.examples}</div>
+                <Link href="/setup-call" style={{ display: 'block', padding: '8px', borderRadius: 8, border: `1px solid ${tier.color}`, color: tier.color, fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>Book consultation first →</Link>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 14 }}>
+            <Link href="/complexity-guide" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>What counts as Simple, Medium, or Complex? →</Link>
+          </div>
+        </div>
+
         {/* Special programs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 60 }}>
           {[
             { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on Wyber AI Discord.', cta: 'Join free', href: 'https://discord.gg/A5KsFv2P' },
-            { icon: '📞', title: 'Need help building?', desc: 'Book a 1-on-1 session. We build your app end-to-end on a live call — you watch, learn, and walk away with a working product.', cta: 'Book a session →', href: '/setup-call' },
             { icon: '🎓', title: 'Wyber for Students', desc: '50% off Pro with valid student email. Learning to build? Build for less.', cta: 'Apply now', href: 'mailto:students@wyberai.com' },
             { icon: '🏢', title: 'Wyber for Startups', desc: '3 months free Pro for pre-seed startups. Build your MVP without burning runway.', cta: 'Apply now', href: 'mailto:startups@wyberai.com' },
             { icon: '🎁', title: 'Gift Credits', desc: 'Send credits to a builder you know. A great gift for founders and developers.', cta: 'Send a gift', href: 'mailto:hello@wyberai.com' },
