@@ -5,7 +5,7 @@ import { TopBar } from './TopBar';
 import { FileTree } from './FileTree';
 import { TabBar } from './TabBar';
 import { CodeEditor } from './CodeEditor';
-import { PreviewPanel } from './PreviewPanel';
+import WyberPreview from './WyberPreview';
 import { RightPanel } from './RightPanel';
 import { ResizableDivider } from './ResizableDivider';
 import { Project } from '@/lib/supabase/types';
@@ -20,6 +20,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
     setProject, setFiles, setFramework,
+    files, isGenerating,
   } = useEditorStore();
 
   const [showCode, setShowCode] = useState(false);
@@ -71,7 +72,11 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
             </div>
           )}
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-            <PreviewPanel />
+            <WyberPreview
+              files={files}
+              projectId={initialProject?.id || 'preview'}
+              isGenerating={isGenerating}
+            />
           </div>
         </div>
 
