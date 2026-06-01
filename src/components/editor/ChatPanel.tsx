@@ -1,4 +1,5 @@
 'use client'
+import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
 import { VoiceButton } from './VoiceButton';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback } from 'react';
@@ -116,6 +117,39 @@ export function ChatPanel({ projectId, userId }: Props) {
   }, [hasInit, framework, files, setFiles, addMessage]);
 
   useEffect(() => { initProject(); }, [initProject]);
+
+  // Auto-trigger generation if a prompt was passed from dashboard/homepage
+  useEffect(() => {
+    if (!projectId || !hasInit) return;
+    const key = `wyber_prompt_${projectId}`;
+    const savedPrompt = sessionStorage.getItem(key);
+    if (!savedPrompt) return;
+    sessionStorage.removeItem(key); // clear so it doesn't re-trigger
+    // Small delay to ensure files/state are ready
+    const timer = setTimeout(() => {
+      setInput(savedPrompt);
+      // Use a ref-based approach to trigger send
+      const event = new CustomEvent('wyber_auto_generate', { detail: { prompt: savedPrompt } });
+      window.dispatchEvent(event);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [projectId, hasInit]);
+
+  // Listen for auto-generate event
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      const { prompt } = e.detail;
+      if (!prompt) return;
+      setInput(prompt);
+      // Trigger send after state update
+      setTimeout(() => {
+        const btn = document.querySelector('[data-send-button]') as HTMLButtonElement;
+        if (btn) btn.click();
+      }, 100);
+    };
+    window.addEventListener('wyber_auto_generate', handler as EventListener);
+    return () => window.removeEventListener('wyber_auto_generate', handler as EventListener);
+  }, []);
 
   const handleImageFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return;
@@ -558,7 +592,7 @@ export function ChatPanel({ projectId, userId }: Props) {
               </button>
             </div>
             <button
-              onClick={handleSend}
+              onClick={handleSend} data-send-button="true"
               disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan}
               style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:7, border:'none', background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--bg-overlay)' : 'var(--accent)', color: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--ide-text3)' : 'white', cursor: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'not-allowed' : 'pointer', fontWeight:700, fontSize:11, transition:'var(--t)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em' }}
             >

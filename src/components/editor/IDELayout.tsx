@@ -62,20 +62,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
 
-        {/* CHAT — left side, fixed width */}
-        <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--ide-border)' }}>
-          <RightPanel
-            projectId={initialProject?.id}
-            userId={initialProfile?.id}
-            projectName={initialProject?.name}
-            githubRepo={initialProject?.github_repo}
-            lastCommitSha={initialProject?.last_commit_sha}
-          />
-        </div>
-
-        <ResizableDivider onResize={resizeRight} />
-
-        {/* PREVIEW — right side, takes all remaining space */}
+        {/* PREVIEW — left side, takes all remaining space */}
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {showCode && (
             <div style={{ height: '40%', borderBottom: '1px solid var(--ide-border)', display: 'flex', flexDirection: 'column' }}>
@@ -86,6 +73,19 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <PreviewPanel />
           </div>
+        </div>
+
+        <ResizableDivider onResize={resizeRight} />
+
+        {/* CHAT — right side, fixed width */}
+        <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--ide-border)' }}>
+          <RightPanel
+            projectId={initialProject?.id}
+            userId={initialProfile?.id}
+            projectName={initialProject?.name}
+            githubRepo={initialProject?.github_repo}
+            lastCommitSha={initialProject?.last_commit_sha}
+          />
         </div>
       </div>
     </div>
