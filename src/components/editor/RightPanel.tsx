@@ -32,7 +32,7 @@ const TAB_ICONS: Record<string, JSX.Element> = {
 
 const TABS: { id: Tab; label: string; desc: string }[] = [
   { id: 'chat',       label: 'Chat',      desc: 'Build & edit with AI' },
-  { id: 'templates',  label: 'Templates', desc: '80+ instant templates' },
+  { id: 'templates',  label: 'Templates', desc: '130+ instant templates' },
   { id: 'database',   label: 'Database',  desc: 'Add Supabase backend' },
   { id: 'themes',     label: 'Themes',    desc: 'Colors & appearance' },
   { id: 'connectors', label: 'Connect',   desc: 'Stripe, APIs & more' },
