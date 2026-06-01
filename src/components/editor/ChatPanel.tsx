@@ -657,10 +657,33 @@ setStreamingContent(chatContent || full);
               </button>
             </div>
 
+            {/* Send button — right side, inside toolbar row */}
+            <button
+              onClick={handleSend}
+              data-send-button="true"
+              disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan}
+              style={{
+                width: 30, height: 30,
+                borderRadius: 8,
+                border: 'none',
+                flexShrink: 0,
+                background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
+                  ? 'var(--bg-overlay)' : 'var(--accent)',
+                color: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
+                  ? 'var(--ide-text3)' : 'white',
+                cursor: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
+                  ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.15s',
+              }}
+            >
+              {isGenerating
+                ? <div style={{ width:11, height:11, border:'1.5px solid rgba(255,255,255,0.3)', borderTopColor:'white', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+                : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              }
+            </button>
           </div>
         </div>
-
-
 
       </div>
     </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from '@/lib/theme';
-import { SupportChat } from '@/components/shared/SupportChat'
 import { CookieBanner } from '@/components/shared/CookieBanner';
 
 export const metadata: Metadata = {
@@ -73,7 +72,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </ThemeProvider>
         <CookieBanner />
-        <SupportChat />
 </body>
     </html>
   );

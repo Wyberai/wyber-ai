@@ -245,50 +245,7 @@ export function PreviewPanel() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
 
-      {/* Toolbar */}
-      <div style={{ height: 40, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px', borderBottom: '1px solid var(--ide-border)', background: 'var(--bg-surface)' }}>
-        <div style={{ display: 'flex', gap: 1, background: 'var(--bg-base)', padding: 2, borderRadius: 6, border: '1px solid var(--ide-border)' }}>
-          {(['preview', 'console'] as Mode[]).map(m => (
-            <button key={m} onClick={() => setMode(m)}
-              style={{ padding: '3px 9px', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 500, fontFamily: 'var(--font-sans)', background: mode === m ? 'var(--bg-elevated)' : 'transparent', color: mode === m ? 'var(--ide-text)' : 'var(--ide-text3)', transition: 'all 0.15s' }}>
-              {m === 'preview' ? '⬡ Preview' : '⌘ Console'}
-            </button>
-          ))}
-        </div>
 
-        {mode === 'preview' && (
-          <div style={{ display: 'flex', gap: 1, background: 'var(--bg-base)', padding: 2, borderRadius: 6, border: '1px solid var(--ide-border)' }}>
-            {(Object.keys(VIEWPORTS) as ViewportSize[]).map(v => (
-              <button key={v} onClick={() => setViewport(v)}
-                style={{ padding: '3px 7px', borderRadius: 4, border: 'none', cursor: 'pointer', fontSize: 11, background: viewport === v ? 'var(--bg-elevated)' : 'transparent', color: viewport === v ? 'var(--ide-text)' : 'var(--ide-text3)' }}>
-                {VIEWPORTS[v].icon}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-base)', borderRadius: 7, padding: '0 10px', border: '1px solid var(--ide-border)', height: 26, minWidth: 0 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: hasFiles ? '#22C55E' : 'var(--ide-text3)', flexShrink: 0 }} />
-          <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontFamily: 'var(--font-mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {hasFiles ? `${Object.keys(files).length} files · ${template} · Sandpack` : 'Generate an app to preview'}
-          </span>
-        </div>
-
-        {hasFiles && (
-          <button onClick={() => setSandpackKey(k => k + 1)}
-            style={{ padding: '4px 8px', borderRadius: 5, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', fontSize: 11, cursor: 'pointer' }} title="Refresh preview">
-            ↺
-          </button>
-        )}
-        {hasGeneratedFiles && (
-          <button onClick={() => setVisualEdit(v => !v)}
-            title="Visual Edit — click any element to edit it"
-            style={{ padding: '4px 10px', borderRadius: 5, border: `1px solid ${visualEdit ? '#0EA5E9' : 'var(--ide-border)'}`, background: visualEdit ? 'rgba(14,165,233,0.1)' : 'transparent', color: visualEdit ? '#0EA5E9' : 'var(--ide-text3)', fontSize: 11, cursor: 'pointer', fontWeight: visualEdit ? 700 : 400, display: 'flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-sans)' }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            {visualEdit ? 'Exit Edit' : 'Visual Edit'}
-          </button>
-        )}
-      </div>
 
       {/* Visual Edit overlay */}
       {visualEdit && <div style={{ position: 'relative' }}><VisualEdit iframeRef={iframeRef} enabled={visualEdit} onDisable={() => setVisualEdit(false)} /></div>}
