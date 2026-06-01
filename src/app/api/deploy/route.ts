@@ -156,7 +156,12 @@ export async function POST(req: NextRequest) {
       ? { framework: null }
       : { framework: 'vite', buildCommand: 'npm run build', outputDirectory: 'dist', installCommand: 'npm install' };
 
-    const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
+    const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
+    const deployUrl = VERCEL_TEAM_ID
+      ? `https://api.vercel.com/v13/deployments?teamId=${VERCEL_TEAM_ID}`
+      : 'https://api.vercel.com/v13/deployments';
+
+    const deployRes = await fetch(deployUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${VERCEL_TOKEN}`,
@@ -167,6 +172,7 @@ export async function POST(req: NextRequest) {
         files: vercelFiles,
         projectSettings: frameworkConfig,
         target: 'production',
+        ...(VERCEL_TEAM_ID ? { teamId: VERCEL_TEAM_ID } : {}),
       }),
     });
 
