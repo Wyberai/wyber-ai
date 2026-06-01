@@ -152,6 +152,9 @@ CODING RULES:
 - Max 7 files — combine smaller components if needed
 - Mobile responsive, loading states, empty states
 
+PROJECT NAMING: The first line of your response before any files should be a project name in 1-2 words only.
+Format: "PROJECT_NAME: CRM Tool" or "PROJECT_NAME: Leave Manager" — always max 2 words, always relevant.
+
 WYBER BADGE (last child in App.tsx outermost div):
 <div style={{position:'fixed',bottom:12,right:12,zIndex:9999,opacity:0.5,fontSize:10,color:'#666',fontFamily:'sans-serif',pointerEvents:'none'}}>Built with <a href="https://wyberai.com" style={{color:'#0EA5E9',textDecoration:'none',pointerEvents:'all'}} target="_blank">Wyber AI</a></div>
 

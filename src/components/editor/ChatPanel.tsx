@@ -10,15 +10,39 @@ import { PlanMode } from './PlanMode';
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
 function cleanMessage(text: string): string {
-  // Strip raw file blocks — never show code in chat
-  return text
-    .replace(/<file[^>]*>[\s\S]*?<\/file>/g, '')
-    .replace(/```[\s\S]*?```/g, '')
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0 && !l.startsWith('<file') && !l.startsWith('import ') && !l.startsWith('export ') && !l.startsWith('const ') && !l.startsWith('//'))
-    .join('\n')
-    .trim();
+  // Strip all code — only show conversational text in chat
+  let t = text;
+  // Remove file blocks
+  t = t.replace(/<file[^\s>]*[^>]*>[\s\S]*?<\/file>/gi, '');
+  // Remove code fences
+  t = t.replace(/```[\s\S]*?```/g, '');
+  // Remove inline code that looks like code paths
+  t = t.replace(/`src\/[^`]+`/g, '');
+  // Split and filter lines
+  const lines = t.split('\n').map(l => l.trim()).filter(l => {
+    if (!l) return false;
+    // Filter out code-like lines
+    if (l.startsWith('✎')) return false;
+    if (l.startsWith('<file')) return false;
+    if (l.startsWith('import ')) return false;
+    if (l.startsWith('export ')) return false;
+    if (l.startsWith('export default')) return false;
+    if (l.startsWith('const ') && l.includes(': ') && l.includes('{')) return false;
+    if (l.startsWith('interface ')) return false;
+    if (l.startsWith('type ') && l.includes('=')) return false;
+    if (l.startsWith('function ') && l.includes('{')) return false;
+    if (l.startsWith('return (') || l === 'return (') return false;
+    if (l.startsWith('//')) return false;
+    if (l === '{' || l === '}' || l === '};' || l === '});') return false;
+    // Filter out data object lines (TypeScript object literals)
+    if (l.startsWith('{ id:') || l.startsWith('id:') || l.startsWith('name:')) return false;
+    if (l.match(/^[a-z]+: ['\"\[{]/)) return false; // property: value lines
+    return true;
+  });
+  // Keep only the summary line (usually last non-empty line after "Built:")
+  const builtLine = lines.find(l => l.startsWith('Built:'));
+  if (builtLine) return builtLine;
+  return lines.join('\n').trim();
 }
 
 function renderMessage(text: string) {
@@ -26,8 +50,7 @@ function renderMessage(text: string) {
   const parts = cleaned.split(/(```edited:[^`]+```|\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((part, i) => {
     if (part.startsWith('```edited:')) {
-      const path = part.replace('```edited:', '').replace('```', '').trim();
-      return <span key={i} style={{ display:'inline-flex', alignItems:'center', gap:4, background:'var(--accent-glow)', border:'1px solid var(--accent-dim)', borderRadius:4, padding:'1px 7px', fontSize:11, color:'var(--accent)', margin:'0 2px', fontFamily:'monospace' }}>✎ {path}</span>;
+      return null; // Never show file edit badges in chat
     }
     if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2,-2)}</strong>;
     if (part.startsWith('`') && part.endsWith('`')) return <code key={i} style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }}>{part.slice(1,-1)}</code>;
@@ -266,11 +289,22 @@ export function ChatPanel({ projectId, userId }: Props) {
         if (done) break;
         const chunk = decoder.decode(value, { stream:true });
         full += chunk;
-        // Filter out file edit lines (✎ src/...) from chat display
+        // During streaming - only show non-code lines
 const displayChunk = chunk.split('\n')
-  .filter(line => !line.trim().startsWith('✎') && !line.trim().startsWith('📝'))
-  .join('\n')
-if (displayChunk) appendStreamingContent(displayChunk);
+  .filter(line => {
+    const l = line.trim();
+    return l.length > 0
+      && !l.startsWith('✎')
+      && !l.startsWith('<file')
+      && !l.startsWith('import ')
+      && !l.startsWith('export ')
+      && !l.startsWith('const ')
+      && !l.startsWith('interface ')
+      && !l.startsWith('{ id:')
+      && !/^[a-zA-Z_]+:\s+['"\[{]/.test(l);
+  })
+  .join('\n');
+if (displayChunk.trim()) appendStreamingContent(displayChunk);
         // Don't show raw file blocks in chat — show only the summary line
 // Strip file blocks and file edit lines — only show the summary
 const lines = full.split('\n');
@@ -622,17 +656,47 @@ setStreamingContent(chatContent || full);
                 {MODEL_LABELS[modelTier].label} ▾
               </button>
             </div>
-            <button
-              onClick={handleSend} data-send-button="true"
-              disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan}
-              style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:7, border:'none', background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--bg-overlay)' : 'var(--accent)', color: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--ide-text3)' : 'white', cursor: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'not-allowed' : 'pointer', fontWeight:700, fontSize:11, transition:'var(--t)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em' }}
-            >
-              {isGenerating ? (
-                <><div style={{ width:10, height:10, border:'1.5px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />Building</>
-              ) : planMode ? '◎ Plan' : '⚡ Generate'}
-            </button>
+
           </div>
         </div>
+
+        {/* Generate button — OUTSIDE input box, full width, clearly separate */}
+        <button
+          onClick={handleSend} data-send-button="true"
+          disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan}
+          style={{
+            width: '100%',
+            marginTop: 6,
+            padding: '9px',
+            borderRadius: 8,
+            border: 'none',
+            background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
+              ? 'var(--bg-overlay)'
+              : 'var(--accent)',
+            color: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
+              ? 'var(--ide-text3)'
+              : 'white',
+            cursor: (!input.trim() && !attachedImage) || isGenerating || credits <= 0
+              ? 'not-allowed'
+              : 'pointer',
+            fontWeight: 700,
+            fontSize: 12,
+            fontFamily: 'var(--font-sans)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            transition: 'var(--t)',
+            letterSpacing: '-0.01em',
+          }}
+        >
+          {isGenerating ? (
+            <>
+              <div style={{ width:11, height:11, border:'1.5px solid rgba(255,255,255,0.3)', borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+              Building...
+            </>
+          ) : planMode ? '◎ Create Plan' : '⚡ Generate'}
+        </button>
 
       </div>
     </div>

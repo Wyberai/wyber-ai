@@ -1,17 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+import { createClient as createAuthClient } from '@/lib/supabase/server'
+
+// Direct admin client - works in all contexts
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    // Auth via cookie-based client
+    const authClient = await createAuthClient()
+    const { data: { user } } = await authClient.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { amount = 1, reason = 'generation' } = await req.json()
+    const body = await req.json()
+    const amount = body.amount ?? 1
+    const reason = body.reason ?? 'generation'
 
-    const admin = await createAdminClient()
+    const admin = getAdmin()
 
-    // Fetch current credits
     const { data: profile, error: fetchErr } = await admin
       .from('profiles')
       .select('credits, plan')
@@ -26,34 +38,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Insufficient credits', credits: profile.credits }, { status: 402 })
     }
 
-    // Atomically deduct credits
+    const newCredits = profile.credits - amount
+
     const { data: updated, error: updateErr } = await admin
       .from('profiles')
-      .update({ credits: profile.credits - amount })
+      .update({ credits: newCredits, updated_at: new Date().toISOString() })
       .eq('id', user.id)
-      .eq('credits', profile.credits) // optimistic lock — prevents double spend
       .select('credits')
       .single()
 
     if (updateErr || !updated) {
-      return NextResponse.json({ error: 'Credit deduction failed — try again' }, { status: 500 })
+      return NextResponse.json({ error: 'Deduction failed' }, { status: 500 })
     }
 
-    // Log usage
-    await admin.from('credit_usage').insert({
+    // Fire and forget usage log
+    admin.from('credit_usage').insert({
       user_id: user.id,
       amount,
       reason,
       credits_before: profile.credits,
       credits_after: updated.credits,
-      created_at: new Date().toISOString(),
-    }).then(() => {}) // fire and forget
+    }).then(() => {}).catch(() => {})
 
-    return NextResponse.json({
-      success: true,
-      credits: updated.credits,
-      deducted: amount,
-    })
+    return NextResponse.json({ success: true, credits: updated.credits, deducted: amount })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
@@ -61,21 +68,18 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const authClient = await createAuthClient()
+    const { data: { user } } = await authClient.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const admin = await createAdminClient()
+    const admin = getAdmin()
     const { data: profile } = await admin
       .from('profiles')
       .select('credits, plan')
       .eq('id', user.id)
       .single()
 
-    return NextResponse.json({
-      credits: profile?.credits ?? 0,
-      plan: profile?.plan ?? 'free',
-    })
+    return NextResponse.json({ credits: profile?.credits ?? 0, plan: profile?.plan ?? 'free' })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

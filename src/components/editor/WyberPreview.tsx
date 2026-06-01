@@ -50,6 +50,12 @@ export default function WyberPreview({
     setStatus('compiling')
     setError(null)
 
+    // Safety timeout — never show spinner >20s
+    const timeout = setTimeout(() => {
+      setStatus('error')
+      setError('Compilation timeout — click ↺ to retry')
+    }, 20000)
+
     try {
       const result = await compileAndPreview(fileMap, projectId)
 
@@ -70,6 +76,7 @@ export default function WyberPreview({
 
       prevBlobURL.current = result.url
       setPreviewURL(result.url)
+      clearTimeout(timeout)
       setStatus('ready')
 
       if (result.error) {
@@ -82,6 +89,7 @@ export default function WyberPreview({
         triggerHMR(projectId)
       }
     } catch (err) {
+      clearTimeout(timeout)
       const msg = String(err)
       setStatus('error')
       setError(msg)

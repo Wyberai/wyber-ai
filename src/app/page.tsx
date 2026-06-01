@@ -37,7 +37,7 @@ const FEATURES = [
   },
   {
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
-    title: '80+ templates',
+    title: '130+ templates',
     desc: 'Start from 130+ professionally designed templates — dashboards, CRMs, e-commerce, healthcare, finance. Instant load, fully editable.',
   },
   {
@@ -48,7 +48,7 @@ const FEATURES = [
 ]
 
 const STATS = [
-  { value: '80+', label: 'Templates' },
+  { value: '130+', label: 'Templates' },
   { value: '30s', label: 'Avg generation' },
   { value: '0', label: 'Setup required' },
   { value: '∞', label: 'Projects on paid' },

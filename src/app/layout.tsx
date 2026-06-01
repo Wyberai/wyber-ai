@@ -5,6 +5,12 @@ import { SupportChat } from '@/components/shared/SupportChat'
 import { CookieBanner } from '@/components/shared/CookieBanner';
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icon.svg',
+  },
   metadataBase: new URL('https://wyberai.com'),
   title: { default: 'Wyber AI — Build Apps with AI in 30 Seconds', template: '%s | Wyber AI' },
   description: 'Turn any idea into a live app in under a minute. 50% more credits than Lovable at 75% of the price. GitHub sync, Vercel deploy, Supabase database. Start free.',
