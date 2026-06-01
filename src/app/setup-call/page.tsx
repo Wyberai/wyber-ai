@@ -3,14 +3,6 @@ import Link from 'next/link'
 import { useEffect } from 'react'
 
 export default function SetupCallPage() {
-  useEffect(() => {
-    const script = document.createElement('script')
-    script.src = 'https://assets.calendly.com/assets/external/widget.js'
-    script.async = true
-    document.body.appendChild(script)
-    return () => { if(document.body.contains(script)) document.body.removeChild(script) }
-  }, [])
-
   const s = { bg:'#09090b',card:'#111113',border:'rgba(255,255,255,0.08)',text:'#fafafa',muted:'#71717a',sky:'#0EA5E9' }
 
   const steps = [
@@ -119,7 +111,7 @@ export default function SetupCallPage() {
           <div style={{borderRadius:16,overflow:'hidden',border:`1px solid ${s.border}`}}>
             <div
               className="calendly-inline-widget"
-              data-url="https://calendly.com/hello-wyberai?hide_gdpr_banner=1&background_color=111113&text_color=fafafa&primary_color=0EA5E9"
+              data-url="https://cal.com/wyberai/wyber-ai-build-consultation?embed=true&theme=dark"
               style={{minWidth:'320px',height:'700px'}}
             />
           </div>
