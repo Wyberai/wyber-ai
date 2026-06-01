@@ -360,9 +360,10 @@ export function PreviewPanel() {
                 }}
               >
                 <SandpackPreview
-                  style={{ height: '100%', width: '100%', minHeight: '100%' }}
+                  style={{ height: '100%', width: '100%', minHeight: 0, flex: 1 }}
                   showOpenInCodeSandbox={false}
                   showRefreshButton={true}
+                  showNavigator={false}
                 />
               </SandpackProvider>
             </Suspense>
@@ -372,10 +373,12 @@ export function PreviewPanel() {
 
       <style>{`
         @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-        .sp-wrapper { height: 100% !important; display: flex !important; flex-direction: column !important; }
-        .sp-preview-container { flex: 1 !important; height: 100% !important; display: flex !important; flex-direction: column !important; }
-        .sp-preview-iframe { flex: 1 !important; height: 100% !important; width: 100% !important; }
-        .sp-overlay { height: 100% !important; }
+        html,body { height:100% }
+        .sp-wrapper,.sp-layout,.sp-stack { height:100% !important; min-height:0 !important; flex:1 !important; border:none !important; display:flex !important; flex-direction:column !important; }
+        .sp-preview-container { flex:1 !important; height:100% !important; min-height:0 !important; display:flex !important; flex-direction:column !important; overflow:hidden !important; }
+        .sp-preview-iframe { flex:1 !important; height:100% !important; min-height:0 !important; width:100% !important; border:none !important; }
+        .sp-overlay,.sp-cube-wrapper { height:100% !important; min-height:0 !important; }
+        .sp-preview-actions { display:none !important; }
       `}</style>
     </div>
   );
