@@ -595,7 +595,7 @@ setStreamingContent(chatContent || full);
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={credits <= 0 ? 'No credits — upgrade to continue' : planMode ? 'Describe what to build (Plan Mode on)...' : 'Describe what to build...'}
+            placeholder={credits <= 0 ? 'No credits — upgrade to continue' : planMode ? 'Plan mode active — describe what to build...' : 'Ask anything or describe what you want to build...'}
             disabled={isGenerating || credits <= 0 || !!pendingPlan}
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:12, color:'var(--ide-text)', lineHeight:1.55, minHeight:40, maxHeight:140, overflowY:'auto', letterSpacing:'-0.01em' }}
@@ -633,9 +633,7 @@ setStreamingContent(chatContent || full);
             </button>
           </div>
         </div>
-        <div style={{ display:'flex', justifyContent:'flex-end', marginTop:4 }}>
-          <span style={{ fontSize:9, color:'var(--ide-text3)', letterSpacing:'0.02em' }}>↵ SEND · ⇧↵ NEW LINE</span>
-        </div>
+
       </div>
     </div>
   );
