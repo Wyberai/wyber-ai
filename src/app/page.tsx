@@ -18,7 +18,7 @@ const FEATURES = [
   {
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="1.8" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
     title: 'Instant generation',
-    desc: 'Describe your app in plain English. Get production-ready React code in under 30 seconds. No setup, no configuration.',
+    desc: 'Describe your app in plain English. Wyber AI asks the right questions, then builds production-ready React code — no setup, no configuration.',
   },
   {
     icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10M12 2a15.3 15.3 0 00-4 10 15.3 15.3 0 004 10M2 12h20"/></svg>,

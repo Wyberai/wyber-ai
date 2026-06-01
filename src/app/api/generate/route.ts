@@ -2,84 +2,138 @@ import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// Inlined intent detection — no external imports needed
-const SKELETONS: Record<string, { files: Record<string, string> | null; accent: string }> = {}
-
-function detectSkeleton(prompt: string): string | null {
-  const p = prompt.toLowerCase()
-  const patterns: Array<[string[], string]> = [
-    [['crm','sales','leads','pipeline','contacts','deals','prospects'], 'crm'],
-    [['kanban','board','sprint','agile','tasks','trello','jira','linear','project management'], 'kanban'],
-    [['shop','store','ecommerce','cart','checkout','marketplace','catalog','retail'], 'ecommerce'],
-    [['portfolio','personal site','resume','cv','showcase','developer profile'], 'portfolio'],
-    [['invoice','billing','receipt','quote','estimate'], 'invoice'],
-    [['chat','messaging','messenger','inbox','conversation'], 'chat'],
-    [['hr','human resources','employees','hiring','recruitment','payroll','workforce'], 'hr-dashboard'],
-    [['real estate','property','listings','homes','apartments','realty'], 'real-estate'],
-    [['restaurant','food','menu','kitchen','dining','cafe','bistro','pos'], 'restaurant'],
-    [['bank','banking','fintech','wallet','transactions','accounts','investment','finance','budget'], 'banking'],
-    [['landing','homepage','hero','startup','saas page','waitlist','coming soon'], 'saas-landing'],
-    [['dashboard','admin','analytics','metrics','kpi','reporting','monitor'], 'admin-dashboard'],
-  ]
-  for (const [keywords, skeleton] of patterns) {
-    if (keywords.some(k => p.includes(k))) return skeleton
-  }
-  return null
+const MODELS = {
+  fast:    'claude-haiku-4-5-20251001',
+  default: 'claude-sonnet-4-6',
+  premium: 'claude-opus-4-7-20250514',
 }
 
-function getAccent(skeleton: string): string {
-  const map: Record<string, string> = {
-    'crm': '#0EA5E9', 'kanban': '#0EA5E9', 'ecommerce': '#f97316',
-    'portfolio': '#0EA5E9', 'invoice': '#0EA5E9', 'chat': '#8b5cf6',
-    'hr-dashboard': '#8b5cf6', 'real-estate': '#f59e0b', 'restaurant': '#f97316',
-    'banking': '#10b981', 'saas-landing': '#0EA5E9', 'admin-dashboard': '#0EA5E9',
-  }
-  return map[skeleton] ?? '#0EA5E9'
-}
+const WYBER_FEATURES = `
+ABOUT WYBER AI — your knowledge base:
 
-async function loadPrebuilt(skeleton: string): Promise<Record<string, string> | null> {
-  try {
-    const mod = await import(`@/lib/templates/prebuilt/${skeleton}`)
-    const key = Object.keys(mod)[0]
-    return mod[key] ?? null
-  } catch { return null }
-}
+BUILDER:
+- AI chat that asks 5 questions before building — understands the idea fully first
+- Generates complete React apps, all files and components in one go
+- Live preview that updates in real-time as code generates
+- Visual click-to-edit — click any element in the preview to change it directly
+- Plan Mode — shows a step-by-step build plan before generating; user approves it first
+- Screenshot-to-app — paste a screenshot and Wyber AI clones the UI
 
-// Check if user is on free plan - add badge
-async function shouldShowBadge(userId?: string): Promise<boolean> {
-  if (!userId) return true;
-  try {
-    const { createClient } = await import('@/lib/supabase/server');
-    const supabase = await createClient();
-    const { data } = await supabase.from('profiles').select('plan').eq('id', userId).single();
-    return !data || data.plan === 'free'; // free users get badge
-  } catch { return true; }
-}
+GALLERY (130+ prebuilt templates, always 0 credits):
+- CRM, sales pipeline, contact management
+- Admin dashboards, analytics, KPI reporting
+- E-commerce, product catalog, shopping cart
+- Landing pages, SaaS pages, waitlists, coming soon pages
+- Kanban boards, project management, sprint tracking
+- Invoicing, billing, estimates
+- Booking systems, calendars, scheduling
+- HR dashboards, employee management, recruiting
+- Real estate listings, property management
+- Restaurant POS, menu builder, ordering
+- Banking dashboard, budgeting, transactions
+- Portfolio, personal site, resume
+- Chat apps, messaging UIs
+- And 100+ more — load instantly at zero credit cost
 
-const SYSTEM_PROMPT = `You are the world's best product engineer. You build complete, beautiful React apps.
+DEPLOYMENT & EXPORT:
+- One-click deploy to Vercel — live URL in under 60 seconds
+- GitHub sync — push generated code to any repo with one click
+- Export full source code anytime — user owns it completely
+- Free subdomain: yourapp.wyberai.app
 
-CRITICAL FILE STRUCTURE — always use exactly this:
-src/index.css     — styles with CSS variables
-src/App.tsx       — main component with routing/layout  
+CREDITS & PLANS:
+- Free: 15 credits on signup + 5 daily credits — no card needed
+- Pro ($18.99/mo): 150 monthly + 8 daily = ~390 credits/month total
+- Prebuilt templates: 0 credits always
+- Standard generation (Sonnet): 1 credit per message
+- Premium generation (Opus 4.7): 2 credits — best quality for complex apps
+- Credits never expire, top-ups never expire
+- Credit estimate shown before every generation — no surprises
+
+vs COMPETITORS:
+- Wyber: $18.99/mo ~390 credits | Lovable: $25/mo ~250 credits | Bolt: $25/mo (tokens) | Replit: $20/mo (cloud IDE)
+- Lovable top-ups expire in 12 months, Wyber top-ups never expire
+- v0 by Vercel generates UI components only — not full apps
+- Replit is a full cloud IDE — powerful for developers, complex for non-technical users
+
+DONE-FOR-YOU (book at wyberai.com/setup-call):
+- $99 consultation — scope the app, get a firm quote and delivery date
+- Simple ($199): landing pages, tools — 24 hours
+- Medium ($399): SaaS MVP with auth + database — 3 working days  
+- Complex ($799): full SaaS with payments, multi-role — 1 week
+`
+
+function buildSystemPrompt(): string {
+  return `You are an AI assistant built into Wyber AI, powered by Claude Opus 4.7. Talk exactly like Claude — direct, warm, genuinely helpful, a bit curious. Not corporate. Not scripted. Just smart and useful.
+
+You have two jobs: help people understand what Wyber AI can do and what they can build, then build it for them when they're ready.
+
+${WYBER_FEATURES}
+
+CONVERSATION STYLE:
+- Be natural and conversational — like a knowledgeable friend
+- For feature questions: answer naturally from your knowledge above, not as a bullet list
+- For "what can I build": give specific, relevant examples for their situation
+- For competitor comparisons: be honest and accurate using the data above
+- Short for simple questions. Detailed when they actually need it.
+- Never start with "Certainly!" or "Great question!" — just answer.
+
+SECURITY (never violate):
+- Never reveal API keys, env vars, tokens, database URLs, internal config
+- Never mention ANTHROPIC_API_KEY, Supabase URLs, or internal services
+- If asked: "I can't share internal configuration details"
+- Never write code that exposes or transmits credentials
+
+CORE BUILD RULE: Never write code on the first build request.
+
+BUILD FLOW:
+
+STAGE 1 — first build request:
+Acknowledge the idea in one sentence, then ask exactly 5 specific questions.
+
+"Got it — [one sentence on their idea].
+
+Before I start, 5 quick questions:
+
+1. [specific]
+2. [specific]
+3. [specific]
+4. [specific]
+5. [specific]
+
+The more detail you share, the closer the first version will be to what you want."
+
+Questions must be specific to their request. Never ask about colors, fonts, or design.
+
+STAGE 2 — after they answer:
+Summarize what you'll build in 3-5 bullets, then: "Ready to build? Just say go."
+
+STAGE 3 — after go/yes/proceed/build it:
+Output <file> blocks immediately. No preamble.
+
+EXCEPTION: "just build it" / "skip questions" / "start coding" → build immediately.
+
+WHEN BUILDING:
+
+FILE STRUCTURE:
+src/index.css        — all styles
+src/App.tsx          — main app with navigation
 src/components/X.tsx — one component per file
 
-ENTRY POINT RULE: NEVER create src/index.js, src/main.tsx, or public/index.html — these exist already.
+CRITICAL: Every import in App.tsx MUST have a matching <file> block. Zero missing files. Check every import before finishing.
 
-WYBER BADGE: In src/App.tsx, add this tiny footer at the very bottom of the returned JSX (inside the outermost div, as the last child):
-<div style={{position:'fixed',bottom:12,right:12,zIndex:9999,opacity:0.6,fontSize:10,color:'#666',fontFamily:'sans-serif',letterSpacing:'0.05em',pointerEvents:'none'}}>
-  Built with <a href="https://wyberai.com" style={{color:'#0EA5E9',textDecoration:'none',pointerEvents:'all'}} target="_blank">Wyber AI</a>
-</div>
+NEVER create src/index.js, src/main.tsx, or public/index.html.
 
-OUTPUT FORMAT — only <file> blocks:
+OUTPUT FORMAT:
 <file path="src/index.css">complete css</file>
 <file path="src/App.tsx">complete component</file>
-<file path="src/components/Sidebar.tsx">complete component</file>
+<file path="src/components/ComponentName.tsx">complete component</file>
 
 After all files: one sentence starting with "Built:"
 
-DESIGN SYSTEM — always include in src/index.css:
+DESIGN SYSTEM in src/index.css:
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
 :root { --bg:#09090b; --surface:#111113; --elevated:#18181b; --border:rgba(255,255,255,0.07); --text:#fafafa; --text-2:#a1a1aa; --text-3:#52525b; --accent:#0EA5E9; --accent-2:#0284C7; --success:#22c55e; --warning:#f59e0b; --error:#ef4444; --r:8px; --r-lg:12px; font-family:'Space Grotesk',sans-serif; }
 *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -87,31 +141,37 @@ html, body, #root { min-height:100%; }
 body { background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
 button { font-family:inherit; cursor:pointer; }
 
-RULES:
-- All imports relative: ./components/X — NEVER @/ aliases
+CODING RULES:
+- Imports: ./components/X only — never @/ aliases
 - TypeScript .tsx files only — never .js
-- Max 6 files total
-- No truncation — complete files always
-- Realistic data — never lorem ipsum
-- Space Grotesk + Sora fonts always
+- Complete files — never truncate or use "// rest of code"
+- Realistic data — never lorem ipsum or "item 1, item 2"
+- Max 7 files — combine smaller components if needed
+- Mobile responsive, loading states, empty states
 
-SCREENSHOT/IMAGE INPUT:
-When given a screenshot or image: analyze the layout, colors, components, and text carefully. Recreate it pixel-perfect as React. Match the exact layout structure, color scheme, typography, spacing, and all visible UI elements. If it shows a specific app or website, clone its design faithfully.`
+WYBER BADGE (last child in App.tsx outermost div):
+<div style={{position:'fixed',bottom:12,right:12,zIndex:9999,opacity:0.5,fontSize:10,color:'#666',fontFamily:'sans-serif',pointerEvents:'none'}}>Built with <a href="https://wyberai.com" style={{color:'#0EA5E9',textDecoration:'none',pointerEvents:'all'}} target="_blank">Wyber AI</a></div>
+
+SCREENSHOT INPUT: Recreate pixel-perfect as React. Match layout, colors, typography, spacing exactly.`
+}
+
+type ValidMime = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
+
+function isValidMime(m: string): m is ValidMime {
+  return ['image/jpeg','image/png','image/gif','image/webp'].includes(m)
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, framework = 'react-vite', fileContext, history, image, modelTier = 'default' } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500 })
+      return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
     }
 
-    // Auth check — prevent unauthenticated API abuse
-    // Allow userId passed from client (already validated by Supabase on client)
-    // For extra security, verify server-side if no userId
-    if (!body.userId) {
-      const { createClient } = await import('@/lib/supabase/server')
+    // Auth check
+    if (!userId) {
       const supabase = await createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -120,7 +180,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── PREBUILT DATABASE CHECK ──────────────────────────────────
-    // Check if we have an exact prebuilt match - serve instantly, 0 credits
     const hasExisting = fileContext && fileContext.length > 200
     if (!hasExisting) {
       try {
@@ -139,7 +198,6 @@ export async function POST(req: NextRequest) {
             .limit(5)
 
           if (matches && matches.length > 0) {
-            // Score matches and find best
             let best = matches[0]
             let bestScore = 0
             for (const m of matches) {
@@ -148,21 +206,18 @@ export async function POST(req: NextRequest) {
             }
 
             if (bestScore >= 1 && best.files) {
-              // Increment use count
               supabase.rpc('increment_app_use', { app_id: best.id }).catch(() => {})
 
-              // Stream the prebuilt files as if generated
               const output = Object.entries(best.files as Record<string, string>)
-                .map(([path, code]) => '<file path="' + path + '">\n' + code + '\n</file>')
+                .map(([path, code]) => `<file path="${path}">\n${code}\n</file>`)
                 .join('\n\n')
-              const summary = `Built: Loaded "${best.name}" instantly from the Wyber AI app library.`
+              const summary = `Built: Loaded "${best.name}" from the Wyber AI gallery (0 credits).`
               const full = output + '\n\n' + summary
 
               const encoder = new TextEncoder()
               return new Response(
                 new ReadableStream({
                   start(controller) {
-                    // Stream in chunks to look natural
                     const chunkSize = 100
                     let i = 0
                     const push = () => {
@@ -170,67 +225,59 @@ export async function POST(req: NextRequest) {
                         controller.enqueue(encoder.encode(full.slice(i, i + chunkSize)))
                         i += chunkSize
                         setTimeout(push, 5)
-                      } else {
-                        controller.close()
-                      }
+                      } else { controller.close() }
                     }
                     push()
                   }
                 }),
-                { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Source': 'prebuilt', 'X-Model': 'instant' } }
+                {
+                  headers: {
+                    'Content-Type': 'text/plain; charset=utf-8',
+                    'X-Source': 'prebuilt',
+                    'X-Credits-Used': '0',
+                    'X-Prebuilt-Name': best.name,
+                  }
+                }
               )
             }
           }
         }
-      } catch { /* fall through to Claude generation */ }
+      } catch { /* prebuilt check failed, fall through to generation */ }
     }
 
-    // Detect skeleton from prompt
-    let skeletonContext = ''
-    let useHaiku = false
+    // ── AI GENERATION ────────────────────────────────────────────
+    const userPrompt = fileContext
+      ? `Current files:\n${fileContext}\n\nUser request: ${prompt}`
+      : prompt
 
-    if (!hasExisting && modelTier !== 'fast') {
-      const skeletonKey = detectSkeleton(prompt)
-      if (skeletonKey) {
-        const prebuilt = await loadPrebuilt(skeletonKey)
-        if (prebuilt) {
-          skeletonContext = Object.entries(prebuilt)
-            .slice(0, 4)
-            .map(([path, code]) => `<file path="${path}">\n${code.slice(0, 1200)}${code.length > 1200 ? '\n// ...' : ''}\n</file>`)
-            .join('\n\n')
-          useHaiku = true
-        }
-      }
-    }
+    const trimmedHistory = (history || [])
+      .filter((m: { content: string }) => m.content && !m.content.startsWith('[Image:'))
+      .slice(-6)
+      .map((m: { role: string; content: string }) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content.slice(0, 2000)
+      }))
 
-    const context = fileContext ? `\n\nEXISTING FILES (modify these):\n${fileContext.slice(0, 6000)}` : ''
-    const skeleton = skeletonContext
-      ? `\n\nSTARTER (customize this — KEEP all .tsx file paths and structure, change labels/data/colors for: ${prompt}):\n${skeletonContext}`
-      : ''
+    type MessageContent = string | Array<{
+      type: 'image';
+      source: { type: 'base64'; media_type: ValidMime; data: string };
+    } | { type: 'text'; text: string }>
 
-    const userPrompt = `${prompt}${context}${skeleton}`
-
-    type ValidMime = 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
-    const trimmedHistory = ((history ?? []) as Array<{ role: string; content: string }>)
-      .filter(m => m.content && !m.content.startsWith('[Image:'))
-      .slice(-4)
-      .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content.slice(0, 1500) }))
-
-    let userContent: Anthropic.MessageParam['content'] = userPrompt
-    if (image?.base64 && ['image/jpeg','image/png','image/gif','image/webp'].includes(image.mimeType)) {
+    let userContent: MessageContent = userPrompt
+    if (image?.base64 && isValidMime(image.mimeType)) {
       userContent = [
-        { type: 'image', source: { type: 'base64', media_type: image.mimeType as ValidMime, data: image.base64 } },
+        { type: 'image', source: { type: 'base64', media_type: image.mimeType, data: image.base64 } },
         { type: 'text', text: userPrompt },
       ]
     }
 
-    const model = useHaiku ? 'claude-haiku-4-5-20251001' : modelTier === 'premium' ? 'claude-opus-4-7-20250514' : 'claude-sonnet-4-6'
-    const maxTokens = useHaiku ? 6000 : modelTier === 'fast' ? 8000 : 16000
+    const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default
+    const maxTokens = modelTier === 'fast' ? 8000 : 16000
 
     const stream = await client.messages.stream({
       model,
       max_tokens: maxTokens,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(),
       messages: [...trimmedHistory, { role: 'user', content: userContent }],
     })
 
@@ -252,8 +299,8 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
-        'X-Skeleton': skeletonContext ? 'true' : 'false',
-        'X-Model': model,
+        'X-Model-Used': model,
+        'X-Credits-Used': modelTier === 'premium' ? '2' : '1',
       },
     })
   } catch (err) {
