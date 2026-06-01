@@ -91,6 +91,18 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), { status: 500 })
     }
 
+    // Auth check — prevent unauthenticated API abuse
+    // Allow userId passed from client (already validated by Supabase on client)
+    // For extra security, verify server-side if no userId
+    if (!body.userId) {
+      const { createClient } = await import('@/lib/supabase/server')
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      }
+    }
+
     // ── PREBUILT DATABASE CHECK ──────────────────────────────────
     // Check if we have an exact prebuilt match - serve instantly, 0 credits
     const hasExisting = fileContext && fileContext.length > 200

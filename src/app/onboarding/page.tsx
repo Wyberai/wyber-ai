@@ -36,15 +36,7 @@ export default function OnboardingPage() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      await supabase.from('profiles').upsert({
-        id: user.id,
-        email: user.email,
-        full_name: name,
-        onboarded: true,
-        credits: 50,
-        plan: 'free',
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
+      await supabase.from('profiles').update({ full_name: name, onboarded: true }).eq('id', user!.id);
     }
     // Create first project with selected idea
     if (selectedIdea || customPrompt) {
@@ -57,7 +49,9 @@ export default function OnboardingPage() {
         first_prompt: prompt,
       }).select().single();
       if (project) {
-        router.push(`/project/${project.id}?prompt=${encodeURIComponent(prompt)}`);
+        // Store in sessionStorage so ChatPanel auto-triggers generation
+        sessionStorage.setItem(`wyber_prompt_${project.id}`, prompt);
+        router.push(`/project/${project.id}`);
         return;
       }
     }

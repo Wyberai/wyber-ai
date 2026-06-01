@@ -33,7 +33,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
 
-  const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/templates', '/privacy', '/terms', '/status', '/vs', '/blog', '/security', '/changelog', '/gallery', '/setup-call', '/complexity-guide', '/pay', '/complexity-guide', '/pay', '/connectors', '/founders', '/marketers', '/designers', '/affiliates', '/about', '/api/webhooks', '/api/dodo', '/api/admin', '/api/support', '/api/stats', '/api/referral', '/credits', '/docs'];
+  const PUBLIC_ROUTES = ['/', '/login', '/signup', '/pricing', '/templates', '/privacy', '/terms', '/status', '/vs', '/blog', '/security', '/changelog', '/gallery', '/setup-call', '/complexity-guide', '/pay', '/connectors', '/founders', '/marketers', '/designers', '/affiliates', '/about', '/api/webhooks', '/api/dodo', '/api/admin', '/api/support', '/api/stats', '/api/referral', '/credits', '/docs'];
   const isPublic = PUBLIC_ROUTES.some(r => path.startsWith(r)) || path.startsWith('/_next') || path.startsWith('/favicon');
 
   // Already logged in hitting auth pages → dashboard
