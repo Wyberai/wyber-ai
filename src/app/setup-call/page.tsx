@@ -1,9 +1,5 @@
-'use client'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 
-const CONSULTATION_LINK = 'https://checkout.dodopayments.com/buy/pdt_0Ng4n8y28QvqAzoGOEhrx'
 const CAL_LINK = 'https://cal.com/wyberai/wyber-ai-build-consultation'
 
 const TIERS = [
@@ -27,9 +23,7 @@ const FAQ = [
   { q:'Can I request a specific stack?',    a:'Our default is Next.js + Supabase + Vercel. Other stacks on request — mention it when booking.' },
 ]
 
-function SetupCallContent() {
-  const params = useSearchParams()
-  const paid = params.get('paid') === '1' || params.get('payment_status') === 'succeeded'
+export default function SetupCallPage() {
   const s = { bg:'#09090b', card:'#111113', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#71717a', sky:'#0EA5E9' }
 
   return (
@@ -58,32 +52,27 @@ function SetupCallContent() {
           </div>
         </div>
 
-        {/* Payment gate OR Cal.com */}
-        {!paid ? (
-          <div style={{ background:`linear-gradient(135deg,rgba(14,165,233,0.07),rgba(139,92,246,0.07))`, border:'1px solid rgba(14,165,233,0.25)', borderRadius:18, padding:'clamp(24px,4vw,40px)', marginBottom:44, textAlign:'center' }}>
-            <div style={{ fontSize:12, fontWeight:700, color:s.sky, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:12 }}>Step 1 of 2 — Secure your slot</div>
-            <div style={{ fontFamily:"'Sora', sans-serif", fontSize:'clamp(22px,4vw,32px)', fontWeight:800, marginBottom:8 }}>60-Minute Build Consultation</div>
-            <div style={{ fontSize:48, fontWeight:800, fontFamily:"'Sora', sans-serif", color:s.sky, lineHeight:1, marginBottom:6 }}>$99</div>
-            <div style={{ fontSize:13, color:s.muted, marginBottom:24 }}>One-time · Credited toward your build if you proceed · Refunded if not a fit</div>
-            <a href={CONSULTATION_LINK} style={{ display:'inline-block', padding:'14px 36px', borderRadius:12, background:s.sky, color:'#fff', fontSize:16, fontWeight:800, textDecoration:'none', fontFamily:"'Sora', sans-serif" }}>
-              Pay $99 & Book →
-            </a>
-            <div style={{ fontSize:11, color:s.muted, marginTop:12 }}>Secure checkout via Dodo Payments · Card, UPI, wallets accepted</div>
+        {/* Consultation fee banner */}
+        <div style={{ background:'rgba(14,165,233,0.06)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:14, padding:'18px 24px', marginBottom:28, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+          <div>
+            <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>$99 consultation fee</div>
+            <div style={{ fontSize:12, color:s.muted }}>You'll receive a payment link after booking to confirm your slot. Credited toward your build.</div>
           </div>
-        ) : (
-          <div style={{ marginBottom:44 }}>
-            <div style={{ textAlign:'center', padding:'14px 20px', borderRadius:12, background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.25)', marginBottom:24, color:'#22c55e', fontWeight:700, fontSize:14 }}>
-              ✓ Payment received — pick your time slot below
-            </div>
-            <div style={{ borderRadius:16, overflow:'hidden', border:`1px solid ${s.border}` }}>
-              <iframe
-                src={`${CAL_LINK}?embed=true&theme=dark`}
-                style={{ width:'100%', height:'700px', border:'none' }}
-                title="Book your Wyber AI consultation"
-              />
-            </div>
+          <div style={{ fontSize:22, fontWeight:800, color:s.sky, fontFamily:"'Sora', sans-serif" }}>$99</div>
+        </div>
+
+        {/* Cal.com embed — always visible */}
+        <div style={{ marginBottom:44 }}>
+          <div style={{ fontSize:18, fontWeight:700, fontFamily:"'Sora', sans-serif", marginBottom:6, textAlign:'center' }}>Pick a time</div>
+          <div style={{ fontSize:13, color:s.muted, textAlign:'center', marginBottom:18 }}>Available 24/7 · Google Meet · Worldwide</div>
+          <div style={{ borderRadius:16, overflow:'hidden', border:`1px solid ${s.border}` }}>
+            <iframe
+              src={`${CAL_LINK}?embed=true&theme=dark`}
+              style={{ width:'100%', height:'700px', border:'none' }}
+              title="Book your Wyber AI consultation"
+            />
           </div>
-        )}
+        </div>
 
         {/* How it works */}
         <div style={{ marginBottom:44 }}>
@@ -144,12 +133,5 @@ function SetupCallContent() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
-}
 
-export default function SetupCallPage() {
-  return (
-    <Suspense fallback={<div style={{ minHeight:'100vh', background:'#09090b' }}/>}>
-      <SetupCallContent />
-    </Suspense>
-  )
 }
