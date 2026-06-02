@@ -210,7 +210,7 @@ export function ChatPanel({ projectId, userId }: Props) {
     addMessage({ id: uid(), role:'user', content: img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg, timestamp:Date.now(), status:'done' });
     const assistantId = uid();
     addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
-    setIsGenerating(true);
+    setIsGenerating(false); // Will be set true only when files start streaming
     clearStreamingContent();
     setLastCreditCost(null);
     setLastModel(null);

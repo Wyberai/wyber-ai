@@ -207,7 +207,7 @@ function getSandpackFiles(files: Record<string, { content: string }>, framework:
 export function PreviewPanel() {
   const { files, framework, isGenerating, hasGeneratedFiles } = useEditorStore();
   const [mode, setMode] = useState<Mode>('preview');
-  const [viewport, setViewport] = useState<ViewportSize>('desktop');
+  const viewport: ViewportSize = 'desktop'; // always full width
   const [sandpackKey, setSandpackKey] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [visualEdit, setVisualEdit] = useState(false);
@@ -251,7 +251,7 @@ export function PreviewPanel() {
       {visualEdit && <div style={{ position: 'relative' }}><VisualEdit iframeRef={iframeRef} enabled={visualEdit} onDisable={() => setVisualEdit(false)} /></div>}
 
       {/* Content */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'stretch', justifyContent: 'center', background: viewport !== 'desktop' && mode === 'preview' ? '#0A0A10' : 'var(--bg-base)' }}>
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'stretch', justifyContent: 'flex-start', background: 'var(--bg-base)' }}>
 
         {/* Generating overlay */}
         {isGenerating && (
@@ -289,7 +289,7 @@ export function PreviewPanel() {
             </div>
           </div>
         ) : (
-          <div style={{ width: vp.w as any, height: '100%', transition: 'width 0.3s ease', overflow: 'auto', borderRadius: viewport !== 'desktop' ? 14 : 0, boxShadow: viewport !== 'desktop' ? '0 0 0 1px rgba(255,255,255,0.06), 0 8px 32px rgba(0,0,0,0.6)' : 'none', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: '100%', height: '100%', overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
             <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--ide-text3)', fontSize: 12 }}>Loading preview...</div>}>
               <SandpackProvider
                 key={sandpackKey}
