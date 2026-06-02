@@ -130,6 +130,21 @@ export async function POST(req: NextRequest) {
 
     // Merge scaffold + user files
     const scaffold = getBuildScaffold(framework, projectName ?? 'My App');
+    
+    // Add vercel.json to allow iframe embedding from wyberai.com
+    scaffold['vercel.json'] = JSON.stringify({
+      headers: [
+        {
+          source: '/(.*)',
+          headers: [
+            { key: 'X-Frame-Options', value: 'ALLOWALL' },
+            { key: 'Content-Security-Policy', value: "frame-ancestors 'self' https://wyberai.com https://*.wyberai.com *" },
+            { key: 'Access-Control-Allow-Origin', value: '*' },
+          ],
+        },
+      ],
+    }, null, 2);
+
     const sourceFiles = files as Record<string, { content: string; path?: string }>;
 
     // Flatten files map

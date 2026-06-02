@@ -50,7 +50,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   );
 
   return (
-    <div className="ide-root">
+    <div className="ide-root" style={{ flexDirection: "column" }}>
       <TopBar
         initialProfile={initialProfile}
         projectId={initialProject?.id}
