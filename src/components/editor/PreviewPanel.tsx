@@ -19,7 +19,10 @@ export function PreviewPanel() {
   const [deployedFiles, setDeployedFiles] = useState<string>('');
   const prevIsGenerating = useRef(false);
 
-  const hasFiles = Object.keys(files).length >= 2;
+  // Only consider files "ready" if App.tsx has substantial generated content
+  const appFile = files['src/App.tsx'] || files['src/App.jsx'];
+  const hasFiles = Object.keys(files).length >= 2 && 
+    appFile && (appFile as any)?.content?.length > 200;
 
   const autoDeployToVercel = useCallback(async () => {
     if (!hasFiles || deploying) return;
@@ -67,14 +70,8 @@ export function PreviewPanel() {
     prevIsGenerating.current = isGenerating;
   }, [isGenerating, hasFiles, autoDeployToVercel]);
 
-  // Auto-deploy when project loads with existing files
-  const initialDeployDone = useRef(false);
-  useEffect(() => {
-    if (hasFiles && !initialDeployDone.current && !isGenerating && !previewUrl) {
-      initialDeployDone.current = true;
-      autoDeployToVercel();
-    }
-  }, [hasFiles, isGenerating, previewUrl, autoDeployToVercel]);
+  // NOTE: No auto-deploy on load — only deploy after generation completes
+  // This prevents the "refused to connect" error on new/empty projects
 
   return (
     <div style={{
