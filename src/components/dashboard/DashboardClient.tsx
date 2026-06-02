@@ -32,6 +32,35 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const supabase = createClient();
   const [projects, setProjects] = useState(initialProjects);
   const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); e.stopPropagation();
+    if (confirmDelete !== id) { setConfirmDelete(id); setTimeout(() => setConfirmDelete(null), 3000); return; }
+    setDeletingId(id); setConfirmDelete(null);
+    await fetch('/api/projects', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projectId: id, userId: profile?.id }) });
+    setProjects(prev => prev.filter(p => p.id !== id));
+    setDeletingId(null);
+  };
+
+  const handleRename = async (id: string, name: string) => {
+    if (!name.trim()) { setRenamingId(null); return; }
+    await fetch('/api/projects', { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projectId: id, name: name.trim(), userId: profile?.id }) });
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, name: name.trim() } : p));
+    setRenamingId(null);
+  };
+
+  const handleDuplicate = async (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); e.stopPropagation();
+    setDuplicatingId(id);
+    const res = await fetch('/api/projects/duplicate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projectId: id, userId: profile?.id }) });
+    const data = await res.json();
+    if (data?.project) setProjects(prev => [data.project, ...prev]);
+    setDuplicatingId(null);
+  };
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -260,6 +289,19 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
                     {/* Thumbnail - real screenshot or gradient */}
+                    {/* Action buttons */}
+                    {p.id && <>
+                      <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id}
+                        title={confirmDelete === p.id ? 'Click again to delete' : 'Delete'}
+                        style={{ position:'absolute', top:6, right:6, zIndex:10, width:22, height:22, borderRadius:5, border:`1px solid ${confirmDelete===p.id?'rgba(239,68,68,0.5)':'rgba(255,255,255,0.1)'}`, background:confirmDelete===p.id?'rgba(239,68,68,0.15)':'rgba(9,9,11,0.7)', color:confirmDelete===p.id?'#ef4444':'#71717a', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, backdropFilter:'blur(4px)' }}>
+                        {deletingId===p.id ? '…' : confirmDelete===p.id ? '!' : '×'}
+                      </button>
+                      <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId===p.id}
+                        title="Duplicate"
+                        style={{ position:'absolute', top:6, right:32, zIndex:10, width:22, height:22, borderRadius:5, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(9,9,11,0.7)', color:'#71717a', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, backdropFilter:'blur(4px)' }}>
+                        {duplicatingId===p.id ? '…' : '⎘'}
+                      </button>
+                    </>}
                     <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))` }}>
                       {(p as any).thumbnail_url
                         ? <img src={(p as any).thumbnail_url} alt={p.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -271,7 +313,11 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                       }
                     </div>
                     <div style={{ padding: '8px 12px' }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
+                      {renamingId === p.id && p.id ? (
+                        <input autoFocus defaultValue={p.name||''} onBlur={e=>handleRename(p.id!,e.target.value)} onKeyDown={e=>{if(e.key==='Enter')handleRename(p.id!,(e.target as HTMLInputElement).value);if(e.key==='Escape')setRenamingId(null);}} onClick={e=>e.preventDefault()} style={{fontSize:12,fontWeight:600,color:'#fafafa',background:'rgba(255,255,255,0.08)',border:'1px solid rgba(14,165,233,0.5)',borderRadius:4,padding:'1px 5px',width:'100%',outline:'none',fontFamily:'inherit'}} />
+                      ) : (
+                        <div onDoubleClick={e=>{e.preventDefault();e.stopPropagation();if(p.id)setRenamingId(p.id);}} title="Double-click to rename" style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
+                      )}
                       <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
                     </div>
                   </div>
