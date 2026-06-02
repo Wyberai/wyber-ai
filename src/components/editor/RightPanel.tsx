@@ -33,11 +33,7 @@ const TAB_ICONS: Record<string, JSX.Element> = {
 const TABS: { id: Tab; label: string; desc: string }[] = [
   { id: 'chat',       label: 'Chat',      desc: 'Build & edit with AI' },
   { id: 'templates',  label: 'Templates', desc: '130+ instant templates' },
-  { id: 'database',   label: 'Database',  desc: 'Add Supabase backend' },
-  { id: 'themes',     label: 'Themes',    desc: 'Colors & appearance' },
-  { id: 'connectors', label: 'Connect',   desc: 'Stripe, APIs & more' },
   { id: 'history',    label: 'History',   desc: 'Save & restore versions' },
-  { id: 'clone',      label: 'Clone URL', desc: 'Clone any website' },
 ];
 
 export function RightPanel({ projectId, userId, onClose }: Props) {
@@ -55,7 +51,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
 
       {/* Icon sidebar — always visible, 7 clear icons */}
       <div style={{
-        width: 52,
+        width: 44,
         height: '100%',
         display: 'flex',
         flexDirection: 'column',

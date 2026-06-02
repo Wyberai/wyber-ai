@@ -62,11 +62,19 @@ export function PreviewPanel() {
   // Auto-deploy when generation finishes
   useEffect(() => {
     if (prevIsGenerating.current && !isGenerating && hasFiles) {
-      // Generation just finished
       autoDeployToVercel();
     }
     prevIsGenerating.current = isGenerating;
   }, [isGenerating, hasFiles, autoDeployToVercel]);
+
+  // Auto-deploy when project loads with existing files
+  const initialDeployDone = useRef(false);
+  useEffect(() => {
+    if (hasFiles && !initialDeployDone.current && !isGenerating && !previewUrl) {
+      initialDeployDone.current = true;
+      autoDeployToVercel();
+    }
+  }, [hasFiles, isGenerating, previewUrl, autoDeployToVercel]);
 
   return (
     <div style={{
