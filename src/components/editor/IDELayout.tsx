@@ -70,7 +70,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
               <div style={{ flex: 1, overflow: 'hidden' }}><CodeEditor /></div>
             </div>
           )}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <PreviewPanel />
           </div>
         </div>

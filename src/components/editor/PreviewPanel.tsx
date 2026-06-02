@@ -202,7 +202,7 @@ export function PreviewPanel() {
   }, [isGenerating, files, buildPreview]);
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
 
       {/* Minimal toolbar */}
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 10px', gap: 8, borderBottom: '1px solid var(--ide-border)', background: 'var(--bg-base)', flexShrink: 0 }}>
@@ -224,7 +224,7 @@ export function PreviewPanel() {
       </div>
 
       {/* Preview */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
         {/* Empty state */}
         {!hasFiles && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#52525b' }}>
@@ -253,6 +253,8 @@ export function PreviewPanel() {
           title="Wyber Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
           style={{
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             height: '100%',
             border: 'none',
