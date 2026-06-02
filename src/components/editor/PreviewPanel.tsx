@@ -70,8 +70,15 @@ export function PreviewPanel() {
     prevIsGenerating.current = isGenerating;
   }, [isGenerating, hasFiles, autoDeployToVercel]);
 
-  // NOTE: No auto-deploy on load — only deploy after generation completes
-  // This prevents the "refused to connect" error on new/empty projects
+  // Auto-deploy when a template is loaded (hasFiles flips true without isGenerating)
+  const prevHasFiles = useRef(false);
+  useEffect(() => {
+    if (hasFiles && !prevHasFiles.current && !isGenerating) {
+      // hasFiles just became true (template loaded or files set externally)
+      autoDeployToVercel();
+    }
+    prevHasFiles.current = hasFiles;
+  }, [hasFiles, isGenerating, autoDeployToVercel]);
 
   return (
     <div style={{
