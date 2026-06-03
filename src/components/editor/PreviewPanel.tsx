@@ -1,296 +1,154 @@
-'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useEditorStore } from '@/store/editor';
+'use client'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEditorStore } from '@/store/editor'
 
 /**
- * PreviewPanel — Auto-deploy preview
- * 
- * On generation complete → auto-deploy to Vercel → show live URL in iframe
- * No in-browser bundling, no CDN timeouts, no Sandpack.
- * Real deployed app every time.
+ * PreviewPanel — Server-side esbuild bundle → srcdoc iframe
+ * Sub-5 second preview. No Vercel deployment needed for preview.
+ * Publish button still deploys to Vercel for sharing.
  */
-
 export function PreviewPanel() {
-  const { files, isGenerating, project } = useEditorStore();
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [deploying, setDeploying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [deployedFiles, setDeployedFiles] = useState<string>('');
-  const prevIsGenerating = useRef(false);
+  const { files, isGenerating, project } = useEditorStore()
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [html, setHtml] = useState<string | null>(null)
+  const [bundling, setBundling] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [elapsed, setElapsed] = useState<number | null>(null)
+  const prevIsGenerating = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [seconds, setSeconds] = useState(0)
 
-  // Only deploy when App.tsx has real generated content (not empty scaffold)
-  const appFile = (files['src/App.tsx'] || files['src/App.jsx'] || files['App.tsx']) as any;
-  const hasFiles = Object.keys(files).length >= 2 && (appFile as any)?.content?.length > 300;
+  const hasRealFiles = useCallback(() => {
+    const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
+    return Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 200
+  }, [files])
 
-  const autoDeployToVercel = useCallback(async () => {
-    if (!hasFiles || deploying) return;
-
-    const currentFilesKey = Object.keys(files).sort().join(',');
-    if (currentFilesKey === deployedFiles) return; // already deployed this version
-
-    setDeploying(true);
-    setError(null);
+  const bundle = useCallback(async () => {
+    if (!hasRealFiles() || bundling) return
+    setBundling(true)
+    setError(null)
+    setSeconds(0)
+    const start = Date.now()
+    timerRef.current = setInterval(() => setSeconds(s => s + 1), 1000)
 
     try {
-      const res = await fetch('/api/deploy', {
+      const res = await fetch('/api/bundle', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          files,
-          projectName: project?.name ?? 'wyber-app',
-          projectId: project?.id,
-        }),
-      });
+        body: JSON.stringify({ files }),
+      })
+      const data = await res.json()
+      clearInterval(timerRef.current!)
+      setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
-      const data = await res.json();
-
-      if (data.url) {
-        // Wait for deployment to be ready
-        const liveUrl = data.url.startsWith('http') ? data.url : `https://${data.url}`;
-        setPreviewUrl(liveUrl);
-        setDeployedFiles(currentFilesKey);
-      } else if (data.error) {
-        setError(data.error);
+      if (data.html) {
+        setHtml(data.html)
+        setError(null)
+      } else {
+        setError(data.error || 'Build failed')
       }
     } catch (err) {
-      setError('Deploy failed — check your Vercel token in env vars');
-      console.error('Auto-deploy error:', err);
+      clearInterval(timerRef.current!)
+      setError(String(err))
     } finally {
-      setDeploying(false);
+      setBundling(false)
     }
-  }, [files, hasFiles, deploying, deployedFiles, project]);
+  }, [files, hasRealFiles, bundling])
 
-  // Auto-deploy when generation finishes
+  // Auto-bundle when generation finishes
   useEffect(() => {
-    if (prevIsGenerating.current && !isGenerating && hasFiles) {
-      autoDeployToVercel();
+    if (prevIsGenerating.current && !isGenerating && hasRealFiles()) {
+      bundle()
     }
-    prevIsGenerating.current = isGenerating;
-  }, [isGenerating, hasFiles, autoDeployToVercel]);
+    prevIsGenerating.current = isGenerating
+  }, [isGenerating, hasRealFiles, bundle])
 
-  // NOTE: No auto-deploy on load. Only deploy after generation or explicit button click.
+  // Update srcdoc when html changes
+  useEffect(() => {
+    if (iframeRef.current && html) {
+      iframeRef.current.srcdoc = html
+    }
+  }, [html])
+
+  const hasFiles = hasRealFiles()
 
   return (
-    <div style={{
-      flex: 1,
-      minHeight: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      background: '#09090b',
-      position: 'relative',
-    }}>
-
-      {/* Minimal toolbar */}
-      <div style={{
-        height: 36,
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 12px',
-        gap: 8,
-        borderBottom: '1px solid var(--ide-border)',
-        background: 'var(--bg-base)',
-        flexShrink: 0,
-      }}>
-        {/* Status dot + URL */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-          <div style={{
-            width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-            background: deploying ? '#f59e0b' : previewUrl ? '#22c55e' : '#52525b',
-            boxShadow: deploying ? '0 0 6px rgba(245,158,11,0.5)' : previewUrl ? '0 0 6px rgba(34,197,94,0.4)' : 'none',
-          }} />
-          {previewUrl ? (
-            <a
-              href={previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontSize: 11,
-                color: 'var(--ide-text3)',
-                fontFamily: 'var(--font-mono)',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                textDecoration: 'none',
-              }}
-            >
-              {previewUrl.replace('https://', '')}
-            </a>
-          ) : (
-            <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontFamily: 'var(--font-mono)' }}>
-              {isGenerating
-                ? 'Generating your app...'
-                : deploying
-                ? 'Deploying preview...'
-                : hasFiles
-                ? 'Ready to deploy'
-                : 'Type a prompt to generate your app'}
-            </span>
-          )}
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#0a0a0f', position: 'relative' }}>
+      {/* Toolbar */}
+      <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 10px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1 }}>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: bundling ? '#f59e0b' : html ? '#22c55e' : '#3f3f46', boxShadow: html ? '0 0 6px rgba(34,197,94,0.4)' : 'none', transition: 'all 0.3s' }} />
+          <span style={{ fontSize: 11, color: '#52525b', fontFamily: 'var(--font-mono)' }}>
+            {isGenerating ? 'Generating...' : bundling ? `Bundling... ${seconds}s` : elapsed ? `Preview ready · ${elapsed}s` : hasFiles ? 'Ready to preview' : 'Type a prompt to get started'}
+          </span>
         </div>
-
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexShrink: 0 }}>
-          {previewUrl && (
-            <>
-              <button
-                onClick={() => iframeRef.current && (iframeRef.current.src = previewUrl)}
-                title="Refresh"
-                style={{
-                  background: 'none', border: '1px solid var(--ide-border)',
-                  borderRadius: 5, color: 'var(--ide-text3)', cursor: 'pointer',
-                  padding: '2px 8px', fontSize: 11,
-                }}
-              >↺</button>
-              <a
-                href={previewUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  background: 'none', border: '1px solid var(--ide-border)',
-                  borderRadius: 5, color: 'var(--ide-text3)', cursor: 'pointer',
-                  padding: '2px 8px', fontSize: 11, textDecoration: 'none',
-                }}
-              >↗</a>
-            </>
-          )}
-          {hasFiles && !deploying && (
-            <button
-              onClick={autoDeployToVercel}
-              title="Deploy preview"
-              style={{
-                background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)',
-                borderRadius: 5, color: '#0EA5E9', cursor: 'pointer',
-                padding: '2px 10px', fontSize: 11, fontWeight: 600,
-              }}
-            >
-              {previewUrl ? 'Redeploy' : 'Deploy preview'}
-            </button>
-          )}
-        </div>
+        {html && (
+          <button onClick={bundle} disabled={bundling} title="Refresh preview"
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>
+            ↺
+          </button>
+        )}
+        {error && (
+          <button onClick={bundle} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 5, color: '#ef4444', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>
+            Retry
+          </button>
+        )}
       </div>
 
-      {/* Preview content */}
+      {/* Content */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-
         {/* Empty state */}
-        {!hasFiles && !isGenerating && !deploying && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: 14, color: '#52525b',
-          }}>
-            <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/>
-              <path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M23 11L28 16L23 21" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-            </svg>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#71717a', marginBottom: 4 }}>
-                Type a prompt and generate your app to see it live here
-              </div>
-              <div style={{ fontSize: 11, color: '#52525b' }}>
-                Your app will auto-deploy and appear in this panel
-              </div>
-            </div>
+        {!hasFiles && !isGenerating && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#52525b' }}>Describe what you want to build</div>
+            <div style={{ fontSize: 11, color: '#3f3f46' }}>Your app will appear here instantly</div>
           </div>
         )}
 
-        {/* Generating overlay */}
+        {/* Generating */}
         {isGenerating && (
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 10,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: 14, background: '#09090b',
-          }}>
-            <div style={{
-              width: 28, height: 28,
-              border: '2px solid rgba(14,165,233,0.15)',
-              borderTopColor: '#0EA5E9',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 4 }}>
-                Building your app...
-              </div>
-              <div style={{ fontSize: 11, color: '#52525b' }}>
-                Will auto-deploy when complete
-              </div>
-            </div>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#0a0a0f', zIndex: 5 }}>
+            <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Building your app...</div>
           </div>
         )}
 
-        {/* Deploying overlay */}
-        {deploying && !isGenerating && (
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 10,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: 14, background: '#09090b',
-          }}>
-            <div style={{
-              width: 28, height: 28,
-              border: '2px solid rgba(245,158,11,0.15)',
-              borderTopColor: '#f59e0b',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 4 }}>
-                Deploying preview...
-              </div>
-              <div style={{ fontSize: 11, color: '#52525b' }}>
-                Usually takes 20–40 seconds
-              </div>
-            </div>
+        {/* Bundling overlay over existing preview */}
+        {bundling && html && (
+          <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 10, background: 'rgba(17,17,24,0.9)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6, backdropFilter: 'blur(8px)' }}>
+            <div style={{ width: 10, height: 10, border: '1.5px solid rgba(245,158,11,0.3)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+            <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 600 }}>Updating preview... {seconds}s</span>
           </div>
         )}
 
-        {/* Error state */}
-        {error && !deploying && !isGenerating && (
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 5,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: 12, padding: 24,
-          }}>
-            <div style={{ fontSize: 22 }}>⚠️</div>
-            <div style={{ fontSize: 13, color: '#ef4444', textAlign: 'center', maxWidth: 320 }}>{error}</div>
-            <button
-              onClick={autoDeployToVercel}
-              style={{
-                padding: '7px 18px', borderRadius: 8, border: 'none',
-                background: '#0EA5E9', color: 'white',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              Try again
-            </button>
+        {/* Bundling no preview yet */}
+        {bundling && !html && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#0a0a0f', zIndex: 5 }}>
+            <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Bundling... {seconds}s</div>
+            <div style={{ fontSize: 11, color: '#52525b' }}>Usually 2–4 seconds</div>
           </div>
         )}
 
-        {/* Live preview iframe */}
-        {previewUrl && !deploying && !isGenerating && (
-          <iframe
-            ref={iframeRef}
-            src={previewUrl}
-            title="App Preview"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              border: 'none',
-            }}
-            allow="clipboard-write; clipboard-read"
-          />
+        {/* Error */}
+        {error && !bundling && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, background: '#0a0a0f', zIndex: 5 }}>
+            <div style={{ fontSize: 18 }}>⚠️</div>
+            <div style={{ fontSize: 12, color: '#ef4444', textAlign: 'center', maxWidth: 360, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{error.slice(0, 400)}</div>
+            <button onClick={bundle} style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Retry</button>
+          </div>
         )}
+
+        {/* The preview iframe */}
+        <iframe
+          ref={iframeRef}
+          title="Wyber Preview"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html ? 'block' : 'none', background: '#0a0a0f' }}
+        />
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
-  );
+  )
 }
