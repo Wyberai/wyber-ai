@@ -19,10 +19,9 @@ export function PreviewPanel() {
   const [deployedFiles, setDeployedFiles] = useState<string>('');
   const prevIsGenerating = useRef(false);
 
-  // Only consider files "ready" if App.tsx has substantial generated content
-  const appFile = files['src/App.tsx'] || files['src/App.jsx'];
-  const hasFiles = Object.keys(files).length >= 2 && 
-    appFile && (appFile as any)?.content?.length > 200;
+  // Only deploy when App.tsx has real generated content (not empty scaffold)
+  const appFile = (files['src/App.tsx'] || files['src/App.jsx'] || files['App.tsx']) as any;
+  const hasFiles = Object.keys(files).length >= 2 && (appFile as any)?.content?.length > 300;
 
   const autoDeployToVercel = useCallback(async () => {
     if (!hasFiles || deploying) return;
@@ -70,15 +69,7 @@ export function PreviewPanel() {
     prevIsGenerating.current = isGenerating;
   }, [isGenerating, hasFiles, autoDeployToVercel]);
 
-  // Auto-deploy when a template is loaded (hasFiles flips true without isGenerating)
-  const prevHasFiles = useRef(false);
-  useEffect(() => {
-    if (hasFiles && !prevHasFiles.current && !isGenerating) {
-      // hasFiles just became true (template loaded or files set externally)
-      autoDeployToVercel();
-    }
-    prevHasFiles.current = hasFiles;
-  }, [hasFiles, isGenerating, autoDeployToVercel]);
+  // NOTE: No auto-deploy on load. Only deploy after generation or explicit button click.
 
   return (
     <div style={{
