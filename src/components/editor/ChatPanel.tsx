@@ -298,21 +298,28 @@ export function ChatPanel({ projectId, userId }: Props) {
         const chunk = decoder.decode(value, { stream:true });
         full += chunk;
         // During streaming - only show non-code lines
-const displayChunk = chunk.split('\n')
-  .filter(line => {
-    const l = line.trim();
-    return l.length > 0
-      && !l.startsWith('✎')
-      && !l.startsWith('<file')
-      && !l.startsWith('import ')
-      && !l.startsWith('export ')
-      && !l.startsWith('const ')
-      && !l.startsWith('interface ')
-      && !l.startsWith('{ id:')
-      && !/^[a-zA-Z_]+:\s+['"\[{]/.test(l);
-  })
-  .join('\n');
-if (displayChunk.trim()) appendStreamingContent(displayChunk);
+// Strip all code — only show conversational sentences
+        const isCode = (l: string) => {
+          const t = l.trim();
+          if (!t) return true;
+          if (t.startsWith('✎') || t.startsWith('<file') || t.startsWith('</file')) return true;
+          if (/^(import |export |export default|const |let |var |function |async |class |interface |type |enum |return |throw |if |else |for |while |switch )/.test(t)) return true;
+          if (t.startsWith('<') && t.includes('>')) return true;
+          if (t.startsWith('</') || t.startsWith('/>') || t.startsWith('{/*')) return true;
+          if (/^[{}()[\];,]+$/.test(t)) return true;
+          if (t === '};' || t === '})' || t === ');' || t === '},' || t === '}),' || t === '});') return true;
+          if (t.startsWith('};') || t.startsWith('})') || t.startsWith(');')) return true;
+          if (/^[a-zA-Z_$][a-zA-Z0-9_$?]*:\s*(string|number|boolean|void|null|undefined|any|never|React\.|[A-Z])/.test(t)) return true;
+          if (t.includes('className=') || t.includes('style={{') || t.includes('onClick=') || t.includes('onChange=')) return true;
+          if (t.includes('useState') || t.includes('useEffect') || t.includes('useRef') || t.includes('useCallback')) return true;
+          if (t.includes('React.') || t.includes('=>') && (t.includes('{') || t.includes('('))) return true;
+          if (t.startsWith('//') || t.startsWith('/*') || t.startsWith('*')) return true;
+          if (/^\[.*\]\s*=\s*use/.test(t)) return true;
+          if (t.startsWith('setForm') || t.startsWith('setLeads') || t.startsWith('setActive') || t.startsWith('set')) return true;
+          return false;
+        };
+        const displayChunk = chunk.split('\n').filter(l => !isCode(l)).join('\n');
+        if (displayChunk.trim()) appendStreamingContent(displayChunk);
         // Don't show raw file blocks in chat — show only the summary line
 // Strip file blocks and file edit lines — only show the summary
 const lines = full.split('\n');
