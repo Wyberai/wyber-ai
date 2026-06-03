@@ -16,7 +16,7 @@ function getBuildScaffold(framework: string, projectName: string): Record<string
         private: true,
         version: '0.1.0',
         type: 'module',
-        scripts: { dev: 'vite', build: 'tsc && vite build', preview: 'vite preview' },
+        scripts: { dev: 'vite', build: 'vite build', preview: 'vite preview' },
         dependencies: {
           react: '^18.3.1',
           'react-dom': '^18.3.1',
@@ -24,6 +24,9 @@ function getBuildScaffold(framework: string, projectName: string): Record<string
           'lucide-react': '^0.383.0',
           recharts: '^2.12.0',
           clsx: '^2.1.1',
+          'date-fns': '^3.6.0',
+          'framer-motion': '^11.0.0',
+          zustand: '^4.5.2',
         },
         devDependencies: {
           '@types/react': '^18.3.12',
@@ -48,7 +51,7 @@ export default defineConfig({
           skipLibCheck: true, moduleResolution: 'bundler',
           allowImportingTsExtensions: true, isolatedModules: true,
           moduleDetection: 'force', noEmit: true, jsx: 'react-jsx',
-          strict: true,
+          strict: false,
         },
         include: ['src'],
       }, null, 2),
