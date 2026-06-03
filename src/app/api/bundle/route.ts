@@ -77,19 +77,21 @@ export async function POST(req: NextRequest) {
         name: 'virtual',
         setup(build: any) {
           build.onResolve({ filter: /.*/ }, (args: any) => {
+            // Named external packages
             if (EXTERNALS.includes(args.path)) return { path: args.path, external: true }
-            for (const ext of EXTERNALS) {
-              if (args.path.startsWith(ext + '/')) return { path: args.path, external: true }
-            }
-            let resolved = ''
+            if (EXTERNALS.some((e: string) => args.path.startsWith(e + '/'))) return { path: args.path, external: true }
+
+            // Relative or absolute path — resolve against virtual FS
             if (args.path.startsWith('.') || args.path.startsWith('/')) {
-              resolved = args.importer ? resolveImport(args.importer, args.path) : normalise(args.path)
-            } else {
-              resolved = '/' + args.path
+              const resolved = args.importer ? resolveImport(args.importer, args.path) : normalise(args.path)
+              for (const s of ['', '.tsx', '.ts', '.jsx', '.js', '/index.tsx', '/index.ts']) {
+                if (fileMap[resolved + s]) return { path: resolved + s, namespace: 'virtual' }
+              }
+              // Not found in virtual FS — skip
+              return { path: resolved, external: true }
             }
-            for (const s of ['', '.tsx', '.ts', '.jsx', '.js', '/index.tsx', '/index.ts']) {
-              if (fileMap[resolved + s]) return { path: resolved + s, namespace: 'virtual' }
-            }
+
+            // Unknown npm package — load from esm.sh CDN
             return { path: `https://esm.sh/${args.path}`, external: true }
           })
           build.onLoad({ filter: /.*/, namespace: 'virtual' }, (args: any) => {
@@ -97,7 +99,7 @@ export async function POST(req: NextRequest) {
             if (!content) return { errors: [{ text: `Not found: ${args.path}` }] }
             const ext = args.path.split('.').pop()
             if (ext === 'css') { css += content + '\n'; return { contents: '', loader: 'js' } }
-            const loader = ext === 'ts' ? 'ts' : ext === 'js' || ext === 'jsx' ? 'jsx' : 'tsx'
+            const loader = ext === 'ts' ? 'ts' : (ext === 'js' || ext === 'jsx') ? 'jsx' : 'tsx'
             return { contents: content, loader }
           })
         },
