@@ -1,144 +1,61 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useEditorStore } from '@/store/editor'
-import { parseGenerationOutput } from '@/lib/file-parser'
 
-// Listens for preview errors via postMessage from Sandpack iframe
-// When an error is detected, fires a focused repair call to Claude
+/**
+ * AutoFix — listens for errors from preview iframe via postMessage
+ * When error detected: adds it to chat + auto-triggers a fix request
+ */
 export function AutoFix() {
-  const [fixing, setFixing] = useState(false)
   const lastError = useRef('')
-  const fixAttempts = useRef(0)
-
-  const {
-    files, framework, setFiles, setHasGeneratedFiles,
-    addMessage, setIsGenerating, isGenerating,
-  } = useEditorStore()
+  const cooldown = useRef(false)
+  const { isGenerating, addMessage, setInput, hasGeneratedFiles } = useEditorStore()
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      // Sandpack sends error messages via postMessage
+      if (isGenerating || cooldown.current || !hasGeneratedFiles) return
       const data = event.data
       if (!data || typeof data !== 'object') return
+      if (data.type !== 'wyber-error') return
 
-      const errorMsg: string =
-        data?.type === 'compile-error' ? data.message :
-        data?.type === 'runtime-error' ? data.error?.message :
-        data?.error ? String(data.error) : ''
+      const msg = String(data.message || '').trim()
+      if (!msg || msg.length < 5 || msg === lastError.current) return
 
-      if (!errorMsg || isGenerating || fixing) return
-      if (errorMsg === lastError.current) return
-      if (fixAttempts.current >= 2) return // Max 2 auto-fix attempts
+      lastError.current = msg
+      cooldown.current = true
+      setTimeout(() => { cooldown.current = false }, 20000)
 
-      // Only auto-fix known fixable errors
-      const isFixable =
-        errorMsg.includes('Cannot find module') ||
-        errorMsg.includes('Could not find module') ||
-        errorMsg.includes('is not defined') ||
-        errorMsg.includes('is not a function') ||
-        errorMsg.includes('Unexpected token') ||
-        errorMsg.includes('SyntaxError')
+      // Add error message to chat
+      addMessage({
+        id: `autofix-${Date.now()}`,
+        role: 'assistant',
+        content: \`⚠️ Preview error detected:
 
-      if (!isFixable) return
+\\`\\`\\`
+\${msg.slice(0, 300)}
+\\`\\`\\`
 
-      lastError.current = errorMsg
-      fixAttempts.current++
-      autoFix(errorMsg)
+Fixing now...\`,
+        timestamp: Date.now(),
+        status: 'done',
+      })
+
+      // Auto-trigger fix via a synthetic click on the send button
+      // We set the input then programmatically send
+      setTimeout(() => {
+        const btn = document.querySelector('[data-send-button]') as HTMLButtonElement
+        if (btn && !btn.disabled) {
+          // Set a fix prompt via custom event
+          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+            detail: { prompt: \`Fix this error in the app: \${msg.slice(0, 200)}\` }
+          }))
+        }
+      }, 500)
     }
 
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [files, isGenerating, fixing])
+  }, [isGenerating, hasGeneratedFiles, addMessage, setInput])
 
-  // Reset fix attempts when new generation starts
-  useEffect(() => {
-    if (isGenerating) {
-      fixAttempts.current = 0
-      lastError.current = ''
-    }
-  }, [isGenerating])
-
-  const autoFix = async (errorMsg: string) => {
-    setFixing(true)
-    setIsGenerating(true)
-
-    const aId = Math.random().toString(36).slice(2)
-    addMessage({
-      id: aId,
-      role: 'assistant',
-      content: `🔧 Auto-fixing: ${errorMsg.split('\n')[0].slice(0, 80)}...`,
-      timestamp: 0,
-      status: 'streaming',
-    })
-
-    try {
-      // Build compact file snapshot
-      const fileContext = Object.entries(files)
-        .filter(([, f]) => (f.content?.length ?? 0) > 30)
-        .slice(0, 6)
-        .map(([, f]) => `<file path="${f.path}">\n${(f.content ?? '').slice(0, 1000)}\n</file>`)
-        .join('\n\n')
-
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: `Fix this runtime error and output only the corrected files:\n\nERROR: ${errorMsg}\n\nFix the error. Keep all existing functionality. Output only the files that need changing.`,
-          framework,
-          fileContext,
-          history: [],
-          modelTier: 'fast',
-        }),
-      })
-
-      if (!res.body) throw new Error('No stream')
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let raw = ''
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        raw += decoder.decode(value, { stream: true })
-      }
-
-      const { files: fixed } = parseGenerationOutput(raw)
-
-      if (fixed.length > 0) {
-        const updated = { ...files }
-        for (const { path, content } of fixed) {
-          const ext = path.split('.').pop() ?? ''
-          const langMap: Record<string, string> = { tsx: 'typescript', ts: 'typescript', js: 'javascript', css: 'css' }
-          updated[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
-        }
-        setFiles(updated)
-        setHasGeneratedFiles(true)
-
-        // Update message
-        const msgs = useEditorStore.getState().messages
-        const msg = msgs.find(m => m.id === aId)
-        if (msg) {
-          useEditorStore.getState().updateMessage(aId, {
-            content: `✓ Fixed automatically — ${fixed.length} file${fixed.length > 1 ? 's' : ''} corrected.`,
-            status: 'done',
-            filesChanged: fixed.map(f => f.path),
-          })
-        }
-      } else {
-        useEditorStore.getState().updateMessage(aId, {
-          content: 'Could not auto-fix. Try rephrasing or regenerate.',
-          status: 'error',
-        })
-      }
-    } catch {
-      useEditorStore.getState().updateMessage(aId, {
-        content: 'Auto-fix failed. Try regenerating.',
-        status: 'error',
-      })
-    }
-
-    setIsGenerating(false)
-    setFixing(false)
-  }
-
-  return null // No UI — runs silently
+  return null
 }

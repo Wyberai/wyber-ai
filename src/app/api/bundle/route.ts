@@ -127,8 +127,22 @@ export async function POST(req: NextRequest) {
 window.onerror=(m,f,l,c,e)=>{const el=document.getElementById('wyber-err');if(el){el.style.display='block';el.textContent='Error: '+m+'\\n'+(e?.stack||f+':'+l+':'+c);}};
 window.onunhandledrejection=e=>{const el=document.getElementById('wyber-err');if(el){el.style.display='block';el.textContent=''+e.reason;}};
 ${js}
+
+// Click-to-edit bridge — sends element info to parent when clicked
+(function(){
+  let overlay = null;
+  document.addEventListener('click', function(e){
+    const el = e.target;
+    if(!el || el.id === 'wyber-err') return;
+    const tag = el.tagName.toLowerCase();
+    const text = (el.innerText || '').trim().slice(0, 60);
+    const cls = el.className && typeof el.className === 'string' ? el.className.split(' ')[0] : '';
+    const info = [tag, cls && '.'+cls, text && '"'+text+'"'].filter(Boolean).join(' ');
+    try { window.parent.postMessage({ type: 'wyber-click', element: info, tag, className: cls, text }, '*'); } catch(e){}
+  }, true);
+})();
 </script>
-</body></html>`
+</body></html>\``
 
     return NextResponse.json({ html })
   } catch (err) {
