@@ -43,14 +43,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No files' }, { status: 400 })
     }
 
-    // Build file map
+    // Build file map — collect ALL css upfront
     const fileMap: Record<string, string> = {}
     let css = ''
     for (const [path, file] of Object.entries(files)) {
       const np = normalise(path)
       const content = (file as any)?.content ?? String(file)
       fileMap[np] = content
-      if (np.endsWith('.css')) css += content + '\n'
+    }
+    // Collect CSS from all css files regardless of imports
+    for (const [path, content] of Object.entries(fileMap)) {
+      if (path.endsWith('.css')) {
+        // Strip @import url() lines — replace with <link> tags in HTML instead
+        const stripped = content.split('\n')
+          .filter(l => !l.trim().startsWith('@import url'))
+          .join('\n')
+        css += stripped + '\n'
+      }
+    }
+    // Extract Google Fonts URLs to inject as <link> tags
+    const fontLinks: string[] = []
+    for (const [path, content] of Object.entries(fileMap)) {
+      if (path.endsWith('.css')) {
+        const matches = content.match(/@import url\(['"](https:\/\/fonts\.googleapis\.com[^'"]+)['"]/g) || []
+        matches.forEach(m => {
+          const url = m.match(/https:\/\/fonts\.googleapis\.com[^'"]+/)?.[0]
+          if (url && !fontLinks.includes(url)) fontLinks.push(url)
+        })
+      }
     }
 
     // Find entry
@@ -120,7 +140,13 @@ export async function POST(req: NextRequest) {
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Preview</title>
 <script type="importmap">${importmap}</script>
-<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html,body,#root{height:100%;width:100%}body{-webkit-font-smoothing:antialiased}#wyber-err{display:none;position:fixed;inset:0;background:#09090b;color:#ef4444;font-family:monospace;font-size:13px;padding:24px;overflow:auto;white-space:pre-wrap;z-index:9999}</style>
+${fontLinks.map(url => `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${url}" rel="stylesheet">`).join('')}
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{height:100%;width:100%;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#0a0a0f;color:#f0f0f5;-webkit-font-smoothing:antialiased}
+#wyber-err{display:none;position:fixed;inset:0;background:#09090b;color:#ef4444;font-family:monospace;font-size:13px;padding:24px;overflow:auto;white-space:pre-wrap;z-index:9999}
+</style>
 <style>${css}</style>
 </head>
 <body>
