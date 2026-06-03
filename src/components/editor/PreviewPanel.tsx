@@ -1,4 +1,5 @@
 'use client'
+import React from 'react'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 
@@ -7,6 +8,47 @@ import { useEditorStore } from '@/store/editor'
  * Sub-5 second preview. No Vercel deployment needed for preview.
  * Publish button still deploys to Vercel for sharing.
  */
+const BUNDLING_MESSAGES = [
+  "Compiling your masterpiece...",
+  "Teaching React to dance...",
+  "Wrangling pixels into place...",
+  "Convincing TypeScript to behave...",
+  "Brewing something beautiful...",
+  "Turning coffee into code...",
+  "Making the internet a better place...",
+  "Polishing the pixels...",
+  "Summoning the UI spirits...",
+  "Almost there, just ironing out the wrinkles...",
+  "Herding components into formation...",
+  "Applying the finishing touches...",
+  "Your app is taking shape...",
+  "Making it pixel perfect...",
+  "Just a moment, doing wizard things...",
+]
+
+const GENERATING_MESSAGES = [
+  "Thinking really hard...",
+  "Reading your mind...",
+  "Consulting the design gods...",
+  "Architecting something special...",
+  "Writing clean code (no shortcuts)...",
+  "Making it beautiful and fast...",
+  "Planning your perfect app...",
+  "Crafting every component with care...",
+  "This one's going to be good...",
+  "Choosing the right shade of indigo...",
+]
+
+function useCyclingMessage(messages: string[], active: boolean, interval = 2500) {
+  const [idx, setIdx] = React.useState(0)
+  React.useEffect(() => {
+    if (!active) { setIdx(0); return }
+    const t = setInterval(() => setIdx(i => (i + 1) % messages.length), interval)
+    return () => clearInterval(t)
+  }, [active, messages.length, interval])
+  return messages[idx]
+}
+
 export function PreviewPanel() {
   const { files, isGenerating, project } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -14,6 +56,8 @@ export function PreviewPanel() {
   const [bundling, setBundling] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState<number | null>(null)
+  const bundlingMsg = useCyclingMessage(BUNDLING_MESSAGES, bundling)
+  const generatingMsg = useCyclingMessage(GENERATING_MESSAGES, isGenerating)
   const prevIsGenerating = useRef(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [seconds, setSeconds] = useState(0)
@@ -79,7 +123,7 @@ export function PreviewPanel() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 1 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: bundling ? '#f59e0b' : html ? '#22c55e' : '#3f3f46', boxShadow: html ? '0 0 6px rgba(34,197,94,0.4)' : 'none', transition: 'all 0.3s' }} />
           <span style={{ fontSize: 11, color: '#52525b', fontFamily: 'var(--font-mono)' }}>
-            {isGenerating ? 'Generating...' : bundling ? `Bundling... ${seconds}s` : elapsed ? `Preview ready · ${elapsed}s` : hasFiles ? 'Ready to preview' : 'Type a prompt to get started'}
+            {isGenerating ? generatingMsg : bundling ? bundlingMsg : elapsed ? `✓ Preview ready in ${elapsed}s` : hasFiles ? 'Ready to preview' : 'Describe what you want to build'}
           </span>
         </div>
         {html && (
@@ -110,7 +154,7 @@ export function PreviewPanel() {
         {isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#0a0a0f', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Building your app...</div>
+            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>{generatingMsg}</div>
           </div>
         )}
 
@@ -126,8 +170,8 @@ export function PreviewPanel() {
         {bundling && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#0a0a0f', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Bundling... {seconds}s</div>
-            <div style={{ fontSize: 11, color: '#52525b' }}>Usually 2–4 seconds</div>
+            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>{bundlingMsg}</div>
+            <div style={{ fontSize: 11, color: '#52525b', marginTop: 4, fontStyle: 'italic' }}>{seconds}s elapsed</div>
           </div>
         )}
 

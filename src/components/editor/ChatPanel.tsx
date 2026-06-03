@@ -76,6 +76,14 @@ export function ChatPanel({ projectId, userId }: Props) {
   } = useEditorStore();
 
   const [input, setInput] = useState('');
+  const [buildMsgIdx, setBuildMsgIdx] = useState(0);
+  const BUILD_MSGS = ['Building your app...', 'Writing clean code...', 'Crafting every component...', 'Making it beautiful...', 'Almost there...', 'Putting on the finishing touches...', 'Just a few more lines...'];
+  useEffect(() => {
+    if (!isGenerating) { setBuildMsgIdx(0); return; }
+    const t = setInterval(() => setBuildMsgIdx(i => (i + 1) % BUILD_MSGS.length), 2000);
+    return () => clearInterval(t);
+  }, [isGenerating]);
+  const buildMsg = BUILD_MSGS[buildMsgIdx];
   const [hasInit, setHasInit] = useState(false);
   const [isSandboxing, setIsSandboxing] = useState(false);
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
@@ -560,7 +568,7 @@ setStreamingContent(chatContent || full);
                     {msg.status === 'streaming'
                       ? <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)' }}>
                           <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                          Building your app...
+                          {buildMsg}
                         </span>
                       : renderMessage(msg.content)
                     }
