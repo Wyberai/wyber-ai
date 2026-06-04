@@ -9,7 +9,7 @@ interface Connector {
 }
 
 export function SupabaseConnector({ onClose }: { onClose: () => void }) {
-  const { project, profile } = useEditorStore()
+  const { project } = useEditorStore()
   const [url, setUrl] = useState('')
   const [anonKey, setAnonKey] = useState('')
   const [saving, setSaving] = useState(false)
