@@ -2,6 +2,7 @@
 import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
 import { useState } from 'react';
+import { SupabaseConnector } from './SupabaseConnector';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -30,6 +31,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [deployUrl, setDeployUrl] = useState('');
   const [pushing, setPushing] = useState(false);
   const [pushUrl, setPushUrl] = useState('');
+  const [showSupabase, setShowSupabase] = useState(false);
 
   const handleExport = async () => {
     if (exporting) return;
@@ -73,7 +75,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     if (pushing || Object.keys(files).length < 2) return;
     setPushing(true);
     try {
-      const res = await fetch('/api/github/push', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, files, projectName: project?.name }) });
+      const res = await fetch('/api/github', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'push', projectId, userId: initialProfile?.id, files, commitMessage: `wyber: update ${project?.name ?? ''}` }) });
       const data = await res.json();
       if (data.error === 'GitHub not connected') {
         window.open(`/api/auth/github?projectId=${projectId}`, '_blank');
@@ -181,6 +183,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         </button>
       )}
 
+      {/* Supabase connect */}
+      {Object.keys(files).length > 2 && (
+        <button onClick={() => setShowSupabase(true)} title="Connect Supabase" style={{ ...btn, padding: '5px 8px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
+        </button>
+      )}
+
       {/* Share / Publish — like Lovable */}
       <button style={{ ...btn, color: 'var(--ide-text)' }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -217,6 +226,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+      {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}
     </div>
   );
 }
