@@ -399,6 +399,64 @@ function isValidMime(m: string): m is ValidMime {
   return ['image/jpeg','image/png','image/gif','image/webp'].includes(m)
 }
 
+async function getSupabaseContext(projectId: string): Promise<string> {
+  if (!projectId) return ''
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('project_connectors')
+      .select('api_key, config')
+      .eq('project_id', projectId)
+      .eq('service', 'supabase')
+      .single()
+    if (!data) return ''
+    const url = data.config?.url || ''
+    const anonKey = data.api_key || ''
+    if (!url || !anonKey) return ''
+    return `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUPABASE IS CONNECTED — USE IT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This project has Supabase connected. You MUST use it for data storage.
+
+Create this file FIRST — before App.tsx:
+<file path="src/lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js'
+export const supabase = createClient('${url}', '${anonKey}')
+</file>
+
+Then in App.tsx and components:
+import { supabase } from './lib/supabase'  // or '../lib/supabase'
+
+DATA PATTERNS with Supabase:
+// Fetch: const { data, error } = await supabase.from('table').select('*')
+// Insert: const { data, error } = await supabase.from('table').insert({ ... })
+// Update: const { data, error } = await supabase.from('table').update({ ... }).eq('id', id)
+// Delete: const { data, error } = await supabase.from('table').delete().eq('id', id)
+
+ALWAYS use useEffect to load data on mount:
+  useEffect(() => {
+    supabase.from('items').select('*').then(({ data }) => { if (data) setItems(data) })
+  }, [])
+
+ALWAYS handle loading state:
+  const [loading, setLoading] = useState(true)
+
+Generate the SQL to create the tables at the VERY END of your response as a comment block:
+/* SQL TO RUN IN SUPABASE:
+create table items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users,
+  name text not null,
+  created_at timestamptz default now()
+);
+alter table items enable row level security;
+create policy "Users manage own items" on items for all using (auth.uid() = user_id);
+*/`
+  } catch { return '' }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()

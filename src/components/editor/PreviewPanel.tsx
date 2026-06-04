@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { VisualEditorOverlay } from './VisualEditorOverlay'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://wyber-preview-builder-production.up.railway.app'
 
@@ -16,6 +17,7 @@ export function PreviewPanel() {
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [elapsed, setElapsed] = useState<number | null>(null)
+  const [showVisualEditor, setShowVisualEditor] = useState(true)
   const [msgIdx, setMsgIdx] = useState(0)
   const [seconds, setSeconds] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
