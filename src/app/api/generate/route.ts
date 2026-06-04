@@ -110,44 +110,101 @@ WHEN BUILDING — THE CODE RULES
 FILE STRUCTURE (always exactly this):
   src/index.css          — ALL styles for the entire app
   src/App.tsx            — Main app, routing, layout, all state
-  src/components/X.tsx   — One component per file
+  src/components/X.tsx   — One component per file, named by feature
 
 ENTRY POINTS — NEVER CREATE THESE:
   src/index.tsx, src/main.tsx, public/index.html, src/index.js
 
-COMPLETENESS RULE — THE MOST IMPORTANT RULE:
-Before finishing, list every import in App.tsx.
-For each "import X from './components/X'" there MUST be a <file path="src/components/X.tsx">.
-Count your imports. Count your file blocks. They must match exactly.
-If they don't match, you have a bug. Fix it before outputting.
+━━━ RULE #1 — COMPLETENESS (THE MOST IMPORTANT) ━━━
+Before outputting, do this check in your head:
+  List every import in App.tsx starting with "./components/"
+  For each one, there MUST be a <file path="src/components/Name.tsx"> block
+  Count: imports = file blocks. If not equal, add the missing files.
+NEVER output a file that imports something that doesn't exist.
 
-TYPESCRIPT RULES — KEEP IT SIMPLE:
-- Use simple types: string, number, boolean, arrays
-- For state: const [items, setItems] = useState<Item[]>([])
-- For components: define interfaces inline and keep them simple
-- AVOID: React.Dispatch<React.SetStateAction<...>> in component props — use simpler patterns
-- AVOID: Generic React types in prop signatures — pass callbacks directly
-- If a type is complex, use 'any' — it's better than a broken build
-- NEVER import types from other files — define all types in the file that uses them
+━━━ RULE #2 — TYPESCRIPT (KEEP IT BUILDABLE) ━━━
+GOOD patterns that compile reliably:
+  const [items, setItems] = useState<Item[]>(initialItems)
+  interface Props { items: Item[]; onAdd: (item: Item) => void; onDelete: (id: string) => void }
+  const Component = ({ items, onAdd, onDelete }: Props) => { ... }
 
-STATE MANAGEMENT:
-- Keep ALL state in App.tsx — pass down as props
-- No prop drilling beyond 2 levels — compose components instead
-- Use simple useState — no useReducer, no Context for simple apps
-- Example pattern:
-  const [leads, setLeads] = useState<Lead[]>(initialLeads)
-  // Pass to component: <Pipeline leads={leads} onUpdate={setLeads} />
-  // Component prop: ({ leads, onUpdate }: { leads: Lead[], onUpdate: (items: Lead[]) => void })
+BAD patterns that break builds — NEVER use:
+  React.Dispatch<React.SetStateAction<anything>>  ← always breaks
+  React.FC<Props>  ← unnecessary, use inline function types
+  import type { X } from './other-file'  ← types don't transfer between files in this setup
+  Generic callbacks like onUpdate: (id: string, data: Partial<T>) => void  ← too complex
 
-COMPONENT PROPS PATTERN — USE THIS EXACTLY:
-  // In App.tsx — simple callback
-  <Dashboard leads={leads} onLeadUpdate={(id, data) => setLeads(prev => ...)} />
-  
-  // In Dashboard.tsx — inline type, no imports needed
-  interface DashboardProps {
-    leads: Lead[]
-    onLeadUpdate: (id: string, data: Partial<Lead>) => void
-  }
+SIMPLE CALLBACK PATTERN — always works:
+  // Pass specific handlers, not generic updaters
+  <LeadCard lead={lead} onEdit={() => openEdit(lead)} onDelete={() => deleteById(lead.id)} />
+
+━━━ RULE #3 — STATE (ALL IN APP.TSX) ━━━
+- ALL useState calls live in App.tsx only
+- Pass state down as props, pass handler functions down as callbacks  
+- Max 2 levels of prop passing — if you need 3 levels, redesign the component tree
+- No Context, no Redux, no Zustand — plain useState only
+- Define ALL data types (interfaces) at the top of App.tsx
+
+━━━ RULE #4 — CHARTS (USE RECHARTS) ━━━
+Recharts is pre-installed. Use it for ANY data visualization.
+Always import from 'recharts' — it's available.
+Example for a line chart:
+  import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+  <ResponsiveContainer width="100%" height={240}>
+    <LineChart data={data}>
+      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+      <XAxis dataKey="month" tick={{ fill: '#52526a', fontSize: 11 }} />
+      <YAxis tick={{ fill: '#52526a', fontSize: 11 }} />
+      <Tooltip contentStyle={{ background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }} />
+      <Line type="monotone" dataKey="value" stroke="#6366f1" strokeWidth={2} dot={false} />
+    </LineChart>
+  </ResponsiveContainer>
+
+For bar charts: use BarChart + Bar. For areas: AreaChart + Area.
+ALWAYS wrap in ResponsiveContainer. ALWAYS use the dark tooltip style above.
+
+━━━ RULE #5 — ICONS (USE LUCIDE-REACT) ━━━
+lucide-react is pre-installed. Use it everywhere.
+  import { BarChart2, Users, TrendingUp, Settings, Plus, Search, Filter, X, Edit2, Trash2, ChevronRight } from 'lucide-react'
+Only import icons you actually use. Size them with size={16} or size={20}.
+
+━━━ RULE #6 — DATA MUST TELL A STORY ━━━
+Every app needs data that feels real and shows a narrative.
+BAD: { name: 'User 1', value: 100 }
+GOOD: { name: 'Sarah Chen', company: 'Horizon Labs', mrr: 2400, churn_risk: 'low', joined: '2024-03' }
+
+For dashboards — show a BUSINESS NARRATIVE in the numbers:
+  MRR: $47,832 (+12.4% vs last month)
+  Churn: 2.1% (industry avg 3.8%)  ← always show context
+  Mix positive and concerning metrics — real businesses have both
+
+12-month chart data must show realistic growth curves — not flat lines:
+  const chartData = [
+    { month: 'Jul', mrr: 31200 }, { month: 'Aug', mrr: 33800 },
+    { month: 'Sep', mrr: 35100 }, { month: 'Oct', mrr: 34200 }, // slight dip = realism
+    { month: 'Nov', mrr: 37600 }, { month: 'Dec', mrr: 41300 },
+    { month: 'Jan', mrr: 39800 }, { month: 'Feb', mrr: 43200 },
+    { month: 'Mar', mrr: 44900 }, { month: 'Apr', mrr: 46100 },
+    { month: 'May', mrr: 45700 }, { month: 'Jun', mrr: 47832 },
+  ]
+
+━━━ RULE #7 — INTERACTIONS MUST WORK ━━━
+Every button must do something visible when clicked.
+Every form must update visible state when submitted.
+Every table row must be clickable and show a detail view or modal.
+Search inputs must filter the displayed data in real time.
+NEVER add a button that does nothing. If unsure what it should do, show a toast/alert.
+
+Modals: use a simple boolean state + conditional render — never use external modal libraries.
+
+━━━ RULE #8 — NAVIGATION MUST WORK ━━━
+Use useState for active section, not React Router (no routing installed).
+Sidebar nav items must highlight the active section.
+Each section must show different, relevant content — not the same component restyled.
+Example:
+  const [section, setSection] = useState<'dashboard' | 'customers' | 'revenue' | 'settings'>('dashboard')
+  {section === 'dashboard' && <Dashboard ... />}
+  {section === 'customers' && <Customers ... />}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT
@@ -289,15 +346,35 @@ APP ARCHITECTURE PATTERNS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ALWAYS build with these components:
-1. App.tsx — All state, routing between sections/pages, layout wrapper
-2. A sidebar with navigation icons + labels, highlighting the active section
-3. A topbar with page title, user avatar, and action buttons
-4. The main content area with stats cards at top, then data below
+1. App.tsx — All state + interfaces at top, navigation logic, layout wrapper
+2. Sidebar.tsx — Navigation with icons from lucide-react, active section highlighted, logo at top
+3. At least 3 content components — one per nav section, each shows genuinely different UI
+4. At least one data-heavy component with a table or list of 8-12 realistic records
+5. At least one chart component using Recharts when the app involves any numbers over time
 
-ALWAYS include in every app:
-- Minimum 8-10 realistic data records (real names, real companies, real numbers)
-- Working navigation between sections (use useState for active section)
-- At least one interactive action (add/edit/delete/approve/etc.)
+EVERY APP MUST HAVE:
+- A working search input that filters visible data as you type (use .filter() on the state array)
+- At least one modal (add new item, view detail, or edit) triggered by a button click
+- Stats cards at the top of the main dashboard section with real numbers and trend indicators
+- Empty state shown when filtered results return nothing
+- Loading-free instant interactions — all state is local, no async calls
+
+SIDEBAR ALWAYS INCLUDES:
+- App logo/name at the top (use a colored square + app name, not generic text)
+- 4-6 navigation items with lucide-react icons, each going to a different section
+- Active item highlighted with accent color background
+- User avatar/name at the bottom
+
+TOPBAR ALWAYS INCLUDES:  
+- Current section title (large, bold)
+- Primary action button (+ New X) on the right
+- Optional: breadcrumb or subtitle
+
+QUALITY BAR — before finishing, ask yourself:
+- Would a designer be proud of this? If no, add more visual hierarchy.
+- Does every button do something? If not, wire it up or remove it.
+- Is the data realistic and varied? If not, add more records with different states.
+- Do the charts have actual curves, not flat lines? If not, make the data more dynamic.
 - Stats cards showing meaningful aggregated numbers
 - Loading and empty states
 - A search/filter input that actually filters the displayed data
