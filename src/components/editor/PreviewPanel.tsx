@@ -67,9 +67,12 @@ export function PreviewPanel() {
     }
   }, [files, hasApp, building, project])
 
-  // Trigger when generation finishes
+  // Auto-build immediately when generation finishes — no button click needed
   useEffect(() => {
-    if (prevGenerating.current && !isGenerating && hasApp) build()
+    if (prevGenerating.current && !isGenerating && hasApp) {
+      lastBuiltKey.current = '' // force fresh build after generation
+      build()
+    }
     prevGenerating.current = isGenerating
   }, [isGenerating, hasApp, build])
 
