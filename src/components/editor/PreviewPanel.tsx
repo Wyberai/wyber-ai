@@ -76,15 +76,17 @@ export function PreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, hasApp, build])
 
-  // Also auto-build when opening an existing project that has files but no preview yet
-  const hasTriedInitialBuild = useRef(false)
+  // Auto-build whenever files change to new real content
+  const prevFilesKey = useRef('')
   useEffect(() => {
-    if (hasTriedInitialBuild.current) return
-    if (hasApp && !isGenerating && !html && !building) {
-      hasTriedInitialBuild.current = true
+    if (!hasApp || isGenerating || building) return
+    const key = Object.keys(files).sort().join('|')
+    if (key === prevFilesKey.current) return
+    prevFilesKey.current = key
+    if (key !== lastBuiltKey.current) {
       build()
     }
-  }, [hasApp, isGenerating, html, building, build])
+  }, [files, hasApp, isGenerating, building, build])
 
   // Update iframe src when URL returned
   useEffect(() => {
