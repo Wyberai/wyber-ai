@@ -28,7 +28,7 @@ export function PreviewPanel() {
   const build = useCallback(async () => {
     if (!hasApp || building) return
     const key = Object.keys(files).sort().join('|')
-    if (key === lastBuiltKey.current) return
+    if (key === lastBuiltKey.current && html) return  // skip if same files already built
     lastBuiltKey.current = key
 
     setBuilding(true)
@@ -53,8 +53,8 @@ export function PreviewPanel() {
       clearInterval(timerRef.current!)
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
-      if (data.html) {
-        setHtml(data.html)
+      if (data.url) {
+        setHtml(data.url)  // store URL in html state
         setError(null)
       } else {
         setError(data.error || 'Build failed')
@@ -73,10 +73,10 @@ export function PreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, hasApp, build])
 
-  // Update iframe srcdoc
+  // Update iframe src when URL returned
   useEffect(() => {
     if (iframeRef.current && html) {
-      iframeRef.current.srcdoc = html
+      iframeRef.current.src = html  // html now holds the URL
     }
   }, [html])
 
