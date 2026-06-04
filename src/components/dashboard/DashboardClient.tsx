@@ -39,11 +39,21 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
-    if (confirmDelete !== id) { setConfirmDelete(id); setTimeout(() => setConfirmDelete(null), 3000); return; }
+    if (confirmDelete !== id) {
+      setConfirmDelete(id);
+      setTimeout(() => setConfirmDelete(c => c === id ? null : c), 5000);
+      return;
+    }
     setDeletingId(id); setConfirmDelete(null);
-    await fetch('/api/projects', { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ projectId: id, userId: profile?.id }) });
-    setProjects(prev => prev.filter(p => p.id !== id));
-    setDeletingId(null);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'DELETE',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ projectId: id, userId: profile?.id })
+      });
+      if (res.ok) setProjects(prev => prev.filter(p => p.id !== id));
+    } catch(e) { console.error('Delete failed', e); }
+    finally { setDeletingId(null); }
   };
 
   const handleRename = async (id: string, name: string) => {
