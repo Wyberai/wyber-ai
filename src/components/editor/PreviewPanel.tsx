@@ -1,3 +1,4 @@
+﻿// Railway preview builder v2 — 20260604-1441
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
@@ -61,7 +62,7 @@ export function PreviewPanel() {
       }
     } catch (e: any) {
       clearInterval(timerRef.current!)
-      setError('Could not reach preview builder — ' + e.message)
+      setError('Could not reach preview builder â€” ' + e.message)
     } finally {
       setBuilding(false)
     }
@@ -86,11 +87,11 @@ export function PreviewPanel() {
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: building ? '#f59e0b' : html ? '#22c55e' : '#3f3f46', boxShadow: html ? '0 0 6px rgba(34,197,94,0.4)' : 'none', transition: 'all 0.3s' }} />
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
-          {isGenerating ? 'Generating your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : elapsed ? `✓ Built in ${elapsed}s` : hasApp ? 'Ready — click Build preview' : 'Describe what you want to build'}
+          {isGenerating ? 'Generating your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : elapsed ? `âœ“ Built in ${elapsed}s` : hasApp ? 'Ready â€” click Build preview' : 'Describe what you want to build'}
         </span>
         {html && !building && (
           <button onClick={() => { if (iframeRef.current) iframeRef.current.srcdoc = html }} title="Refresh"
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>↺</button>
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>â†º</button>
         )}
         {hasApp && !building && (
           <button onClick={build}
@@ -124,7 +125,7 @@ export function PreviewPanel() {
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 13, color: '#a1a1aa', fontWeight: 500 }}>{MESSAGES[msgIdx]}</div>
-            <div style={{ fontSize: 11, color: '#52525b' }}>{seconds}s — first build ~30s, then ~5s cached</div>
+            <div style={{ fontSize: 11, color: '#52525b' }}>{seconds}s â€” first build ~30s, then ~5s cached</div>
           </div>
         )}
 
@@ -136,7 +137,7 @@ export function PreviewPanel() {
           </div>
         )}
 
-        {/* Preview iframe — srcdoc, no X-Frame-Options issues */}
+        {/* Preview iframe â€” srcdoc, no X-Frame-Options issues */}
         <iframe
           ref={iframeRef}
           title="Wyber Preview"
@@ -148,3 +149,4 @@ export function PreviewPanel() {
     </div>
   )
 }
+
