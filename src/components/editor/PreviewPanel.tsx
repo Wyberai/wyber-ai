@@ -67,14 +67,24 @@ export function PreviewPanel() {
     }
   }, [files, hasApp, building, project])
 
-  // Auto-build immediately when generation finishes — no button click needed
+  // Auto-build when generation finishes
   useEffect(() => {
     if (prevGenerating.current && !isGenerating && hasApp) {
-      lastBuiltKey.current = '' // force fresh build after generation
+      lastBuiltKey.current = ''
       build()
     }
     prevGenerating.current = isGenerating
   }, [isGenerating, hasApp, build])
+
+  // Also auto-build when opening an existing project that has files but no preview yet
+  const hasTriedInitialBuild = useRef(false)
+  useEffect(() => {
+    if (hasTriedInitialBuild.current) return
+    if (hasApp && !isGenerating && !html && !building) {
+      hasTriedInitialBuild.current = true
+      build()
+    }
+  }, [hasApp, isGenerating, html, building, build])
 
   // Update iframe src when URL returned
   useEffect(() => {

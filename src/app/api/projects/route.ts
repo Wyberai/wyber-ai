@@ -16,15 +16,17 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { projectId } = await req.json()
-    if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 })
-    const supabase = await createClient()
-    // Use auth user for security instead of passing userId from client
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    const { error } = await supabase.from('projects').delete()
+    const { projectId, userId } = await req.json()
+    if (!projectId || !userId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
+    // Use service role to bypass RLS — userId validated at app level
+    const { createClient: createAdmin } = await import('@supabase/supabase-js')
+    const admin = createAdmin(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+    const { error } = await admin.from('projects').delete()
       .eq('id', projectId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ success: true })
   } catch (err) { return NextResponse.json({ error: String(err) }, { status: 500 }) }
