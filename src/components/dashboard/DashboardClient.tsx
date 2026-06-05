@@ -121,7 +121,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
       const { data, error } = await supabase
         .from('projects')
-        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '' })
+        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '', project_type: type || 'app' })
         .select('id');
 
       if (error) throw error;
@@ -392,7 +392,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
               {/* New project card */}
-              <button onClick={() => startProject()} disabled={creating}
+              <button onClick={() => setShowTypePicker(true)} disabled={creating}
                 style={{ height: 160, borderRadius: 12, border: '2px dashed rgba(255,255,255,0.08)', background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s', color: '#3f3f46' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; (e.currentTarget as HTMLElement).style.color = '#0EA5E9'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.04)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.color = '#3f3f46'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
@@ -458,5 +458,45 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         }
       `}</style>
     </div>
+
+    {/* Type Picker Modal */}
+    {showTypePicker && (
+      <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, backdropFilter:'blur(8px)' }}
+        onClick={() => setShowTypePicker(false)}>
+        <div style={{ background:'#111118', border:'1px solid rgba(255,255,255,0.1)', borderRadius:20, padding:32, width:560, boxShadow:'0 32px 64px rgba(0,0,0,0.6)' }}
+          onClick={e => e.stopPropagation()}>
+          <div style={{ textAlign:'center', marginBottom:28 }}>
+            <div style={{ fontSize:22, fontWeight:800, marginBottom:6 }}>What are you building?</div>
+            <div style={{ fontSize:14, color:'#71717a' }}>Or just describe your problem — I'll suggest the best approach</div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:24 }}>
+            {[
+              { type:'app' as const, icon:'🎨', label:'Web App', desc:'Dashboard, CRM, tool, landing page, or any UI' },
+              { type:'agent' as const, icon:'🤖', label:'AI Agent', desc:'Monitor, process, alert, or automate a task' },
+              { type:'workflow' as const, icon:'⚡', label:'Workflow', desc:'Connect apps with triggers and action chains' },
+            ].map(opt => (
+              <button key={opt.type} onClick={() => { setSelectedType(opt.type); startProject(undefined, opt.type); setShowTypePicker(false); }}
+                style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:'20px 16px', cursor:'pointer', textAlign:'center', transition:'all 0.15s', fontFamily:'inherit' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor='rgba(14,165,233,0.5)'; (e.currentTarget as HTMLElement).style.background='rgba(14,165,233,0.06)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.background='rgba(255,255,255,0.03)' }}>
+                <div style={{ fontSize:32, marginBottom:10 }}>{opt.icon}</div>
+                <div style={{ fontSize:14, fontWeight:700, color:'#fafafa', marginBottom:6 }}>{opt.label}</div>
+                <div style={{ fontSize:11, color:'#71717a', lineHeight:1.5 }}>{opt.desc}</div>
+              </button>
+            ))}
+          </div>
+          <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', paddingTop:20 }}>
+            <div style={{ fontSize:12, color:'#52525b', marginBottom:8, textAlign:'center' }}>Not sure? Just describe your challenge:</div>
+            <div style={{ display:'flex', gap:8 }}>
+              <input placeholder="e.g. I keep losing track of leads that go cold after a demo..." autoFocus
+                onKeyDown={e => { if(e.key==='Enter' && (e.target as HTMLInputElement).value.trim()) { startProject((e.target as HTMLInputElement).value, 'app'); setShowTypePicker(false); }}}
+                style={{ flex:1, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, padding:'10px 14px', color:'#fafafa', fontSize:13, outline:'none', fontFamily:'inherit' }}/>
+              <button onClick={(e) => { const input = (e.currentTarget.previousSibling as HTMLInputElement); if(input?.value) { startProject(input.value, 'app'); setShowTypePicker(false); }}}
+                style={{ padding:'10px 18px', borderRadius:8, border:'none', background:'#0EA5E9', color:'white', fontSize:13, fontWeight:700, cursor:'pointer' }}>Go</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }

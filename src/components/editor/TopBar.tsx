@@ -2,6 +2,7 @@
 import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { SupabaseConnector } from './SupabaseConnector';
 
 interface Props {
@@ -32,6 +33,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [pushing, setPushing] = useState(false);
   const [pushUrl, setPushUrl] = useState('');
   const [showSupabase, setShowSupabase] = useState(false);
+  const searchParams = useSearchParams();
+  const projectType = searchParams?.get('type') || 'app';
+  const [activeMode, setActiveMode] = useState<'app'|'agent'|'workflow'>(
+    (searchParams?.get('type') as 'app'|'agent'|'workflow') || 'app'
+  );
 
   const handleExport = async () => {
     if (exporting) return;
