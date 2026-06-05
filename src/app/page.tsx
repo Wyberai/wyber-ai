@@ -182,15 +182,66 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.03em' }}>From idea to live app in minutes</h2>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.03em' }}>Apps. Agents. Automations.</h2>
+            <p style={{ fontSize:15, color:'#71717a', marginTop:10, maxWidth:500, margin:'10px auto 0' }}>One platform. Three capabilities. Zero setup.</p>
+          </div>
+
+          {/* Three pillar cards */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:20, marginBottom:60 }}>
+            {[
+              {
+                icon:'🎨', color:'#0EA5E9', label:'APPS',
+                title:'Build any app from a prompt',
+                desc:'Type what you want. Wyber generates production-ready React code, deploys to Vercel, and wires a real Supabase database — in under 30 seconds.',
+                steps:['Describe your app in plain English','Preview builds automatically in 8 seconds','One-click deploy to live URL','Visual editing for any element'],
+                cta:'Build an app →', href:'/signup'
+              },
+              {
+                icon:'🤖', color:'#8b5cf6', label:'AGENTS',
+                title:'Deploy AI agents for any workflow',
+                desc:'Browse 5,000+ pre-built agents across 18 industries. Connect your own tools (Slack, HubSpot, Gmail, Airtable), click Run, and let Claude execute.',
+                steps:['Pick from 5,000+ agents','Connect your API keys (encrypted)','Click Run — Claude executes steps','Full audit log of every action'],
+                cta:'Browse agents →', href:'/agents'
+              },
+              {
+                icon:'⚡', color:'#f59e0b', label:'AUTOMATIONS',
+                title:'Build visual automation flows',
+                desc:'Drag-and-drop flow builder. Triggers → AI reasoning → Actions. Schedule runs, wire 12+ tools, branch on conditions. No code needed.',
+                steps:['Add trigger (webhook, schedule, Slack)','AI step: Claude decides what to do','Action: send message, update CRM, log data','Run on schedule or on demand'],
+                cta:'Build a flow →', href:'/flows'
+              },
+            ].map(pillar => (
+              <div key={pillar.label} style={{ background:'#111118', border:`1px solid ${pillar.color}20`, borderRadius:14, padding:24, display:'flex', flexDirection:'column' }}>
+                <div style={{ fontSize:11, fontWeight:800, color:pillar.color, letterSpacing:'0.1em', marginBottom:10 }}>{pillar.icon} {pillar.label}</div>
+                <div style={{ fontSize:17, fontWeight:700, marginBottom:8, letterSpacing:'-0.02em' }}>{pillar.title}</div>
+                <div style={{ fontSize:13, color:'#71717a', lineHeight:1.65, marginBottom:16 }}>{pillar.desc}</div>
+                <div style={{ flex:1 }}>
+                  {pillar.steps.map((step, i) => (
+                    <div key={i} style={{ display:'flex', gap:8, marginBottom:7, alignItems:'flex-start' }}>
+                      <span style={{ color:pillar.color, fontSize:12, fontWeight:800, flexShrink:0, marginTop:1 }}>0{i+1}</span>
+                      <span style={{ fontSize:12, color:'#a1a1aa', lineHeight:1.5 }}>{step}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link href={pillar.href} style={{ marginTop:20, display:'block', textAlign:'center', padding:'9px 0', borderRadius:8, border:`1px solid ${pillar.color}40`, background:`${pillar.color}10`, color:pillar.color, fontSize:13, fontWeight:700, textDecoration:'none' }}>
+                  {pillar.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* Original 4-step flow — kept, just renamed */}
+          <div style={{ textAlign:'center', marginBottom:36 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'#0EA5E9', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:12 }}>App building</div>
+            <h3 style={{ fontFamily:"'Sora',sans-serif", fontSize:'clamp(22px,2.5vw,32px)', fontWeight:800, letterSpacing:'-0.03em' }}>From prompt to live app</h3>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {[
-              { num: '01', title: 'Describe your app', desc: 'Type what you want in plain English. Wyber AI generates production-ready React code instantly.', component: <GenerateAnimation /> },
-              { num: '02', title: 'Deploy with one click', desc: 'Get a live URL in seconds. GitHub sync, custom domains, full source code export included.', component: <DeployAnimation /> },
-              { num: '03', title: 'Edit visually', desc: 'Click any element in the preview to edit it directly. No code needed — just describe the change.', component: <VisualEditAnimation /> },
-              { num: '04', title: 'Add a real database', desc: 'One click provisions a Postgres database, auth, and storage. Your app becomes truly full-stack.', component: <DatabaseAnimation /> },
+              { num: '01', title: 'Describe your app', desc: 'Type what you want. Wyber AI generates production-ready React code — no templates, no drag-and-drop, just real code.', component: <GenerateAnimation /> },
+              { num: '02', title: 'Preview in 8 seconds', desc: 'Live preview builds automatically. Click elements to edit them. Change anything — the preview updates instantly.', component: <DeployAnimation /> },
+              { num: '03', title: 'Edit visually', desc: 'Click any element in the preview to edit it directly. Describe the change and it happens — no code needed.', component: <VisualEditAnimation /> },
+              { num: '04', title: 'Deploy to a live URL', desc: 'One click publishes to Vercel. GitHub sync, custom domains, and full source code export included.', component: <DatabaseAnimation /> },
             ].map(s => (
               <div key={s.num} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {s.component}
@@ -311,14 +362,17 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(80px,10vw,140px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 560, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(30px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.1 }}>Start building today.<br />Free, forever.</h2>
-          <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, marginBottom: 32 }}>15 free credits on signup. No credit card required. Deploy your first app in under a minute.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '16px 36px', borderRadius: 12, background: '#0EA5E9', color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(14,165,233,0.35)', transition: 'all 0.2s' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 40px rgba(14,165,233,0.45)' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px rgba(14,165,233,0.35)' }}>
-            Build your first app free →
-          </Link>
-          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>No credit card · 15 free credits · Cancel anytime</div>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(30px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.1 }}>One prompt.<br /><span style={{ background:'linear-gradient(135deg,#6366f1,#0EA5E9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Infinite possibilities.</span></h2>
+          <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, marginBottom: 32 }}>Build apps, deploy AI agents, and automate workflows — all from a single prompt. Start with 15 free credits, no card required.</p>
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+            <Link href="/signup" style={{ display: 'inline-block', padding: '16px 36px', borderRadius: 12, background: '#6366f1', color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(99,102,241,0.35)' }}>
+              Start for free →
+            </Link>
+            <Link href="/agents" style={{ display: 'inline-block', padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 16, fontWeight: 500, textDecoration: 'none' }}>
+              Browse agents →
+            </Link>
+          </div>
+          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>15 free credits · No credit card · No setup</div>
         </div>
       </section>
 

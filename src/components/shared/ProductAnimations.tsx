@@ -170,16 +170,16 @@ export function VisualEditAnimation() {
       <div style={{ padding: 14, position: 'relative' }}>
         {/* Fake app */}
         <div style={{ background: '#111113', borderRadius: 10, padding: 14, border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div style={{ fontSize: 11, color: '#52525b', marginBottom: 10 }}>NestFinder CRM</div>
+          <div style={{ fontSize: 11, color: '#52525b', marginBottom: 10 }}>NexusMetrics</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 10 }}>
-            {['12 Leads', '4 Deals', '$840K'].map((s, i) => (
+            {['$47.8K MRR', '2.1% Churn', '1,847 Users'].map((s, i) => (
               <div key={i} style={{ padding: '8px', borderRadius: 7, background: '#18181b', textAlign: 'center', fontSize: 11, color: i === 0 && (hovering || selected) ? '#0EA5E9' : '#a1a1aa', border: i === 0 ? `1px solid ${hovering ? '#0EA5E9' : selected ? '#0EA5E9' : 'rgba(255,255,255,0.05)'}` : '1px solid rgba(255,255,255,0.05)', outline: i === 0 && hovering ? '2px solid rgba(14,165,233,0.4)' : 'none', transition: 'all 0.3s', cursor: 'crosshair' }}>
                 {s}
               </div>
             ))}
           </div>
           {/* Hover tooltip */}
-          {hovering && <div style={{ position: 'absolute', top: 60, left: 30, background: '#0EA5E9', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 5, pointerEvents: 'none' }}>&lt;div&gt; "12 Leads"</div>}
+          {hovering && <div style={{ position: 'absolute', top: 55, left: 14, background: '#0EA5E9', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 5, pointerEvents: 'none', zIndex:10 }}>&lt;div&gt; "MRR"</div>}
         </div>
 
         {/* Edit prompt */}
@@ -193,7 +193,7 @@ export function VisualEditAnimation() {
           </div>
         )}
         {changed && (
-          <div style={{ position: 'absolute', bottom: 20, left: 20, right: 20, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: 10, animation: 'fadeUp 0.2s ease' }}>
+          <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: 10, animation: 'fadeUp 0.2s ease', zIndex:10 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><polyline points="20,6 9,17 4,12"/></svg>
             <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>Element updated — 1 file changed</span>
           </div>
