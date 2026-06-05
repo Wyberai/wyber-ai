@@ -39,7 +39,7 @@ const PLANS = [
     credits: 250,
     dailyCredits: 10,
     maxMonthly: 400,
-    color: '#6366f1',
+    color: '#0EA5E9',
     features: [
       '250 monthly credits (rollover)',
       '10 daily credits',
@@ -59,11 +59,11 @@ const PLANS = [
   {
     id: 'team',
     name: 'Team',
-    monthlyPrice: 49,
-    annualPrice: 39,
-    credits: 800,
-    dailyCredits: 30,
-    maxMonthly: 1200,
+    monthlyPrice: 37.99,
+    annualPrice: 31.99,
+    credits: 500,
+    dailyCredits: 20,
+    maxMonthly: 800,
     color: '#8b5cf6',
     features: [
       '800 monthly credits (rollover)',
@@ -114,7 +114,7 @@ const TOPUPS = [
 function WyberLogo({ size = 26 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#6366f1"/>
+      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
       <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
       <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
     </svg>
@@ -169,11 +169,11 @@ export default function PricingPage() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>{user
             ? <>
                 <Link href="/dashboard" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Dashboard</Link>
-                <Link href="/settings?tab=billing" style={{ padding: '7px 18px', borderRadius: 8, background: '#6366f1', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>My Plan</Link>
+                <Link href="/settings?tab=billing" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>My Plan</Link>
               </>
             : <>
                 <Link href="/login" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Sign in</Link>
-                <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: '#6366f1', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started free</Link>
+                <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started free</Link>
               </>
           }
         </div>
@@ -187,7 +187,7 @@ export default function PricingPage() {
             Build apps, run agents, automate workflows
           </h1>
           <p style={{ fontSize: 16, color: '#71717a', maxWidth: 480, margin: '0 auto 28px', lineHeight: 1.65 }}>
-            One credit system across apps, agents, and automations. Credits never expire. Top up anytime.
+            Apps cost 1 credit · Agent runs cost 5 credits · Flow runs cost 3 credits. Credits never expire. Top up anytime.
           </p>
 
           {/* Annual toggle */}
@@ -203,9 +203,9 @@ export default function PricingPage() {
         {/* Plan cards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 12, marginBottom: 60 }}>
           {PLANS.map(p => (
-            <div key={p.id} style={{ position: 'relative', padding: 24, borderRadius: 16, background: p.highlight ? 'rgba(14,165,233,0.05)' : '#111113', border: `1px solid ${p.highlight ? '#6366f1' : 'rgba(255,255,255,0.07)'}`, display: 'flex', flexDirection: 'column' }}>
+            <div key={p.id} style={{ position: 'relative', padding: 24, borderRadius: 16, background: p.highlight ? 'rgba(14,165,233,0.05)' : '#111113', border: `1px solid ${p.highlight ? '#0EA5E9' : 'rgba(255,255,255,0.07)'}`, display: 'flex', flexDirection: 'column' }}>
               {p.badge && (
-                <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: '#6366f1', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 12px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
+                <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: '#0EA5E9', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 12px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
                   {p.badge}
                 </div>
               )}
@@ -245,14 +245,14 @@ export default function PricingPage() {
               </div>
 
               {p.ctaHref ? (
-                <Link href={p.ctaHref} style={{ display: 'block', padding: '10px', borderRadius: 9, textAlign: 'center', background: p.highlight ? '#6366f1' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : '#a1a1aa', fontSize: 13, fontWeight: 700, textDecoration: 'none', border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.1)', transition: 'all 0.15s' }}>
+                <Link href={p.ctaHref} style={{ display: 'block', padding: '10px', borderRadius: 9, textAlign: 'center', background: p.highlight ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : '#a1a1aa', fontSize: 13, fontWeight: 700, textDecoration: 'none', border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.1)', transition: 'all 0.15s' }}>
                   {p.cta}
                 </Link>
               ) : (
                 <button
                   onClick={() => p.planKey && handleCheckout(p.planKey)}
                   disabled={loading === p.planKey}
-                  style={{ width: '100%', padding: '10px', borderRadius: 9, border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.1)', background: p.highlight ? '#6366f1' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : '#a1a1aa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+                  style={{ width: '100%', padding: '10px', borderRadius: 9, border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.1)', background: p.highlight ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : '#a1a1aa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
                   {loading === p.planKey ? 'Loading...' : p.cta}
                 </button>
               )}
@@ -272,7 +272,7 @@ export default function PricingPage() {
                   <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>${(t.price / t.credits).toFixed(3)}/credit · never expires</div>
                 </div>
                 <button onClick={() => handleCheckout(t.key)} disabled={loading === t.key}
-                  style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#6366f1', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                  style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
                   ${t.price}
                 </button>
               </div>
@@ -318,7 +318,7 @@ export default function PricingPage() {
                   <tr key={label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <td style={{ padding: '12px 16px', fontWeight: 500 }}>{label}</td>
                     <td style={{ padding: '12px 16px', color: '#71717a' }}>{lovable}</td>
-                    <td style={{ padding: '12px 16px', color: '#6366f1', fontWeight: 600 }}>{wyber}</td>
+                    <td style={{ padding: '12px 16px', color: '#0EA5E9', fontWeight: 600 }}>{wyber}</td>
                     <td style={{ padding: '12px 16px', color: '#22c55e', fontSize: 12 }}>{diff}</td>
                   </tr>
                 ))}
@@ -354,7 +354,7 @@ export default function PricingPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
             {[
               { icon: '⚡', name: 'Simple Build', price: '$199', delivery: '24 hours', color: '#22c55e', examples: 'Landing pages, portfolios, tools', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4nveFV1qZ31hP5cR2d' },
-              { icon: '🔧', name: 'Medium Build', price: '$399', delivery: '3 working days', color: '#6366f1', examples: 'SaaS MVPs, booking systems, CRMs', badge: 'Most common', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4o4Slt7VZfJr1AS2mb' },
+              { icon: '🔧', name: 'Medium Build', price: '$399', delivery: '3 working days', color: '#0EA5E9', examples: 'SaaS MVPs, booking systems, CRMs', badge: 'Most common', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4o4Slt7VZfJr1AS2mb' },
               { icon: '🏗️', name: 'Complex Build', price: '$799', delivery: '1 week', color: '#8b5cf6', examples: 'Full SaaS with payments, multi-role apps', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4oEF3oofJnrbHmuuDO' },
             ].map(tier => (
               <div key={tier.name} style={{ background: '#111113', border: `1px solid ${tier.color}30`, borderRadius: 12, padding: 18, borderTop: `3px solid ${tier.color}`, position: 'relative' }}>
@@ -389,7 +389,7 @@ export default function PricingPage() {
               <div style={{ fontSize: 24, marginBottom: 10 }}>{p.icon}</div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{p.title}</div>
               <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6, marginBottom: 12 }}>{p.desc}</div>
-              <Link href={p.href} style={{ fontSize: 12, fontWeight: 700, color: '#6366f1', textDecoration: 'none' }}>{p.cta} →</Link>
+              <Link href={p.href} style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none' }}>{p.cta} →</Link>
             </div>
           ))}
         </div>

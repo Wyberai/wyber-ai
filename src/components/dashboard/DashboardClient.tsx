@@ -144,7 +144,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
   const NAV = [
     { label: 'Home', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg> },
-    { label: 'Projects', href: '/dashboard/projects', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+    { label: 'Projects', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
     { label: 'Templates', href: '/templates', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
     { label: 'Community', href: '/community', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> },
     { label: 'Connectors', href: '/connectors', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/></svg> },
@@ -314,7 +314,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             { id: 'automations' as const, label: '🔀 Automations' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              style={{ padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #6366f1' : '2px solid transparent', background: activeTab === tab.id ? 'rgba(99,102,241,0.08)' : 'transparent', color: activeTab === tab.id ? '#6366f1' : '#52525b', fontSize: 13, fontWeight: activeTab === tab.id ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+              style={{ padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #0EA5E9' : '2px solid transparent', background: activeTab === tab.id ? 'rgba(14,165,233,0.08)' : 'transparent', color: activeTab === tab.id ? '#0EA5E9' : '#52525b', fontSize: 13, fontWeight: activeTab === tab.id ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
               {tab.label}
             </button>
           ))}
@@ -329,7 +329,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   <h2 style={{ fontSize: 17, fontWeight: 700 }}>AI Agent Library</h2>
                   <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>5,000+ agents ready to deploy across 18 industries</div>
                 </div>
-                <a href="/agents" style={{ padding: '8px 18px', borderRadius: 8, background: '#6366f1', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Browse all agents →</a>
+                <a href="/agents" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Browse all agents →</a>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
                 {[
@@ -342,14 +342,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 ].map(agent => (
                   <div key={agent.id} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 16 }}>
                     <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🤖</div>
+                      <div style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🤖</div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{agent.name}</div>
-                        <div style={{ fontSize: 10, color: '#6366f1', fontWeight: 600 }}>{agent.id} · {agent.cat}</div>
+                        <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 600 }}>{agent.id} · {agent.cat}</div>
                       </div>
                     </div>
                     <div style={{ fontSize: 11, color: '#8b8b9a', marginBottom: 12, lineHeight: 1.5 }}>{agent.desc}</div>
-                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.06)', color: '#6366f1', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure →</a>
+                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure →</a>
                   </div>
                 ))}
               </div>
@@ -363,7 +363,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   <h2 style={{ fontSize: 17, fontWeight: 700 }}>Automations</h2>
                   <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>Visual flow builder — triggers, AI steps, actions</div>
                 </div>
-                <a href="/flows" style={{ padding: '8px 18px', borderRadius: 8, background: '#6366f1', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Open Flow Builder →</a>
+                <a href="/flows" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Open Flow Builder →</a>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
                 {[
@@ -378,8 +378,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   </div>
                 ))}
               </div>
-              <div style={{ textAlign: 'center', padding: 20, background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 12 }}>
-                <a href="/flows" style={{ fontSize: 15, fontWeight: 700, color: '#6366f1', textDecoration: 'none' }}>→ Open the Visual Flow Builder</a>
+              <div style={{ textAlign: 'center', padding: 20, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 12 }}>
+                <a href="/flows" style={{ fontSize: 15, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none' }}>→ Open the Visual Flow Builder</a>
                 <div style={{ fontSize: 12, color: '#52525b', marginTop: 4 }}>Drag nodes, connect steps, run automations with real tools</div>
               </div>
             </div>
