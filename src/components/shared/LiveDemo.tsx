@@ -2,12 +2,12 @@
 import { useState, useRef, useEffect } from 'react'
 
 const EXAMPLE_PROMPTS = [
-  'Build a SaaS dashboard for a project management tool',
-  'Create a CRM for a real estate agency called NestFinder',
-  'Build an e-commerce store for handmade jewelry',
-  'Design an HR dashboard with employee analytics',
-  'Create a landing page for an AI writing tool',
-  'Build a restaurant management system',
+  'Build a SaaS analytics dashboard called NexusMetrics with MRR, churn rate, customer health scores and 12-month growth chart',
+  'Build a VC portfolio management platform called Meridian Capital with deal pipeline, fund analytics and LP tracking',
+  'Build a revenue operations dashboard with pipeline scoring, stale deal alerts and forecast analytics',
+  'Build an HR platform with employee onboarding tracker, team org chart and performance reviews',
+  'Build a customer support hub with ticket queue, SLA tracking, churn risk scores and escalation workflows',
+  'Build a sales CRM with lead scoring, email sequences, meeting scheduler and deal forecasting',
 ]
 
 // Simulated streaming output — shows what generation looks like
