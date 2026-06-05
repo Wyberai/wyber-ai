@@ -69,26 +69,19 @@ export function PreviewPanel() {
     }
   }, [files, hasApp, building, project])
 
-  // Auto-build when generation finishes
+  // Auto-build ONLY when AI generation completes — not on page load
   useEffect(() => {
-    if (prevGenerating.current && !isGenerating && hasApp) {
-      lastBuiltKey.current = ''
-      build()
+    if (prevGenerating.current && !isGenerating) {
+      // Small delay to ensure files are fully set in the store
+      setTimeout(() => {
+        lastBuiltKey.current = ''
+        build()
+      }, 300)
     }
     prevGenerating.current = isGenerating
-  }, [isGenerating, hasApp, build])
+  }, [isGenerating, build])
 
-  // Auto-build whenever files change to new real content
-  const prevFilesKey = useRef('')
-  useEffect(() => {
-    if (!hasApp || isGenerating || building) return
-    const key = Object.keys(files).sort().join('|')
-    if (key === prevFilesKey.current) return
-    prevFilesKey.current = key
-    if (key !== lastBuiltKey.current) {
-      build()
-    }
-  }, [files, hasApp, isGenerating, building, build])
+  // Note: file-change auto-trigger removed — only builds after AI generation or manual click
 
   // Update iframe src when URL returned
   useEffect(() => {
