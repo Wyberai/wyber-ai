@@ -1,0 +1,240 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { decryptCredential } from '@/lib/encryption'
+import { getToolById, detectRequiredTools } from '@/lib/tool-registry'
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+export async function POST(req: NextRequest) {
+  try {
+    const auth = await createClient()
+    const { data: { user } } = await auth.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { agentId, projectId, input, config } = await req.json()
+    if (!agentId || !projectId) {
+      return NextResponse.json({ error: 'agentId and projectId required' }, { status: 400 })
+    }
+
+    const admin = await createAdminClient()
+
+    // Get agent definition
+    const { data: agent, error: agentErr } = await admin
+      .from('agent_workflows')
+      .select('*')
+      .eq('agent_id', agentId)
+      .single()
+
+    if (agentErr || !agent) {
+      return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
+    }
+
+    // Get connected tools for this project
+    const { data: connectors } = await admin
+      .from('project_connectors')
+      .select('service, config')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+
+    // Decrypt credentials — only done at execution time, never stored decrypted
+    const decryptedCreds: Record<string, Record<string, string>> = {}
+    for (const connector of connectors || []) {
+      decryptedCreds[connector.service] = {}
+      for (const [key, encVal] of Object.entries(connector.config || {})) {
+        try {
+          decryptedCreds[connector.service][key] = await decryptCredential(String(encVal))
+        } catch { /* skip invalid entries */ }
+      }
+    }
+
+    // Build tool definitions for Claude
+    const requiredTools = detectRequiredTools(agent.required_tools || '')
+    const claudeTools: Anthropic.Tool[] = []
+
+    // Add HTTP call tool — Claude uses this to call any API
+    claudeTools.push({
+      name: 'http_request',
+      description: 'Make an HTTP request to any API endpoint',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          method: { type: 'string', enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] },
+          url: { type: 'string', description: 'Full URL to call' },
+          headers: { type: 'object', description: 'HTTP headers' },
+          body: { type: 'object', description: 'Request body for POST/PUT' },
+        },
+        required: ['method', 'url'],
+      },
+    })
+
+    // Add log tool
+    claudeTools.push({
+      name: 'log_result',
+      description: 'Log an agent result or finding',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          type: { type: 'string', enum: ['info', 'success', 'warning', 'error'] },
+          message: { type: 'string' },
+          data: { type: 'object' },
+        },
+        required: ['type', 'message'],
+      },
+    })
+
+    // Build system context with decrypted credentials
+    const credContext = requiredTools.map(tool => {
+      const creds = decryptedCreds[tool.id]
+      if (!creds || Object.keys(creds).length === 0) return null
+      const credStr = Object.entries(creds).map(([k, v]) => `${k}: ${v}`).join(', ')
+      return `${tool.name}: ${credStr}`
+    }).filter(Boolean).join('\n')
+
+    const systemPrompt = `You are an AI agent executing the "${agent.name}" workflow.
+
+AGENT OBJECTIVE: ${agent.outcome}
+PROBLEM BEING SOLVED: ${agent.problem}
+TARGET USER: ${agent.primary_buyer}
+
+AVAILABLE CREDENTIALS (use these when calling APIs):
+${credContext || 'No tools connected — inform the user they need to connect tools first.'}
+
+EXECUTION RULES:
+1. Execute the agent objective step by step
+2. Use http_request tool to call APIs with the provided credentials
+3. Use log_result to record each significant finding or action
+4. Never expose raw credentials in your response
+5. Be specific — include actual data from API responses
+6. If a required tool is not connected, stop and clearly state what needs to be connected
+
+USER INPUT: ${input || 'Run the default agent workflow'}
+ADDITIONAL CONFIG: ${JSON.stringify(config || {})}
+
+Execute now. Return a structured summary of what you did and what you found.`
+
+    // Create execution log entry
+    const { data: execLog } = await admin
+      .from('agent_executions')
+      .insert({
+        agent_id: agentId,
+        project_id: projectId,
+        user_id: user.id,
+        status: 'running',
+        input: input || null,
+        started_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single()
+
+    const executionId = execLog?.id
+
+    const logs: Array<{ type: string; message: string; data?: unknown }> = []
+    let stepCount = 0
+
+    // Execute with Claude — streaming with tool use
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      system: systemPrompt,
+      tools: claudeTools,
+      messages: [{ role: 'user', content: input || 'Execute the agent workflow now.' }],
+    })
+
+    // Process tool calls
+    let messages: Anthropic.MessageParam[] = [
+      { role: 'user', content: input || 'Execute the agent workflow now.' }
+    ]
+
+    let currentResponse = response
+    let iterations = 0
+    const MAX_ITERATIONS = 10
+
+    while (currentResponse.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
+      iterations++
+      const toolUses = currentResponse.content.filter(b => b.type === 'tool_use')
+      const toolResults: Anthropic.ToolResultBlockParam[] = []
+
+      for (const toolUse of toolUses) {
+        if (toolUse.type !== 'tool_use') continue
+        stepCount++
+
+        let result: unknown = null
+        let isError = false
+
+        try {
+          if (toolUse.name === 'http_request') {
+            const { method, url, headers = {}, body } = toolUse.input as {
+              method: string; url: string; headers?: Record<string,string>; body?: unknown
+            }
+            const res = await fetch(url, {
+              method,
+              headers: { 'Content-Type': 'application/json', ...headers },
+              body: body ? JSON.stringify(body) : undefined,
+            })
+            result = await res.json().catch(() => ({ status: res.status, ok: res.ok }))
+            logs.push({ type: 'info', message: `${method} ${url} → ${res.status}` })
+          } else if (toolUse.name === 'log_result') {
+            const { type, message, data } = toolUse.input as { type: string; message: string; data?: unknown }
+            logs.push({ type, message, data })
+            result = { logged: true }
+          }
+        } catch (err) {
+          isError = true
+          result = { error: String(err) }
+          logs.push({ type: 'error', message: String(err) })
+        }
+
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: JSON.stringify(result),
+          is_error: isError,
+        })
+      }
+
+      messages = [
+        ...messages,
+        { role: 'assistant', content: currentResponse.content },
+        { role: 'user', content: toolResults },
+      ]
+
+      currentResponse = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        tools: claudeTools,
+        messages,
+      })
+    }
+
+    // Extract final text response
+    const finalText = currentResponse.content
+      .filter(b => b.type === 'text')
+      .map(b => b.type === 'text' ? b.text : '')
+      .join('\n')
+
+    // Update execution log
+    if (executionId) {
+      await admin.from('agent_executions').update({
+        status: 'completed',
+        output: finalText,
+        logs: logs,
+        steps: stepCount,
+        completed_at: new Date().toISOString(),
+      }).eq('id', executionId)
+    }
+
+    return NextResponse.json({
+      success: true,
+      execution_id: executionId,
+      summary: finalText,
+      logs,
+      steps: stepCount,
+    })
+
+  } catch (err) {
+    console.error('Agent execution error:', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}

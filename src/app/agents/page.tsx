@@ -186,17 +186,7 @@ export default function AgentsPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      localStorage.setItem('wyber_pending_agent', JSON.stringify({
-                        agent_id: agent.agent_id,
-                        name: agent.name,
-                        category: agent.category,
-                        problem: agent.problem,
-                        outcome: agent.outcome,
-                        buyer: agent.primary_buyer,
-                        complexity: agent.complexity,
-                        tools: agent.required_tools,
-                      }))
-                      window.location.href = '/dashboard'
+                      window.location.href = '/agent/' + agent.agent_id
                     }}
                     style={{ fontSize:12, fontWeight:600, color:'#6366f1', border:'1px solid rgba(99,102,241,0.3)', borderRadius:6, background:'rgba(99,102,241,0.06)', padding:'4px 12px', cursor:'pointer' }}>
                     Configure →
