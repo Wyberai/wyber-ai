@@ -16,6 +16,7 @@ export function PreviewPanel() {
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [autoRetrying, setAutoRetrying] = useState(false)
   const [elapsed, setElapsed] = useState<number | null>(null)
   const [showVisualEditor, setShowVisualEditor] = useState(true)
   const [msgIdx, setMsgIdx] = useState(0)

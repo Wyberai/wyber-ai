@@ -116,11 +116,23 @@ ENTRY POINTS — NEVER CREATE THESE:
   src/index.tsx, src/main.tsx, public/index.html, src/index.js
 
 ━━━ RULE #1 — COMPLETENESS (THE MOST IMPORTANT) ━━━
-Before outputting, do this check in your head:
-  List every import in App.tsx starting with "./components/"
-  For each one, there MUST be a <file path="src/components/Name.tsx"> block
-  Count: imports = file blocks. If not equal, add the missing files.
-NEVER output a file that imports something that doesn't exist.
+BEFORE WRITING ANY CODE, plan your files:
+  1. List every section/page in the app (e.g. Dashboard, Customers, Revenue, Integrations, Settings)
+  2. Each section = one component file = one import in App.tsx
+  3. Count your planned sections. You MUST output exactly that many component files.
+
+BEFORE FINISHING, do this check out loud in your response:
+  "Files I need: App.tsx + [list every component]"
+  Then verify every listed component has a <file path="src/components/X.tsx"> block.
+
+HARD RULE: If App.tsx has an import for ./components/X then src/components/X.tsx MUST exist.
+A missing file = build error = broken product. This is the #1 cause of failures.
+When in doubt, create the file. A stub component is better than a missing import.
+
+Stub pattern for when you run short on space — always output this rather than skipping a file:
+[file: src/components/Settings.tsx]
+  A minimal component that shows the section name and "Coming soon" — 5 lines max.
+  Never skip outputting a file. A stub is better than a missing import.
 
 ━━━ RULE #2 — TYPESCRIPT (KEEP IT BUILDABLE) ━━━
 GOOD patterns that compile reliably:

@@ -327,15 +327,26 @@ const filteredLines = lines.filter(l => {
   const t = l.trim();
   return !t.startsWith('<file ') && !t.startsWith('</file>') && !t.startsWith('✎') && !t.startsWith('📝');
 });
-// Also strip content inside file blocks
+// Strip file blocks AND code lines from final content
+const isCodeLine = (l: string) => {
+  const t = l.trim();
+  if (!t) return false;
+  if (t.startsWith('<file ') || t.startsWith('</file>') || t.startsWith('✎') || t.startsWith('📝')) return true;
+  if (/^(import |export |export default|const |let |var |function |async |class |interface |type |return |throw )/.test(t)) return true;
+  if (t.startsWith('<') && t.includes('>') && (t.includes('className') || t.includes('style=') || t.includes('onClick') || t.includes('/>') || t.includes('</') || /^<[A-Z]/.test(t))) return true;
+  if (t.startsWith('</') || t.startsWith('/>') || t === '};' || t === '})' || t === ');') return true;
+  if (t.includes('className=') || t.includes('style={{') || t.includes('useState') || t.includes('useEffect')) return true;
+  return false;
+};
 let inFileBlock = false;
 const chatLines = filteredLines.filter(l => {
   if (l.trim().startsWith('<file ')) { inFileBlock = true; return false; }
   if (l.trim().startsWith('</file>')) { inFileBlock = false; return false; }
-  return !inFileBlock;
+  if (inFileBlock) return false;
+  return !isCodeLine(l);
 });
 const chatContent = chatLines.join('\n').trim();
-setStreamingContent(chatContent || full);
+setStreamingContent(chatContent || '');
       }
 
       const { files: newFiles, chatText } = parseGenerationOutput(full);
