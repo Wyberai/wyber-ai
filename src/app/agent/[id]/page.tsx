@@ -19,7 +19,13 @@ export default function AgentStudioPage() {
   const [running, setRunning] = useState(false)
   const [currentExec, setCurrentExec] = useState<Execution|null>(null)
   const [input, setInput] = useState('')
-  const [projectId] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('wyber_default_project') : null) || 'agent-' + id)
+  const [projectId] = useState(() => {
+    if (typeof window === 'undefined') return 'agent-standalone'
+    // Try to get user's most recent project ID for tool connections
+    return localStorage.getItem('wyber_agent_project') || 
+           localStorage.getItem('wyber_default_project') || 
+           'agent-' + String(id)
+  })
 
   const load = useCallback(async () => {
     const res = await fetch('/api/agents?limit=10&search=' + encodeURIComponent(String(id)))
