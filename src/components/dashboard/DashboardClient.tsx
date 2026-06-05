@@ -33,26 +33,26 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [projects, setProjects] = useState(initialProjects);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [renamingId, setRenamingId] = useState<string | null>(null);
+    const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
-    if (confirmDelete !== id) {
-      setConfirmDelete(id);
-      setTimeout(() => setConfirmDelete(c => c === id ? null : c), 5000);
-      return;
-    }
-    setDeletingId(id); setConfirmDelete(null);
+    if (!window.confirm('Delete this project? This cannot be undone.')) return;
+    setDeletingId(id);
     try {
       const res = await fetch('/api/projects', {
         method: 'DELETE',
-        headers: {'Content-Type':'application/json'},
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ projectId: id, userId: profile?.id })
       });
-      if (res.ok) setProjects(prev => prev.filter(p => p.id !== id));
-    } catch(e) { console.error('Delete failed', e); }
+      if (res.ok) {
+        setProjects(prev => prev.filter(p => p.id !== id));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        console.error('Delete failed:', err.error || res.status);
+      }
+    } catch(err) { console.error('Delete failed', err); }
     finally { setDeletingId(null); }
   };
 

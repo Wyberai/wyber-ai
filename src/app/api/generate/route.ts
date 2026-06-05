@@ -580,7 +580,7 @@ export async function POST(req: NextRequest) {
     }
 
     const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default
-    const maxTokens = modelTier === 'fast' ? 8000 : 16000
+    const maxTokens = modelTier === 'fast' ? 8000 : modelTier === 'premium' ? 32000 : 24000
 
     const stream = await client.messages.stream({
       model,
