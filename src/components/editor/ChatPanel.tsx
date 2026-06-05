@@ -332,6 +332,11 @@ const filteredLines = lines.filter(l => {
   const t = l.trim();
   return !t.startsWith('<file ') && !t.startsWith('</file>') && !t.startsWith('✎') && !t.startsWith('📝');
 });
+// Strip agent/flow blocks from display
+let cleanedFull = full
+  .replace(/<agent>[\s\S]*?<\/agent>/g, '')
+  .replace(/<flow>[\s\S]*?<\/flow>/g, '')
+
 // Strip file blocks AND code lines from final content
 const isCodeLine = (l: string) => {
   const t = l.trim();
