@@ -302,9 +302,9 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                     {/* Action buttons */}
                     {p.id && <>
                       <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id}
-                        title={confirmDelete === p.id ? 'Click again to delete' : 'Delete'}
-                        style={{ position:'absolute', top:6, right:6, zIndex:10, width:22, height:22, borderRadius:5, border:`1px solid ${confirmDelete===p.id?'rgba(239,68,68,0.5)':'rgba(255,255,255,0.1)'}`, background:confirmDelete===p.id?'rgba(239,68,68,0.15)':'rgba(9,9,11,0.7)', color:confirmDelete===p.id?'#ef4444':'#71717a', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, backdropFilter:'blur(4px)' }}>
-                        {deletingId===p.id ? '…' : confirmDelete===p.id ? '!' : '×'}
+                        title='Delete project'
+                        style={{ position:'absolute', top:6, right:6, zIndex:10, width:22, height:22, borderRadius:5, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(9,9,11,0.7)', color:'#71717a', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, backdropFilter:'blur(4px)' }}>
+                        {deletingId===p.id ? '…' : '×'}
                       </button>
                       <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId===p.id}
                         title="Duplicate"
