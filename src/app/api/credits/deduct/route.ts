@@ -1,20 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { createClient as createAuthClient } from '@/lib/supabase/server'
-
-// Direct admin client - works in all contexts
-function getAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-}
+import { createAdminClient, createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
-    // Auth via cookie-based client
-    const authClient = await createAuthClient()
+    const authClient = await createClient()
     const { data: { user } } = await authClient.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
@@ -22,7 +11,7 @@ export async function POST(req: NextRequest) {
     const amount = body.amount ?? 1
     const reason = body.reason ?? 'generation'
 
-    const admin = getAdmin()
+    const admin = await createAdminClient()
 
     const { data: profile, error: fetchErr } = await admin
       .from('profiles')
@@ -34,11 +23,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    if (profile.credits < amount) {
+    if ((profile.credits ?? 0) < amount) {
       return NextResponse.json({ error: 'Insufficient credits', credits: profile.credits }, { status: 402 })
     }
 
-    const newCredits = profile.credits - amount
+    const newCredits = (profile.credits ?? 0) - amount
 
     const { data: updated, error: updateErr } = await admin
       .from('profiles')
@@ -51,28 +40,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Deduction failed' }, { status: 500 })
     }
 
-    // Fire and forget usage log
+    // Fire and forget usage log — ignore if table doesn't exist
     admin.from('credit_usage').insert({
-      user_id: user.id,
-      amount,
-      reason,
-      credits_before: profile.credits,
-      credits_after: updated.credits,
+      user_id: user.id, amount, reason,
+      credits_before: profile.credits, credits_after: updated.credits,
     }).then(() => {}).catch(() => {})
 
     return NextResponse.json({ success: true, credits: updated.credits, deducted: amount })
   } catch (err) {
+    console.error('Credits deduct error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
 
 export async function GET() {
   try {
-    const authClient = await createAuthClient()
+    const authClient = await createClient()
     const { data: { user } } = await authClient.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const admin = getAdmin()
+    const admin = await createAdminClient()
     const { data: profile } = await admin
       .from('profiles')
       .select('credits, plan')

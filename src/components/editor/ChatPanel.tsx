@@ -179,7 +179,22 @@ export function ChatPanel({ projectId, userId }: Props) {
       }, 100);
     };
     window.addEventListener('wyber_auto_generate', handler as EventListener);
-    return () => window.removeEventListener('wyber_auto_generate', handler as EventListener);
+
+    // Also listen for wyber-autofix (from AutoFix component, VisualEditor, PreviewPanel)
+    const autofixHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (!detail?.prompt) return
+      setInput(detail.prompt)
+      setTimeout(() => {
+        const btn = document.querySelector('[data-send-button]') as HTMLButtonElement
+        if (btn && !btn.disabled) btn.click()
+      }, 100)
+    }
+    window.addEventListener('wyber-autofix', autofixHandler)
+    return () => {
+      window.removeEventListener('wyber_auto_generate', handler as EventListener)
+      window.removeEventListener('wyber-autofix', autofixHandler)
+    }
   }, []);
 
   const handleImageFile = useCallback((file: File) => {

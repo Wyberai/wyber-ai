@@ -2,14 +2,10 @@
 import { useEffect, useRef } from 'react'
 import { useEditorStore } from '@/store/editor'
 
-/**
- * AutoFix — listens for errors from preview iframe via postMessage
- * When error detected: adds it to chat + auto-triggers a fix request
- */
 export function AutoFix() {
   const lastError = useRef('')
   const cooldown = useRef(false)
-  const { isGenerating, addMessage, setInput, hasGeneratedFiles } = useEditorStore()
+  const { isGenerating, addMessage, hasGeneratedFiles } = useEditorStore()
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {
@@ -25,29 +21,19 @@ export function AutoFix() {
       cooldown.current = true
       setTimeout(() => { cooldown.current = false }, 20000)
 
-      // Add error message to chat
       addMessage({
-        id: `autofix-${Date.now()}`,
+        id: 'autofix-' + Date.now(),
         role: 'assistant',
-        content: \`⚠️ Preview error detected:
-
-\\`\\`\\`
-\${msg.slice(0, 300)}
-\\`\\`\\`
-
-Fixing now...\`,
+        content: 'Fixing error: ' + msg.slice(0, 100),
         timestamp: Date.now(),
         status: 'done',
       })
 
-      // Auto-trigger fix via a synthetic click on the send button
-      // We set the input then programmatically send
       setTimeout(() => {
         const btn = document.querySelector('[data-send-button]') as HTMLButtonElement
         if (btn && !btn.disabled) {
-          // Set a fix prompt via custom event
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { prompt: \`Fix this error in the app: \${msg.slice(0, 200)}\` }
+            detail: { prompt: 'Fix this JavaScript error in the app: ' + msg.slice(0, 200) }
           }))
         }
       }, 500)
@@ -55,7 +41,7 @@ Fixing now...\`,
 
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [isGenerating, hasGeneratedFiles, addMessage, setInput])
+  }, [isGenerating, hasGeneratedFiles, addMessage])
 
   return null
 }

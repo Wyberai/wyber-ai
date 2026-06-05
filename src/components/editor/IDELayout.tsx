@@ -1,5 +1,6 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
+import { AutoFix } from './AutoFix';
 import { useCallback, useEffect, useState } from 'react';
 import { TopBar } from './TopBar';
 import { FileTree } from './FileTree';
@@ -88,6 +89,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
           />
         </div>
       </div>
+      <AutoFix />
     </div>
   );
 }

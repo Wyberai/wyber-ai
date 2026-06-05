@@ -586,10 +586,14 @@ export async function POST(req: NextRequest) {
     const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default
     const maxTokens = modelTier === 'fast' ? 8000 : 32000
 
+    // Inject Supabase context if user has connected their project
+    const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
+    const fullSystemPrompt = buildSystemPrompt() + supabaseContext
+
     const stream = await client.messages.stream({
       model,
       max_tokens: maxTokens,
-      system: buildSystemPrompt(),
+      system: fullSystemPrompt,
       messages: [...trimmedHistory, { role: 'user', content: userContent }],
     })
 
