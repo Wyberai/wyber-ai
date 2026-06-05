@@ -222,6 +222,22 @@ Example:
   {section === 'dashboard' && <Dashboard ... />}
   {section === 'customers' && <Customers ... />}
 
+━━━ RULE #9 — PAYMENTS (WHEN RELEVANT) ━━━
+If the app involves selling, subscriptions, or payments — include a Stripe checkout button.
+Use a realistic Stripe-style checkout UI (no real Stripe keys needed — show the UI pattern):
+  <button onClick={() => window.open('https://buy.stripe.com/your-link', '_blank')}
+    style={{ background:'#635BFF', color:'white', padding:'12px 24px', borderRadius:8, border:'none', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+    💳 Checkout with Stripe
+  </button>
+Show pricing cards with monthly/annual toggle when building SaaS or e-commerce apps.
+
+━━━ RULE #10 — MAKE IT CLONEABLE ━━━
+Always include a "Built with Wyber AI" badge in the bottom-right corner of every app:
+  <div style={{ position:'fixed', bottom:12, right:12, fontSize:10, color:'rgba(255,255,255,0.3)', background:'rgba(0,0,0,0.4)', padding:'3px 8px', borderRadius:10, backdropFilter:'blur(4px)', cursor:'pointer' }}
+    onClick={() => window.open('https://wyberai.com', '_blank')}>
+    Built with Wyber AI ⚡
+  </div>
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 OUTPUT FORMAT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

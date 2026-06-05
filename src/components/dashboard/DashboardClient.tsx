@@ -1,4 +1,6 @@
 'use client';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -33,8 +35,35 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [projects, setProjects] = useState(initialProjects);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  // Auto-clone if ?clone=projectId in URL
+  useEffect(() => {
+    const cloneId = searchParams?.get('clone');
+    if (!cloneId || !profile?.id) return;
+    fetch('/api/projects/duplicate', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ projectId: cloneId, userId: profile.id })
+    }).then(r => r.json()).then(data => {
+      if (data.project?.id) window.location.href = '/project/' + data.project.id;
+    });
+  }, [searchParams, profile?.id]);
     const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+
+  const handleClone = async (e: React.MouseEvent, projectId: string) => {
+    e.preventDefault(); e.stopPropagation();
+    const res = await fetch('/api/projects/duplicate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId, userId: profile?.id })
+    });
+    const data = await res.json();
+    if (data.project?.id) {
+      window.location.href = '/project/' + data.project.id;
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
