@@ -16,7 +16,7 @@ function WyberLogo({ size = 28 }: { size?: number }) {
 
 const FEATURES = [
   {
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="1.8" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
     title: 'Instant generation',
     desc: 'Describe your app in plain English. Wyber AI asks the right questions, then builds production-ready React code — no setup, no configuration.',
   },
@@ -36,7 +36,7 @@ const FEATURES = [
     desc: 'Click any element in the preview to edit it directly. No code needed. Just describe the change you want and it happens.',
   },
   {
-    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
     title: '130+ templates',
     desc: 'Start from 130+ professionally designed templates — dashboards, CRMs, e-commerce, healthcare, finance. Instant load, fully editable.',
   },
@@ -87,10 +87,10 @@ export default function HomePage() {
             </Link>
           ))}<div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 6px' }} />
           {user
-            ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
+            ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: '#6366f1', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
             : <>
                 <Link href="/login" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, color: '#a1a1aa', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
-                <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 20px rgba(14,165,233,0.25)' }}>Start free →</Link>
+                <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#6366f1', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 20px rgba(14,165,233,0.25)' }}>Start free →</Link>
               </>
           }
         </div>
@@ -104,14 +104,14 @@ export default function HomePage() {
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 760 }}>
           {/* Badge */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 2s infinite' }} />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: '#6366f1', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366f1', animation: 'pulse 2s infinite' }} />
             AI-powered · Built for builders
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 22 }}>
             Build apps and AI agents<br />
-            <span style={{ background: 'linear-gradient(135deg, #0EA5E9, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            <span style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               from one prompt
             </span>
           </h1>
@@ -121,7 +121,7 @@ export default function HomePage() {
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
-            <Link href="/signup" style={{ padding: '14px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)', transition: 'all 0.2s' }}
+            <Link href="/signup" style={{ padding: '14px 28px', borderRadius: 10, background: '#6366f1', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)', transition: 'all 0.2s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
               Start building free →
@@ -148,7 +148,7 @@ export default function HomePage() {
       {/* Live Demo */}
       <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Try it — no sign-up needed</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Try it — no sign-up needed</div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.03em' }}>Type a prompt. See it generate live.</h2>
         </div>
         <LiveDemo />
@@ -158,7 +158,7 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Everything you need</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Everything you need</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.03em' }}>Not just a frontend generator</h2>
             <p style={{ fontSize: 15, color: '#71717a', marginTop: 12, maxWidth: 480, margin: '12px auto 0' }}>Full-stack apps with real databases, auth, and deployments. Everything Lovable has, at 75% of the price.</p>
           </div>
@@ -191,7 +191,7 @@ export default function HomePage() {
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(300px,1fr))', gap:20, marginBottom:60 }}>
             {[
               {
-                icon:'🎨', color:'#0EA5E9', label:'APPS',
+                icon:'🎨', color:'#6366f1', label:'APPS',
                 title:'Build any app from a prompt',
                 desc:'Type what you want. Wyber generates production-ready React code, deploys to Vercel, and wires a real Supabase database — in under 30 seconds.',
                 steps:['Describe your app in plain English','Preview builds automatically in 8 seconds','One-click deploy to live URL','Visual editing for any element'],
@@ -233,10 +233,10 @@ export default function HomePage() {
 
           {/* Original 4-step flow — kept, just renamed */}
           <div style={{ textAlign:'center', marginBottom:36 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:'#0EA5E9', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:12 }}>App building</div>
+            <div style={{ fontSize:11, fontWeight:700, color:'#6366f1', letterSpacing:'0.1em', textTransform:'uppercase', marginBottom:12 }}>App building</div>
             <h3 style={{ fontFamily:"'Sora',sans-serif", fontSize:'clamp(22px,2.5vw,32px)', fontWeight:800, letterSpacing:'-0.03em' }}>From prompt to live app</h3>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+          <div className="wyber-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
             {[
               { num: '01', title: 'Describe your app', desc: 'Type what you want. Wyber AI generates production-ready React code — no templates, no drag-and-drop, just real code.', component: <GenerateAnimation /> },
               { num: '02', title: 'Preview in 8 seconds', desc: 'Live preview builds automatically. Click elements to edit them. Change anything — the preview updates instantly.', component: <DeployAnimation /> },
@@ -246,7 +246,7 @@ export default function HomePage() {
               <div key={s.num} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {s.component}
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#0EA5E9', letterSpacing: '0.1em', marginBottom: 6 }}>{s.num}</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#6366f1', letterSpacing: '0.1em', marginBottom: 6 }}>{s.num}</div>
                   <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6, letterSpacing: '-0.01em' }}>{s.title}</div>
                   <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65 }}>{s.desc}</div>
                 </div>
@@ -265,7 +265,7 @@ export default function HomePage() {
             <p style={{ fontSize: 15, color: '#71717a', marginTop: 12 }}>Everything competitors charge extra for — included.</p>
           </div>
 
-          <div style={{ overflowX:'auto' }}>
+          <div className="wyber-comparison" style={{ overflowX:'auto' }}>
             <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
               <thead>
                 <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.08)' }}>
@@ -313,10 +313,10 @@ export default function HomePage() {
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em' }}>Builders love Wyber AI</h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+          <div className="wyber-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
             {TESTIMONIALS.map(t => (
               <div key={t.name} style={{ padding: 22, borderRadius: 14, background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div style={{ fontSize: 22, marginBottom: 14, color: '#0EA5E9' }}>"</div>
+                <div style={{ fontSize: 22, marginBottom: 14, color: '#6366f1' }}>"</div>
                 <div style={{ fontSize: 14, lineHeight: 1.7, color: '#a1a1aa', marginBottom: 16 }}>{t.quote}</div>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>{t.name}</div>
                 <div style={{ fontSize: 11, color: '#52525b' }}>{t.role}</div>
@@ -362,9 +362,9 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(80px,10vw,140px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 560, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(30px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.1 }}>One prompt.<br /><span style={{ background:'linear-gradient(135deg,#6366f1,#0EA5E9)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Infinite possibilities.</span></h2>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(30px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.1 }}>One prompt.<br /><span style={{ background:'linear-gradient(135deg,#6366f1,#6366f1)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>Infinite possibilities.</span></h2>
           <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, marginBottom: 32 }}>Build apps, deploy AI agents, and automate workflows — all from a single prompt. Start with 15 free credits, no card required.</p>
-          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+          <div className="wyber-hero-btns" style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
             <Link href="/signup" style={{ display: 'inline-block', padding: '16px 36px', borderRadius: 12, background: '#6366f1', color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(99,102,241,0.35)' }}>
               Start for free →
             </Link>

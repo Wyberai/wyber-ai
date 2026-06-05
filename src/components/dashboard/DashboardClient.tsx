@@ -21,12 +21,12 @@ function WyberLogo({ size = 26 }: { size?: number }) {
 }
 
 const QUICK_PROMPTS = [
-  'Build a SaaS dashboard with analytics and user management',
-  'Create a landing page for my startup',
-  'Build a CRM for my sales team',
-  'Create an e-commerce store',
-  'Build a project management tool',
-  'Create a restaurant management system',
+  'Build a SaaS analytics dashboard with MRR, churn rate, and customer health scores',
+  'Build a CRM with lead pipeline, email sequences, and deal forecasting',
+  'Build a VC portfolio management platform with fund analytics and deal tracking',
+  'Build an HR platform with onboarding tracker, org chart, and performance reviews',
+  'Build a customer support hub with ticket queue, SLA tracking, and escalations',
+  'Build a revenue operations dashboard with pipeline scoring and forecast analytics',
 ];
 
 export function DashboardClient({ profile, projects: initialProjects }: Props) {
@@ -51,6 +51,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   }, [searchParams, profile?.id]);
     const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'apps' | 'agents' | 'automations'>('apps');
 
   const handleClone = async (e: React.MouseEvent, projectId: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -305,11 +306,88 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           </div>
         </div>
 
+        {/* Tab bar */}
+        <div style={{ padding: '16px 28px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 4 }}>
+          {[
+            { id: 'apps' as const, label: '⚡ Apps' },
+            { id: 'agents' as const, label: '🤖 Agents' },
+            { id: 'automations' as const, label: '🔀 Automations' },
+          ].map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              style={{ padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #6366f1' : '2px solid transparent', background: activeTab === tab.id ? 'rgba(99,102,241,0.08)' : 'transparent', color: activeTab === tab.id ? '#6366f1' : '#52525b', fontSize: 13, fontWeight: activeTab === tab.id ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         {/* Projects grid */}
-        <div style={{ flex: 1, padding: '24px 28px' }}>
-          {projects.length > 0 ? <>
+        <div style={{ flex: 1, padding: '24px 28px', overflowY: 'auto' }}>
+          {activeTab === 'agents' && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <h2 style={{ fontSize: 17, fontWeight: 700 }}>AI Agent Library</h2>
+                  <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>5,000+ agents ready to deploy across 18 industries</div>
+                </div>
+                <a href="/agents" style={{ padding: '8px 18px', borderRadius: 8, background: '#6366f1', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Browse all agents →</a>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
+                {[
+                  { id: 'WYBER-001', name: 'Revenue Operations Command', cat: 'Sales & Revenue', desc: 'CRM chaos, missed follow-ups, unreliable forecasts', complexity: 'Enterprise' },
+                  { id: 'WYBER-002', name: 'Inbound Lead Response Agent', cat: 'Sales & Revenue', desc: 'Slow response to inbound leads', complexity: 'Growth' },
+                  { id: 'WYBER-013', name: 'Customer Health Monitor', cat: 'Customer Support', desc: 'Churn risk invisible until too late', complexity: 'Growth' },
+                  { id: 'WYBER-025', name: 'Invoice Processing Agent', cat: 'Finance', desc: 'Manual invoice entry wastes hours', complexity: 'Growth' },
+                  { id: 'WYBER-031', name: 'Content Calendar Manager', cat: 'Marketing', desc: 'Content planning scattered and reactive', complexity: 'Enterprise' },
+                  { id: 'WYBER-050', name: 'Employee Onboarding Agent', cat: 'HR & People', desc: 'Inconsistent onboarding wastes new hire time', complexity: 'Growth' },
+                ].map(agent => (
+                  <div key={agent.id} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 16 }}>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(99,102,241,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🤖</div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{agent.name}</div>
+                        <div style={{ fontSize: 10, color: '#6366f1', fontWeight: 600 }}>{agent.id} · {agent.cat}</div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#8b8b9a', marginBottom: 12, lineHeight: 1.5 }}>{agent.desc}</div>
+                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.06)', color: '#6366f1', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure →</a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'automations' && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+                <div>
+                  <h2 style={{ fontSize: 17, fontWeight: 700 }}>Automations</h2>
+                  <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>Visual flow builder — triggers, AI steps, actions</div>
+                </div>
+                <a href="/flows" style={{ padding: '8px 18px', borderRadius: 8, background: '#6366f1', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Open Flow Builder →</a>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
+                {[
+                  { icon: '⚡', title: 'Trigger → AI → Action', desc: 'New lead scores high? Claude decides → Slack alert fires automatically' },
+                  { icon: '📅', title: 'Scheduled workflows', desc: 'Run every morning at 7AM, weekly on Monday, or any cron schedule' },
+                  { icon: '🔗', title: '12+ integrations', desc: 'Slack, Gmail, HubSpot, Airtable, Notion, GitHub and more' },
+                ].map(card => (
+                  <div key={card.title} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 20 }}>
+                    <div style={{ fontSize: 28, marginBottom: 10 }}>{card.icon}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{card.title}</div>
+                    <div style={{ fontSize: 12, color: '#52525b', lineHeight: 1.6 }}>{card.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ textAlign: 'center', padding: 20, background: 'rgba(99,102,241,0.04)', border: '1px solid rgba(99,102,241,0.12)', borderRadius: 12 }}>
+                <a href="/flows" style={{ fontSize: 15, fontWeight: 700, color: '#6366f1', textDecoration: 'none' }}>→ Open the Visual Flow Builder</a>
+                <div style={{ fontSize: 12, color: '#52525b', marginTop: 4 }}>Drag nodes, connect steps, run automations with real tools</div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'apps' && projects.length > 0 ? <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Projects</h2>
+              <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Apps</h2>
               <Link href="/dashboard/projects" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', fontWeight: 500 }} onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>View all →</Link>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
