@@ -134,6 +134,10 @@ Stub pattern for when you run short on space — always output this rather than 
   A minimal component that shows the section name and "Coming soon" — 5 lines max.
   Never skip outputting a file. A stub is better than a missing import.
 
+CRITICAL: If you are running long and approaching your limit, output ALL remaining 
+missing components as stubs immediately rather than stopping. Even 3 lines per component 
+is better than a missing file. Do NOT stop generating until every planned file exists.
+
 ━━━ RULE #2 — TYPESCRIPT (KEEP IT BUILDABLE) ━━━
 GOOD patterns that compile reliably:
   const [items, setItems] = useState<Item[]>(initialItems)
@@ -580,7 +584,7 @@ export async function POST(req: NextRequest) {
     }
 
     const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default
-    const maxTokens = modelTier === 'fast' ? 8000 : modelTier === 'premium' ? 32000 : 24000
+    const maxTokens = modelTier === 'fast' ? 8000 : 32000
 
     const stream = await client.messages.stream({
       model,
