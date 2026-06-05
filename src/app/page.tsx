@@ -48,10 +48,10 @@ const FEATURES = [
 ]
 
 const STATS = [
-  { value: '130+', label: 'Templates' },
-  { value: '30s', label: 'Avg generation' },
+  { value: '5,000+', label: 'AI Agents' },
+  { value: '130+', label: 'App templates' },
+  { value: '30s', label: 'Avg build time' },
   { value: '0', label: 'Setup required' },
-  { value: '∞', label: 'Projects on paid' },
 ]
 
 const TESTIMONIALS = [
@@ -79,7 +79,7 @@ export default function HomePage() {
           <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {[['Gallery', '/gallery'], ['Compare', '/vs/lovable'], ['Pricing', '/pricing'], ['Blog', '/blog']].map(([l, h]) => (
+          {[['Gallery', '/gallery'], ['Agents', '/agents'], ['Community', '/community'], ['Pricing', '/pricing']].map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -110,15 +110,14 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,72px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 22 }}>
-            Turn your idea into<br />
+            Build apps and AI agents<br />
             <span style={{ background: 'linear-gradient(135deg, #0EA5E9, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              a live app
+              from one prompt
             </span>
-            {' '}before lunch
           </h1>
 
-          <p style={{ fontSize: 'clamp(15px,1.8vw,19px)', color: '#71717a', lineHeight: 1.65, marginBottom: 36, maxWidth: 540, margin: '0 auto 36px' }}>
-            Describe your app in plain English. Wyber AI generates production-ready code, deploys it live, and wires up a real database — in under a minute.
+          <p style={{ fontSize: 'clamp(15px,1.8vw,19px)', color: '#71717a', lineHeight: 1.65, marginBottom: 36, maxWidth: 560, margin: '0 auto 36px' }}>
+            Describe your app or pick from 5,000+ AI agents. Wyber generates production-ready code, wires real tools, and deploys live — in under 30 seconds.
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
@@ -127,10 +126,10 @@ export default function HomePage() {
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
               Start building free →
             </Link>
-            <Link href="/pricing" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
+            <Link href="/agents" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.3)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
-              View pricing
+              Browse 5,000+ agents →
             </Link>
           </div>
 
@@ -206,27 +205,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Comparison vs Lovable */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(14,165,233,0.02)' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why Wyber AI</div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 40 }}>50% more credits at 75% of the price</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 32 }}>
-            {[
-              { label: 'Lovable Pro', price: '$25/mo', credits: '~250 credits/mo', note: 'Credits reset monthly', bad: true },
-              { label: 'Wyber AI Pro', price: '$18.99/mo', credits: '~390 credits/mo', note: 'Credits roll over', bad: false },
-            ].map(c => (
-              <div key={c.label} style={{ padding: 20, borderRadius: 12, background: c.bad ? '#111113' : 'rgba(14,165,233,0.05)', border: `1px solid ${c.bad ? 'rgba(255,255,255,0.07)' : 'rgba(14,165,233,0.2)'}` }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: c.bad ? '#52525b' : '#0EA5E9', marginBottom: 6 }}>{c.label}</div>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 4 }}>{c.price}</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: c.bad ? '#a1a1aa' : '#0EA5E9', marginBottom: 4 }}>{c.credits}</div>
-                <div style={{ fontSize: 11, color: '#52525b' }}>{c.bad ? '⚠️' : '✓'} {c.note}</div>
-              </div>
-            ))}
+      {/* Comparison table — Taskade-style */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign:'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why Wyber AI</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.03em' }}>One platform. Apps and agents.</h2>
+            <p style={{ fontSize: 15, color: '#71717a', marginTop: 12 }}>Everything competitors charge extra for — included.</p>
           </div>
-          <Link href="/pricing" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
-            See full pricing →
-          </Link>
+
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+              <thead>
+                <tr style={{ borderBottom:'1px solid rgba(255,255,255,0.08)' }}>
+                  <th style={{ textAlign:'left', padding:'12px 16px', color:'#52525b', fontWeight:600 }}>Capability</th>
+                  <th style={{ textAlign:'center', padding:'12px 16px', background:'rgba(99,102,241,0.08)', color:'#6366f1', fontWeight:700, borderRadius:'8px 8px 0 0' }}>Wyber AI</th>
+                  <th style={{ textAlign:'center', padding:'12px 16px', color:'#52525b', fontWeight:600 }}>Lovable</th>
+                  <th style={{ textAlign:'center', padding:'12px 16px', color:'#52525b', fontWeight:600 }}>Bolt</th>
+                  <th style={{ textAlign:'center', padding:'12px 16px', color:'#52525b', fontWeight:600 }}>Taskade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { cap:'App generation from prompt', wyber:'✅', lovable:'✅', bolt:'✅', taskade:'✅' },
+                  { cap:'5,000+ AI agent library', wyber:'✅', lovable:'❌', bolt:'❌', taskade:'Templates only' },
+                  { cap:'Agent execution with real tools', wyber:'✅', lovable:'❌', bolt:'❌', taskade:'✅' },
+                  { cap:'Credits never expire', wyber:'✅', lovable:'❌', bolt:'❌', taskade:'❌' },
+                  { cap:'Supabase database integration', wyber:'✅', lovable:'✅', bolt:'Partial', taskade:'❌' },
+                  { cap:'Clone any app one-click', wyber:'✅', lovable:'❌', bolt:'❌', taskade:'✅' },
+                  { cap:'Community gallery', wyber:'✅', lovable:'❌', bolt:'❌', taskade:'✅' },
+                  { cap:'Price per month', wyber:'$18.99', lovable:'$25', bolt:'$20', taskade:'$8–$50' },
+                ].map((row, i) => (
+                  <tr key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', background: i%2===0?'transparent':'rgba(255,255,255,0.01)' }}>
+                    <td style={{ padding:'11px 16px', color:'#a1a1aa', fontWeight:500 }}>{row.cap}</td>
+                    <td style={{ padding:'11px 16px', textAlign:'center', background:'rgba(99,102,241,0.04)', fontWeight:700, color:row.wyber==='✅'?'#22c55e':row.wyber==='❌'?'#52525b':'#f0f0f5' }}>{row.wyber}</td>
+                    <td style={{ padding:'11px 16px', textAlign:'center', color:row.lovable==='✅'?'#a1a1aa':row.lovable==='❌'?'#3f3f46':'#a1a1aa' }}>{row.lovable}</td>
+                    <td style={{ padding:'11px 16px', textAlign:'center', color:row.bolt==='✅'?'#a1a1aa':row.bolt==='❌'?'#3f3f46':'#a1a1aa' }}>{row.bolt}</td>
+                    <td style={{ padding:'11px 16px', textAlign:'center', color:row.taskade==='✅'?'#a1a1aa':row.taskade==='❌'?'#3f3f46':'#a1a1aa' }}>{row.taskade}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ textAlign:'center', marginTop:32 }}>
+            <Link href="/signup" style={{ display:'inline-block', padding:'12px 28px', borderRadius:10, background:'#6366f1', color:'#fff', fontSize:14, fontWeight:700, textDecoration:'none' }}>
+              Start building free →
+            </Link>
+          </div>
         </div>
       </section>
 
