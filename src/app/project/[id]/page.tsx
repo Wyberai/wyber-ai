@@ -1,49 +1,48 @@
-import { IDELayout } from '@/components/editor/IDELayout';
-import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { IDELayout } from '@/components/editor/IDELayout'
+import type { Metadata } from 'next'
 
-export default async function ProjectPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
+type Props = { params: Promise<{ id: string }> }
 
-  if (id === 'test' || id === 'demo' || id === 'new') {
-    redirect('/dashboard');
-  }
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: project } = await supabase.from('projects').select('name').eq('id', id).single()
+  return { title: project?.name ? `${project.name} — Wyber AI` : 'Editor — Wyber AI' }
+}
 
-  const { createClient } = await import('@/lib/supabase/server');
+export default async function ProjectPage({ params }: Props) {
+  const { id } = await params
+  const supabase = await createClient()
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect('/login');
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  // Try to get project - if it doesn't exist, create a stub so the IDE still loads
-  let project = null;
-  const { data: existingProject } = await supabase
+  const { data: project } = await supabase
     .from('projects')
     .select('*')
     .eq('id', id)
-    .single();
+    .single()
 
-  if (existingProject) {
-    // Check access
-    if (existingProject.user_id !== user.id && !existingProject.is_public) {
-      redirect('/dashboard');
-    }
-    project = existingProject;
-  } else {
-    // Project doesn't exist - could be a new project that failed to save
-    // Get name from query params if available, otherwise use a default
-    // Just redirect to dashboard - the dashboard handles project creation
-    redirect('/dashboard');
-  }
+  if (!project) redirect('/dashboard')
+  if (project.user_id !== user.id && !project.is_public) redirect('/dashboard')
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('credits,plan,email,id')
+    .select('credits, plan, email, id')
     .eq('id', user.id)
-    .single();
+    .single()
 
-  return <IDELayout initialProject={project} initialProfile={profile} />;
+  return (
+    <IDELayout
+      initialProject={project}
+      initialProfile={{
+        credits: profile?.credits ?? 0,
+        plan: profile?.plan ?? 'free',
+        email: profile?.email ?? user.email ?? '',
+        id: user.id,
+      }}
+    />
+  )
 }
