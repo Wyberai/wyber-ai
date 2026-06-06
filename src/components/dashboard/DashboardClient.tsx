@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useState, useRef } from 'react';
@@ -190,7 +190,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)' }}>
               <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : '#0EA5E9', width: creditPct + '%', transition: 'width 0.5s ease' }} />
             </div>
-            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>Low on credits — upgrade to continue building</div>}
+            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>Low on credits â€” upgrade to continue building</div>}
           </div>
         )}
 
@@ -250,7 +250,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.1)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/></svg>
-            Power your app with connectors →
+            Power your app with connectors â†’
           </Link>
 
           {/* Greeting */}
@@ -278,7 +278,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   </button>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 11, color: '#3f3f46' }}>↵ Enter to build</span>
+                  <span style={{ fontSize: 11, color: '#3f3f46' }}>â†µ Enter to build</span>
                   <button
                     onClick={() => startProject(promptInput.trim() || undefined)}
                     disabled={creating}
@@ -309,9 +309,9 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         {/* Tab bar */}
         <div style={{ padding: '16px 28px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 4 }}>
           {[
-            { id: 'apps' as const, label: '⚡ Apps' },
-            { id: 'agents' as const, label: '🤖 Agents' },
-            { id: 'automations' as const, label: '🔀 Automations' },
+            { id: 'apps' as const, label: 'âš¡ Apps' },
+            { id: 'agents' as const, label: 'ðŸ¤– Agents' },
+            { id: 'automations' as const, label: 'ðŸ”€ Automations' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               style={{ padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #0EA5E9' : '2px solid transparent', background: activeTab === tab.id ? 'rgba(14,165,233,0.08)' : 'transparent', color: activeTab === tab.id ? '#0EA5E9' : '#52525b', fontSize: 13, fontWeight: activeTab === tab.id ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
@@ -329,7 +329,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   <h2 style={{ fontSize: 17, fontWeight: 700 }}>AI Agent Library</h2>
                   <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>5,000+ agents ready to deploy across 18 industries</div>
                 </div>
-                <a href="/agents" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Browse all agents →</a>
+                <a href="/agents" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Browse all agents â†’</a>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
                 {[
@@ -342,14 +342,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 ].map(agent => (
                   <div key={agent.id} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 16 }}>
                     <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🤖</div>
+                      <div style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>ðŸ¤–</div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600 }}>{agent.name}</div>
-                        <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 600 }}>{agent.id} · {agent.cat}</div>
+                        <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 600 }}>{agent.id} Â· {agent.cat}</div>
                       </div>
                     </div>
                     <div style={{ fontSize: 11, color: '#8b8b9a', marginBottom: 12, lineHeight: 1.5 }}>{agent.desc}</div>
-                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure →</a>
+                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure â†’</a>
                   </div>
                 ))}
               </div>
@@ -361,15 +361,15 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
                 <div>
                   <h2 style={{ fontSize: 17, fontWeight: 700 }}>Automations</h2>
-                  <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>Visual flow builder — triggers, AI steps, actions</div>
+                  <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>Visual flow builder â€” triggers, AI steps, actions</div>
                 </div>
-                <a href="/flows" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Open Flow Builder →</a>
+                <a href="/flows" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Open Flow Builder â†’</a>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 20 }}>
                 {[
-                  { icon: '⚡', title: 'Trigger → AI → Action', desc: 'New lead scores high? Claude decides → Slack alert fires automatically' },
-                  { icon: '📅', title: 'Scheduled workflows', desc: 'Run every morning at 7AM, weekly on Monday, or any cron schedule' },
-                  { icon: '🔗', title: '12+ integrations', desc: 'Slack, Gmail, HubSpot, Airtable, Notion, GitHub and more' },
+                  { icon: 'âš¡', title: 'Trigger â†’ AI â†’ Action', desc: 'New lead scores high? Claude decides â†’ Slack alert fires automatically' },
+                  { icon: 'ðŸ“…', title: 'Scheduled workflows', desc: 'Run every morning at 7AM, weekly on Monday, or any cron schedule' },
+                  { icon: 'ðŸ”—', title: '12+ integrations', desc: 'Slack, Gmail, HubSpot, Airtable, Notion, GitHub and more' },
                 ].map(card => (
                   <div key={card.title} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 20 }}>
                     <div style={{ fontSize: 28, marginBottom: 10 }}>{card.icon}</div>
@@ -379,7 +379,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 ))}
               </div>
               <div style={{ textAlign: 'center', padding: 20, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 12 }}>
-                <a href="/flows" style={{ fontSize: 15, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none' }}>→ Open the Visual Flow Builder</a>
+                <a href="/flows" style={{ fontSize: 15, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none' }}>â†’ Open the Visual Flow Builder</a>
                 <div style={{ fontSize: 12, color: '#52525b', marginTop: 4 }}>Drag nodes, connect steps, run automations with real tools</div>
               </div>
             </div>
@@ -388,7 +388,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           {activeTab === 'apps' && projects.length > 0 ? <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Apps</h2>
-              <Link href="/dashboard/projects" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', fontWeight: 500 }} onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>View all →</Link>
+              <Link href="/dashboard/projects" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', fontWeight: 500 }} onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>View all â†’</Link>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
               {/* New project card */}
@@ -411,12 +411,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                       <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id}
                         title='Delete project'
                         style={{ position:'absolute', top:6, right:6, zIndex:10, width:22, height:22, borderRadius:5, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(9,9,11,0.7)', color:'#71717a', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, backdropFilter:'blur(4px)' }}>
-                        {deletingId===p.id ? '…' : '×'}
+                        {deletingId===p.id ? 'â€¦' : 'Ã—'}
                       </button>
                       <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId===p.id}
                         title="Duplicate"
                         style={{ position:'absolute', top:6, right:32, zIndex:10, width:22, height:22, borderRadius:5, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(9,9,11,0.7)', color:'#71717a', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, backdropFilter:'blur(4px)' }}>
-                        {duplicatingId===p.id ? '…' : '⎘'}
+                        {duplicatingId===p.id ? 'â€¦' : 'âŽ˜'}
                       </button>
                     </>}
                     <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))` }}>
@@ -424,7 +424,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                         ? <img src={(p as any).thumbnail_url} alt={p.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                              {p.framework === 'next' ? '▲' : p.framework === 'vue' ? '◆' : p.framework === 'vanilla' ? '⊡' : '⚛'}
+                              {p.framework === 'next' ? 'â–²' : p.framework === 'vue' ? 'â—†' : p.framework === 'vanilla' ? 'âŠ¡' : 'âš›'}
                             </div>
                           </div>
                       }
@@ -435,7 +435,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                       ) : (
                         <div onDoubleClick={e=>{e.preventDefault();e.stopPropagation();if(p.id)setRenamingId(p.id);}} title="Double-click to rename" style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
                       )}
-                      <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
+                      <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} Â· {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
                     </div>
                   </div>
                 </Link>
@@ -443,7 +443,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             </div>
           </> : (
             <div style={{ textAlign: 'center', paddingTop: 40, color: '#52525b' }}>
-              <div style={{ fontSize: 14 }}>No projects yet — describe your first app above</div>
+              <div style={{ fontSize: 14 }}>No projects yet â€” describe your first app above</div>
             </div>
           )}
         </div>
@@ -457,8 +457,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           50% { opacity: 0.8; }
         }
       `}</style>
-    </div>
-
     {/* Type Picker Modal */}
     {showTypePicker && (
       <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, backdropFilter:'blur(8px)' }}
@@ -467,13 +465,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           onClick={e => e.stopPropagation()}>
           <div style={{ textAlign:'center', marginBottom:28 }}>
             <div style={{ fontSize:22, fontWeight:800, marginBottom:6 }}>What are you building?</div>
-            <div style={{ fontSize:14, color:'#71717a' }}>Or just describe your problem — I'll suggest the best approach</div>
+            <div style={{ fontSize:14, color:'#71717a' }}>Or just describe your problem â€” I'll suggest the best approach</div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:24 }}>
             {[
-              { type:'app' as const, icon:'🎨', label:'Web App', desc:'Dashboard, CRM, tool, landing page, or any UI' },
-              { type:'agent' as const, icon:'🤖', label:'AI Agent', desc:'Monitor, process, alert, or automate a task' },
-              { type:'workflow' as const, icon:'⚡', label:'Workflow', desc:'Connect apps with triggers and action chains' },
+              { type:'app' as const, icon:'ðŸŽ¨', label:'Web App', desc:'Dashboard, CRM, tool, landing page, or any UI' },
+              { type:'agent' as const, icon:'ðŸ¤–', label:'AI Agent', desc:'Monitor, process, alert, or automate a task' },
+              { type:'workflow' as const, icon:'âš¡', label:'Workflow', desc:'Connect apps with triggers and action chains' },
             ].map(opt => (
               <button key={opt.type} onClick={() => { setSelectedType(opt.type); startProject(undefined, opt.type); setShowTypePicker(false); }}
                 style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:'20px 16px', cursor:'pointer', textAlign:'center', transition:'all 0.15s', fontFamily:'inherit' }}
