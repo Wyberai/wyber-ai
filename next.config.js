@@ -4,6 +4,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      { source: '/contact-us', destination: '/contact', permanent: true },
+      { source: '/dashboard/projects', destination: '/dashboard', permanent: false },
+      { source: '/home', destination: '/', permanent: true },
+      { source: '/app', destination: '/dashboard', permanent: false },
+      { source: '/login', destination: '/login', permanent: false, missing: [] },
+    ]
+  },
   async headers() {
     return [
       {
@@ -14,8 +23,8 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
         ],
       },
-    ];
+    ]
   },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

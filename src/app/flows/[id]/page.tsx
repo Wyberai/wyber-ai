@@ -14,7 +14,7 @@ interface Flow { id: string; name: string; nodes: FlowNode[]; edges: FlowEdge[];
 
 // ─── Node definitions ─────────────────────────────────────────
 const NODE_COLORS: Record<NodeType, string> = {
-  trigger: '#6366f1', ai: '#8b5cf6', action: '#0EA5E9', condition: '#f59e0b', end: '#22c55e'
+  trigger: '#0EA5E9', ai: '#0EA5E9', action: '#0EA5E9', condition: '#f59e0b', end: '#22c55e'
 }
 const NODE_ICONS: Record<NodeType, string> = {
   trigger: '⚡', ai: '🤖', action: '▶', condition: '◆', end: '✓'
@@ -230,7 +230,7 @@ export default function FlowBuilderPage() {
         <div style={{ marginLeft:'auto', display:'flex', gap:8 }}>
           <button onClick={save} style={{ padding:'6px 14px', borderRadius:6, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color:'#a1a1aa', fontSize:12, fontWeight:600, cursor:'pointer' }}>Save</button>
           <button onClick={runFlow} disabled={running || nodes.length === 0}
-            style={{ padding:'6px 16px', borderRadius:6, border:'none', background:running?'#2a2a3a':'#6366f1', color:running?'#52526a':'white', fontSize:12, fontWeight:700, cursor:running?'not-allowed':'pointer' }}>
+            style={{ padding:'6px 16px', borderRadius:6, border:'none', background:running?'#2a2a3a':'#0EA5E9', color:running?'#52526a':'white', fontSize:12, fontWeight:700, cursor:running?'not-allowed':'pointer' }}>
             {running ? '⚡ Running...' : '▶ Run Flow'}
           </button>
         </div>
@@ -332,7 +332,7 @@ export default function FlowBuilderPage() {
                 {selectedNode.type === 'trigger' && (
                   <>
                     <div style={{ fontSize:10, fontWeight:700, color:'#52526a', marginBottom:4 }}>WEBHOOK URL</div>
-                    <div style={{ background:'#1a1a24', border:'1px solid rgba(255,255,255,0.06)', borderRadius:6, padding:'7px 10px', fontSize:10, color:'#6366f1', fontFamily:'monospace', marginBottom:8, wordBreak:'break-all' }}>
+                    <div style={{ background:'#1a1a24', border:'1px solid rgba(255,255,255,0.06)', borderRadius:6, padding:'7px 10px', fontSize:10, color:'#0EA5E9', fontFamily:'monospace', marginBottom:8, wordBreak:'break-all' }}>
                       wyberai.com/api/flows/{id}/trigger
                     </div>
                     <div style={{ fontSize:10, fontWeight:700, color:'#52526a', marginBottom:4, marginTop:8 }}>SCHEDULE</div>
@@ -400,9 +400,9 @@ export default function FlowBuilderPage() {
             <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:12, maxHeight:200, overflowY:'auto' }}>
               <div style={{ fontSize:10, fontWeight:700, color:'#52526a', marginBottom:8 }}>EXECUTION LOG</div>
               {runLog.map((line, i) => (
-                <div key={i} style={{ fontSize:11, color: line.startsWith('✓')?'#22c55e':line.startsWith('🤖')?'#8b5cf6':line.startsWith('◆')?'#f59e0b':'#a1a1aa', marginBottom:2, lineHeight:1.5 }}>{line}</div>
+                <div key={i} style={{ fontSize:11, color: line.startsWith('✓')?'#22c55e':line.startsWith('🤖')?'#0EA5E9':line.startsWith('◆')?'#f59e0b':'#a1a1aa', marginBottom:2, lineHeight:1.5 }}>{line}</div>
               ))}
-              {running && <div style={{ width:16, height:16, border:'2px solid rgba(99,102,241,0.2)', borderTopColor:'#6366f1', borderRadius:'50%', animation:'spin 0.8s linear infinite', marginTop:4 }}/>}
+              {running && <div style={{ width:16, height:16, border:'2px solid rgba(99,102,241,0.2)', borderTopColor:'#0EA5E9', borderRadius:'50%', animation:'spin 0.8s linear infinite', marginTop:4 }}/>}
             </div>
           )}
         </div>

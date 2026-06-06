@@ -4,12 +4,11 @@ import { ThemeProvider } from '@/lib/theme';
 import { CookieBanner } from '@/components/shared/CookieBanner';
 import { WyberChatbot } from '@/components/shared/WyberChatbot';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   icons: {
-    icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-    ],
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
     apple: '/icon.svg',
   },
   metadataBase: new URL('https://wyberai.com'),
@@ -39,8 +38,6 @@ export const metadata: Metadata = {
 
 export const viewport = { themeColor: '#0EA5E9' };
 
-import Script from 'next/script'
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -49,9 +46,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{
             __html: `
               (function(){
-                var t = localStorage.getItem('wyber-theme');
-                var p = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                document.documentElement.setAttribute('data-theme', t || p);
+                try {
+                  var t = typeof localStorage !== 'undefined' ? localStorage.getItem('wyber-theme') : null;
+                  var p = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  document.documentElement.setAttribute('data-theme', t || p);
+                } catch(e) {}
               })();
             `,
           }}

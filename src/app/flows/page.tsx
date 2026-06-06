@@ -27,7 +27,7 @@ export default function FlowsPage() {
           <Link href="/dashboard" style={{ fontSize:13, color:'#52526a', textDecoration:'none' }}>← Dashboard</Link>
           <span style={{ color:'rgba(255,255,255,0.12)' }}>|</span>
           <span style={{ fontSize:15, fontWeight:700 }}>Automations</span>
-          <button onClick={createFlow} style={{ marginLeft:'auto', padding:'7px 18px', borderRadius:8, border:'none', background:'#6366f1', color:'white', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ New Flow</button>
+          <button onClick={createFlow} style={{ marginLeft:'auto', padding:'7px 18px', borderRadius:8, border:'none', background:'#0EA5E9', color:'white', fontSize:13, fontWeight:700, cursor:'pointer' }}>+ New Flow</button>
         </div>
       </div>
       <div style={{ maxWidth:1100, margin:'0 auto', padding:32 }}>
@@ -36,7 +36,7 @@ export default function FlowsPage() {
             <div style={{ fontSize:48, marginBottom:16 }}>⚡</div>
             <div style={{ fontSize:20, fontWeight:700, marginBottom:8 }}>Build your first automation</div>
             <div style={{ fontSize:14, color:'#52526a', marginBottom:24 }}>Connect triggers, AI steps, and actions into powerful workflows</div>
-            <button onClick={createFlow} style={{ padding:'11px 28px', borderRadius:8, border:'none', background:'#6366f1', color:'white', fontSize:14, fontWeight:700, cursor:'pointer' }}>Create automation →</button>
+            <button onClick={createFlow} style={{ padding:'11px 28px', borderRadius:8, border:'none', background:'#0EA5E9', color:'white', fontSize:14, fontWeight:700, cursor:'pointer' }}>Create automation →</button>
           </div>
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:16 }}>
