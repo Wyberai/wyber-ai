@@ -5,6 +5,7 @@ import { CookieBanner } from '@/components/shared/CookieBanner';
 import { WyberChatbot } from '@/components/shared/WyberChatbot';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
 import Script from 'next/script'
+import { Suspense } from 'react'
 
 export const metadata: Metadata = {
   icons: {
@@ -23,14 +24,14 @@ export const metadata: Metadata = {
     url: 'https://wyberai.com',
     siteName: 'Wyber AI',
     title: 'Wyber AI — Build Apps with AI in 30 Seconds',
-    description: 'Turn any idea into a live app in under a minute. 50% more credits than Lovable at 75% of the price.',
-    images: [{ url: '/api/og?title=Describe%20your%20app.%20We%20build%20it.&sub=AI%20app%20builder%20with%2050%25%20more%20credits%20than%20Lovable', width: 1200, height: 630, alt: 'Wyber AI' }],
+    description: 'Turn any idea into a live app in under a minute.',
+    images: [{ url: '/api/og?title=Build%20Apps%20with%20AI&sub=No%20coding%20required', width: 1200, height: 630, alt: 'Wyber AI' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Wyber AI — Build Apps with AI in 30 Seconds',
     description: '50% more credits than Lovable at 75% of the price. Start free.',
-    images: ['/api/og?title=Describe%20your%20app.%20We%20build%20it.&sub=AI%20app%20builder%20with%2050%25%20more%20credits%20than%20Lovable'],
+    images: ['/api/og?title=Build%20Apps%20with%20AI&sub=No%20coding%20required'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   alternates: { canonical: 'https://wyberai.com' },
@@ -56,22 +57,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <Script
-        src="https://www.googletagmanager.com/gtag/js?id=G-YJTD8LYK6V"
-        strategy="afterInteractive"
-      />
+      <Script src="https://www.googletagmanager.com/gtag/js?id=G-YJTD8LYK6V" strategy="afterInteractive" />
       <Script id="google-analytics" strategy="afterInteractive">
-        {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-YJTD8LYK6V');
-        `}
+        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-YJTD8LYK6V');`}
       </Script>
       <body>
         <PostHogProvider>
           <ThemeProvider>
-            {children}
+            <Suspense>
+              {children}
+            </Suspense>
           </ThemeProvider>
           <CookieBanner />
           <WyberChatbot />
