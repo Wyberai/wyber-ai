@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from '@/lib/theme';
 import { CookieBanner } from '@/components/shared/CookieBanner';
+import { WyberChatbot } from '@/components/shared/WyberChatbot';
+import { PostHogProvider } from '@/components/shared/PostHogProvider';
 
 export const metadata: Metadata = {
   icons: {
@@ -68,11 +70,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}
       </Script>
       <body>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
-        <CookieBanner />
-</body>
+        <PostHogProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+          <CookieBanner />
+          <WyberChatbot />
+        </PostHogProvider>
+      </body>
     </html>
   );
 }
