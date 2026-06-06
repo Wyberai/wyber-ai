@@ -10,7 +10,6 @@ const nextConfig = {
       { source: '/dashboard/projects', destination: '/dashboard', permanent: false },
       { source: '/home', destination: '/', permanent: true },
       { source: '/app', destination: '/dashboard', permanent: false },
-      { source: '/login', destination: '/login', permanent: false, missing: [] },
     ]
   },
   async headers() {
@@ -26,5 +25,4 @@ const nextConfig = {
     ]
   },
 }
-
 module.exports = nextConfig
