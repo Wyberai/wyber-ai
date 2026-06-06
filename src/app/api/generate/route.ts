@@ -569,7 +569,7 @@ create policy "Users manage own items" on items for all using (auth.uid() = user
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })

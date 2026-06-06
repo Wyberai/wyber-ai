@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+
+// Public route — no cookie context needed, use service role directly
+function getAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -11,8 +20,7 @@ export async function GET(req: NextRequest) {
   const offset = (page - 1) * limit
 
   try {
-    const supabase = await createAdminClient()
-
+    const supabase = getAdmin()
     let query = supabase
       .from('agent_workflows')
       .select('id,agent_id,name,category,primary_buyer,problem,outcome,complexity,is_featured,required_tools', { count: 'exact' })
@@ -36,14 +44,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createAdminClient()
+    const supabase = getAdmin()
     const { data, error } = await supabase.from('agent_workflows').select('category')
     if (error) throw error
     const counts: Record<string, number> = {}
     data?.forEach(r => { counts[r.category] = (counts[r.category] || 0) + 1 })
     return NextResponse.json({ categories: counts })
   } catch (err) {
-    console.error('Agents categories error:', String(err))
     return NextResponse.json({ error: String(err), categories: {} }, { status: 500 })
   }
 }
