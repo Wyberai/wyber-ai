@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -13,7 +14,11 @@ const SUGGESTED = [
   'Is there a free plan?',
 ]
 
+// Pages where chatbot should NOT appear (they have their own chat UI)
+const HIDDEN_ROUTES = ['/dashboard', '/project/', '/flows/', '/agent/', '/onboarding']
+
 export function WyberChatbot() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -22,12 +27,16 @@ export function WyberChatbot() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Auto-scroll to bottom on new message
+  // Hide on dashboard and editor routes
+  const isHidden = HIDDEN_ROUTES.some(route => pathname?.startsWith(route))
+  if (isHidden) return null
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Focus input when opened
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 100)
@@ -60,7 +69,6 @@ export function WyberChatbot() {
 
       if (!res.ok) throw new Error('Failed')
 
-      // Stream the response
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       let assistantContent = ''
@@ -88,7 +96,6 @@ export function WyberChatbot() {
 
   return (
     <>
-      {/* Chat panel */}
       {open && (
         <div style={{
           position: 'fixed', bottom: 88, right: 20, width: 360, height: 500,
@@ -98,7 +105,6 @@ export function WyberChatbot() {
           fontFamily: 'Inter,-apple-system,sans-serif',
           animation: 'chatSlideUp 0.2s ease',
         }}>
-          {/* Header */}
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>⚡</div>
             <div>
@@ -114,12 +120,12 @@ export function WyberChatbot() {
             </button>
           </div>
 
-          {/* Messages */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
-                  maxWidth: '85%', padding: '9px 12px', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                  maxWidth: '85%', padding: '9px 12px',
+                  borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                   background: msg.role === 'user' ? '#0EA5E9' : 'rgba(255,255,255,0.06)',
                   color: msg.role === 'user' ? '#fff' : '#e4e4e7',
                   fontSize: 13, lineHeight: 1.55,
@@ -129,7 +135,6 @@ export function WyberChatbot() {
               </div>
             ))}
 
-            {/* Suggested questions — show only at start */}
             {messages.length === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
                 {SUGGESTED.map(q => (
@@ -153,7 +158,6 @@ export function WyberChatbot() {
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
             <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
@@ -166,14 +170,12 @@ export function WyberChatbot() {
             </button>
           </div>
 
-          {/* Powered by */}
           <div style={{ textAlign: 'center', padding: '6px 0 10px', fontSize: 10, color: '#3f3f46' }}>
             Powered by Wyber AI · <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free →</a>
           </div>
         </div>
       )}
 
-      {/* Floating button */}
       <button onClick={() => setOpen(v => !v)}
         style={{
           position: 'fixed', bottom: 20, right: 20, width: 56, height: 56,
