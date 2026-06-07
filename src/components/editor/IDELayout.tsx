@@ -1,7 +1,7 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import { AutoFix } from './AutoFix';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, Suspense } from 'react';
 import { TopBar } from './TopBar';
 import { FileTree } from './FileTree';
 import { TabBar } from './TabBar';
@@ -52,6 +52,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
   return (
     <div className="ide-root" style={{ flexDirection: "column" }}>
+      <Suspense fallback={<div style={{ height: 48, background: 'var(--bg-base)', borderBottom: '1px solid var(--ide-border)' }} />}>
       <TopBar
         initialProfile={initialProfile}
         projectId={initialProject?.id}
@@ -60,6 +61,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
         onToggleCode={() => setShowCode(v => !v)}
         onToggleFileTree={() => setShowFileTree(v => !v)}
       />
+      </Suspense>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
 
