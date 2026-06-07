@@ -1,93 +1,82 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+  const path = request.nextUrl.pathname
 
-  // Always skip static assets
+  // Skip static assets immediately
   if (
     path.startsWith('/_next') ||
     path.startsWith('/favicon') ||
     path.startsWith('/icon') ||
     path.includes('.')
   ) {
-    return NextResponse.next();
+    return NextResponse.next()
   }
 
-  const PUBLIC_ROUTES = [
+  // All public routes — skip auth entirely
+  const PUBLIC_PREFIXES = [
     '/', '/login', '/signup', '/pricing', '/templates', '/privacy', '/terms',
-    '/status', '/vs', '/blog', '/security', '/changelog', '/gallery', '/setup-call',
-    '/complexity-guide', '/pay', '/connectors', '/founders', '/marketers',
-    '/designers', '/affiliates', '/about', '/credits', '/docs',
+    '/status', '/vs', '/blog', '/security', '/changelog', '/gallery',
+    '/setup-call', '/complexity-guide', '/pay', '/connectors', '/founders',
+    '/marketers', '/designers', '/affiliates', '/about', '/credits', '/docs',
     '/agents', '/flows', '/community', '/p/',
-    '/api/webhooks', '/api/dodo', '/api/admin', '/api/support',
-    '/api/stats', '/api/referral', '/api/og', '/api/agents',
-    '/api/prebuilt-apps', '/api/auth', '/api/build-from-template',
-    '/api/build-from-agent', '/api/canvas-chat',
-    '/auth',
-  ];
+    '/auth',  // CRITICAL: auth callback must never be intercepted
+    '/api/',  // All API routes are public — they handle auth themselves
+  ]
 
-  const isPublic = PUBLIC_ROUTES.some(r => path === r || path.startsWith(r + '/') || path.startsWith(r + '?'));
+  const isPublic = PUBLIC_PREFIXES.some(prefix =>
+    path === prefix ||
+    path === prefix.replace(/\/$/, '') ||
+    path.startsWith(prefix.endsWith('/') ? prefix : prefix + '/')
+  )
 
-  // For public routes, skip auth entirely
   if (isPublic) {
-    return NextResponse.next();
+    return NextResponse.next()
   }
 
-  // Protected routes — check auth
+  // Protected routes: /dashboard, /project/*, /settings, /onboarding
   try {
-    const { createServerClient } = await import('@supabase/ssr');
-    let supabaseResponse = NextResponse.next({ request });
+    const { createServerClient } = await import('@supabase/ssr')
+    let response = NextResponse.next({ request })
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
-          getAll() { return request.cookies.getAll(); },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-            supabaseResponse = NextResponse.next({ request });
-            cookiesToSet.forEach(({ name, value, options }) =>
-              supabaseResponse.cookies.set(name, value, options)
-            );
+          getAll: () => request.cookies.getAll(),
+          setAll: (cookies) => {
+            cookies.forEach(({ name, value }) => request.cookies.set(name, value))
+            response = NextResponse.next({ request })
+            cookies.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
           },
         },
       }
-    );
+    )
 
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser()
 
-    // If Supabase itself errors, let the page handle it gracefully
-    if (error) {
-      console.error('Middleware auth error:', error.message);
-      // Don't crash — redirect to login for protected routes
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('next', path);
-      return NextResponse.redirect(url);
+    if (error || !user) {
+      // Not logged in — redirect to login
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('next', path)
+      return NextResponse.redirect(url)
     }
 
-    // Already logged in hitting auth pages → dashboard
-    if (user && (path === '/login' || path === '/signup')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+    // Logged in hitting auth pages — redirect to dashboard
+    if (path === '/login' || path === '/signup') {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
-    // Not logged in on protected route → login
-    if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/login';
-      url.searchParams.set('next', path);
-      return NextResponse.redirect(url);
-    }
-
-    return supabaseResponse;
+    return response
   } catch (err) {
-    // Middleware must never crash — fallback to letting the page render
-    console.error('Middleware exception:', err);
-    return NextResponse.next();
+    // Never crash — let the page handle it
+    console.error('Proxy error:', err)
+    return NextResponse.next()
   }
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico).*)'],
-};
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg).*)'],
+}
