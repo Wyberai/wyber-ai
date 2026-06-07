@@ -297,7 +297,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                       </div>
                     </div>
                     <div style={{ fontSize: 11, color: '#8b8b9a', marginBottom: 12, lineHeight: 1.5 }}>{agent.desc}</div>
-                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure →</a>
+                    <a href={'/agents'} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Open in Canvas →</a>
                   </div>
                 ))}
               </div>

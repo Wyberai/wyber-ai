@@ -312,51 +312,9 @@ export function ChatPanel({ projectId, userId }: Props) {
         const { done, value } = await reader.read();
         if (done) break;
         full += decoder.decode(value, { stream:true });
-        // Only stream conversational lines (questions, clarifications) — not code
-        // A line is safe if it has no code markers at all
-        const lastLine = full.split('\n').pop() ?? '';
-        const isSafeChat = (t: string) => {
-          t = t.trim();
-          if (!t || t.length < 3) return false;
-          if (t.startsWith('<') || t.startsWith('{') || t.startsWith('/')) return false;
-          if (t.includes('<file') || t.includes('className') || t.includes('=>')) return false;
-          if (/^(import|export|const|let|var|function|return|interface|type)\s/.test(t)) return false;
-          if (t.startsWith('Built:') || t.startsWith('Perfect') || t.startsWith('Got it') || t.startsWith('Sure') || t.startsWith('Here') || t.startsWith('I') || t.startsWith('Let') || t.endsWith('?')) return true;
-          return false;
-        };
-        if (isSafeChat(lastLine)) setStreamingContent(lastLine);
-        // Don't show raw file blocks in chat — show only the summary line
-// Strip file blocks and file edit lines — only show the summary
-const lines = full.split('\n');
-const filteredLines = lines.filter(l => {
-  const t = l.trim();
-  return !t.startsWith('<file ') && !t.startsWith('</file>') && !t.startsWith('✎') && !t.startsWith('📝');
-});
-// Strip agent/flow blocks from display
-let cleanedFull = full
-  .replace(/<agent>[\s\S]*?<\/agent>/g, '')
-  .replace(/<flow>[\s\S]*?<\/flow>/g, '')
-
-// Strip file blocks AND code lines from final content
-const isCodeLine = (l: string) => {
-  const t = l.trim();
-  if (!t) return false;
-  if (t.startsWith('<file ') || t.startsWith('</file>') || t.startsWith('✎') || t.startsWith('📝')) return true;
-  if (/^(import |export |export default|const |let |var |function |async |class |interface |type |return |throw )/.test(t)) return true;
-  if (t.startsWith('<') && t.includes('>') && (t.includes('className') || t.includes('style=') || t.includes('onClick') || t.includes('/>') || t.includes('</') || /^<[A-Z]/.test(t))) return true;
-  if (t.startsWith('</') || t.startsWith('/>') || t === '};' || t === '})' || t === ');') return true;
-  if (t.includes('className=') || t.includes('style={{') || t.includes('useState') || t.includes('useEffect')) return true;
-  return false;
-};
-let inFileBlock = false;
-const chatLines = filteredLines.filter(l => {
-  if (l.trim().startsWith('<file ')) { inFileBlock = true; return false; }
-  if (l.trim().startsWith('</file>')) { inFileBlock = false; return false; }
-  if (inFileBlock) return false;
-  return !isCodeLine(l);
-});
-const chatContent = chatLines.join('\n').trim();
-setStreamingContent(chatContent || '');
+        // Never stream raw code to chat — buffer everything silently
+        // The buildMsg cycling animation handles the loading UX
+        // Only the final chatText from parseGenerationOutput will be shown
       }
 
       const { files: newFiles, chatText } = parseGenerationOutput(full);

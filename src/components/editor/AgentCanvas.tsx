@@ -14,6 +14,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useAgentStore, WyberNodeData, WyberNodeType } from '@/store/agentStore'
 import { CanvasChat } from '@/components/editor/CanvasChat'
+import { WyberEdge, WyberMarkerDefs } from '@/components/editor/WyberEdge'
 import { useRouter } from 'next/navigation'
 
 // ─── Brand logos via Logo.dev ──────────────────────────────────────────────────
@@ -107,6 +108,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
 }
 
 const NODE_TYPES = { trigger: WyberNode, aiagent: WyberNode, tool: WyberNode, condition: WyberNode, output: WyberNode }
+const EDGE_TYPES = { default: WyberEdge, wyber: WyberEdge }
 
 // ─── Config Panel ──────────────────────────────────────────────────────────────
 
@@ -366,9 +368,11 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             nodeTypes={NODE_TYPES}
             fitView
             fitViewOptions={{ padding: 0.3 }}
-            defaultEdgeOptions={{ animated: true, style: { stroke: '#0EA5E9', strokeWidth: 2 } }}
+            defaultEdgeOptions={{ type: 'wyber', markerEnd: 'url(#wyber-arrow)', style: { stroke: '#0EA5E9', strokeWidth: 2 } }}
             style={{ background: '#09090b' }}
+            edgeTypes={EDGE_TYPES}
           >
+            <WyberMarkerDefs />
             <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="rgba(255,255,255,0.04)" />
             <Controls style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }} />
             <MiniMap
