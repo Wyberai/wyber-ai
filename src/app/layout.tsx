@@ -69,7 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Suspense>
           </ThemeProvider>
           <CookieBanner />
-          <WyberChatbot />
+          <Suspense fallback={null}><WyberChatbot /></Suspense>
         </PostHogProvider>
       </body>
     </html>

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     if (error || !project) throw error || new Error('Failed to create project')
 
     // Increment use_count on template
-    await admin.rpc('increment_use_count', { template_id: templateId }).catch(() => {})
+    try { await admin.rpc('increment_use_count', { template_id: templateId }) } catch {}
 
     return NextResponse.json({ projectId: project.id, prompt })
   } catch (err) {
