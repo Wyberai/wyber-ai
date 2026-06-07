@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -43,10 +42,10 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const searchParams = useSearchParams();
-
   useEffect(() => {
-    const cloneId = searchParams?.get('clone');
+    // Read clone param from URL directly — avoids useSearchParams hydration issues
+    if (typeof window === 'undefined') return;
+    const cloneId = new URLSearchParams(window.location.search).get('clone');
     if (!cloneId || !profile?.id) return;
     fetch('/api/projects/duplicate', {
       method: 'POST',
@@ -55,7 +54,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     }).then(r => r.json()).then(data => {
       if (data.project?.id) window.location.href = '/project/' + data.project.id;
     });
-  }, [searchParams, profile?.id]);
+  }, [profile?.id]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();

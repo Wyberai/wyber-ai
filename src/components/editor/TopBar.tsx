@@ -2,7 +2,6 @@
 import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { SupabaseConnector } from './SupabaseConnector';
 
 interface Props {
@@ -132,7 +131,6 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [showSupabase, setShowSupabase] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [deployDone, setDeployDone] = useState(false);
-  const searchParams = useSearchParams();
 
   const hasFiles = Object.keys(files).length > 2;
   const projectName = project?.name ?? 'My Wyber App';
