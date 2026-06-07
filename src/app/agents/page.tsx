@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const CATEGORIES = [
   'All','Sales & Revenue','Customer Support','Finance','Marketing',
@@ -10,7 +11,7 @@ const CATEGORIES = [
 ]
 
 const COMPLEXITY_COLOR: Record<string,string> = {
-  Enterprise: '#6366f1', Growth: '#22c55e', Ready: '#0EA5E9'
+  Enterprise: '#8b5cf6', Growth: '#22c55e', Ready: '#0EA5E9'
 }
 
 interface Agent {
@@ -20,6 +21,7 @@ interface Agent {
 }
 
 export default function AgentsPage() {
+  const router = useRouter()
   const [agents, setAgents] = useState<Agent[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -28,6 +30,7 @@ export default function AgentsPage() {
   const [searchInput, setSearchInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [featured, setFeatured] = useState(false)
+  const [openingId, setOpeningId] = useState<string | null>(null)
 
   const fetchAgents = useCallback(async () => {
     setLoading(true)
@@ -50,19 +53,51 @@ export default function AgentsPage() {
   const handleSearch = () => { setSearch(searchInput); setPage(1) }
   const handleCategory = (cat: string) => { setCategory(cat); setPage(1) }
 
+  const handleOpenAgent = async (agentId: string) => {
+    if (openingId) return
+    setOpeningId(agentId)
+    try {
+      const res = await fetch('/api/build-from-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId })
+      })
+      const data = await res.json()
+      if (data.projectId) {
+        // Store canvas data so AgentCanvas can hydrate from it on first load
+        if (data.canvasData) sessionStorage.setItem(`wyber_canvas_${data.projectId}`, data.canvasData)
+        router.push(`/project/${data.projectId}?type=agent`)
+      } else if (res.status === 401) {
+        router.push('/login')
+      } else {
+        alert('Failed to open agent: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err) {
+      alert('Failed to open agent')
+    } finally {
+      setOpeningId(null)
+    }
+  }
+
   return (
-    <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#f0f0f5', fontFamily:'Inter,-apple-system,sans-serif' }}>
+    <div style={{ minHeight:'100vh', background:'#09090b', color:'#fafafa', fontFamily:"'Space Grotesk', sans-serif" }}>
+
       {/* Header */}
-      <div style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px' }}>
+      <div style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px', background: '#0d0d0f' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', display:'flex', alignItems:'center', height:60, gap:24 }}>
-          <Link href="/" style={{ fontSize:18, fontWeight:700, color:'#f0f0f5', textDecoration:'none' }}>
-            Wyber AI
+          <Link href="/" style={{ display:'flex', alignItems:'center', gap:8, textDecoration:'none' }}>
+            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+              <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
+              <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
+            </svg>
+            <span style={{ fontSize:15, fontWeight:700, color:'#fafafa', letterSpacing:'-0.03em' }}>Wyber AI</span>
           </Link>
           <span style={{ color:'rgba(255,255,255,0.15)' }}>|</span>
-          <span style={{ fontSize:14, color:'#8b8b9a' }}>Agent Library</span>
+          <span style={{ fontSize:13, color:'#71717a', fontWeight:500 }}>Agent Library</span>
           <div style={{ marginLeft:'auto', display:'flex', gap:12 }}>
-            <Link href="/gallery" style={{ fontSize:13, color:'#8b8b9a', textDecoration:'none' }}>Apps</Link>
-            <Link href="/dashboard" style={{ fontSize:13, color:'#6366f1', textDecoration:'none', fontWeight:600 }}>Build →</Link>
+            <Link href="/gallery" style={{ fontSize:13, color:'#71717a', textDecoration:'none', fontWeight:500 }}>Apps</Link>
+            <Link href="/dashboard" style={{ fontSize:13, color:'#0EA5E9', textDecoration:'none', fontWeight:700 }}>Dashboard →</Link>
           </div>
         </div>
       </div>
@@ -70,15 +105,15 @@ export default function AgentsPage() {
       <div style={{ maxWidth:1200, margin:'0 auto', padding:'32px 32px' }}>
         {/* Hero */}
         <div style={{ textAlign:'center', marginBottom:40 }}>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#6366f1', marginBottom:16 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#0EA5E9', marginBottom:16, fontWeight:700 }}>
             ⚡ {total.toLocaleString()} AI Agents Available
           </div>
-          <h1 style={{ fontSize:40, fontWeight:800, margin:'0 0 12px', letterSpacing:'-0.02em' }}>
+          <h1 style={{ fontSize:'clamp(28px,4vw,42px)', fontWeight:800, margin:'0 0 12px', letterSpacing:'-0.03em', fontFamily:"'Sora', sans-serif" }}>
             Deploy AI agents for<br />
-            <span style={{ color:'#6366f1' }}>any business workflow</span>
+            <span style={{ color:'#0EA5E9' }}>any business workflow</span>
           </h1>
-          <p style={{ fontSize:16, color:'#8b8b9a', maxWidth:560, margin:'0 auto 28px' }}>
-            Browse 5,000+ pre-built AI agents across 18 industries. Configure any agent in one prompt. Deploy with approval controls.
+          <p style={{ fontSize:15, color:'#71717a', maxWidth:520, margin:'0 auto 28px', lineHeight:1.65 }}>
+            Browse {total.toLocaleString()}+ pre-built AI agents across 18 industries. Click any agent to open it in the visual canvas builder — no setup required.
           </p>
 
           {/* Search */}
@@ -88,108 +123,113 @@ export default function AgentsPage() {
               onChange={e => setSearchInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="Search agents... e.g. 'invoice processing'"
-              style={{ flex:1, padding:'11px 16px', background:'#111118', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, color:'#f0f0f5', fontSize:14, outline:'none' }}
+              style={{ flex:1, padding:'11px 16px', background:'#111118', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, color:'#fafafa', fontSize:14, outline:'none', fontFamily:'inherit' }}
             />
             <button onClick={handleSearch}
-              style={{ padding:'11px 20px', background:'#6366f1', border:'none', borderRadius:10, color:'white', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+              style={{ padding:'11px 20px', background:'#0EA5E9', border:'none', borderRadius:10, color:'white', fontSize:14, fontWeight:600, cursor:'pointer' }}>
               Search
             </button>
           </div>
         </div>
 
         {/* Filters */}
-        <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:24, alignItems:'center' }}>
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:24, alignItems:'center' }}>
           {CATEGORIES.map(cat => (
             <button key={cat} onClick={() => handleCategory(cat)}
               style={{
-                padding:'6px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'1px solid',
-                background: category === cat ? '#6366f1' : 'transparent',
-                borderColor: category === cat ? '#6366f1' : 'rgba(255,255,255,0.1)',
-                color: category === cat ? 'white' : '#8b8b9a',
+                padding:'5px 13px', borderRadius:20, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid',
+                background: category === cat ? '#0EA5E9' : 'transparent',
+                borderColor: category === cat ? '#0EA5E9' : 'rgba(255,255,255,0.08)',
+                color: category === cat ? 'white' : '#71717a',
+                transition: 'all 0.15s',
               }}>
               {cat}
             </button>
           ))}
           <button onClick={() => { setFeatured(!featured); setPage(1) }}
             style={{
-              marginLeft:'auto', padding:'6px 14px', borderRadius:20, fontSize:12, fontWeight:500, cursor:'pointer', border:'1px solid',
+              marginLeft:'auto', padding:'5px 13px', borderRadius:20, fontSize:11, fontWeight:600, cursor:'pointer', border:'1px solid',
               background: featured ? 'rgba(245,158,11,0.1)' : 'transparent',
-              borderColor: featured ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.1)',
-              color: featured ? '#f59e0b' : '#8b8b9a',
+              borderColor: featured ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.08)',
+              color: featured ? '#f59e0b' : '#71717a',
             }}>
-            ⭐ Featured only
+            ⭐ Featured
           </button>
         </div>
 
-        {/* Stats bar */}
+        {/* Stats */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
-          <span style={{ fontSize:13, color:'#52526a' }}>
+          <span style={{ fontSize:12, color:'#52525b' }}>
             {loading ? 'Loading...' : `${total.toLocaleString()} agents${search ? ` matching "${search}"` : ''}${category !== 'All' ? ` in ${category}` : ''}`}
           </span>
-          <div style={{ display:'flex', gap:12, fontSize:12, color:'#52526a' }}>
+          <div style={{ display:'flex', gap:12, fontSize:11, color:'#52525b' }}>
             <span style={{ display:'flex', alignItems:'center', gap:4 }}>
-              <span style={{ width:8, height:8, borderRadius:'50%', background:'#6366f1', display:'inline-block' }}/>Enterprise
+              <span style={{ width:7, height:7, borderRadius:'50%', background:'#8b5cf6', display:'inline-block' }}/>Enterprise
             </span>
             <span style={{ display:'flex', alignItems:'center', gap:4 }}>
-              <span style={{ width:8, height:8, borderRadius:'50%', background:'#22c55e', display:'inline-block' }}/>Growth
+              <span style={{ width:7, height:7, borderRadius:'50%', background:'#22c55e', display:'inline-block' }}/>Growth
             </span>
           </div>
         </div>
 
         {/* Grid */}
         {loading ? (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:12 }}>
             {Array(12).fill(0).map((_,i) => (
-              <div key={i} style={{ height:180, background:'#111118', borderRadius:12, border:'1px solid rgba(255,255,255,0.06)', animation:'pulse 1.5s ease-in-out infinite' }}/>
+              <div key={i} style={{ height:180, background:'#111118', borderRadius:14, border:'1px solid rgba(255,255,255,0.06)', animation:'pulse 1.5s ease-in-out infinite' }}/>
             ))}
           </div>
+        ) : agents.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'80px 0', color:'#52525b' }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🤖</div>
+            <div style={{ fontSize:16, fontWeight:600, marginBottom:8, color:'#a1a1aa' }}>No agents found</div>
+            <div style={{ fontSize:13 }}>Try a different search or category</div>
+          </div>
         ) : (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:16 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:12 }}>
             {agents.map(agent => (
               <div key={agent.id}
-                style={{ background:'#111118', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:20, cursor:'pointer', transition:'all 0.15s', position:'relative' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor='rgba(99,102,241,0.3)'; (e.currentTarget as HTMLDivElement).style.background='#15151f' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor='rgba(255,255,255,0.06)'; (e.currentTarget as HTMLDivElement).style.background='#111118' }}
+                style={{ background:'#111118', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:20, cursor:'pointer', transition:'all 0.15s', position:'relative', display:'flex', flexDirection:'column' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor='rgba(14,165,233,0.25)'; (e.currentTarget as HTMLDivElement).style.transform='translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow='0 8px 32px rgba(0,0,0,0.3)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor='rgba(255,255,255,0.07)'; (e.currentTarget as HTMLDivElement).style.transform='none'; (e.currentTarget as HTMLDivElement).style.boxShadow='none' }}
               >
                 {agent.is_featured && (
                   <div style={{ position:'absolute', top:12, right:12, fontSize:10, fontWeight:700, color:'#f59e0b', background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.2)', borderRadius:10, padding:'2px 8px', letterSpacing:'0.05em' }}>
                     FEATURED
                   </div>
                 )}
+
+                {/* Agent header */}
                 <div style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
-                  <div style={{ width:36, height:36, borderRadius:8, background:'rgba(99,102,241,0.1)', border:'1px solid rgba(99,102,241,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
+                  <div style={{ width:40, height:40, borderRadius:10, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
                     🤖
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:14, fontWeight:600, color:'#f0f0f5', marginBottom:2, lineHeight:1.3 }}>{agent.name}</div>
-                    <div style={{ fontSize:11, color:'#52526a' }}>{agent.agent_id}</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:'#fafafa', marginBottom:3, lineHeight:1.3 }}>{agent.name}</div>
+                    <div style={{ fontSize:11, color:'#52525b' }}>{agent.agent_id} · {agent.category}</div>
                   </div>
                 </div>
 
-                <div style={{ fontSize:12, color:'#8b8b9a', marginBottom:12, lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                <div style={{ fontSize:12, color:'#a1a1aa', marginBottom:10, lineHeight:1.55, flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
                   {agent.problem}
                 </div>
 
-                <div style={{ fontSize:11, color:'#52526a', marginBottom:14, display:'-webkit-box', WebkitLineClamp:1, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
+                <div style={{ fontSize:11, color:'#52525b', marginBottom:16, display:'-webkit-box', WebkitLineClamp:1, WebkitBoxOrient:'vertical', overflow:'hidden' }}>
                   → {agent.outcome}
                 </div>
 
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                  <div style={{ display:'flex', gap:6 }}>
-                    <span style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:10, background:`${COMPLEXITY_COLOR[agent.complexity] || '#6366f1'}18`, color:COMPLEXITY_COLOR[agent.complexity] || '#6366f1', border:`1px solid ${COMPLEXITY_COLOR[agent.complexity] || '#6366f1'}30` }}>
-                      {agent.complexity}
-                    </span>
-                    <span style={{ fontSize:10, padding:'2px 8px', borderRadius:10, background:'rgba(255,255,255,0.04)', color:'#52526a', border:'1px solid rgba(255,255,255,0.06)' }}>
-                      {agent.category}
-                    </span>
-                  </div>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:'auto' }}>
+                  <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:10, background:`${COMPLEXITY_COLOR[agent.complexity] || '#0EA5E9'}15`, color:COMPLEXITY_COLOR[agent.complexity] || '#0EA5E9', border:`1px solid ${COMPLEXITY_COLOR[agent.complexity] || '#0EA5E9'}30` }}>
+                    {agent.complexity}
+                  </span>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      window.location.href = '/agent/' + agent.agent_id
-                    }}
-                    style={{ fontSize:12, fontWeight:600, color:'#6366f1', border:'1px solid rgba(99,102,241,0.3)', borderRadius:6, background:'rgba(99,102,241,0.06)', padding:'4px 12px', cursor:'pointer' }}>
-                    Configure →
+                    onClick={() => handleOpenAgent(agent.agent_id)}
+                    disabled={openingId === agent.agent_id}
+                    style={{ fontSize:12, fontWeight:700, color: openingId === agent.agent_id ? '#52525b' : '#0EA5E9', border:`1px solid ${openingId === agent.agent_id ? 'rgba(255,255,255,0.08)' : 'rgba(14,165,233,0.3)'}`, borderRadius:8, background: openingId === agent.agent_id ? 'transparent' : 'rgba(14,165,233,0.08)', padding:'6px 14px', cursor: openingId === agent.agent_id ? 'wait' : 'pointer', transition:'all 0.15s', display:'flex', alignItems:'center', gap:5 }}>
+                    {openingId === agent.agent_id
+                      ? <><div style={{ width:10, height:10, border:'1.5px solid rgba(14,165,233,0.3)', borderTopColor:'#0EA5E9', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />Opening...</>
+                      : 'Open in Canvas →'
+                    }
                   </button>
                 </div>
               </div>
@@ -201,18 +241,24 @@ export default function AgentsPage() {
         {total > 24 && (
           <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:8, marginTop:32 }}>
             <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page === 1}
-              style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color: page===1 ? '#3f3f46' : '#f0f0f5', cursor: page===1 ? 'not-allowed':'pointer', fontSize:13 }}>
+              style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.08)', background:'transparent', color: page===1 ? '#3f3f46' : '#fafafa', cursor: page===1 ? 'not-allowed':'pointer', fontSize:13 }}>
               ← Prev
             </button>
-            <span style={{ fontSize:13, color:'#52526a' }}>Page {page} of {Math.ceil(total/24)}</span>
+            <span style={{ fontSize:13, color:'#52525b' }}>Page {page} of {Math.ceil(total/24)}</span>
             <button onClick={() => setPage(p => p+1)} disabled={page >= Math.ceil(total/24)}
-              style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color: page>=Math.ceil(total/24) ? '#3f3f46' : '#f0f0f5', cursor: page>=Math.ceil(total/24) ? 'not-allowed':'pointer', fontSize:13 }}>
+              style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.08)', background:'transparent', color: page>=Math.ceil(total/24) ? '#3f3f46' : '#fafafa', cursor: page>=Math.ceil(total/24) ? 'not-allowed':'pointer', fontSize:13 }}>
               Next →
             </button>
           </div>
         )}
       </div>
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        input::placeholder{color:#52525b}
+      `}</style>
     </div>
   )
 }

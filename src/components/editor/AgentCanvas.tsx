@@ -14,6 +14,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useAgentStore, WyberNodeData, WyberNodeType } from '@/store/agentStore'
 import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 
 // ─── Brand logos via Logo.dev ──────────────────────────────────────────────────
 
@@ -321,6 +322,8 @@ interface Props {
 
 export function AgentCanvas({ projectId, projectName, canvasType, initialProfile }: Props) {
   const router = useRouter()
+  const { hydrateFromSession } = useAgentStore()
+  useEffect(() => { hydrateFromSession(projectId) }, [projectId])
   const [saved, setSaved] = useState(false)
   const {
     nodes, edges, selectedNodeId,
