@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useAgentStore } from '@/store/agentStore'
+import { useAgentStore, useAgentStore as useStore } from '@/store/agentStore'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -116,11 +116,15 @@ export function CanvasChat({ projectId, canvasType }: Props) {
 
       if (data.canvasData) {
         const { nodes: newNodes, edges: newEdges } = JSON.parse(data.canvasData)
-        sessionStorage.setItem(`wyber_canvas_${projectId}`, JSON.stringify({ nodes: newNodes, edges: newEdges }))
-        window.location.reload()
+        useAgentStore.setState({ nodes: newNodes, edges: newEdges, selectedNodeId: null })
+        setAgentMatch(null)
+        setMessages(prev => [...prev, {
+          role: 'assistant' as const,
+          content: `✓ Applied to your canvas. ${newNodes.length} nodes loaded — connect them and hit Run to deploy.`
+        }])
       }
     } catch {
-      alert('Failed to apply agent to canvas')
+      setMessages(prev => [...prev, { role: 'assistant' as const, content: 'Failed to apply agent. Please try again.' }])
     }
     setApplyingAgent(false)
   }
