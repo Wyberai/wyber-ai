@@ -1,9 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { IDELayout } from '@/components/editor/IDELayout'
+import { AgentCanvas } from '@/components/editor/AgentCanvas'
 import type { Metadata } from 'next'
 
-type Props = { params: Promise<{ id: string }> }
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ type?: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
@@ -12,8 +13,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: project?.name ? `${project.name} — Wyber AI` : 'Editor — Wyber AI' }
 }
 
-export default async function ProjectPage({ params }: Props) {
+export default async function ProjectPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { type } = await searchParams
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -34,15 +36,31 @@ export default async function ProjectPage({ params }: Props) {
     .eq('id', user.id)
     .single()
 
+  const initialProfile = {
+    credits: profile?.credits ?? 0,
+    plan: profile?.plan ?? 'free',
+    email: profile?.email ?? user.email ?? '',
+    id: user.id,
+  }
+
+  // Determine canvas type from URL param or project type
+  const canvasType = type || project.project_type || 'app'
+
+  if (canvasType === 'agent' || canvasType === 'workflow') {
+    return (
+      <AgentCanvas
+        projectId={id}
+        projectName={project.name || 'Untitled'}
+        canvasType={canvasType as 'agent' | 'workflow'}
+        initialProfile={initialProfile}
+      />
+    )
+  }
+
   return (
     <IDELayout
       initialProject={project}
-      initialProfile={{
-        credits: profile?.credits ?? 0,
-        plan: profile?.plan ?? 'free',
-        email: profile?.email ?? user.email ?? '',
-        id: user.id,
-      }}
+      initialProfile={initialProfile}
     />
   )
 }
