@@ -36,8 +36,9 @@ export async function GET(req: NextRequest) {
     if (error) throw error
     return NextResponse.json({ agents: data || [], total: count || 0, page, limit })
   } catch (err) {
-    console.error('Agents API error:', String(err))
-    return NextResponse.json({ error: String(err), agents: [], total: 0 }, { status: 500 })
+    const errMsg = err instanceof Error ? err.message : JSON.stringify(err)
+    console.error('Agents API error:', errMsg)
+    return NextResponse.json({ error: errMsg, agents: [], total: 0 }, { status: 500 })
   }
 }
 
@@ -50,6 +51,7 @@ export async function POST(req: NextRequest) {
     data?.forEach(r => { counts[r.category] = (counts[r.category] || 0) + 1 })
     return NextResponse.json({ categories: counts })
   } catch (err) {
-    return NextResponse.json({ error: String(err), categories: {} }, { status: 500 })
+    const errMsg2 = err instanceof Error ? err.message : JSON.stringify(err)
+    return NextResponse.json({ error: errMsg2, categories: {} }, { status: 500 })
   }
 }
