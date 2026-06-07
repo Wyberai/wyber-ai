@@ -27,11 +27,8 @@ export function WyberChatbot() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Hide on dashboard and editor routes
   const isHidden = HIDDEN_ROUTES.some(route => pathname?.startsWith(route))
-  if (isHidden) return null
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
@@ -93,6 +90,8 @@ export function WyberChatbot() {
     }
     setLoading(false)
   }
+
+  if (isHidden) return null
 
   return (
     <>
@@ -207,3 +206,4 @@ export function WyberChatbot() {
     </>
   )
 }
+
