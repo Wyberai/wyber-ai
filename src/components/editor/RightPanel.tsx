@@ -14,6 +14,9 @@ const ClonePanel     = dynamic(() => import('./ClonePanel').then(m => ({ default
 interface Props {
   projectId?: string;
   userId?: string;
+  projectName?: string;
+  githubRepo?: string;
+  lastCommitSha?: string;
   onClose?: () => void;
 }
 

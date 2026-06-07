@@ -2,7 +2,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { detectRequiredTools, ToolDefinition } from '@/lib/tool-registry'
-import { ToolLogo } from '@/components/shared/BrandLogo'
 import { WorkflowVisualizer } from '@/components/agents/WorkflowVisualizer'
 
 interface Agent { agent_id: string; name: string; category: string; problem: string; outcome: string; primary_buyer: string; complexity: string; required_tools: string }
@@ -45,7 +44,7 @@ export default function AgentStudioPage() {
     const res = await fetch('/api/tools', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({projectId, toolId, credentials: creds}) })
     const data = await res.json()
     if (data.success) { setConnecting(null); load() }
-    else alert('Failed: ' + data.error)
+    else { console.error('Failed:', data.error) }
   }
 
   const runAgent = async () => {
@@ -68,7 +67,7 @@ export default function AgentStudioPage() {
           <button onClick={() => router.push('/agents')} style={{background:'none',border:'none',color:'#52526a',cursor:'pointer',fontSize:13}}>← Agents</button>
           <span style={{color:'rgba(255,255,255,0.15)'}}>|</span>
           <span style={{fontSize:14,fontWeight:600}}>{agent.name}</span>
-          <span style={{fontSize:11,padding:'2px 8px',borderRadius:10,background:'rgba(99,102,241,0.1)',color:'#0EA5E9',border:'1px solid rgba(99,102,241,0.2)'}}>{agent.agent_id}</span>
+          <span style={{fontSize:11,padding:'2px 8px',borderRadius:10,background:'rgba(99,102,241,0.1)',color:'#6366f1',border:'1px solid rgba(99,102,241,0.2)'}}>{agent.agent_id}</span>
           <div style={{marginLeft:'auto'}}>
             <span style={{fontSize:11,padding:'3px 10px',borderRadius:10,background:allConnected?'rgba(34,197,94,0.1)':'rgba(245,158,11,0.1)',color:allConnected?'#22c55e':'#f59e0b',border:`1px solid ${allConnected?'rgba(34,197,94,0.2)':'rgba(245,158,11,0.2)'}`}}>
               {allConnected?'✓ Ready':'Connect tools to run'}
@@ -80,7 +79,7 @@ export default function AgentStudioPage() {
       <div style={{maxWidth:1100,margin:'0 auto',padding:32,display:'grid',gridTemplateColumns:'1fr 360px',gap:24}}>
         <div>
           <div style={{background:'#111118',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:24,marginBottom:20}}>
-            <div style={{fontSize:11,fontWeight:700,color:'#0EA5E9',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{agent.category} · {agent.complexity}</div>
+            <div style={{fontSize:11,fontWeight:700,color:'#6366f1',letterSpacing:'0.08em',textTransform:'uppercase',marginBottom:6}}>{agent.category} · {agent.complexity}</div>
             <div style={{fontSize:18,fontWeight:700,marginBottom:8}}>{agent.name}</div>
             <div style={{fontSize:13,color:'#8b8b9a',lineHeight:1.6,marginBottom:12}}>{agent.problem}</div>
             <div style={{background:'rgba(34,197,94,0.06)',border:'1px solid rgba(34,197,94,0.12)',borderRadius:8,padding:12,fontSize:13,color:'#a1a1aa'}}>
@@ -98,14 +97,14 @@ export default function AgentStudioPage() {
               return (
                 <div key={tool.id} style={{border:`1px solid ${isConnected?'rgba(34,197,94,0.2)':'rgba(255,255,255,0.06)'}`,borderRadius:10,padding:14,marginBottom:8}}>
                   <div style={{display:'flex',alignItems:'center',gap:10}}>
-                    <ToolLogo toolId={tool.id} name={tool.name} size={32} />
+                    <span style={{fontSize:18}}>{tool.icon}</span>
                     <div style={{flex:1}}>
                       <div style={{fontSize:13,fontWeight:600}}>{tool.name}</div>
                       <div style={{fontSize:11,color:'#52526a'}}>{tool.description}</div>
                     </div>
                     {isConnected
                       ? <span style={{fontSize:11,color:'#22c55e',fontWeight:700}}>✓ Connected</span>
-                      : <button onClick={() => setConnecting(isOpen?null:tool.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.08)',color:'#0EA5E9',fontSize:12,fontWeight:600,cursor:'pointer'}}>{isOpen?'Cancel':'Connect'}</button>
+                      : <button onClick={() => setConnecting(isOpen?null:tool.id)} style={{padding:'5px 12px',borderRadius:6,border:'1px solid rgba(99,102,241,0.3)',background:'rgba(99,102,241,0.08)',color:'#6366f1',fontSize:12,fontWeight:600,cursor:'pointer'}}>{isOpen?'Cancel':'Connect'}</button>
                     }
                   </div>
                   {isOpen && (
@@ -120,7 +119,7 @@ export default function AgentStudioPage() {
                           <div style={{fontSize:10,color:'#52526a',marginTop:2}}>{f.helpText}</div>
                         </div>
                       ))}
-                      <button onClick={() => connectTool(tool.id)} style={{padding:'7px 16px',borderRadius:6,border:'none',background:'#0EA5E9',color:'white',fontSize:12,fontWeight:700,cursor:'pointer',marginTop:4}}>
+                      <button onClick={() => connectTool(tool.id)} style={{padding:'7px 16px',borderRadius:6,border:'none',background:'#6366f1',color:'white',fontSize:12,fontWeight:700,cursor:'pointer',marginTop:4}}>
                         🔒 Save Encrypted
                       </button>
                     </div>
@@ -135,7 +134,7 @@ export default function AgentStudioPage() {
             <textarea value={input} onChange={e => setInput(e.target.value)} placeholder="Optional: add context for this run..."
               style={{width:'100%',background:'#1a1a24',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:'10px 12px',color:'#f0f0f5',fontSize:13,resize:'vertical',minHeight:72,outline:'none',fontFamily:'inherit',marginBottom:12}}/>
             <button onClick={runAgent} disabled={running||(!allConnected&&requiredTools.length>0)}
-              style={{padding:'10px 28px',borderRadius:8,border:'none',background:running||(!allConnected&&requiredTools.length>0)?'#2a2a3a':'#0EA5E9',color:running||(!allConnected&&requiredTools.length>0)?'#52526a':'white',fontSize:14,fontWeight:700,cursor:'pointer'}}>
+              style={{padding:'10px 28px',borderRadius:8,border:'none',background:running||(!allConnected&&requiredTools.length>0)?'#2a2a3a':'#6366f1',color:running||(!allConnected&&requiredTools.length>0)?'#52526a':'white',fontSize:14,fontWeight:700,cursor:'pointer'}}>
               {running?'⚡ Running agent...':'▶ Run Agent Now'}
             </button>
           </div>
@@ -144,7 +143,7 @@ export default function AgentStudioPage() {
         <div style={{position:'sticky',top:24}}>
           <div style={{background:'#111118',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:20}}>
             <div style={{fontSize:14,fontWeight:700,marginBottom:16}}>Execution Results</div>
-            {running && <div style={{textAlign:'center',padding:'32px 0'}}><div style={{width:28,height:28,border:'2px solid rgba(99,102,241,0.15)',borderTopColor:'#0EA5E9',borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 10px'}}/><div style={{fontSize:13,color:'#8b8b9a'}}>Running...</div></div>}
+            {running && <div style={{textAlign:'center',padding:'32px 0'}}><div style={{width:28,height:28,border:'2px solid rgba(99,102,241,0.15)',borderTopColor:'#6366f1',borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 10px'}}/><div style={{fontSize:13,color:'#8b8b9a'}}>Running...</div></div>}
             {currentExec && !running && (
               <div>
                 <div style={{padding:'8px 12px',borderRadius:8,marginBottom:12,background:currentExec.status==='completed'?'rgba(34,197,94,0.06)':'rgba(239,68,68,0.06)',border:`1px solid ${currentExec.status==='completed'?'rgba(34,197,94,0.15)':'rgba(239,68,68,0.15)'}`,fontSize:12,fontWeight:700,color:currentExec.status==='completed'?'#22c55e':'#ef4444'}}>
@@ -160,7 +159,7 @@ export default function AgentStudioPage() {
           </div>
 
           <div style={{background:'rgba(99,102,241,0.04)',border:'1px solid rgba(99,102,241,0.12)',borderRadius:12,padding:16,marginTop:12}}>
-            <div style={{fontSize:12,fontWeight:700,color:'#0EA5E9',marginBottom:8}}>🔒 Security</div>
+            <div style={{fontSize:12,fontWeight:700,color:'#6366f1',marginBottom:8}}>🔒 Security</div>
             <div style={{fontSize:11,color:'#52526a',lineHeight:1.6}}>
               • AES-256-GCM encryption at rest<br/>
               • Credentials decrypted only during execution<br/>

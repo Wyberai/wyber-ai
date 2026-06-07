@@ -10,6 +10,8 @@ const nextConfig = {
       { source: '/dashboard/projects', destination: '/dashboard', permanent: false },
       { source: '/home', destination: '/', permanent: true },
       { source: '/app', destination: '/dashboard', permanent: false },
+      { source: '/community', destination: '/gallery', permanent: true },
+      { source: '/build', destination: '/dashboard', permanent: false },
     ]
   },
   async headers() {
