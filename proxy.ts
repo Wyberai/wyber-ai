@@ -1,56 +1,53 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Routes that never need auth checks
-const PUBLIC_PREFIXES = [
-  '/_next', '/favicon', '/icon', '/apple-icon', '/robots', '/sitemap', '/manifest',
-  '/auth',     // CRITICAL: auth callback must NEVER be intercepted
-  '/api/',     // All API routes handle their own auth
-  '/login',
-  '/signup',
-  '/',
-  '/pricing',
-  '/templates',
-  '/gallery',
-  '/community',
-  '/agents',
-  '/flows',
-  '/privacy',
-  '/terms',
-  '/status',
-  '/vs',
-  '/blog',
-  '/security',
-  '/changelog',
-  '/setup-call',
-  '/complexity-guide',
-  '/pay',
-  '/connectors',
-  '/founders',
-  '/marketers',
-  '/designers',
-  '/affiliates',
-  '/about',
-  '/credits',
-  '/docs',
-  '/p/',
-]
-
-function isPublicPath(path: string): boolean {
-  return PUBLIC_PREFIXES.some(prefix => {
-    if (prefix.endsWith('/')) return path.startsWith(prefix)
-    return path === prefix || path.startsWith(prefix + '/') || path.startsWith(prefix + '?')
-  }) || path.includes('.')  // any file with extension is public (static assets)
-}
-
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
-  // Always allow public paths
-  if (isPublicPath(path)) {
+  // Skip everything that is clearly public — check these FIRST before any auth logic
+  // Using simple startsWith — the most reliable approach
+  if (
+    path.startsWith('/auth') ||        // auth callback — MUST never be intercepted
+    path.startsWith('/api/') ||        // all API routes handle their own auth
+    path.startsWith('/_next') ||       // Next.js internals
+    path.startsWith('/login') ||
+    path.startsWith('/signup') ||
+    path.startsWith('/pricing') ||
+    path.startsWith('/gallery') ||
+    path.startsWith('/agents') ||
+    path.startsWith('/flows') ||
+    path.startsWith('/templates') ||
+    path.startsWith('/community') ||
+    path.startsWith('/privacy') ||
+    path.startsWith('/terms') ||
+    path.startsWith('/status') ||
+    path.startsWith('/vs') ||
+    path.startsWith('/blog') ||
+    path.startsWith('/security') ||
+    path.startsWith('/changelog') ||
+    path.startsWith('/setup-call') ||
+    path.startsWith('/complexity-guide') ||
+    path.startsWith('/pay') ||
+    path.startsWith('/connectors') ||
+    path.startsWith('/founders') ||
+    path.startsWith('/marketers') ||
+    path.startsWith('/designers') ||
+    path.startsWith('/affiliates') ||
+    path.startsWith('/about') ||
+    path.startsWith('/credits') ||
+    path.startsWith('/docs') ||
+    path.startsWith('/p/') ||
+    path.startsWith('/favicon') ||
+    path.startsWith('/icon') ||
+    path.startsWith('/apple-icon') ||
+    path.startsWith('/robots') ||
+    path.startsWith('/sitemap') ||
+    path === '/' ||
+    path.includes('.')  // any file with extension (static assets)
+  ) {
     return NextResponse.next()
   }
 
-  // Protected routes: /dashboard, /project/*, /onboarding, /settings (app)
+  // Only protected routes reach here: /dashboard, /project/*, /onboarding
   try {
     const { createServerClient } = await import('@supabase/ssr')
     let response = NextResponse.next({ request })
@@ -72,9 +69,9 @@ export async function proxy(request: NextRequest) {
       }
     )
 
-    const { data: { user }, error } = await supabase.auth.getUser()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (error || !user) {
+    if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('next', path)
@@ -83,12 +80,11 @@ export async function proxy(request: NextRequest) {
 
     return response
   } catch (err) {
-    // Never crash the proxy — let the page handle auth itself
     console.error('Proxy error:', err)
     return NextResponse.next()
   }
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg|apple-icon\\.png).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg).*)'],
 }
