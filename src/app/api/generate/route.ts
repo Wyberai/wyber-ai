@@ -508,7 +508,7 @@ create policy "Users manage own items" on items for all using (auth.uid() = user
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -523,47 +523,77 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── PREBUILT DATABASE CHECK ──────────────────────────────────
+    // ── SMART PREBUILT TEMPLATE MATCHING ────────────────────────────
     const hasExisting = fileContext && fileContext.length > 200
     if (!hasExisting) {
       try {
         const supabase = await createClient()
+
+        // Extract meaningful words from prompt
+        const stopWords = new Set(['build','create','make','want','need','with','that','have','this','from','for','and','the','can','get'])
         const words = prompt.toLowerCase()
           .replace(/[^a-z0-9 ]/g, ' ')
           .split(' ')
-          .filter((w: string) => w.length > 3)
-          .slice(0, 8)
+          .filter((w: string) => w.length > 3 && !stopWords.has(w))
+          .slice(0, 10)
 
         if (words.length > 0) {
+          // Get templates that have actual files stored
           const { data: matches } = await supabase
             .from('prebuilt_apps')
-            .select('id, name, files, preview_color')
+            .select('id, app_id, name, category, files, preview_color, keywords')
             .overlaps('keywords', words)
-            .limit(5)
+            .not('files', 'eq', '{}')
+            .not('files', 'is', null)
+            .limit(10)
 
           if (matches && matches.length > 0) {
+            // Score each match
             let best = matches[0]
             let bestScore = 0
+
             for (const m of matches) {
-              const score = words.filter((w: string) => m.name?.toLowerCase().includes(w)).length
+              // Check files exist and have real content
+              const fileCount = m.files ? Object.keys(m.files).length : 0
+              if (fileCount < 2) continue
+
+              let score = 0
+              // Keyword overlap score
+              const templateKeywords = (m.keywords || []) as string[]
+              score += words.filter((w: string) => templateKeywords.some((k: string) => k.includes(w) || w.includes(k))).length * 2
+              // Name match score
+              score += words.filter((w: string) => m.name?.toLowerCase().includes(w)).length * 3
+              // Category match score
+              score += words.filter((w: string) => m.category?.toLowerCase().includes(w)).length * 2
+              // Bonus for richer templates
+              score += Math.min(fileCount, 8) * 0.5
+
               if (score > bestScore) { bestScore = score; best = m }
             }
 
-            if (bestScore >= 1 && best.files) {
-              try { await supabase.rpc('increment_app_use', { app_id: best.id }) } catch {}
+            // Only use template if score >= 3 (meaningful match) and has files
+            const fileCount = best.files ? Object.keys(best.files).length : 0
+            if (bestScore >= 3 && fileCount >= 2) {
+              try { 
+                await supabase.rpc('increment_app_use', { app_id: best.id }) 
+              } catch {}
 
               const output = Object.entries(best.files as Record<string, string>)
-                .map(([path, code]) => `<file path="${path}">\n${code}\n</file>`)
+                .map(([path, code]) => `<file path="${path}">
+${code}
+</file>`)
                 .join('\n\n')
-              const summary = `Built: Loaded "${best.name}" from the Wyber AI gallery (0 credits).`
-              const full = output + '\n\n' + summary
 
+              const appIdLabel = best.app_id ? ` [${best.app_id}]` : ''
+              const summary = `Built: Loaded "${best.name}"${appIdLabel} from the Wyber AI gallery (0 credits).`
+              const full = output + '\n\n' + summary
               const encoder = new TextEncoder()
-              // Sanitize prebuilt files — remove undefined variable references
+
+              // Sanitize — remove undefined variable references
               const sanitized = full
                 .replace(/const\s+\w*[Cc]lient\s*=\s*createClient\([^)]*\)/g, '// client removed')
-                .replace(/\bprojectId\b/g, "\"demo-project\"")
-                .replace(/\buserId\b/g, "\"demo-user\"")
+                .replace(/projectId/g, '"demo-project"')
+                .replace(/userId/g, '"demo-user"')
                 .replace(/supabaseUrl[^;,)\s]*/g, '"https://demo.supabase.co"')
                 .replace(/process\.env\.\w+/g, '"demo"')
 
@@ -588,6 +618,8 @@ export async function POST(req: NextRequest) {
                     'X-Source': 'prebuilt',
                     'X-Credits-Used': '0',
                     'X-Prebuilt-Name': best.name,
+                    'X-Prebuilt-ID': best.app_id || best.id,
+                    'X-Match-Score': String(bestScore),
                   }
                 }
               )
