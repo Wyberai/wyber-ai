@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { detectRequiredTools, ToolDefinition } from '@/lib/tool-registry'
-import { WorkflowVisualizer } from '@/components/agents/WorkflowVisualizer'
+
 
 interface Agent { agent_id: string; name: string; category: string; problem: string; outcome: string; primary_buyer: string; complexity: string; required_tools: string }
 interface Execution { id: string; status: string; summary?: string; logs: Array<{type:string;message:string}>; steps: number; started_at: string }
@@ -44,7 +44,7 @@ export default function AgentStudioPage() {
     const res = await fetch('/api/tools', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({projectId, toolId, credentials: creds}) })
     const data = await res.json()
     if (data.success) { setConnecting(null); load() }
-    else { console.error('Failed:', data.error) }
+    else alert('Failed: ' + data.error)
   }
 
   const runAgent = async () => {
