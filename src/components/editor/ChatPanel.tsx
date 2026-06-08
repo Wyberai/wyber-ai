@@ -145,12 +145,12 @@ export function ChatPanel({ projectId, userId }: Props) {
   };
 
   const initProject = useCallback(() => {
-    if (hasInit || Object.keys(files).length > 0) { setHasInit(true); return; }
+    if (hasInit) return; // Only run once
     setHasInit(true);
     const template = STARTER_TEMPLATES[framework];
     setFiles(template);
     addMessage({ id: uid(), role:'assistant', content:`**Wyber AI ready** — describe what to build, paste a screenshot, or pick a template.`, timestamp:Date.now(), status:'done' });
-  }, [hasInit, framework, files, setFiles, addMessage]);
+  }, [hasInit, framework, setFiles, addMessage]); // files excluded — prevents infinite loop
 
   useEffect(() => { initProject(); }, [initProject]);
 
