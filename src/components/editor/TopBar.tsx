@@ -32,9 +32,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [pushing, setPushing] = useState(false);
   const [pushUrl, setPushUrl] = useState('');
   const [showSupabase, setShowSupabase] = useState(false);
-  const projectType = searchParams?.get('type') || 'app';
+  const projectType = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('type') || 'app') : 'app';
   const [activeMode, setActiveMode] = useState<'app'|'agent'|'workflow'>(
-    (searchParams?.get('type') as 'app'|'agent'|'workflow') || 'app'
+    (projectType as 'app'|'agent'|'workflow') || 'app'
   );
 
   const handleExport = async () => {
