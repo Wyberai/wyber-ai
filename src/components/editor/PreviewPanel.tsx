@@ -160,6 +160,20 @@ export function PreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, build, hasApp])
 
+  // Auto-build when prebuilt files load (gallery templates — isGenerating never fires)
+  const prevFileCount = useRef(0)
+  useEffect(() => {
+    const fileCount = Object.keys(files).length
+    if (fileCount >= 2 && prevFileCount.current === 0 && !isGenerating) {
+      // Files appeared without generation — must be prebuilt template
+      setTimeout(() => {
+        lastBuiltKey.current = ''
+        build()
+      }, 800)
+    }
+    prevFileCount.current = fileCount
+  }, [files, isGenerating, build])
+
   // Update iframe srcdoc when html changes
   useEffect(() => {
     if (iframeRef.current && html) {

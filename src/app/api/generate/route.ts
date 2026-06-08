@@ -558,14 +558,22 @@ export async function POST(req: NextRequest) {
               const full = output + '\n\n' + summary
 
               const encoder = new TextEncoder()
+              // Sanitize prebuilt files — remove undefined variable references
+              const sanitized = full
+                .replace(/const\s+\w*[Cc]lient\s*=\s*createClient\([^)]*\)/g, '// client removed')
+                .replace(/projectId[^;,)\s]*/g, '"demo-project"')
+                .replace(/userId[^;,)\s]*/g, '"demo-user"')
+                .replace(/supabaseUrl[^;,)\s]*/g, '"https://demo.supabase.co"')
+                .replace(/process\.env\.\w+/g, '"demo"')
+
               return new Response(
                 new ReadableStream({
                   start(controller) {
                     const chunkSize = 100
                     let i = 0
                     const push = () => {
-                      if (i < full.length) {
-                        controller.enqueue(encoder.encode(full.slice(i, i + chunkSize)))
+                      if (i < sanitized.length) {
+                        controller.enqueue(encoder.encode(sanitized.slice(i, i + chunkSize)))
                         i += chunkSize
                         setTimeout(push, 5)
                       } else { controller.close() }
