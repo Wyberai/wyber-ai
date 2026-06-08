@@ -2,10 +2,25 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
+  const host = request.headers.get('host') || ''
 
-  // Skip all API routes and public pages — handle auth themselves
+  // Handle custom domains — if the host is not wyberai.com, serve the published app
+  const isWyberDomain = host.includes('wyberai.com') || host.includes('vercel.app') || host.includes('localhost')
+  
+  if (!isWyberDomain && host.includes('.')) {
+    // Custom domain request — rewrite to /api/serve-custom-domain
+    const url = request.nextUrl.clone()
+    url.pathname = `/api/serve-custom-domain`
+    url.searchParams.set('domain', host)
+    url.searchParams.set('path', path)
+    return NextResponse.rewrite(url)
+  }
+
+  // Skip everything that is clearly public
   if (
+    path.startsWith('/auth') ||
     path.startsWith('/api/') ||
+    path.startsWith('/_next') ||
     path.startsWith('/login') ||
     path.startsWith('/signup') ||
     path.startsWith('/pricing') ||
@@ -33,12 +48,14 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/credits') ||
     path.startsWith('/docs') ||
     path.startsWith('/p/') ||
-    path === '/'
+    path.startsWith('/app/') ||
+    path === '/' ||
+    path.includes('.')
   ) {
     return NextResponse.next()
   }
 
-  // Protected routes only: /dashboard, /project/*, /onboarding, /settings
+  // Protected routes: /dashboard, /project/*, /onboarding, /settings
   try {
     const { createServerClient } = await import('@supabase/ssr')
     let response = NextResponse.next({ request })
@@ -76,12 +93,12 @@ export async function proxy(request: NextRequest) {
   }
 }
 
-// CRITICAL: /auth/* excluded from matcher entirely — never intercepted
 export const config = {
   matcher: [
     '/dashboard/:path*',
     '/project/:path*',
     '/onboarding/:path*',
     '/settings/:path*',
+    '/((?!_next/static|_next/image|favicon\\.ico).*)',
   ],
 }
