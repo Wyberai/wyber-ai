@@ -73,7 +73,12 @@ export function ChatPanel({ projectId, userId }: Props) {
     messages, isGenerating, addMessage, updateMessage,
     setIsGenerating, setStreamingContent, appendStreamingContent, clearStreamingContent,
     setFiles, files, framework, consumeCredit, credits, setPreviewUrl, setHasGeneratedFiles,
+    project,
   } = useEditorStore();
+  
+  // Always get projectId from store — props are unreliable when RightPanel doesn't pass them
+  const resolvedProjectId = projectId || project?.id;
+  const resolvedUserId = userId || project?.userId;
 
   const [input, setInput] = useState('');
   const [buildMsgIdx, setBuildMsgIdx] = useState(0);
@@ -140,19 +145,19 @@ export function ChatPanel({ projectId, userId }: Props) {
   };
 
   const initProject = useCallback(() => {
-    if (hasInit) return; // Only run once
+    if (hasInit || Object.keys(files).length > 0) { setHasInit(true); return; }
     setHasInit(true);
     const template = STARTER_TEMPLATES[framework];
     setFiles(template);
     addMessage({ id: uid(), role:'assistant', content:`**Wyber AI ready** — describe what to build, paste a screenshot, or pick a template.`, timestamp:Date.now(), status:'done' });
-  }, [hasInit, framework, setFiles, addMessage]); // removed 'files' dependency to prevent infinite loop
+  }, [hasInit, framework, files, setFiles, addMessage]);
 
   useEffect(() => { initProject(); }, [initProject]);
 
   // Auto-trigger generation if a prompt was passed from dashboard/homepage
   useEffect(() => {
-    if (!projectId || !hasInit) return;
-    const key = `wyber_prompt_${projectId}`;
+    if (!resolvedProjectId || !hasInit) return;
+    const key = `wyber_prompt_${resolvedProjectId}`;
     const savedPrompt = sessionStorage.getItem(key);
     if (!savedPrompt) return;
     sessionStorage.removeItem(key); // clear so it doesn't re-trigger
@@ -164,7 +169,7 @@ export function ChatPanel({ projectId, userId }: Props) {
       window.dispatchEvent(event);
     }, 800);
     return () => clearTimeout(timer);
-  }, [projectId, hasInit]);
+  }, [resolvedProjectId, hasInit]);
 
   // Listen for auto-generate event
   useEffect(() => {
@@ -224,9 +229,9 @@ export function ChatPanel({ projectId, userId }: Props) {
   }, []);
 
   const saveProject = useCallback(async (updatedFiles: typeof files) => {
-    if (!projectId) return;
-    fetch('/api/projects', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ projectId, files: updatedFiles, userId: userId || 'auto' }) }).catch(() => {});
-  }, [projectId]);
+    if (!resolvedProjectId) return;
+    fetch('/api/projects', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ resolvedProjectId, files: updatedFiles, resolvedUserId: resolvedUserId || 'auto' }) }).catch(() => {});
+  }, [resolvedProjectId]);
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
     consumeCredit(); // Optimistic local update — will be corrected after generation
@@ -269,7 +274,7 @@ export function ChatPanel({ projectId, userId }: Props) {
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           prompt: userMsg || 'Build a UI matching this screenshot exactly.',
-          framework, fileContext, history, projectId, knowledge, modelTier, userId,
+          framework, fileContext, history, resolvedProjectId, knowledge, modelTier, resolvedUserId,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
         }),
       });
@@ -385,7 +390,7 @@ setStreamingContent(chatContent || '');
       setIsGenerating(false);
       clearStreamingContent();
     }
-  }, [credits, files, messages, framework, projectId, modelTier, addMessage, updateMessage, setIsGenerating, setStreamingContent, appendStreamingContent, clearStreamingContent, consumeCredit, setFiles, saveProject, launchSandbox]);
+  }, [credits, files, messages, framework, resolvedProjectId, modelTier, addMessage, updateMessage, setIsGenerating, setStreamingContent, appendStreamingContent, clearStreamingContent, consumeCredit, setFiles, saveProject, launchSandbox]);
 
   // Extract imports from a file's content
   const extractFileImports = (code: string): string[] => {
@@ -460,7 +465,7 @@ setStreamingContent(chatContent || '');
           framework,
           fileContext: topFiles,
           history: [],
-          userId,
+          resolvedUserId,
           modelTier: 'fast',
         }),
       });
@@ -493,7 +498,7 @@ setStreamingContent(chatContent || '');
     } catch (err) {
       console.error('Auto-repair failed:', err);
     }
-  }, [framework, userId, addMessage, setFiles]);
+  }, [framework, resolvedUserId, addMessage, setFiles]);
 
   const handleSend = useCallback(async () => {
     if ((!input.trim() && !attachedImage) || isGenerating || credits <= 0) return;
