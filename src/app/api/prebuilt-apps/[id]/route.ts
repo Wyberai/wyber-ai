@@ -9,7 +9,7 @@ export async function GET(
     const admin = await createAdminClient()
     const { data: app, error } = await admin
       .from('prebuilt_apps')
-      .select('id, name, description, category, keywords, preview_color, files')
+      .select('id, name, description, category, keywords, preview_color')
       .eq('id', params.id)
       .single()
 
@@ -18,7 +18,7 @@ export async function GET(
     }
 
     return NextResponse.json({ app })
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+  } catch (err) {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
