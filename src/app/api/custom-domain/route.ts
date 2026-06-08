@@ -71,6 +71,24 @@ export async function POST(req: NextRequest) {
       const { verified, error } = await verifyDNS(cleanDomain, projectId)
       
       if (verified) {
+        // Register domain with Vercel so it routes correctly
+        const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+        const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID
+        const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_pTqy3kMHCQ6CTOrkbCXVuCETb0bZ'
+        
+        if (VERCEL_TOKEN) {
+          try {
+            // Add domain to Vercel project
+            await fetch(`https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains${VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : ''}`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ name: cleanDomain }),
+            })
+          } catch (e) {
+            console.warn('Vercel domain registration failed (non-critical):', e)
+          }
+        }
+
         // Save the custom domain
         await admin.from('projects').update({
           custom_domain: cleanDomain,
