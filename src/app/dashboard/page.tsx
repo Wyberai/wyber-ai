@@ -1,5 +1,5 @@
-import { Suspense } from 'react';
 import { DashboardClient } from '@/components/dashboard/DashboardClient';
+import { OnboardingTour } from '@/components/shared/OnboardingTour';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
@@ -21,13 +21,9 @@ export default async function DashboardPage() {
     .order('updated_at', { ascending: false });
 
   return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 32, height: 32, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-    }>
+    <>
+      <OnboardingTour />
       <DashboardClient profile={profile} projects={projects ?? []} />
-    </Suspense>
+    </>
   );
 }
