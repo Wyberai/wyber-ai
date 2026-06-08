@@ -41,7 +41,7 @@ function getBuildScaffold(framework: string, projectName: string): Record<string
 import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
-  build: { outDir: 'dist', sourcemap: false },
+  base: './', build: { outDir: 'dist', sourcemap: false },
 })`,
 
       'tsconfig.json': JSON.stringify({
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       }, { status: 503 });
     }
 
-    const cleanName = `wyber-${(projectName ?? 'app').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 40)}-${Date.now().toString(36)}`;
+    const cleanName = `wyber-${Math.random().toString(36).slice(2, 10)}`; // Short random name
 
     // Merge scaffold + user files
     const scaffold = getBuildScaffold(framework, projectName ?? 'My App');
@@ -190,6 +190,7 @@ export async function POST(req: NextRequest) {
         files: vercelFiles,
         projectSettings: frameworkConfig,
         target: 'production',
+        ssoProtectionBypass: true,
         ...(VERCEL_TEAM_ID ? { teamId: VERCEL_TEAM_ID } : {}),
       }),
     });
