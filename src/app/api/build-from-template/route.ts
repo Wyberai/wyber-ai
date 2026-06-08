@@ -13,19 +13,20 @@ export async function POST(req: NextRequest) {
     const admin = await createAdminClient()
 
     // Get the template
-    const { data: template } = await admin
+    const { data: template, error: tErr } = await admin
       .from('prebuilt_apps')
       .select('name, description, category, files')
       .eq('id', templateId)
       .single()
 
-    if (!template) return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    if (tErr || !template) {
+      return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
 
-    // Build the prompt from template
     const prompt = `Build a ${template.name}. ${template.description || ''}`
 
-    // Create a new project
-    const { data: project, error } = await admin
+    // Create project — use try/catch not .catch()
+    const { data: project, error: pErr } = await admin
       .from('projects')
       .insert({
         user_id: user.id,
@@ -37,13 +38,17 @@ export async function POST(req: NextRequest) {
       .select('id')
       .single()
 
-    if (error || !project) throw error || new Error('Failed to create project')
+    if (pErr || !project) {
+      console.error('Project create error:', pErr)
+      throw new Error(pErr?.message || 'Failed to create project')
+    }
 
-    // Increment use_count on template
-    try { await admin.rpc('increment_use_count', { template_id: templateId }) } catch {}
+    // Increment use_count — fire and forget
+    admin.rpc('increment_use_count', { template_id: templateId }).then(() => {}).catch(() => {})
 
     return NextResponse.json({ projectId: project.id, prompt })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  } catch (err: any) {
+    console.error('build-from-template error:', err)
+    return NextResponse.json({ error: err?.message || String(err) }, { status: 500 })
   }
 }

@@ -1,40 +1,56 @@
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Routes that never need auth checks
+const PUBLIC_PREFIXES = [
+  '/_next', '/favicon', '/icon', '/apple-icon', '/robots', '/sitemap', '/manifest',
+  '/auth',     // CRITICAL: auth callback must NEVER be intercepted
+  '/api/',     // All API routes handle their own auth
+  '/login',
+  '/signup',
+  '/',
+  '/pricing',
+  '/templates',
+  '/gallery',
+  '/community',
+  '/agents',
+  '/flows',
+  '/privacy',
+  '/terms',
+  '/status',
+  '/vs',
+  '/blog',
+  '/security',
+  '/changelog',
+  '/setup-call',
+  '/complexity-guide',
+  '/pay',
+  '/connectors',
+  '/founders',
+  '/marketers',
+  '/designers',
+  '/affiliates',
+  '/about',
+  '/credits',
+  '/docs',
+  '/p/',
+]
+
+function isPublicPath(path: string): boolean {
+  return PUBLIC_PREFIXES.some(prefix => {
+    if (prefix.endsWith('/')) return path.startsWith(prefix)
+    return path === prefix || path.startsWith(prefix + '/') || path.startsWith(prefix + '?')
+  }) || path.includes('.')  // any file with extension is public (static assets)
+}
+
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
-  // Skip static assets immediately
-  if (
-    path.startsWith('/_next') ||
-    path.startsWith('/favicon') ||
-    path.startsWith('/icon') ||
-    path.includes('.')
-  ) {
+  // Always allow public paths
+  if (isPublicPath(path)) {
     return NextResponse.next()
   }
 
-  // All public routes — skip auth entirely
-  const PUBLIC_PREFIXES = [
-    '/', '/login', '/signup', '/pricing', '/templates', '/privacy', '/terms',
-    '/status', '/vs', '/blog', '/security', '/changelog', '/gallery',
-    '/setup-call', '/complexity-guide', '/pay', '/connectors', '/founders',
-    '/marketers', '/designers', '/affiliates', '/about', '/credits', '/docs',
-    '/agents', '/flows', '/community', '/p/',
-    '/auth',  // CRITICAL: auth callback must never be intercepted
-    '/api/',  // All API routes are public — they handle auth themselves
-  ]
-
-  const isPublic = PUBLIC_PREFIXES.some(prefix =>
-    path === prefix ||
-    path === prefix.replace(/\/$/, '') ||
-    path.startsWith(prefix.endsWith('/') ? prefix : prefix + '/')
-  )
-
-  if (isPublic) {
-    return NextResponse.next()
-  }
-
-  // Protected routes: /dashboard, /project/*, /settings, /onboarding
+  // Protected routes: /dashboard, /project/*, /onboarding, /settings (app)
   try {
     const { createServerClient } = await import('@supabase/ssr')
     let response = NextResponse.next({ request })
@@ -48,7 +64,9 @@ export async function proxy(request: NextRequest) {
           setAll: (cookies) => {
             cookies.forEach(({ name, value }) => request.cookies.set(name, value))
             response = NextResponse.next({ request })
-            cookies.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+            cookies.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            )
           },
         },
       }
@@ -57,26 +75,20 @@ export async function proxy(request: NextRequest) {
     const { data: { user }, error } = await supabase.auth.getUser()
 
     if (error || !user) {
-      // Not logged in — redirect to login
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       url.searchParams.set('next', path)
       return NextResponse.redirect(url)
     }
 
-    // Logged in hitting auth pages — redirect to dashboard
-    if (path === '/login' || path === '/signup') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
     return response
   } catch (err) {
-    // Never crash — let the page handle it
+    // Never crash the proxy — let the page handle auth itself
     console.error('Proxy error:', err)
     return NextResponse.next()
   }
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg|apple-icon\\.png).*)'],
 }
