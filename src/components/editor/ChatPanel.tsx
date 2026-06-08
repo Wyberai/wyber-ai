@@ -230,7 +230,7 @@ export function ChatPanel({ projectId, userId }: Props) {
 
   const saveProject = useCallback(async (updatedFiles: typeof files) => {
     if (!resolvedProjectId) return;
-    fetch('/api/projects', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ resolvedProjectId, files: updatedFiles, resolvedUserId: resolvedUserId || 'auto' }) }).catch(() => {});
+    fetch('/api/projects', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ projectId: resolvedProjectId, files: updatedFiles, userId: resolvedUserId || "auto" }) }).catch(() => {});
   }, [resolvedProjectId]);
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
