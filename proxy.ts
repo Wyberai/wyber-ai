@@ -3,12 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
-  // Skip everything that is clearly public — check these FIRST before any auth logic
-  // Using simple startsWith — the most reliable approach
+  // Skip all API routes and public pages — handle auth themselves
   if (
-    path.startsWith('/auth') ||        // auth callback — MUST never be intercepted
-    path.startsWith('/api/') ||        // all API routes handle their own auth
-    path.startsWith('/_next') ||       // Next.js internals
+    path.startsWith('/api/') ||
     path.startsWith('/login') ||
     path.startsWith('/signup') ||
     path.startsWith('/pricing') ||
@@ -36,18 +33,12 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/credits') ||
     path.startsWith('/docs') ||
     path.startsWith('/p/') ||
-    path.startsWith('/favicon') ||
-    path.startsWith('/icon') ||
-    path.startsWith('/apple-icon') ||
-    path.startsWith('/robots') ||
-    path.startsWith('/sitemap') ||
-    path === '/' ||
-    path.includes('.')  // any file with extension (static assets)
+    path === '/'
   ) {
     return NextResponse.next()
   }
 
-  // Only protected routes reach here: /dashboard, /project/*, /onboarding
+  // Protected routes only: /dashboard, /project/*, /onboarding, /settings
   try {
     const { createServerClient } = await import('@supabase/ssr')
     let response = NextResponse.next({ request })
@@ -85,6 +76,12 @@ export async function proxy(request: NextRequest) {
   }
 }
 
+// CRITICAL: /auth/* excluded from matcher entirely — never intercepted
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon\\.ico|icon\\.svg).*)'],
+  matcher: [
+    '/dashboard/:path*',
+    '/project/:path*',
+    '/onboarding/:path*',
+    '/settings/:path*',
+  ],
 }
