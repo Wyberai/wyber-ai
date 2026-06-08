@@ -562,8 +562,8 @@ export async function POST(req: NextRequest) {
               // Sanitize prebuilt files — remove undefined variable references
               const sanitized = full
                 .replace(/const\s+\w*[Cc]lient\s*=\s*createClient\([^)]*\)/g, '// client removed')
-                .replace(/projectId[^;,)\s]*/g, '"demo-project"')
-                .replace(/userId[^;,)\s]*/g, '"demo-user"')
+                .replace(/\bprojectId\b/g, "\"demo-project\"")
+                .replace(/\buserId\b/g, "\"demo-user\"")
                 .replace(/supabaseUrl[^;,)\s]*/g, '"https://demo.supabase.co"')
                 .replace(/process\.env\.\w+/g, '"demo"')
 
