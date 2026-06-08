@@ -1,178 +1,93 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const STEPS = [
   {
-    id: 'welcome',
     title: 'Welcome to Wyber AI 👋',
-    description: 'Build apps, deploy AI agents, and create workflows — all with AI. Let us show you around in 60 seconds.',
+    desc: 'Build apps, deploy AI agents, and create workflows — all with AI. Let us show you around.',
     target: null,
-    position: 'center',
   },
   {
-    id: 'new-project',
-    title: 'Start Building',
-    description: 'Click "New Project" to describe any app in plain English. Wyber AI will generate the full code instantly.',
-    target: '[data-tour="new-project"]',
-    position: 'bottom',
-  },
-  {
-    id: 'templates',
-    title: '130+ Ready-Made Templates',
-    description: 'Browse our gallery of pre-built apps — CRM, dashboards, e-commerce, and more. Zero credits to preview.',
+    title: 'Start from a Template',
+    desc: 'Browse 100+ pre-built apps — CRM, dashboards, e-commerce. Click any to start building instantly.',
     target: '[data-tour="templates"]',
-    position: 'right',
   },
   {
-    id: 'agents',
     title: '5,000 AI Agents',
-    description: 'Pick from 5,000 pre-built AI agents across 18 industries. Click any agent to open it in the visual canvas builder.',
+    desc: 'Pick from 5,000 pre-built AI agents. Click any agent to configure and run it automatically.',
     target: '[data-tour="agents"]',
-    position: 'right',
   },
   {
-    id: 'flows',
-    title: 'Workflow Builder',
-    description: 'Connect apps and automate workflows with drag-and-drop nodes. No code required.',
-    target: '[data-tour="flows"]',
-    position: 'right',
+    title: 'Build Your Own App',
+    desc: 'Click "New Project" and describe any app in plain English. AI builds the full code instantly.',
+    target: '[data-tour="new-project"]',
   },
   {
-    id: 'credits',
-    title: 'You\'re Ready!',
-    description: 'Each generation uses 1 credit. You have plenty to get started. Describe your first app and watch it build in real time.',
+    title: "You're Ready!",
+    desc: 'Start with a template or describe your own idea. Your app will be live in under 60 seconds.',
     target: null,
-    position: 'center',
   },
 ]
 
 export function OnboardingTour() {
   const [step, setStep] = useState(0)
   const [visible, setVisible] = useState(false)
-  const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  const [rect, setRect] = useState<DOMRect | null>(null)
 
   useEffect(() => {
-    const done = localStorage.getItem('wyber_onboarding_done')
-    const isNewUser = !localStorage.getItem('wyber_has_visited')
-    if (!done && isNewUser) {
-      setTimeout(() => setVisible(true), 1500)
-    }
-    localStorage.setItem('wyber_has_visited', '1')
+    const done = localStorage.getItem('wyber_tour_done')
+    if (!done) setTimeout(() => setVisible(true), 1200)
   }, [])
 
   useEffect(() => {
     if (!visible) return
-    const current = STEPS[step]
-    if (current.target) {
-      const el = document.querySelector(current.target)
-      if (el) setTargetRect(el.getBoundingClientRect())
-      else setTargetRect(null)
-    } else {
-      setTargetRect(null)
-    }
+    const s = STEPS[step]
+    if (s.target) {
+      const el = document.querySelector(s.target)
+      if (el) setRect(el.getBoundingClientRect())
+      else setRect(null)
+    } else setRect(null)
   }, [step, visible])
 
-  const finish = () => {
-    localStorage.setItem('wyber_onboarding_done', '1')
-    setVisible(false)
-  }
-
-  const next = () => {
-    if (step < STEPS.length - 1) setStep(s => s + 1)
-    else finish()
-  }
-
+  const finish = () => { localStorage.setItem('wyber_tour_done', '1'); setVisible(false) }
+  const next = () => step < STEPS.length - 1 ? setStep(s => s + 1) : finish()
   const prev = () => setStep(s => Math.max(0, s - 1))
 
   if (!visible) return null
+  const s = STEPS[step]
+  const isCenter = !s.target || !rect
 
-  const current = STEPS[step]
-  const isCenter = current.position === 'center'
+  const cardStyle: React.CSSProperties = isCenter ? {
+    position: 'fixed', top: '50%', left: '50%',
+    transform: 'translate(-50%, -50%)',
+  } : {
+    position: 'fixed',
+    top: rect ? rect.bottom + 12 : '50%',
+    left: rect ? Math.max(16, Math.min(rect.left, window.innerWidth - 340)) : '50%',
+  }
 
   return (
     <>
-      {/* Backdrop */}
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, backdropFilter: 'blur(2px)' }} onClick={finish} />
-
-      {/* Spotlight on target */}
-      {targetRect && (
-        <div style={{
-          position: 'fixed',
-          top: targetRect.top - 6,
-          left: targetRect.left - 6,
-          width: targetRect.width + 12,
-          height: targetRect.height + 12,
-          borderRadius: 10,
-          boxShadow: '0 0 0 9999px rgba(0,0,0,0.7)',
-          border: '2px solid #0EA5E9',
-          zIndex: 10001,
-          pointerEvents: 'none',
-          transition: 'all 0.3s ease',
-        }} />
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 10000, backdropFilter: 'blur(2px)' }} onClick={finish} />
+      {rect && (
+        <div style={{ position: 'fixed', top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: 10, boxShadow: '0 0 0 9999px rgba(0,0,0,0.65)', border: '2px solid #0EA5E9', zIndex: 10001, pointerEvents: 'none' }} />
       )}
-
-      {/* Tooltip card */}
-      <div style={{
-        position: 'fixed',
-        zIndex: 10002,
-        ...(isCenter ? {
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-        } : targetRect ? {
-          top: targetRect.bottom + 16,
-          left: Math.max(16, Math.min(targetRect.left, window.innerWidth - 340)),
-        } : {
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-        }),
-        width: 320,
-        background: '#111118',
-        border: '1px solid rgba(14,165,233,0.3)',
-        borderRadius: 16,
-        padding: 24,
-        boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(14,165,233,0.1)',
-        animation: 'tourIn 0.25s ease',
-      }}>
-        {/* Progress dots */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+      <div style={{ ...cardStyle, zIndex: 10002, width: 320, background: '#111118', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.6)', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ display: 'flex', gap: 5, marginBottom: 16 }}>
           {STEPS.map((_, i) => (
-            <div key={i} style={{
-              width: i === step ? 20 : 6, height: 6,
-              borderRadius: 999,
-              background: i === step ? '#0EA5E9' : i < step ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.1)',
-              transition: 'all 0.3s ease',
-            }} />
+            <div key={i} style={{ height: 4, flex: i === step ? 2 : 1, borderRadius: 2, background: i <= step ? '#0EA5E9' : 'rgba(255,255,255,0.1)', transition: 'all 0.3s' }} />
           ))}
         </div>
-
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>
-          {current.title}
-        </div>
-        <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 20 }}>
-          {current.description}
-        </div>
-
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {step > 0 && (
-            <button onClick={prev} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
-              Back
-            </button>
-          )}
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 8 }}>{s.title}</div>
+        <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 20 }}>{s.desc}</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {step > 0 && <button onClick={prev} style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Back</button>}
           <button onClick={next} style={{ flex: 1, padding: '9px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             {step === STEPS.length - 1 ? 'Start Building →' : 'Next →'}
           </button>
-          <button onClick={finish} style={{ padding: '8px 12px', borderRadius: 8, border: 'none', background: 'transparent', color: '#52525b', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
-            Skip
-          </button>
+          <button onClick={finish} style={{ padding: '8px 10px', borderRadius: 8, border: 'none', background: 'transparent', color: '#52525b', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>Skip</button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes tourIn {
-          from { opacity: 0; transform: ${isCenter ? 'translate(-50%, -48%) scale(0.97)' : 'translateY(-4px)'} }
-          to { opacity: 1; transform: ${isCenter ? 'translate(-50%, -50%) scale(1)' : 'translateY(0)'} }
-        }
-      `}</style>
     </>
   )
 }

@@ -1,4 +1,3 @@
-export const maxDuration = 300
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
@@ -252,8 +251,9 @@ DESIGN SYSTEM — MANDATORY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 src/index.css ALWAYS STARTS WITH EXACTLY THIS (never omit, never modify):
+CRITICAL: NEVER use @import in CSS files. No Google Fonts imports. No @import url(). This breaks the build.
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* Google Fonts loaded via Next.js - do not use @import in CSS files */
 
 :root {
   --bg: #0a0a0f;
@@ -508,7 +508,7 @@ create policy "Users manage own items" on items for all using (auth.uid() = user
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })

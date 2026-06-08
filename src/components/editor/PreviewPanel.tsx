@@ -188,10 +188,13 @@ export function PreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, build, hasApp])
 
-  // Auto-build when prebuilt files load (gallery templates)
+  // Auto-build when prebuilt files load (gallery templates — not starter templates)
   useEffect(() => {
     const fileCount = Object.keys(files).length
-    if (fileCount >= 2 && prevFileCount.current === 0 && !isGenerating) {
+    const appFile = files['src/App.tsx'] || files['src/App.jsx']
+    const appContent = (appFile as any)?.content || ''
+    // Only trigger if App.tsx has substantial content (> 500 chars = real generated app, not starter)
+    if (fileCount >= 2 && prevFileCount.current === 0 && !isGenerating && appContent.length > 500) {
       setTimeout(() => { lastBuiltKey.current = ''; build() }, 800)
     }
     prevFileCount.current = fileCount
