@@ -45,7 +45,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   // searchParams removed
 
   useEffect(() => {
-    const cloneId = searchParams?.get('clone');
+    const cloneId = null; // searchParams removed
     if (!cloneId || !profile?.id) return;
     fetch('/api/projects/duplicate', {
       method: 'POST',
@@ -54,7 +54,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     }).then(r => r.json()).then(data => {
       if (data.project?.id) window.location.href = '/project/' + data.project.id;
     });
-  }, [searchParams, profile?.id]);
+  }, [profile?.id]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
