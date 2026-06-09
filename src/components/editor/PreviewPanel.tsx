@@ -1,97 +1,13 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { VisualEditorOverlay } from './VisualEditorOverlay'
 
 const MESSAGES = [
   'Compiling components...', 'Bundling your app...', 'Almost ready...',
 ]
 
-function buildSrcdoc(files: Record<string, any>): string {
-  const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
-  const appCode: string = appFile?.content || ''
-  const cssCode: string = (files['src/index.css'] as any)?.content || ''
-
-  // Collect all component files
-  const componentFiles: Record<string, string> = {}
-  for (const [path, file] of Object.entries(files)) {
-    if (
-      path.startsWith('src/components/') ||
-      path.startsWith('src/lib/') ||
-      path.startsWith('src/hooks/')
-    ) {
-      componentFiles[path] = (file as any)?.content || ''
-    }
-  }
-
-  // Transform App.tsx — strip imports, transform exports
-  function transformApp(code: string): string {
-    let c = code
-    // Remove all import statements
-    c = c.replace(/^import\s+.*?from\s+['"][^'"]+['"]\s*;?\n?/gm, '')
-    c = c.replace(/^import\s+['"][^'"]+['"]\s*;?\n?/gm, '')
-    // Transform export default function Name → function App
-    c = c.replace(/export\s+default\s+function\s+\w+/, 'function __WyberApp')
-    c = c.replace(/export\s+default\s+function\s*\(/, 'function __WyberApp(')
-    // Transform export default ComponentName → (already defined above)
-    c = c.replace(/^export\s+default\s+(\w+)\s*;?\s*$/m, '// default: $1')
-    // Transform named exports
-    c = c.replace(/^export\s+(const|function|class|interface|type)\s+/gm, '$1 ')
-    // Transform export { x } → // export x
-    c = c.replace(/^export\s*\{[^}]*\}\s*;?\s*$/gm, '')
-    return c
-  }
-
-  // Build component module stubs
-  const componentScripts = Object.entries(componentFiles).map(([path, code]) => {
-    const modName = path.replace('src/', '').replace(/\.(tsx?|jsx?)$/, '')
-    let c = code
-    c = c.replace(/^import\s+.*?from\s+['"][^'"]+['"]\s*;?\n?/gm, '')
-    c = c.replace(/^import\s+['"][^'"]+['"]\s*;?\n?/gm, '')
-    c = c.replace(/export\s+default\s+function\s+(\w+)/, 'function $1')
-    c = c.replace(/^export\s+(const|function|class)\s+/gm, '$1 ')
-    c = c.replace(/^export\s*\{[^}]*\}\s*;?\s*$/gm, '')
-    return `/* ${modName} */\n${c}`
-  }).join('\n\n')
-
-  const transformedApp = transformApp(appCode)
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-<script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
-<script>
-// Shim lucide-react icons as simple SVG spans
-window.LucideReact = new Proxy({}, {
-  get: function(_, name) {
-    return function(props) {
-      return React.createElement('span', {
-        style: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: props.size || 16, height: props.size || 16, opacity: 0.7 },
-        title: String(name)
-      }, '◆');
-    };
-  }
-});
-window.Recharts = window.Recharts || {};
-</script>
-<style>
-${cssCode}
-</style>
-</head>
-<body style="margin:0;padding:0">
-<div id="root"></div>
-<script type="text/babel" data-presets="react,typescript" data-type="module">
-const { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext, memo, forwardRef, Fragment, lazy, Suspense, useReducer } = React;
-
-// Recharts
-const { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar, ScatterChart, Scatter } = window.Recharts || {};
-
-// Lucide icons proxy
-const { ${[
+const LUCIDE_ICONS = [
   'Home','Users','Settings','BarChart2','TrendingUp','TrendingDown','Plus','Search',
   'Filter','X','Edit2','Trash2','ChevronRight','ChevronDown','ChevronUp','ChevronLeft',
   'Bell','CreditCard','Package','ArrowUp','ArrowDown','MoreVertical','CheckCircle',
@@ -103,20 +19,111 @@ const { ${[
   'Moon','Sun','Layout','Grid','List','Menu','Sidebar','Monitor','Smartphone',
   'DollarSign','Percent','Hash','Tag','Bookmark','Heart','ThumbsUp','MessageCircle',
   'Send','Inbox','Archive','Paperclip','Mic','Volume2','Play','Pause','SkipForward',
-].join(',')} } = window.LucideReact;
+  'Award','Target','Flag','Briefcase','Building','Truck','ShoppingCart','ShoppingBag',
+  'Coffee','Pizza','Utensils','Car','Plane','Train','Bike','Anchor','Compass',
+  'Map','Navigation','Wind','Droplets','Thermometer','Umbrella','CloudRain',
+  'PieChart','LineChart','BarChart','TrendingUp','Layers','GitBranch','GitCommit',
+  'Clipboard','ClipboardCheck','ClipboardList','CheckSquare','Square','Circle',
+  'Minus','Divide','Equal','CornerDownRight','RotateCcw','RotateCw','Maximize',
+  'Minimize','Move','Crop','Sliders','ToggleLeft','ToggleRight','Volume','VolumeX',
+  'Headphones','Camera','Video','Film','Music','Radio','Rss','Wifi','WifiOff',
+  'Bluetooth','Cast','Printer','Scanner','HardDrive','Cpu','Terminal','Code2',
+  'Bug','Wrench','Tool','Settings2','Key','Fingerprint','Scan','QrCode',
+  'Receipt','Wallet','PiggyBank','Coins','BadgeDollarSign','Banknote',
+  'Trophy','Medal','Ribbon','Gift','Package2','Box','Archive','Inbox',
+  'MessageSquare','MessageCircle','ChatBubble','AtSign','Hash','Phone','PhoneCall',
+]
 
-// Component files
+function buildSrcdoc(files: Record<string, any>): string {
+  const appFile = (files['src/App.tsx'] || files['src/App.jsx'] || files['src/app.tsx'] || files['src/app.jsx']) as any
+  const appCode: string = typeof appFile === 'string' ? appFile : (appFile?.content || '')
+  const cssCode: string = typeof (files['src/index.css']) === 'string'
+    ? files['src/index.css']
+    : ((files['src/index.css'] as any)?.content || '')
+
+  // Collect all component/data/hook files
+  const componentFiles: Record<string, string> = {}
+  for (const [path, file] of Object.entries(files)) {
+    if (path === 'src/App.tsx' || path === 'src/App.jsx' || path === 'src/index.css' || path === 'src/main.tsx') continue
+    const code = typeof file === 'string' ? file : (file as any)?.content || ''
+    if (code.trim()) componentFiles[path] = code
+  }
+
+  function transform(code: string, isApp = false): string {
+    let c = code
+    // Remove import statements
+    c = c.replace(/^import\s+type\s+.*?;\s*\n?/gm, '')
+    c = c.replace(/^import\s+.*?from\s+['"][^'"]+['"]\s*;?\s*\n?/gm, '')
+    c = c.replace(/^import\s+['"][^'"]+['"]\s*;?\s*\n?/gm, '')
+    // Remove export keywords
+    c = c.replace(/^export\s+default\s+function\s+(\w+)/m, isApp ? 'function __WyberApp' : 'function $1')
+    c = c.replace(/^export\s+default\s+function\s*\(/m, isApp ? 'function __WyberApp(' : 'function __Component(')
+    c = c.replace(/^export\s+default\s+(\w+)\s*;?\s*$/m, '')
+    c = c.replace(/^export\s+(const|function|class|interface|type|enum)\s+/gm, '$1 ')
+    c = c.replace(/^export\s*\{[^}]*\}\s*;?\s*$/gm, '')
+    c = c.replace(/^export\s*\{[^}]*\}\s*from\s*['"][^'"]+['"]\s*;?\s*$/gm, '')
+    // Remove TypeScript type annotations that break Babel
+    c = c.replace(/:\s*React\.FC[^=]*/g, '')
+    c = c.replace(/:\s*React\.ReactNode/g, '')
+    return c
+  }
+
+  const componentScripts = Object.entries(componentFiles).map(([path, code]) => {
+    return `/* === ${path} === */\n${transform(code)}`
+  }).join('\n\n')
+
+  const transformedApp = transform(appCode, true)
+  const iconList = LUCIDE_ICONS.join(',')
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+<script>
+window.LucideReact = new Proxy({}, {
+  get: function(_, name) {
+    return function(props) {
+      var p = props || {};
+      return React.createElement('span', {
+        style: { display:'inline-flex', alignItems:'center', justifyContent:'center',
+          width: p.size||16, height: p.size||16, opacity:0.75, color: p.color||'currentColor' },
+        title: String(name), className: p.className||''
+      }, '◆');
+    };
+  }
+});
+window.Recharts = window.Recharts || {};
+</script>
+<style>
+${cssCode}
+* { box-sizing: border-box; }
+body { margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react,typescript" data-type="module">
+const { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext,
+  memo, forwardRef, Fragment, useReducer, useLayoutEffect } = React;
+const { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  RadialBarChart, RadialBar, ScatterChart, Scatter, ComposedChart } = window.Recharts || {};
+const { ${iconList} } = window.LucideReact;
+
 ${componentScripts}
 
-// App
 ${transformedApp}
 
-// Render
+const AppToRender = typeof __WyberApp !== 'undefined' ? __WyberApp : () => React.createElement('div', {style:{padding:24,color:'#fff',background:'#09090b',minHeight:'100vh',fontFamily:'sans-serif'}}, 'App loaded');
 try {
-  const AppComponent = typeof __WyberApp !== 'undefined' ? __WyberApp : (() => React.createElement('div', {style:{padding:24,fontFamily:'sans-serif',color:'#fff',background:'#09090b',minHeight:'100vh'}}, 'App loaded'));
-  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(AppComponent));
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(AppToRender));
 } catch(err) {
-  document.getElementById('root').innerHTML = '<div style="padding:24px;color:#ef4444;font-family:monospace;font-size:13px;background:#fff1f1;white-space:pre-wrap">Preview error: ' + err.message + '\\n\\nThis app may need a live server to run. Try editing it in the chat.</div>';
+  document.getElementById('root').innerHTML = '<div style="padding:24px;color:#ef4444;font-family:monospace;font-size:12px;background:#111;white-space:pre-wrap;min-height:100vh">Preview error: ' + err.message + '</div>';
 }
 </script>
 </body>
@@ -138,47 +145,40 @@ export function PreviewPanel() {
   const lastBuiltKey = useRef('')
 
   const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
-  const hasApp = Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 100
+  const hasApp = Object.keys(files).length >= 2 && (typeof appFile === 'string' ? appFile : appFile?.content || '').length > 100
 
   const build = useCallback(async () => {
     if (!hasApp || building) return
     const key = Object.keys(files).sort().join('|')
     if (key === lastBuiltKey.current && html) return
     lastBuiltKey.current = key
-
     setBuilding(true)
     setError(null)
     setSeconds(0)
     setMsgIdx(0)
     const start = Date.now()
-
     timerRef.current = setInterval(() => {
       setSeconds(s => s + 1)
       setMsgIdx(i => (i + 1) % MESSAGES.length)
     }, 1200)
-
     try {
-      const res = await fetch('/api/preview-build', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files, projectId: project?.id }),
-      })
-      const data = await res.json()
+      // Build in browser — no Railway, no build step, instant preview
+      const srcdoc = buildSrcdoc(files)
       clearInterval(timerRef.current!)
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
-      if (data.url) {
-        setHtml(data.url)
+      if (srcdoc) {
+        setHtml(srcdoc)
         setError(null)
       } else {
-        setError(data.error || 'Build failed')
+        setError('Preview failed to render')
       }
     } catch (e: any) {
       clearInterval(timerRef.current!)
-      setError('Build failed: ' + e.message)
+      setError('Preview error: ' + e.message)
     } finally {
       setBuilding(false)
     }
-  }, [files, hasApp, building, html, project])
+  }, [files, hasApp, building, html])
 
   // Auto-build when generation completes
   useEffect(() => {
@@ -188,82 +188,79 @@ export function PreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, build, hasApp])
 
-  // Auto-build when prebuilt files load (gallery templates — not starter templates)
+  // Auto-build when prebuilt files load (gallery templates)
   useEffect(() => {
     const fileCount = Object.keys(files).length
-    const appFile = files['src/App.tsx'] || files['src/App.jsx']
-    const appContent = (appFile as any)?.content || ''
-    // Only trigger if App.tsx has substantial content (> 500 chars = real generated app, not starter)
-    if (fileCount >= 2 && prevFileCount.current === 0 && !isGenerating && appContent.length > 500) {
-      setTimeout(() => { lastBuiltKey.current = ''; build() }, 800)
+    const appF = files['src/App.tsx'] || files['src/App.jsx']
+    const appContent = typeof appF === 'string' ? appF : (appF as any)?.content || ''
+    if (fileCount >= 2 && prevFileCount.current === 0 && !isGenerating && appContent.length > 100) {
+      setTimeout(() => { lastBuiltKey.current = ''; build() }, 600)
     }
     prevFileCount.current = fileCount
   }, [files, isGenerating, build])
 
-  // Update iframe src when Railway URL returned
   useEffect(() => {
-    if (iframeRef.current && html) {
-      if (html.startsWith('http')) {
-        iframeRef.current.src = html
-      } else {
-        iframeRef.current.srcdoc = html
-      }
-    }
-  }, [html])
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
-      <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
-        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: building ? '#f59e0b' : html ? '#22c55e' : '#3f3f46', boxShadow: html ? '0 0 6px rgba(34,197,94,0.4)' : 'none', transition: 'all 0.3s' }} />
-        <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
-          {isGenerating ? 'Generating your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : elapsed !== null ? `✓ Preview ready in ${elapsed}s` : hasApp ? 'Ready — click Build preview' : 'Describe what you want to build'}
-        </span>
-        {html && !building && (
-          <button onClick={() => { if (iframeRef.current) { iframeRef.current.srcdoc = ''; setTimeout(() => { if (iframeRef.current) iframeRef.current.srcdoc = html! }, 50) } }}
-            title="Refresh" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
-        )}
-        {hasApp && !building && (
-          <button onClick={build} style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
-            {html ? 'Rebuild' : 'Build preview'}
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#09090b', overflow: 'hidden' }}>
+      {/* Building state */}
+      {building && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#09090b', zIndex: 10, gap: 12 }}>
+          <div style={{ width: 32, height: 32, border: '2px solid rgba(255,255,255,0.1)', borderTop: '2px solid #0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ fontSize: 13, color: '#71717a' }}>{MESSAGES[msgIdx]}</div>
+          <div style={{ fontSize: 11, color: '#52526a' }}>{seconds}s</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+      {/* Error state */}
+      {error && !building && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#09090b', zIndex: 10, gap: 16, padding: 24 }}>
+          <div style={{ fontSize: 32 }}>⚠️</div>
+          <div style={{ fontSize: 13, color: '#ef4444', textAlign: 'center', maxWidth: 400, lineHeight: 1.5 }}>{error}</div>
+          <button onClick={() => { lastBuiltKey.current = ''; build() }}
+            style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+            Retry
           </button>
-        )}
-      </div>
-
-      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-        {!hasApp && !isGenerating && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#52525b' }}>Describe what you want to build</div>
-            <div style={{ fontSize: 11, color: '#3f3f46' }}>Your app will appear here after generation</div>
-          </div>
-        )}
-        {isGenerating && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
-            <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Generating your app...</div>
-          </div>
-        )}
-        {building && !isGenerating && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
-            <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#a1a1aa', fontWeight: 500 }}>{MESSAGES[msgIdx]}</div>
-            <div style={{ fontSize: 11, color: '#52525b' }}>{seconds}s</div>
-          </div>
-        )}
-        {error && !building && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, background: '#09090b', zIndex: 5 }}>
-            <div style={{ fontSize: 13, color: '#ef4444', textAlign: 'center', maxWidth: 400, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{error.slice(0, 500)}</div>
-            <button onClick={build} style={{ padding: '7px 18px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Retry</button>
-          </div>
-        )}
-        <iframe
-          ref={iframeRef}
-          title="Wyber Preview"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !building && !isGenerating ? 'block' : 'none', background: '#fff' }}
-        />
-      </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        </div>
+      )}
+      {/* Empty state */}
+      {!building && !error && !html && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#52526a' }}>
+          <div style={{ fontSize: 32 }}>{'<'}</div>
+          <div style={{ fontSize: 13 }}>Describe what you want to build</div>
+          <div style={{ fontSize: 11 }}>Your app will appear here after generation</div>
+        </div>
+      )}
+      {/* Status bar */}
+      {elapsed !== null && !building && (
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 32, display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', background: 'rgba(9,9,11,0.9)', borderBottom: '1px solid rgba(255,255,255,0.06)', zIndex: 5, fontSize: 11 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: error ? '#ef4444' : '#22c55e' }} />
+          <span style={{ color: '#71717a' }}>{error ? 'Build failed' : `Preview ready in ${elapsed}s`}</span>
+          <div style={{ flex: 1 }} />
+          <button onClick={() => { lastBuiltKey.current = ''; build() }}
+            style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 11, cursor: 'pointer' }}>
+            Rebuild
+          </button>
+        </div>
+      )}
+      {/* Preview iframe */}
+      <iframe
+        ref={iframeRef}
+        title="Wyber Preview"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+        srcDoc={html || undefined}
+        style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%',
+          border: 'none',
+          display: html && !building ? 'block' : 'none',
+          background: '#09090b',
+          marginTop: elapsed ? 32 : 0,
+          height: elapsed ? 'calc(100% - 32px)' : '100%',
+        }}
+      />
+      <VisualEditorOverlay iframeRef={iframeRef} />
     </div>
   )
 }
