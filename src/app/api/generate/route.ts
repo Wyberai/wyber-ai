@@ -592,8 +592,8 @@ ${code}
               // Sanitize — remove undefined variable references
               const sanitized = full
                 .replace(/const\s+\w*[Cc]lient\s*=\s*createClient\([^)]*\)/g, '// client removed')
-                .replace(/projectId/g, '"demo-project"')
-                .replace(/userId/g, '"demo-user"')
+                .replace(/\bprojectId\b/g, '"demo-project"')
+                .replace(/\buserId\b/g, '"demo-user"')
                 .replace(/supabaseUrl[^;,)\s]*/g, '"https://demo.supabase.co"')
                 .replace(/process\.env\.\w+/g, '"demo"')
 
