@@ -33,7 +33,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [pushUrl, setPushUrl] = useState('');
   const [showSupabase, setShowSupabase] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const projectType = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('type') || 'app') : 'app';
+  const [customDomain, setCustomDomain] = useState('');
+  const [customDomainStatus, setCustomDomainStatus] = useState<'idle'|'saving'|'verifying'|'verified'|'error'>('idle');
+  const [customDomainError, setCustomDomainError] = useState('');
+  const [dnsInstructions, setDnsInstructions] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleExport = async () => {
     if (exporting) return;
@@ -69,8 +73,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     try {
       const res = await fetch('/api/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId }) });
       const data = await res.json();
-      if (data.url) {
-        setDeployUrl(data.url);
+      const url = data.publishedUrl || data.url;
+      if (url) {
+        setDeployUrl(url);
         setShowShareModal(true);
       }
     } catch {}
@@ -92,7 +97,38 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     setPushing(false);
   };
 
-  const liveUrl = deployUrl || (projectId ? `https://wyberai.com/app/${projectId}` : '');
+  const handleCustomDomain = async (action: 'save' | 'verify') => {
+    if (!customDomain.trim() || !projectId) return;
+    setCustomDomainStatus(action === 'verify' ? 'verifying' : 'saving');
+    setCustomDomainError('');
+    try {
+      const res = await fetch('/api/custom-domain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, domain: customDomain, action }),
+      });
+      const data = await res.json();
+      if (data.verified) {
+        setCustomDomainStatus('verified');
+        setDnsInstructions(null);
+      } else {
+        setCustomDomainStatus('error');
+        setCustomDomainError(data.error || 'DNS not verified yet');
+        if (data.instructions) setDnsInstructions(data.instructions);
+      }
+    } catch {
+      setCustomDomainStatus('error');
+      setCustomDomainError('Failed to connect domain');
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const liveUrl = deployUrl;
 
   const btn = {
     background: 'none',
@@ -109,6 +145,18 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     gap: 5,
     transition: 'all 0.15s',
     letterSpacing: '-0.01em',
+  } as React.CSSProperties;
+
+  const inputStyle = {
+    flex: 1,
+    background: 'var(--bg-elevated)',
+    border: '1px solid var(--ide-border)',
+    borderRadius: 7,
+    color: 'var(--ide-text)',
+    fontSize: 12,
+    padding: '7px 11px',
+    outline: 'none',
+    fontFamily: 'var(--font-sans)',
   } as React.CSSProperties;
 
   return (
@@ -149,34 +197,101 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
           Share
         </button>
         <button onClick={handleDeploy} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
-          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying...</> : deployUrl ? '↗ Live' : 'Publish'}
+          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying...</> : deployUrl ? 'Live' : 'Publish'}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}
       </div>
 
       {showShareModal && (
-        <div onClick={() => setShowShareModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 14, padding: 28, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div onClick={() => setShowShareModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 28, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }}>
+            
+            {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Share your app</span>
-              <button onClick={() => setShowShareModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1 }}>x</button>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Publish & Share</span>
+              <button onClick={() => setShowShareModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
             </div>
+
             {!deployUrl ? (
-              <div style={{ textAlign: 'center', padding: '12px 0' }}>
-                <p style={{ fontSize: 13, color: 'var(--ide-text2)', marginBottom: 16 }}>Publish your app first to get a shareable link.</p>
-                <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '8px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Publish now</button>
+              /* Not published yet */
+              <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>Your app is ready to go live on <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
+                <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Publish now
+                </button>
               </div>
             ) : (
               <>
-                <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ flex: 1, fontSize: 12, color: '#22c55e', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveUrl}</span>
-                  <button onClick={() => navigator.clipboard.writeText(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Copy</button>
-                  <button onClick={() => window.open(liveUrl, '_blank')} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Open</button>
+                {/* Live URL */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Live URL</span>
+                  <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(34,197,94,0.2)' }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+                    <span style={{ flex: 1, fontSize: 12, color: '#22c55e', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveUrl}</span>
+                    <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? 'Copied!' : 'Copy'}</button>
+                    <button onClick={() => window.open(liveUrl, '_blank')} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Open</button>
+                  </div>
                 </div>
+
+                {/* Social share */}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI&url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center' }}>X / Twitter</button>
-                  <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center' }}>LinkedIn</button>
+                  <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>X / Twitter</button>
+                  <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>LinkedIn</button>
+                  <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out my app built with Wyber AI: ' + liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>WhatsApp</button>
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: 1, background: 'var(--ide-border)' }} />
+
+                {/* Custom domain */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom Domain</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      style={inputStyle}
+                      placeholder="yourdomain.com"
+                      value={customDomain}
+                      onChange={e => setCustomDomain(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleCustomDomain('save')}
+                    />
+                    <button
+                      onClick={() => handleCustomDomain('save')}
+                      disabled={!customDomain.trim() || customDomainStatus === 'saving'}
+                      style={{ ...btn, whiteSpace: 'nowrap', background: 'var(--bg-elevated)' }}
+                    >
+                      {customDomainStatus === 'saving' ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+
+                  {customDomainStatus === 'verified' && (
+                    <div style={{ fontSize: 12, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Domain verified and live!
+                    </div>
+                  )}
+
+                  {dnsInstructions && customDomainStatus !== 'verified' && (
+                    <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>Add this DNS record:</span>
+                      <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 11, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <span>Type: <strong style={{ color: 'var(--ide-text)' }}>CNAME</strong></span>
+                        <span>Name: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.name || '@'}</strong></span>
+                        <span>Value: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.value || 'wyberai.com'}</strong></span>
+                      </div>
+                      <button
+                        onClick={() => handleCustomDomain('verify')}
+                        disabled={customDomainStatus === 'verifying'}
+                        style={{ ...btn, background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.3)', color: '#f59e0b', justifyContent: 'center' }}
+                      >
+                        {customDomainStatus === 'verifying' ? 'Checking DNS...' : 'Verify DNS'}
+                      </button>
+                      {customDomainError && <span style={{ fontSize: 11, color: '#ef4444' }}>{customDomainError}</span>}
+                    </div>
+                  )}
                 </div>
               </>
             )}
