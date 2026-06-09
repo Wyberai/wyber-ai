@@ -20,25 +20,41 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   const {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
-    setProject, setFiles, setFramework,
+    hydrateProject, setHydrated, setCredits,
   } = useEditorStore();
-
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
 
+  // Hydrate store from server data + load messages and knowledge
   useEffect(() => {
-    if (!initialProject) return;
-    setProject({
+    if (!initialProject?.id) return;
+    setHydrated(false);
+
+    const project = {
       id: initialProject.id!,
       name: initialProject.name ?? 'Untitled',
       framework: (initialProject.framework as any) ?? 'react-vite',
       createdAt: Date.now(),
+      userId: (initialProject as any).user_id,
+      is_public: (initialProject as any).is_public,
+    };
+
+    // Set credits from profile
+    if (initialProfile?.credits !== undefined) setCredits(initialProfile.credits);
+
+    // Load messages + knowledge in parallel, then hydrate everything at once
+    Promise.all([
+      fetch(`/api/projects/messages?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ messages: [] })),
+      fetch(`/api/projects/knowledge?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ knowledge: '' })),
+    ]).then(([msgData, kData]) => {
+      hydrateProject({
+        project,
+        files: (initialProject.files && Object.keys(initialProject.files).length > 0) ? initialProject.files as any : undefined,
+        messages: msgData.messages || [],
+        knowledge: kData.knowledge || '',
+      });
     });
-    setFramework((initialProject.framework as any) ?? 'react-vite');
-    if (initialProject.files && Object.keys(initialProject.files).length > 0) {
-      setFiles(initialProject.files as any);
-    }
   }, [initialProject?.id]);
 
   const resizeLeft = useCallback(
@@ -53,19 +69,16 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   return (
     <div className="ide-root" style={{ flexDirection: "column" }}>
       <Suspense fallback={<div style={{ height: 48, background: 'var(--bg-base)', borderBottom: '1px solid var(--ide-border)' }} />}>
-      <TopBar
-        initialProfile={initialProfile}
-        projectId={initialProject?.id}
-        showCode={showCode}
-        showFileTree={showFileTree}
-        onToggleCode={() => setShowCode(v => !v)}
-        onToggleFileTree={() => setShowFileTree(v => !v)}
-      />
+        <TopBar
+          initialProfile={initialProfile}
+          projectId={initialProject?.id}
+          showCode={showCode}
+          showFileTree={showFileTree}
+          onToggleCode={() => setShowCode(v => !v)}
+          onToggleFileTree={() => setShowFileTree(v => !v)}
+        />
       </Suspense>
-
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
-
-        {/* PREVIEW — left side, takes all remaining space */}
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {showCode && (
             <div style={{ height: '40%', borderBottom: '1px solid var(--ide-border)', display: 'flex', flexDirection: 'column' }}>
@@ -77,17 +90,14 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
             <PreviewPanel />
           </div>
         </div>
-
         <ResizableDivider onResize={resizeRight} />
-
-        {/* CHAT — right side, fixed width */}
         <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--ide-border)' }}>
           <RightPanel
             projectId={initialProject?.id}
             userId={initialProfile?.id}
             projectName={initialProject?.name}
-            githubRepo={initialProject?.github_repo}
-            lastCommitSha={initialProject?.last_commit_sha}
+            githubRepo={(initialProject as any)?.github_repo}
+            lastCommitSha={(initialProject as any)?.last_commit_sha}
           />
         </div>
       </div>
