@@ -13,7 +13,9 @@ export function VersionHistory({ projectId }: { projectId: string }) {
   const [versions, setVersions] = useState<Version[]>([])
   const [saving, setSaving] = useState(false)
   const [restoring, setRestoring] = useState<string | null>(null)
-  const { files, setFiles, setHasGeneratedFiles } = useEditorStore()
+  const [naming, setNaming] = useState(false)
+  const [labelInput, setLabelInput] = useState('')
+  const { files, setFiles, setHasGeneratedFiles, project } = useEditorStore()
 
   useEffect(() => { loadVersions() }, [projectId])
 
@@ -26,35 +28,67 @@ export function VersionHistory({ projectId }: { projectId: string }) {
   }
 
   const saveVersion = async () => {
+    const label = labelInput.trim() || `Snapshot ${new Date().toLocaleString()}`
     setSaving(true)
+    setNaming(false)
     try {
       const res = await fetch('/api/versions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, files, label: `Snapshot ${new Date().toLocaleString()}` }),
+        body: JSON.stringify({ projectId, files, label }),
       })
       const data = await res.json()
       if (data.version) setVersions(v => [data.version, ...v])
     } catch {}
+    setLabelInput('')
     setSaving(false)
   }
 
   const restore = async (v: Version) => {
     setRestoring(v.id)
+    // Update the store (triggers preview auto-rebuild)
     setFiles(v.files)
     setHasGeneratedFiles(true)
-    setTimeout(() => setRestoring(null), 1000)
+    // Persist the restore to Supabase so it survives refresh
+    try {
+      await fetch('/api/projects', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, files: v.files, userId: project?.userId || 'auto' }),
+      })
+    } catch {}
+    setTimeout(() => setRestoring(null), 1200)
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ide-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>History</div>
-        <button onClick={saveVersion} disabled={saving || Object.keys(files).length < 2}
-          style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: saving ? 'rgba(14,165,233,0.1)' : 'transparent', color: saving ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-          {saving ? '✓ Saved' : '+ Save snapshot'}
-        </button>
+        {!naming && (
+          <button onClick={() => setNaming(true)} disabled={saving || Object.keys(files).length < 2}
+            style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: saving ? 'rgba(14,165,233,0.1)' : 'transparent', color: saving ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {saving ? '✓ Saved' : '+ Save snapshot'}
+          </button>
+        )}
       </div>
+
+      {/* Name input row */}
+      {naming && (
+        <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ide-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input
+            autoFocus
+            value={labelInput}
+            onChange={e => setLabelInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') saveVersion(); if (e.key === 'Escape') { setNaming(false); setLabelInput('') } }}
+            placeholder="Name this snapshot (e.g. Before adding auth)"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, padding: '8px 11px', outline: 'none', fontFamily: 'inherit' }}
+          />
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Save</button>
+            <button onClick={() => { setNaming(false); setLabelInput('') }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
         {versions.length === 0 ? (

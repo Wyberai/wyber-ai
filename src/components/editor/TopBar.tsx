@@ -24,7 +24,7 @@ function WyberIcon() {
 }
 
 export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Props = {}) {
-  const { project, isGenerating, credits, files } = useEditorStore();
+  const { project, setProject, isGenerating, credits, files } = useEditorStore();
   const displayCredits = initialProfile?.credits ?? credits;
   const [exporting, setExporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
@@ -38,6 +38,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [customDomainError, setCustomDomainError] = useState('');
   const [dnsInstructions, setDnsInstructions] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState('');
 
   const handleExport = async () => {
     if (exporting) return;
@@ -64,6 +66,26 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       }
     } catch {}
     setExporting(false);
+  };
+
+  const startRename = () => {
+    setNameInput(project?.name ?? '');
+    setEditingName(true);
+  };
+
+  const saveRename = async () => {
+    const newName = nameInput.trim();
+    setEditingName(false);
+    if (!newName || !projectId || newName === project?.name) return;
+    // Optimistic store update
+    if (project) setProject({ ...project, name: newName });
+    try {
+      await fetch('/api/projects/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, name: newName }),
+      });
+    } catch {}
   };
 
   const handleDeploy = async () => {
@@ -174,8 +196,27 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
           </button>
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-          {project && <span style={{ fontSize: 12, color: 'var(--ide-text2)', fontWeight: 500, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{project.name}</span>}
-          {isGenerating && <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#0EA5E9', fontSize: 11, fontWeight: 600 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease-in-out infinite' }} />Building...</div>}
+          {editingName ? (
+            <input
+              autoFocus
+              value={nameInput}
+              onChange={e => setNameInput(e.target.value)}
+              onBlur={saveRename}
+              onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditingName(false); }}
+              style={{ fontSize: 12, fontWeight: 600, color: 'var(--ide-text)', background: 'var(--bg-elevated)', border: '1px solid var(--accent-dim, rgba(14,165,233,0.3))', borderRadius: 6, padding: '3px 10px', outline: 'none', textAlign: 'center', maxWidth: 280, fontFamily: 'var(--font-sans)' }}
+            />
+          ) : project ? (
+            <span
+              onClick={startRename}
+              title="Click to rename"
+              style={{ fontSize: 12, color: 'var(--ide-text2)', fontWeight: 500, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'text', padding: '3px 8px', borderRadius: 6 }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-elevated)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+            >
+              {project.name}
+            </span>
+          ) : null}
+          {isGenerating && <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#0EA5E9', fontSize: 11, fontWeight: 600, marginLeft: 8 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease-in-out infinite' }} />Building...</div>}
         </div>
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
@@ -206,15 +247,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       {showShareModal && (
         <div onClick={() => setShowShareModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 28, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }}>
-            
-            {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Publish & Share</span>
               <button onClick={() => setShowShareModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
             </div>
 
             {!deployUrl ? (
-              /* Not published yet */
               <div style={{ textAlign: 'center', padding: '16px 0', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -226,7 +264,6 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               </div>
             ) : (
               <>
-                {/* Live URL */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Live URL</span>
                   <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(34,197,94,0.2)' }}>
@@ -237,17 +274,14 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   </div>
                 </div>
 
-                {/* Social share */}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>X / Twitter</button>
                   <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>LinkedIn</button>
                   <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out my app built with Wyber AI: ' + liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>WhatsApp</button>
                 </div>
 
-                {/* Divider */}
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
-                {/* Custom domain */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom Domain</span>
                   <div style={{ display: 'flex', gap: 8 }}>
