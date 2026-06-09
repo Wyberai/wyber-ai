@@ -14,6 +14,13 @@ const MESSAGES = [
   'Almost plated and ready...',
 ]
 
+interface SelectedEl {
+  selector: string
+  tag: string
+  text: string
+  classes: string
+}
+
 export function PreviewPanel() {
   const { files, isGenerating, project, hydrated } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -24,6 +31,9 @@ export function PreviewPanel() {
   const [msgIdx, setMsgIdx] = useState(0)
   const [seconds, setSeconds] = useState(0)
   const [fixing, setFixing] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [selectedEl, setSelectedEl] = useState<SelectedEl | null>(null)
+  const [editInstruction, setEditInstruction] = useState('')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const prevGenerating = useRef(false)
   const lastBuiltKey = useRef('')
@@ -101,16 +111,66 @@ export function PreviewPanel() {
     }
   }, [html])
 
-  // Send the build error to the AI to auto-repair
+  // Listen for element-selected messages from the preview iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (!e.data || typeof e.data !== 'object') return
+      if (e.data.type === 'wyber-element-selected') {
+        setSelectedEl({
+          selector: e.data.selector || '',
+          tag: e.data.tag || '',
+          text: e.data.text || '',
+          classes: e.data.classes || '',
+        })
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
+  // Tell the iframe when edit mode toggles
+  const toggleEditMode = () => {
+    const next = !editMode
+    setEditMode(next)
+    setSelectedEl(null)
+    iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: next }, '*')
+  }
+
+  // Re-send edit mode state whenever the iframe reloads
+  useEffect(() => {
+    if (html && editMode) {
+      const t = setTimeout(() => {
+        iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: true }, '*')
+      }, 800)
+      return () => clearTimeout(t)
+    }
+  }, [html, editMode])
+
   const tryToFix = useCallback(() => {
     if (!error || fixing) return
     setFixing(true)
-    // Reset the build key so the next generation re-triggers a build
     lastBuiltKey.current = ''
     const prompt = `The app failed to build with this error. Fix the exact file and syntax causing it, and return the corrected file(s):\n\n${error.slice(0, 600)}`
     window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt } }))
     setTimeout(() => setFixing(false), 3000)
   }, [error, fixing])
+
+  const sendVisualEdit = () => {
+    if (!selectedEl || !editInstruction.trim()) return
+    const desc = `Visual edit request. The user clicked on this element in the preview:
+- Element: <${selectedEl.tag}>${selectedEl.classes ? ' with classes "' + selectedEl.classes + '"' : ''}
+- Text content: "${selectedEl.text}"
+- CSS path: ${selectedEl.selector}
+
+Change requested: ${editInstruction.trim()}
+
+Find this element in the code and apply the change.`
+    window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt: desc } }))
+    setEditInstruction('')
+    setSelectedEl(null)
+    setEditMode(false)
+    iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: false }, '*')
+  }
 
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
@@ -120,6 +180,13 @@ export function PreviewPanel() {
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
           {isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : error ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
         </span>
+        {html && !building && !error && (
+          <button onClick={toggleEditMode} title="Click an element to edit it"
+            style={{ background: editMode ? 'rgba(14,165,233,0.15)' : 'none', border: `1px solid ${editMode ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, color: editMode ? '#0EA5E9' : '#52525b', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+            {editMode ? 'Selecting' : 'Select'}
+          </button>
+        )}
         {html && !building && (
           <button onClick={build} title="Rebuild preview"
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
@@ -131,6 +198,36 @@ export function PreviewPanel() {
           </button>
         )}
       </div>
+
+      {/* Visual edit instruction bar */}
+      {editMode && selectedEl && (
+        <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+          <div style={{ fontSize: 11, color: '#0EA5E9', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontWeight: 700 }}>Selected:</span>
+            <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>&lt;{selectedEl.tag}&gt;</code>
+            {selectedEl.text && <span style={{ color: '#71717a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>"{selectedEl.text}"</span>}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              autoFocus
+              value={editInstruction}
+              onChange={e => setEditInstruction(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') sendVisualEdit() }}
+              placeholder="Describe the change (e.g. make this bigger and blue)"
+              style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, padding: '7px 11px', outline: 'none' }}
+            />
+            <button onClick={sendVisualEdit} disabled={!editInstruction.trim()}
+              style={{ background: editInstruction.trim() ? '#0EA5E9' : '#27272a', color: 'white', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed' }}>
+              Apply
+            </button>
+          </div>
+        </div>
+      )}
+      {editMode && !selectedEl && (
+        <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
+          Click any element in the preview to edit it
+        </div>
+      )}
 
       {/* Content */}
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
@@ -157,7 +254,6 @@ export function PreviewPanel() {
           </div>
         )}
 
-        {/* Error — now with Try to fix */}
         {error && !building && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
