@@ -55,6 +55,10 @@ function buildSrcdoc(files: Record<string, any>): string {
     c = c.replace(/^import\s+type\s+.*?;\s*\n?/gm, '')
     c = c.replace(/^import\s+.*?from\s+['"][^'"]+['"]\s*;?\s*\n?/gm, '')
     c = c.replace(/^import\s+['"][^'"]+['"]\s*;?\s*\n?/gm, '')
+    // Strip re-declarations that conflict with globals
+    c = c.replace(/^const\s+\{[^}]*\}\s*=\s*(window\.)?Recharts[^;\n]*;?\s*$/gm, '')
+    c = c.replace(/^const\s+\{[^}]*\}\s*=\s*(window\.)?LucideReact[^;\n]*;?\s*$/gm, '')
+    c = c.replace(/^const\s+\{[^}]+\}\s*=\s*React\b[^;\n]*;?\s*$/gm, '')
     // Remove export keywords
     c = c.replace(/^export\s+default\s+function\s+(\w+)/m, isApp ? 'function __WyberApp' : 'function $1')
     c = c.replace(/^export\s+default\s+function\s*\(/m, isApp ? 'function __WyberApp(' : 'function __Component(')
@@ -110,9 +114,15 @@ body { margin: 0; }
 <script type="text/babel" data-presets="react,typescript" data-type="module">
 const { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext,
   memo, forwardRef, Fragment, useReducer, useLayoutEffect } = React;
-const { LineChart, Line, BarChart, Bar, AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  RadialBarChart, RadialBar, ScatterChart, Scatter, ComposedChart } = window.Recharts || {};
+// Recharts available via window.Recharts — components use it directly
+const __RC = window.Recharts || {};
+const LineChart = __RC.LineChart, BarChart = __RC.BarChart, AreaChart = __RC.AreaChart,
+  PieChart = __RC.PieChart, Pie = __RC.Pie, Cell = __RC.Cell, Bar = __RC.Bar,
+  Line = __RC.Line, Area = __RC.Area, XAxis = __RC.XAxis, YAxis = __RC.YAxis,
+  CartesianGrid = __RC.CartesianGrid, Tooltip = __RC.Tooltip, Legend = __RC.Legend,
+  ResponsiveContainer = __RC.ResponsiveContainer, RadialBarChart = __RC.RadialBarChart,
+  RadialBar = __RC.RadialBar, ScatterChart = __RC.ScatterChart, Scatter = __RC.Scatter,
+  ComposedChart = __RC.ComposedChart;
 const { ${iconList} } = window.LucideReact;
 
 ${componentScripts}
