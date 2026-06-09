@@ -5,7 +5,7 @@ export const maxDuration = 300
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const res = await fetch('https://wyber-preview-builder-production.up.railway.app/build', {
+    const res = await fetch('https://preview-builder.wyberai.com/build', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
