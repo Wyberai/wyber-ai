@@ -5,6 +5,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { parseGenerationOutput } from '@/lib/file-parser';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { PlanMode } from './PlanMode';
+import { FileMentionDropdown } from './FileMentionDropdown';
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
@@ -92,6 +93,7 @@ export function ChatPanel({ projectId, userId }: Props) {
   const [pendingPlan, setPendingPlan] = useState<{ prompt: string; image: AttachedImage | null } | null>(null);
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
   const [lastModel, setLastModel] = useState<string | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
 
   const [recording, setRecording] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -541,10 +543,27 @@ export function ChatPanel({ projectId, userId }: Props) {
 
       {/* Input */}
       <div style={{ padding:'8px 10px', borderTop:'1px solid var(--ide-border)', background:'var(--bg-base)', flexShrink:0 }}>
-        <div style={{ background:'var(--bg-elevated)', borderRadius:10, border:`1px solid ${input.trim() ? 'var(--ide-border-light)' : 'var(--ide-border)'}`, overflow:'hidden', transition:'border-color 0.15s', display:'flex', flexDirection:'column' }}>
+        <div style={{ background:'var(--bg-elevated)', borderRadius:10, border:`1px solid ${input.trim() ? 'var(--ide-border-light)' : 'var(--ide-border)'}`, overflow:'visible', position:'relative', transition:'border-color 0.15s', display:'flex', flexDirection:'column' }}>{mentionQuery !== null && (
+            <FileMentionDropdown
+              query={mentionQuery}
+              files={Object.keys(files)}
+              onSelect={(path) => {
+                const base = path.split('/').pop() || path;
+                setInput(prev => prev.replace(/@[\w./-]*$/, base + ' '));
+                setMentionQuery(null);
+                textareaRef.current?.focus();
+              }}
+              onClose={() => setMentionQuery(null)}
+            />
+          )}
           <textarea
             ref={textareaRef} value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={e => {
+              const v = e.target.value;
+              setInput(v);
+              const m = v.slice(0, e.target.selectionStart).match(/@([\w./-]*)$/);
+              setMentionQuery(m ? m[1] : null);
+            }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={credits <= 0 ? 'No credits — upgrade to continue' : planMode ? 'Plan mode active — describe what to build...' : 'Ask anything or describe what you want to build...'}
