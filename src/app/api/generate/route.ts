@@ -508,7 +508,7 @@ create policy "Users manage own items" on items for all using (auth.uid() = user
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -660,7 +660,8 @@ ${code}
 
     // Inject Supabase context if user has connected their project
     const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
-    const fullSystemPrompt = buildSystemPrompt() + supabaseContext
+    const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
+    const fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext
 
     const stream = await client.messages.stream({
       model,
