@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Profile, Project } from '@/lib/supabase/types';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
+import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
@@ -232,7 +233,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           </div>
         </div>
 
-        {/* Projects */}
+        {/* Projects + Templates */}
         <div style={{ flex: 1, padding: '24px 28px', overflowY: 'auto' }}>
           {projects.length > 0 ? (
             <>
@@ -281,21 +282,24 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   </Link>
                 ))}
               </div>
+
+              {/* Templates gallery — below the user's apps */}
+              <div style={{ marginTop: 36 }}>
+                <TemplatesShowcase userId={profile?.id} />
+              </div>
             </>
           ) : (
-            <div style={{ textAlign: 'center', paddingTop: 80, color: '#52525b' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 8 }}>No apps yet</div>
-              <div style={{ fontSize: 14, marginBottom: 28 }}>Describe your first app above or browse 500+ templates</div>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button onClick={() => startProject()} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                  Start building →
-                </button>
-                <Link href="/gallery" style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
-                  Browse templates
-                </Link>
+            <>
+              {/* Empty state — still show templates so new users can start fast */}
+              <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: '#52525b' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 8 }}>No apps yet</div>
+                <div style={{ fontSize: 14, marginBottom: 8 }}>Describe your first app above, or start from a template below</div>
               </div>
-            </div>
+              <div style={{ marginTop: 24 }}>
+                <TemplatesShowcase userId={profile?.id} />
+              </div>
+            </>
           )}
         </div>
       </main>
