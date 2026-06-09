@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Profile, Project, PLAN_LIMITS } from '@/lib/supabase/types';
+import { Profile, Project } from '@/lib/supabase/types';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 
@@ -36,25 +36,10 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'apps' | 'agents' | 'automations'>('apps');
   const [showTypePicker, setShowTypePicker] = useState(false);
-  const [selectedType, setSelectedType] = useState<'app' | 'agent' | 'workflow'>('app');
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // searchParams removed
-
-  useEffect(() => {
-    const cloneId = null; // searchParams removed
-    if (!cloneId || !profile?.id) return;
-    fetch('/api/projects/duplicate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: cloneId, userId: profile.id })
-    }).then(r => r.json()).then(data => {
-      if (data.project?.id) window.location.href = '/project/' + data.project.id;
-    });
-  }, [profile?.id]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -66,12 +51,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId: id, userId: profile?.id })
       });
-      if (res.ok) {
-        setProjects(prev => prev.filter(p => p.id !== id));
-      } else {
-        const err = await res.json().catch(() => ({}));
-        console.error('Delete failed:', err.error || res.status);
-      }
+      if (res.ok) setProjects(prev => prev.filter(p => p.id !== id));
     } catch (err) { console.error('Delete failed', err); }
     finally { setDeletingId(null); }
   };
@@ -98,23 +78,21 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const totalCredits = plan === 'starter' ? 500 : plan === 'pro' ? 2000 : plan === 'teams' ? 99999 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
-  const startProject = async (prompt?: string, type: 'app' | 'agent' | 'workflow' = 'app') => {
+  const startProject = async (prompt?: string) => {
     if (!profile?.id || creating) return;
     setCreating(true);
     try {
       const projectName = prompt
         ? prompt.slice(0, 40).trim()
         : 'New Project ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
       const { data, error } = await supabase
         .from('projects')
-        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '', project_type: type })
+        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '', project_type: 'app' })
         .select('id');
-
       if (error) throw error;
       if (data?.[0]?.id) {
         if (prompt) sessionStorage.setItem(`wyber_prompt_${data[0].id}`, prompt);
-        router.push(`/project/${data[0].id}?type=${type}`);
+        router.push(`/project/${data[0].id}?type=app`);
       }
     } catch (err) {
       console.error(err);
@@ -133,9 +111,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     { label: 'Home', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg> },
     { label: 'Projects', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
     { label: 'Templates', href: '/gallery', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
-    { label: 'Gallery', href: '/gallery', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg> },
-    { label: 'Agents', href: '/agents', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg> },
-    { label: 'Flows', href: '/flows', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/></svg> },
     { label: 'Settings', href: '/settings', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> },
   ];
 
@@ -179,7 +154,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
         <nav style={{ padding: '8px 8px', flex: 1, overflow: 'auto' }}>
           {NAV.map(n => (
-            <Link key={n.label} href={n.href} data-tour={n.label === 'Templates' ? 'templates' : n.label === 'Agents' ? 'agents' : n.label === 'Flows' ? 'flows' : undefined} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: '#a1a1aa', fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s' }}
+            <Link key={n.label} href={n.href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: '#a1a1aa', fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
               {n.icon}{n.label}
@@ -231,7 +206,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           <div style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
             <div style={{ background: 'rgba(17,17,19,0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
               <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder="Describe your app, agent, or workflow..." rows={3}
+                placeholder="Describe the web app you want to build..." rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: '#fafafa', fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10 }}>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>↵ Enter to build</span>
@@ -257,145 +232,70 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ padding: '16px 28px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 4 }}>
-          {[{ id: 'apps' as const, label: '⚡ Apps' }, { id: 'agents' as const, label: '🤖 Agents' }, { id: 'automations' as const, label: '🔀 Automations' }].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              style={{ padding: '8px 16px', borderRadius: '8px 8px 0 0', border: 'none', borderBottom: activeTab === tab.id ? '2px solid #0EA5E9' : '2px solid transparent', background: activeTab === tab.id ? 'rgba(14,165,233,0.08)' : 'transparent', color: activeTab === tab.id ? '#0EA5E9' : '#52525b', fontSize: 13, fontWeight: activeTab === tab.id ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
+        {/* Projects */}
         <div style={{ flex: 1, padding: '24px 28px', overflowY: 'auto' }}>
-          {activeTab === 'agents' && (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div>
-                  <h2 style={{ fontSize: 17, fontWeight: 700 }}>AI Agent Library</h2>
-                  <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>5,000+ agents ready to deploy across 18 industries</div>
-                </div>
-                <a href="/agents" data-tour="agents" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Browse all agents →</a>
+          {projects.length > 0 ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Apps</h2>
+                <button onClick={() => startProject()} disabled={creating}
+                  style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  + New App
+                </button>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
-                {[
-                  { id: 'WYBER-001', name: 'Revenue Operations Command', cat: 'Sales & Revenue', desc: 'CRM chaos, missed follow-ups, unreliable forecasts', complexity: 'Enterprise' },
-                  { id: 'WYBER-002', name: 'Inbound Lead Response Agent', cat: 'Sales & Revenue', desc: 'Slow response to inbound leads', complexity: 'Growth' },
-                  { id: 'WYBER-013', name: 'Customer Health Monitor', cat: 'Customer Support', desc: 'Churn risk invisible until too late', complexity: 'Growth' },
-                  { id: 'WYBER-025', name: 'Invoice Processing Agent', cat: 'Finance', desc: 'Manual invoice entry wastes hours', complexity: 'Growth' },
-                  { id: 'WYBER-031', name: 'Content Calendar Manager', cat: 'Marketing', desc: 'Content planning scattered and reactive', complexity: 'Enterprise' },
-                  { id: 'WYBER-050', name: 'Employee Onboarding Agent', cat: 'HR & People', desc: 'Inconsistent onboarding wastes new hire time', complexity: 'Growth' },
-                ].map(agent => (
-                  <div key={agent.id} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 16 }}>
-                    <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 7, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🤖</div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{agent.name}</div>
-                        <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 600 }}>{agent.id} · {agent.cat}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+                {projects.slice(0, 11).map(p => (
+                  <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                    <div style={{ height: 160, borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', background: '#111113', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                      {p.id && <>
+                        <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id} title="Delete project"
+                          style={{ position: 'absolute', top: 6, right: 6, zIndex: 10, width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(9,9,11,0.7)', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, backdropFilter: 'blur(4px)' }}>
+                          {deletingId === p.id ? '…' : '×'}
+                        </button>
+                        <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title="Duplicate"
+                          style={{ position: 'absolute', top: 6, right: 32, zIndex: 10, width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(9,9,11,0.7)', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, backdropFilter: 'blur(4px)' }}>
+                          {duplicatingId === p.id ? '…' : '⎘'}
+                        </button>
+                      </>}
+                      <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))` }}>
+                        {(p as any).thumbnail_url
+                          ? <img src={(p as any).thumbnail_url} alt={p.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                                ⚛
+                              </div>
+                            </div>
+                        }
+                      </div>
+                      <div style={{ padding: '8px 12px' }}>
+                        {renamingId === p.id && p.id ? (
+                          <input autoFocus defaultValue={p.name || ''} onBlur={e => handleRename(p.id!, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleRename(p.id!, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRenamingId(null); }} onClick={e => e.preventDefault()} style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(14,165,233,0.5)', borderRadius: 4, padding: '1px 5px', width: '100%', outline: 'none', fontFamily: 'inherit' }} />
+                        ) : (
+                          <div onDoubleClick={e => { e.preventDefault(); e.stopPropagation(); if (p.id) setRenamingId(p.id); }} style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
+                        )}
+                        <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 11, color: '#8b8b9a', marginBottom: 12, lineHeight: 1.5 }}>{agent.desc}</div>
-                    <a href={'/agent/' + agent.id} style={{ display: 'block', textAlign: 'center', padding: '6px 0', borderRadius: 6, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Configure →</a>
-                  </div>
+                  </Link>
                 ))}
               </div>
-            </div>
-          )}
-
-          {activeTab === 'automations' && (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div>
-                  <h2 style={{ fontSize: 17, fontWeight: 700 }}>Automations</h2>
-                  <div style={{ fontSize: 13, color: '#52525b', marginTop: 4 }}>Visual flow builder — triggers, AI steps, actions</div>
-                </div>
-                <a href="/flows" style={{ padding: '8px 18px', borderRadius: 8, background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Open Flow Builder →</a>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 16, marginBottom: 20 }}>
-                {[
-                  { icon: '⚡', title: 'Trigger → AI → Action', desc: 'New lead scores high? Claude decides → Slack alert fires' },
-                  { icon: '📅', title: 'Scheduled workflows', desc: 'Run every morning at 7AM, or any cron schedule' },
-                  { icon: '🔗', title: '12+ integrations', desc: 'Slack, Gmail, HubSpot, Airtable, Notion, GitHub and more' },
-                ].map(card => (
-                  <div key={card.title} style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 20 }}>
-                    <div style={{ fontSize: 28, marginBottom: 10 }}>{card.icon}</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{card.title}</div>
-                    <div style={{ fontSize: 12, color: '#52525b', lineHeight: 1.6 }}>{card.desc}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ textAlign: 'center', padding: 20, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 12 }}>
-                <a href="/flows" style={{ fontSize: 15, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none' }}>→ Open the Visual Flow Builder</a>
-                <div style={{ fontSize: 12, color: '#52525b', marginTop: 4 }}>Drag nodes, connect steps, run automations with real tools</div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'apps' && (
-            <>
-              {projects.length > 0 ? (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Apps</h2>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-                    <button onClick={() => setShowTypePicker(true)} disabled={creating}
-                      style={{ height: 160, borderRadius: 12, border: '2px dashed rgba(255,255,255,0.08)', background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, transition: 'all 0.2s', color: '#3f3f46' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; (e.currentTarget as HTMLElement).style.color = '#0EA5E9'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.04)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.color = '#3f3f46'; (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                      <span style={{ fontSize: 13, fontWeight: 600, fontFamily: 'inherit' }}>New Project</span>
-                    </button>
-                    {projects.slice(0, 7).map(p => (
-                      <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                        <div style={{ height: 160, borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', background: '#111113', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)' }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
-                          {p.id && <>
-                            <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id} title="Delete project"
-                              style={{ position: 'absolute', top: 6, right: 6, zIndex: 10, width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(9,9,11,0.7)', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, backdropFilter: 'blur(4px)' }}>
-                              {deletingId === p.id ? '…' : '×'}
-                            </button>
-                            <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title="Duplicate"
-                              style={{ position: 'absolute', top: 6, right: 32, zIndex: 10, width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(9,9,11,0.7)', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, backdropFilter: 'blur(4px)' }}>
-                              {duplicatingId === p.id ? '…' : '⎘'}
-                            </button>
-                          </>}
-                          <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))` }}>
-                            {(p as any).thumbnail_url
-                              ? <img src={(p as any).thumbnail_url} alt={p.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                  <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                                    {p.framework === 'next' ? '▲' : p.framework === 'vue' ? '◆' : '⚛'}
-                                  </div>
-                                </div>
-                            }
-                          </div>
-                          <div style={{ padding: '8px 12px' }}>
-                            {renamingId === p.id && p.id ? (
-                              <input autoFocus defaultValue={p.name || ''} onBlur={e => handleRename(p.id!, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleRename(p.id!, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRenamingId(null); }} onClick={e => e.preventDefault()} style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(14,165,233,0.5)', borderRadius: 4, padding: '1px 5px', width: '100%', outline: 'none', fontFamily: 'inherit' }} />
-                            ) : (
-                              <div onDoubleClick={e => { e.preventDefault(); e.stopPropagation(); if (p.id) setRenamingId(p.id); }} style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
-                            )}
-                            <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div style={{ textAlign: 'center', paddingTop: 60, color: '#52525b' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: '#fafafa', marginBottom: 8 }}>No apps yet</div>
-                  <div style={{ fontSize: 14, marginBottom: 24 }}>Describe your first app above or click New Project</div>
-                  <button onClick={() => setShowTypePicker(true)} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                    Start building →
-                  </button>
-                </div>
-              )}
             </>
+          ) : (
+            <div style={{ textAlign: 'center', paddingTop: 80, color: '#52525b' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 8 }}>No apps yet</div>
+              <div style={{ fontSize: 14, marginBottom: 28 }}>Describe your first app above or browse 500+ templates</div>
+              <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+                <button onClick={() => startProject()} style={{ padding: '10px 24px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                  Start building →
+                </button>
+                <Link href="/gallery" style={{ padding: '10px 24px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                  Browse templates
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </main>
@@ -405,46 +305,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
         @keyframes gradientShift { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
       `}</style>
-
-      {/* Type Picker Modal */}
-      {showTypePicker && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(8px)' }}
-          onClick={() => setShowTypePicker(false)}>
-          <div style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 32, width: 560, boxShadow: '0 32px 64px rgba(0,0,0,0.6)' }}
-            onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 6 }}>What are you building?</div>
-              <div style={{ fontSize: 14, color: '#71717a' }}>Or describe your challenge — I'll suggest the best approach</div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
-              {[
-                { type: 'app' as const, icon: '🎨', label: 'Web App', desc: 'Dashboard, CRM, tool, landing page, or any UI' },
-                { type: 'agent' as const, icon: '🤖', label: 'AI Agent', desc: 'Monitor, process, alert, or automate a task' },
-                { type: 'workflow' as const, icon: '⚡', label: 'Workflow', desc: 'Connect apps with triggers and action chains' },
-              ].map(opt => (
-                <button key={opt.type} onClick={() => { setSelectedType(opt.type); startProject(undefined, opt.type); setShowTypePicker(false); }}
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 16px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s', fontFamily: 'inherit' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.5)'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.06)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>{opt.icon}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 6 }}>{opt.label}</div>
-                  <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5 }}>{opt.desc}</div>
-                </button>
-              ))}
-            </div>
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20 }}>
-              <div style={{ fontSize: 12, color: '#52525b', marginBottom: 8, textAlign: 'center' }}>Not sure? Just describe your challenge:</div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input placeholder="e.g. I keep losing track of leads after demos..." autoFocus
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) { startProject((e.target as HTMLInputElement).value, 'app'); setShowTypePicker(false); } }}
-                  style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-                <button onClick={e => { const input = (e.currentTarget.previousSibling as HTMLInputElement); if (input?.value) { startProject(input.value, 'app'); setShowTypePicker(false); } }}
-                  style={{ padding: '10px 18px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Go</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
