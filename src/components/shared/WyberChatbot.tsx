@@ -25,10 +25,13 @@ export function WyberChatbot() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Check path client-side only — no usePathname needed
+  // Check path on mount and re-check on every client-side navigation
   useEffect(() => {
-    const path = window.location.pathname
-    setIsHidden(HIDDEN_ROUTES.some(route => path.startsWith(route)))
+    const check = () => setIsHidden(HIDDEN_ROUTES.some(r => window.location.pathname.startsWith(r)))
+    check()
+    window.addEventListener('popstate', check)
+    const id = setInterval(check, 500)
+    return () => { window.removeEventListener('popstate', check); clearInterval(id) }
   }, [])
 
   useEffect(() => {
@@ -90,20 +93,20 @@ export function WyberChatbot() {
       {open && (
         <div style={{ position: 'fixed', bottom: 88, right: 20, width: 360, height: 500, background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', zIndex: 9999, fontFamily: 'Inter,-apple-system,sans-serif', animation: 'chatSlideUp 0.2s ease' }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>⚡</div>
+            <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>Ã¢Å¡Â¡</div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Wyber AI</div>
               <div style={{ fontSize: 11, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> Online
               </div>
             </div>
-            <button onClick={() => setOpen(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>
+            <button onClick={() => setOpen(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>Ãƒâ€”</button>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{ maxWidth: '85%', padding: '9px 12px', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: msg.role === 'user' ? '#fff' : '#e4e4e7', fontSize: 13, lineHeight: 1.55 }}>
-                  {msg.content || <span style={{ opacity: 0.5 }}>▋</span>}
+                  {msg.content || <span style={{ opacity: 0.5 }}>Ã¢â€“â€¹</span>}
                 </div>
               </div>
             ))}
@@ -124,7 +127,7 @@ export function WyberChatbot() {
             </button>
           </div>
           <div style={{ textAlign: 'center', padding: '6px 0 10px', fontSize: 10, color: '#3f3f46' }}>
-            Powered by Wyber AI · <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free →</a>
+            Powered by Wyber AI Ã‚Â· <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free Ã¢â€ â€™</a>
           </div>
         </div>
       )}
