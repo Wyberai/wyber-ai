@@ -435,10 +435,11 @@ export function ChatPanel({ projectId, userId }: Props) {
             prompt={pendingPlan.prompt}
             framework={framework}
             fileContext={Object.entries(files).slice(0,10).map(([p,f]) => `<file path="${p}">\n${(f as any).content.slice(0,1500)}\n</file>`).join('\n\n')}
-            onApprove={() => {
-              const { prompt, image } = pendingPlan;
+            projectId={projectId}
+            onApprove={(planSpec) => {
+              const { image } = pendingPlan;
               setPendingPlan(null);
-              executeGeneration(prompt, image);
+              executeGeneration(planSpec, image);
             }}
             onCancel={() => setPendingPlan(null)}
           />
