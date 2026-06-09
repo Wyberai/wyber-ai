@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+
+function adminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+}
 
 // GET /api/projects/knowledge?projectId=xxx
 export async function GET(req: NextRequest) {
   try {
     const projectId = req.nextUrl.searchParams.get('projectId');
     if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
-    const supabase = await createAdminClient();
+    const supabase = adminClient();
     const { data, error } = await supabase
       .from('projects')
       .select('knowledge')
@@ -24,7 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     const { projectId, knowledge } = await req.json();
     if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
-    const supabase = await createAdminClient();
+    const supabase = adminClient();
     const { error } = await supabase
       .from('projects')
       .update({ knowledge: knowledge || '', updated_at: new Date().toISOString() })

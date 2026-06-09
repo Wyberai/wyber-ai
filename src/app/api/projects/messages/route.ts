@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
+
+// Pure service-role client — no cookies, safe to call during hydration
+function adminClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+}
 
 // GET /api/projects/messages?projectId=xxx — load chat history
 export async function GET(req: NextRequest) {
   try {
     const projectId = req.nextUrl.searchParams.get('projectId');
     if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
-    const supabase = await createAdminClient();
+    const supabase = adminClient();
     const { data, error } = await supabase
       .from('project_messages')
       .select('*')
@@ -34,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (!projectId || !role || content === undefined) {
       return NextResponse.json({ error: 'Missing params' }, { status: 400 });
     }
-    const supabase = await createAdminClient();
+    const supabase = adminClient();
     const { error } = await supabase.from('project_messages').insert({
       project_id: projectId,
       role,

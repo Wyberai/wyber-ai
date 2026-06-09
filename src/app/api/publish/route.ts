@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 function slugify(name: string): string {
   return name
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { projectId } = await req.json()
-    const admin = await createAdminClient()
+    const admin = createServiceClient()
 
     const { data: project } = await admin
       .from('projects')
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       subdomain = await ensureUniqueSlug(base, admin)
     }
 
-    // Build the app via Railway proxy
+    // Build the app via Railway
     const buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -109,7 +109,7 @@ export async function DELETE(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { projectId } = await req.json()
-    const admin = await createAdminClient()
+    const admin = createServiceClient()
 
     await admin.storage.from('published-apps').remove([`${projectId}/index.html`])
     await admin.from('projects')

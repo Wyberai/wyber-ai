@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
 export async function createClient() {
@@ -30,5 +31,15 @@ export async function createAdminClient() {
         },
       },
     }
+  );
+}
+
+// Cookie-free service-role client — safe to call during hydration/SSR
+// Use this for admin DB operations that don't need the user's session cookies.
+export function createServiceClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
   );
 }
