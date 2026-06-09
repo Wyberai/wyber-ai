@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { getTemplateReference } from '@/lib/template-reference'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -661,7 +662,8 @@ ${code}
     // Inject Supabase context if user has connected their project
     const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
-    const fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext
+    const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
+    const fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext + templateRef
 
     const stream = await client.messages.stream({
       model,
