@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Build the app via Railway proxy
-    const buildRes = await fetch(`${process.env.NEXTAUTH_URL || 'https://wyberai.com'}/api/preview-build`, {
+    const buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ files: project.files, projectId }),
