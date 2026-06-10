@@ -234,8 +234,8 @@ Find this element in the code and apply the change.`
         {!hasApp && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <div style={{ fontSize: 13, fontWeight: 500, color: '#52525b' }}>Describe what you want to build</div>
-            <div style={{ fontSize: 11, color: '#3f3f46' }}>Your app will appear here automatically after generation</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>Your preview will appear here</div>
+            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 240, textAlign: 'center', lineHeight: 1.5 }}>Describe what you want to build in the chat, and your app appears here automatically</div>
           </div>
         )}
 
