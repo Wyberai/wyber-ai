@@ -66,12 +66,16 @@ export class StreamingFileParser {
 // so the chat view never shows raw <thinking> or <file> content mid-stream.
 export function cleanStreamingDisplay(raw: string): string {
   let out = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
-  const openIdx = out.search(/<thinking>/i);
-  if (openIdx !== -1) out = out.slice(0, openIdx);
-  // hide file blocks (complete and partial) from the streaming chat text
+  const openThink = out.search(/<thinking>/i);
+  if (openThink !== -1) out = out.slice(0, openThink);
+  // hide complete <file> and <edit> blocks from the streaming chat text
   out = out.replace(/<file\s+path="[^"]*">[\s\S]*?<\/file>/g, '');
+  out = out.replace(/<edit\s+path="[^"]*">[\s\S]*?<\/edit>/g, '');
+  // hide partial (still-streaming) blocks: cut from the first unclosed opener
   const openFile = out.search(/<file\s+path="/i);
   if (openFile !== -1) out = out.slice(0, openFile);
+  const openEdit = out.search(/<edit\s+path="/i);
+  if (openEdit !== -1) out = out.slice(0, openEdit);
   return out.trim();
 }
 

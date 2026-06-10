@@ -2,7 +2,7 @@
 import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser';
+import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { PlanMode } from './PlanMode';
@@ -318,30 +318,11 @@ export function ChatPanel({ projectId, userId }: Props) {
         if (done) break;
         full += decoder.decode(value, { stream:true });
 
-        const lines = full.split('\n');
-        let inFileBlock = false;
-        const isCodeLine = (l: string) => {
-          const t = l.trim();
-          if (!t) return false;
-          if (t.startsWith('<file ') || t.startsWith('</file>')) return true;
-          if (/^(import |export |export default|const |let |var |function |async |class |interface |type |return |throw )/.test(t)) return true;
-          if (t.startsWith('<') && t.includes('>') && (t.includes('className') || t.includes('style=') || t.includes('onClick') || t.includes('/>') || t.includes('</') || /^<[A-Z]/.test(t))) return true;
-          if (t.startsWith('</') || t.startsWith('/>') || t === '};' || t === '})' || t === ');') return true;
-          if (t.includes('className=') || t.includes('style={{') || t.includes('useState') || t.includes('useEffect')) return true;
-          return false;
-        };
-        const chatLines = lines.filter(l => {
-          if (l.trim().startsWith('<file ')) { inFileBlock = true; return false; }
-          if (l.trim().startsWith('</file>')) { inFileBlock = false; return false; }
-          if (inFileBlock) return false;
-          return !isCodeLine(l);
-        });
-        const cleanedFull = chatLines.join('\n')
+        const cleanedFull = cleanStreamingDisplay(full)
           .replace(/<agent>[\s\S]*?<\/agent>/g, '')
           .replace(/<flow>[\s\S]*?<\/flow>/g, '')
           .trim();
         setStreamingContent(cleanedFull || '');
-      }
 
       const { files: newFiles, chatText } = parseGenerationOutput(full);
       const editBlocks = parseEditBlocks(full);
