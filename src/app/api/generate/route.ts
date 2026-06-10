@@ -543,6 +543,7 @@ export async function POST(req: NextRequest) {
           const { data: matches } = await supabase
             .from('prebuilt_apps')
             .select('id, app_id, name, category, files, preview_color, keywords')
+            .eq('valid', true)
             .overlaps('keywords', words)
             .not('files', 'eq', '{}')
             .not('files', 'is', null)

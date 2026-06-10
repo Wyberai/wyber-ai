@@ -142,13 +142,20 @@ export async function POST(req: NextRequest) {
 
     // 1. Normalize every file into the correct Vite location (src/ prefix etc.)
     const normalized: Record<string, { path: string; content: string; language: string }> = {};
-    for (const [rawPath, val] of Object.entries(rawFiles as Record<string, FileVal>)) {
-      const newPath = normalizePath(rawPath);
-      normalized[newPath] = {
-        path: newPath,
-        content: normalizeContent(val, rawPath),
-        language: langFromExt(newPath),
-      };
+
+    // Single-file format: { code: "<entire app>", generated: ... }
+    if (typeof (rawFiles as any).code === 'string' && (rawFiles as any).code.trim().length > 0) {
+      normalized['src/App.jsx'] = { path: 'src/App.jsx', content: (rawFiles as any).code, language: 'javascript' };
+    } else {
+      for (const [rawPath, val] of Object.entries(rawFiles as Record<string, FileVal>)) {
+        if (rawPath === 'generated' || rawPath === 'code') continue; // metadata, not files
+        const newPath = normalizePath(rawPath);
+        normalized[newPath] = {
+          path: newPath,
+          content: normalizeContent(val, rawPath),
+          language: langFromExt(newPath),
+        };
+      }
     }
 
     const paths = Object.keys(normalized);
@@ -194,6 +201,15 @@ export async function POST(req: NextRequest) {
     if (pErr || !project) {
       return NextResponse.json({ error: pErr?.message || 'Could not create project' }, { status: 500 });
     }
+
+    // Seed a friendly first assistant message so the chat guides the user
+    try {
+      await supabase.from('project_messages').insert({
+        project_id: project.id,
+        role: 'assistant',
+        content: `You've chosen the **${template.name}** template. Take a look at the preview on the left and tell me how you'd like to design it — change colors, add features, rename sections, anything.`,
+      });
+    } catch {}
 
     return NextResponse.json({ projectId: project.id });
   } catch (err: any) {

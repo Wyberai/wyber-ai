@@ -42,6 +42,7 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
     const { data: candidates } = await supabase
       .from('prebuilt_apps')
       .select('id, name, category, keywords, files, preview_color')
+      .eq('valid', true)
       .overlaps('keywords', words)
       .limit(10)
 

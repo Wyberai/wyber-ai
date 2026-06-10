@@ -24,6 +24,7 @@ export function TemplatesShowcase({ userId }: { userId?: string }) {
         const { data } = await supabase
           .from('prebuilt_apps')
           .select('app_id, name, category, preview_color')
+          .eq('valid', true)
           .order('category', { ascending: true });
         if (data) setTemplates(data as Template[]);
       } catch {}

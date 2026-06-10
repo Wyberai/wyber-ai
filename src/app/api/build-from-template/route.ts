@@ -135,9 +135,16 @@ export async function POST(req: NextRequest) {
 
     // 1. Normalize paths into a proper Vite layout
     const normalized: Record<string, { path: string; content: string; language: string }> = {}
-    for (const [rawPath, val] of Object.entries(rawFiles)) {
-      const newPath = normalizePath(rawPath)
-      normalized[newPath] = { path: newPath, content: contentOf(val), language: langFromExt(newPath) }
+
+    // Single-file format: { code: "<entire app>", generated: ... }
+    if (typeof (rawFiles as any).code === 'string' && (rawFiles as any).code.trim().length > 0) {
+      normalized['src/App.jsx'] = { path: 'src/App.jsx', content: (rawFiles as any).code, language: 'javascript' }
+    } else {
+      for (const [rawPath, val] of Object.entries(rawFiles)) {
+        if (rawPath === 'generated' || rawPath === 'code') continue // metadata, not files
+        const newPath = normalizePath(rawPath)
+        normalized[newPath] = { path: newPath, content: contentOf(val), language: langFromExt(newPath) }
+      }
     }
 
     // 2. Inject Vite scaffold if missing so the preview can build immediately
@@ -176,6 +183,15 @@ export async function POST(req: NextRequest) {
       console.error('Project create error:', pErr)
       throw new Error(pErr?.message || 'Failed to create project')
     }
+
+    // Seed a friendly first assistant message so the chat guides the user
+    try {
+      await admin.from('project_messages').insert({
+        project_id: project.id,
+        role: 'assistant',
+        content: `You've chosen the **${template.name}** template. Take a look at the preview on the left and tell me how you'd like to design it — change colors, add features, rename sections, anything.`,
+      })
+    } catch {}
 
     // Increment use_count — fire and forget
     admin.rpc('increment_use_count', { template_id: templateId }).then(() => {}).catch(() => {})

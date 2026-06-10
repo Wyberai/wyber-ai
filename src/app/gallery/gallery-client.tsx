@@ -45,6 +45,7 @@ export default function GalleryPage() {
       createClient()
         .from('prebuilt_apps')
         .select('id, name, category, description, keywords, preview_color, use_count')
+        .eq('valid', true)
         .order('use_count', { ascending: false })
         .then(({ data }) => {
           setApps(data || [])
