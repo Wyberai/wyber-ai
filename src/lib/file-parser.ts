@@ -27,6 +27,11 @@ export function parseGenerationOutput(raw: string): ParseResult {
     files.push({ path: path.trim(), content: content.trim() });
     return '';
   });
+  // Strip <edit> diff blocks from chat text (they're handled separately by parseEditBlocks)
+  chatText = chatText.replace(/<edit\s+path="[^"]*">[\s\S]*?<\/edit>/g, '');
+  // Also cut any unclosed trailing <edit> block (stream ended mid-block)
+  const openEditIdx = chatText.search(/<edit\s+path="/i);
+  if (openEditIdx !== -1) chatText = chatText.slice(0, openEditIdx);
   // Strip any remaining ```edited: ...``` markers the AI might output
   chatText = chatText.replace(/```edited:[^`]*```/g, '');
   // Strip backtick code fences that wrap file lists
