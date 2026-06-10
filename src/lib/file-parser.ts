@@ -74,3 +74,35 @@ export function cleanStreamingDisplay(raw: string): string {
   if (openFile !== -1) out = out.slice(0, openFile);
   return out.trim();
 }
+
+// ─── Diff-based editing: parse <edit> search/replace blocks ───
+export interface EditBlockParsed {
+  path: string;
+  search: string;
+  replace: string;
+}
+
+// Extracts <edit path="..."> blocks containing one or more
+// <<<<<<< SEARCH / ======= / >>>>>>> REPLACE sections.
+export function parseEditBlocks(raw: string): EditBlockParsed[] {
+  const out: EditBlockParsed[] = [];
+  const working = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+  const editRe = /<edit\s+path="([^"]+)">([\s\S]*?)<\/edit>/g;
+  let m: RegExpExecArray | null;
+  while ((m = editRe.exec(working)) !== null) {
+    const path = m[1].trim();
+    const body = m[2];
+    // Each block: <<<<<<< SEARCH \n ... \n ======= \n ... \n >>>>>>> REPLACE
+    const pairRe = /<<<<<<<\s*SEARCH\s*\n([\s\S]*?)\n?=======\s*\n([\s\S]*?)\n?>>>>>>>\s*REPLACE/g;
+    let p: RegExpExecArray | null;
+    while ((p = pairRe.exec(body)) !== null) {
+      out.push({ path, search: p[1], replace: p[2] });
+    }
+  }
+  return out;
+}
+
+// True if the model emitted any <edit> blocks (diff mode) vs full <file> blocks
+export function hasEditBlocks(raw: string): boolean {
+  return /<edit\s+path="/.test(raw);
+}

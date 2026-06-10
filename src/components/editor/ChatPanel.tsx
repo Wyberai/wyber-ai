@@ -2,7 +2,8 @@
 import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { parseGenerationOutput } from '@/lib/file-parser';
+import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser';
+import { applyEdits } from '@/lib/patch-applier';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
@@ -338,16 +339,39 @@ export function ChatPanel({ projectId, userId }: Props) {
       }
 
       const { files: newFiles, chatText } = parseGenerationOutput(full);
+      const editBlocks = parseEditBlocks(full);
       let updatedFiles = { ...files };
+      const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
+      // 1. Apply full <file> blocks (new files or full rewrites)
       if (newFiles.length > 0) {
         for (const { path, content } of newFiles) {
           const ext = path.split('.').pop() ?? '';
-          const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
           updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
         }
+      }
+      // 2. Apply <edit> diff blocks (fast path)
+      let failedPaths: string[] = [];
+      if (editBlocks.length > 0) {
+        const result = applyEdits(updatedFiles, editBlocks);
+        for (const [path, content] of Object.entries(result.updated)) {
+          const ext = path.split('.').pop() ?? '';
+          updatedFiles[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
+        }
+        failedPaths = result.failedPaths;
+      }
+      // 3. Persist if anything changed
+      if (newFiles.length > 0 || editBlocks.length > 0) {
         setFiles(updatedFiles);
         setHasGeneratedFiles(true);
         await saveProject(updatedFiles);
+      }
+      // 4. Fallback: any patch that didn't match → ask AI for the full file
+      if (failedPaths.length > 0) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+            detail: { prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}` }
+          }));
+        }, 400);
       }
 
       const finalContent = chatText || 'Done.';
