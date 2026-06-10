@@ -241,7 +241,11 @@ export function ChatPanel({ projectId, userId }: Props) {
     const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
     addMessage({ id: uid(), role:'user', content: userContent, timestamp:Date.now(), status:'done' });
     persistMessage('user', userContent);
-
+const storeProjectId = useEditorStore.getState().project?.id;
+  if (resolvedProjectId && storeProjectId && storeProjectId !== resolvedProjectId) {
+    console.warn('Blocked generation: project mismatch');
+    return;
+  }
     const assistantId = uid();
     addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
     setIsGenerating(false);

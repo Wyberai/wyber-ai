@@ -20,7 +20,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   const {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
-    hydrateProject, setHydrated, setCredits,
+    hydrateProject, setHydrated, setCredits,resetForProject,
   } = useEditorStore();
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
@@ -29,7 +29,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   // Hydrate store from server data + load messages and knowledge
   useEffect(() => {
     if (!initialProject?.id) return;
-    setHydrated(false);
+    resetForProject(); // wipe previous project's state before loading the new one
 
     const project = {
       id: initialProject.id!,

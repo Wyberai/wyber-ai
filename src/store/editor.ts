@@ -61,6 +61,7 @@ interface EditorState {
   setProject: (p: Project) => void;
   setFramework: (f: Framework) => void;
   hydrateProject: (data: { project: Project; files?: Record<string, FileNode>; messages?: ChatMessage[]; knowledge?: string }) => void;
+  resetForProject: () => void;
   setHydrated: (v: boolean) => void;
 
   // Files
@@ -133,6 +134,19 @@ export const useEditorStore = create<EditorState>()(
 
     // IMPORTANT: setProject no longer wipes files/messages — hydration handles that
     setProject: (p) => set((s) => { s.project = p; }),
+    resetForProject: () => set((s) => {
+      s.project = null;
+      s.files = {};
+      s.activeFile = null;
+      s.openTabs = [];
+      s.messages = [];
+      s.isGenerating = false;
+      s.hasGeneratedFiles = false;
+      s.streamingContent = '';
+      s.knowledge = '';
+      s.checkpoints = [];
+      s.hydrated = false;
+    }),
     setFramework: (f) => set((s) => { s.framework = f; }),
 
     hydrateProject: (data) => set((s) => {
