@@ -335,6 +335,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
       }
       const { files: newFiles, chatText } = parseGenerationOutput(full);
       const editBlocks = parseEditBlocks(full);
+      // Self-heal: if the stream was cut off mid-file or mid-edit, request the rest
+      const lastFileOpen = full.lastIndexOf('<file path="');
+      const lastEditOpen = full.lastIndexOf('<edit path="');
+      const fileCut = lastFileOpen !== -1 && full.indexOf('</file>', lastFileOpen) === -1;
+      const editCut = lastEditOpen !== -1 && full.indexOf('</edit>', lastEditOpen) === -1;
+      if (fileCut || editCut) {
+        const cutAt = fileCut ? lastFileOpen : lastEditOpen;
+        const cm = full.slice(cutAt).match(/path="([^"]+)"/);
+        const cutPath = cm ? cm[1] : 'the last file';
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+            detail: { prompt: `Your previous output was cut off before finishing. Output the COMPLETE <file> block (full contents, not a diff) for: ${cutPath}. Then output any other files from your plan that were never emitted, each as a complete <file> block.` }
+          }));
+        }, 600);
+      }
       let updatedFiles = { ...files };
       const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
       // 1. Apply full <file> blocks (new files or full rewrites)

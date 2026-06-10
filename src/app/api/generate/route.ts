@@ -8,7 +8,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MODELS = {
   fast:    'claude-haiku-4-5-20251001',
   default: 'claude-sonnet-4-6',
-  premium: 'claude-opus-4-7-20250514',
+  premium: 'claude-opus-4-8',
 }
 
 const WYBER_FEATURES = `
@@ -658,7 +658,7 @@ ${code}
     }
 
     const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default
-    const maxTokens = modelTier === 'fast' ? 8000 : 32000
+    const maxTokens = modelTier === 'fast' ? 8000 : modelTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
     const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
