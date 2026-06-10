@@ -88,9 +88,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     } catch {}
   };
 
-  const handleDeploy = async () => {
+  const handleDeploy = async (force = false) => {
     if (!projectId || deploying) return;
-    if (deployUrl) { setShowShareModal(true); return; }
+    if (deployUrl && !force) { setShowShareModal(true); return; }
     setDeploying(true);
     try {
       const res = await fetch('/api/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId }) });
@@ -233,7 +233,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
           </button>
         )}
-        <button onClick={handleDeploy} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
+        <button onClick={() => handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
           {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying...</> : deployUrl ? 'Live' : 'Publish'}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -254,7 +254,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>Your app is ready to go live on <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
-                <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => { setShowShareModal(false); handleDeploy(true); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                   Publish now
                 </button>
               </div>
