@@ -253,8 +253,13 @@ export function ChatPanel({ projectId, userId }: Props) {
       promptLower.split(/\s+/).filter(w => w.length > 3).forEach(w => { if (pathLower.includes(w)) score += 20; });
       return { path, content: (f as any).content, score };
     });
-    const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 10);
-    const fileContext = topFiles.map(({path, content}) => `<file path="${path}">\n${content.slice(0,2000)}\n</file>`).join('\n\n');
+    const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
+    // Send FULL content of the most relevant files so the model can produce exact-match
+    // SEARCH/REPLACE diffs. Truncating breaks diff editing (model can't match what it can't see).
+    const fileContext = topFiles.map(({path, content}) => {
+      const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
+      return `<file path="${path}">\n${body}\n</file>`;
+    }).join('\n\n');
     const history = messages.filter(m => m.status==='done').slice(-6).map(m => ({ role:m.role, content:m.content }));
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
