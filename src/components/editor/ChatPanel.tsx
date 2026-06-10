@@ -328,7 +328,7 @@ export function ChatPanel({ projectId, userId }: Props) {
           .replace(/<flow>[\s\S]*?<\/flow>/g, '')
           .trim();
         setStreamingContent(cleanedFull || '');
-
+      }
       const { files: newFiles, chatText } = parseGenerationOutput(full);
       const editBlocks = parseEditBlocks(full);
       let updatedFiles = { ...files };
