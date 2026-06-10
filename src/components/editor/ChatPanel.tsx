@@ -12,7 +12,12 @@ function uid() { return Math.random().toString(36).slice(2, 9); }
 
 function cleanMessage(text: string): string {
   let t = text;
+  t = t.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
   t = t.replace(/<file[^\s>]*[^>]*>[\s\S]*?<\/file>/gi, '');
+  t = t.replace(/<edit\s+path="[^"]*">[\s\S]*?<\/edit>/gi, '');
+  // cut any unclosed trailing block (stream/save ended mid-block)
+  const _cuts = [t.search(/<thinking>/i), t.search(/<file/i), t.search(/<edit\s+path="/i)].filter(i => i !== -1);
+  if (_cuts.length) t = t.slice(0, Math.min(..._cuts));
   t = t.replace(/```[\s\S]*?```/g, '');
   t = t.replace(/`src\/[^`]+`/g, '');
   const lines = t.split('\n').map(l => l.trim()).filter(l => {
