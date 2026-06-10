@@ -663,7 +663,8 @@ ${code}
     const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
-    const fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext + templateRef
+    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or long planning preambles. Start with ONE short sentence, then immediately output <file> blocks.\n2. When editing an existing app, output ONLY the files that actually change — never re-output unchanged files.\n3. Always prioritize emitting complete <file>...</file> blocks over explanation. Every file block must be fully closed.\n4. Never leave a <file> block unclosed or stop mid-file.'
+    const fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext + templateRef + outputRule
 
     const stream = await client.messages.stream({
       model,
