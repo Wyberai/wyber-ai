@@ -17,7 +17,56 @@ import { CanvasChat } from '@/components/editor/CanvasChat'
 import { WyberEdge, WyberMarkerDefs } from '@/components/editor/WyberEdge'
 import { useRouter } from 'next/navigation'
 
-// ─── Brand logos via Logo.dev ──────────────────────────────────────────────────
+// ─── SVG icons — no emojis ───────────────────────────────────────────────────
+
+const IcoCpu    = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/>
+    <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+    <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+    <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
+    <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+  </svg>
+
+const IcoZap    = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+  </svg>
+
+const IcoBrain  = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9.5 2A2.5 2.5 0 017 4.5A2.5 2.5 0 014.5 7H4a2 2 0 00-2 2v2a2 2 0 002 2h.5A2.5 2.5 0 017 15.5A2.5 2.5 0 019.5 18h5A2.5 2.5 0 0117 15.5A2.5 2.5 0 0119.5 13H20a2 2 0 002-2V9a2 2 0 00-2-2h-.5A2.5 2.5 0 0117 4.5A2.5 2.5 0 0114.5 2z"/>
+  </svg>
+
+const IcoTool   = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+  </svg>
+
+const IcoDiamond = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 22 9 18 21 6 21 2 9"/>
+  </svg>
+
+const IcoCheck  = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) =>
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+
+const IcoCheckSm = ({ color = '#22c55e' }: { color?: string }) =>
+  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+    <path d="M2 6l3 3 5-5" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+  </svg>
+
+const IcoX = ({ color = '#ef4444' }: { color?: string }) =>
+  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+    <path d="M2 2l8 8M10 2l-8 8" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+  </svg>
+
+const IcoSpinner = () =>
+  <div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+
+// ─── Brand logos via Logo.dev ────────────────────────────────────────────────
 
 const TOOL_DOMAINS: Record<string, string> = {
   slack: 'slack.com', gmail: 'gmail.google.com', hubspot: 'hubspot.com',
@@ -28,7 +77,7 @@ const TOOL_DOMAINS: Record<string, string> = {
 
 function ToolIcon({ toolId, size = 24 }: { toolId?: string; size?: number }) {
   const domain = toolId ? TOOL_DOMAINS[toolId] : null
-  if (!domain) return <span style={{ fontSize: size * 0.6 }}>🔧</span>
+  if (!domain) return <IcoTool size={size * 0.8} color="#71717a" />
   return (
     <img
       src={`https://img.logo.dev/${domain}?token=pk_I0pI4NHLSmyw-WgJgdqmNg&size=${size * 2}`}
@@ -40,23 +89,23 @@ function ToolIcon({ toolId, size = 24 }: { toolId?: string; size?: number }) {
   )
 }
 
-// ─── Node styles ───────────────────────────────────────────────────────────────
+// ─── Node styles ─────────────────────────────────────────────────────────────
 
-const NODE_STYLES: Record<WyberNodeType, { color: string; bg: string; icon: string; label: string }> = {
-  trigger:   { color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)',  icon: '⚡', label: 'Trigger' },
-  aiagent:   { color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', icon: '🧠', label: 'AI Agent' },
-  tool:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', icon: '🔧', label: 'Tool' },
-  condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', icon: '◆',  label: 'Condition' },
-  output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  icon: '✓',  label: 'Output' },
+const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: string; Icon: React.FC<{ size?: number; color?: string }> }> = {
+  trigger:   { color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)',  label: 'Trigger',   Icon: IcoZap },
+  aiagent:   { color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', label: 'AI Agent',  Icon: IcoBrain },
+  tool:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', label: 'Tool',      Icon: IcoTool },
+  condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'Condition', Icon: IcoDiamond },
+  output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  label: 'Output',    Icon: IcoCheck },
 }
 
 const STATUS_COLORS = { idle: 'rgba(255,255,255,0.12)', running: '#f59e0b', success: '#22c55e', error: '#ef4444' }
 
-// ─── Custom node ───────────────────────────────────────────────────────────────
+// ─── Custom node ─────────────────────────────────────────────────────────────
 
 function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
   const nodeType = (type || 'trigger') as WyberNodeType
-  const style = NODE_STYLES[nodeType]
+  const meta = NODE_META[nodeType]
   const { setSelectedNode } = useAgentStore()
   const status = (data.status as string) || 'idle'
 
@@ -65,9 +114,9 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
       onClick={() => setSelectedNode(id)}
       style={{
         width: 220, background: '#111118',
-        border: `2px solid ${selected ? style.color : 'rgba(255,255,255,0.08)'}`,
+        border: `2px solid ${selected ? meta.color : 'rgba(255,255,255,0.08)'}`,
         borderRadius: 14,
-        boxShadow: selected ? `0 0 0 3px ${style.color}25, 0 8px 32px rgba(0,0,0,0.5)` : '0 4px 20px rgba(0,0,0,0.4)',
+        boxShadow: selected ? `0 0 0 3px ${meta.color}25, 0 8px 32px rgba(0,0,0,0.5)` : '0 4px 20px rgba(0,0,0,0.4)',
         cursor: 'pointer', transition: 'all 0.15s', position: 'relative', overflow: 'hidden',
         fontFamily: "'Space Grotesk', sans-serif",
       }}
@@ -76,32 +125,35 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
       <div style={{ position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: '50%', background: (STATUS_COLORS as any)[status], boxShadow: status === 'running' ? `0 0 8px ${STATUS_COLORS.running}` : 'none', animation: status === 'running' ? 'pulse 1s ease infinite' : 'none' }} />
 
       {/* Color bar */}
-      <div style={{ height: 3, background: style.color, borderRadius: '12px 12px 0 0' }} />
+      <div style={{ height: 3, background: meta.color, borderRadius: '12px 12px 0 0' }} />
 
       {/* Header */}
       <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: style.bg, border: `1px solid ${style.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-          {nodeType === 'tool' && data.toolId ? <ToolIcon toolId={data.toolId as string} size={22} /> : style.icon}
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.bg, border: `1px solid ${meta.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          {nodeType === 'tool' && data.toolId
+            ? <ToolIcon toolId={data.toolId as string} size={22} />
+            : <meta.Icon size={18} color={meta.color} />
+          }
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: style.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{style.label}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{meta.label}</div>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.label as string}</div>
         </div>
       </div>
 
       {/* Subtitle */}
-      {data.subtitle ? (
-        <div style={{ padding: '0 14px 12px', paddingTop: 4, fontSize: 11, color: '#71717a', lineHeight: 1.45, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          {(data.subtitle as string).slice(0, 70)}{(data.subtitle as string).length > 70 ? '...' : ''}
-        </div>
-      ) : <div style={{ height: 10 }} />}
+      {data.subtitle
+        ? <div style={{ padding: '0 14px 12px', paddingTop: 4, fontSize: 11, color: '#71717a', lineHeight: 1.45, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+            {(data.subtitle as string).slice(0, 70)}{(data.subtitle as string).length > 70 ? '...' : ''}
+          </div>
+        : <div style={{ height: 10 }} />
+      }
 
-      {/* Handles */}
       {nodeType !== 'trigger' && (
-        <Handle type="target" position={Position.Left} style={{ background: style.color, width: 10, height: 10, border: '2px solid #111118', left: -6 }} />
+        <Handle type="target" position={Position.Left} style={{ background: meta.color, width: 10, height: 10, border: '2px solid #111118', left: -6 }} />
       )}
       {nodeType !== 'output' && (
-        <Handle type="source" position={Position.Right} style={{ background: style.color, width: 10, height: 10, border: '2px solid #111118', right: -6 }} />
+        <Handle type="source" position={Position.Right} style={{ background: meta.color, width: 10, height: 10, border: '2px solid #111118', right: -6 }} />
       )}
     </div>
   )
@@ -110,7 +162,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
 const NODE_TYPES = { trigger: WyberNode, aiagent: WyberNode, tool: WyberNode, condition: WyberNode, output: WyberNode }
 const EDGE_TYPES = { default: WyberEdge, wyber: WyberEdge }
 
-// ─── Config Panel ──────────────────────────────────────────────────────────────
+// ─── Config Panel ─────────────────────────────────────────────────────────────
 
 const TOOL_OPTIONS = [
   { id: 'slack', name: 'Slack' }, { id: 'gmail', name: 'Gmail' },
@@ -125,91 +177,89 @@ function ConfigPanel() {
   const node = nodes.find(n => n.id === selectedNodeId)
   if (!node) return null
   const nodeType = node.type as WyberNodeType
-  const style = NODE_STYLES[nodeType]
+  const meta = NODE_META[nodeType]
 
-  const inp = (label: string, key: string, placeholder: string, opts?: { key: string; val: string; label: string }[]) => (
-    <div key={key}>
-      <label style={{ fontSize: 11, fontWeight: 600, color: '#71717a', display: 'block', marginBottom: 5 }}>{label}</label>
-      {opts ? (
-        <select value={(node.data.config as Record<string,string>)[key] || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), [key]: e.target.value } })}
-          style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}>
-          {opts.map(o => <option key={o.key} value={o.val}>{o.label}</option>)}
-        </select>
-      ) : (
-        <input value={(node.data.config as Record<string,string>)[key] || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), [key]: e.target.value } })}
-          placeholder={placeholder}
-          style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
-      )}
-    </div>
-  )
+  const fieldStyle = { width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const }
+  const labelStyle = { fontSize: 11, fontWeight: 600 as const, color: '#71717a', display: 'block' as const, marginBottom: 5 }
 
   return (
     <div style={{ width: 260, background: '#0a0a0d', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0 }}>
       <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 30, height: 30, borderRadius: 8, background: style.bg, border: `1px solid ${style.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>
-          {nodeType === 'tool' && node.data.toolId ? <ToolIcon toolId={node.data.toolId as string} size={18} /> : style.icon}
+        <div style={{ width: 30, height: 30, borderRadius: 8, background: meta.bg, border: `1px solid ${meta.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {nodeType === 'tool' && node.data.toolId ? <ToolIcon toolId={node.data.toolId as string} size={18} /> : <meta.Icon size={16} color={meta.color} />}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, color: style.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{style.label}</div>
+          <div style={{ fontSize: 10, color: meta.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{meta.label}</div>
           <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa' }}>Configure</div>
         </div>
-        <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16 }}>×</button>
+        <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
       </div>
 
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: "'Space Grotesk', sans-serif" }}>
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: '#71717a', display: 'block', marginBottom: 5 }}>Name</label>
-          <input value={node.data.label as string} onChange={e => updateNodeData(node.id, { label: e.target.value })}
-            style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
+          <label style={labelStyle}>Name</label>
+          <input value={node.data.label as string} onChange={e => updateNodeData(node.id, { label: e.target.value })} style={fieldStyle} />
         </div>
 
         {nodeType === 'tool' && (
           <div>
-            <label style={{ fontSize: 11, fontWeight: 600, color: '#71717a', display: 'block', marginBottom: 5 }}>Service</label>
-            <select value={(node.data.toolId as string) || ''} onChange={e => updateNodeData(node.id, { toolId: e.target.value })}
-              style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}>
+            <label style={labelStyle}>Service</label>
+            <select value={(node.data.toolId as string) || ''} onChange={e => updateNodeData(node.id, { toolId: e.target.value })} style={fieldStyle}>
               <option value="">Select service...</option>
               {TOOL_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </div>
         )}
 
-        {nodeType === 'trigger' && inp('Trigger type', 'type', '', [
-          { key: 'manual', val: 'manual', label: 'Manual trigger' },
-          { key: 'webhook', val: 'webhook', label: 'Webhook' },
-          { key: 'schedule', val: 'schedule', label: 'Schedule (cron)' },
-          { key: 'form', val: 'form', label: 'Form submission' },
-          { key: 'email', val: 'email', label: 'Email received' },
-        ])}
+        {nodeType === 'trigger' && (
+          <div>
+            <label style={labelStyle}>Trigger type</label>
+            <select value={(node.data.config as Record<string,string>).type || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), type: e.target.value } })} style={fieldStyle}>
+              <option value="manual">Manual trigger</option>
+              <option value="webhook">Webhook</option>
+              <option value="schedule">Schedule (cron)</option>
+              <option value="form">Form submission</option>
+              <option value="email">Email received</option>
+            </select>
+          </div>
+        )}
 
         {nodeType === 'aiagent' && (
           <>
-            {inp('Model', 'model', '', [
-              { key: 'sonnet', val: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
-              { key: 'opus', val: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
-              { key: 'gpt4o', val: 'gpt-4o', label: 'GPT-4o' },
-              { key: 'gpt4mini', val: 'gpt-4o-mini', label: 'GPT-4o mini' },
-            ])}
             <div>
-              <label style={{ fontSize: 11, fontWeight: 600, color: '#71717a', display: 'block', marginBottom: 5 }}>System prompt</label>
-              <textarea value={(node.data.config as Record<string,string>).instructions || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), instructions: e.target.value } })}
-                placeholder="What should this AI agent do?" rows={4}
-                style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }} />
+              <label style={labelStyle}>Model</label>
+              <select value={(node.data.config as Record<string,string>).model || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), model: e.target.value } })} style={fieldStyle}>
+                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                <option value="claude-opus-4-8">Claude Opus 4.8</option>
+                <option value="gpt-4o">GPT-4o</option>
+                <option value="gpt-4o-mini">GPT-4o mini</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>System prompt</label>
+              <textarea value={(node.data.config as Record<string,string>).instructions || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), instructions: e.target.value } })} placeholder="What should this AI agent do?" rows={4} style={{ ...fieldStyle, resize: 'vertical' }} />
             </div>
           </>
         )}
 
-        {nodeType === 'condition' && inp('Condition rule', 'rule', 'e.g. score > 80 OR status == approved')}
+        {nodeType === 'condition' && (
+          <div>
+            <label style={labelStyle}>Condition rule</label>
+            <input value={(node.data.config as Record<string,string>).rule || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), rule: e.target.value } })} placeholder="e.g. score > 80 OR status == approved" style={fieldStyle} />
+          </div>
+        )}
 
         <div>
-          <label style={{ fontSize: 11, fontWeight: 600, color: '#71717a', display: 'block', marginBottom: 5 }}>Description</label>
-          <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })}
-            placeholder="What does this step do?" rows={3}
-            style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', boxSizing: 'border-box' }} />
+          <label style={labelStyle}>Description</label>
+          <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="What does this step do?" rows={3} style={{ ...fieldStyle, resize: 'none' }} />
         </div>
 
-        <button onClick={() => deleteNode(node.id)}
-          style={{ padding: '9px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+        {/* TODO: connector credentials — wire per-tool OAuth/token storage here */}
+        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#3f3f46' }}>
+          Connector credentials: coming soon
+        </div>
+
+        <button onClick={() => deleteNode(node.id)} style={{ padding: '9px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
           Delete node
         </button>
       </div>
@@ -217,7 +267,7 @@ function ConfigPanel() {
   )
 }
 
-// ─── Execution Log ─────────────────────────────────────────────────────────────
+// ─── Execution Log ────────────────────────────────────────────────────────────
 
 function ExecutionLog() {
   const { executionLogs, clearLogs, isRunning } = useAgentStore()
@@ -234,8 +284,10 @@ function ExecutionLog() {
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {executionLogs.map((log, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-            <span style={{ color: log.status === 'success' ? '#22c55e' : log.status === 'error' ? '#ef4444' : '#f59e0b', flexShrink: 0 }}>
-              {log.status === 'success' ? '✓' : log.status === 'error' ? '✗' : '⟳'}
+            <span style={{ flexShrink: 0 }}>
+              {log.status === 'success' && <IcoCheckSm />}
+              {log.status === 'error'   && <IcoX />}
+              {log.status === 'running' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', animation: 'pulse 1s ease infinite' }} />}
             </span>
             <span style={{ color: '#a1a1aa', flex: 1 }}>{log.message}</span>
             {log.duration && <span style={{ color: '#52525b', fontSize: 10 }}>{log.duration}ms</span>}
@@ -246,7 +298,7 @@ function ExecutionLog() {
   )
 }
 
-// ─── Palette ───────────────────────────────────────────────────────────────────
+// ─── Node Palette ─────────────────────────────────────────────────────────────
 
 const PALETTE: { type: WyberNodeType; description: string }[] = [
   { type: 'trigger',   description: 'Start the flow' },
@@ -256,19 +308,23 @@ const PALETTE: { type: WyberNodeType; description: string }[] = [
   { type: 'output',   description: 'End / return result' },
 ]
 
-// ─── Main Canvas ───────────────────────────────────────────────────────────────
+// ─── Main Canvas ──────────────────────────────────────────────────────────────
 
 interface Props {
   projectId: string
   projectName: string
   canvasType: 'agent' | 'workflow'
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null
+  /** 'project' → saves to /api/projects/[id]/canvas (projects table)
+   *  'flow'    → saves to /api/flows/[id] (flows table, default for /flows/[id] route) */
+  saveTarget?: 'project' | 'flow'
 }
 
-export function AgentCanvas({ projectId, projectName, canvasType, initialProfile }: Props) {
+export function AgentCanvas({ projectId, projectName, canvasType, initialProfile, saveTarget = 'flow' }: Props) {
   const router = useRouter()
   const [saved, setSaved] = useState(false)
-  const [chatWidth] = useState(380) // Same as IDELayout right panel default
+  const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project')
+  const [chatWidth] = useState(380)
 
   const {
     nodes, edges, selectedNodeId,
@@ -277,19 +333,53 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
     hydrateFromSession,
   } = useAgentStore()
 
-  // Hydrate canvas from sessionStorage on first load (from agent library)
-  useEffect(() => { hydrateFromSession(projectId) }, [projectId])
-
   const credits = initialProfile?.credits ?? 0
 
+  // On mount: hydrate from sessionStorage first (agent library hand-off),
+  // then fall back to persisted canvas_data for project-routed canvases.
+  useEffect(() => {
+    hydrateFromSession(projectId)
+
+    if (saveTarget === 'project') {
+      fetch(`/api/projects/${projectId}/canvas`)
+        .then(r => r.json())
+        .then(({ canvas_data }) => {
+          if (canvas_data?.nodes?.length) {
+            useAgentStore.setState({ nodes: canvas_data.nodes, edges: canvas_data.edges ?? [], selectedNodeId: null })
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingCanvas(false))
+    }
+  }, [projectId, saveTarget])
+
   const handleSave = async () => {
-    await fetch(`/api/flows/${projectId}`, {
+    const url = saveTarget === 'project'
+      ? `/api/projects/${projectId}/canvas`
+      : `/api/flows/${projectId}`
+    await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nodes, edges }),
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const isAgent    = canvasType === 'agent'
+  const accentColor = isAgent ? '#8b5cf6' : '#0EA5E9'
+  const TypeIcon    = isAgent ? IcoCpu : IcoZap
+
+  if (loadingCanvas) {
+    return (
+      <div style={{ height: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', sans-serif" }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: '#52525b' }}>
+          <div style={{ width: 32, height: 32, border: '2px solid rgba(255,255,255,0.06)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ fontSize: 13 }}>Loading canvas...</div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
   }
 
   return (
@@ -309,44 +399,44 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
         </svg>
 
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{projectName}</span>
-        <div style={{ padding: '2px 8px', borderRadius: 20, background: canvasType === 'agent' ? 'rgba(139,92,246,0.12)' : 'rgba(14,165,233,0.12)', color: canvasType === 'agent' ? '#8b5cf6' : '#0EA5E9', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          {canvasType === 'agent' ? '🤖 Agent' : '⚡ Workflow'}
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{projectName}</span>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 20, background: `${accentColor}18`, border: `1px solid ${accentColor}30`, color: accentColor, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <TypeIcon size={11} color={accentColor} />
+          {isAgent ? 'Agent' : 'Workflow'}
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 7, alignItems: 'center' }}>
           <div style={{ fontSize: 11, color: credits < 10 ? '#ef4444' : '#52525b', padding: '3px 9px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.06)' }}>
             {credits} cr
           </div>
-          <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
-            {saved ? '✓ Saved' : 'Save'}
+          <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
+            {saved ? <><IcoCheckSm color="#22c55e" /> Saved</> : 'Save'}
           </button>
+          {/* TODO: wire Run button to real execution API (/api/agent/run or /api/flows/[id]/run) */}
           <button onClick={runFlow} disabled={isRunning}
             style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: isRunning ? '#1a1a24' : '#0EA5E9', color: isRunning ? '#52525b' : '#fff', fontSize: 11, fontWeight: 700, cursor: isRunning ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
-            {isRunning
-              ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Running...</>
-              : '▶ Run'
-            }
+            {isRunning ? <><IcoSpinner /> Running...</> : '▶ Run'}
           </button>
         </div>
       </div>
 
-      {/* Body — canvas + chat side by side like IDELayout */}
+      {/* Body */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
         {/* Left palette */}
         <div style={{ width: 160, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, padding: '0 4px' }}>Nodes</div>
           {PALETTE.map(({ type, description }) => {
-            const s = NODE_STYLES[type]
+            const m = NODE_META[type]
             return (
               <button key={type} onClick={() => addNode(type)}
-                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 8, border: `1px solid ${s.color}18`, background: s.bg, color: '#fafafa', fontSize: 11, fontWeight: 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', width: '100%' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = s.color + '45'; (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = s.color + '18'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
-                <span style={{ fontSize: 13, flexShrink: 0 }}>{s.icon}</span>
+                style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 9px', borderRadius: 8, border: `1px solid ${m.color}18`, background: m.bg, color: '#fafafa', fontSize: 11, fontWeight: 500, cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s', width: '100%' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = m.color + '45'; (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = m.color + '18'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
+                <m.Icon size={14} color={m.color} />
                 <div>
-                  <div style={{ color: s.color, fontWeight: 600, fontSize: 11 }}>{s.label}</div>
+                  <div style={{ color: m.color, fontWeight: 600, fontSize: 11 }}>{m.label}</div>
                   <div style={{ color: '#52525b', fontSize: 10 }}>{description}</div>
                 </div>
               </button>
@@ -357,7 +447,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           </div>
         </div>
 
-        {/* Canvas — takes remaining space, same as IDELayout preview panel */}
+        {/* Canvas */}
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden', paddingBottom: executionLogs.length > 0 ? 160 : 0 }}>
           <ReactFlow
             nodes={nodes}
@@ -376,16 +466,18 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="rgba(255,255,255,0.04)" />
             <Controls style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10 }} />
             <MiniMap
-              nodeColor={n => NODE_STYLES[(n.type as WyberNodeType) || 'trigger'].color}
+              nodeColor={n => NODE_META[(n.type as WyberNodeType) || 'trigger'].color}
               style={{ background: '#0d0d0f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10 }}
               maskColor="rgba(0,0,0,0.5)"
             />
             {nodes.length <= 1 && (
               <Panel position="top-center">
                 <div style={{ marginTop: 80, textAlign: 'center', color: '#3f3f46', pointerEvents: 'none', fontFamily: "'Space Grotesk', sans-serif" }}>
-                  <div style={{ fontSize: 32, marginBottom: 10 }}>{canvasType === 'agent' ? '🤖' : '⚡'}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, opacity: 0.4 }}>
+                    {isAgent ? <IcoCpu size={36} color="#8b5cf6" /> : <IcoZap size={36} color="#0EA5E9" />}
+                  </div>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Add nodes or describe your use case in the chat →</div>
-                  <div style={{ fontSize: 11 }}>Wyber AI will match and load the right agent automatically</div>
+                  <div style={{ fontSize: 11 }}>Wyber AI will match and load the right {isAgent ? 'agent' : 'workflow'} automatically</div>
                 </div>
               </Panel>
             )}
@@ -393,20 +485,21 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <ExecutionLog />
         </div>
 
-        {/* Node config panel — slides in on selection */}
+        {/* Node config panel */}
         {selectedNodeId && <ConfigPanel />}
 
-        {/* Divider */}
         <div style={{ width: 1, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />
 
-        {/* Chat panel — fixed 380px, same as IDELayout right panel */}
+        {/* Chat panel */}
         <div style={{ width: chatWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {/* TODO: wire CanvasChat send to /api/generate-agent or /api/generate-flow
+              based on canvasType, and auto-apply the returned nodes/edges to the canvas */}
           <CanvasChat projectId={projectId} canvasType={canvasType} />
         </div>
       </div>
 
       <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .react-flow__attribution { display: none; }
         .react-flow__handle { transition: all 0.15s; }

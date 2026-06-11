@@ -62,7 +62,9 @@ create table public.projects (
   last_commit_sha text,
   -- Meta
   created_at    timestamptz default now(),
-  updated_at    timestamptz default now()
+  updated_at    timestamptz default now(),
+  -- Agent / Workflow canvas state (nodes + edges JSON)
+  canvas_data   jsonb
 );
 
 -- ── GENERATIONS ──────────────────────────────────────────────
