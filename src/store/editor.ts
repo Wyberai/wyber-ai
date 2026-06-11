@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
-export type Framework = 'react-vite' | 'next' | 'vue' | 'vanilla';
+export type Framework = 'react-vite' | 'next' | 'vue' | 'vanilla' | 'react-native';
 
 export interface FileNode {
   path: string;
@@ -177,8 +177,8 @@ export const useEditorStore = create<EditorState>()(
     }),
 
     setFiles: (files) => set((s) => {
-      s.files = files;
-      const paths = Object.keys(files);
+      s.files = files ?? {};
+      const paths = Object.keys(s.files);
       if (paths.length && !s.activeFile) {
         const preferred = paths.find(p => p.includes('App') || p.includes('index') || p.includes('main')) ?? paths[0];
         s.activeFile = preferred;

@@ -156,13 +156,13 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   useEffect(() => {
     if (!hydrated || hasInit) return;
     setHasInit(true);
-    const hasFiles = Object.keys(files).length > 0;
+    const hasFiles = Object.keys(files ?? {}).length > 0;
     const hasMessages = messages.length > 0;
     // Existing project with work — do NOT reset. Just leave loaded state.
     if (hasFiles || hasMessages) return;
-    // Brand new project — seed starter template + greeting
+    // Brand new project — seed starter template + greeting (skip if no template for this framework)
     const template = STARTER_TEMPLATES[framework];
-    setFiles(template);
+    if (template) setFiles(template);
     const greeting = { id: uid(), role:'assistant' as const, content:`**Wyber AI ready** — describe what to build, paste a screenshot, or pick a template.`, timestamp:Date.now(), status:'done' as const };
     addMessage(greeting);
   }, [hydrated, hasInit, files, messages, framework, setFiles, addMessage]);
@@ -325,7 +325,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
     // Snapshot current files for undo BEFORE generation
-    if (Object.keys(files).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
+    if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
 
     consumeCredit();
     const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
@@ -678,7 +678,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         <div style={{ background:'var(--bg-elevated)', borderRadius:10, border:`1px solid ${input.trim() ? 'var(--ide-border-light)' : 'var(--ide-border)'}`, overflow:'visible', position:'relative', transition:'border-color 0.15s', display:'flex', flexDirection:'column' }}>{mentionQuery !== null && (
             <FileMentionDropdown
               query={mentionQuery}
-              files={Object.keys(files)}
+              files={Object.keys(files ?? {})}
               onSelect={(path) => {
                 const base = path.split('/').pop() || path;
                 setInput(prev => prev.replace(/@[\w./-]*$/, base + ' '));

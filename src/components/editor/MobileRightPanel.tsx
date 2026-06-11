@@ -53,7 +53,7 @@ function StoreListing({ projectId, projectName }: { projectId?: string; projectN
     setError(null)
     try {
       // Grab a snippet from App.tsx for context
-      const appFile = Object.entries(files).find(([p]) => p.includes('App.tsx'))
+      const appFile = Object.entries(files ?? {}).find(([p]) => p.includes('App.tsx'))
       const codeSnippet = appFile ? (appFile[1] as any).content?.slice(0, 1200) : ''
 
       const res = await fetch('/api/store-listing', {

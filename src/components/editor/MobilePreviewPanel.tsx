@@ -21,11 +21,11 @@ export function MobilePreviewPanel() {
   const prevGenerating = useRef(false)
   const lastKey = useRef('')
 
-  const hasApp = Object.keys(files).some(p => p.includes('App.tsx') || p.includes('App.jsx'))
+  const hasApp = Object.keys(files ?? {}).some(p => p.includes('App.tsx') || p.includes('App.jsx'))
 
   const saveToSnack = useCallback(async () => {
     if (!hasApp || saving) return
-    const key = Object.keys(files).sort().map(p => `${p}:${(files[p] as any)?.content?.length ?? 0}`).join('|')
+    const key = Object.keys(files ?? {}).sort().map(p => `${p}:${(files[p] as any)?.content?.length ?? 0}`).join('|')
     if (key === lastKey.current && embedUrl) return
     lastKey.current = key
 
@@ -37,7 +37,7 @@ export function MobilePreviewPanel() {
     try {
       // Convert file map to plain string map
       const plainFiles: Record<string, string> = {}
-      for (const [path, file] of Object.entries(files)) {
+      for (const [path, file] of Object.entries(files ?? {})) {
         plainFiles[path] = (file as any).content || ''
       }
 

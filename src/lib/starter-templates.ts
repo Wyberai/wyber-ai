@@ -162,4 +162,28 @@ export default function Home() {
   "devDependencies": { "typescript": "^5.5.0", "@types/react": "^18.3.0", "@types/node": "^22.0.0" }
 }`),
   },
+
+  'react-native': {
+    'App.tsx': f('App.tsx', `import React from 'react';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+
+export default function App() {
+  return (
+    <SafeAreaView style={styles.root}>
+      <View style={styles.center}>
+        <Text style={styles.title}>Wyber AI Mobile</Text>
+        <Text style={styles.subtitle}>Describe your app in the chat to get started</Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#09090b' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
+  title: { fontSize: 22, fontWeight: '700', color: '#f4f4f5', letterSpacing: -0.5 },
+  subtitle: { fontSize: 14, color: '#71717a', textAlign: 'center', lineHeight: 22 },
+});
+`),
+  },
 };
