@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { IDELayout } from '@/components/editor/IDELayout'
 import { AgentCanvas } from '@/components/editor/AgentCanvas'
+import { MobileLayout } from '@/components/editor/MobileLayout'
 import type { Metadata } from 'next'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ type?: string }> }
@@ -45,6 +46,15 @@ export default async function ProjectPage({ params, searchParams }: Props) {
 
   // Determine canvas type from URL param or project type
   const canvasType = type || project.project_type || 'app'
+
+  if (canvasType === 'mobile') {
+    return (
+      <MobileLayout
+        initialProject={{ id, name: project.name || 'Untitled', files: project.files, project_type: project.project_type, user_id: user.id }}
+        initialProfile={initialProfile}
+      />
+    )
+  }
 
   if (canvasType === 'agent' || canvasType === 'workflow') {
     return (

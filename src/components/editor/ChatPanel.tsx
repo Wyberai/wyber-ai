@@ -55,7 +55,7 @@ function renderMessage(text: string) {
 }
 
 interface AttachedImage { dataUrl: string; base64: string; mimeType: string; name: string; }
-interface Props { projectId?: string; userId?: string; }
+interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium';
 const MODEL_LABELS: Record<ModelTier, { label: string; credits: string; description: string }> = {
@@ -64,7 +64,7 @@ const MODEL_LABELS: Record<ModelTier, { label: string; credits: string; descript
   premium: { label: 'Premium', credits: '2 credits', description: 'Complex apps and detailed UI' },
 };
 
-export function ChatPanel({ projectId, userId }: Props) {
+export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
     messages, isGenerating, addMessage, updateMessage, setMessages,
     setIsGenerating, setStreamingContent, clearStreamingContent,
@@ -389,6 +389,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           prompt: userMsg || 'Build a UI matching this screenshot exactly.',
           framework, fileContext, history, knowledge: knowledgeStr, modelTier,
           userId: resolvedUserId, projectId: resolvedProjectId,
+          projectType,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
         }),
       });
