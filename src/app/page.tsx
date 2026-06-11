@@ -3,18 +3,9 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { LiveDemo } from '@/components/shared/LiveDemo';
 import { GenerateAnimation, DeployAnimation, VisualEditAnimation, DatabaseAnimation } from '@/components/shared/ProductAnimations';
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 const BRAND = '#0EA5E9';
-
-function WyberLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill={BRAND}/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
 
 const STATS = [
   { value: '5,000+', label: 'AI Agents' },
@@ -147,9 +138,8 @@ export default function HomePage() {
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
-          <WyberLogo size={26} />
-          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 0, textDecoration: 'none', color: 'inherit' }}>
+          <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {[['Gallery', '/gallery'], ['Agents', '/agents'], ['Flows', '/flows'], ['Pricing', '/pricing']].map(([l, h]) => (
@@ -373,8 +363,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <WyberLogo size={20} />
-          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: '-0.03em', color: '#71717a' }}>Wyber AI</span>
+          <WyberLogo markSize={20} wordmarkSize={13} />
           <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>

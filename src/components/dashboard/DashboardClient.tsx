@@ -8,16 +8,38 @@ import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
-function WyberLogo({ size = 26 }: { size?: number }) {
+// SVG icons — no emojis
+const IconHome = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>;
+const IconGrid = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
+const IconTemplates = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
+const IconSettings = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
+const IconBolt = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="#0EA5E9"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
+const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
+const IconDot = () => <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />;
+const IconTrash = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
+const IconCopy = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>;
+const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>;
+const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
+
+// Project type badge
+const TYPE_META: Record<string, { label: string; color: string }> = {
+  app:      { label: 'Web',      color: '#0EA5E9' },
+  mobile:   { label: 'Mobile',   color: '#8b5cf6' },
+  agent:    { label: 'Agent',    color: '#10b981' },
+  workflow: { label: 'Workflow', color: '#f59e0b' },
+};
+
+function TypeBadge({ type }: { type?: string }) {
+  const meta = TYPE_META[type ?? ''] ?? { label: 'Web', color: '#0EA5E9' };
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
+    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: meta.color, background: `${meta.color}18`, border: `1px solid ${meta.color}35`, borderRadius: 4, padding: '2px 6px', lineHeight: 1.4 }}>
+      {meta.label}
+    </span>
   );
 }
 
@@ -29,6 +51,16 @@ const QUICK_PROMPTS = [
   'Build a customer support hub with ticket queue, SLA tracking, and escalations',
   'Build a revenue operations dashboard with pipeline scoring and forecast analytics',
 ];
+
+// Colors
+const BG = '#15171f';
+const SIDEBAR_BG = '#10121a';
+const BORDER = '#262a36';
+const TEXT = '#f4f4f5';
+const MUTED = '#a1a1aa';
+const DIM = '#52525b';
+const CARD_BG = '#1a1d28';
+const BRAND = '#0EA5E9';
 
 export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const router = useRouter();
@@ -112,55 +144,60 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   };
 
   const NAV = [
-    { label: 'Home', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg> },
-    { label: 'Projects', href: '/dashboard', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
-    { label: 'Templates', href: '/gallery', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
-    { label: 'Settings', href: '/settings', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg> },
+    { label: 'Home',      href: '/dashboard', icon: <IconHome /> },
+    { label: 'Projects',  href: '/dashboard', icon: <IconGrid /> },
+    { label: 'Templates', href: '/gallery',   icon: <IconTemplates /> },
+    { label: 'Settings',  href: '/settings',  icon: <IconSettings /> },
   ];
 
+  const ACCENT_PALETTE = ['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'];
+  const accentFor = (n?: string) => ACCENT_PALETTE[Math.abs((n?.charCodeAt(0) ?? 0) % ACCENT_PALETTE.length)];
+
   return (
-    <div style={{ display: 'flex', height: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: "'Space Grotesk', sans-serif" }}>
 
       {/* Sidebar */}
-      <aside style={{ width: 220, height: '100vh', background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 }}>
-        <div style={{ padding: '16px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <WyberLogo size={26} />
-            <div style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: '-0.03em' }}>Wyber AI</div>
-          </div>
+      <aside style={{ width: 220, height: '100vh', background: SIDEBAR_BG, borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 }}>
+        {/* Logo */}
+        <div style={{ padding: '16px 14px', borderBottom: `1px solid ${BORDER}` }}>
+          <WyberLogo markSize={26} wordmarkSize={14} />
         </div>
 
+        {/* User row */}
         <button onClick={() => setSidebarExpanded(v => !v)}
-          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', border: 'none', background: 'transparent', color: '#fafafa', cursor: 'pointer', width: '100%', textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', border: 'none', background: 'transparent', color: TEXT, cursor: 'pointer', width: '100%', textAlign: 'left', borderBottom: `1px solid ${BORDER}` }}>
           <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #0EA5E9, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
             {name[0]?.toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-            <div style={{ fontSize: 10, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} plan</div>
+            <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} plan</div>
           </div>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: sidebarExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>
+          <IconChevronDown rotated={sidebarExpanded} />
         </button>
 
+        {/* Credits panel */}
         {sidebarExpanded && (
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ fontSize: 11, color: '#71717a', marginBottom: 8 }}>Credits</div>
+          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ fontSize: 11, color: MUTED, marginBottom: 8 }}>Credits</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <span style={{ fontSize: 13, fontWeight: 700 }}>{credits} left</span>
-              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Add credits</Link>
+              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>Add credits</Link>
             </div>
-            <div style={{ height: 4, borderRadius: 9999, background: 'rgba(255,255,255,0.06)' }}>
-              <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : '#0EA5E9', width: creditPct + '%', transition: 'width 0.5s ease' }} />
+            <div style={{ height: 4, borderRadius: 9999, background: BORDER }}>
+              <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : BRAND, width: creditPct + '%', transition: 'width 0.5s ease' }} />
             </div>
             {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>Low on credits — upgrade to continue building</div>}
           </div>
         )}
 
-        <nav style={{ padding: '8px 8px', flex: 1, overflow: 'auto' }}>
+        {/* Nav */}
+        <nav style={{ padding: '8px', flex: 1, overflow: 'auto' }}>
           {NAV.map(n => (
-            <Link key={n.label} href={n.href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: '#a1a1aa', fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
+            <Link key={n.label} href={n.href}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `rgba(255,255,255,0.05)`; (e.currentTarget as HTMLElement).style.color = TEXT }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = MUTED }}>
               {n.icon}{n.label}
             </Link>
           ))}
@@ -169,10 +206,10 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>Recent</div>
             {projects.slice(0, 4).map(p => (
               <Link key={p.id} href={`/project/${p.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: '#71717a', fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'all 0.15s', marginBottom: 1 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#71717a' }}>
-                <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'all 0.15s', marginBottom: 1 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = TEXT }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = DIM }}>
+                <IconDot />
                 {p.name || 'Untitled'}
               </Link>
             ))}
@@ -182,14 +219,15 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         <ReferralCard />
 
         {plan === 'free' && (
-          <div style={{ padding: '10px 10px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            <Link href="/pricing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', textDecoration: 'none', transition: 'all 0.15s' }}
+          <div style={{ padding: '10px', borderTop: `1px solid ${BORDER}` }}>
+            <Link href="/pricing"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: `rgba(14,165,233,0.1)`, border: `1px solid rgba(14,165,233,0.2)`, textDecoration: 'none', transition: 'all 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.15)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.1)'}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="#0EA5E9"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <IconBolt />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9' }}>Upgrade to Pro</div>
-                <div style={{ fontSize: 10, color: '#52525b' }}>2000 credits/month</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Pro</div>
+                <div style={{ fontSize: 10, color: DIM }}>2000 credits/month</div>
               </div>
             </Link>
           </div>
@@ -198,37 +236,39 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
       {/* Main */}
       <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {/* Hero */}
-        <div style={{ position: 'relative', minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 60% at 20% 40%, rgba(14,165,233,0.25) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 60%, rgba(139,92,246,0.2) 0%, transparent 60%)', animation: 'gradientShift 8s ease infinite' }} />
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
+        {/* Hero / prompt area */}
+        <div style={{ position: 'relative', minHeight: 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 20% 40%, rgba(14,165,233,0.18) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 60%, rgba(139,92,246,0.14) 0%, transparent 60%)`, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
+
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
             What are we building, {name.split(' ')[0]}?
           </h1>
 
           <div style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
-            <div style={{ background: 'rgba(17,17,19,0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.4)' }}>
+            <div style={{ background: 'rgba(16,18,26,0.9)', backdropFilter: 'blur(20px)', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
               <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder="Describe the web app you want to build..." rows={3}
-                style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: '#fafafa', fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10 }}>
-                <span style={{ fontSize: 11, color: '#3f3f46' }}>↵ Enter to build</span>
+                placeholder="Describe the app you want to build..." rows={3}
+                style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
+                <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
                 <button onClick={() => openChooser(promptInput.trim() || undefined)} disabled={creating}
-                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : '#0EA5E9', color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                    : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>
+                    : <IconArrowUp />
                   }
                 </button>
               </div>
             </div>
+
             <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
               {QUICK_PROMPTS.slice(0, 4).map(p => (
                 <button key={p} onClick={() => { setPromptInput(p); textareaRef.current?.focus() }}
-                  style={{ padding: '4px 12px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', color: '#71717a', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#fafafa'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#71717a'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)' }}>
+                  style={{ padding: '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEXT; (e.currentTarget as HTMLElement).style.borderColor = `rgba(14,165,233,0.4)` }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = DIM; (e.currentTarget as HTMLElement).style.borderColor = BORDER }}>
                   {p.replace('Build a ', '').replace('Create a ', '')}
                 </button>
               ))}
@@ -241,62 +281,68 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           {projects.length > 0 ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Apps</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Projects</h2>
                 <button onClick={() => openChooser()} disabled={creating}
-                  style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  + New App
+                  style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  + New Project
                 </button>
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                 {projects.slice(0, 11).map(p => (
                   <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ height: 160, borderRadius: 12, border: '1px solid rgba(255,255,255,0.07)', background: '#111113', overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.4)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                    <div style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.35)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.5)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+
+                      {/* Action buttons */}
                       {p.id && <>
-                        <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id} title="Delete project"
-                          style={{ position: 'absolute', top: 6, right: 6, zIndex: 10, width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(9,9,11,0.7)', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, backdropFilter: 'blur(4px)' }}>
-                          {deletingId === p.id ? '…' : '×'}
+                        <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id} title="Delete"
+                          style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                          {deletingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconTrash />}
                         </button>
                         <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title="Duplicate"
-                          style={{ position: 'absolute', top: 6, right: 32, zIndex: 10, width: 22, height: 22, borderRadius: 5, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(9,9,11,0.7)', color: '#71717a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, backdropFilter: 'blur(4px)' }}>
-                          {duplicatingId === p.id ? '…' : '⎘'}
+                          style={{ position: 'absolute', top: 7, right: 36, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                          {duplicatingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconCopy />}
                         </button>
                       </>}
-                      <div style={{ height: 110, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}18, rgba(9,9,11,0.8))` }}>
+
+                      {/* Thumbnail */}
+                      <div style={{ height: 112, position: 'relative', overflow: 'hidden', background: `linear-gradient(135deg, ${accentFor(p.name)}18, rgba(16,18,26,0.9))` }}>
                         {(p as any).thumbnail_url
                           ? <img src={(p as any).thumbnail_url} alt={p.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <div style={{ width: 40, height: 40, borderRadius: 10, background: `${['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'][Math.abs((p.name?.charCodeAt(0) ?? 0) % 5)]}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                                ⚛
-                              </div>
+                          : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }}>
+                              <IconPlaceholder />
                             </div>
                         }
                       </div>
-                      <div style={{ padding: '8px 12px' }}>
-                        {renamingId === p.id && p.id ? (
-                          <input autoFocus defaultValue={p.name || ''} onBlur={e => handleRename(p.id!, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleRename(p.id!, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRenamingId(null); }} onClick={e => e.preventDefault()} style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(14,165,233,0.5)', borderRadius: 4, padding: '1px 5px', width: '100%', outline: 'none', fontFamily: 'inherit' }} />
-                        ) : (
-                          <div onDoubleClick={e => { e.preventDefault(); e.stopPropagation(); if (p.id) setRenamingId(p.id); }} style={{ fontSize: 12, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{p.name || 'Untitled'}</div>
-                        )}
-                        <div style={{ fontSize: 10, color: '#52525b' }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
+
+                      {/* Footer */}
+                      <div style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                          {renamingId === p.id && p.id ? (
+                            <input autoFocus defaultValue={p.name || ''} onBlur={e => handleRename(p.id!, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleRename(p.id!, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRenamingId(null); }} onClick={e => e.preventDefault()} style={{ fontSize: 12, fontWeight: 600, color: TEXT, background: 'rgba(255,255,255,0.08)', border: `1px solid rgba(14,165,233,0.5)`, borderRadius: 4, padding: '1px 5px', flex: 1, outline: 'none', fontFamily: 'inherit' }} />
+                          ) : (
+                            <div onDoubleClick={e => { e.preventDefault(); e.stopPropagation(); if (p.id) setRenamingId(p.id); }} style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name || 'Untitled'}</div>
+                          )}
+                          <TypeBadge type={(p as any).project_type} />
+                        </div>
+                        <div style={{ fontSize: 10, color: DIM }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
                       </div>
                     </div>
                   </Link>
                 ))}
               </div>
 
-              {/* Templates gallery — below the user's apps */}
               <div style={{ marginTop: 36 }}>
                 <TemplatesShowcase userId={profile?.id} />
               </div>
             </>
           ) : (
             <>
-              {/* Empty state — still show templates so new users can start fast */}
-              <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: '#52525b' }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>⚡</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: '#fafafa', marginBottom: 8 }}>No apps yet</div>
+              <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><IconEmpty /></div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No projects yet</div>
                 <div style={{ fontSize: 14, marginBottom: 8 }}>Describe your first app above, or start from a template below</div>
               </div>
               <div style={{ marginTop: 24 }}>
@@ -310,9 +356,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
-        @keyframes gradientShift { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
       `}</style>
-      <ProjectTypeChooser open={showTypePicker} onClose={() => setShowTypePicker(false)} onPick={(type) => { setShowTypePicker(false); startProject(pendingPrompt, type); }} />
+      <ProjectTypeChooser
+        open={showTypePicker}
+        onClose={() => setShowTypePicker(false)}
+        onPick={(type) => { setShowTypePicker(false); startProject(pendingPrompt, type); }}
+      />
     </div>
   );
 }
