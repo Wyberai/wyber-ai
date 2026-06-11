@@ -1,7 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Profile, Project } from '@/lib/supabase/types';
 import Link from 'next/link';
@@ -75,6 +75,16 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const searchParams = useSearchParams();
+
+  // Deep-link: /dashboard?new=app|mobile|agent|workflow → open chooser
+  useEffect(() => {
+    const newType = searchParams.get('new');
+    if (['app', 'mobile', 'agent', 'workflow'].includes(newType ?? '')) {
+      setPendingPrompt(undefined);
+      setShowTypePicker(true);
+    }
+  }, []);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
