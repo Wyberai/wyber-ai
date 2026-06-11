@@ -337,6 +337,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
   }
     const assistantId = uid();
     addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
+    // Staged build for complex apps (>=4 files). Returns true if handled; else fall through to one-shot.
+    if (!img) {
+      try {
+        const handledByStaged = await runStagedBuild(userMsg, assistantId);
+        if (handledByStaged) { setIsGenerating(false); return; }
+      } catch (e) { console.error('staged build error, falling back', e); }
+    }
     setIsGenerating(false);
     clearStreamingContent();
     setLastCreditCost(null);
