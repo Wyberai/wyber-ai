@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
+import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
@@ -232,6 +233,94 @@ export function ChatPanel({ projectId, userId }: Props) {
     if (!resolvedProjectId) return;
     fetch('/api/projects', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ projectId: resolvedProjectId, files: updatedFiles, userId: resolvedUserId || "auto" }) }).catch(() => {});
   }, [resolvedProjectId, resolvedUserId]);
+
+  // ── Staged generation: plan → scaffold → fill batches ──
+  // Returns true if it handled the build (staged), false to fall back to one-shot.
+  const runStagedBuild = useCallback(async (userMsg: string, assistantId: string): Promise<boolean> => {
+    try {
+      // STAGE A — Plan: get the file manifest (fast, cheap)
+      setStreamingContent('Planning the build…')
+      const planRes = await fetch('/api/generate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: userMsg, stage: 'plan', modelTier,
+          userId: resolvedUserId, projectId: resolvedProjectId,
+        }),
+      })
+      if (!planRes.ok) return false
+      const planReader = planRes.body!.getReader()
+      const planDecoder = new TextDecoder()
+      let planRaw = ''
+      while (true) {
+        const { done, value } = await planReader.read()
+        if (done) break
+        planRaw += planDecoder.decode(value, { stream: true })
+      }
+      const manifest = parsePlanManifest(planRaw)
+      const plan = buildStagedPlan(manifest)
+      if (!plan.shouldStage) return false  // simple app → one-shot fallback
+
+      const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' }
+      let working = { ...files }
+      const forgeLog: string[] = []
+      const pushForge = (line: string) => { forgeLog.push('✓ ' + line); setStreamingContent('⚒ Forging your app\n\n' + forgeLog.join('\n')) }
+
+      // Helper: run one stage call, merge files, rebuild preview
+      const runPass = async (stage: 'scaffold'|'fill', paths: string[], logLine: string): Promise<boolean> => {
+        setStreamingContent('⚒ Forging your app\n\n' + forgeLog.join('\n') + (forgeLog.length?'\n':'') + '◌ ' + logLine)
+        const doCall = async () => {
+          const res = await fetch('/api/generate', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: userMsg, stage, stageFiles: paths, modelTier,
+              fileContext: stage==='fill' ? Object.entries(working).map(([p,f]:any)=>`<file path="${p}">\n${(f.content||'').slice(0,4000)}\n</file>`).join('\n\n') : '',
+              userId: resolvedUserId, projectId: resolvedProjectId,
+            }),
+          })
+          if (!res.ok) throw new Error(await res.text())
+          const reader = res.body!.getReader(); const dec = new TextDecoder(); let full = ''
+          while (true) { const { done, value } = await reader.read(); if (done) break; full += dec.decode(value, { stream:true }) }
+          const { files: nf } = parseGenerationOutput(full)
+          if (nf.length === 0) throw new Error('No files produced in ' + stage + ' pass')
+          for (const { path, content } of nf) {
+            const ext = path.split('.').pop() ?? ''
+            working[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+          }
+          return true
+        }
+        try { await doCall() } catch { try { await doCall() } catch { return false } } // one auto-retry
+        setFiles({ ...working }); setHasGeneratedFiles(true); await saveProject(working)
+        pushForge(logLine)
+        return true
+      }
+
+      // STAGE B — Scaffold
+      const okScaffold = await runPass('scaffold', plan.scaffoldPaths, forgeLine([], 'scaffold'))
+      if (!okScaffold) return false
+
+      // STAGE C — Fill batches
+      for (const batch of plan.fillBatches) {
+        const ok = await runPass('fill', batch.map(b=>b.path), forgeLine(batch, 'fill'))
+        if (!ok) {
+          // batch failed after retry → calm error, but keep everything built so far
+          setStreamingContent('')
+          addMessage({ id: uid(), role:'assistant', content:`I built the shell and most features, but one part ("${forgeLine(batch,'fill')}") needs another pass. Tap "Try to fix" in the preview, or ask me to finish it.`, timestamp:Date.now(), status:'done' })
+          persistMessage('assistant', 'Partial build — one batch needs a retry.')
+          return true
+        }
+      }
+
+      // Done
+      setStreamingContent('')
+      const summary = `Built your app in ${plan.fillBatches.length + 1} stages — ${plan.files.length} files. Take a look at the preview.`
+      addMessage({ id: assistantId, role:'assistant', content: summary, timestamp:Date.now(), status:'done' })
+      persistMessage('assistant', summary)
+      return true
+    } catch {
+      return false  // any unexpected error → fall back to one-shot
+    }
+  }, [files, modelTier, resolvedUserId, resolvedProjectId, setFiles, setHasGeneratedFiles, saveProject, addMessage, persistMessage, setStreamingContent])
+
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
     // Snapshot current files for undo BEFORE generation

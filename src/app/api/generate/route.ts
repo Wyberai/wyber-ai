@@ -509,7 +509,7 @@ create policy "Users manage own items" on items for all using (auth.uid() = user
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [] } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -667,11 +667,28 @@ ${code}
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence, then immediately output your changes.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.'
     
     const wyberDNA = '\n\n=== WYBER DESIGN SYSTEM (mandatory for all generated apps) ===\nStyling stack: Tailwind CSS v4 + daisyUI 5 component classes. Do NOT hand-roll CSS design systems or custom CSS color variables.\n1. src/index.css MUST begin with exactly these two lines (and contain only layout helpers after them):\n@import "tailwindcss";\n@plugin "daisyui";\nThe Wyber theme tokens are injected automatically by the build system. NEVER define @theme or color variables yourself.\n2. Use daisyUI component classes everywhere: btn btn-primary, card card-body, navbar, drawer, menu, stat/stats, table, badge, modal, input, select, toggle, tabs, alert, progress, avatar. Use Tailwind utilities only for layout (flex, grid, gap-, p-, m-).\n3. Colors: ONLY semantic daisyUI classes (bg-base-100/200/300, text-primary, text-base-content, bg-primary, border-base-300, badge-success, etc). NEVER hex codes or custom color vars.\n4. Light/dark: app starts in data-theme="wyber" (dark). A theme toggle is ONE line: document.documentElement.setAttribute("data-theme", isLight ? "wyberlight" : "wyber"). Put a daisyUI swap/toggle in the top bar of every app.\n5. Typography (Space Grotesk headings, Inter body) is preconfigured. Do NOT set font-family.\n6. Polish: generous whitespace, rounded-box cards, subtle borders (border border-base-300), avoid heavy shadows.\n\n=== VISUAL POLISH (MANDATORY for every app, even if not asked — this is what separates premium from generic) ===\nDEPTH: Cards are never flat — use a subtle gradient surface + soft shadow + 1px top highlight border (lit-from-above). Layer the UI: page bg darkest, cards lighter, controls lighter still. Key metrics and primary buttons use gradient fills or gradient text, not flat color.\nSPACING: Be generous. Cards get 20-24px padding, sections 32-40px vertical breathing room. 4/8px scale, aligned to a grid. Never cram.\nBORDERS/GLOW: Subtle 1px low-contrast borders. On hover/focus add a faint primary-colored glow ring, not a hard outline. Interactive cards lift (translateY -2px) on hover with smoothed shadow.\nMOTION: Every interactive element transitions 0.15-0.2s ease (hover, toggles, tabs). Content fades/slides in 8px on mount. Never jarring.\nTYPOGRAPHY: Strong hierarchy — large tight Space Grotesk headings (-0.02em), comfortable Inter body, clear size jumps. Separate primary/secondary text with weight and muted color, not just size.\nSTATES: Always design empty states (icon + one helpful line), loading skeletons (not spinners on blank), and hover/active/focus states. No raw blank divs.\nBefore finishing, every app MUST have: layered surfaces, gradient accents on key elements, generous spacing, smooth hover transitions, clear type hierarchy, thoughtful empty/loading states. If it looks flat or cramped, it is NOT done.'
-    const fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext + templateRef + wyberDNA + outputRule
+    let fullSystemPrompt = buildSystemPrompt() + supabaseContext + knowledgeContext + templateRef + wyberDNA + outputRule
+
+    // ── Staged generation modes ──
+    // 'plan': return a JSON file manifest only (no code). Fast + cheap.
+    // 'scaffold': build only the listed shell files so the preview renders a skeleton.
+    // 'fill': build only the listed feature files this pass (small batch, can't truncate).
+    // 'full' (default): unchanged one-shot behaviour.
+    let stageMaxTokens = maxTokens
+    if (stage === 'plan') {
+      fullSystemPrompt = buildSystemPrompt() + '\n\n=== PLANNING MODE ===\nDo NOT write any code. Output ONLY a JSON array of the files this app needs, each as {"path":"src/...","purpose":"short feature description"}. Order matters: list shell/layout/theme files (index.css, App.tsx, Sidebar/nav) FIRST, then feature files. Output ONLY the JSON array, no prose, no code fences.'
+      stageMaxTokens = 2000
+    } else if (stage === 'scaffold') {
+      const list = (stageFiles as string[]).join(', ')
+      fullSystemPrompt += `\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in later passes. Output each file as a complete <file> block.`
+    } else if (stage === 'fill') {
+      const list = (stageFiles as string[]).join(', ')
+      fullSystemPrompt += `\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.`
+    }
 
     const stream = await client.messages.stream({
       model,
-      max_tokens: maxTokens,
+      max_tokens: stageMaxTokens,
       system: fullSystemPrompt,
       messages: [...trimmedHistory, { role: 'user', content: userContent }],
     })
