@@ -676,7 +676,7 @@ ${code}
     // 'full' (default): unchanged one-shot behaviour.
     let stageMaxTokens = maxTokens
     if (stage === 'plan') {
-      fullSystemPrompt = buildSystemPrompt() + '\n\n=== PLANNING MODE ===\nDo NOT write any code. Output ONLY a JSON array of the files this app needs, each as {"path":"src/...","purpose":"short feature description"}. Order matters: list shell/layout/theme files (index.css, App.tsx, Sidebar/nav) FIRST, then feature files. Output ONLY the JSON array, no prose, no code fences.'
+      fullSystemPrompt = "You are a software architect. Given an app request, output ONLY a JSON array of the files needed to build it. Each item must be {\"path\":\"src/...\",\"purpose\":\"short feature description\"}. List shell files (src/index.css, src/App.tsx, src/components/Sidebar.tsx) FIRST, then one file per feature. Aim for 5-9 files. Output ONLY the raw JSON array starting with [ and ending with ]. No prose, no markdown, no code fences."
       stageMaxTokens = 2000
     } else if (stage === 'scaffold') {
       const list = (stageFiles as string[]).join(', ')
