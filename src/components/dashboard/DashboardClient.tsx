@@ -7,6 +7,7 @@ import { Profile, Project } from '@/lib/supabase/types';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
+import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
@@ -38,6 +39,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [showTypePicker, setShowTypePicker] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -79,7 +81,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const totalCredits = plan === 'starter' ? 500 : plan === 'pro' ? 2000 : plan === 'teams' ? 99999 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
-  const startProject = async (prompt?: string) => {
+  const openChooser = (prompt?: string) => { setPendingPrompt(prompt); setShowTypePicker(true); };
+  const startProject = async (prompt?: string, type: ProjectType = 'app') => {
     if (!profile?.id || creating) return;
     setCreating(true);
     try {
@@ -88,12 +91,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         : 'New Project ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const { data, error } = await supabase
         .from('projects')
-        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '', project_type: 'app' })
+        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '', project_type: type })
         .select('id');
       if (error) throw error;
       if (data?.[0]?.id) {
         if (prompt) sessionStorage.setItem(`wyber_prompt_${data[0].id}`, prompt);
-        router.push(`/project/${data[0].id}?type=app`);
+        router.push(`/project/${data[0].id}?type=${type}`);
       }
     } catch (err) {
       console.error(err);
@@ -104,7 +107,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      startProject(promptInput.trim() || undefined);
+      openChooser(promptInput.trim() || undefined);
     }
   };
 
@@ -211,7 +214,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: '#fafafa', fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10 }}>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>↵ Enter to build</span>
-                <button onClick={() => startProject(promptInput.trim() || undefined)} disabled={creating}
+                <button onClick={() => openChooser(promptInput.trim() || undefined)} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : '#0EA5E9', color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
@@ -239,7 +242,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Apps</h2>
-                <button onClick={() => startProject()} disabled={creating}
+                <button onClick={() => openChooser()} disabled={creating}
                   style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                   + New App
                 </button>
@@ -309,6 +312,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
         @keyframes gradientShift { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
       `}</style>
+      <ProjectTypeChooser open={showTypePicker} onClose={() => setShowTypePicker(false)} onPick={(type) => { setShowTypePicker(false); startProject(pendingPrompt, type); }} />
     </div>
   );
 }
