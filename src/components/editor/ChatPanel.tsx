@@ -237,6 +237,7 @@ export function ChatPanel({ projectId, userId }: Props) {
   // ── Staged generation: plan → scaffold → fill batches ──
   // Returns true if it handled the build (staged), false to fall back to one-shot.
   const runStagedBuild = useCallback(async (userMsg: string, assistantId: string): Promise<boolean> => {
+    return false; // STAGING DISABLED — rebuild cleanly next session
     try {
       // STAGE A — Plan: get the file manifest (fast, cheap)
       setStreamingContent('Planning the build…')

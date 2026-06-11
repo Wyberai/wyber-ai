@@ -36,17 +36,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );`),
     'src/App.tsx': f('src/App.tsx', `import { useState } from 'react';
 export default function App() {
-  const [count, setCount] = useState(0);
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui', gap: 16 }}>
-      <h1 style={{ fontSize: 32, fontWeight: 700 }}>Hello from Wyber AI</h1>
-      <p style={{ color: '#666' }}>Edit this file or describe what you want to build.</p>
-      <button
-        onClick={() => setCount(c => c + 1)}
-        style={{ padding: '10px 24px', fontSize: 16, borderRadius: 8, border: 'none', background: '#7c6ef7', color: 'white', cursor: 'pointer' }}
-      >
-        Count: {count}
-      </button>
+      <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0EA5E9' }}>Your app will appear here</h1>
+      <p style={{ color: '#a1a1aa', fontSize: 15 }}>Describe what you want to build in the chat &rarr;</p>
+
     </div>
   );
 }`),
@@ -91,9 +85,9 @@ import App from './App.vue';
 createApp(App).mount('#app');`),
     'src/App.vue': f('src/App.vue', `<template>
   <div class="app">
-    <h1>Hello from Wyber AI</h1>
+    <h1 style="color:#0EA5E9">Your app will appear here</h1>
     <p>Edit this file or describe what you want to build.</p>
-    <button @click="count++">Count: {{ count }}</button>
+    <button @click="count++">Describe what you want to build</button>
   </div>
 </template>
 <script setup>
@@ -124,9 +118,9 @@ button { padding: 10px 24px; font-size: 16px; border-radius: 8px; border: none; 
 </head>
 <body>
   <div id="app">
-    <h1>Hello from Wyber AI</h1>
+    <h1 style="color:#0EA5E9">Your app will appear here</h1>
     <p>Edit this file or describe what you want to build.</p>
-    <button id="btn">Count: 0</button>
+    <button id="btn">Describe what you want to build</button>
   </div>
   <script src="main.js"></script>
 </body>
@@ -148,10 +142,9 @@ btn.addEventListener('click', () => {
     'app/page.tsx': f('app/page.tsx', `'use client';
 import { useState } from 'react';
 export default function Home() {
-  const [count, setCount] = useState(0);
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: 'system-ui' }}>
-      <h1>Hello from Wyber AI</h1>
+      <h1 style="color:#0EA5E9">Your app will appear here</h1>
       <button onClick={() => setCount(c => c + 1)} style={{ padding: '10px 24px', fontSize: 16, borderRadius: 8, border: 'none', background: '#7c6ef7', color: 'white', cursor: 'pointer' }}>
         Count: {count}
       </button>
