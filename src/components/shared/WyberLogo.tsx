@@ -16,7 +16,7 @@ export function WyberLogo({ markSize = 26, showWordmark = true, wordmarkSize = 1
       </svg>
       {showWordmark && (
         <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: wordmarkSize, letterSpacing: '-0.03em', lineHeight: 1 }}>
-          <span style={{ color: '#f4f4f5' }}>Wyber</span><span style={{ color: '#0EA5E9' }}>ai</span>
+          <span style={{ color: '#f4f4f5' }}>Wyber</span><span style={{ color: '#0EA5E9' }}>Ai</span>
         </span>
       )}
     </div>
