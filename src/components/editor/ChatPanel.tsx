@@ -247,7 +247,7 @@ export function ChatPanel({ projectId, userId }: Props) {
           userId: resolvedUserId, projectId: resolvedProjectId,
         }),
       })
-      if (!planRes.ok) return false
+      console.log('[WYBER] plan status', planRes.status); if (!planRes.ok) { setStreamingContent('STAGED FAILED: plan call returned ' + planRes.status); return false }
       const planReader = planRes.body!.getReader()
       const planDecoder = new TextDecoder()
       let planRaw = ''
@@ -257,7 +257,7 @@ export function ChatPanel({ projectId, userId }: Props) {
         planRaw += planDecoder.decode(value, { stream: true })
       }
       const manifest = parsePlanManifest(planRaw)
-      const plan = buildStagedPlan(manifest)
+      const plan = buildStagedPlan(manifest); setStreamingContent('STAGED: parsed ' + manifest.length + ' files, shouldStage=' + plan.shouldStage); await new Promise(r=>setTimeout(r,1500));
       if (!plan.shouldStage) return false  // simple app → one-shot fallback
 
       const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' }
