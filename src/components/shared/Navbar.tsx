@@ -44,9 +44,10 @@ export function Navbar({ user }: Props) {
   };
 
   const NAV_LINKS = [
-    ['Founders', '/founders'],
-    ['Marketers', '/marketers'],
-    ['Designers', '/designers'],
+    ['Templates', '/templates'],
+    ['Mobile', '/templates/mobile'],
+    ['Workflows', '/workflows'],
+    ['Agents', '/agents'],
     ['Pricing', '/pricing'],
     ['Blog', '/blog'],
   ];

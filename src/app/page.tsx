@@ -205,7 +205,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/dashboard?new=mobile'], ['Agents', '/agents'], ['Flows', '/flows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -429,7 +429,7 @@ export default function HomePage() {
           <a href="https://www.producthunt.com/products/wyber-ai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyber-ai" target="_blank" rel="noopener noreferrer">
             <img alt="WyberAi on Product Hunt" width="200" height="44" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1160357&theme=dark&t=1780291241806" />
           </a>
-          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Mobile', '/dashboard?new=mobile'], ['Blog', '/blog'], ['Discord', 'https://discord.gg/A5KsFv2P']] as [string, string][]).map(([l, h]) => (
+          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Mobile', '/templates/mobile'], ['Workflows', '/workflows'], ['Blog', '/blog'], ['Discord', 'https://discord.gg/A5KsFv2P']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>

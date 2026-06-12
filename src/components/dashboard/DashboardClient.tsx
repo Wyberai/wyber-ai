@@ -18,6 +18,8 @@ const IconGrid = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="non
 const IconTemplates = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>;
 const IconSettings = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
 const IconBolt = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="#0EA5E9"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+const IconPhone = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
+const IconZap = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
 const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
 const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
 const IconDot = () => <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />;
@@ -78,10 +80,18 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const searchParams = useSearchParams();
 
   // Deep-link: /dashboard?new=app|mobile|agent|workflow → open chooser
+  // If ?template= is present, read the stored prompt from sessionStorage first
   useEffect(() => {
     const newType = searchParams.get('new');
     if (['app', 'mobile', 'agent', 'workflow'].includes(newType ?? '')) {
-      setPendingPrompt(undefined);
+      const templateId = searchParams.get('template');
+      let templatePrompt: string | undefined;
+      if (templateId && newType === 'mobile') {
+        templatePrompt = sessionStorage.getItem('wyber_mobile_template_prompt') ?? undefined;
+        sessionStorage.removeItem('wyber_mobile_template_prompt');
+        sessionStorage.removeItem('wyber_mobile_template_title');
+      }
+      setPendingPrompt(templatePrompt);
       setShowTypePicker(true);
     }
   }, []);
@@ -154,10 +164,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   };
 
   const NAV = [
-    { label: 'Home',      href: '/dashboard', icon: <IconHome /> },
-    { label: 'Projects',  href: '/dashboard', icon: <IconGrid /> },
-    { label: 'Templates', href: '/gallery',   icon: <IconTemplates /> },
-    { label: 'Settings',  href: '/settings',  icon: <IconSettings /> },
+    { label: 'Home',        href: '/dashboard',       icon: <IconHome /> },
+    { label: 'Projects',    href: '/dashboard',       icon: <IconGrid /> },
+    { label: 'Templates',   href: '/gallery',         icon: <IconTemplates /> },
+    { label: 'Mobile',      href: '/templates/mobile',icon: <IconPhone /> },
+    { label: 'Workflows',   href: '/workflows',       icon: <IconZap /> },
+    { label: 'Settings',    href: '/settings',        icon: <IconSettings /> },
   ];
 
   const ACCENT_PALETTE = ['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'];

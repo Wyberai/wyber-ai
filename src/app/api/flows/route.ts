@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
     const auth = await createClient()
     const { data: { user } } = await auth.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const { name, description } = await req.json()
+    const { name, description, nodes, edges } = await req.json()
     const admin = await createAdminClient()
     const { data, error } = await admin.from('flows').insert({
       user_id: user.id, name: name || 'New Automation',
-      description: description || '', nodes: [], edges: [], is_active: false, run_count: 0
+      description: description || '', nodes: nodes || [], edges: edges || [], is_active: false, run_count: 0
     }).select('*').single()
     if (error) throw error
     return NextResponse.json({ flow: data })
