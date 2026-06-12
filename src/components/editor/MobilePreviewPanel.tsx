@@ -16,7 +16,7 @@ export function MobilePreviewPanel() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [msgIdx, setMsgIdx] = useState(0)
-  const [platform, setPlatform] = useState<'ios' | 'android' | 'web'>('ios')
+  const [platform, setPlatform] = useState<'ios' | 'android' | 'web'>('web')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const prevGenerating = useRef(false)
   const lastKey = useRef('')
@@ -51,7 +51,9 @@ export function MobilePreviewPanel() {
       if (timerRef.current) clearInterval(timerRef.current)
 
       if (data.embedUrl) {
-        setEmbedUrl(data.embedUrl.replace('platform=ios', `platform=${platform}`))
+        // Route always returns platform=web; just swap if user already changed platform
+        const url = data.embedUrl.replace('platform=web', `platform=${platform}`)
+        setEmbedUrl(url)
         setSnackUrl(data.snackUrl)
         setError(null)
       } else {

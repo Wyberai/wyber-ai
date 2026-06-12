@@ -1,6 +1,84 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// Known-good versions for Expo SDK 52
+// These are the packages Snack commonly needs declared explicitly
+const SDK52_VERSIONS: Record<string, string> = {
+  '@react-navigation/native': '^6.1.18',
+  '@react-navigation/native-stack': '^6.11.0',
+  '@react-navigation/stack': '^6.4.1',
+  '@react-navigation/bottom-tabs': '^6.6.1',
+  '@react-navigation/drawer': '^6.7.2',
+  '@react-navigation/material-top-tabs': '^6.6.14',
+  '@expo/vector-icons': '^14.0.3',
+  'react-native-safe-area-context': '4.10.5',
+  'react-native-screens': '~3.34.0',
+  'react-native-gesture-handler': '~2.20.2',
+  'react-native-reanimated': '~3.16.1',
+  'react-native-svg': '15.8.0',
+  'react-native-maps': '1.18.0',
+  '@react-native-async-storage/async-storage': '1.23.1',
+  '@react-native-community/slider': '4.5.5',
+  'expo-status-bar': '~2.0.0',
+  'expo-constants': '~17.0.3',
+  'expo-font': '~13.0.1',
+  'expo-splash-screen': '~0.29.13',
+  'expo-linear-gradient': '~14.0.1',
+  'expo-blur': '~14.0.1',
+  'expo-image': '~2.0.1',
+  'expo-av': '~15.0.1',
+  'expo-camera': '~16.0.3',
+  'expo-location': '~18.0.3',
+  'expo-haptics': '~14.0.0',
+  'expo-clipboard': '~7.0.0',
+  'expo-sharing': '~13.0.0',
+  'expo-file-system': '~18.0.4',
+}
+
+// Packages that are built into React Native / Expo SDK — no declaration needed
+const BUILTIN_PREFIXES = [
+  'react',
+  'react-native',  // react-native itself is built-in; sub-packages may not be
+  'expo/',
+]
+const BUILTIN_EXACT = new Set([
+  'react',
+  'react-native',
+  'expo',
+])
+
+function isBuiltin(pkg: string): boolean {
+  if (BUILTIN_EXACT.has(pkg)) return true
+  // react-native/* are built-in (e.g. react-native/Libraries/...)
+  // but @react-native/* packages (e.g. @react-native-async-storage) are NOT
+  if (pkg.startsWith('react-native/')) return true
+  // expo/* sub-paths are built-in
+  if (pkg.startsWith('expo/')) return true
+  return false
+}
+
+function parseImports(code: string): string[] {
+  const pkgs = new Set<string>()
+  // Match: import ... from 'pkg' or import ... from "pkg"
+  // Also: require('pkg') or require("pkg")
+  const patterns = [
+    /from\s+['"]([^'"./][^'"]*)['"]/g,
+    /require\s*\(\s*['"]([^'"./][^'"]*)['"]\s*\)/g,
+  ]
+  for (const pattern of patterns) {
+    let m: RegExpExecArray | null
+    while ((m = pattern.exec(code)) !== null) {
+      const raw = m[1]
+      // Extract scope+name: '@scope/name' or 'name' (drop sub-paths like 'pkg/foo')
+      const pkg = raw.startsWith('@')
+        ? raw.split('/').slice(0, 2).join('/')
+        : raw.split('/')[0]
+      if (!isBuiltin(pkg)) pkgs.add(pkg)
+    }
+  }
+  return Array.from(pkgs)
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -16,27 +94,42 @@ export async function POST(req: NextRequest) {
     // Build the `code` map: { filename: { type: 'CODE', contents: string } }
     // Strip leading src/ — Snack expects bare filenames like App.tsx, screens/Home.tsx
     const code: Record<string, { type: 'CODE'; contents: string }> = {}
+    let allCode = ''
     for (const [path, content] of Object.entries(files ?? {})) {
       if (!content) continue
       const snackPath = path.startsWith('src/') ? path.slice(4) : path
       code[snackPath] = { type: 'CODE', contents: content }
+      allCode += content + '\n'
     }
 
-    // Snack requires an App.tsx or App.js entry point
     if (!code['App.tsx'] && !code['App.js'] && !code['app/index.tsx']) {
       return NextResponse.json({ error: 'No App.tsx entry point found in files' }, { status: 400 })
     }
 
-    // Exact payload shape from snack-sdk Session.ts saveAsync()
+    // Parse all imports across all files, resolve to known SDK 52 versions
+    const detectedPkgs = parseImports(allCode)
+    const resolvedDeps: Record<string, string> = {}
+    for (const pkg of detectedPkgs) {
+      const version = SDK52_VERSIONS[pkg]
+      if (version) resolvedDeps[pkg] = version
+      // Unknown packages: pass with '*' so Snack tries to resolve them
+      else resolvedDeps[pkg] = '*'
+    }
+
+    // Exact payload shape from snack-sdk Session.ts saveAsync():
+    // manifest.dependencies: { pkg: versionString }
+    // dependencies (top-level): { pkg: { version: versionString } }
     const payload = {
       manifest: {
         sdkVersion: '52.0.0',
         name: name || 'Wyber AI Mobile App',
         description: description || 'Generated with Wyber AI',
-        dependencies: {},
+        dependencies: resolvedDeps,
       },
       code,
-      dependencies: {},
+      dependencies: Object.fromEntries(
+        Object.entries(resolvedDeps).map(([pkg, version]) => [pkg, { version }])
+      ),
       isDraft: false,
     }
 
@@ -67,8 +160,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       snackId,
       snackUrl: `https://snack.expo.dev/${snackId}`,
-      // embed URL: ?snack= param is the canonical format for anonymous/saved snacks
-      embedUrl: `https://snack.expo.dev/embedded?snack=${snackId}&platform=ios&theme=dark&preview=true`,
+      embedUrl: `https://snack.expo.dev/embedded?snack=${snackId}&platform=web&theme=dark&preview=true`,
     })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

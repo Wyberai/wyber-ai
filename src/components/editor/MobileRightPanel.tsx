@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useEditorStore } from '@/store/editor'
 
 interface StoreListing {
@@ -47,6 +47,26 @@ function StoreListing({ projectId, projectName }: { projectId?: string; projectN
   const [listing, setListing] = useState<StoreListing | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [loadedFromDb, setLoadedFromDb] = useState(false)
+
+  // Load persisted listing on mount
+  useEffect(() => {
+    if (!projectId || loadedFromDb) return
+    setLoadedFromDb(true)
+    fetch(`/api/projects/${projectId}/mobile-meta`)
+      .then(r => r.json())
+      .then(d => { if (d.store_listing) setListing(d.store_listing) })
+      .catch(() => {})
+  }, [projectId, loadedFromDb])
+
+  const persist = useCallback(async (data: StoreListing) => {
+    if (!projectId) return
+    fetch(`/api/projects/${projectId}/mobile-meta`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ store_listing: data }),
+    }).catch(() => {})
+  }, [projectId])
 
   const generate = useCallback(async () => {
     setLoading(true)
@@ -64,12 +84,13 @@ function StoreListing({ projectId, projectName }: { projectId?: string; projectN
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setListing(data)
+      persist(data)
     } catch (e: any) {
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [files, projectName])
+  }, [files, projectName, persist])
 
   if (!listing && !loading) {
     return (
