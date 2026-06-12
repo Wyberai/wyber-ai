@@ -57,11 +57,12 @@ function renderMessage(text: string) {
 interface AttachedImage { dataUrl: string; base64: string; mimeType: string; name: string; }
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
-type ModelTier = 'fast' | 'default' | 'premium';
+type ModelTier = 'fast' | 'default' | 'premium' | 'fable';
 const MODEL_LABELS: Record<ModelTier, { label: string; credits: string; description: string }> = {
-  fast:    { label: 'Fast',    credits: '1 credit',  description: 'Quick edits and simple changes' },
-  default: { label: 'Standard', credits: '1 credit', description: 'Best for most tasks' },
-  premium: { label: 'Premium', credits: '2 credits', description: 'Complex apps and detailed UI' },
+  fast:    { label: 'Fast',     credits: '~1 cr',  description: 'Quick edits and simple changes' },
+  default: { label: 'Standard', credits: '~2 cr',  description: 'Best for most tasks' },
+  premium: { label: 'Premium',  credits: '~5 cr',  description: 'Complex apps and detailed UI' },
+  fable:   { label: 'Fable',    credits: '~10 cr', description: 'Most powerful — large apps (Pro+)' },
 };
 
 export function ChatPanel({ projectId, userId, projectType }: Props) {
@@ -394,7 +395,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }),
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        // Parse 402 credit errors
+        const errText = await res.text();
+        if (res.status === 402) {
+          try {
+            const errJson = JSON.parse(errText);
+            throw new Error(errJson.error || 'Not enough credits');
+          } catch { throw new Error('Not enough credits for this action'); }
+        }
+        throw new Error(errText);
+      }
 
       const xSource = res.headers.get('X-Source');
       const creditsUsed = res.headers.get('X-Credits-Used');
@@ -402,19 +413,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (creditsUsed) setLastCreditCost(parseInt(creditsUsed));
       if (modelUsed) setLastModel(modelUsed);
 
+      // Server already deducted credits before streaming. Refresh balance from API.
       const isPrebuilt = xSource === 'prebuilt';
-      const creditAmount = isPrebuilt ? 0 : (modelTier === 'premium' ? 2 : 1);
-
       if (isPrebuilt) {
-        useEditorStore.getState().setCredits(credits + 1);
+        // Prebuilt is free — restore the optimistic deduction the store may have applied
+        useEditorStore.getState().setCredits(credits);
       } else {
-        fetch('/api/credits/deduct', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: creditAmount, reason: 'generation' }),
-        }).then(r => r.json()).then(data => {
-          if (data.credits !== undefined) useEditorStore.getState().setCredits(data.credits);
-        }).catch(() => {});
+        // Fetch fresh balance after server deduction
+        fetch('/api/credits/deduct', { method: 'GET' })
+          .then(r => r.json())
+          .then(data => { if (data.credits !== undefined) useEditorStore.getState().setCredits(data.credits); })
+          .catch(() => {});
       }
 
       const reader = res.body!.getReader();
@@ -720,6 +729,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
               >
                 {MODEL_LABELS[modelTier].label} ▾
               </button>
+              {/* Credit cost estimate */}
+              <span style={{ fontSize:9, color:'var(--ide-text3)', opacity:0.7, letterSpacing:'0.01em' }} title="Estimated credit cost for this action">
+                {MODEL_LABELS[modelTier].credits}
+              </span>
             </div>
             <button
               onClick={handleSend}

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient, createAdminClient } from '@/lib/supabase/server'
 import { getDecryptedSecret } from '@/lib/get-decrypted-secret'
 import Anthropic from '@anthropic-ai/sdk'
+import { creditCost } from '@/lib/credits'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -271,6 +272,28 @@ export async function POST(req: NextRequest) {
     }
 
     if (!nodes.length) return NextResponse.json({ error: 'No nodes found — save the canvas first' }, { status: 400 })
+
+    // ── Credit pre-flight for AI nodes ───────────────────────────────
+    const aiNodeCount = nodes.filter(n => n.type === 'aiagent').length
+    if (aiNodeCount > 0) {
+      const runCost = creditCost('execution', 'default') * aiNodeCount
+      const admin = await createAdminClient()
+      const { data: profile } = await admin.from('profiles').select('credits').eq('id', user.id).single()
+      const balance = profile?.credits ?? 0
+      if (balance < runCost) {
+        return NextResponse.json({
+          error: `Not enough credits. Running ${aiNodeCount} AI node${aiNodeCount !== 1 ? 's' : ''} costs ${runCost} credit${runCost !== 1 ? 's' : ''} and you have ${balance}.`,
+          needed: runCost,
+          balance,
+        }, { status: 402 })
+      }
+      // Deduct before running
+      await admin.from('profiles').update({ credits: balance - runCost, updated_at: new Date().toISOString() }).eq('id', user.id)
+      admin.from('credit_usage').insert({
+        user_id: user.id, amount: runCost, reason: 'canvas-execution',
+        credits_before: balance, credits_after: balance - runCost,
+      }).then(() => {}).catch(() => {})
+    }
 
     const ordered = topoSort(nodes, edges)
     const steps: StepResult[] = []

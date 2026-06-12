@@ -1,15 +1,13 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
+import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const MODELS = {
-  fast:    'claude-haiku-4-5-20251001',
-  default: 'claude-sonnet-4-6',
-  premium: 'claude-opus-4-8',
-}
+// Use central model map — single source of truth
+const MODELS = MODEL_IDS
 
 const WYBER_FEATURES = `
 ABOUT WYBER AI — your knowledge base:
@@ -607,13 +605,66 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
     }
 
-    // Auth check
-    if (!userId) {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    // ── Auth + credit pre-flight ──────────────────────────────────────
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    }
+
+    // Determine action type for cost calculation
+    const tier = (modelTier as ModelTier) in MODEL_IDS ? (modelTier as ModelTier) : 'default'
+    const isNewBuild = !fileContext || fileContext.length < 200
+    const actionType = projectType === 'mobile' ? 'mobile-build'
+      : isNewBuild ? 'web-build'
+      : 'small-edit'
+    const cost = creditCost(actionType, tier)
+
+    // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens)
+    if (stage !== 'plan') {
+      const admin = await createAdminClient()
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('credits, plan')
+        .eq('id', user.id)
+        .single()
+
+      const balance = profile?.credits ?? 0
+      const plan = profile?.plan ?? 'free'
+
+      // Enforce plan-based model gate
+      if (!tierAllowedForPlan(tier, plan)) {
+        return new Response(JSON.stringify({
+          error: `The ${tier} model requires a higher plan. Please upgrade.`,
+          needed: cost,
+          balance,
+        }), { status: 402 })
       }
+
+      if (balance < cost) {
+        return new Response(JSON.stringify({
+          error: `Not enough credits. This action costs ${cost} credit${cost !== 1 ? 's' : ''} and you have ${balance}.`,
+          needed: cost,
+          balance,
+        }), { status: 402 })
+      }
+
+      // Deduct before streaming — atomic update
+      const { data: updated, error: deductErr } = await admin
+        .from('profiles')
+        .update({ credits: balance - cost, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+        .select('credits')
+        .single()
+      if (deductErr) {
+        return new Response(JSON.stringify({ error: 'Credit deduction failed' }), { status: 500 })
+      }
+
+      // Log usage (fire-and-forget)
+      admin.from('credit_usage').insert({
+        user_id: user.id, amount: cost, reason: actionType,
+        credits_before: balance, credits_after: updated!.credits,
+      }).then(() => {}).catch(() => {})
     }
 
     // ── SMART PREBUILT TEMPLATE MATCHING ────────────────────────────
@@ -749,8 +800,9 @@ ${code}
       ]
     }
 
-    const model = MODELS[modelTier as keyof typeof MODELS] ?? MODELS.default
-    const maxTokens = modelTier === 'fast' ? 8000 : modelTier === 'premium' ? 96000 : 64000
+    const resolvedTier = (modelTier as ModelTier) in MODEL_IDS ? (modelTier as ModelTier) : 'default' as ModelTier
+    const model = MODELS[resolvedTier] ?? MODELS.default
+    const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
     const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
@@ -807,7 +859,8 @@ ${code}
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'X-Model-Used': model,
-        'X-Credits-Used': modelTier === 'premium' ? '2' : '1',
+        'X-Credits-Used': String(cost),
+        'X-Credits-Tier': resolvedTier,
       },
     })
   } catch (err) {

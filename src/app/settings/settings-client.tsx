@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { MODEL_META, MODEL_MULTIPLIERS, estimateCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits';
 
 function WyberLogo({ size = 26 }: { size?: number }) {
   return (
@@ -14,11 +15,12 @@ function WyberLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-type Tab = 'profile' | 'billing' | 'api-keys' | 'secrets' | 'github' | 'notifications' | 'danger';
+type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'github' | 'notifications' | 'danger';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'profile',       label: 'Profile',             icon: '👤' },
   { id: 'billing',       label: 'Plans & Billing',      icon: '💳' },
+  { id: 'models',        label: 'Models & Credits',     icon: '⚡' },
   { id: 'api-keys',      label: 'API Keys',             icon: '🔑' },
   { id: 'secrets',       label: 'Secrets Vault',        icon: '🔐' },
   { id: 'github',        label: 'GitHub',               icon: '⌥' },
@@ -56,6 +58,7 @@ export default function SettingsPage() {
   const [secretSaving, setSecretSaving] = useState(false);
   const [secretError, setSecretError] = useState('');
   const [secretSuccess, setSecretSuccess] = useState('');
+  const [recentSpend, setRecentSpend] = useState<{ reason: string; amount: number; created_at: string }[]>([]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -70,6 +73,9 @@ export default function SettingsPage() {
         .then(({ data }) => { if (data) setGithubConnected(true); });
       // Pre-load secrets so the tab feels instant
       fetch('/api/secrets').then(r => r.json()).then(d => { if (d.secrets) { setSecrets(d.secrets); setSecretsLoaded(true); } });
+      // Load recent credit spend
+      supabase.from('credit_usage').select('reason, amount, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5)
+        .then(({ data }) => { if (data) setRecentSpend(data); });
     });
     // Generate fake API key for display
     setApiKey('wai-' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10));
@@ -258,6 +264,108 @@ export default function SettingsPage() {
 
           <a href="/credits" style={{ fontSize: 13, color: '#0EA5E9', display: 'inline-block', marginTop: 4 }}>View full credits & pricing breakdown →</a>
         </>}
+
+        {/* MODELS & CREDITS */}
+        {tab === 'models' && (() => {
+          const plan = profile?.plan ?? 'free'
+          const balance = profile?.credits ?? 0
+          const tiers: ModelTier[] = ['fast', 'default', 'premium', 'fable']
+          const POWER_BARS: Record<ModelTier, number> = { fast: 1, default: 2, premium: 3, fable: 4 }
+          const ACTION_ROWS: { label: string; hint: Parameters<typeof estimateCost>[1] }[] = [
+            { label: 'Quick edit / chat reply', hint: 'edit' },
+            { label: 'Component or feature build', hint: 'component' },
+            { label: 'Full web app build', hint: 'build' },
+            { label: 'Mobile app build', hint: 'mobile' },
+            { label: 'Image generation', hint: 'image' },
+            { label: 'Canvas execution (per AI node)', hint: 'run' },
+          ]
+          return <>
+            <h1 style={S.h2}>Models & Credits</h1>
+            <p style={S.sub}>Choose your AI model and understand how credits are spent on each action.</p>
+
+            {/* Balance card */}
+            <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '20px 24px', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 24 }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Current balance</div>
+                <div style={{ fontSize: 36, fontWeight: 800, color: balance < 10 ? '#ef4444' : '#0EA5E9', letterSpacing: '-0.03em', lineHeight: 1 }}>{balance}</div>
+                <div style={{ fontSize: 12, color: '#71717a', marginTop: 4 }}>credits remaining</div>
+              </div>
+              <div style={{ flex: 1, borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: 24 }}>
+                <div style={{ fontSize: 12, color: '#71717a', marginBottom: 6 }}>Recent spend</div>
+                {recentSpend.length === 0
+                  ? <div style={{ fontSize: 12, color: '#3f3f46' }}>No recent activity</div>
+                  : recentSpend.map((row, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#a1a1aa', marginBottom: 3 }}>
+                      <span style={{ textTransform: 'capitalize' }}>{row.reason.replace(/-/g, ' ')}</span>
+                      <span style={{ color: '#ef4444', fontWeight: 600 }}>−{row.amount} cr</span>
+                    </div>
+                  ))
+                }
+              </div>
+              <div style={{ borderLeft: '1px solid rgba(255,255,255,0.06)', paddingLeft: 24 }}>
+                <div style={{ fontSize: 12, color: '#71717a', marginBottom: 6 }}>Plan</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', textTransform: 'capitalize' }}>{plan}</div>
+                <a href="/pricing" style={{ fontSize: 11, color: '#0EA5E9', display: 'block', marginTop: 4, textDecoration: 'none' }}>Upgrade →</a>
+              </div>
+            </div>
+
+            {/* Model cards */}
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 12 }}>Available models</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10, marginBottom: 28 }}>
+              {tiers.map(t => {
+                const meta = MODEL_META[t]
+                const allowed = tierAllowedForPlan(t, plan)
+                const bars = POWER_BARS[t]
+                return (
+                  <div key={t} style={{ background: '#111113', border: `1px solid ${allowed ? 'rgba(14,165,233,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 12, padding: '16px', opacity: allowed ? 1 : 0.5 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: allowed ? '#fafafa' : '#71717a' }}>{meta.label}</div>
+                      <div style={{ display: 'flex', gap: 3 }}>
+                        {[1,2,3,4].map(b => (
+                          <div key={b} style={{ width: 5, height: 14, borderRadius: 2, background: b <= bars ? (allowed ? '#0EA5E9' : '#3f3f46') : 'rgba(255,255,255,0.06)' }} />
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#71717a', marginBottom: 10, lineHeight: 1.4 }}>{meta.tagline}</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 8, display: 'inline-block',
+                      background: allowed ? 'rgba(14,165,233,0.1)' : 'rgba(255,255,255,0.04)',
+                      color: allowed ? '#0EA5E9' : '#52525b',
+                      border: `1px solid ${allowed ? 'rgba(14,165,233,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                      {allowed ? `×${MODEL_MULTIPLIERS[t]} multiplier` : `${meta.minPlan} plan required`}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Credit cost table */}
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 12 }}>Estimated credit costs</div>
+            <div style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, overflow: 'hidden', marginBottom: 24 }}>
+              {/* Header */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#52525b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div>Action</div>
+                <div style={{ textAlign: 'center' }}>Fast</div>
+                <div style={{ textAlign: 'center' }}>Standard</div>
+                <div style={{ textAlign: 'center' }}>Premium</div>
+                <div style={{ textAlign: 'center' }}>Fable</div>
+              </div>
+              {ACTION_ROWS.map((row, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', padding: '10px 16px', borderBottom: i < ACTION_ROWS.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none', fontSize: 12 }}>
+                  <div style={{ color: '#a1a1aa' }}>{row.label}</div>
+                  {tiers.map(t => (
+                    <div key={t} style={{ textAlign: 'center', color: tierAllowedForPlan(t, plan) ? '#fafafa' : '#3f3f46', fontWeight: 500 }}>
+                      {estimateCost(t, row.hint)} cr
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ fontSize: 12, color: '#52525b' }}>
+              Costs are per action. Prebuilt gallery templates are always 0 credits. Error fixes are always free.
+            </div>
+          </>
+        })()}
 
         {/* API KEYS */}
         {tab === 'api-keys' && <>
