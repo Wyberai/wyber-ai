@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { encrypt, decrypt } from '@/lib/secrets-crypto';
+
+function safeDecrypt(val: string): string {
+  if (!val) return val
+  // Values encrypted with AES-256-GCM have format "iv:authTag:ciphertext" (3 colons min)
+  if (val.split(':').length === 3) {
+    try { return decrypt(val) } catch {}
+  }
+  return val // plaintext legacy value
+}
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -15,7 +25,12 @@ export async function GET(req: NextRequest) {
     .eq('project_id', projectId)
     .eq('user_id', user.id);
 
-  return NextResponse.json({ connectors: data || [] });
+  const connectors = (data || []).map(c => ({
+    ...c,
+    api_key: safeDecrypt(c.api_key),
+  }))
+
+  return NextResponse.json({ connectors });
 }
 
 export async function POST(req: NextRequest) {
@@ -31,7 +46,7 @@ export async function POST(req: NextRequest) {
       project_id: projectId,
       user_id: user.id,
       service,
-      api_key: apiKey,
+      api_key: encrypt(apiKey),
       config,
       connected_at: new Date().toISOString(),
     }, { onConflict: 'project_id,service' })

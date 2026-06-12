@@ -499,8 +499,12 @@ function isValidMime(m: string): m is ValidMime {
 async function getSupabaseContext(projectId: string): Promise<string> {
   if (!projectId) return ''
   try {
-    const supabase = await createClient()
-    const { data } = await supabase
+    // Use service-role client so RLS doesn't block this server-side lookup
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const { decrypt } = await import('@/lib/secrets-crypto')
+
+    const db = createServiceClient()
+    const { data } = await db
       .from('project_connectors')
       .select('api_key, config')
       .eq('project_id', projectId)
@@ -508,49 +512,89 @@ async function getSupabaseContext(projectId: string): Promise<string> {
       .single()
     if (!data) return ''
     const url = data.config?.url || ''
-    const anonKey = data.api_key || ''
+    let anonKey = data.api_key || ''
     if (!url || !anonKey) return ''
+
+    // Decrypt if stored encrypted (iv:authTag:ciphertext format)
+    if (anonKey.split(':').length === 3) {
+      try { anonKey = decrypt(anonKey) } catch {}
+    }
+
     return `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SUPABASE IS CONNECTED — USE IT
+SUPABASE IS CONNECTED — USE IT FOR EVERYTHING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This project has Supabase connected. You MUST use it for data storage.
+This project has Supabase connected. You MUST use it for ALL data and auth.
 
-Create this file FIRST — before App.tsx:
+── STEP 1: Create src/lib/supabase.ts FIRST (before any other file) ──
 <file path="src/lib/supabase.ts">
 import { createClient } from '@supabase/supabase-js'
 export const supabase = createClient('${url}', '${anonKey}')
 </file>
 
-Then in App.tsx and components:
-import { supabase } from './lib/supabase'  // or '../lib/supabase'
+── STEP 2: Auth — ALWAYS include signup/login/logout ──
+Auth API (use these exact methods):
+  // Sign up: const { data, error } = await supabase.auth.signUp({ email, password })
+  // Sign in: const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  // Sign out: await supabase.auth.signOut()
+  // Get current user: const { data: { user } } = await supabase.auth.getUser()
 
-DATA PATTERNS with Supabase:
-// Fetch: const { data, error } = await supabase.from('table').select('*')
-// Insert: const { data, error } = await supabase.from('table').insert({ ... })
-// Update: const { data, error } = await supabase.from('table').update({ ... }).eq('id', id)
-// Delete: const { data, error } = await supabase.from('table').delete().eq('id', id)
+Listen for auth changes (put this in App.tsx useEffect):
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setUser(session?.user ?? null)
+  })
 
-ALWAYS use useEffect to load data on mount:
+Auth UI pattern — build a simple modal or inline form with two fields (email + password)
+and two buttons (Sign Up / Log In). Show it when user is null, hide it when logged in.
+Add a Sign Out button in the header/navbar.
+
+── STEP 3: Database CRUD ──
+  // Fetch (RLS filters automatically by auth.uid()):
+  const { data, error } = await supabase.from('items').select('*').order('created_at', { ascending: false })
+  // Insert:
+  const { error } = await supabase.from('items').insert({ user_id: user.id, ...fields })
+  // Update:
+  const { error } = await supabase.from('items').update({ field: value }).eq('id', id)
+  // Delete:
+  const { error } = await supabase.from('items').delete().eq('id', id)
+
+ALWAYS use useEffect to load data (re-run when user changes):
   useEffect(() => {
-    supabase.from('items').select('*').then(({ data }) => { if (data) setItems(data) })
-  }, [])
+    if (!user) { setItems([]); return }
+    setLoading(true)
+    supabase.from('items').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => { setItems(data || []); setLoading(false) })
+  }, [user])
 
-ALWAYS handle loading state:
-  const [loading, setLoading] = useState(true)
+── STEP 4: Security — RLS is the boundary ──
+The anon key is safe in client code. Security comes from Row Level Security policies.
+ALWAYS include these policies so users only see their own data.
 
-Generate the SQL to create the tables at the VERY END of your response as a comment block:
-/* SQL TO RUN IN SUPABASE:
-create table items (
+── STEP 5: SQL block at the end ──
+Output the SQL to run in Supabase at the VERY END as a comment block. Use this exact format:
+/* SQL TO RUN IN SUPABASE DASHBOARD → SQL EDITOR:
+create table if not exists items (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users,
-  name text not null,
+  user_id uuid references auth.users on delete cascade not null,
+  title text not null,
   created_at timestamptz default now()
 );
 alter table items enable row level security;
-create policy "Users manage own items" on items for all using (auth.uid() = user_id);
-*/`
+create policy "Users manage own items" on items for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+*/
+
+── MANDATORY CHECKLIST ──
+Before finishing, confirm your generated app has:
+[x] src/lib/supabase.ts with the real URL and key above
+[x] Auth state (user / setUser) managed in App.tsx
+[x] onAuthStateChange listener
+[x] Login/signup form shown when !user
+[x] Sign out button when user is logged in
+[x] All data fetches scoped to the logged-in user
+[x] SQL block at the end
+`
   } catch { return '' }
 }
 
