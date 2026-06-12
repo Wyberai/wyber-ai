@@ -14,15 +14,16 @@ function WyberLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-type Tab = 'profile' | 'billing' | 'api-keys' | 'github' | 'notifications' | 'danger';
+type Tab = 'profile' | 'billing' | 'api-keys' | 'secrets' | 'github' | 'notifications' | 'danger';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'profile',       label: 'Profile',        icon: '👤' },
-  { id: 'billing',       label: 'Plans & Billing', icon: '💳' },
-  { id: 'api-keys',      label: 'API Keys',        icon: '🔑' },
-  { id: 'github',        label: 'GitHub',          icon: '⌥' },
-  { id: 'notifications', label: 'Notifications',   icon: '🔔' },
-  { id: 'danger',        label: 'Danger Zone',     icon: '⚠️' },
+  { id: 'profile',       label: 'Profile',             icon: '👤' },
+  { id: 'billing',       label: 'Plans & Billing',      icon: '💳' },
+  { id: 'api-keys',      label: 'API Keys',             icon: '🔑' },
+  { id: 'secrets',       label: 'Secrets Vault',        icon: '🔐' },
+  { id: 'github',        label: 'GitHub',               icon: '⌥' },
+  { id: 'notifications', label: 'Notifications',        icon: '🔔' },
+  { id: 'danger',        label: 'Danger Zone',          icon: '⚠️' },
 ];
 
 const PLANS = [
@@ -47,6 +48,14 @@ export default function SettingsPage() {
   const [githubConnected, setGithubConnected] = useState(false);
   const [notifications, setNotifications] = useState({ email: true, credits: true, deploy: false });
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  // Secrets vault state
+  const [secrets, setSecrets] = useState<{ id: string; name: string; preview: string; created_at: string }[]>([]);
+  const [secretsLoaded, setSecretsLoaded] = useState(false);
+  const [secretName, setSecretName] = useState('');
+  const [secretValue, setSecretValue] = useState('');
+  const [secretSaving, setSecretSaving] = useState(false);
+  const [secretError, setSecretError] = useState('');
+  const [secretSuccess, setSecretSuccess] = useState('');
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -59,6 +68,8 @@ export default function SettingsPage() {
       // Check GitHub connection
       supabase.from('github_connections').select('github_username').eq('user_id', user.id).single()
         .then(({ data }) => { if (data) setGithubConnected(true); });
+      // Pre-load secrets so the tab feels instant
+      fetch('/api/secrets').then(r => r.json()).then(d => { if (d.secrets) { setSecrets(d.secrets); setSecretsLoaded(true); } });
     });
     // Generate fake API key for display
     setApiKey('wai-' + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10));
@@ -73,6 +84,29 @@ export default function SettingsPage() {
   };
 
   const signOut = async () => { await supabase.auth.signOut(); router.push('/'); };
+
+  const loadSecrets = async () => {
+    const res = await fetch('/api/secrets');
+    const data = await res.json();
+    if (data.secrets) { setSecrets(data.secrets); setSecretsLoaded(true); }
+  };
+
+  const addSecret = async () => {
+    if (!secretName.trim() || !secretValue.trim()) { setSecretError('Both name and value are required'); return; }
+    setSecretSaving(true); setSecretError(''); setSecretSuccess('');
+    const res = await fetch('/api/secrets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: secretName, value: secretValue }) });
+    const data = await res.json();
+    setSecretSaving(false);
+    if (data.error) { setSecretError(data.error); return; }
+    setSecretName(''); setSecretValue('');
+    setSecretSuccess(`${data.name} saved`); setTimeout(() => setSecretSuccess(''), 2500);
+    loadSecrets();
+  };
+
+  const deleteSecret = async (name: string) => {
+    await fetch('/api/secrets', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+    setSecrets(s => s.filter(x => x.name !== name));
+  };
 
   const S = {
     page: { minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif", display: 'flex' as const },
@@ -323,6 +357,93 @@ export default function SettingsPage() {
                 </button>
               </div>
             ))}
+          </div>
+        </>}
+
+        {/* SECRETS VAULT */}
+        {tab === 'secrets' && <>
+          <h1 style={S.h2}>Secrets Vault</h1>
+          <p style={S.sub}>Store API keys and OAuth tokens your agents and workflows use at runtime. Values are AES-256-GCM encrypted at rest and never sent to the client in plaintext.</p>
+
+          {/* Add secret form */}
+          <div style={S.card}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Add a secret
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
+              <div>
+                <label style={S.label}>Name (e.g. OPENAI_API_KEY)</label>
+                <input
+                  value={secretName}
+                  onChange={e => setSecretName(e.target.value.toUpperCase().replace(/\s+/g, '_'))}
+                  placeholder="MY_API_KEY"
+                  style={{ ...S.input, fontFamily: 'monospace', fontSize: 13 }}
+                />
+              </div>
+              <div>
+                <label style={S.label}>Value</label>
+                <input
+                  type="password"
+                  value={secretValue}
+                  onChange={e => setSecretValue(e.target.value)}
+                  placeholder="sk-..."
+                  style={{ ...S.input, fontFamily: 'monospace', fontSize: 13 }}
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={addSecret}
+                disabled={secretSaving}
+                style={{ ...S.btn(), opacity: secretSaving ? 0.6 : 1 }}
+              >
+                {secretSaving ? 'Saving...' : 'Save secret'}
+              </button>
+              {secretError && <span style={{ fontSize: 12, color: '#ef4444' }}>{secretError}</span>}
+              {secretSuccess && <span style={{ fontSize: 12, color: '#22c55e' }}>{secretSuccess}</span>}
+            </div>
+          </div>
+
+          {/* Secrets list */}
+          <div style={S.card}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 14 }}>
+              Stored secrets {secretsLoaded && <span style={{ fontSize: 11, fontWeight: 400, color: '#52525b', marginLeft: 6 }}>({secrets.length})</span>}
+            </div>
+
+            {!secretsLoaded && (
+              <div style={{ fontSize: 13, color: '#52525b', padding: '8px 0' }}>Loading...</div>
+            )}
+
+            {secretsLoaded && secrets.length === 0 && (
+              <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 10px' }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <div style={{ fontSize: 13, color: '#52525b' }}>No secrets yet. Add your first API key above.</div>
+              </div>
+            )}
+
+            {secrets.map(s => (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7', fontFamily: 'monospace' }}>{s.name}</div>
+                  <div style={{ fontSize: 11, color: '#52525b', fontFamily: 'monospace', marginTop: 1 }}>{s.preview}</div>
+                </div>
+                <div style={{ fontSize: 11, color: '#3f3f46', flexShrink: 0 }}>
+                  {new Date(s.created_at).toLocaleDateString()}
+                </div>
+                <button
+                  onClick={() => deleteSecret(s.name)}
+                  style={{ background: 'none', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, color: '#ef4444', cursor: 'pointer', padding: '3px 8px', fontSize: 11, fontWeight: 600, flexShrink: 0 }}
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ padding: '12px 14px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 12, color: '#52525b', lineHeight: 1.6 }}>
+            <span style={{ color: '#0EA5E9', fontWeight: 700 }}>How it works:</span> Values are encrypted with AES-256-GCM before storage. The API returns name and a masked preview only. Agent and workflow routes access plaintext server-side via <code style={{ fontFamily: 'monospace', color: '#a1a1aa' }}>getDecryptedSecret(userId, name)</code>.
           </div>
         </>}
 
