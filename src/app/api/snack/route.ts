@@ -1,38 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// Known-good versions for Expo SDK 52
-// These are the packages Snack commonly needs declared explicitly
+// Authoritative versions from expo/expo bundledNativeModules.json @ sdk-52 tag
 const SDK52_VERSIONS: Record<string, string> = {
+  // Navigation
   '@react-navigation/native': '^6.1.18',
   '@react-navigation/native-stack': '^6.11.0',
   '@react-navigation/stack': '^6.4.1',
   '@react-navigation/bottom-tabs': '^6.6.1',
   '@react-navigation/drawer': '^6.7.2',
   '@react-navigation/material-top-tabs': '^6.6.14',
-  '@expo/vector-icons': '^14.0.3',
-  'react-native-safe-area-context': '4.10.5',
-  'react-native-screens': '~3.34.0',
+  // Icons
+  '@expo/vector-icons': '~14.0.4',
+  // React Native community
+  'react-native-safe-area-context': '4.12.0',
+  'react-native-screens': '~4.4.0',
   'react-native-gesture-handler': '~2.20.2',
   'react-native-reanimated': '~3.16.1',
   'react-native-svg': '15.8.0',
   'react-native-maps': '1.18.0',
+  'react-native-webview': '13.12.5',
   '@react-native-async-storage/async-storage': '1.23.1',
   '@react-native-community/slider': '4.5.5',
-  'expo-status-bar': '~2.0.0',
-  'expo-constants': '~17.0.3',
-  'expo-font': '~13.0.1',
-  'expo-splash-screen': '~0.29.13',
-  'expo-linear-gradient': '~14.0.1',
-  'expo-blur': '~14.0.1',
-  'expo-image': '~2.0.1',
-  'expo-av': '~15.0.1',
-  'expo-camera': '~16.0.3',
-  'expo-location': '~18.0.3',
-  'expo-haptics': '~14.0.0',
-  'expo-clipboard': '~7.0.0',
-  'expo-sharing': '~13.0.0',
-  'expo-file-system': '~18.0.4',
+  // Expo modules
+  'expo-status-bar': '~2.0.1',
+  'expo-constants': '~17.0.8',
+  'expo-font': '~13.0.4',
+  'expo-splash-screen': '~0.29.24',
+  'expo-linear-gradient': '~14.0.2',
+  'expo-blur': '~14.0.3',
+  'expo-image': '~2.0.7',
+  'expo-av': '~15.0.2',
+  'expo-video': '~2.0.6',
+  'expo-camera': '~16.0.18',
+  'expo-location': '~18.0.10',
+  'expo-haptics': '~14.0.1',
+  'expo-clipboard': '~7.0.1',
+  'expo-sharing': '~13.0.1',
+  'expo-file-system': '~18.0.12',
 }
 
 // Packages that are built into React Native / Expo SDK — no declaration needed
@@ -160,7 +165,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       snackId,
       snackUrl: `https://snack.expo.dev/${snackId}`,
-      embedUrl: `https://snack.expo.dev/embedded?snack=${snackId}&platform=web&theme=dark&preview=true`,
+      embedUrl: `https://snack.expo.dev/embedded/${snackId}?platform=web&preview=true&theme=dark&supportedPlatforms=web,ios,android`,
     })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

@@ -50,9 +50,8 @@ export function MobilePreviewPanel() {
       const data = await res.json()
       if (timerRef.current) clearInterval(timerRef.current)
 
-      if (data.embedUrl) {
-        // Route always returns platform=web; just swap if user already changed platform
-        const url = data.embedUrl.replace('platform=web', `platform=${platform}`)
+      if (data.snackId) {
+        const url = `https://snack.expo.dev/embedded/${data.snackId}?platform=${platform}&preview=true&theme=dark&supportedPlatforms=web,ios,android`
         setEmbedUrl(url)
         setSnackUrl(data.snackUrl)
         setError(null)
@@ -79,7 +78,7 @@ export function MobilePreviewPanel() {
   useEffect(() => {
     if (snackUrl) {
       const id = snackUrl.split('/').pop()
-      setEmbedUrl(`https://snack.expo.dev/embedded?snack=${id}&platform=${platform}&theme=dark&preview=true`)
+      setEmbedUrl(`https://snack.expo.dev/embedded/${id}?platform=${platform}&preview=true&theme=dark&supportedPlatforms=web,ios,android`)
     }
   }, [platform, snackUrl])
 
