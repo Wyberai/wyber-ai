@@ -113,9 +113,9 @@ function AgentMockup() {
           { t: '09:42:04', msg: 'Drafted outreach email via Gmail', c: '#a1a1aa' },
           { t: '09:42:05', msg: 'Posted to #sales-alerts on Slack', c: BRAND },
         ].map((l, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 5 }}>
+          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 5, minWidth: 0 }}>
             <span style={{ color: '#3f3f46', flexShrink: 0 }}>{l.t}</span>
-            <span style={{ color: l.c }}>{l.msg}</span>
+            <span style={{ color: l.c, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{l.msg}</span>
           </div>
         ))}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
@@ -189,6 +189,7 @@ function ProductCard({ eyebrow, heading, body, mockup, ctaLabel, ctaHref, accent
 
 export default function HomePage() {
   const [user, setUser] = useState<any>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
@@ -197,14 +198,15 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif", overflowX: 'hidden' }}>
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 0, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        {/* Desktop nav — hidden below 768px via CSS */}
+        <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
@@ -221,7 +223,37 @@ export default function HomePage() {
               </>
           }
         </div>
+        {/* Hamburger — shown below 768px via CSS */}
+        <button
+          className="wyb-nav-hamburger"
+          onClick={() => setMobileMenuOpen(o => !o)}
+          aria-label="Toggle menu"
+          style={{ display: 'none', flexDirection: 'column', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 8, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div style={{ width: 22, height: 2, background: mobileMenuOpen ? '#fafafa' : '#a1a1aa', borderRadius: 1, transition: 'all 0.2s', transform: mobileMenuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none' }} />
+          <div style={{ width: 22, height: 2, background: mobileMenuOpen ? 'transparent' : '#a1a1aa', borderRadius: 1, transition: 'all 0.2s' }} />
+          <div style={{ width: 22, height: 2, background: mobileMenuOpen ? '#fafafa' : '#a1a1aa', borderRadius: 1, transition: 'all 0.2s', transform: mobileMenuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none' }} />
+        </button>
       </nav>
+      {/* Mobile nav drawer */}
+      {mobileMenuOpen && (
+        <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+            <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>
+              {l}
+            </Link>
+          ))}
+          <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {user
+              ? <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{ padding: '13px 0', textAlign: 'center', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', minHeight: 44, display: 'block' }}>Dashboard →</Link>
+              : <>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{ padding: '13px 0', textAlign: 'center', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none', minHeight: 44, display: 'block' }}>Sign in</Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} style={{ padding: '13px 0', textAlign: 'center', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', minHeight: 44, display: 'block', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>Start free →</Link>
+                </>
+            }
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(60px,10vw,120px) clamp(20px,4vw,48px)', overflow: 'hidden' }}>
@@ -294,7 +326,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: 24 }}>
             <ProductCard
               eyebrow="Web Apps"
               heading="Describe it. It builds."
@@ -344,7 +376,7 @@ export default function HomePage() {
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.03em' }}>From prompt to live app</h2>
             <p style={{ fontSize: 14, color: '#71717a', marginTop: 10 }}>Four steps. Under 30 seconds.</p>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: 20 }}>
             {[
               { num: '01', title: 'Describe your app', desc: 'Type what you want in plain English. Wyber generates production-ready React code — no templates, no drag-and-drop, just real code.', component: <GenerateAnimation /> },
               { num: '02', title: 'Preview in 8 seconds', desc: 'Live preview builds automatically. Click elements to edit them. Change anything — the preview updates instantly.', component: <DeployAnimation /> },
@@ -442,6 +474,13 @@ export default function HomePage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @media (max-width: 768px) {
+          .wyb-nav-desktop { display: none !important; }
+          .wyb-nav-hamburger { display: flex !important; }
+        }
+        @media (min-width: 769px) {
+          .wyb-nav-hamburger { display: none !important; }
+        }
       `}</style>
     </div>
   );
