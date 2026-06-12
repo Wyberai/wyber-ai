@@ -202,13 +202,52 @@ function ConfigPanel() {
         </div>
 
         {nodeType === 'tool' && (
-          <div>
-            <label style={labelStyle}>Service</label>
-            <select value={(node.data.toolId as string) || ''} onChange={e => updateNodeData(node.id, { toolId: e.target.value })} style={fieldStyle}>
-              <option value="">Select service...</option>
-              {TOOL_OPTIONS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-          </div>
+          <>
+            <div>
+              <label style={labelStyle}>Mode</label>
+              <select
+                value={(node.data.config as Record<string,string>).mode || 'http'}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), mode: e.target.value } })}
+                style={fieldStyle}
+              >
+                <option value="http">HTTP Request</option>
+                <option value="composio">Composio Tool</option>
+              </select>
+            </div>
+
+            {((node.data.config as Record<string,string>).mode || 'http') === 'http' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Method</label>
+                  <select value={(node.data.config as Record<string,string>).method || 'GET'} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), method: e.target.value } })} style={fieldStyle}>
+                    {['GET','POST','PUT','PATCH','DELETE'].map(m => <option key={m}>{m}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>URL</label>
+                  <input value={(node.data.config as Record<string,string>).url || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), url: e.target.value } })} placeholder="https://api.example.com/endpoint" style={fieldStyle} />
+                  <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>Use {'{{SECRET:MY_API_KEY}}'} to inject vault secrets server-side.</div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Headers (JSON)</label>
+                  <textarea value={(node.data.config as Record<string,string>).headers || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), headers: e.target.value } })} placeholder='{"Authorization": "Bearer {{SECRET:MY_TOKEN}}"}' rows={2} style={{ ...fieldStyle, resize: 'none', fontFamily: 'monospace', fontSize: 10 }} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Body (JSON)</label>
+                  <textarea value={(node.data.config as Record<string,string>).body || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), body: e.target.value } })} placeholder='{"key": "value"}' rows={2} style={{ ...fieldStyle, resize: 'none', fontFamily: 'monospace', fontSize: 10 }} />
+                </div>
+              </>
+            )}
+
+            {((node.data.config as Record<string,string>).mode) === 'composio' && (
+              <div style={{ padding: '10px 11px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 11, color: '#71717a', lineHeight: 1.6 }}>
+                <div style={{ fontWeight: 700, color: '#0EA5E9', marginBottom: 4 }}>Composio Tools</div>
+                Add <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: 3 }}>COMPOSIO_API_KEY</code> in{' '}
+                <a href="/settings" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>Settings → Secrets Vault</a>{' '}
+                to enable Gmail, Slack, HubSpot and 200+ tools via Composio.
+              </div>
+            )}
+          </>
         )}
 
         {nodeType === 'trigger' && (
@@ -254,10 +293,13 @@ function ConfigPanel() {
           <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="What does this step do?" rows={3} style={{ ...fieldStyle, resize: 'none' }} />
         </div>
 
-        {/* TODO: connector credentials — wire per-tool OAuth/token storage here */}
-        <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: 11, color: '#3f3f46' }}>
-          Connector credentials: coming soon
-        </div>
+        {/* Vault secrets hint */}
+        {(nodeType === 'aiagent' || nodeType === 'tool') && (
+          <div style={{ padding: '7px 10px', borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
+            Use <code style={{ fontFamily: 'monospace' }}>{'{{SECRET:NAME}}'}</code> in URLs and headers to inject secrets from your{' '}
+            <a href="/settings" target="_blank" rel="noopener noreferrer" style={{ color: '#52525b' }}>Secrets Vault</a>.
+          </div>
+        )}
 
         <button onClick={() => deleteNode(node.id)} style={{ padding: '9px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
           Delete node
@@ -271,28 +313,37 @@ function ConfigPanel() {
 
 function ExecutionLog() {
   const { executionLogs, clearLogs, isRunning } = useAgentStore()
+  const hasErrors = executionLogs.some(l => l.status === 'error')
   if (executionLogs.length === 0 && !isRunning) return null
+
+  const logEndRef = (el: HTMLDivElement | null) => { if (el) el.scrollTop = el.scrollHeight }
+
   return (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 160, background: '#0a0a0d', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', zIndex: 10, fontFamily: "'Space Grotesk', sans-serif" }}>
-      <div style={{ padding: '7px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6 }}>
-          {isRunning && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', animation: 'pulse 1s ease infinite' }} />}
-          Execution log
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 180, background: '#070709', borderTop: `1px solid ${hasErrors ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', flexDirection: 'column', zIndex: 10, fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, color: hasErrors ? '#ef4444' : '#52525b' }}>
+          {isRunning && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease infinite' }} />}
+          {hasErrors ? 'Execution errors' : isRunning ? 'Running...' : 'Execution trace'}
         </div>
-        <button onClick={clearLogs} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 11 }}>Clear</button>
+        <button onClick={clearLogs} style={{ background: 'none', border: 'none', color: '#3f3f46', cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>Clear</button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        {executionLogs.map((log, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
-            <span style={{ flexShrink: 0 }}>
-              {log.status === 'success' && <IcoCheckSm />}
-              {log.status === 'error'   && <IcoX />}
-              {log.status === 'running' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', animation: 'pulse 1s ease infinite' }} />}
-            </span>
-            <span style={{ color: '#a1a1aa', flex: 1 }}>{log.message}</span>
-            {log.duration && <span style={{ color: '#52525b', fontSize: 10 }}>{log.duration}ms</span>}
-          </div>
-        ))}
+      <div ref={logEndRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {executionLogs.map((log, i) => {
+          const isErr = log.status === 'error'
+          const isOk  = log.status === 'success'
+          const isRun = log.status === 'running'
+          return (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11, fontFamily: 'monospace', padding: '1px 0' }}>
+              <span style={{ flexShrink: 0, marginTop: 1 }}>
+                {isOk  && <IcoCheckSm color="#22c55e" />}
+                {isErr && <IcoX color="#ef4444" />}
+                {isRun && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease infinite', marginTop: 1 }} />}
+              </span>
+              <span style={{ color: isErr ? '#ef4444' : isOk ? '#a1a1aa' : '#71717a', flex: 1, wordBreak: 'break-all', lineHeight: 1.4 }}>{log.message}</span>
+              {log.duration != null && <span style={{ color: '#3f3f46', fontSize: 9, flexShrink: 0, marginTop: 2 }}>{log.duration}ms</span>}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -413,10 +464,11 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
             {saved ? <><IcoCheckSm color="#22c55e" /> Saved</> : 'Save'}
           </button>
-          {/* TODO: wire Run button to real execution API (/api/agent/run or /api/flows/[id]/run) */}
-          <button onClick={runFlow} disabled={isRunning}
+          <button
+            onClick={() => runFlow({ sourceId: projectId, sourceType: saveTarget === 'project' ? 'project' : 'flow' })}
+            disabled={isRunning}
             style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: isRunning ? '#1a1a24' : '#0EA5E9', color: isRunning ? '#52525b' : '#fff', fontSize: 11, fontWeight: 700, cursor: isRunning ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
-            {isRunning ? <><IcoSpinner /> Running...</> : '▶ Run'}
+            {isRunning ? <><IcoSpinner /> Running...</> : <><svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5V0z"/></svg> Run</>}
           </button>
         </div>
       </div>

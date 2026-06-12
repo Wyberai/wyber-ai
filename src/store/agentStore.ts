@@ -41,7 +41,7 @@ interface AgentStore {
   deleteNode: (id: string) => void
   hydrateFromSession: (projectId: string) => void
 
-  runFlow: () => Promise<void>
+  runFlow: (opts: { sourceId: string; sourceType: 'project' | 'flow' }) => Promise<void>
   clearLogs: () => void
 }
 
@@ -112,25 +112,92 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     } catch {}
   },
 
-  runFlow: async () => {
-    const { nodes } = get()
+  runFlow: async ({ sourceId, sourceType }) => {
     set({ isRunning: true, executionLogs: [] })
-    for (const node of nodes) {
+
+    // Mark all nodes pending
+    set((s) => ({
+      nodes: s.nodes.map(n => ({ ...n, data: { ...n.data, status: 'idle' as const } }))
+    }))
+
+    try {
+      const res = await fetch('/api/canvas/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceId, sourceType }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        set((s) => ({
+          isRunning: false,
+          executionLogs: [...s.executionLogs, {
+            nodeId: 'system',
+            nodeLabel: 'System',
+            status: 'error',
+            message: data.error || 'Execution failed',
+            timestamp: Date.now(),
+          }],
+        }))
+        return
+      }
+
+      // Animate each step result in order
+      for (const step of (data.steps ?? [])) {
+        // Mark as running
+        set((s) => ({
+          nodes: s.nodes.map(n => n.id === step.nodeId ? { ...n, data: { ...n.data, status: 'running' as const } } : n),
+          executionLogs: [...s.executionLogs, {
+            nodeId: step.nodeId,
+            nodeLabel: step.nodeLabel,
+            status: 'running',
+            message: `Running ${step.nodeLabel}...`,
+            timestamp: Date.now(),
+          }],
+        }))
+
+        await new Promise(r => setTimeout(r, 120)) // brief visual pause
+
+        // Mark with final status + add log lines
+        const finalStatus = step.status === 'success' ? 'success' : 'error'
+        const logLines: string[] = step.log ?? []
+        set((s) => ({
+          nodes: s.nodes.map(n => n.id === step.nodeId
+            ? { ...n, data: { ...n.data, status: finalStatus as 'success' | 'error' } }
+            : n),
+          executionLogs: [
+            ...s.executionLogs.filter(l => !(l.nodeId === step.nodeId && l.status === 'running')),
+            {
+              nodeId: step.nodeId,
+              nodeLabel: step.nodeLabel,
+              status: finalStatus,
+              message: logLines[0] || `${step.nodeLabel} ${finalStatus}`,
+              timestamp: Date.now(),
+              duration: step.durationMs,
+            },
+            ...logLines.slice(1).map(msg => ({
+              nodeId: step.nodeId,
+              nodeLabel: step.nodeLabel,
+              status: finalStatus,
+              message: `  ${msg}`,
+              timestamp: Date.now(),
+            })),
+          ],
+        }))
+      }
+    } catch (err) {
       set((s) => ({
-        nodes: s.nodes.map(n => n.id === node.id ? { ...n, data: { ...n.data, status: 'running' } } : n),
-        executionLogs: [...s.executionLogs, { nodeId: node.id, nodeLabel: node.data.label, status: 'running', message: `Executing ${node.data.label}...`, timestamp: Date.now() }]
+        executionLogs: [...s.executionLogs, {
+          nodeId: 'system',
+          nodeLabel: 'System',
+          status: 'error',
+          message: `Network error: ${String(err)}`,
+          timestamp: Date.now(),
+        }],
       }))
-      await new Promise(r => setTimeout(r, 900))
-      set((s) => ({
-        nodes: s.nodes.map(n => n.id === node.id ? { ...n, data: { ...n.data, status: 'success' } } : n),
-        executionLogs: s.executionLogs.map(l =>
-          l.nodeId === node.id && l.status === 'running'
-            ? { ...l, status: 'success', message: `✓ ${node.data.label} completed`, duration: 900 }
-            : l
-        )
-      }))
+    } finally {
+      set({ isRunning: false })
     }
-    set({ isRunning: false })
   },
 
   clearLogs: () => set({ executionLogs: [] }),
