@@ -73,12 +73,13 @@ export function MobilePreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, hasApp, saveToSnack])
 
-  // Re-embed when platform changes
+  // Re-embed when platform changes (rebuild embed URL from snackUrl)
   useEffect(() => {
-    if (embedUrl) {
-      setEmbedUrl(u => u ? u.replace(/platform=(ios|android|web)/, `platform=${platform}`) : u)
+    if (snackUrl) {
+      const id = snackUrl.split('/').pop()
+      setEmbedUrl(`https://snack.expo.dev/embedded?snack=${id}&platform=${platform}&theme=dark&preview=true`)
     }
-  }, [platform])
+  }, [platform, snackUrl])
 
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>

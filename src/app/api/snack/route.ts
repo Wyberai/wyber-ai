@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-interface SnackFile {
-  type: 'CODE' | 'ASSET'
-  contents: string
-}
-
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -18,49 +13,62 @@ export async function POST(req: NextRequest) {
       description?: string
     }
 
-    // Convert editor file map to Snack file format
-    const snackFiles: Record<string, SnackFile> = {}
-    for (const [path, content] of Object.entries(files)) {
-      // Snack expects paths without leading src/ for RN projects
+    // Build the `code` map: { filename: { type: 'CODE', contents: string } }
+    // Strip leading src/ — Snack expects bare filenames like App.tsx, screens/Home.tsx
+    const code: Record<string, { type: 'CODE'; contents: string }> = {}
+    for (const [path, content] of Object.entries(files ?? {})) {
+      if (!content) continue
       const snackPath = path.startsWith('src/') ? path.slice(4) : path
-      snackFiles[snackPath] = { type: 'CODE', contents: content }
+      code[snackPath] = { type: 'CODE', contents: content }
     }
 
-    // Ensure App.tsx exists (required by Snack)
-    if (!snackFiles['App.tsx'] && !snackFiles['app/index.tsx']) {
-      return NextResponse.json({ error: 'No App.tsx found in files' }, { status: 400 })
+    // Snack requires an App.tsx or App.js entry point
+    if (!code['App.tsx'] && !code['App.js'] && !code['app/index.tsx']) {
+      return NextResponse.json({ error: 'No App.tsx entry point found in files' }, { status: 400 })
     }
 
+    // Exact payload shape from snack-sdk Session.ts saveAsync()
     const payload = {
-      name: name || 'Wyber AI Mobile App',
-      description: description || 'Generated with Wyber AI',
-      files: snackFiles,
-      sdkVersion: '52.0.0',
+      manifest: {
+        sdkVersion: '52.0.0',
+        name: name || 'Wyber AI Mobile App',
+        description: description || 'Generated with Wyber AI',
+        dependencies: {},
+      },
+      code,
       dependencies: {},
+      isDraft: false,
     }
 
     const res = await fetch('https://exp.host/--/api/v2/snack/save', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Expo-Platform': 'web',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
 
+    const text = await res.text()
     if (!res.ok) {
-      const text = await res.text()
-      return NextResponse.json({ error: `Snack API error: ${text}` }, { status: 500 })
+      return NextResponse.json({ error: `Snack API error (${res.status}): ${text}` }, { status: 500 })
     }
 
-    const data = await res.json() as { id: string; hashId?: string }
-    const snackId = data.id || data.hashId
-    if (!snackId) return NextResponse.json({ error: 'No snack ID returned' }, { status: 500 })
+    let data: { id?: string; errors?: { message: string }[] }
+    try {
+      data = JSON.parse(text)
+    } catch {
+      return NextResponse.json({ error: `Invalid JSON from Snack API: ${text.slice(0, 200)}` }, { status: 500 })
+    }
 
+    if (!data.id) {
+      const msg = data.errors?.[0]?.message || 'No id returned'
+      return NextResponse.json({ error: `Snack save failed: ${msg}` }, { status: 500 })
+    }
+
+    const snackId = data.id
     return NextResponse.json({
       snackId,
       snackUrl: `https://snack.expo.dev/${snackId}`,
-      embedUrl: `https://snack.expo.dev/embedded/${snackId}?platform=ios&theme=dark&preview=true`,
+      // embed URL: ?snack= param is the canonical format for anonymous/saved snacks
+      embedUrl: `https://snack.expo.dev/embedded?snack=${snackId}&platform=ios&theme=dark&preview=true`,
     })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
