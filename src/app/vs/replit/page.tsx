@@ -10,8 +10,8 @@ const ROWS = [
   { feature: 'Primary use case',        wyber: 'AI app builder',       replit: 'Cloud IDE + AI agent',   winner: 'tie'   },
   { feature: 'Core/Pro price',          wyber: '$18.99/mo',            replit: '$20/mo (Core)',          winner: 'wyber' },
   { feature: 'Cost predictability',     wyber: 'Fixed credits',        replit: 'Usage-based overages',   winner: 'wyber' },
-  { feature: 'Free tier',               wyber: '15 credits (no card)', replit: 'Free (Agent trial)',     winner: 'tie'   },
-  { feature: 'Prebuilt app library',    wyber: '130+ at 0 cost',       replit: 'None',                   winner: 'wyber' },
+  { feature: 'Free tier',               wyber: '50 credits/month (no card)', replit: 'Free (Agent trial)',     winner: 'tie'   },
+  { feature: 'Prebuilt app library',    wyber: '81+ at 0 cost',       replit: 'None',                   winner: 'wyber' },
   { feature: 'Credit estimate upfront', wyber: '✓',                    replit: '✗ Effort-based billing', winner: 'wyber' },
   { feature: 'Non-technical friendly',  wyber: '✓ Guided',             replit: 'Developer-focused',      winner: 'wyber' },
   { feature: 'Full cloud IDE',          wyber: '✗',                    replit: '✓',                      winner: 'replit'},
@@ -60,7 +60,7 @@ export default function VsReplit() {
         <div style={{fontSize:11,color:'#52525b',textAlign:'center',marginBottom:40}}>Bolt uses a token-based model — some rows are approximate. Verify at <a href="https://replit.com/pricing" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>replit.com/pricing</a>.</div>
         <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
           <h2 style={{fontFamily:"'Sora', sans-serif",fontSize:22,fontWeight:800,marginBottom:8}}>Try Wyber AI free</h2>
-          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>15 credits, no card required. Build your first app in under 60 seconds.</p>
+          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>50 credits/month free, no card required. Build your first app in under 60 seconds.</p>
           <Link href="/signup" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Start building free →</Link>
         </div>
       </div>

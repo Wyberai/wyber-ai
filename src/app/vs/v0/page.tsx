@@ -14,7 +14,7 @@ const ROWS = [
   { feature: 'Authentication',          wyber: '✓ Built-in',             v0: '✗ Manual integration',     winner: 'wyber' },
   { feature: 'One-click deploy',        wyber: '✓ Vercel',               v0: 'Via Vercel',               winner: 'tie'   },
   { feature: 'GitHub sync',             wyber: '✓',                      v0: '✓',                        winner: 'tie'   },
-  { feature: 'Prebuilt app library',    wyber: '130+ at 0 cost',         v0: 'Component library',        winner: 'wyber' },
+  { feature: 'Prebuilt app library',    wyber: '81+ at 0 cost',         v0: 'Component library',        winner: 'wyber' },
   { feature: 'Credit estimate upfront', wyber: '✓',                      v0: '✗',                        winner: 'wyber' },
   { feature: 'Design system quality',   wyber: 'Good',                   v0: '✓ Excellent',              winner: 'v0'    },
   { feature: 'Figma import',            wyber: 'Coming soon',            v0: '✓',                        winner: 'v0'    },
@@ -59,7 +59,7 @@ export default function VsV0() {
         <div style={{fontSize:11,color:'#52525b',textAlign:'center',marginBottom:40}}>Bolt uses a token-based model — some rows are approximate. Verify at <a href="https://v0.dev" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>v0.dev</a>.</div>
         <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
           <h2 style={{fontFamily:"'Sora', sans-serif",fontSize:22,fontWeight:800,marginBottom:8}}>Try Wyber AI free</h2>
-          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>15 credits, no card required. Build your first app in under 60 seconds.</p>
+          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>50 credits/month free, no card required. Build your first app in under 60 seconds.</p>
           <Link href="/signup" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Start building free →</Link>
         </div>
       </div>

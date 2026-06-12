@@ -16,7 +16,7 @@ const ROWS = [
   { feature: 'Top-up credits',          wyber: 'All plans',      lovable: 'Pro+ only',       winner: 'wyber' },
   { feature: 'Top-up expiry',           wyber: 'Never',          lovable: '12 months',       winner: 'wyber' },
   { feature: 'Credit estimate upfront', wyber: '✓',              lovable: '✗',               winner: 'wyber' },
-  { feature: 'Prebuilt app library',    wyber: '130+ at 0 cost', lovable: 'Templates',       winner: 'wyber' },
+  { feature: 'Prebuilt app library',    wyber: '81+ at 0 cost', lovable: 'Templates',       winner: 'wyber' },
   { feature: 'Visual click-to-edit',    wyber: '✓',              lovable: '✓',               winner: 'tie'   },
   { feature: 'GitHub sync',             wyber: '✓',              lovable: '✓',               winner: 'tie'   },
   { feature: 'Supabase integration',    wyber: '✓ Auto',         lovable: '✓ Auto',          winner: 'tie'   },
@@ -64,7 +64,7 @@ export default function VsLovable() {
         <div style={{fontSize:11,color:'#52525b',textAlign:'center',marginBottom:40}}>Bolt uses a token-based model — some rows are approximate. Verify at <a href="https://lovable.dev" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>lovable.dev/pricing</a>.</div>
         <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
           <h2 style={{fontFamily:"'Sora', sans-serif",fontSize:22,fontWeight:800,marginBottom:8}}>Try Wyber AI free</h2>
-          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>15 credits, no card required. Build your first app in under 60 seconds.</p>
+          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>50 credits/month free, no card required. Build your first app in under 60 seconds.</p>
           <Link href="/signup" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Start building free →</Link>
         </div>
       </div>

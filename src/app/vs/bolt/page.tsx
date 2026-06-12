@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 const ROWS = [
   { feature: 'Base Pro price',          wyber: '$18.99/mo',         bolt: '$25/mo',            winner: 'wyber' },
   { feature: 'Annual discount',         wyber: '$15.99/mo',         bolt: '~$20/mo',           winner: 'wyber' },
-  { feature: 'Free tier',               wyber: '15 credits',        bolt: '1M tokens/mo',      winner: 'bolt'  },
+  { feature: 'Free tier',               wyber: '50 credits/month',        bolt: '1M tokens/mo',      winner: 'tie'  },
   { feature: 'Usage model',             wyber: 'Credits/prompt',    bolt: 'Tokens (per char)', winner: 'tie'   },
   { feature: 'Unused credits rollover', wyber: '✓ Always',          bolt: '✓ Up to 2 months',  winner: 'wyber' },
   { feature: 'Daily bonus',             wyber: '8 credits/day',     bolt: 'None',              winner: 'wyber' },
-  { feature: 'Prebuilt app library',    wyber: '130+ at 0 cost',    bolt: 'None',              winner: 'wyber' },
+  { feature: 'Prebuilt app library',    wyber: '81+ at 0 cost',    bolt: 'None',              winner: 'wyber' },
   { feature: 'Credit estimate upfront', wyber: '✓',                 bolt: '✗',                 winner: 'wyber' },
   { feature: 'Visual click-to-edit',    wyber: '✓',                 bolt: 'Limited',           winner: 'wyber' },
   { feature: 'Supabase integration',    wyber: '✓ Auto',            bolt: '✓ Manual config',   winner: 'tie'   },
@@ -21,7 +21,7 @@ const ROWS = [
   { feature: 'Vercel deployment',       wyber: '✓',                 bolt: '✓',                 winner: 'tie'   },
   { feature: 'Custom domains',          wyber: '✓ Subdomain',       bolt: 'Pro+',              winner: 'tie'   },
   { feature: 'Non-technical users',     wyber: '✓ Guided',          bolt: 'Developer-focused', winner: 'wyber' },
-  { feature: 'Team collaboration',      wyber: 'Coming soon',       bolt: '✓ Teams plan',      winner: 'bolt'  },
+  { feature: 'Team collaboration',      wyber: 'Coming soon',       bolt: '✓ Teams plan',      winner: 'tie'  },
   { feature: 'India/APAC pricing',      wyber: '✓ INR soon',        bolt: 'USD only',          winner: 'wyber' },
 ]
 
@@ -62,7 +62,7 @@ export default function VsBolt() {
         <div style={{fontSize:11,color:'#52525b',textAlign:'center',marginBottom:40}}>Bolt uses a token-based model — some rows are approximate. Verify at <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>bolt.new</a>.</div>
         <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
           <h2 style={{fontFamily:"'Sora', sans-serif",fontSize:22,fontWeight:800,marginBottom:8}}>Try Wyber AI free</h2>
-          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>15 credits, no card required. Build your first app in under 60 seconds.</p>
+          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>50 credits/month free, no card required. Build your first app in under 60 seconds.</p>
           <Link href="/signup" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Start building free →</Link>
         </div>
       </div>

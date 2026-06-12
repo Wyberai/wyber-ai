@@ -9,7 +9,7 @@ const BRAND = '#0EA5E9';
 
 const STATS = [
   { value: '5,000+', label: 'AI Agents' },
-  { value: '130+', label: 'App templates' },
+  { value: '81+', label: 'App templates' },
   { value: '30s',   label: 'Avg build time' },
   { value: '0',     label: 'Setup required' },
 ];
@@ -205,7 +205,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Gallery', '/gallery'], ['Mobile', '/dashboard?new=mobile'], ['Agents', '/agents'], ['Flows', '/flows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/dashboard?new=mobile'], ['Agents', '/agents'], ['Flows', '/flows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -252,7 +252,7 @@ export default function HomePage() {
             <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: `0 4px 24px rgba(14,165,233,0.35)`, transition: 'all 0.2s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
-              Start free — 15 credits →
+              Start free — 50 credits/month →
             </Link>
             <Link href="/agents" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `rgba(14,165,233,0.3)`; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
@@ -320,7 +320,7 @@ export default function HomePage() {
               body="Browse 5,000+ pre-built agents across 18 industries. Connect your tools — Slack, HubSpot, Gmail, Airtable. Click Run. Claude executes every step with a full audit log."
               mockup={<AgentMockup />}
               ctaLabel="Browse agents →"
-              ctaHref="/dashboard?new=agent"
+              ctaHref="/agents"
               Icon={IcoCpu}
             />
             <ProductCard
@@ -329,7 +329,7 @@ export default function HomePage() {
               body="Visual drag-and-drop flow builder. Wire triggers, AI reasoning steps, and actions together. Branch on conditions. Schedule runs. No code — just connect the nodes and go."
               mockup={<FlowMockup />}
               ctaLabel="Build a workflow →"
-              ctaHref="/dashboard?new=workflow"
+              ctaHref="/flows"
               Icon={IcoZap}
             />
           </div>
@@ -405,7 +405,7 @@ export default function HomePage() {
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Infinite possibilities.</span>
           </h2>
           <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 32px' }}>
-            Build web and mobile apps, deploy AI agents, and automate workflows — all from a single prompt. Start with 15 free credits, no card required.
+            Build web and mobile apps, deploy AI agents, and automate workflows — all from a single prompt. Start with 50 free credits/month, no card required.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ display: 'inline-block', padding: '16px 40px', borderRadius: 12, background: BRAND, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: `0 8px 32px rgba(14,165,233,0.35)` }}>
@@ -415,7 +415,7 @@ export default function HomePage() {
               Browse agents →
             </Link>
           </div>
-          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>15 free credits · No credit card · No setup</div>
+          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>50 credits/month free · No credit card · No setup</div>
         </div>
       </section>
 

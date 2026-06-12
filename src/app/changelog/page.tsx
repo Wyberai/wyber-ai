@@ -13,7 +13,7 @@ const RELEASES = [
     { type:'new', text:'Project subdomains — one-click publish to projectname.wyberai.app' },
     { type:'new', text:'Image generation (DALL-E 3) — generate assets directly in the IDE' },
     { type:'new', text:'SEO + AI search audit — score, fix recommendations, AI crawler optimization' },
-    { type:'new', text:'Voice input — mic button in chat, powered by Whisper' },
+    { type:'new', text:'Voice input — mic button in chat (UI shipped; server-side transcription coming)' },
     { type:'improved', text:'ChatPanel — bubble UI, AI avatar, dot-pulse loading' },
     { type:'improved', text:'PreviewPanel — live indicator, glass overlay, premium empty state' },
     { type:'improved', text:'Design system — consistent tokens, skeleton loading, smooth transitions' },

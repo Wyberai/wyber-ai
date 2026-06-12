@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 16, color: '#52525b' }}>wyberai.com</span>
           <div style={{ padding: '8px 20px', borderRadius: 20, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', fontSize: 16, fontWeight: 700, color: '#0EA5E9' }}>
-            Start free → 15 credits
+            Start free → 50 credits/month
           </div>
         </div>
       </div>
