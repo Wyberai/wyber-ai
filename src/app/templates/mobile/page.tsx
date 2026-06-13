@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { MOBILE_GALLERY, MOBILE_CATEGORIES } from '@/lib/templates/mobile-gallery'
+import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export default function MobileTemplatesPage() {
   const router = useRouter()
@@ -31,12 +32,7 @@ export default function MobileTemplatesPage() {
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px', background: '#0d0d0f' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', height: 60, gap: 24 }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-              <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-            </svg>
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>Wyber AI</span>
+            <WyberLogo markSize={24} wordmarkSize={13} />
           </Link>
           <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
           <span style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Mobile Templates</span>

@@ -60,7 +60,6 @@ export default function GalleryPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={13} />
-          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800, fontSize: 14, letterSpacing: '-0.03em' }}>Wyber AI</span>
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link></div>
       </nav>

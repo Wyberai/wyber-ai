@@ -263,21 +263,19 @@ export default function HomePage() {
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 800 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: `rgba(14,165,233,0.1)`, border: `1px solid rgba(14,165,233,0.2)`, fontSize: 12, fontWeight: 700, color: BRAND, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
-            A new category of AI platform
+            From idea to running product.
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,76px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 22 }}>
-            The AI platform that<br />
+            Build apps, ship to mobile, and<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              builds, thinks, and acts.
+              put AI agents to work
             </span>
+            {' '}— in plain English.
           </h1>
 
-          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 580, margin: '0 auto 12px' }}>
-            Web. Mobile. Agents. Workflows.
-          </p>
-          <p style={{ fontSize: 'clamp(13px,1.5vw,16px)', color: '#52525b', lineHeight: 1.65, maxWidth: 520, margin: '0 auto 36px' }}>
-            One platform. One prompt. Zero setup.
+          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 620, margin: '0 auto 36px' }}>
+            Web. Mobile. Agents. Workflows. One platform, no code, no setup.
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 52 }}>

@@ -44,7 +44,6 @@ export function Navbar({ user }: Props) {
   };
 
   const NAV_LINKS = [
-    ['Templates', '/templates'],
     ['Mobile', '/templates/mobile'],
     ['Workflows', '/workflows'],
     ['Agents', '/agents'],
