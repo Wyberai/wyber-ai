@@ -92,12 +92,12 @@ function ToolIcon({ toolId, logoUrl, size = 24 }: { toolId?: string; logoUrl?: s
 
 // ─── Node styles ─────────────────────────────────────────────────────────────
 
-const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: string; Icon: React.FC<{ size?: number; color?: string }> }> = {
-  trigger:   { color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)',  label: 'Trigger',   Icon: IcoZap },
-  aiagent:   { color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', label: 'AI Agent',  Icon: IcoBrain },
-  tool:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', label: 'Tool',      Icon: IcoTool },
-  condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'Condition', Icon: IcoDiamond },
-  output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  label: 'Output',    Icon: IcoCheck },
+const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: string; helpText: string; Icon: React.FC<{ size?: number; color?: string }> }> = {
+  trigger:   { color: '#0EA5E9', bg: 'rgba(14,165,233,0.08)',  label: 'When this starts', helpText: 'How and when this agent begins running', Icon: IcoZap },
+  aiagent:   { color: '#8b5cf6', bg: 'rgba(139,92,246,0.08)', label: 'AI Step',           helpText: 'Claude reads inputs and decides what to do', Icon: IcoBrain },
+  tool:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', label: 'Use a tool',        helpText: 'Connect to an external app (Gmail, Slack, etc.)', Icon: IcoTool },
+  condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'Decision point',    helpText: 'Take different paths based on a condition', Icon: IcoDiamond },
+  output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  label: 'Final result',      helpText: 'What the agent produces or sends when done', Icon: IcoCheck },
 }
 
 const STATUS_COLORS = { idle: 'rgba(255,255,255,0.12)', running: '#f59e0b', success: '#22c55e', error: '#ef4444' }
@@ -438,7 +438,7 @@ function ConfigPanel() {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 10, color: meta.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{meta.label}</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa' }}>Configure</div>
+          <div style={{ fontSize: 11, color: '#52525b' }}>{meta.helpText}</div>
         </div>
         <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
       </div>
@@ -452,14 +452,14 @@ function ConfigPanel() {
         {nodeType === 'tool' && (
           <>
             <div>
-              <label style={labelStyle}>Mode</label>
+              <label style={labelStyle}>What kind of tool?</label>
               <select
                 value={(node.data.config as Record<string,string>).mode || 'http'}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), mode: e.target.value } })}
                 style={fieldStyle}
               >
-                <option value="http">HTTP Request</option>
-                <option value="composio">Composio Tool</option>
+                <option value="composio">Connected app (Gmail, Slack, GitHub...)</option>
+                <option value="http">Custom website or API</option>
               </select>
             </div>
 
@@ -508,13 +508,13 @@ function ConfigPanel() {
 
         {nodeType === 'trigger' && (
           <div>
-            <label style={labelStyle}>Trigger type</label>
+            <label style={labelStyle}>How does this start?</label>
             <select value={(node.data.config as Record<string,string>).type || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), type: e.target.value } })} style={fieldStyle}>
-              <option value="manual">Manual trigger</option>
-              <option value="webhook">Webhook</option>
-              <option value="schedule">Schedule (cron)</option>
-              <option value="form">Form submission</option>
-              <option value="email">Email received</option>
+              <option value="manual">I click Run manually</option>
+              <option value="webhook">A webhook fires (from another system)</option>
+              <option value="schedule">On a schedule (e.g. every hour)</option>
+              <option value="form">Someone submits a form</option>
+              <option value="email">An email is received</option>
             </select>
           </div>
         )}
@@ -522,40 +522,33 @@ function ConfigPanel() {
         {nodeType === 'aiagent' && (
           <>
             <div>
-              <label style={labelStyle}>Model</label>
+              <label style={labelStyle}>Which AI model?</label>
               <select value={(node.data.config as Record<string,string>).model || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), model: e.target.value } })} style={fieldStyle}>
-                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-                <option value="claude-opus-4-8">Claude Opus 4.8</option>
+                <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (fast, smart)</option>
+                <option value="claude-opus-4-8">Claude Opus 4.8 (most capable)</option>
                 <option value="gpt-4o">GPT-4o</option>
-                <option value="gpt-4o-mini">GPT-4o mini</option>
+                <option value="gpt-4o-mini">GPT-4o mini (faster, cheaper)</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>System prompt</label>
-              <textarea value={(node.data.config as Record<string,string>).instructions || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), instructions: e.target.value } })} placeholder="What should this AI agent do?" rows={4} style={{ ...fieldStyle, resize: 'vertical' }} />
+              <label style={labelStyle}>What should the AI do?</label>
+              <textarea value={(node.data.config as Record<string,string>).instructions || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), instructions: e.target.value } })} placeholder="e.g. Read the email, extract the customer name and issue type, and draft a polite reply." rows={4} style={{ ...fieldStyle, resize: 'vertical' }} />
             </div>
           </>
         )}
 
         {nodeType === 'condition' && (
           <div>
-            <label style={labelStyle}>Condition rule</label>
-            <input value={(node.data.config as Record<string,string>).rule || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), rule: e.target.value } })} placeholder="e.g. score > 80 OR status == approved" style={fieldStyle} />
+            <label style={labelStyle}>What condition decides the path?</label>
+            <input value={(node.data.config as Record<string,string>).rule || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), rule: e.target.value } })} placeholder="e.g. score > 80   or   status === 'urgent'" style={fieldStyle} />
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>Write a simple true/false expression using values from earlier steps.</div>
           </div>
         )}
 
         <div>
-          <label style={labelStyle}>Description</label>
-          <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="What does this step do?" rows={3} style={{ ...fieldStyle, resize: 'none' }} />
+          <label style={labelStyle}>Notes (optional)</label>
+          <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="Describe what this step does, so you remember later." rows={2} style={{ ...fieldStyle, resize: 'none' }} />
         </div>
-
-        {/* Vault secrets hint */}
-        {(nodeType === 'aiagent' || nodeType === 'tool') && (
-          <div style={{ padding: '7px 10px', borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
-            Use <code style={{ fontFamily: 'monospace' }}>{'{{SECRET:NAME}}'}</code> in URLs and headers to inject secrets from your{' '}
-            <a href="/settings" target="_blank" rel="noopener noreferrer" style={{ color: '#52525b' }}>Secrets Vault</a>.
-          </div>
-        )}
 
         <button onClick={() => deleteNode(node.id)} style={{ padding: '9px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
           Delete node
@@ -588,8 +581,13 @@ function ExecutionLog() {
           const isErr = log.status === 'error'
           const isOk  = log.status === 'success'
           const isRun = log.status === 'running'
+          // Detect "not connected" error messages from canvas/run
+          const connectMatch = log.message.match(/not connected.*?Connect it.*?integrations/i) ||
+            log.message.match(/needs.*connection/i)
+          const toolkitMatch = log.message.match(/\b([A-Z]{2,})\b.*?not connected/i)
+          const toolkitName = toolkitMatch?.[1]
           return (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11, fontFamily: 'monospace', padding: '1px 0' }}>
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11, fontFamily: 'monospace', padding: '1px 0', flexWrap: 'wrap' }}>
               <span style={{ flexShrink: 0, marginTop: 1 }}>
                 {isOk  && <IcoCheckSm color="#22c55e" />}
                 {isErr && <IcoX color="#ef4444" />}
@@ -597,6 +595,17 @@ function ExecutionLog() {
               </span>
               <span style={{ color: isErr ? '#ef4444' : isOk ? '#a1a1aa' : '#71717a', flex: 1, wordBreak: 'break-all', lineHeight: 1.4 }}>{log.message}</span>
               {log.duration != null && <span style={{ color: '#3f3f46', fontSize: 9, flexShrink: 0, marginTop: 2 }}>{log.duration}ms</span>}
+              {connectMatch && (
+                <a
+                  href="/settings?tab=integrations"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '3px 9px', borderRadius: 6, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', color: '#0EA5E9', fontSize: 10, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', textDecoration: 'none', cursor: 'pointer' }}
+                >
+                  {toolkitName ? `Connect ${toolkitName}` : 'Connect in Settings'}
+                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              )}
             </div>
           )
         })}
@@ -608,11 +617,11 @@ function ExecutionLog() {
 // ─── Node Palette ─────────────────────────────────────────────────────────────
 
 const PALETTE: { type: WyberNodeType; description: string }[] = [
-  { type: 'trigger',   description: 'Start the flow' },
-  { type: 'aiagent',  description: 'AI reasoning step' },
-  { type: 'tool',     description: 'Call external service' },
-  { type: 'condition', description: 'Branch on condition' },
-  { type: 'output',   description: 'End / return result' },
+  { type: 'trigger',   description: 'How it starts' },
+  { type: 'aiagent',  description: 'Add an AI step' },
+  { type: 'tool',     description: 'Connect an app' },
+  { type: 'condition', description: 'Add a decision' },
+  { type: 'output',   description: 'Show the result' },
 ]
 
 // ─── Main Canvas ──────────────────────────────────────────────────────────────
