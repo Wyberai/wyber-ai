@@ -25,11 +25,27 @@ html,body,#root{height:100%;margin:0;padding:0;background:#fff;font-family:-appl
 <div id="root"></div>
 <div id="__err"></div>
 
-<!-- UMD globals — jsDelivr (no crossorigin to avoid CORS CORB) -->
-<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-native-web@0.19.12/dist/react-native-web.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js"></script>
+<!-- Error reporter: must run before any other script -->
+<script>
+window.__cdnFailed = [];
+function __postErr(msg) {
+  document.getElementById('__err').style.display='block';
+  document.getElementById('__err').textContent = msg;
+  try { window.parent.postMessage({ type: 'preview-error', message: msg }, '*'); } catch(e) {}
+}
+window.onerror = function(msg, src, line, col, err) {
+  __postErr('Runtime error: ' + (err ? err.message : msg) + (src ? ' (' + src.split('/').pop() + ':' + line + ')' : ''));
+};
+window.addEventListener('unhandledrejection', function(e) {
+  __postErr('Unhandled promise rejection: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+});
+</script>
+
+<!-- UMD globals — jsDelivr, no crossorigin (avoids CORB), null-origin sandbox (no CSP inheritance) -->
+<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" onerror="window.__cdnFailed.push('react')"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="window.__cdnFailed.push('react-dom')"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-native-web@0.19.12/dist/react-native-web.js" onerror="window.__cdnFailed.push('react-native-web')"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js" onerror="window.__cdnFailed.push('@babel/standalone')"></script>
 
 <script>
 (function(){
@@ -39,9 +55,12 @@ var RD = window.ReactDOM;
 var RNW = window.ReactNativeWeb;
 var h = R.createElement;
 
+if(window.__cdnFailed.length>0){
+  __postErr('CDN scripts failed to load: ' + window.__cdnFailed.join(', ') + '\n\nThis is usually a network issue. Check your internet connection or try refreshing.');
+  return;
+}
 if(!R||!RD||!RNW){
-  document.getElementById('__err').style.display='block';
-  document.getElementById('__err').textContent='CDN load failed. Check your connection.';
+  __postErr('CDN globals missing (React=' + !!R + ', ReactDOM=' + !!RD + ', RNW=' + !!RNW + ').\nCheck that CDN scripts loaded correctly.');
   return;
 }
 
@@ -333,11 +352,7 @@ function requireModule(id, fromDir) {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
-function showError(msg) {
-  var el = document.getElementById('__err');
-  el.style.display='block';
-  el.textContent = msg;
-}
+function showError(msg) { __postErr(msg); }
 
 try {
   var appPath = null;
@@ -369,8 +384,18 @@ export function MobilePreviewPanel() {
   const [srcdoc, setSrcdoc] = useState<string | null>(null)
   const [snackUrl, setSnackUrl] = useState<string | null>(null)
   const [buildingSnack, setBuildingSnack] = useState(false)
+  const [previewError, setPreviewError] = useState<string | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const lastKeyRef = useRef('')
+
+  // Listen for errors posted by the iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'preview-error') setPreviewError(e.data.message as string)
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
   const hasApp = Object.keys(files ?? {}).some(p =>
     p.includes('App.tsx') || p.includes('App.jsx') || p.includes('App.js')
@@ -386,6 +411,7 @@ export function MobilePreviewPanel() {
     const key = Object.keys(plainFiles).sort().map(p => `${p}:${plainFiles[p].length}`).join('|')
     if (key === lastKeyRef.current && srcdoc) return
     lastKeyRef.current = key
+    setPreviewError(null)
     setSrcdoc(buildSrcdoc(plainFiles))
 
     // Also kick off Snack save in background (for "Open in Expo" link)
@@ -474,13 +500,22 @@ export function MobilePreviewPanel() {
               <div style={{ height: 28, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ width: 90, height: 20, background: '#0a0a0a', borderRadius: 10 }} />
               </div>
-              <iframe
-                ref={iframeRef}
-                srcDoc={srcdoc}
-                title="Mobile App Preview"
-                sandbox="allow-scripts allow-same-origin"
-                style={{ width: '100%', height: 'calc(100% - 28px)', border: 'none', background: '#fff', display: 'block' }}
-              />
+              {previewError ? (
+                <div style={{ width: '100%', height: 'calc(100% - 28px)', overflow: 'auto', background: '#1a0505', padding: 12 }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff6b6b', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
+                    <strong style={{ display: 'block', marginBottom: 8, fontSize: 11 }}>Preview error</strong>
+                    {previewError}
+                  </div>
+                </div>
+              ) : (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={srcdoc}
+                  title="Mobile App Preview"
+                  sandbox="allow-scripts"
+                  style={{ width: '100%', height: 'calc(100% - 28px)', border: 'none', background: '#fff', display: 'block' }}
+                />
+              )}
             </div>
           </div>
         )}
