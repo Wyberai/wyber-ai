@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient, createAdminClient } from '@/lib/supabase/server'
 import { getDecryptedSecret } from '@/lib/get-decrypted-secret'
 import Anthropic from '@anthropic-ai/sdk'
@@ -233,9 +233,12 @@ async function executeOutput(
   _node: CanvasNode,
   state: Record<string, unknown>,
 ): Promise<{ output: unknown; log: string[] }> {
+  // Shallow-copy state — caller sets stepState[node.id]=output after this returns,
+  // which would make output.result[nodeId]===output (circular). Spread breaks the ref.
+  const snapshot = { ...state }
   return {
-    output: { result: state, summary: 'Flow completed' },
-    log: ['Output collected', `Keys in state: ${Object.keys(state).join(', ')}`],
+    output: { result: snapshot, summary: 'Flow completed' },
+    log: ['Output collected', `Keys in state: ${Object.keys(snapshot).join(', ')}`],
   }
 }
 

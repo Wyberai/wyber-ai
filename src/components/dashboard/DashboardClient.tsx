@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect } from 'react';
 import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -80,18 +80,20 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const searchParams = useSearchParams();
 
   // Deep-link: /dashboard?new=app|mobile|agent|workflow → open chooser
-  // If ?template= is present, read the stored prompt from sessionStorage first
+  // When ?template= is present for mobile, the type is already known — skip chooser.
   useEffect(() => {
     const newType = searchParams.get('new');
-    if (['app', 'mobile', 'agent', 'workflow'].includes(newType ?? '')) {
-      const templateId = searchParams.get('template');
-      let templatePrompt: string | undefined;
-      if (templateId && newType === 'mobile') {
-        templatePrompt = sessionStorage.getItem('wyber_mobile_template_prompt') ?? undefined;
-        sessionStorage.removeItem('wyber_mobile_template_prompt');
-        sessionStorage.removeItem('wyber_mobile_template_title');
-      }
-      setPendingPrompt(templatePrompt);
+    if (!['app', 'mobile', 'agent', 'workflow'].includes(newType ?? '')) return;
+
+    const templateId = searchParams.get('template');
+    if (templateId && newType === 'mobile') {
+      // Type is fully known — bypass the chooser and start immediately
+      const templatePrompt = sessionStorage.getItem('wyber_mobile_template_prompt') ?? undefined;
+      sessionStorage.removeItem('wyber_mobile_template_prompt');
+      sessionStorage.removeItem('wyber_mobile_template_title');
+      startProject(templatePrompt, 'mobile');
+    } else {
+      setPendingPrompt(undefined);
       setShowTypePicker(true);
     }
   }, []);

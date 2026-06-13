@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { LiveDemo } from '@/components/shared/LiveDemo';
@@ -330,7 +330,7 @@ export default function HomePage() {
             <ProductCard
               eyebrow="Web Apps"
               heading="Describe it. It builds."
-              body="Type what you want. Wyber generates production-ready React code, provisions a Supabase database, and deploys to Vercel — in under 30 seconds. No templates. No drag-and-drop. Real code."
+              body="Type what you want. Wyber generates production-ready React code, provisions a Supabase database, and deploys to Vercel — in under 30 seconds. No drag-and-drop. Real code. Start from one of 81+ gallery templates or build from scratch."
               mockup={<AppMockup />}
               ctaLabel="Build a web app →"
               ctaHref="/dashboard?new=app"

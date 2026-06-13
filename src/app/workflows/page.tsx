@@ -1,7 +1,9 @@
-'use client'
+﻿'use client'
+export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { WORKFLOW_GALLERY, WORKFLOW_CATEGORIES } from '@/lib/templates/workflow-gallery'
 
 export default function WorkflowsPage() {
@@ -9,6 +11,7 @@ export default function WorkflowsPage() {
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [launching, setLaunching] = useState<string | null>(null)
+  const [useError, setUseError] = useState<string | null>(null)
 
   const filtered = WORKFLOW_GALLERY.filter(t => {
     const matchCat = category === 'All' || t.category === category
@@ -18,7 +21,18 @@ export default function WorkflowsPage() {
 
   const handleUse = async (template: typeof WORKFLOW_GALLERY[0]) => {
     if (launching) return
+    setUseError(null)
     setLaunching(template.id)
+
+    // Client-side auth check first — avoids the redirect loop where unauthenticated
+    // users get sent to /signup and end up back at dashboard → workflows → repeat.
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.push('/login?next=/workflows')
+      return
+    }
+
     try {
       const res = await fetch('/api/flows', {
         method: 'POST',
@@ -31,18 +45,18 @@ export default function WorkflowsPage() {
         }),
       })
       if (res.status === 401) {
-        router.push('/signup')
+        router.push('/login?next=/workflows')
         return
       }
       const data = await res.json()
       if (data.flow?.id) {
         router.push('/flows/' + data.flow.id)
       } else {
-        router.push('/signup')
+        setUseError(data.error || 'Failed to create workflow. Please try again.')
+        setLaunching(null)
       }
     } catch {
-      router.push('/signup')
-    } finally {
+      setUseError('Network error. Please check your connection and try again.')
       setLaunching(null)
     }
   }
@@ -101,6 +115,13 @@ export default function WorkflowsPage() {
             />
           </div>
         </div>
+
+        {/* Inline error banner */}
+        {useError && (
+          <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 13 }}>
+            {useError}
+          </div>
+        )}
 
         {/* Category filters */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 28 }}>
