@@ -34,7 +34,7 @@ export default function FlowsPage() {
       <div style={{ maxWidth:1100, margin:'0 auto', padding:32 }}>
         {loading ? <div style={{ color:'#52526a' }}>Loading...</div> : flows.length === 0 ? (
           <div style={{ textAlign:'center', padding:'80px 0' }}>
-            <div style={{ fontSize:48, marginBottom:16 }}>⚡</div>
+            <div style={{ marginBottom:16, display:'flex', justifyContent:'center' }}><svg width="48" height="48" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg></div>
             <div style={{ fontSize:20, fontWeight:700, marginBottom:8 }}>Build your first automation</div>
             <div style={{ fontSize:14, color:'#52526a', marginBottom:24 }}>Connect triggers, AI steps, and actions into powerful workflows</div>
             <button onClick={createFlow} style={{ padding:'11px 28px', borderRadius:8, border:'none', background:'#0EA5E9', color:'white', fontSize:14, fontWeight:700, cursor:'pointer' }}>Create automation →</button>
@@ -45,7 +45,7 @@ export default function FlowsPage() {
               <Link key={flow.id} href={'/flows/'+flow.id} style={{ textDecoration:'none' }}>
                 <div style={{ background:'#111118', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:20, cursor:'pointer' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
-                    <span style={{ fontSize:18 }}>⚡</span>
+                    <svg width="18" height="18" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
                     <span style={{ fontSize:14, fontWeight:700, color:'#f0f0f5' }}>{flow.name}</span>
                     <span style={{ marginLeft:'auto', fontSize:10, padding:'2px 7px', borderRadius:8, background:flow.is_active?'rgba(34,197,94,0.1)':'rgba(255,255,255,0.04)', color:flow.is_active?'#22c55e':'#52526a', fontWeight:700 }}>{flow.is_active?'ACTIVE':'DRAFT'}</span>
                   </div>
