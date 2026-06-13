@@ -87,10 +87,10 @@ async function getToolkitActions(apiKey: string, toolkitSlug: string) {
       limit: 100,
     })
 
-    // tools is an array of raw tool descriptors when no provider is set
+    // Composio returns Claude-format tool descriptors: { type: 'function', function: { name, description, parameters } }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const actions = (Array.isArray(tools) ? tools : []).map((t: any) => ({
-      slug: t.name ?? t.slug ?? t.function?.name ?? '',
+      slug: t.function?.name ?? t.name ?? '',
       name: t.function?.name ?? t.name ?? '',
       description: t.function?.description ?? t.description ?? '',
     }))

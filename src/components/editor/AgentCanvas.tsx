@@ -192,6 +192,81 @@ interface ComposioAction {
   description: string
 }
 
+function useComposioConnections() {
+  const [connections, setConnections] = useState<{ toolkit: string; status: string; id: string }[]>([])
+  const [loadedAt, setLoadedAt] = useState(0)
+
+  const refresh = () => {
+    fetch('/api/composio/connections')
+      .then(r => r.json())
+      .then(d => { setConnections(d.connections ?? []); setLoadedAt(Date.now()) })
+      .catch(() => {})
+  }
+
+  useEffect(() => { refresh() }, [])
+
+  // Listen for OAuth popup completing and refresh
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'composio_oauth_result' && e.data.success) refresh()
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
+  const isConnected = (toolkit: string) =>
+    connections.some(c => c.toolkit.toLowerCase() === toolkit.toLowerCase() && c.status === 'ACTIVE')
+
+  return { connections, isConnected, refresh, loadedAt }
+}
+
+function ComposioConnectButton({ toolkit, onConnected }: { toolkit: string; onConnected?: () => void }) {
+  const [connecting, setConnecting] = useState(false)
+
+  const handleConnect = async () => {
+    setConnecting(true)
+    try {
+      const res = await fetch(`/api/composio/connect?toolkit=${toolkit.toLowerCase()}`)
+      const data = await res.json()
+      if (!data.redirectUrl) {
+        setConnecting(false)
+        return
+      }
+      const popup = window.open(data.redirectUrl, 'composio_oauth',
+        'width=600,height=700,scrollbars=yes,resizable=yes')
+
+      const check = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(check)
+          setConnecting(false)
+          onConnected?.()
+        }
+      }, 500)
+    } catch {
+      setConnecting(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleConnect}
+      disabled={connecting}
+      style={{
+        padding: '7px 14px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.4)',
+        background: connecting ? 'rgba(14,165,233,0.05)' : 'rgba(14,165,233,0.1)',
+        color: connecting ? '#52525b' : '#0EA5E9', fontSize: 11, fontWeight: 700,
+        cursor: connecting ? 'wait' : 'pointer', fontFamily: 'inherit',
+        display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+      }}
+    >
+      {connecting
+        ? <><div style={{ width: 8, height: 8, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Connecting...</>
+        : <>Connect {toolkit}</>
+      }
+    </button>
+  )
+}
+
 function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
   nodeId: string
   cfg: Record<string, string>
@@ -203,6 +278,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
   const [loading, setLoading] = useState(true)
   const [actionsLoading, setActionsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { isConnected, refresh } = useComposioConnections()
 
   useEffect(() => {
     setLoading(true)
@@ -212,7 +288,6 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
       .catch(() => { setError('Could not load toolkits — check COMPOSIO_API_KEY'); setLoading(false) })
   }, [])
 
-  // When a toolkit is already selected, load its actions
   useEffect(() => {
     if (!cfg.toolkit) { setActions([]); return }
     setActionsLoading(true)
@@ -227,10 +302,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
     : toolkits
 
   const selectToolkit = (slug: string, name: string, logo: string) => {
-    updateNodeData(nodeId, {
-      label: name,
-      config: { ...cfg, toolkit: slug, action: '', logo },
-    })
+    updateNodeData(nodeId, { label: name, config: { ...cfg, toolkit: slug, action: '', logo } })
     setActions([])
   }
 
@@ -242,9 +314,10 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
     </div>
   )
 
+  const connected = cfg.toolkit ? isConnected(cfg.toolkit) : false
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {/* Toolkit search + grid */}
       {!cfg.toolkit ? (
         <>
           <input
@@ -274,7 +347,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                     ? <img src={t.logo} alt={t.name} width={22} height={22} style={{ borderRadius: 4, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     : <IcoTool size={18} color="#52525b" />
                   }
-                  <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                  <span style={{ fontSize: 9, color: isConnected(t.slug) ? '#22c55e' : '#a1a1aa', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
                 </button>
               ))}
             </div>
@@ -282,20 +355,28 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
         </>
       ) : (
         <>
-          {/* Selected toolkit header */}
+          {/* Selected toolkit row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 8 }}>
+            {cfg.logo && <img src={cfg.logo} width={18} height={18} style={{ borderRadius: 3, objectFit: 'contain' }} />}
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9' }}>{cfg.toolkit}</div>
-              <div style={{ fontSize: 10, color: '#52525b' }}>toolkit selected</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9' }}>{cfg.toolkit.toUpperCase()}</div>
+              <div style={{ fontSize: 10, color: connected ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                {connected ? '● Connected' : '● Not connected'}
+              </div>
             </div>
             <button
-              onClick={() => updateNodeData(nodeId, { config: { ...cfg, toolkit: '', action: '' } })}
-              style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 12 }}
+              onClick={() => updateNodeData(nodeId, { config: { ...cfg, toolkit: '', action: '', logo: '' } })}
+              style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 12, padding: '2px 4px' }}
               title="Change toolkit"
             >✕</button>
           </div>
 
-          {/* Action picker */}
+          {/* Connect button if not connected */}
+          {!connected && (
+            <ComposioConnectButton toolkit={cfg.toolkit} onConnected={refresh} />
+          )}
+
+          {/* Action picker — only show when connected (or allow preview when not) */}
           <div>
             <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 5 }}>ACTION</div>
             {actionsLoading ? (
@@ -315,9 +396,15 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
           </div>
 
           {cfg.action && (
-            <div style={{ padding: '7px 9px', borderRadius: 7, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', fontSize: 10, color: '#71717a' }}>
-              <span style={{ color: '#22c55e', fontWeight: 700 }}>{cfg.action}</span>
-              {' '}— arguments will be populated from upstream node outputs at runtime.
+            <div style={{
+              padding: '7px 9px', borderRadius: 7, fontSize: 10, color: '#71717a',
+              background: connected ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
+              border: `1px solid ${connected ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'}`,
+            }}>
+              <span style={{ color: connected ? '#22c55e' : '#ef4444', fontWeight: 700 }}>{cfg.action}</span>
+              {' '}{connected
+                ? '— will execute when this agent runs.'
+                : '— connect the toolkit above before running.'}
             </div>
           )}
         </>

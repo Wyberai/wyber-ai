@@ -15,7 +15,7 @@ function WyberLogo({ size = 26 }: { size?: number }) {
   );
 }
 
-type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'github' | 'notifications' | 'danger';
+type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'integrations' | 'github' | 'notifications' | 'danger';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'profile',       label: 'Profile',             icon: '👤' },
@@ -23,6 +23,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'models',        label: 'Models & Credits',     icon: '⚡' },
   { id: 'api-keys',      label: 'API Keys',             icon: '🔑' },
   { id: 'secrets',       label: 'Secrets Vault',        icon: '🔐' },
+  { id: 'integrations',  label: 'Integrations',         icon: '🔌' },
   { id: 'github',        label: 'GitHub',               icon: '⌥' },
   { id: 'notifications', label: 'Notifications',        icon: '🔔' },
   { id: 'danger',        label: 'Danger Zone',          icon: '⚠️' },
@@ -35,10 +36,131 @@ const PLANS = [
   { id: 'business', name: 'Business', price: '$49', credits: 500, color: '#f59e0b', features: ['500 monthly credits', 'Everything in Pro', 'Priority support', 'SSO & audit logs (Q3 2026)'] },
 ];
 
+interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }
+
+function IntegrationsTab() {
+  const [connections, setConnections] = useState<Connection[]>([])
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState<string | null>(null)
+  const [disconnecting, setDisconnecting] = useState<string | null>(null)
+
+  const load = () => {
+    setLoading(true)
+    fetch('/api/composio/connections')
+      .then(r => r.json())
+      .then(d => { setConnections(d.connections ?? []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'composio_oauth_result' && e.data.success) load()
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
+  const handleConnect = async (toolkit: string) => {
+    setConnecting(toolkit)
+    try {
+      const res = await fetch(`/api/composio/connect?toolkit=${toolkit.toLowerCase()}`)
+      const data = await res.json()
+      if (!data.redirectUrl) { setConnecting(null); return }
+      const popup = window.open(data.redirectUrl, 'composio_oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+      const check = setInterval(() => {
+        if (popup?.closed) { clearInterval(check); setConnecting(null); setTimeout(load, 1500) }
+      }, 500)
+    } catch { setConnecting(null) }
+  }
+
+  const handleDisconnect = async (accountId: string) => {
+    setDisconnecting(accountId)
+    try {
+      await fetch(`/api/composio/connections?accountId=${accountId}`, { method: 'DELETE' })
+      setConnections(c => c.filter(x => x.id !== accountId))
+    } catch {}
+    setDisconnecting(null)
+  }
+
+  const POPULAR = ['gmail', 'slack', 'github', 'notion', 'googlecalendar', 'hubspot', 'airtable', 'linear', 'jira', 'stripe']
+  const connectedSlugs = new Set(connections.filter(c => c.status === 'ACTIVE').map(c => c.toolkit))
+  const suggestedUnconnected = POPULAR.filter(t => !connectedSlugs.has(t))
+
+  const S = {
+    row: { display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 6 } as const,
+    badge: (active: boolean) => ({ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', color: active ? '#22c55e' : '#71717a', border: `1px solid ${active ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}` }) as const,
+    btnSm: (danger?: boolean) => ({ padding: '5px 12px', borderRadius: 7, border: `1px solid ${danger ? 'rgba(239,68,68,0.3)' : 'rgba(14,165,233,0.3)'}`, background: danger ? 'rgba(239,68,68,0.05)' : 'rgba(14,165,233,0.08)', color: danger ? '#ef4444' : '#0EA5E9', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }) as const,
+  }
+
+  return (
+    <>
+      <h1 style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 4px' }}>Integrations</h1>
+      <p style={{ fontSize: 13, color: '#71717a', marginBottom: 24 }}>Connect external tools for use in your AI agents. Powered by Composio.</p>
+
+      {/* Connected accounts */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Connected ({connections.filter(c => c.status === 'ACTIVE').length})</div>
+        {loading ? (
+          <div style={{ fontSize: 13, color: '#52525b' }}>Loading...</div>
+        ) : connections.length === 0 ? (
+          <div style={{ fontSize: 13, color: '#52525b', padding: '20px', textAlign: 'center', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 10 }}>
+            No integrations connected yet. Connect a tool below to get started.
+          </div>
+        ) : (
+          connections.map(c => (
+            <div key={c.id} style={S.row}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', textTransform: 'capitalize' }}>{c.toolkit}</div>
+                <div style={{ fontSize: 11, color: '#52525b' }}>{c.authScheme} · Connected {new Date(c.connectedAt).toLocaleDateString()}</div>
+              </div>
+              <span style={S.badge(c.status === 'ACTIVE')}>{c.status}</span>
+              <button
+                onClick={() => handleDisconnect(c.id)}
+                disabled={disconnecting === c.id}
+                style={S.btnSm(true)}
+              >{disconnecting === c.id ? 'Disconnecting...' : 'Disconnect'}</button>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Suggested toolkits to connect */}
+      {suggestedUnconnected.length > 0 && (
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Popular Integrations</div>
+          {suggestedUnconnected.slice(0, 8).map(slug => (
+            <div key={slug} style={S.row}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', textTransform: 'capitalize' }}>{slug.replace('googlecalendar', 'Google Calendar')}</div>
+                <div style={{ fontSize: 11, color: '#52525b' }}>Not connected</div>
+              </div>
+              <button
+                onClick={() => handleConnect(slug)}
+                disabled={connecting === slug}
+                style={S.btnSm()}
+              >{connecting === slug ? 'Connecting...' : 'Connect'}</button>
+            </div>
+          ))}
+          <div style={{ marginTop: 12, fontSize: 12, color: '#52525b' }}>
+            250+ more integrations available in the agent canvas tool picker.
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 export default function SettingsPage() {
   const supabase = createClient();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('profile');
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
+      if (p && ['profile','billing','models','api-keys','secrets','integrations','github','notifications','danger'].includes(p)) return p
+    }
+    return 'profile'
+  });
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -554,6 +676,9 @@ export default function SettingsPage() {
             <span style={{ color: '#0EA5E9', fontWeight: 700 }}>How it works:</span> Values are encrypted with AES-256-GCM before storage. The API returns name and a masked preview only. Agent and workflow routes access plaintext server-side via <code style={{ fontFamily: 'monospace', color: '#a1a1aa' }}>getDecryptedSecret(userId, name)</code>.
           </div>
         </>}
+
+        {/* INTEGRATIONS */}
+        {tab === 'integrations' && <IntegrationsTab />}
 
         {/* DANGER ZONE */}
         {tab === 'danger' && <>
