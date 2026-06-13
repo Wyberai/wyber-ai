@@ -69,6 +69,7 @@ export class StreamingFileParser {
 
 // Helper for streaming display: strip thinking + file blocks from a partial buffer
 // so the chat view never shows raw <thinking> or <file> content mid-stream.
+// Progress lines tagged [progress: ...] are preserved and returned via extractProgressLines.
 export function cleanStreamingDisplay(raw: string): string {
   let out = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
   const openThink = out.search(/<thinking>/i);
@@ -82,6 +83,23 @@ export function cleanStreamingDisplay(raw: string): string {
   const openEdit = out.search(/<edit\s+path="/i);
   if (openEdit !== -1) out = out.slice(0, openEdit);
   return out.trim();
+}
+
+/**
+ * Extract [progress: ...] lines from a streaming buffer.
+ * Returns the human-readable step labels in order, deduped.
+ * These are emitted by the generate route's system prompt during builds.
+ */
+export function extractProgressLines(raw: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const re = /\[progress:\s*([^\]]+)\]/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) {
+    const label = m[1].trim();
+    if (!seen.has(label)) { seen.add(label); out.push(label); }
+  }
+  return out;
 }
 
 // ─── Diff-based editing: parse <edit> search/replace blocks ───

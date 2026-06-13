@@ -2,10 +2,11 @@
 import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay } from '@/lib/file-parser';
+import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
+import { detectDeps, detectDepsInCode } from '@/lib/detect-deps';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
 
@@ -83,6 +84,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   useEffect(() => {
     if (!isGenerating) { setBuildMsgIdx(0); setElapsed(0); return; }
+    setProgressSteps([]);
     const startTime = Date.now();
     const t = setInterval(() => {
       setBuildMsgIdx(i => (i + 1) % BUILD_MSGS.length);
@@ -102,6 +104,16 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
   const [lastModel, setLastModel] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+
+  // ── Pre-gen dep gate state ──────────────────────────────────────────────
+  // When deps are detected, we pause before generation and show a connect UI.
+  // pendingGenArgs holds (prompt, img) waiting for the user to decide.
+  const [pendingGenArgs, setPendingGenArgs] = useState<{ prompt: string; img: AttachedImage | null; needsSupabase: boolean; needsStripe: boolean; composioTools: string[] } | null>(null);
+  // Inline secret collection for the gate UI (key name → value)
+  const [inlineSecrets, setInlineSecrets] = useState<Record<string, string>>({});
+  const [secretSaving, setSecretSaving] = useState(false);
+  // Live progress steps shown during streaming
+  const [progressSteps, setProgressSteps] = useState<string[]>([]);
 
   const [recording, setRecording] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -434,9 +446,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
         if (done) break;
         full += decoder.decode(value, { stream:true });
 
+        // Extract [progress: ...] markers and surface them live
+        const steps = extractProgressLines(full);
+        if (steps.length > 0) setProgressSteps(steps);
+
         const cleanedFull = cleanStreamingDisplay(full)
           .replace(/<agent>[\s\S]*?<\/agent>/g, '')
           .replace(/<flow>[\s\S]*?<\/flow>/g, '')
+          // Strip [progress: ...] tags from visible chat text
+          .replace(/\[progress:[^\]]+\]/gi, '')
           .trim();
         setStreamingContent(cleanedFull || '');
       }
@@ -491,6 +509,31 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }, 400);
       }
 
+      // Post-prebuilt dep nudge: scan applied code for service references.
+      // Fires AFTER files are applied so it never blocks. Prebuilt check is
+      // identified by X-Source: prebuilt header.
+      if (isPrebuilt && newFiles.length > 0) {
+        const allCode = newFiles.map(f => f.content).join('\n');
+        const codeDeps = detectDepsInCode(allCode);
+        if (codeDeps.needsSupabase) {
+          setTimeout(() => {
+            addMessage({
+              id: uid(), role: 'assistant',
+              content: '🗄 **This template uses Supabase** for its database and auth. Connect your Supabase project to make login and data persistence work — open the **Connectors** tab in the right panel.',
+              timestamp: Date.now(), status: 'done',
+            });
+          }, 400);
+        } else if (codeDeps.needsStripe) {
+          setTimeout(() => {
+            addMessage({
+              id: uid(), role: 'assistant',
+              content: '💳 **This template includes Stripe payments.** Add your `STRIPE_SECRET_KEY` in the Connectors tab to enable checkout.',
+              timestamp: Date.now(), status: 'done',
+            });
+          }, 400);
+        }
+      }
+
       const finalContent = chatText || 'Done.';
       updateMessage(assistantId, {
         content: finalContent,
@@ -517,6 +560,30 @@ const storeProjectId = useEditorStore.getState().project?.id;
     addMessage({ id: uid(), role:'assistant', content:`↩ Reverted to "${last.label}"`, timestamp:Date.now(), status:'done' });
   }, [checkpoints, restoreCheckpoint, saveProject, addMessage]);
 
+  /**
+   * Save one or more inline secrets to the vault, then proceed to generation.
+   * Called from the dep-gate UI's "Save & Build" button.
+   */
+  const saveSecretsAndBuild = useCallback(async () => {
+    if (!pendingGenArgs) return;
+    setSecretSaving(true);
+    try {
+      for (const [name, value] of Object.entries(inlineSecrets)) {
+        if (!value.trim()) continue;
+        await fetch('/api/secrets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, value: value.trim() }),
+        });
+      }
+    } catch { /* non-fatal — proceed anyway */ }
+    const { prompt, img } = pendingGenArgs;
+    setInlineSecrets({});
+    setSecretSaving(false);
+    setPendingGenArgs(null);
+    await executeGeneration(prompt, img);
+  }, [pendingGenArgs, inlineSecrets, executeGeneration]);
+
   const handleSend = useCallback(async () => {
     if ((!input.trim() && !attachedImage) || isGenerating || credits <= 0) return;
     const userMsg = input.trim();
@@ -525,10 +592,52 @@ const storeProjectId = useEditorStore.getState().project?.id;
     setAttachedImage(null);
     if (planMode) {
       setPendingPlan({ prompt: userMsg, image: img });
-    } else {
-      await executeGeneration(userMsg, img);
+      return;
     }
-  }, [input, attachedImage, isGenerating, credits, planMode, executeGeneration]);
+
+    // ── Pre-gen dep gate ────────────────────────────────────────────────
+    // Only for new builds (no existing files), and only when there's no
+    // image attached (image = screenshot-to-app, never needs a dep gate).
+    const isNewBuild = Object.keys(files ?? {}).length === 0;
+    if (isNewBuild && !img) {
+      const deps = detectDeps(userMsg);
+      if (deps.hasAnyDep) {
+        // Check which keys the user already has stored
+        let existingNames: string[] = [];
+        try {
+          const r = await fetch('/api/secrets');
+          if (r.ok) {
+            const data = await r.json();
+            existingNames = (data.secrets ?? []).map((s: { name: string }) => s.name.toUpperCase());
+          }
+        } catch { /* can't fetch secrets — show gate anyway */ }
+
+        const missingSupabase = deps.needsSupabase &&
+          !existingNames.some(n => n.includes('SUPABASE'))
+        const missingStripe = deps.needsStripe &&
+          !existingNames.some(n => n.includes('STRIPE'))
+        const missingComposio = deps.composioTools.filter(t =>
+          !existingNames.some(n => n.toUpperCase().includes(t.toUpperCase()))
+        );
+
+        const hasMissing = missingSupabase || missingStripe || missingComposio.length > 0;
+        if (hasMissing) {
+          // Show the gate — do NOT start generation yet
+          setPendingGenArgs({ prompt: userMsg, img, needsSupabase: missingSupabase, needsStripe: missingStripe, composioTools: missingComposio });
+          // Pre-fill secret key names so the UI has fields ready
+          const initialSecrets: Record<string, string> = {};
+          if (missingSupabase) { initialSecrets['SUPABASE_URL'] = ''; initialSecrets['SUPABASE_ANON_KEY'] = ''; }
+          if (missingStripe)   { initialSecrets['STRIPE_PUBLISHABLE_KEY'] = ''; }
+          for (const t of missingComposio) initialSecrets[`${t.toUpperCase()}_API_KEY`] = '';
+          setInlineSecrets(initialSecrets);
+          return; // do NOT call executeGeneration here
+        }
+      }
+    }
+    // ───────────────────────────────────────────────────────────────────
+
+    await executeGeneration(userMsg, img);
+  }, [input, attachedImage, isGenerating, credits, planMode, files, executeGeneration]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -589,6 +698,103 @@ const storeProjectId = useEditorStore.getState().project?.id;
         </div>
       )}
 
+      {/* ── Dep-gate panel ─────────────────────────────────────────── */}
+      {pendingGenArgs && (
+        <div style={{ flexShrink:0, borderBottom:'1px solid var(--ide-border)', background:'var(--bg-base)', padding:'12px 14px', display:'flex', flexDirection:'column', gap:10 }}>
+          {/* Header */}
+          <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+            <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>One thing before we build</div>
+              <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
+                This app needs external services. Add your keys now or skip and build a demo version.
+              </div>
+            </div>
+          </div>
+
+          {/* Supabase section */}
+          {pendingGenArgs.needsSupabase && (
+            <div style={{ background:'rgba(63,207,142,0.06)', border:'1px solid rgba(63,207,142,0.2)', borderRadius:8, padding:'10px 12px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
+                <span style={{ fontSize:14 }}>🗄</span>
+                <span style={{ fontSize:12, fontWeight:700, color:'#3FCF8E' }}>Supabase</span>
+                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>— database + auth</span>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                {['SUPABASE_URL', 'SUPABASE_ANON_KEY'].map(key => (
+                  <input key={key}
+                    placeholder={key === 'SUPABASE_URL' ? 'https://xxxx.supabase.co' : 'eyJhbGci...'}
+                    value={inlineSecrets[key] ?? ''}
+                    onChange={e => setInlineSecrets(s => ({ ...s, [key]: e.target.value }))}
+                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(63,207,142,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                  />
+                ))}
+                <div style={{ fontSize:10, color:'var(--ide-text3)' }}>
+                  Find these in your Supabase project → Settings → API
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stripe section */}
+          {pendingGenArgs.needsStripe && (
+            <div style={{ background:'rgba(99,91,255,0.06)', border:'1px solid rgba(99,91,255,0.2)', borderRadius:8, padding:'10px 12px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
+                <span style={{ fontSize:14 }}>💳</span>
+                <span style={{ fontSize:12, fontWeight:700, color:'#635BFF' }}>Stripe</span>
+                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>— payments</span>
+              </div>
+              <input
+                placeholder="pk_live_... or pk_test_..."
+                value={inlineSecrets['STRIPE_PUBLISHABLE_KEY'] ?? ''}
+                onChange={e => setInlineSecrets(s => ({ ...s, 'STRIPE_PUBLISHABLE_KEY': e.target.value }))}
+                style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(99,91,255,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+              />
+              <div style={{ fontSize:10, color:'var(--ide-text3)', marginTop:5 }}>
+                Find this in dashboard.stripe.com → Developers → API keys
+              </div>
+            </div>
+          )}
+
+          {/* Composio tools */}
+          {pendingGenArgs.composioTools.length > 0 && (
+            <div style={{ background:'rgba(14,165,233,0.06)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:8, padding:'10px 12px' }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--blue)', marginBottom:6 }}>
+                🔗 Connected tools needed: {pendingGenArgs.composioTools.join(', ')}
+              </div>
+              <div style={{ fontSize:11, color:'var(--ide-text3)' }}>
+                Connect these via the <strong>Agents</strong> canvas → Browse Tools → OAuth. Build with mock data for now and connect later.
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display:'flex', gap:7 }}>
+            <button
+              onClick={saveSecretsAndBuild}
+              disabled={secretSaving}
+              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', opacity: secretSaving ? 0.7 : 1 }}
+            >
+              {secretSaving ? 'Saving…' : 'Save keys & build →'}
+            </button>
+            <button
+              onClick={() => {
+                const { prompt, img } = pendingGenArgs;
+                setPendingGenArgs(null);
+                setInlineSecrets({});
+                executeGeneration(prompt, img);
+              }}
+              style={{ padding:'7px 14px', borderRadius:7, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text2)', fontSize:12, fontWeight:600, cursor:'pointer' }}
+            >
+              Build without backend
+            </button>
+          </div>
+        </div>
+      )}
+      {/* ─────────────────────────────────────────────────────────── */}
+
       {dragOver && (
         <div style={{ position:'absolute', inset:0, background:'rgba(124,110,247,0.1)', border:'2px dashed var(--accent)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, pointerEvents:'none' }}>
           <span style={{ fontSize:14, color:'var(--accent)', fontWeight:500 }}>Drop image to generate UI</span>
@@ -618,10 +824,29 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:12, lineHeight:1.65, color: msg.status === 'error' ? 'var(--ide-red)' : 'var(--ide-text2)', letterSpacing:'-0.01em' }}>
                     {msg.status === 'streaming'
-                      ? <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)' }}>
-                          <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                          {buildMsg} {elapsed > 0 && `(${elapsed}s)`}
-                        </span>
+                      ? <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                          {progressSteps.length > 0
+                            ? <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
+                                {progressSteps.map((step, i) => {
+                                  const isLast = i === progressSteps.length - 1;
+                                  return (
+                                    <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
+                                      {isLast
+                                        ? <span style={{ width:9, height:9, borderRadius:'50%', border:'1.5px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block', flexShrink:0 }}/>
+                                        : <span style={{ width:9, height:9, borderRadius:'50%', background:'var(--ide-green)', display:'inline-block', flexShrink:0 }}/>
+                                      }
+                                      {step}
+                                    </span>
+                                  );
+                                })}
+                                <span style={{ fontSize:10, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
+                              </div>
+                            : <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)', fontSize:11 }}>
+                                <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
+                                {buildMsg} {elapsed > 0 && `(${elapsed}s)`}
+                              </span>
+                          }
+                        </div>
                       : renderMessage(msg.content)
                     }
                   </div>
@@ -638,7 +863,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         ))}
 
-        {isGenerating && (
+        {isGenerating && progressSteps.length === 0 && (
           <div style={{ padding:'4px 12px' }}>
             <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
               <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
@@ -707,8 +932,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={credits <= 0 ? 'No credits — upgrade to continue' : planMode ? 'Plan mode active — describe what to build...' : 'Ask anything or describe what you want to build...'}
-            disabled={isGenerating || credits <= 0 || !!pendingPlan}
+            placeholder={credits <= 0 ? 'No credits — upgrade to continue' : planMode ? 'Plan mode active — describe what to build...' : pendingGenArgs ? 'Add your keys above, or click "Build without backend"' : 'Ask anything or describe what you want to build...'}
+            disabled={isGenerating || credits <= 0 || !!pendingPlan || !!pendingGenArgs}
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:12, color:'var(--ide-text)', lineHeight:1.55, minHeight:40, maxHeight:140, overflowY:'auto', letterSpacing:'-0.01em' }}
           />
@@ -737,7 +962,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <button
               onClick={handleSend}
               data-send-button="true"
-              disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan}
+              disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan || !!pendingGenArgs}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
                 background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--bg-overlay)' : 'var(--accent)',

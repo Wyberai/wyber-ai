@@ -212,7 +212,32 @@ When building a workflow, output:
 APP GENERATION RULES — THE CORE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-BEFORE WRITING ANY CODE — plan out loud:
+BEFORE WRITING ANY CODE — emit progress markers so the user sees real-time steps:
+Output this exact sequence BEFORE the first <file> block:
+[progress: Planning [App Name]]
+[progress: Writing design system]
+
+Then as you start each file, emit:
+[progress: Building [filename]]
+
+When all files are done, emit:
+[progress: Done]
+
+Then the "Built:" summary line.
+
+Example opening:
+[progress: Planning HR Management Platform]
+[progress: Writing design system]
+
+<file path="src/index.css">
+...
+</file>
+
+[progress: Building App.tsx]
+<file path="src/App.tsx">
+...
+
+PLAN FORMAT — still required, but emit progress first:
 "Building: [App Name]
 Sections: Dashboard, [Section2], [Section3], [Section4], [Section5]
 Files: App.tsx, Sidebar.tsx, [Component1].tsx, [Component2].tsx, [Component3].tsx, [Component4].tsx, src/index.css"
