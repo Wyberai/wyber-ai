@@ -4,6 +4,8 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
 
+export const maxDuration = 300
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Use central model map — single source of truth
@@ -805,7 +807,109 @@ ${code}
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence, then immediately output your changes.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.'
     
-    const wyberDNA = '\n\n=== WYBER DESIGN SYSTEM (mandatory for all generated apps) ===\nStyling stack: Tailwind CSS v4 + daisyUI 5 component classes. Do NOT hand-roll CSS design systems or custom CSS color variables.\n1. src/index.css MUST begin with exactly these two lines (and contain only layout helpers after them):\n@import "tailwindcss";\n@plugin "daisyui";\nThe Wyber theme tokens are injected automatically by the build system. NEVER define @theme or color variables yourself.\n2. Use daisyUI component classes everywhere: btn btn-primary, card card-body, navbar, drawer, menu, stat/stats, table, badge, modal, input, select, toggle, tabs, alert, progress, avatar. Use Tailwind utilities only for layout (flex, grid, gap-, p-, m-).\n3. Colors: ONLY semantic daisyUI classes (bg-base-100/200/300, text-primary, text-base-content, bg-primary, border-base-300, badge-success, etc). NEVER hex codes or custom color vars.\n4. Light/dark: app starts in data-theme="wyber" (dark). A theme toggle is ONE line: document.documentElement.setAttribute("data-theme", isLight ? "wyberlight" : "wyber"). Put a daisyUI swap/toggle in the top bar of every app.\n5. Typography (Space Grotesk headings, Inter body) is preconfigured. Do NOT set font-family.\n6. Polish: generous whitespace, rounded-box cards, subtle borders (border border-base-300), avoid heavy shadows.\n\n=== VISUAL POLISH (MANDATORY for every app, even if not asked — this is what separates premium from generic) ===\nDEPTH: Cards are never flat — use a subtle gradient surface + soft shadow + 1px top highlight border (lit-from-above). Layer the UI: page bg darkest, cards lighter, controls lighter still. Key metrics and primary buttons use gradient fills or gradient text, not flat color.\nSPACING: Be generous. Cards get 20-24px padding, sections 32-40px vertical breathing room. 4/8px scale, aligned to a grid. Never cram.\nBORDERS/GLOW: Subtle 1px low-contrast borders. On hover/focus add a faint primary-colored glow ring, not a hard outline. Interactive cards lift (translateY -2px) on hover with smoothed shadow.\nMOTION: Every interactive element transitions 0.15-0.2s ease (hover, toggles, tabs). Content fades/slides in 8px on mount. Never jarring.\nTYPOGRAPHY: Strong hierarchy — large tight Space Grotesk headings (-0.02em), comfortable Inter body, clear size jumps. Separate primary/secondary text with weight and muted color, not just size.\nSTATES: Always design empty states (icon + one helpful line), loading skeletons (not spinners on blank), and hover/active/focus states. No raw blank divs.\nBefore finishing, every app MUST have: layered surfaces, gradient accents on key elements, generous spacing, smooth hover transitions, clear type hierarchy, thoughtful empty/loading states. If it looks flat or cramped, it is NOT done.'
+    const wyberDNA = `
+
+=== WYBER HOUSE STYLE — MANDATORY for every generated app ===
+
+PHILOSOPHY: Premium SaaS dashboard aesthetic using CSS custom properties. No Tailwind, no daisyUI, no external CSS frameworks. The variables below ARE the design system.
+
+── TYPOGRAPHY (both fonts are preloaded — just reference them) ──
+:root { font-family: 'Inter', -apple-system, sans-serif; }
+Headings: font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em to -0.04em; font-weight: 700-800
+Body: Inter, weights 400-500, line-height 1.5
+Label / uppercase: font-size 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase
+
+── COMPLETE TOKEN SET — BOTH THEMES (MANDATORY in src/index.css) ──
+CRITICAL: define BOTH :root (dark default) AND [data-theme="light"] so toggling never breaks.
+
+:root {
+  /* Dark — default */
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --elevated: #1a1a24;
+  --border: rgba(255,255,255,0.06);
+  --border-hover: rgba(255,255,255,0.14);
+  --text: #f0f0f5;
+  --text-2: #8b8b9a;
+  --text-3: #52526a;
+  --accent: #6366f1;
+  --accent-hover: #5558e8;
+  --accent-glow: rgba(99,102,241,0.12);
+  --green: #22c55e; --green-bg: rgba(34,197,94,0.08);
+  --amber: #f59e0b; --amber-bg: rgba(245,158,11,0.08);
+  --red: #ef4444;   --red-bg: rgba(239,68,68,0.08);
+  --blue: #0EA5E9;  --blue-bg: rgba(14,165,233,0.08);
+  --r: 8px; --r-lg: 12px; --r-xl: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+}
+[data-theme="light"] {
+  /* Light — complete guaranteed-contrast set */
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --elevated: #f0f0f5;
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.18);
+  --text: #09090b;
+  --text-2: #52525b;
+  --text-3: #a1a1aa;
+  --accent: #6366f1;
+  --accent-hover: #4f52e0;
+  --accent-glow: rgba(99,102,241,0.10);
+  --green: #16a34a; --green-bg: rgba(22,163,74,0.08);
+  --amber: #b45309; --amber-bg: rgba(180,83,9,0.08);
+  --red: #dc2626;   --red-bg: rgba(220,38,38,0.08);
+  --blue: #0284c7;  --blue-bg: rgba(2,132,199,0.08);
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+── THEME TOGGLE (include in every app topbar) ──
+State: const [isDark, setIsDark] = useState(true)
+Handler:
+  const toggleTheme = () => {
+    const next = !isDark
+    setIsDark(next)
+    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light')
+  }
+On mount: document.documentElement.setAttribute('data-theme', 'dark')
+Render (lucide Sun/Moon icons):
+  <button onClick={toggleTheme} style={{background:'none',border:'1px solid var(--border)',borderRadius:'var(--r)',padding:'6px 8px',color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center'}} title="Toggle theme">
+    {isDark ? <Sun size={15}/> : <Moon size={15}/>}
+  </button>
+Import: import { Sun, Moon } from 'lucide-react'
+
+── SVG / ICON DIMENSIONS — CRITICAL RULE ──
+ALL SVGs MUST have explicit pixel width and height. NEVER write width="100%" or height="100%" on an <svg> element — this causes the SVG to expand and cover the entire UI as a solid black shape.
+
+WRONG (causes black blob bug): <svg width="100%" viewBox="0 0 24 24">...</svg>
+CORRECT: <svg width={24} height={24} viewBox="0 0 24 24">...</svg>
+
+Rules by context:
+- Lucide icons: ALWAYS use the size prop — <Settings size={18}/>, <Plus size={16}/>. Never omit size.
+- Sidebar logo SVG: width={28} height={28} MAX. Never larger.
+- Inline decorative SVG: explicit px only, max 64px unless it is a hero full-bleed illustration.
+- Any SVG in a flex container: add flexShrink: 0 to prevent it stretching.
+
+── CONTRAST — ABSOLUTE RULES ──
+NEVER place text on a background of the same color family without meeting 4.5:1 contrast.
+- Body text: var(--text) on var(--bg) or var(--surface) ✓
+- Secondary text: var(--text-2) on var(--surface) or var(--elevated) ✓
+- var(--text-3): ONLY for timestamps, placeholders, disabled labels — NEVER for interactive or body text
+- Badge foreground must contrast with badge background: use the --green/--amber/--red/--blue tokens on their respective --*-bg
+- Chart axes, tick labels, tooltip text: must be var(--text-2) minimum — not var(--text-3)
+- In light mode: all dark-mode assumptions break. Use semantic vars only — never hardcode #1a1a24 or rgba(255,255,255,0.X) inline.
+
+── VISUAL DEPTH & POLISH (every app must have these) ──
+SURFACES: --bg (darkest) → --surface (cards) → --elevated (inputs, dropdowns). Never flatten to one color.
+CARDS: border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: var(--r-lg); padding: 20px 24px.
+HOVER: translateY(-2px) + box-shadow: var(--shadow-lg) + border-color: var(--border-hover). Transition: all 0.15s ease.
+KEY METRIC: the single most important KPI gets a gradient text fill (background-clip:text, WebkitBackgroundClip:'text', color:'transparent', backgroundImage:'linear-gradient(135deg, var(--accent), var(--blue))').
+SPACING: 16-24px card padding; 24-32px between sections; 8px between related elements. 4/8px scale. Never cram.
+TYPOGRAPHY HIERARCHY: section heading 20px Space Grotesk 700; stat value 28-32px Space Grotesk 800 tight; body 13-14px Inter; label 11px uppercase 600.
+STATES: every empty search result → empty state (icon opacity 0.3 + short helpful message). Loading → shimmer skeleton divs, not bare spinners. Every interactive element → hover + focus ring.
+MOTION: opacity+translateY(8px)→(0) on mount for content blocks. All buttons/cards transition 0.15-0.2s ease.
+`
     let fullSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt()) + supabaseContext + knowledgeContext + templateRef + (projectType === 'mobile' ? '' : wyberDNA) + outputRule
 
     // ── Staged generation modes ──
