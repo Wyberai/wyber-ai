@@ -42,27 +42,40 @@ window.addEventListener('unhandledrejection', function(e) {
 </script>
 
 <!-- UMD globals — jsDelivr, no crossorigin (avoids CORB), null-origin sandbox (no CSP inheritance) -->
+<!-- react-native-web has no UMD bundle; loaded below via esm.sh dynamic import() -->
 <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js" onerror="window.__cdnFailed.push('react')"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js" onerror="window.__cdnFailed.push('react-dom')"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-native-web@0.19.12/dist/react-native-web.js" onerror="window.__cdnFailed.push('react-native-web')"></script>
 <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js" onerror="window.__cdnFailed.push('@babel/standalone')"></script>
 
 <script>
-(function(){
+(async function(){
 'use strict';
 var R = window.React;
 var RD = window.ReactDOM;
-var RNW = window.ReactNativeWeb;
-var h = R.createElement;
 
 if(window.__cdnFailed.length>0){
   __postErr('CDN scripts failed to load: ' + window.__cdnFailed.join(', ') + '\n\nThis is usually a network issue. Check your internet connection or try refreshing.');
   return;
 }
-if(!R||!RD||!RNW){
-  __postErr('CDN globals missing (React=' + !!R + ', ReactDOM=' + !!RD + ', RNW=' + !!RNW + ').\nCheck that CDN scripts loaded correctly.');
+if(!R||!RD){
+  __postErr('CDN globals missing (React=' + !!R + ', ReactDOM=' + !!RD + ').\nCheck that CDN scripts loaded correctly.');
   return;
 }
+
+var RNW;
+try {
+  var rnwMod = await import('https://esm.sh/react-native-web@0.19.12');
+  RNW = rnwMod.default || rnwMod;
+} catch(e) {
+  __postErr('Failed to load react-native-web from esm.sh: ' + e.message);
+  return;
+}
+if(!RNW||!RNW.View){
+  __postErr('react-native-web loaded but missing expected exports (View=' + !!(RNW&&RNW.View) + ').');
+  return;
+}
+
+var h = R.createElement;
 
 // ── Navigation stubs ──────────────────────────────────────────────────────────
 // Implements enough of react-navigation to render real tab/stack navigators in browser.
@@ -371,7 +384,7 @@ try {
   showError('Preview error: ' + e.message + (e.stack?'\n\n'+e.stack.split('\n').slice(0,8).join('\n'):''));
 }
 
-})();
+})().catch(function(e){ __postErr('Boot error: ' + e.message + (e.stack?'\n\n'+e.stack.split('\n').slice(0,6).join('\n'):'')); });
 </script>
 </body>
 </html>`
@@ -380,7 +393,7 @@ try {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function MobilePreviewPanel() {
-  const { files, isGenerating } = useEditorStore()
+  const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
   const [srcdoc, setSrcdoc] = useState<string | null>(null)
   const [snackUrl, setSnackUrl] = useState<string | null>(null)
   const [buildingSnack, setBuildingSnack] = useState(false)
@@ -427,11 +440,11 @@ export function MobilePreviewPanel() {
       .finally(() => setBuildingSnack(false))
   }
 
-  // Build preview whenever files change or generation ends (covers generation, gallery load, hydration)
+  // Build preview whenever files change or generation ends (only when real files exist — not starter template)
   useEffect(() => {
-    if (!isGenerating && hasApp) buildPreview()
+    if (!isGenerating && hasApp && hasGeneratedFiles) buildPreview()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files, isGenerating])
+  }, [files, isGenerating, hasGeneratedFiles])
 
   const refresh = () => {
     lastKeyRef.current = ''
