@@ -641,6 +641,9 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   const [saved, setSaved] = useState(false)
   const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project')
   const [chatWidth] = useState(380)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const [displayName, setDisplayName] = useState(projectName)
   const [showToolBrowse, setShowToolBrowse] = useState(false)
   const [toolBrowseSearch, setToolBrowseSearch] = useState('')
   const [toolBrowseList, setToolBrowseList] = useState<ComposioToolkitMeta[]>([])
@@ -661,6 +664,17 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
     addNode, updateNodeData, runFlow, isRunning, executionLogs,
     hydrateFromSession,
   } = useAgentStore()
+
+  const saveRename = async () => {
+    const newName = nameInput.trim()
+    setEditingName(false)
+    if (!newName || newName === displayName) return
+    setDisplayName(newName)
+    const body = saveTarget === 'flow'
+      ? { flowId: projectId, name: newName }
+      : { projectId, name: newName }
+    try { await fetch('/api/projects/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }) } catch {}
+  }
 
   const addToolNode = (toolkit: ComposioToolkitMeta) => {
     addNode('tool')
@@ -745,7 +759,24 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
         </svg>
 
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{projectName}</span>
+        {editingName ? (
+          <input
+            autoFocus
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onBlur={saveRename}
+            onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditingName(false); }}
+            style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '2px 7px', maxWidth: 200, outline: 'none' }}
+          />
+        ) : (
+          <span
+            onClick={() => { setNameInput(displayName); setEditingName(true); }}
+            title="Click to rename"
+            style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', padding: '2px 4px', borderRadius: 4 }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >{displayName}</span>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 20, background: `${accentColor}18`, border: `1px solid ${accentColor}30`, color: accentColor, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           <TypeIcon size={11} color={accentColor} />

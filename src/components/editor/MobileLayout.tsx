@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, Suspense } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { ChatPanel } from './ChatPanel'
 import { MobilePreviewPanel } from './MobilePreviewPanel'
@@ -13,6 +13,17 @@ interface Props {
 
 export function MobileLayout({ initialProject, initialProfile }: Props) {
   const { hydrateProject, resetForProject, setCredits } = useEditorStore()
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+  const [displayName, setDisplayName] = useState(initialProject?.name || 'Mobile App')
+
+  const saveRename = async () => {
+    const newName = nameInput.trim()
+    setEditingName(false)
+    if (!newName || newName === displayName || !initialProject?.id) return
+    setDisplayName(newName)
+    try { await fetch('/api/projects/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: initialProject.id, name: newName }) }) } catch {}
+  }
 
   useEffect(() => {
     if (!initialProject?.id) return
@@ -49,7 +60,24 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
           <WyberLogo markSize={22} wordmarkSize={13} />
         </a>
         <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
-        <span style={{ fontSize: 12, color: '#a1a1aa', fontFamily: "'Space Grotesk', sans-serif" }}>{initialProject?.name || 'Mobile App'}</span>
+        {editingName ? (
+          <input
+            autoFocus
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onBlur={saveRename}
+            onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditingName(false); }}
+            style={{ fontSize: 12, color: '#fafafa', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '1px 6px', outline: 'none', fontFamily: "'Space Grotesk', sans-serif" }}
+          />
+        ) : (
+          <span
+            onClick={() => { setNameInput(displayName); setEditingName(true); }}
+            title="Click to rename"
+            style={{ fontSize: 12, color: '#a1a1aa', fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer', padding: '1px 4px', borderRadius: 4 }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >{displayName}</span>
+        )}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', letterSpacing: '0.04em' }}>MOBILE</span>
           {initialProfile && (
