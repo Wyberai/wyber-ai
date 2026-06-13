@@ -41,8 +41,8 @@ export async function GET(req: NextRequest) {
 
     // Build callback URL — include connectionId after the fact via connectionId query param
     // Composio will append ?status=success|failed to our callbackUrl
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.vercel.app'
-    const callbackUrl = `${appUrl}/api/composio/callback`
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
+    const callbackUrl = `${appUrl}/api/composio/callback?toolkit=${encodeURIComponent(toolkit)}`
 
     const connectionRequest = await composio.connectedAccounts.link(
       user.id,

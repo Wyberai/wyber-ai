@@ -219,20 +219,18 @@ async function executeComposioTool(
   // Check if this user has connected the required toolkit
   const accounts = await composio.connectedAccounts.list({ userIds: [userId] })
   const isConnected = accounts.items?.some(
-    (a: { toolkitSlug?: string; status?: string }) =>
-      a.toolkitSlug?.toUpperCase() === toolkit.toUpperCase() && a.status === 'ACTIVE'
+    (a: { toolkit?: { slug?: string }; status?: string }) =>
+      a.toolkit?.slug?.toUpperCase() === toolkit.toUpperCase() && a.status === 'ACTIVE'
   )
 
   if (!isConnected) {
-    // TODO (next brief): initiate OAuth connect flow here
-    // const initiation = await composio.connectedAccounts.initiate({ userId, toolkitSlug: toolkit })
-    // return redirect to initiation.redirectUrl
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
     return {
-      output: null,
+      output: { needsConnection: true, toolkit },
       log: [
-        `${toolkit} is not connected for this user.`,
-        'Connect it first: Settings → Integrations → ' + toolkit,
-        '(Connect flow coming in the next release)',
+        `${toolkit} is not connected.`,
+        `Connect it: ${appUrl}/settings?tab=integrations`,
+        'Or click "Connect" in the tool node config panel.',
       ],
     }
   }
