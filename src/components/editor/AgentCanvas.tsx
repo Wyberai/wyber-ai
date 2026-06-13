@@ -386,9 +386,10 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
 
   const credits = initialProfile?.credits ?? 0
 
-  // On mount: hydrate from sessionStorage first (agent library hand-off),
-  // then fall back to persisted canvas_data for project-routed canvases.
+  // On project change: reset store state from previous project, then load the new one.
   useEffect(() => {
+    useAgentStore.getState().resetForProject()
+    setLoadingCanvas(saveTarget === 'project')
     hydrateFromSession(projectId)
 
     if (saveTarget === 'project') {
@@ -546,7 +547,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         <div style={{ width: chatWidth, flexShrink: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* TODO: wire CanvasChat send to /api/generate-agent or /api/generate-flow
               based on canvasType, and auto-apply the returned nodes/edges to the canvas */}
-          <CanvasChat projectId={projectId} canvasType={canvasType} />
+          <CanvasChat key={projectId} projectId={projectId} canvasType={canvasType} />
         </div>
       </div>
 

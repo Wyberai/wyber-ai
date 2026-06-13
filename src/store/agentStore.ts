@@ -43,6 +43,7 @@ interface AgentStore {
 
   runFlow: (opts: { sourceId: string; sourceType: 'project' | 'flow' }) => Promise<void>
   clearLogs: () => void
+  resetForProject: () => void
 }
 
 function makeId() { return Math.random().toString(36).slice(2, 9) }
@@ -201,4 +202,12 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   clearLogs: () => set({ executionLogs: [] }),
+
+  resetForProject: () => set({
+    nodes: DEFAULT_NODES,
+    edges: [],
+    selectedNodeId: null,
+    executionLogs: [],
+    isRunning: false,
+  }),
 }))
