@@ -12,6 +12,7 @@
     "@ai-sdk/anthropic": "^3.0.78",
     "@anthropic-ai/sdk": "^0.98.0",
     "@codesandbox/sandpack-react": "^2.20.0",
+    "@composio/core": "^0.10.0",
     "@e2b/code-interpreter": "^2.4.2",
     "@monaco-editor/react": "^4.7.0",
     "@octokit/oauth-app": "^8.0.3",

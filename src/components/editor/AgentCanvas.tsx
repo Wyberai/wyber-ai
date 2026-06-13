@@ -75,12 +75,13 @@ const TOOL_DOMAINS: Record<string, string> = {
   supabase: 'supabase.com', sendgrid: 'sendgrid.com',
 }
 
-function ToolIcon({ toolId, size = 24 }: { toolId?: string; size?: number }) {
-  const domain = toolId ? TOOL_DOMAINS[toolId] : null
-  if (!domain) return <IcoTool size={size * 0.8} color="#71717a" />
+function ToolIcon({ toolId, logoUrl, size = 24 }: { toolId?: string; logoUrl?: string; size?: number }) {
+  const domain = toolId ? TOOL_DOMAINS[toolId.toLowerCase()] : null
+  const src = logoUrl || (domain ? `https://img.logo.dev/${domain}?token=pk_X4yCW7j3RwCjVnhfq2UWNw&size=64&format=webp` : null)
+  if (!src) return <IcoTool size={size * 0.8} color="#71717a" />
   return (
     <img
-      src={`https://img.logo.dev/${domain}?token=pk_I0pI4NHLSmyw-WgJgdqmNg&size=${size * 2}`}
+      src={src}
       alt={toolId}
       width={size} height={size}
       style={{ borderRadius: size * 0.2, objectFit: 'contain' }}
@@ -130,8 +131,12 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
       {/* Header */}
       <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ width: 36, height: 36, borderRadius: 10, background: meta.bg, border: `1px solid ${meta.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          {nodeType === 'tool' && data.toolId
-            ? <ToolIcon toolId={data.toolId as string} size={22} />
+          {nodeType === 'tool' && ((data.config as Record<string,string>)?.toolkit || data.toolId)
+            ? <ToolIcon
+                toolId={(data.config as Record<string,string>)?.toolkit || data.toolId as string}
+                logoUrl={(data.config as Record<string,string>)?.logo}
+                size={22}
+              />
             : <meta.Icon size={18} color={meta.color} />
           }
         </div>
@@ -172,6 +177,155 @@ const TOOL_OPTIONS = [
   { id: 'openai', name: 'OpenAI' }, { id: 'supabase', name: 'Supabase' },
 ]
 
+interface ComposioToolkitMeta {
+  slug: string
+  name: string
+  description: string
+  logo: string
+  categories: string[]
+  toolsCount: number
+}
+
+interface ComposioAction {
+  slug: string
+  name: string
+  description: string
+}
+
+function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
+  nodeId: string
+  cfg: Record<string, string>
+  updateNodeData: (id: string, data: Partial<WyberNodeData>) => void
+}) {
+  const [toolkits, setToolkits] = useState<ComposioToolkitMeta[]>([])
+  const [actions, setActions] = useState<ComposioAction[]>([])
+  const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [actionsLoading, setActionsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/composio/toolkits')
+      .then(r => r.json())
+      .then(d => { setToolkits(d.toolkits ?? []); setLoading(false) })
+      .catch(() => { setError('Could not load toolkits — check COMPOSIO_API_KEY'); setLoading(false) })
+  }, [])
+
+  // When a toolkit is already selected, load its actions
+  useEffect(() => {
+    if (!cfg.toolkit) { setActions([]); return }
+    setActionsLoading(true)
+    fetch(`/api/composio/toolkits?toolkit=${cfg.toolkit}`)
+      .then(r => r.json())
+      .then(d => { setActions(d.actions ?? []); setActionsLoading(false) })
+      .catch(() => setActionsLoading(false))
+  }, [cfg.toolkit])
+
+  const filtered = search
+    ? toolkits.filter(t => t.name.toLowerCase().includes(search.toLowerCase()) || t.slug.toLowerCase().includes(search.toLowerCase()))
+    : toolkits
+
+  const selectToolkit = (slug: string, name: string, logo: string) => {
+    updateNodeData(nodeId, {
+      label: name,
+      config: { ...cfg, toolkit: slug, action: '', logo },
+    })
+    setActions([])
+  }
+
+  const fieldStyle = { width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const }
+
+  if (error) return (
+    <div style={{ padding: '10px 11px', borderRadius: 8, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', fontSize: 11, color: '#ef4444' }}>
+      {error}
+    </div>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Toolkit search + grid */}
+      {!cfg.toolkit ? (
+        <>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search 250+ tools..."
+            style={fieldStyle}
+          />
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '16px 0', color: '#52525b', fontSize: 11 }}>Loading...</div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
+              {filtered.slice(0, 40).map(t => (
+                <button
+                  key={t.slug}
+                  onClick={() => selectToolkit(t.slug, t.name, t.logo)}
+                  title={t.description}
+                  style={{
+                    background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8,
+                    padding: '8px 6px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', gap: 5, transition: 'all 0.12s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(14,165,233,0.35)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
+                >
+                  {t.logo
+                    ? <img src={t.logo} alt={t.name} width={22} height={22} style={{ borderRadius: 4, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    : <IcoTool size={18} color="#52525b" />
+                  }
+                  <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Selected toolkit header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 8 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9' }}>{cfg.toolkit}</div>
+              <div style={{ fontSize: 10, color: '#52525b' }}>toolkit selected</div>
+            </div>
+            <button
+              onClick={() => updateNodeData(nodeId, { config: { ...cfg, toolkit: '', action: '' } })}
+              style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 12 }}
+              title="Change toolkit"
+            >✕</button>
+          </div>
+
+          {/* Action picker */}
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 5 }}>ACTION</div>
+            {actionsLoading ? (
+              <div style={{ fontSize: 11, color: '#52525b' }}>Loading actions...</div>
+            ) : (
+              <select
+                value={cfg.action || ''}
+                onChange={e => updateNodeData(nodeId, { config: { ...cfg, action: e.target.value } })}
+                style={{ ...fieldStyle, cursor: 'pointer' }}
+              >
+                <option value="">— pick an action —</option>
+                {actions.map(a => (
+                  <option key={a.slug} value={a.slug}>{a.name || a.slug}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {cfg.action && (
+            <div style={{ padding: '7px 9px', borderRadius: 7, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.15)', fontSize: 10, color: '#71717a' }}>
+              <span style={{ color: '#22c55e', fontWeight: 700 }}>{cfg.action}</span>
+              {' '}— arguments will be populated from upstream node outputs at runtime.
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 function ConfigPanel() {
   const { nodes, selectedNodeId, setSelectedNode, updateNodeData, deleteNode } = useAgentStore()
   const node = nodes.find(n => n.id === selectedNodeId)
@@ -186,7 +340,14 @@ function ConfigPanel() {
     <div style={{ width: 260, background: '#0a0a0d', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0 }}>
       <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{ width: 30, height: 30, borderRadius: 8, background: meta.bg, border: `1px solid ${meta.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {nodeType === 'tool' && node.data.toolId ? <ToolIcon toolId={node.data.toolId as string} size={18} /> : <meta.Icon size={16} color={meta.color} />}
+          {nodeType === 'tool' && ((node.data.config as Record<string,string>)?.toolkit || node.data.toolId)
+            ? <ToolIcon
+                toolId={(node.data.config as Record<string,string>)?.toolkit || node.data.toolId as string}
+                logoUrl={(node.data.config as Record<string,string>)?.logo}
+                size={18}
+              />
+            : <meta.Icon size={16} color={meta.color} />
+          }
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 10, color: meta.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{meta.label}</div>
@@ -240,12 +401,20 @@ function ConfigPanel() {
             )}
 
             {((node.data.config as Record<string,string>).mode) === 'composio' && (
-              <div style={{ padding: '10px 11px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 11, color: '#71717a', lineHeight: 1.6 }}>
-                <div style={{ fontWeight: 700, color: '#0EA5E9', marginBottom: 4 }}>Composio Tools</div>
-                Add <code style={{ fontFamily: 'monospace', background: 'rgba(255,255,255,0.06)', padding: '1px 4px', borderRadius: 3 }}>COMPOSIO_API_KEY</code> in{' '}
-                <a href="/settings" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>Settings → Secrets Vault</a>{' '}
-                to enable Gmail, Slack, HubSpot and 200+ tools via Composio.
-              </div>
+              <>
+                <div>
+                  <label style={labelStyle}>TOOLKIT + ACTION</label>
+                  <ComposioToolPicker
+                    nodeId={node.id}
+                    cfg={node.data.config as Record<string, string>}
+                    updateNodeData={updateNodeData}
+                  />
+                </div>
+                <div style={{ padding: '6px 9px', borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
+                  User must connect this toolkit via Settings → Integrations before it will run.
+                  {/* TODO (next brief): add inline "Connect now" button that initiates OAuth */}
+                </div>
+              </>
             )}
           </>
         )}

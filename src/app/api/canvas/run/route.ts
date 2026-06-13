@@ -3,6 +3,7 @@ import { createClient, createServiceClient, createAdminClient } from '@/lib/supa
 import { getDecryptedSecret } from '@/lib/get-decrypted-secret'
 import Anthropic from '@anthropic-ai/sdk'
 import { creditCost } from '@/lib/credits'
+import { Composio } from '@composio/core'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -178,35 +179,78 @@ async function executeToolNode(
 ): Promise<{ output: unknown; log: string[] }> {
   const cfg = node.data.config
 
-  // If URL is configured → treat as HTTP tool
-  if (cfg.url) return executeHttpTool(node, state, userId)
+  // HTTP mode: URL is configured directly on the node
+  if (cfg.mode === 'http' || (!cfg.mode && cfg.url)) return executeHttpTool(node, state, userId)
 
-  // Composio gate: check if user has COMPOSIO_API_KEY in vault
-  const composioKey = await getDecryptedSecret(userId, 'COMPOSIO_API_KEY')
-  if (!composioKey) {
+  // Composio mode: toolkit + action reference stored in node config
+  if (cfg.mode === 'composio') {
+    return executeComposioTool(node, state, userId)
+  }
+
+  return { output: null, log: ['Tool node has no mode configured. Set mode to "http" or "composio" in the config panel.'] }
+}
+
+async function executeComposioTool(
+  node: CanvasNode,
+  state: Record<string, unknown>,
+  userId: string,
+): Promise<{ output: unknown; log: string[] }> {
+  const cfg = node.data.config
+  const action = cfg.action  // e.g. 'GMAIL_SEND_EMAIL'
+  const toolkit = cfg.toolkit // e.g. 'GMAIL'
+
+  if (!action || !toolkit) {
+    return {
+      output: null,
+      log: ['Composio tool node is missing toolkit/action. Pick a tool from the config panel.'],
+    }
+  }
+
+  const adminKey = process.env.COMPOSIO_API_KEY
+  if (!adminKey) {
+    return {
+      output: null,
+      log: ['COMPOSIO_API_KEY is not set in server environment. Add it to your .env.local file.'],
+    }
+  }
+
+  const composio = new Composio({ apiKey: adminKey })
+
+  // Check if this user has connected the required toolkit
+  const accounts = await composio.connectedAccounts.list({ userIds: [userId] })
+  const isConnected = accounts.items?.some(
+    (a: { toolkitSlug?: string; status?: string }) =>
+      a.toolkitSlug?.toUpperCase() === toolkit.toUpperCase() && a.status === 'ACTIVE'
+  )
+
+  if (!isConnected) {
+    // TODO (next brief): initiate OAuth connect flow here
+    // const initiation = await composio.connectedAccounts.initiate({ userId, toolkitSlug: toolkit })
+    // return redirect to initiation.redirectUrl
     return {
       output: null,
       log: [
-        'Tool node requires Composio to be connected.',
-        'Add your COMPOSIO_API_KEY in Settings → Secrets Vault, then reconnect.',
-        // TODO: wire Composio SDK here once key is present
-        // const { ComposioToolSet } = await import('@composio-core/composio')
-        // const toolset = new ComposioToolSet({ apiKey: composioKey })
-        // const result = await toolset.executeAction(cfg.action, { ...cfg })
+        `${toolkit} is not connected for this user.`,
+        'Connect it first: Settings → Integrations → ' + toolkit,
+        '(Connect flow coming in the next release)',
       ],
     }
   }
 
-  // TODO: Composio SDK execution — key is present but SDK not yet installed
-  // Install: npm install @composio-core/composio
-  // const { ComposioToolSet } = await import('@composio-core/composio')
-  // const toolset = new ComposioToolSet({ apiKey: composioKey })
-  // const result = await toolset.executeAction(cfg.action || node.data.toolId, state)
-  // return { output: result, log: [`Composio: ${cfg.action}`] }
+  // Execute the action with upstream state as arguments
+  const result = await composio.tools.execute(action, {
+    userId,
+    arguments: state as Record<string, unknown>,
+    dangerouslySkipVersionCheck: true,
+  })
 
   return {
-    output: null,
-    log: ['Composio key found — SDK integration coming soon. Configure a URL in this node to use HTTP mode.'],
+    output: result,
+    log: [
+      `Composio: ${action}`,
+      `Toolkit: ${toolkit}`,
+      `Result: ${JSON.stringify(result).slice(0, 200)}`,
+    ],
   }
 }
 
