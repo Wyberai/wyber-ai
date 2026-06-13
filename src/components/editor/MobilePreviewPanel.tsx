@@ -407,6 +407,11 @@ export function MobilePreviewPanel() {
     prevGenerating.current = isGenerating
   }, [isGenerating, hasApp])
 
+  // Also build when files are loaded from gallery/hydration (no generation cycle)
+  useEffect(() => {
+    if (!isGenerating && hasApp && !srcdoc) buildPreview()
+  }, [hasApp])
+
   const refresh = () => {
     lastKeyRef.current = ''
     setSrcdoc(null)
