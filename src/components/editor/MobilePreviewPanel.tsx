@@ -7,7 +7,8 @@ import { useEditorStore } from '@/store/editor'
 // No Snack API call — srcdoc is generated directly from the file map.
 
 function buildSrcdoc(files: Record<string, string>): string {
-  const filesJson = JSON.stringify(files)
+  // Escape </script so the HTML parser doesn't close the script tag prematurely
+  const filesJson = JSON.stringify(files).replace(/<\/script/gi, '<\\/script')
 
   return `<!DOCTYPE html>
 <html>
@@ -24,11 +25,11 @@ html,body,#root{height:100%;margin:0;padding:0;background:#fff;font-family:-appl
 <div id="root"></div>
 <div id="__err"></div>
 
-<!-- UMD globals -->
-<script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-<script crossorigin src="https://unpkg.com/react-native-web@0.19.12/dist/react-native-web.js"></script>
-<script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+<!-- UMD globals — jsDelivr (no crossorigin to avoid CORS CORB) -->
+<script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/react-native-web@0.19.12/dist/react-native-web.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.23.10/babel.min.js"></script>
 
 <script>
 (function(){
@@ -369,7 +370,6 @@ export function MobilePreviewPanel() {
   const [snackUrl, setSnackUrl] = useState<string | null>(null)
   const [buildingSnack, setBuildingSnack] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const prevGenerating = useRef(false)
   const lastKeyRef = useRef('')
 
   const hasApp = Object.keys(files ?? {}).some(p =>
@@ -401,16 +401,11 @@ export function MobilePreviewPanel() {
       .finally(() => setBuildingSnack(false))
   }
 
-  // Rebuild preview when generation finishes
+  // Build preview whenever files change or generation ends (covers generation, gallery load, hydration)
   useEffect(() => {
-    if (prevGenerating.current && !isGenerating && hasApp) buildPreview()
-    prevGenerating.current = isGenerating
-  }, [isGenerating, hasApp])
-
-  // Also build when files are loaded from gallery/hydration (no generation cycle)
-  useEffect(() => {
-    if (!isGenerating && hasApp && !srcdoc) buildPreview()
-  }, [hasApp])
+    if (!isGenerating && hasApp) buildPreview()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files, isGenerating])
 
   const refresh = () => {
     lastKeyRef.current = ''
