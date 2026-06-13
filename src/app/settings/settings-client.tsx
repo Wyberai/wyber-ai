@@ -4,16 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { MODEL_META, MODEL_MULTIPLIERS, estimateCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits';
-
-function WyberLogo({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'integrations' | 'github' | 'notifications' | 'danger';
 
@@ -258,8 +249,7 @@ export default function SettingsPage() {
       {/* Sidebar */}
       <div style={S.sidebar}>
         <a href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 32, textDecoration: 'none', color: 'inherit' }}>
-          <WyberLogo size={24} />
-          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: '-0.03em' }}>Wyber AI</span>
+          <WyberLogo markSize={24} wordmarkSize={14} />
         </a>
         <div style={{ fontSize: 10, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8, padding: '0 12px' }}>Settings</div>
         {TABS.map(t => (

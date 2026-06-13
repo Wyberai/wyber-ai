@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 const IDEAS = [
   { icon: '📊', label: 'SaaS dashboard', prompt: 'Build a modern SaaS analytics dashboard with dark mode, sidebar navigation, KPI cards, revenue chart, and user activity table' },
@@ -12,15 +13,6 @@ const IDEAS = [
   { icon: '🎯', label: 'Project tracker', prompt: 'Build a project management tool with kanban board, task cards, priority levels, and team avatars' },
 ];
 
-function WyberLogo() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
@@ -80,7 +72,7 @@ export default function OnboardingPage() {
     <div style={S.page}>
       <div style={S.box}>
         <div style={S.logo}>
-          <WyberLogo />
+          <WyberLogo markSize={40} showWordmark={false} />
           <span style={S.wordmark}>Wyber<span style={{ color: 'var(--sky)' }}>AI</span></span>
         </div>
 

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const CAL_LINK = 'https://cal.com/wyberai/wyber-ai-build-consultation'
 
@@ -30,8 +31,7 @@ export default function SetupCallPage() {
     <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily:"'Space Grotesk', sans-serif" }}>
       <nav style={{ padding:'0 clamp(16px,4vw,48px)', height:60, display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:`1px solid ${s.border}`, position:'sticky', top:0, zIndex:100, background:'rgba(9,9,11,0.95)', backdropFilter:'blur(16px)' }}>
         <Link href="/" style={{ fontFamily:"'Sora', sans-serif", fontWeight:800, fontSize:14, textDecoration:'none', color:s.text, display:'flex', alignItems:'center', gap:8 }}>
-          <svg width="22" height="22" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
-          Wyber AI
+          <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
           <Link href="/pricing" style={{ fontSize:13, color:s.muted, textDecoration:'none' }}>← Pricing</Link>

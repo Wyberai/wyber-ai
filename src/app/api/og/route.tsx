@@ -5,8 +5,8 @@ export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const title = searchParams.get('title') || 'Build apps with AI'
-  const sub = searchParams.get('sub') || '50% more credits than Lovable at 75% of the price'
+  const title = searchParams.get('title') || 'Web, Mobile, Agents, Workflows'
+  const sub = searchParams.get('sub') || 'From idea to running product, in plain English'
 
   return new ImageResponse(
     (

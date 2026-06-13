@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const CREDIT_COST = {
   app_build: 1,       // Generate an app
@@ -111,15 +112,6 @@ const TOPUPS = [
   { credits: 500, price: 69.99, key: 'topup_500', label: 'Large top-up' },
 ]
 
-function WyberLogo({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  )
-}
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true)
@@ -163,8 +155,7 @@ export default function PricingPage() {
       {/* Nav */}
       <nav style={{ padding: '16px 40px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
-          <WyberLogo size={26} />
-          <span style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 15, letterSpacing: '-0.03em' }}>Wyber AI</span>
+          <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>{user
             ? <>

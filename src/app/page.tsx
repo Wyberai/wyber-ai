@@ -207,7 +207,7 @@ export default function HomePage() {
         </Link>
         {/* Desktop nav — hidden below 768px via CSS */}
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -238,7 +238,7 @@ export default function HomePage() {
       {/* Mobile nav drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Gallery', '/gallery'], ['Templates', '/templates'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>
               {l}
             </Link>

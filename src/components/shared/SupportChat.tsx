@@ -1,16 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-
-
-function WyberLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  )
-}
+import { WyberLogo } from '@/components/shared/WyberLogo'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
@@ -85,7 +75,7 @@ export function SupportChat() {
       >
         {open
           ? <span style={{ color: '#fff', fontSize: 18, fontWeight: 300 }}>✕</span>
-          : <WyberLogo size={28} />}
+          : <WyberLogo markSize={28} showWordmark={false} />}
       </button>
 
       {/* Window */}
@@ -101,7 +91,7 @@ export function SupportChat() {
         }}>
           {/* Header */}
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#0EA5E9,#0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><WyberLogo size={26} /></div>
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#0EA5E9,#0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><WyberLogo markSize={26} showWordmark={false} /></div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Wyber Support</div>
               <div style={{ fontSize: 11, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>

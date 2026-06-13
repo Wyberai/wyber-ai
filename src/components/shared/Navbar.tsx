@@ -3,16 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
-
-function WyberLogo({ size = 26 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="var(--sky)"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 interface Props { user?: { email?: string } | null; }
 
@@ -44,11 +35,11 @@ export function Navbar({ user }: Props) {
   };
 
   const NAV_LINKS = [
+    ['Web Apps', '/gallery'],
     ['Mobile', '/templates/mobile'],
-    ['Workflows', '/workflows'],
     ['Agents', '/agents'],
+    ['Workflows', '/workflows'],
     ['Pricing', '/pricing'],
-    ['Blog', '/blog'],
   ];
 
   return (
@@ -70,10 +61,7 @@ export function Navbar({ user }: Props) {
         fontFamily: 'var(--font-sans)',
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <WyberLogo size={26} />
-          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.05em', color: 'var(--text)' }}>
-            Wyber<span style={{ color: 'var(--sky)' }}>AI</span>
-          </span>
+          <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
 
         <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>

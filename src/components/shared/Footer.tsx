@@ -1,18 +1,9 @@
 'use client';
 import Link from 'next/link';
-
-function WyberLogo({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="var(--sky)"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 const COLS = [
-  { heading: 'Product',   links: [['Pricing','/pricing'],['Templates','/templates'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
+  { heading: 'Product',   links: [['Pricing','/pricing'],['Web Apps','/gallery'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
   { heading: 'Resources', links: [['Blog','/blog'],['Security','/security'],['Docs','/docs'],['API Keys','/api-keys']] },
   { heading: 'Company',   links: [['Founders','/founders'],['Affiliates','/affiliates'],['Community','/community'],['Privacy','/privacy'],['Terms','/terms']] },
 ];
@@ -30,10 +21,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
-              <WyberLogo size={24} />
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, letterSpacing: '-0.04em', color: 'var(--text)' }}>
-                Wyber<span style={{ color: 'var(--sky)' }}>AI</span>
-              </span>
+              <WyberLogo markSize={24} wordmarkSize={15} />
             </Link>
             <p style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.7, marginBottom: 16, maxWidth: 220 }}>
               Turn plain English into full-stack apps. Build, preview, and deploy — before lunch.

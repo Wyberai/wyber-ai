@@ -2,16 +2,8 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
-function WyberLogo() {
-  return (
-    <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -48,7 +40,7 @@ export default function LoginPage() {
       {/* Left panel — branding */}
       <div style={{ display: 'none', flex: 1, background: '#0B1627', padding: '48px', flexDirection: 'column', justifyContent: 'space-between', minHeight: '100vh' }} className="login-left">
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <WyberLogo />
+          <WyberLogo markSize={36} showWordmark={false} />
           <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.05em', color: '#EDF4FF' }}>Wyber<span style={{ color: '#38BDF8' }}>AI</span></span>
         </Link>
         <div>
@@ -67,7 +59,7 @@ export default function LoginPage() {
           {/* Logo for mobile */}
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 24 }}>
-              <WyberLogo />
+              <WyberLogo markSize={36} showWordmark={false} />
               <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.05em', color: '#0B1627' }}>Wyber<span style={{ color: '#0EA5E9' }}>AI</span></span>
             </Link>
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', color: '#0B1627', margin: '0 0 8px' }}>Welcome back</h1>

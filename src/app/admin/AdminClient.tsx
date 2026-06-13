@@ -2,16 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme';
-
-function WyberLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <rect width="32" height="32" rx="8" fill="#0EA5E9"/>
-      <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
-    </svg>
-  );
-}
+import { WyberLogo } from '@/components/shared/WyberLogo';
 
 interface AdminData {
   totalUsers: number;
@@ -44,8 +35,7 @@ export function AdminClient({ data }: { data: AdminData }) {
       <nav style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)', padding: '0 32px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
-            <WyberLogo size={26} />
-            <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.04em', color: 'var(--text)' }}>Wyber<span style={{ color: 'var(--sky)' }}>AI</span></span>
+            <WyberLogo markSize={26} wordmarkSize={15} />
           </Link>
           <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 20, background: 'rgba(239,68,68,0.1)', color: 'var(--red)', fontWeight: 700, border: '1px solid rgba(239,68,68,0.2)' }}>ADMIN</span>
         </div>
