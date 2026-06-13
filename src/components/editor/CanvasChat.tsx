@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAgentStore } from '@/store/agentStore'
+import { detectDeps } from '@/lib/detect-deps'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -50,6 +51,64 @@ const IcoBlank = () => (
     <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
   </svg>
 )
+const IcoCheck = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round">
+    <polyline points="20,6 9,17 4,12"/>
+  </svg>
+)
+
+// Tool logo from Composio toolkit slug
+function ToolLogo({ toolkit, size = 20 }: { toolkit: string; size?: number }) {
+  const [err, setErr] = useState(false)
+  const slug = toolkit.toLowerCase()
+  if (err) {
+    return (
+      <div style={{ width: size, height: size, borderRadius: 5, background: 'rgba(14,165,233,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.55, color: '#0EA5E9', fontWeight: 700 }}>
+        {slug.charAt(0).toUpperCase()}
+      </div>
+    )
+  }
+  return (
+    <img
+      src={`https://cdn.composio.dev/apps/${slug}.svg`}
+      alt={toolkit}
+      width={size} height={size}
+      style={{ borderRadius: 4, objectFit: 'contain' }}
+      onError={() => setErr(true)}
+    />
+  )
+}
+
+// Single OAuth connect button for one toolkit
+function ConnectToolButton({ toolkit, onConnected }: { toolkit: string; onConnected: () => void }) {
+  const [connecting, setConnecting] = useState(false)
+
+  const handleConnect = async () => {
+    setConnecting(true)
+    try {
+      const res = await fetch(`/api/composio/connect?toolkit=${toolkit.toLowerCase()}`)
+      const data = await res.json()
+      if (!data.redirectUrl) { setConnecting(false); return }
+      const popup = window.open(data.redirectUrl, 'composio_oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+      const check = setInterval(() => {
+        if (popup?.closed) { clearInterval(check); setConnecting(false); onConnected() }
+      }, 500)
+    } catch {
+      setConnecting(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleConnect}
+      disabled={connecting}
+      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 600, cursor: connecting ? 'wait' : 'pointer', width: '100%' }}
+    >
+      <ToolLogo toolkit={toolkit} size={16} />
+      {connecting ? 'Opening OAuth...' : `Connect ${toolkit} →`}
+    </button>
+  )
+}
 
 export function CanvasChat({ projectId, canvasType }: Props) {
   const [messages, setMessages] = useState<Message[]>([
@@ -61,6 +120,13 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [applying, setApplying] = useState(false)
+  const [progressMsg, setProgressMsg] = useState<string | null>(null)
+
+  // Pre-gen gate state
+  const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
+  const [missingTools, setMissingTools] = useState<string[]>([])
+  const [connectedInGate, setConnectedInGate] = useState<Set<string>>(new Set())
+
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const { addNode } = useAgentStore()
@@ -68,6 +134,17 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  // Listen for OAuth popup completing
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'composio_oauth_result' && e.data.success && e.data.toolkit) {
+        setConnectedInGate(prev => new Set([...prev, (e.data.toolkit as string).toLowerCase()]))
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
 
   const parseAgentMatch = (text: string): AgentMatch | null => {
     const match = text.match(/AGENT_MATCH:\s*(\{[^}]+\})/s)
@@ -80,13 +157,19 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   // Path A: generate fresh canvas from Claude
   const generateCanvas = useCallback(async (prompt: string) => {
     setLoading(true)
+    setProgressMsg('Planning your automation...')
+    setPendingPrompt(null)
+    setMissingTools([])
+    setConnectedInGate(new Set())
     try {
+      setProgressMsg('Building canvas...')
       const res = await fetch('/api/generate-canvas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
       })
       const data = await res.json()
+      setProgressMsg(null)
       if (data.error || !data.nodes?.length) {
         setMessages(prev => [...prev, { role: 'assistant', content: 'I had trouble building that agent. Try rephrasing what you want to automate.' }])
         setLoading(false)
@@ -105,6 +188,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
         },
       }])
     } catch {
+      setProgressMsg(null)
       setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }])
     }
     setLoading(false)
@@ -162,13 +246,34 @@ export function CanvasChat({ projectId, canvasType }: Props) {
     setLoading(true)
 
     try {
-      // Decide: if this looks like a concrete automation description (>15 words OR contains "when"/"every"/"send"/"create"),
-      // generate fresh canvas. Otherwise, chat for clarification.
       const words = content.split(/\s+/).length
       const isConcreteDesc = words >= 8 ||
         /\b(when|every|send|create|post|email|slack|gmail|github|notion|hubspot|update|log|track|fetch|reply|notify)\b/i.test(content)
 
       if (isConcreteDesc) {
+        // Pre-gen gate: detect Composio tools needed
+        const deps = detectDeps(content)
+        if (deps.composioTools.length > 0) {
+          try {
+            const connRes = await fetch('/api/composio/connections')
+            const connData = await connRes.json()
+            const connected = new Set(
+              (connData.connections ?? [])
+                .filter((c: { status: string }) => c.status === 'ACTIVE')
+                .map((c: { toolkit: string }) => c.toolkit.toLowerCase())
+            )
+            const missing = deps.composioTools.filter(t => !connected.has(t.toLowerCase()))
+            if (missing.length > 0) {
+              setPendingPrompt(content)
+              setMissingTools(missing)
+              setConnectedInGate(new Set())
+              setLoading(false)
+              return
+            }
+          } catch {
+            // If connections check fails, proceed without blocking
+          }
+        }
         await generateCanvas(content)
       } else {
         await chatMatch(newMessages)
@@ -210,13 +315,16 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   }
 
   const startBlank = () => {
-    // Reset to DEFAULT_NODES (single trigger)
     useAgentStore.getState().resetForProject()
     setMessages(prev => [...prev, {
       role: 'assistant',
       content: 'Blank canvas ready. Drag steps in from the panel on the left, or describe what you want and I\'ll generate it.',
     }])
   }
+
+  // How many of the missing tools are now connected (either via gate buttons or OAuth postMessage)
+  const stillMissing = missingTools.filter(t => !connectedInGate.has(t.toLowerCase()))
+  const allToolsConnected = pendingPrompt !== null && stillMissing.length === 0 && missingTools.length > 0
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0d0d0f', fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -332,20 +440,79 @@ export function CanvasChat({ projectId, canvasType }: Props) {
           </div>
         ))}
 
-        {/* Typing indicator */}
+        {/* Pre-gen tool connect gate */}
+        {pendingPrompt && missingTools.length > 0 && (
+          <div style={{ marginLeft: 29, padding: 16, borderRadius: 12, background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.25)' }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>
+              Connect tools before building
+            </div>
+            <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 12, lineHeight: 1.5 }}>
+              This automation needs access to{' '}
+              <span style={{ color: '#fafafa', fontWeight: 600 }}>{missingTools.join(', ')}</span>.
+              Connect them so the agent can run for real.
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 12 }}>
+              {missingTools.map(tool => {
+                const isConnected = connectedInGate.has(tool.toLowerCase())
+                return (
+                  <div key={tool}>
+                    {isConnected ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22c55e', fontSize: 12, fontWeight: 600 }}>
+                        <IcoCheck />
+                        {tool} connected
+                      </div>
+                    ) : (
+                      <ConnectToolButton
+                        toolkit={tool}
+                        onConnected={() => setConnectedInGate(prev => new Set([...prev, tool.toLowerCase()]))}
+                      />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              {allToolsConnected && (
+                <button
+                  onClick={() => generateCanvas(pendingPrompt)}
+                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Build now →
+                </button>
+              )}
+              <button
+                onClick={() => generateCanvas(pendingPrompt)}
+                style={{ flex: allToolsConnected ? 'unset' : 1, padding: '9px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+              >
+                Build without connections
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Typing / progress indicator */}
         {loading && (
           <div style={{ display: 'flex', gap: 5, padding: '4px 0', alignItems: 'center' }}>
             <div style={{ width: 22, height: 22, borderRadius: 6, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <IcoWyber />
             </div>
-            {[0, 1, 2].map(i => (
-              <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: `bounce 1s ease infinite ${i * 0.15}s`, opacity: 0.7 }} />
-            ))}
+            {progressMsg ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ width: 10, height: 10, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: '#a1a1aa' }}>{progressMsg}</span>
+              </div>
+            ) : (
+              [0, 1, 2].map(i => (
+                <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: `bounce 1s ease infinite ${i * 0.15}s`, opacity: 0.7 }} />
+              ))
+            )}
           </div>
         )}
 
         {/* Suggestions — show only at start */}
-        {messages.length === 1 && !loading && (
+        {messages.length === 1 && !loading && !pendingPrompt && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Try describing:</div>
             {SUGGESTIONS.map(s => (
@@ -371,13 +538,13 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
             placeholder="Describe what you want to automate..."
-            disabled={loading}
+            disabled={loading || pendingPrompt !== null}
             rows={1}
-            style={{ flex: 1, background: 'none', border: 'none', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', maxHeight: 80, lineHeight: 1.5 }}
+            style={{ flex: 1, background: 'none', border: 'none', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', maxHeight: 80, lineHeight: 1.5, opacity: pendingPrompt ? 0.4 : 1 }}
             onInput={e => { const t = e.target as HTMLTextAreaElement; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 80) + 'px' }}
           />
-          <button onClick={() => send()} disabled={loading || !input.trim()}
-            style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: loading || !input.trim() ? 'rgba(255,255,255,0.06)' : '#0EA5E9', color: '#fff', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <button onClick={() => send()} disabled={loading || !input.trim() || pendingPrompt !== null}
+            style={{ width: 30, height: 30, borderRadius: 8, border: 'none', background: loading || !input.trim() || pendingPrompt ? 'rgba(255,255,255,0.06)' : '#0EA5E9', color: '#fff', cursor: loading || !input.trim() || pendingPrompt ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <IcoSend />
           </button>
         </div>
