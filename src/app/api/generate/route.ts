@@ -474,11 +474,6 @@ QUALITY BAR — before finishing, check:
 □ Are there zero undefined variables? (no projectId, userId, etc.)
 □ Search actually filters data on keystroke?
 □ Modal opens and closes correctly?
-□ "Built with Wyber AI" badge at bottom right of App.tsx?
-
-Wyber badge — add to App.tsx return, last child:
-<a href="https://wyberai.com" target="_blank" style={{position:'fixed',bottom:12,right:12,fontSize:9,color:'rgba(255,255,255,0.2)',fontFamily:'sans-serif',textDecoration:'none',zIndex:9999}}>Built with Wyber AI</a>
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SECURITY — ABSOLUTE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

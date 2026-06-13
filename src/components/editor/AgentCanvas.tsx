@@ -641,13 +641,42 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   const [saved, setSaved] = useState(false)
   const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project')
   const [chatWidth] = useState(380)
+  const [showToolBrowse, setShowToolBrowse] = useState(false)
+  const [toolBrowseSearch, setToolBrowseSearch] = useState('')
+  const [toolBrowseList, setToolBrowseList] = useState<ComposioToolkitMeta[]>([])
+  const [toolBrowseLoading, setToolBrowseLoading] = useState(false)
+
+  useEffect(() => {
+    if (!showToolBrowse || toolBrowseList.length > 0) return
+    setToolBrowseLoading(true)
+    fetch('/api/composio/toolkits')
+      .then(r => r.json())
+      .then(d => { setToolBrowseList(d.toolkits ?? []); setToolBrowseLoading(false) })
+      .catch(() => setToolBrowseLoading(false))
+  }, [showToolBrowse])
 
   const {
     nodes, edges, selectedNodeId,
     onNodesChange, onEdgesChange, onConnect,
-    addNode, runFlow, isRunning, executionLogs,
+    addNode, updateNodeData, runFlow, isRunning, executionLogs,
     hydrateFromSession,
   } = useAgentStore()
+
+  const addToolNode = (toolkit: ComposioToolkitMeta) => {
+    addNode('tool')
+    // After addNode the new node is last in the store; grab its id
+    setTimeout(() => {
+      const nodes = useAgentStore.getState().nodes
+      const newNode = nodes[nodes.length - 1]
+      if (newNode) {
+        updateNodeData(newNode.id, {
+          label: toolkit.name,
+          config: { mode: 'composio', toolkit: toolkit.slug, action: '', logo: toolkit.logo },
+        })
+      }
+    }, 0)
+    setShowToolBrowse(false)
+  }
 
   const credits = initialProfile?.credits ?? 0
 
@@ -740,7 +769,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
         {/* Left palette */}
         <div style={{ width: 160, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
@@ -760,10 +789,57 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               </button>
             )
           })}
-          <div style={{ marginTop: 'auto', padding: '8px 4px 0', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+          <div style={{ marginTop: 'auto', padding: '8px 4px 0', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button
+              onClick={() => setShowToolBrowse(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 9px', borderRadius: 8, border: '1px solid rgba(14,165,233,0.25)', background: showToolBrowse ? 'rgba(14,165,233,0.12)' : 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 11, fontWeight: 600, cursor: 'pointer', width: '100%', transition: 'all 0.15s' }}>
+              <IcoTool size={12} color="#0EA5E9" />
+              Browse Tools
+            </button>
             <div style={{ fontSize: 9, color: '#3f3f46', lineHeight: 1.55 }}>Drag from handle to connect nodes</div>
           </div>
         </div>
+
+        {/* Tool catalogue overlay */}
+        {showToolBrowse && (
+          <div style={{ position: 'absolute', left: 160, top: 0, bottom: 0, width: 280, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.08)', zIndex: 10, display: 'flex', flexDirection: 'column', padding: '12px 10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Tool Catalogue</span>
+              <button onClick={() => setShowToolBrowse(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1 }}>✕</button>
+            </div>
+            <input
+              value={toolBrowseSearch}
+              onChange={e => setToolBrowseSearch(e.target.value)}
+              placeholder="Search 250+ tools..."
+              style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }}
+            />
+            {toolBrowseLoading ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#52525b', fontSize: 11 }}>Loading...</div>
+            ) : (
+              <div style={{ overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, alignContent: 'start' }}>
+                {toolBrowseList
+                  .filter(t => !toolBrowseSearch || t.name.toLowerCase().includes(toolBrowseSearch.toLowerCase()) || t.slug.toLowerCase().includes(toolBrowseSearch.toLowerCase()))
+                  .slice(0, 60)
+                  .map(t => (
+                    <button
+                      key={t.slug}
+                      onClick={() => addToolNode(t)}
+                      title={t.description}
+                      style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 7, padding: '7px 5px', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, transition: 'all 0.12s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(14,165,233,0.4)'; (e.currentTarget as HTMLButtonElement).style.background = 'rgba(14,165,233,0.06)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.background = '#111118' }}>
+                      {t.logo
+                        ? <img src={t.logo} alt={t.name} width={20} height={20} style={{ borderRadius: 4, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                        : <IcoTool size={16} color="#52525b" />
+                      }
+                      <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, textAlign: 'center', lineHeight: 1.2, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
+                    </button>
+                  ))}
+              </div>
+            )}
+            <div style={{ marginTop: 8, fontSize: 10, color: '#3f3f46', textAlign: 'center' }}>Click a tool to add it to the canvas</div>
+          </div>
+        )}
 
         {/* Canvas */}
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden', paddingBottom: executionLogs.length > 0 ? 160 : 0 }}>
@@ -774,8 +850,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={NODE_TYPES}
-            fitView
-            fitViewOptions={{ padding: 0.3 }}
+            defaultViewport={{ zoom: 0.75, x: 0, y: 0 }}
             defaultEdgeOptions={{ type: 'wyber', markerEnd: 'url(#wyber-arrow)', style: { stroke: '#0EA5E9', strokeWidth: 2 } }}
             style={{ background: '#09090b' }}
             edgeTypes={EDGE_TYPES}

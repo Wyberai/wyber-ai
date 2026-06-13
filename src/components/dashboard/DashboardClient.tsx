@@ -167,7 +167,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
   const NAV = [
     { label: 'Home',        href: '/dashboard',       icon: <IconHome /> },
-    { label: 'Projects',    href: '/dashboard',       icon: <IconGrid /> },
     { label: 'Templates',   href: '/gallery',         icon: <IconTemplates /> },
     { label: 'Mobile',      href: '/templates/mobile',icon: <IconPhone /> },
     { label: 'Workflows',   href: '/workflows',       icon: <IconZap /> },
