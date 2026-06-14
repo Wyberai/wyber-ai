@@ -77,6 +77,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const searchParams = useSearchParams();
 
   // Deep-link: /dashboard?new=app|mobile|agent|workflow → open chooser
@@ -158,6 +160,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     }
   };
 
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -179,8 +188,33 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   return (
     <div style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: "'Space Grotesk', sans-serif" }}>
 
+      {/* Mobile top bar */}
+      {isMobile && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDEBAR_BG, borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, zIndex: 50, flexShrink: 0 }}>
+          <button onClick={() => setSidebarOpen(v => !v)} aria-label="Open menu"
+            style={{ background: 'none', border: 'none', color: TEXT, cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <WyberLogo markSize={22} wordmarkSize={13} />
+        </div>
+      )}
+
+      {/* Mobile sidebar backdrop */}
+      {isMobile && sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 100, backdropFilter: 'blur(2px)' }} />
+      )}
+
       {/* Sidebar */}
-      <aside style={{ width: 220, height: '100vh', background: SIDEBAR_BG, borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0 }}>
+      <aside style={{
+        width: 220, height: '100vh', background: SIDEBAR_BG, borderRight: `1px solid ${BORDER}`,
+        display: 'flex', flexDirection: 'column', flexShrink: 0,
+        position: isMobile ? 'fixed' : 'sticky', top: 0, left: 0,
+        transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+        transition: 'transform 0.25s ease',
+        zIndex: isMobile ? 101 : 'auto' as any,
+        overflowY: 'auto',
+      }}>
         {/* Logo */}
         <div style={{ padding: '16px 14px', borderBottom: `1px solid ${BORDER}` }}>
           <WyberLogo markSize={26} wordmarkSize={14} />
@@ -258,10 +292,10 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', marginTop: isMobile ? 52 : 0, width: isMobile ? '100%' : undefined }}>
 
         {/* Hero / prompt area */}
-        <div style={{ position: 'relative', minHeight: 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', minHeight: isMobile ? 260 : 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '28px 16px 20px' : '40px 24px', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 20% 40%, rgba(14,165,233,0.18) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 60%, rgba(139,92,246,0.14) 0%, transparent 60%)`, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
 
@@ -286,10 +320,10 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-              {QUICK_PROMPTS.slice(0, 4).map(p => (
+            <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: isMobile ? undefined : 'wrap', flexDirection: isMobile ? 'column' : 'row', justifyContent: isMobile ? undefined : 'center', alignItems: isMobile ? 'stretch' : undefined }}>
+              {QUICK_PROMPTS.slice(0, isMobile ? 3 : 4).map(p => (
                 <button key={p} onClick={() => { setPromptInput(p); textareaRef.current?.focus() }}
-                  style={{ padding: '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEXT; (e.currentTarget as HTMLElement).style.borderColor = `rgba(14,165,233,0.4)` }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = DIM; (e.currentTarget as HTMLElement).style.borderColor = BORDER }}>
                   {p.replace('Build a ', '').replace('Create a ', '')}
@@ -300,7 +334,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         </div>
 
         {/* Projects + Templates */}
-        <div style={{ flex: 1, padding: '24px 28px', overflowY: 'auto' }}>
+        <div style={{ flex: 1, padding: isMobile ? '16px 14px' : '24px 28px', overflowY: 'auto' }}>
           {projects.length > 0 ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -311,7 +345,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 </button>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                 {projects.slice(0, 11).map(p => (
                   <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
                     <div style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
