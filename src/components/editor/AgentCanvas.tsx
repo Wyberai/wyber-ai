@@ -192,6 +192,31 @@ interface ComposioAction {
   description: string
 }
 
+// Common actions to pin at the top for well-known toolkits.
+// Keys are uppercase toolkit slugs as returned by Composio.
+const TOOLKIT_TOP_ACTIONS: Record<string, string[]> = {
+  GMAIL:     ['GMAIL_SEND_EMAIL', 'GMAIL_FETCH_EMAILS', 'GMAIL_REPLY_TO_THREAD', 'GMAIL_CREATE_EMAIL_DRAFT', 'GMAIL_SEARCH_EMAILS', 'GMAIL_LIST_THREADS'],
+  SLACK:     ['SLACK_SENDS_A_MESSAGE_TO_A_SLACK_CHANNEL', 'SLACK_LIST_CHANNELS', 'SLACK_FETCH_CONVERSATION_HISTORY', 'SLACK_SCHEDULE_MESSAGE_TO_A_CHANNEL', 'SLACK_LIST_MEMBERS_OF_CHANNEL'],
+  GITHUB:    ['GITHUB_CREATE_AN_ISSUE', 'GITHUB_LIST_PULL_REQUESTS', 'GITHUB_CREATE_A_PULL_REQUEST', 'GITHUB_CREATE_A_REPO', 'GITHUB_SEARCH_CODE', 'GITHUB_COMMIT_EVENT'],
+  HUBSPOT:   ['HUBSPOT_CREATE_CONTACT', 'HUBSPOT_UPDATE_CONTACT', 'HUBSPOT_LIST_CONTACTS', 'HUBSPOT_CREATE_DEAL', 'HUBSPOT_UPDATE_DEAL', 'HUBSPOT_SEARCH_OBJECTS'],
+  NOTION:    ['NOTION_CREATE_PAGE', 'NOTION_QUERY_A_DATABASE', 'NOTION_UPDATE_PAGE', 'NOTION_SEARCH', 'NOTION_APPEND_BLOCK_CHILDREN'],
+  AIRTABLE:  ['AIRTABLE_LIST_RECORDS', 'AIRTABLE_CREATE_RECORD', 'AIRTABLE_UPDATE_RECORD', 'AIRTABLE_DELETE_RECORD', 'AIRTABLE_SEARCH_RECORDS'],
+  STRIPE:    ['STRIPE_LIST_CUSTOMERS', 'STRIPE_CREATE_CUSTOMER', 'STRIPE_CREATE_A_PAYMENT_LINK', 'STRIPE_RETRIEVE_BALANCE', 'STRIPE_LIST_SUBSCRIPTIONS'],
+  LINEAR:    ['LINEAR_CREATE_ISSUE', 'LINEAR_UPDATE_ISSUE', 'LINEAR_GET_ISSUES', 'LINEAR_CREATE_COMMENT', 'LINEAR_LIST_PROJECTS'],
+  GOOGLE_CALENDAR: ['GOOGLECALENDAR_CREATE_EVENT', 'GOOGLECALENDAR_LIST_EVENTS', 'GOOGLECALENDAR_UPDATE_EVENT', 'GOOGLECALENDAR_DELETE_EVENT', 'GOOGLECALENDAR_FIND_FREE_SLOTS'],
+  GOOGLE_SHEETS:   ['GOOGLESHEETS_BATCH_UPDATE', 'GOOGLESHEETS_CREATE_SPREADSHEET', 'GOOGLESHEETS_GET_SPREADSHEET_INFO', 'GOOGLESHEETS_APPEND_GOOGLE_SHEET_ROW', 'GOOGLESHEETS_LOOKUP_SPREADSHEET_ROW'],
+  JIRA:      ['JIRA_CREATE_ISSUE', 'JIRA_LIST_JIRA_ISSUES_FOR_A_BOARD', 'JIRA_EDIT_ISSUE', 'JIRA_GET_ALL_PROJECTS', 'JIRA_ADD_COMMENT_TO_ISSUE'],
+  SALESFORCE:['SALESFORCE_CREATE_A_CONTACT', 'SALESFORCE_SEARCH_RECORDS', 'SALESFORCE_UPDATE_RECORD', 'SALESFORCE_CREATE_A_LEAD', 'SALESFORCE_CREATE_OPPORTUNITY'],
+  TWILIO:    ['TWILIO_SEND_MESSAGE', 'TWILIO_MAKE_A_CALL', 'TWILIO_LIST_MESSAGES', 'TWILIO_SEND_WHATSAPP_MESSAGE'],
+}
+
+// Turn a Composio slug like "GMAIL_SEND_EMAIL" into "Send Email"
+function slugToLabel(slug: string, toolkitSlug: string): string {
+  const prefix = toolkitSlug.toUpperCase() + '_'
+  const body = slug.startsWith(prefix) ? slug.slice(prefix.length) : slug
+  return body.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase())
+}
+
 function useComposioConnections() {
   const [connections, setConnections] = useState<{ toolkit: string; status: string; id: string }[]>([])
   const [loadedAt, setLoadedAt] = useState(0)
@@ -275,6 +300,8 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
   const [toolkits, setToolkits] = useState<ComposioToolkitMeta[]>([])
   const [actions, setActions] = useState<ComposioAction[]>([])
   const [search, setSearch] = useState('')
+  const [actionSearch, setActionSearch] = useState('')
+  const [showAllActions, setShowAllActions] = useState(false)
   const [loading, setLoading] = useState(true)
   const [actionsLoading, setActionsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -291,6 +318,8 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
   useEffect(() => {
     if (!cfg.toolkit) { setActions([]); return }
     setActionsLoading(true)
+    setActionSearch('')
+    setShowAllActions(false)
     fetch(`/api/composio/toolkits?toolkit=${cfg.toolkit}`)
       .then(r => r.json())
       .then(d => { setActions(d.actions ?? []); setActionsLoading(false) })
@@ -376,23 +405,113 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
             <ComposioConnectButton toolkit={cfg.toolkit} onConnected={refresh} />
           )}
 
-          {/* Action picker — only show when connected (or allow preview when not) */}
+          {/* Action picker */}
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 5 }}>ACTION</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 6 }}>ACTION</div>
             {actionsLoading ? (
-              <div style={{ fontSize: 11, color: '#52525b' }}>Loading actions...</div>
-            ) : (
-              <select
-                value={cfg.action || ''}
-                onChange={e => updateNodeData(nodeId, { config: { ...cfg, action: e.target.value } })}
-                style={{ ...fieldStyle, cursor: 'pointer' }}
-              >
-                <option value="">— pick an action —</option>
-                {actions.map(a => (
-                  <option key={a.slug} value={a.slug}>{a.name || a.slug}</option>
-                ))}
-              </select>
-            )}
+              <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>Loading actions...</div>
+            ) : actions.length === 0 ? null : (() => {
+              const toolkit = cfg.toolkit?.toUpperCase() ?? ''
+              const topSlugs = TOOLKIT_TOP_ACTIONS[toolkit] ?? []
+
+              // Split into pinned top and rest
+              const topActions = topSlugs
+                .map(slug => actions.find(a => a.slug === slug))
+                .filter(Boolean) as ComposioAction[]
+              const restActions = actions.filter(a => !topSlugs.includes(a.slug))
+
+              const searchQ = actionSearch.toLowerCase()
+              const filterAction = (a: ComposioAction) =>
+                !searchQ ||
+                slugToLabel(a.slug, cfg.toolkit ?? '').toLowerCase().includes(searchQ) ||
+                a.description.toLowerCase().includes(searchQ)
+
+              // When searching, show all matched; otherwise show pinned + optional rest
+              const displayTop = topActions.filter(filterAction)
+              const displayRest = restActions.filter(filterAction)
+
+              const ActionRow = ({ a }: { a: ComposioAction }) => {
+                const label = slugToLabel(a.slug, cfg.toolkit ?? '')
+                const isSelected = cfg.action === a.slug
+                return (
+                  <button
+                    key={a.slug}
+                    onClick={() => updateNodeData(nodeId, { config: { ...cfg, action: a.slug } })}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                      border: `1px solid ${isSelected ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                      background: isSelected ? 'rgba(14,165,233,0.08)' : '#111118',
+                      marginBottom: 4, transition: 'all 0.12s', fontFamily: 'inherit',
+                    }}
+                    onMouseEnter={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.16)'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)' } }}
+                    onMouseLeave={e => { if (!isSelected) { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.background = '#111118' } }}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 600, color: isSelected ? '#0EA5E9' : '#e4e4e7', marginBottom: a.description ? 2 : 0 }}>{label}</div>
+                    {a.description && (
+                      <div style={{ fontSize: 10, color: '#71717a', lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+                        {a.description}
+                      </div>
+                    )}
+                  </button>
+                )
+              }
+
+              return (
+                <div>
+                  {/* Search within actions */}
+                  <input
+                    value={actionSearch}
+                    onChange={e => setActionSearch(e.target.value)}
+                    placeholder="Search actions..."
+                    style={{ ...fieldStyle, marginBottom: 8, fontSize: 11 }}
+                  />
+
+                  <div style={{ maxHeight: 280, overflowY: 'auto', paddingRight: 2 }}>
+                    {searchQ ? (
+                      /* Search mode: show all matching from entire list */
+                      <>
+                        {[...displayTop, ...displayRest].map(a => <ActionRow key={a.slug} a={a} />)}
+                        {displayTop.length === 0 && displayRest.length === 0 && (
+                          <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>No matching actions</div>
+                        )}
+                      </>
+                    ) : showAllActions ? (
+                      /* Expanded: all actions in one flat list */
+                      <>
+                        <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                          All actions ({actions.length} total)
+                        </div>
+                        {[...topActions, ...restActions].map(a => <ActionRow key={a.slug} a={a} />)}
+                        <button
+                          onClick={() => setShowAllActions(false)}
+                          style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#52525b', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
+                        >
+                          ↑ Show fewer
+                        </button>
+                      </>
+                    ) : (
+                      /* Default: pinned common actions + "Show all" toggle */
+                      <>
+                        {topActions.length > 0 && (
+                          <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                            Common
+                          </div>
+                        )}
+                        {topActions.map(a => <ActionRow key={a.slug} a={a} />)}
+                        {restActions.length > 0 && (
+                          <button
+                            onClick={() => setShowAllActions(true)}
+                            style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#52525b', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
+                          >
+                            ↓ Show all {actions.length} actions
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {cfg.action && (
@@ -401,7 +520,9 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
               background: connected ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)',
               border: `1px solid ${connected ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'}`,
             }}>
-              <span style={{ color: connected ? '#22c55e' : '#ef4444', fontWeight: 700 }}>{cfg.action}</span>
+              <span style={{ color: connected ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
+                {slugToLabel(cfg.action, cfg.toolkit ?? '')}
+              </span>
               {' '}{connected
                 ? '— will execute when this agent runs.'
                 : '— connect the toolkit above before running.'}
