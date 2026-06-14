@@ -4,7 +4,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 
 const COLS = [
   { heading: 'Product',   links: [['Pricing','/pricing'],['Web Apps','/gallery'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
-  { heading: 'Resources', links: [['Blog','/blog'],['Learn','/learn'],['Docs','/docs'],['Security','/security'],['API Keys','/api-keys']] },
+  { heading: 'Resources', links: [['Blog','/blog'],['Learn','/learn'],['Docs','/docs'],['Use Cases','/use-cases'],['Security','/security']] },
+  { heading: 'Compare',   links: [['vs Lovable','/vs/lovable'],['vs Bolt','/vs/bolt'],['vs v0','/vs/v0'],['vs Replit','/vs/replit'],['vs Cursor','/vs/cursor']] },
   { heading: 'Company',   links: [['Founders','/founders'],['Affiliates','/affiliates'],['Community','/community'],['Privacy','/privacy'],['Terms','/terms']] },
 ];
 
@@ -17,7 +18,7 @@ export function Footer() {
     }}>
       <div style={{ maxWidth: 1080, margin: '0 auto' }}>
         {/* Top row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr repeat(3,1fr)', gap: 40, marginBottom: 40 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.6fr repeat(4,1fr)', gap: 40, marginBottom: 40 }}>
           {/* Brand */}
           <div>
             <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>

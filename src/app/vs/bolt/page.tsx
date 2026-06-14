@@ -1,70 +1,69 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { WyberLogo } from '@/components/shared/WyberLogo'
+import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'Wyber AI vs Bolt.new (2026) — Honest Comparison',
-  description: 'Honest comparison of Wyber AI and Bolt.new. Features, pricing, and who each tool is best for. Verified June 2026.',
+  description: 'Wyber AI vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, AI agents, and workflows Bolt doesn\'t offer. Verified June 2026.',
+  alternates: { canonical: 'https://wyberai.com/vs/bolt' },
+  openGraph: { title: 'Wyber AI vs Bolt.new (2026)', description: 'Fixed credits, lower price, four pillars. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 
 const ROWS = [
-  { feature: 'Base Pro price',          wyber: '$18.99/mo',         bolt: '$25/mo',            winner: 'wyber' },
-  { feature: 'Annual discount',         wyber: '$15.99/mo',         bolt: '~$20/mo',           winner: 'wyber' },
-  { feature: 'Free tier',               wyber: '50 credits/month',        bolt: '1M tokens/mo',      winner: 'tie'  },
-  { feature: 'Usage model',             wyber: 'Credits/prompt',    bolt: 'Tokens (per char)', winner: 'tie'   },
-  { feature: 'Unused credits rollover', wyber: '✓ Always',          bolt: '✓ Up to 2 months',  winner: 'wyber' },
-  { feature: 'Daily bonus',             wyber: '8 credits/day',     bolt: 'None',              winner: 'wyber' },
-  { feature: 'Prebuilt app library',    wyber: '81+ at 0 cost',    bolt: 'None',              winner: 'wyber' },
-  { feature: 'Credit estimate upfront', wyber: '✓',                 bolt: '✗',                 winner: 'wyber' },
-  { feature: 'Visual click-to-edit',    wyber: '✓',                 bolt: 'Limited',           winner: 'wyber' },
-  { feature: 'Supabase integration',    wyber: '✓ Auto',            bolt: '✓ Manual config',   winner: 'tie'   },
-  { feature: 'GitHub sync',             wyber: '✓',                 bolt: '✓',                 winner: 'tie'   },
-  { feature: 'Vercel deployment',       wyber: '✓',                 bolt: '✓',                 winner: 'tie'   },
-  { feature: 'Custom domains',          wyber: '✓ Subdomain',       bolt: 'Pro+',              winner: 'tie'   },
-  { feature: 'Non-technical users',     wyber: '✓ Guided',          bolt: 'Developer-focused', winner: 'wyber' },
-  { feature: 'Team collaboration',      wyber: 'Coming soon',       bolt: '✓ Teams plan',      winner: 'tie'  },
-  { feature: 'India/APAC pricing',      wyber: '✓ INR soon',        bolt: 'USD only',          winner: 'wyber' },
+  { feature: 'Base Pro price',          wyber: '$18.99/mo',         other: '$25/mo',            winner: 'wyber' as const },
+  { feature: 'Annual discount',         wyber: '$15.99/mo',         other: '~$20/mo',           winner: 'wyber' as const },
+  { feature: 'Free tier',               wyber: '50 credits/month',  other: '1M tokens/mo',      winner: 'tie'   as const },
+  { feature: 'Usage model',             wyber: 'Fixed credits',     other: 'Tokens (per char)', winner: 'wyber' as const },
+  { feature: 'Unused credits rollover', wyber: '✓ Always',          other: '✓ Up to 2 months',  winner: 'wyber' as const },
+  { feature: 'Daily bonus',             wyber: '8 credits/day',     other: 'None',              winner: 'wyber' as const },
+  { feature: 'Mobile app builder',      wyber: '✓ React Native',    other: '✗ Web only',        winner: 'wyber' as const },
+  { feature: 'AI agent builder',        wyber: '✓ Built-in',        other: '✗',                 winner: 'wyber' as const },
+  { feature: 'Workflow automation',     wyber: '✓ Built-in',        other: '✗',                 winner: 'wyber' as const },
+  { feature: 'Prebuilt app library',    wyber: '130+ at 0 cost',    other: 'None',              winner: 'wyber' as const },
+  { feature: 'Credit estimate upfront', wyber: '✓',                 other: '✗',                 winner: 'wyber' as const },
+  { feature: 'Visual click-to-edit',    wyber: '✓',                 other: 'Limited',           winner: 'wyber' as const },
+  { feature: 'Supabase integration',    wyber: '✓ Auto',            other: '✓ Manual config',   winner: 'tie'   as const },
+  { feature: 'GitHub sync',             wyber: '✓',                 other: '✓',                 winner: 'tie'   as const },
+  { feature: 'Vercel deployment',       wyber: '✓',                 other: '✓',                 winner: 'tie'   as const },
+  { feature: 'Non-technical users',     wyber: '✓ Guided',          other: 'Developer-focused', winner: 'wyber' as const },
+  { feature: 'Team collaboration',      wyber: 'Coming soon',       other: '✓ Teams plan',      winner: 'other' as const },
+  { feature: 'India/APAC pricing',      wyber: '✓ INR soon',        other: 'USD only',          winner: 'wyber' as const },
 ]
 
-const s = {bg:'#09090b',card:'#111113',border:'rgba(255,255,255,0.08)',text:'#fafafa',muted:'#71717a',sky:'#0EA5E9'}
-
+const FAQS = [
+  {
+    q: 'How does Wyber AI pricing compare to Bolt.new?',
+    a: 'Wyber AI Pro is $18.99/month with a fixed-credit model — you know exactly what each generation costs before you start. Bolt uses a token-based model ($25/month) where cost depends on the length of your code and prompts, making it harder to predict spend.',
+  },
+  {
+    q: 'Does Bolt.new have a mobile app builder?',
+    a: 'No. Bolt.new generates React web apps only. Wyber AI also generates full React Native + Expo mobile apps that run on iOS and Android — all from the same account.',
+  },
+  {
+    q: 'Can Wyber AI build AI agents? Bolt can\'t.',
+    a: 'Wyber AI includes a dedicated AI agent builder with 250+ tool integrations (Gmail, Slack, HubSpot, GitHub, and more), cron schedules, and visual canvas editing. Bolt does not offer an agent builder.',
+  },
+  {
+    q: 'Is Bolt.new better for developers?',
+    a: 'Bolt.new is more developer-oriented — it has a full in-browser IDE. If you\'re a developer comfortable with code, Bolt\'s flexibility may appeal. Wyber AI is optimized for non-technical builders who want to describe and ship, not debug.',
+  },
+  {
+    q: 'Can I import my Bolt project into Wyber AI?',
+    a: 'Yes. Bolt exports standard React + Vite code. You can paste or upload those files into a Wyber project and continue iterating from there.',
+  },
+]
 
 export default function VsBolt() {
   return (
-    <div style={{minHeight:'100vh',background:s.bg,color:s.text,fontFamily:"'Space Grotesk', sans-serif"}}>
-      <nav style={{padding:'0 clamp(16px,4vw,48px)',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${s.border}`,position:'sticky',top:0,zIndex:100,background:'rgba(9,9,11,0.9)',backdropFilter:'blur(16px)'}}>
-        <Link href="/" style={{display:'flex',alignItems:'center',gap:9,textDecoration:'none',color:'inherit'}}><WyberLogo markSize={22} wordmarkSize={14} /></Link>
-        <Link href="/signup" style={{padding:'7px 16px',borderRadius:8,background:s.sky,color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Try free →</Link>
-      </nav>
-      <div style={{maxWidth:900,margin:'0 auto',padding:'clamp(40px,6vw,72px) clamp(16px,4vw,48px)'}}>
-        <div style={{textAlign:'center',marginBottom:40}}>
-          <div style={{fontSize:11,fontWeight:700,color:s.sky,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:12}}>Comparison</div>
-          <h1 style={{fontFamily:"'Sora', sans-serif",fontSize:'clamp(26px,4vw,44px)',fontWeight:800,letterSpacing:'-0.04em',marginBottom:12}}>Wyber AI vs Bolt.new</h1>
-          <p style={{fontSize:14,color:s.muted,maxWidth:540,margin:'0 auto 8px'}}>Bolt.new is a powerful developer-focused AI builder. Wyber AI is built for non-technical founders who want more credits at a lower price.</p>
-          <p style={{fontSize:11,color:'#52525b'}}>Verified June 2026 · <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>bolt.new</a> · <Link href="mailto:hello@wyberai.com" style={{color:'#52525b'}}>Report an error</Link></p>
-        </div>
-        <div style={{background:s.card,border:`1px solid ${s.border}`,borderRadius:14,overflow:'hidden',marginBottom:16}}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',borderBottom:`1px solid ${s.border}`}}>
-            <div style={{padding:'12px 16px',fontSize:11,fontWeight:700,color:s.muted,textTransform:'uppercase',letterSpacing:'0.06em'}}>Feature</div>
-            <div style={{padding:'12px 16px',fontSize:11,fontWeight:700,color:s.sky,textTransform:'uppercase',letterSpacing:'0.06em'}}>Wyber AI</div>
-            <div style={{padding:'12px 16px',fontSize:11,fontWeight:700,color:s.muted,textTransform:'uppercase',letterSpacing:'0.06em'}}>Bolt.new</div>
-          </div>
-          {ROWS.map((row,i)=>(
-            <div key={row.feature} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',borderBottom:i<ROWS.length-1?`1px solid rgba(255,255,255,0.04)`:'none',background:row.winner==='wyber'?'rgba(14,165,233,0.03)':row.winner==='bolt'?'rgba(255,255,255,0.02)':'transparent'}}>
-              <div style={{padding:'11px 16px',fontSize:13,color:s.muted}}>{row.feature}</div>
-              <div style={{padding:'11px 16px',fontSize:13,fontWeight:row.winner==='wyber'?700:400,color:row.winner==='wyber'?s.sky:s.text}}>{row.wyber}</div>
-              <div style={{padding:'11px 16px',fontSize:13,fontWeight:row.winner==='bolt'?700:400,color:row.winner==='bolt'?'#fafafa':s.muted}}>{row.bolt}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{fontSize:11,color:'#52525b',textAlign:'center',marginBottom:40}}>Bolt uses a token-based model — some rows are approximate. Verify at <a href="https://bolt.new" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>bolt.new</a>.</div>
-        <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
-          <h2 style={{fontFamily:"'Sora', sans-serif",fontSize:22,fontWeight:800,marginBottom:8}}>Try Wyber AI free</h2>
-          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>50 credits/month free, no card required. Build your first app in under 60 seconds.</p>
-          <Link href="/signup" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Start building free →</Link>
-        </div>
-      </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
-    </div>
+    <VsPageTemplate
+      slug="bolt"
+      competitorName="Bolt.new"
+      competitorUrl="https://bolt.new"
+      tagline="Bolt.new is a powerful web app builder for developers. Wyber AI offers predictable fixed-credit pricing, a friendlier interface — and mobile apps, agents, and workflows Bolt doesn't cover."
+      blurb="Honest comparison of Wyber AI vs Bolt.new: pricing model, credits, features, and the four-pillar difference. Verified June 2026."
+      rows={ROWS}
+      faqs={FAQS}
+      pillarNote="Bolt.new builds web apps only."
+      competitorKey="bolt"
+    />
   )
 }

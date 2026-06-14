@@ -1,67 +1,68 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { WyberLogo } from '@/components/shared/WyberLogo'
+import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
-  title: 'Wyber AI vs Replit (2026) — Honest Comparison',
-  description: 'Honest comparison of Wyber AI and Bolt.new. Features, pricing, and who each tool is best for. Verified June 2026.',
+  title: 'Wyber AI vs Replit (2026) — AI App Builder vs Cloud IDE',
+  description: 'Wyber AI vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and four pillars Replit doesn\'t have. Verified June 2026.',
+  alternates: { canonical: 'https://wyberai.com/vs/replit' },
+  openGraph: { title: 'Wyber AI vs Replit (2026)', description: 'AI app builder vs cloud IDE. Verified June 2026.', url: 'https://wyberai.com/vs/replit' },
 }
 
 const ROWS = [
-  { feature: 'Primary use case',        wyber: 'AI app builder',       replit: 'Cloud IDE + AI agent',   winner: 'tie'   },
-  { feature: 'Core/Pro price',          wyber: '$18.99/mo',            replit: '$20/mo (Core)',          winner: 'wyber' },
-  { feature: 'Cost predictability',     wyber: 'Fixed credits',        replit: 'Usage-based overages',   winner: 'wyber' },
-  { feature: 'Free tier',               wyber: '50 credits/month (no card)', replit: 'Free (Agent trial)',     winner: 'tie'   },
-  { feature: 'Prebuilt app library',    wyber: '81+ at 0 cost',       replit: 'None',                   winner: 'wyber' },
-  { feature: 'Credit estimate upfront', wyber: '✓',                    replit: '✗ Effort-based billing', winner: 'wyber' },
-  { feature: 'Non-technical friendly',  wyber: '✓ Guided',             replit: 'Developer-focused',      winner: 'wyber' },
-  { feature: 'Full cloud IDE',          wyber: '✗',                    replit: '✓',                      winner: 'replit'},
-  { feature: 'Real-time collaboration', wyber: 'Coming soon',          replit: '✓',                      winner: 'replit'},
-  { feature: 'GitHub sync',             wyber: '✓',                    replit: '✓',                      winner: 'tie'   },
-  { feature: 'Persistent backend',      wyber: 'Via Supabase',         replit: '✓ Native',               winner: 'replit'},
-  { feature: '50+ language support',    wyber: 'Web apps (JS)',        replit: '✓',                      winner: 'replit'},
-  { feature: 'Custom subdomain',        wyber: '✓',                    replit: 'Core+',                  winner: 'wyber' },
-  { feature: 'India/APAC pricing',      wyber: '✓ INR soon',           replit: 'USD only',               winner: 'wyber' },
+  { feature: 'Primary use case',        wyber: 'AI app builder',           other: 'Cloud IDE + AI agent',    winner: 'tie'   as const },
+  { feature: 'Core/Pro price',          wyber: '$18.99/mo',                other: '$20/mo (Core)',           winner: 'wyber' as const },
+  { feature: 'Cost predictability',     wyber: 'Fixed credits',            other: 'Usage-based overages',    winner: 'wyber' as const },
+  { feature: 'Free tier',               wyber: '50 credits/month',         other: 'Free (limited)',          winner: 'tie'   as const },
+  { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗',                       winner: 'wyber' as const },
+  { feature: 'AI agent builder',        wyber: '✓ Built-in',               other: 'Replit Agent (IDE-based)',winner: 'wyber' as const },
+  { feature: 'Workflow automation',     wyber: '✓ Built-in',               other: '✗',                       winner: 'wyber' as const },
+  { feature: 'Prebuilt app library',    wyber: '130+ at 0 cost',           other: 'None',                    winner: 'wyber' as const },
+  { feature: 'Credit estimate upfront', wyber: '✓',                        other: '✗ Effort-based billing',  winner: 'wyber' as const },
+  { feature: 'Non-technical friendly',  wyber: '✓ Guided',                 other: 'Developer-focused',       winner: 'wyber' as const },
+  { feature: 'Full cloud IDE',          wyber: '✗',                        other: '✓',                       winner: 'other' as const },
+  { feature: 'Real-time collaboration', wyber: 'Coming soon',              other: '✓',                       winner: 'other' as const },
+  { feature: 'GitHub sync',             wyber: '✓',                        other: '✓',                       winner: 'tie'   as const },
+  { feature: 'Persistent backend',      wyber: 'Via Supabase',             other: '✓ Native',                winner: 'other' as const },
+  { feature: '50+ language support',    wyber: 'Web/mobile apps (JS)',     other: '✓',                       winner: 'other' as const },
+  { feature: 'Custom subdomain',        wyber: '✓',                        other: 'Core+',                   winner: 'wyber' as const },
+  { feature: 'India/APAC pricing',      wyber: '✓ INR soon',               other: 'USD only',                winner: 'wyber' as const },
 ]
 
-const s = {bg:'#09090b',card:'#111113',border:'rgba(255,255,255,0.08)',text:'#fafafa',muted:'#71717a',sky:'#0EA5E9'}
+const FAQS = [
+  {
+    q: 'What is the main difference between Wyber AI and Replit?',
+    a: 'Replit is a cloud IDE with AI assistance — great for developers who want to write and run code in any language. Wyber AI is a no-code app builder that generates complete apps from plain English, optimized for non-technical founders who want to ship fast without coding.',
+  },
+  {
+    q: 'Is Wyber AI cheaper than Replit?',
+    a: 'Wyber AI Pro is $18.99/month vs Replit Core at $20/month. More importantly, Wyber uses fixed credits so you always know the cost upfront. Replit\'s effort-based billing can lead to unpredictable charges for complex tasks.',
+  },
+  {
+    q: 'Does Replit have a mobile app builder?',
+    a: 'No. Replit supports many programming languages but does not have a dedicated mobile app builder. Wyber AI generates complete React Native + Expo apps that run on iOS and Android.',
+  },
+  {
+    q: 'Which should a non-technical founder use?',
+    a: 'Wyber AI. Replit is powerful but assumes programming knowledge. Wyber AI is designed for people who have never written code — you describe the app in plain English and it\'s built for you.',
+  },
+  {
+    q: 'Can I use Wyber AI if I also code?',
+    a: 'Yes. Wyber AI exports clean React code you can take anywhere — to GitHub, Vercel, or your own IDE. Many users prototype in Wyber and then refine the exported code themselves.',
+  },
+]
 
 export default function VsReplit() {
   return (
-    <div style={{minHeight:'100vh',background:s.bg,color:s.text,fontFamily:"'Space Grotesk', sans-serif"}}>
-      <nav style={{padding:'0 clamp(16px,4vw,48px)',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${s.border}`,position:'sticky',top:0,zIndex:100,background:'rgba(9,9,11,0.9)',backdropFilter:'blur(16px)'}}>
-        <Link href="/" style={{display:'flex',alignItems:'center',gap:9,textDecoration:'none',color:'inherit'}}><WyberLogo markSize={22} wordmarkSize={14} /></Link>
-        <Link href="/signup" style={{padding:'7px 16px',borderRadius:8,background:s.sky,color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Try free →</Link>
-      </nav>
-      <div style={{maxWidth:900,margin:'0 auto',padding:'clamp(40px,6vw,72px) clamp(16px,4vw,48px)'}}>
-        <div style={{textAlign:'center',marginBottom:40}}>
-          <div style={{fontSize:11,fontWeight:700,color:s.sky,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:12}}>Comparison</div>
-          <h1 style={{fontFamily:"'Sora', sans-serif",fontSize:'clamp(26px,4vw,44px)',fontWeight:800,letterSpacing:'-0.04em',marginBottom:12}}>Wyber AI vs Replit</h1>
-          <p style={{fontSize:14,color:s.muted,maxWidth:540,margin:'0 auto 8px'}}>Replit is a full cloud IDE with an AI agent — powerful for developers, complex for non-technical builders. Wyber AI is built for non-technical founders who want more credits at a lower price.</p>
-          <p style={{fontSize:11,color:'#52525b'}}>Verified June 2026 · <a href="https://replit.com/pricing" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>replit.com/pricing</a> · <Link href="mailto:hello@wyberai.com" style={{color:'#52525b'}}>Report an error</Link></p>
-        </div>
-        <div style={{background:s.card,border:`1px solid ${s.border}`,borderRadius:14,overflow:'hidden',marginBottom:16}}>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',borderBottom:`1px solid ${s.border}`}}>
-            <div style={{padding:'12px 16px',fontSize:11,fontWeight:700,color:s.muted,textTransform:'uppercase',letterSpacing:'0.06em'}}>Feature</div>
-            <div style={{padding:'12px 16px',fontSize:11,fontWeight:700,color:s.sky,textTransform:'uppercase',letterSpacing:'0.06em'}}>Wyber AI</div>
-            <div style={{padding:'12px 16px',fontSize:11,fontWeight:700,color:s.muted,textTransform:'uppercase',letterSpacing:'0.06em'}}>Replit</div>
-          </div>
-          {ROWS.map((row,i)=>(
-            <div key={row.feature} style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',borderBottom:i<ROWS.length-1?`1px solid rgba(255,255,255,0.04)`:'none',background:row.winner==='wyber'?'rgba(14,165,233,0.03)':row.winner==='replit'?'rgba(255,255,255,0.02)':'transparent'}}>
-              <div style={{padding:'11px 16px',fontSize:13,color:s.muted}}>{row.feature}</div>
-              <div style={{padding:'11px 16px',fontSize:13,fontWeight:row.winner==='wyber'?700:400,color:row.winner==='wyber'?s.sky:s.text}}>{row.wyber}</div>
-              <div style={{padding:'11px 16px',fontSize:13,fontWeight:row.winner==='replit'?700:400,color:row.winner==='replit'?'#fafafa':s.muted}}>{row.replit}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{fontSize:11,color:'#52525b',textAlign:'center',marginBottom:40}}>Bolt uses a token-based model — some rows are approximate. Verify at <a href="https://replit.com/pricing" target="_blank" rel="noopener noreferrer" style={{color:'#52525b'}}>replit.com/pricing</a>.</div>
-        <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
-          <h2 style={{fontFamily:"'Sora', sans-serif",fontSize:22,fontWeight:800,marginBottom:8}}>Try Wyber AI free</h2>
-          <p style={{fontSize:14,color:s.muted,marginBottom:20}}>50 credits/month free, no card required. Build your first app in under 60 seconds.</p>
-          <Link href="/signup" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Start building free →</Link>
-        </div>
-      </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
-    </div>
+    <VsPageTemplate
+      slug="replit"
+      competitorName="Replit"
+      competitorUrl="https://replit.com"
+      tagline="Replit is a powerful cloud IDE for developers. Wyber AI is a no-code app builder for founders — with predictable pricing and four pillars Replit doesn't cover."
+      blurb="Honest comparison of Wyber AI vs Replit: AI app builder vs cloud IDE, pricing, and the four-pillar difference. Verified June 2026."
+      rows={ROWS}
+      faqs={FAQS}
+      pillarNote="Replit is an IDE — it doesn't have dedicated mobile, agent, or workflow builders."
+      competitorKey="replit"
+    />
   )
 }
