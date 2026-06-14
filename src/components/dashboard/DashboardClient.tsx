@@ -28,6 +28,7 @@ const IconCopy = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="non
 const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>;
 const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
 const IconDocs = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>;
+const IconLearn = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
 
 // Project type badge
 const TYPE_META: Record<string, { label: string; color: string }> = {
@@ -180,6 +181,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     { label: 'Templates',   href: '/gallery',         icon: <IconTemplates /> },
     { label: 'Mobile',      href: '/templates/mobile',icon: <IconPhone /> },
     { label: 'Workflows',   href: '/workflows',       icon: <IconZap /> },
+    { label: 'Learn',       href: '/learn',           icon: <IconLearn /> },
     { label: 'Docs',        href: '/docs',            icon: <IconDocs /> },
     { label: 'Settings',    href: '/settings',        icon: <IconSettings /> },
   ];

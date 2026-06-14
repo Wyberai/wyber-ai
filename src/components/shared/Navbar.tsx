@@ -40,6 +40,7 @@ export function Navbar({ user }: Props) {
     ['Agents', '/agents'],
     ['Workflows', '/workflows'],
     ['Pricing', '/pricing'],
+    ['Learn', '/learn'],
     ['Docs', '/docs'],
   ];
 
