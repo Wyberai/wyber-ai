@@ -5,7 +5,6 @@ import { useEditorStore } from '@/store/editor'
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
 
-  const [embedUrl, setEmbedUrl] = useState<string | null>(null)
   const [snackUrl, setSnackUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -14,16 +13,19 @@ export function MobilePreviewPanel() {
   const hasApp = Object.keys(files ?? {}).some(p =>
     p.includes('App.tsx') || p.includes('App.jsx') || p.includes('App.js')
   )
+  const fileCount = Object.keys(files ?? {}).length
+  // Trigger for AI-generated apps OR gallery/template apps (>1 file = real app, not the 1-file starter placeholder)
+  const shouldBuildPreview = hasApp && (hasGeneratedFiles || fileCount > 1)
 
   const buildPreview = () => {
-    if (!hasApp) return
+    if (!shouldBuildPreview) return
     const plainFiles: Record<string, string> = {}
     for (const [path, file] of Object.entries(files ?? {})) {
       const content = (file as { content?: string }).content || (file as unknown as string)
       if (typeof content === 'string') plainFiles[path] = content
     }
     const key = Object.keys(plainFiles).sort().map(p => `${p}:${plainFiles[p].length}`).join('|')
-    if (key === lastKeyRef.current && embedUrl) return
+    if (key === lastKeyRef.current && snackUrl) return
     lastKeyRef.current = key
     setError(null)
     setLoading(true)
@@ -35,7 +37,6 @@ export function MobilePreviewPanel() {
       .then(r => r.json())
       .then(d => {
         if (d.error) { setError(d.error); return }
-        if (d.embedUrl) setEmbedUrl(d.embedUrl)
         if (d.snackUrl) setSnackUrl(d.snackUrl)
       })
       .catch(e => setError(String(e)))
@@ -43,14 +44,14 @@ export function MobilePreviewPanel() {
   }
 
   useEffect(() => {
-    if (!isGenerating && hasApp && hasGeneratedFiles) buildPreview()
+    if (!isGenerating && shouldBuildPreview) buildPreview()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files, isGenerating, hasGeneratedFiles])
 
   const refresh = () => {
     lastKeyRef.current = ''
-    setEmbedUrl(null)
     setSnackUrl(null)
+    setError(null)
     buildPreview()
   }
 
@@ -64,31 +65,16 @@ export function MobilePreviewPanel() {
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
         <div style={{
           width: 7, height: 7, borderRadius: '50%',
-          background: embedUrl ? '#22c55e' : loading ? '#f59e0b' : isGenerating ? '#f59e0b' : '#3f3f46',
+          background: snackUrl ? '#22c55e' : loading ? '#f59e0b' : isGenerating ? '#f59e0b' : '#3f3f46',
           transition: 'all 0.3s',
         }} />
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
-          {isGenerating ? 'Writing your app...' : loading ? 'Preparing web preview...' : embedUrl ? 'Web preview' : 'Describe your app to get started'}
+          {isGenerating ? 'Writing your app...' : loading ? 'Uploading to Expo Snack...' : snackUrl ? 'Preview ready' : 'Describe your app to get started'}
         </span>
-        {snackUrl && (
-          <a
-            href={snackUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open in Expo Snack — scan QR to test on iOS or Android"
-            style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', padding: '2px 10px', fontSize: 11, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}
-          >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
-              <polyline points="15 3 21 3 21 9"/>
-              <line x1="10" y1="14" x2="21" y2="3"/>
-            </svg>
-            Test on real phone ↗
-          </a>
-        )}
-        {hasApp && !isGenerating && !loading && (
+        {shouldBuildPreview && !isGenerating && !loading && (
           <button
             onClick={refresh}
+            title="Rebuild preview"
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}
           >⟳</button>
         )}
@@ -107,7 +93,7 @@ export function MobilePreviewPanel() {
             </svg>
             <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>Mobile preview</div>
             <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>
-              Describe your React Native app and it'll render here instantly
+              Describe your React Native app and it&apos;ll render here instantly
             </div>
           </div>
         )}
@@ -120,8 +106,8 @@ export function MobilePreviewPanel() {
           </div>
         )}
 
-        {/* Phone frame — shown when we have an embed URL, or while loading after generation */}
-        {!isGenerating && hasGeneratedFiles && hasApp && (loading || embedUrl || error) && (
+        {/* Phone frame — shown when preview is building or ready */}
+        {!isGenerating && shouldBuildPreview && (loading || snackUrl || error) && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', padding: 16 }}>
             <div style={{
               width: 375,
@@ -143,28 +129,80 @@ export function MobilePreviewPanel() {
 
               {/* Inner content */}
               <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+
+                {/* Loading */}
                 {loading && (
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, background: '#0f0f14' }}>
                     <div style={{ width: 22, height: 22, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                    <div style={{ fontSize: 11, color: '#52525b' }}>Preparing web preview…</div>
+                    <div style={{ fontSize: 11, color: '#52525b' }}>Uploading to Expo Snack…</div>
                   </div>
                 )}
-                {error && (
-                  <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: '#1a0505', padding: 14 }}>
+
+                {/* Error */}
+                {error && !loading && (
+                  <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: '#1a0505', padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff6b6b', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
                       <strong style={{ display: 'block', marginBottom: 8, fontSize: 11 }}>Preview error</strong>
                       {error}
                     </div>
+                    <button onClick={refresh}
+                      style={{ alignSelf: 'flex-start', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 10, fontFamily: 'monospace' }}>
+                      Retry ⟳
+                    </button>
                   </div>
                 )}
-                {embedUrl && !loading && !error && (
-                  <iframe
-                    key={embedUrl}
-                    src={embedUrl}
-                    title="Web preview"
-                    allow="accelerometer; camera; encrypted-media; geolocation; gyroscope; microphone"
-                    style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                  />
+
+                {/* Preview ready — open in Expo Snack */}
+                {snackUrl && !loading && !error && (
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, background: '#0c0c12', padding: 24 }}>
+
+                    {/* Phone icon */}
+                    <div style={{ width: 60, height: 60, borderRadius: 18, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="30" height="30" viewBox="0 0 48 48" fill="none">
+                        <rect x="12" y="2" width="24" height="44" rx="5" stroke="#0EA5E9" strokeWidth="2" fill="rgba(14,165,233,0.08)"/>
+                        <rect x="20" y="6" width="8" height="2" rx="1" fill="#0EA5E9" opacity="0.7"/>
+                        <circle cx="24" cy="42" r="2" fill="#0EA5E9" opacity="0.7"/>
+                        <rect x="17" y="16" width="14" height="2" rx="1" fill="#0EA5E9" opacity="0.5"/>
+                        <rect x="17" y="21" width="10" height="2" rx="1" fill="#0EA5E9" opacity="0.35"/>
+                        <rect x="17" y="26" width="12" height="2" rx="1" fill="#0EA5E9" opacity="0.35"/>
+                      </svg>
+                    </div>
+
+                    <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#e4e4e7' }}>Your app is ready</div>
+                      <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.6, maxWidth: 210 }}>
+                        Preview in the browser, or scan the QR code to run natively on iOS / Android
+                      </div>
+                    </div>
+
+                    <a
+                      href={snackUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 7,
+                        padding: '11px 22px',
+                        borderRadius: 12,
+                        background: '#0EA5E9',
+                        color: '#fff',
+                        fontSize: 13,
+                        fontWeight: 700,
+                        textDecoration: 'none',
+                        boxShadow: '0 4px 24px rgba(14,165,233,0.35)',
+                        transition: 'opacity 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.85'}
+                      onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>
+                        <polyline points="15 3 21 3 21 9"/>
+                        <line x1="10" y1="14" x2="21" y2="3"/>
+                      </svg>
+                      Open in Expo Snack ↗
+                    </a>
+
+                  </div>
                 )}
               </div>
             </div>

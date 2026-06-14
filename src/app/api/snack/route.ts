@@ -103,6 +103,9 @@ export async function POST(req: NextRequest) {
     for (const [path, content] of Object.entries(files ?? {})) {
       if (!content) continue
       const snackPath = path.startsWith('src/') ? path.slice(4) : path
+      // Skip package.json — deps are provided via manifest.dependencies (prevents
+      // the generated package.json from overriding our curated SDK 52 versions)
+      if (snackPath === 'package.json') continue
       code[snackPath] = { type: 'CODE', contents: content }
       allCode += content + '\n'
     }
