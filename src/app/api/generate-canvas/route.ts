@@ -93,9 +93,12 @@ export async function POST(req: NextRequest) {
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2000,
-      system: SYSTEM,
+      system: [{ type: 'text' as const, text: SYSTEM, cache_control: { type: 'ephemeral' as const } }],
       messages: [{ role: 'user', content: `Build an agent for: ${prompt}` }],
     })
+
+    const u = msg.usage as Record<string, number>
+    console.log(`[generate-canvas cache] creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
 
     const raw = (msg.content.find(b => b.type === 'text') as { type: 'text'; text: string } | undefined)?.text || ''
     // Strip any accidental markdown fences

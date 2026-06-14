@@ -949,34 +949,66 @@ TYPOGRAPHY HIERARCHY: section heading 20px Space Grotesk 700; stat value 28-32px
 STATES: every empty search result → empty state (icon opacity 0.3 + short helpful message). Loading → shimmer skeleton divs, not bare spinners. Every interactive element → hover + focus ring.
 MOTION: opacity+translateY(8px)→(0) on mount for content blocks. All buttons/cards transition 0.15-0.2s ease.
 `
-    let fullSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt()) + supabaseContext + knowledgeContext + templateRef + (projectType === 'mobile' ? '' : wyberDNA) + outputRule
-
     // ── Staged generation modes ──
+    // Static system prompt (cacheable) — per-request context injected into user message instead.
     // 'plan': return a JSON file manifest only (no code). Fast + cheap.
     // 'scaffold': build only the listed shell files so the preview renders a skeleton.
     // 'fill': build only the listed feature files this pass (small batch, can't truncate).
     // 'full' (default): unchanged one-shot behaviour.
     let stageMaxTokens = maxTokens
+    let staticSystemPrompt: string
+    const perRequestParts: string[] = []
+
+    // These vary per project/prompt — keep them out of the system prompt so the cache breakpoint stays byte-stable
+    if (supabaseContext) perRequestParts.push(supabaseContext)
+    if (knowledgeContext) perRequestParts.push(knowledgeContext)
+    if (templateRef) perRequestParts.push(templateRef)
+
     if (stage === 'plan') {
-      fullSystemPrompt = "You are a software architect. Given an app request, output ONLY a JSON array of the files needed to build it. Each item must be {\"path\":\"src/...\",\"purpose\":\"short feature description\"}. List shell files (src/index.css, src/App.tsx, src/components/Sidebar.tsx) FIRST, then one file per feature. Aim for 5-9 files. Output ONLY the raw JSON array starting with [ and ending with ]. No prose, no markdown, no code fences."
+      staticSystemPrompt = "You are a software architect. Given an app request, output ONLY a JSON array of the files needed to build it. Each item must be {\"path\":\"src/...\",\"purpose\":\"short feature description\"}. List shell files (src/index.css, src/App.tsx, src/components/Sidebar.tsx) FIRST, then one file per feature. Aim for 5-9 files. Output ONLY the raw JSON array starting with [ and ending with ]. No prose, no markdown, no code fences."
       stageMaxTokens = 2000
-    } else if (stage === 'scaffold') {
-      const list = (stageFiles as string[]).join(', ')
-      fullSystemPrompt += `\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in later passes. Output each file as a complete <file> block.`
-  } else if (stage === 'fill') {
-      const list = (stageFiles as string[]).join(', ')
-      fullSystemPrompt += `\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.`
+    } else {
+      staticSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt())
+        + (projectType === 'mobile' ? '' : wyberDNA)
+        + outputRule
+      if (stage === 'scaffold') {
+        const list = (stageFiles as string[]).join(', ')
+        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in later passes. Output each file as a complete <file> block.`)
+      } else if (stage === 'fill') {
+        const list = (stageFiles as string[]).join(', ')
+        perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.`)
+      }
+      if (stage === 'full') {
+        staticSystemPrompt += '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
+      }
     }
-    if (stage === 'full') {
-      fullSystemPrompt += '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
+
+    // Prepend per-request context to the user message to keep the static system byte-stable for caching
+    const contextPrefix = perRequestParts.filter(Boolean).join('')
+    if (contextPrefix) {
+      if (Array.isArray(userContent)) {
+        userContent = userContent.map(block =>
+          (block as { type: string }).type === 'text'
+            ? { ...(block as { type: 'text'; text: string }), text: contextPrefix + '\n\n' + (block as { type: 'text'; text: string }).text }
+            : block
+        ) as typeof userContent
+      } else {
+        userContent = contextPrefix + '\n\n' + userContent
+      }
     }
 
     const stream = await client.messages.stream({
       model,
       max_tokens: stageMaxTokens,
-      system: fullSystemPrompt,
+      system: [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }],
       messages: [...trimmedHistory, { role: 'user', content: userContent }],
     })
+
+    // Log prompt-cache metrics after stream ends (fire-and-forget)
+    stream.finalMessage().then(msg => {
+      const u = msg.usage as Record<string, number>
+      console.log(`[generate cache] creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+    }).catch(() => {})
 
     const encoder = new TextEncoder()
     const readable = new ReadableStream({
