@@ -21,7 +21,7 @@ const PILLARS = [
     id: 'agents',
     icon: '🤖',
     label: 'AI Agents',
-    desc: '5,000+ pre-built agents for sales, finance, HR, and more. Connect your tools and run.',
+    desc: '5,000 pre-built agents for sales, finance, HR, and more. Connect your tools and run.',
   },
   {
     id: 'workflows',

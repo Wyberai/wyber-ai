@@ -10,7 +10,7 @@ Wyber AI is a platform that lets anyone build web apps, deploy AI agents, and cr
 
 THREE CORE CAPABILITIES:
 1. 🎨 Web Apps — Describe any app in plain English. Wyber generates production-ready React code, previews it live, and deploys to a real URL in under 30 seconds. Includes Supabase database, auth, and storage with one click.
-2. 🤖 AI Agents — Browse 5,000+ pre-built AI agents across 18 industries. Connect your own tools (Slack, HubSpot, Gmail, Airtable, etc.), click Run, and Claude executes the agent automatically. No timeout limits — runs on Trigger.dev infrastructure.
+2. 🤖 AI Agents — Browse 5,000 pre-built AI agents across 18 industries. Connect your own tools (Slack, HubSpot, Gmail, Airtable, etc.), click Run, and Claude executes the agent automatically. No timeout limits — runs on Trigger.dev infrastructure.
 3. ⚡ Workflows — Visual drag-and-drop flow builder. Add triggers (webhook, schedule, Slack), AI reasoning steps, and actions. Connect 12+ tools. Set and forget.
 
 PRICING:

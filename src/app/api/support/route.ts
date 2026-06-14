@@ -19,7 +19,7 @@ Pricing:
 - Teams: $79/month — unlimited
 
 Key facts:
-- 130+ templates across 25 industries, all instant load
+- 118 templates across 25 industries, all instant load
 - Deploy to Vercel with one click
 - Export full source code as ZIP
 - GitHub sync available

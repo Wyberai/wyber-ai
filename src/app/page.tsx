@@ -8,8 +8,8 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 const BRAND = '#0EA5E9';
 
 const STATS = [
-  { value: '5,000+', label: 'AI Agents' },
-  { value: '81+', label: 'App templates' },
+  { value: '5,000', label: 'AI Agents' },
+  { value: '118', label: 'App templates' },
   { value: '30s',   label: 'Avg build time' },
   { value: '0',     label: 'Setup required' },
 ];
@@ -343,7 +343,7 @@ export default function HomePage() {
             <ProductCard
               eyebrow="Web Apps"
               heading="Describe it. It builds."
-              body="Type what you want. Wyber generates production-ready React code, provisions a Supabase database, and deploys to Vercel — in under 30 seconds. No drag-and-drop. Real code. Start from one of 81+ gallery templates or build from scratch."
+              body="Type what you want. Wyber generates production-ready React code, provisions a Supabase database, and deploys to Vercel — in under 30 seconds. No drag-and-drop. Real code. Start from one of 118 gallery templates or build from scratch."
               mockup={<AppMockup />}
               ctaLabel="Build a web app →"
               ctaHref="/dashboard?new=app"
@@ -362,7 +362,7 @@ export default function HomePage() {
             <ProductCard
               eyebrow="AI Agents"
               heading="Pick one. It executes."
-              body="Browse 5,000+ pre-built agents across 18 industries. Connect your tools — Slack, HubSpot, Gmail, Airtable. Click Run. Claude executes every step with a full audit log."
+              body="Browse 5,000 pre-built agents across 18 industries. Connect your tools — Slack, HubSpot, Gmail, Airtable. Click Run. Claude executes every step with a full audit log."
               mockup={<AgentMockup />}
               ctaLabel="Browse agents →"
               ctaHref="/agents"

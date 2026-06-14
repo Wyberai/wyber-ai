@@ -22,7 +22,7 @@ BUILDER:
 - Plan Mode — shows a step-by-step build plan before generating; user approves it first
 - Screenshot-to-app — paste a screenshot and Wyber AI clones the UI
 
-GALLERY (130+ prebuilt templates, always 0 credits):
+GALLERY (118 prebuilt templates, always 0 credits):
 - CRM, sales pipeline, contact management
 - Admin dashboards, analytics, KPI reporting
 - E-commerce, product catalog, shopping cart

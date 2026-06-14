@@ -21,7 +21,7 @@ const ROWS = [
   { feature: 'GitHub sync',             wyber: '✓',                       other: '✓',                     winner: 'tie'   as const },
   { feature: 'Design system quality',    wyber: 'Good',                   other: '✓ Excellent',           winner: 'other' as const },
   { feature: 'Figma import',             wyber: 'Coming soon',            other: '✓',                     winner: 'other' as const },
-  { feature: 'Prebuilt app library',     wyber: '130+ at 0 cost',         other: 'Component library',     winner: 'wyber' as const },
+  { feature: 'Prebuilt app library',     wyber: '118 at 0 cost',         other: 'Component library',     winner: 'wyber' as const },
   { feature: 'Non-technical users',      wyber: '✓ Guided',               other: 'Developer-focused',     winner: 'wyber' as const },
   { feature: 'Free tier',                wyber: '50 credits/month',       other: 'Limited free',          winner: 'tie'   as const },
   { feature: 'India/APAC pricing',       wyber: '✓ INR soon',             other: 'USD only',              winner: 'wyber' as const },
