@@ -4,7 +4,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 
 const COLS = [
   { heading: 'Product',   links: [['Pricing','/pricing'],['Web Apps','/gallery'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
-  { heading: 'Resources', links: [['Blog','/blog'],['Learn','/learn'],['Docs','/docs'],['Use Cases','/use-cases'],['Security','/security']] },
+  { heading: 'Resources', links: [['Learning Paths','/learn'],['Documentation','/docs'],['Use Cases','/use-cases'],['Blog','/blog']] },
   { heading: 'Compare',   links: [['vs Lovable','/vs/lovable'],['vs Bolt','/vs/bolt'],['vs v0','/vs/v0'],['vs Replit','/vs/replit'],['vs Cursor','/vs/cursor']] },
   { heading: 'Company',   links: [['Founders','/founders'],['Affiliates','/affiliates'],['Community','/community'],['Privacy','/privacy'],['Terms','/terms']] },
 ];
