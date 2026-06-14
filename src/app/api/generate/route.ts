@@ -85,6 +85,17 @@ Every file must be output as:
 ...complete file content...
 </file>
 
+PROGRESS MARKERS — emit before writing files:
+Before the first <file> block, output:
+[progress: Planning [App Name]]
+[progress: Scaffolding screens]
+
+Then before each file:
+[progress: Building [filename]]
+
+After all files:
+[progress: Done]
+
 REQUIRED FILES FOR EVERY APP:
 1. App.tsx — root component with navigation setup
 2. screens/HomeScreen.tsx — main screen
@@ -691,8 +702,10 @@ export async function POST(req: NextRequest) {
     }
 
     // ── SMART PREBUILT TEMPLATE MATCHING ────────────────────────────
+    // Skip for mobile: prebuilt_apps contains web (React/Vite) files — returning them for a mobile
+    // prompt produces a gallery hit with web files that Expo Snack cannot run.
     const hasExisting = fileContext && fileContext.length > 200
-    if (!hasExisting) {
+    if (!hasExisting && projectType !== 'mobile') {
       try {
         const supabase = await createClient()
 
