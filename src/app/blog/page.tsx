@@ -100,11 +100,7 @@ export default function BlogPage() {
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {POSTS.map((post, i) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <article
-                style={{ padding: '28px 0', borderBottom: `1px solid ${s.border}`, cursor: 'pointer', transition: 'padding-left 0.15s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.paddingLeft = '6px'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.paddingLeft = '0'}
-              >
+              <article className="blog-post" style={{ padding: '28px 0', borderBottom: `1px solid ${s.border}`, cursor: 'pointer' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
                   <span style={{ padding: '3px 10px', borderRadius: 20, background: post.tagColor + '15', border: `1px solid ${post.tagColor}30`, fontSize: 11, fontWeight: 700, color: post.tagColor }}>
                     {post.tag}
@@ -127,7 +123,7 @@ export default function BlogPage() {
           ))}
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); .blog-post { transition: padding-left 0.15s; } .blog-post:hover { padding-left: 6px !important; }`}</style>
     </div>
   )
 }
