@@ -121,6 +121,14 @@ export async function POST(req: NextRequest) {
       else resolvedDeps[pkg] = '*'
     }
 
+    // @react-navigation requires these peer deps — Snack won't auto-resolve them
+    const NAV_PKGS = ['@react-navigation/native', '@react-navigation/native-stack', '@react-navigation/stack', '@react-navigation/bottom-tabs', '@react-navigation/drawer', '@react-navigation/material-top-tabs']
+    if (detectedPkgs.some(p => NAV_PKGS.includes(p))) {
+      if (!resolvedDeps['react-native-screens']) resolvedDeps['react-native-screens'] = SDK52_VERSIONS['react-native-screens']
+      if (!resolvedDeps['react-native-safe-area-context']) resolvedDeps['react-native-safe-area-context'] = SDK52_VERSIONS['react-native-safe-area-context']
+      if (!resolvedDeps['react-native-gesture-handler']) resolvedDeps['react-native-gesture-handler'] = SDK52_VERSIONS['react-native-gesture-handler']
+    }
+
     // Exact payload shape from snack-sdk Session.ts saveAsync():
     // manifest.dependencies: { pkg: versionString }
     // dependencies (top-level): { pkg: { version: versionString } }

@@ -74,6 +74,7 @@ TECH STACK — MANDATORY:
 - React Native with Expo SDK 52
 - TypeScript
 - Navigation: @react-navigation/native + @react-navigation/stack or @react-navigation/bottom-tabs
+- Navigation peer deps (REQUIRED alongside ANY @react-navigation package): react-native-screens, react-native-safe-area-context, react-native-gesture-handler — import GestureHandlerRootView from 'react-native-gesture-handler' and wrap the root navigator
 - Styling: StyleSheet.create() — NO Tailwind, NO web CSS
 - Icons: @expo/vector-icons (Ionicons, MaterialCommunityIcons)
 - Data: useState + useEffect with inline initial data (no external DBs unless user asks)
