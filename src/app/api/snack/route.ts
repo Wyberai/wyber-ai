@@ -164,8 +164,11 @@ export async function POST(req: NextRequest) {
     const snackId = data.id
     return NextResponse.json({
       snackId,
+      // Full Snack editor — for "open in new tab / test on real phone"
       snackUrl: `https://snack.expo.dev/${snackId}`,
-      embedUrl: `https://snack.expo.dev/embedded/${snackId}?platform=web&preview=true&theme=dark&supportedPlatforms=web,ios,android`,
+      // Embedded web-only player — supportedPlatforms=web removes all platform
+      // tabs (iOS/Android/My Device), so no QR code and no sign-in ever appear inline.
+      embedUrl: `https://snack.expo.dev/embedded/${snackId}?platform=web&supportedPlatforms=web&preview=true&theme=dark`,
     })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
