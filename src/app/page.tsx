@@ -106,7 +106,10 @@ function AgentMockup() {
         <div style={{ color: '#71717a', fontSize: 10, marginTop: 4 }}>Connected: HubSpot · Gmail · Slack</div>
       </div>
       <div style={{ background: '#050508', borderRadius: 8, padding: 10, fontFamily: 'monospace' }}>
-        <div style={{ color: '#52525b', fontSize: 9, marginBottom: 6, letterSpacing: '0.05em' }}>EXECUTION LOG</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div style={{ color: '#52525b', fontSize: 9, letterSpacing: '0.05em' }}>EXECUTION LOG</div>
+          <div style={{ color: '#3f3f46', fontSize: 9 }}>sample run</div>
+        </div>
         {[
           { t: '09:42:01', msg: 'Fetched 24 new leads from HubSpot', c: '#a1a1aa' },
           { t: '09:42:03', msg: 'Scoring lead: john@acme.com → 87/100', c: '#22c55e' },
@@ -284,11 +287,23 @@ export default function HomePage() {
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
               Start free — 50 credits/month →
             </Link>
-            <Link href="/agents" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
+            <a href="#live-demo" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `rgba(14,165,233,0.3)`; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
-              Browse 5,000+ agents →
-            </Link>
+              See how it works ↓
+            </a>
+          </div>
+
+          {/* Social proof */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 40, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {['#0EA5E9','#38bdf8','#7dd3fc','#bae6fd','#e0f2fe'].map((c, i) => (
+                <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', background: c, border: '2px solid #09090b', marginLeft: i > 0 ? -8 : 0, zIndex: 5 - i }} />
+              ))}
+            </div>
+            <div style={{ fontSize: 13, color: '#a1a1aa' }}>
+              <span style={{ fontWeight: 700, color: '#fafafa' }}>Founders and teams</span> building their products — no code needed
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -303,7 +318,7 @@ export default function HomePage() {
       </section>
 
       {/* Live Demo */}
-      <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
+      <section id="live-demo" style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
         <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Try it — no sign-up needed</div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.03em' }}>Type a prompt. See it generate live.</h2>
@@ -394,35 +409,39 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Community / Discord */}
+      {/* Teams angle */}
       <section style={{ padding: 'clamp(40px,5vw,60px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20, padding: '24px 28px', borderRadius: 16, background: `rgba(14,165,233,0.06)`, border: `1px solid rgba(14,165,233,0.15)` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 12, background: `rgba(14,165,233,0.12)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <IcoChat />
-            </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 3 }}>Join the WyberAi community</div>
-              <div style={{ fontSize: 13, color: '#71717a' }}>Ask questions, share what you're building, get early feature previews</div>
-            </div>
-          </div>
-          <a href="https://discord.gg/A5KsFv2P" target="_blank" rel="noopener noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            Join Discord →
-          </a>
-        </div>
-      </section>
-
-      {/* Done for you */}
-      <section style={{ padding: 'clamp(32px,4vw,48px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '28px 32px', borderRadius: 16, background: `rgba(14,165,233,0.05)`, border: `1px solid rgba(14,165,233,0.15)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 20 }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(420px,100%),1fr))', gap: 32, alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Done for you</div>
-            <div style={{ fontSize: 'clamp(16px,2.5vw,20px)', fontWeight: 800, marginBottom: 6, letterSpacing: '-0.02em' }}>Have an idea but don't want to build it yourself?</div>
-            <div style={{ fontSize: 13, color: '#71717a' }}>Book a $99 consultation — we scope, quote, and build your app. Simple in 24hrs, Medium in 3 days, Complex in 1 week.</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>For teams</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: 14 }}>
+              Equip your whole team to build with AI
+            </h2>
+            <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.7, marginBottom: 20, maxWidth: 420 }}>
+              One shared workspace. Everyone builds — from your developers to your ops team. Shared credits, shared projects, no per-seat friction.
+            </p>
+            <Link href="/pricing" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 9, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+              See Teams plan →
+            </Link>
           </div>
-          <a href="/setup-call" style={{ padding: '11px 22px', borderRadius: 9, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            Book a session →
-          </a>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              ['Shared workspace', 'Every project, agent, and workflow your team builds — in one place.'],
+              ['Pooled credits', 'One credit balance across the team. No individual limits.'],
+              ['Role-based access', 'Editors build, viewers review, admins manage billing.'],
+              ['Priority support', 'Slack-based support direct to the founding team.'],
+            ].map(([title, desc]) => (
+              <div key={title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '14px 16px', background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.1)', borderRadius: 10 }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(34,197,94,0.15)', border: '1px solid #22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  <IcoCheck />
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', marginBottom: 2 }}>{title}</div>
+                  <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -456,10 +475,7 @@ export default function HomePage() {
           <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          <a href="https://www.producthunt.com/products/wyber-ai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyber-ai" target="_blank" rel="noopener noreferrer">
-            <img alt="WyberAi on Product Hunt" width="200" height="44" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1160357&theme=dark&t=1780291241806" />
-          </a>
-          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Mobile', '/templates/mobile'], ['Workflows', '/workflows'], ['Blog', '/blog'], ['Discord', 'https://discord.gg/A5KsFv2P']] as [string, string][]).map(([l, h]) => (
+          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Mobile', '/templates/mobile'], ['Workflows', '/workflows'], ['Blog', '/blog']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
