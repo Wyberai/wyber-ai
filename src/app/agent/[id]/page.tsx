@@ -28,10 +28,10 @@ export default function AgentStudioPage() {
   })
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/agents?limit=10&search=' + encodeURIComponent(String(id)))
+    // Fetch by agent_id text field (e.g. WYBER-079) directly
+    const res = await fetch('/api/agents/by-agent-id?agentId=' + encodeURIComponent(String(id)))
     const data = await res.json()
-    const found = (data.agents||[]).find((a: Agent) => a.agent_id === id)
-    if (found) { setAgent(found); setRequiredTools(detectRequiredTools(found.required_tools||'')) }
+    if (data.agent) { setAgent(data.agent); setRequiredTools(detectRequiredTools(data.agent.required_tools||'')) }
     const toolsRes = await fetch('/api/tools?projectId=' + encodeURIComponent(projectId))
     const toolsData = await toolsRes.json()
     setConnectedTools(toolsData.tools || [])

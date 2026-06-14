@@ -25,7 +25,7 @@ interface Agent {
 export default function AgentsPage() {
   const router = useRouter()
   const [agents, setAgents] = useState<Agent[]>([])
-  const [total, setTotal] = useState(0)
+  const [total, setTotal] = useState<number | null>(null)
   const [page, setPage] = useState(1)
   const [category, setCategory] = useState('All')
   const [search, setSearch] = useState('')
@@ -103,14 +103,14 @@ export default function AgentsPage() {
         {/* Hero */}
         <div style={{ textAlign:'center', marginBottom:40 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#0EA5E9', marginBottom:16, fontWeight:700 }}>
-            ⚡ {total.toLocaleString()} AI Agents Available
+            ⚡ {total === null ? '…' : total.toLocaleString()} AI Agents Available
           </div>
           <h1 style={{ fontSize:'clamp(28px,4vw,42px)', fontWeight:800, margin:'0 0 12px', letterSpacing:'-0.03em', fontFamily:"'Sora', sans-serif" }}>
             Deploy AI agents for<br />
             <span style={{ color:'#0EA5E9' }}>any business workflow</span>
           </h1>
           <p style={{ fontSize:15, color:'#71717a', maxWidth:520, margin:'0 auto 28px', lineHeight:1.65 }}>
-            Browse {total.toLocaleString()}+ pre-built AI agents across 18 industries. Click any agent to open it in the visual canvas builder — no setup required.
+            Browse {total === null ? '' : `${total.toLocaleString()}+`} pre-built AI agents across 18 industries. Click any agent to open it in the visual canvas builder — no setup required.
           </p>
 
           {/* Search */}

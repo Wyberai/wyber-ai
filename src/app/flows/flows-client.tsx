@@ -12,13 +12,18 @@ export default function FlowsPage() {
   const router = useRouter()
 
   useEffect(() => {
-    fetch('/api/flows').then(r => r.json()).then(d => { setFlows(d.flows || []); setLoading(false) })
-  }, [])
+    fetch('/api/flows').then(r => {
+      if (r.status === 401) { router.push('/login'); return r.json() }
+      return r.json()
+    }).then(d => { if (d) { setFlows(d.flows || []); setLoading(false) } })
+  }, [router])
 
   const createFlow = async () => {
     const res = await fetch('/api/flows', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ name: 'New Automation', description: '' }) })
+    if (res.status === 401) { router.push('/login'); return }
     const data = await res.json()
     if (data.flow?.id) router.push('/flows/' + data.flow.id)
+    else alert('Failed to create flow: ' + (data.error || 'Unknown error'))
   }
 
   return (
