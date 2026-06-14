@@ -36,6 +36,8 @@ export function parseGenerationOutput(raw: string): ParseResult {
   chatText = chatText.replace(/```edited:[^`]*```/g, '');
   // Strip backtick code fences that wrap file lists
   chatText = chatText.replace(/```[\s\S]*?```/g, '');
+  // Strip [progress: ...] markers — these are surfaced as the live checklist, never as chat text
+  chatText = chatText.replace(/\[progress:[^\]]+\]/gi, '');
   // Clean up extra whitespace and blank lines
   chatText = chatText
     .split('\n')

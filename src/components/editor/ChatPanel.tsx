@@ -20,6 +20,8 @@ function cleanMessage(text: string): string {
   // cut any unclosed trailing block (stream/save ended mid-block)
   const _cuts = [t.search(/<thinking>/i), t.search(/<file/i), t.search(/<edit\s+path="/i)].filter(i => i !== -1);
   if (_cuts.length) t = t.slice(0, Math.min(..._cuts));
+  // strip progress markers — these belong in the checklist, never in chat text
+  t = t.replace(/\[progress:[^\]]+\]/gi, '');
   t = t.replace(/```[\s\S]*?```/g, '');
   t = t.replace(/`src\/[^`]+`/g, '');
   const lines = t.split('\n').map(l => l.trim()).filter(l => {
@@ -37,6 +39,12 @@ function cleanMessage(text: string): string {
     if (l === '{' || l === '}' || l === '};' || l === '});') return false;
     if (l.startsWith('{ id:') || l.startsWith('id:') || l.startsWith('name:')) return false;
     if (l.match(/^[a-z]+: ['"\[{]/)) return false;
+    // file-manifest list items: "- path/to/File.tsx" or "- File.tsx: description"
+    if (l.startsWith('- ') && /\.\w{2,4}/.test(l)) return false;
+    // continuation/self-heal reasoning openers
+    if (/^(i notice|i see that|i'll continue|let me continue|continuing|previous output|your previous|it seems|it looks like)/i.test(l)) return false;
+    // file-list headers
+    if (/^(here(?:'s| are)|the following files|these files|i(?:'m| will| am) (?:now |going to )?(?:build|creat|generat|output|provid))/i.test(l)) return false;
     return true;
   });
   const builtLine = lines.find(l => l.startsWith('Built:'));
@@ -354,9 +362,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
     return;
   }
     const assistantId = uid();
-    addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
-    // Staged build for complex apps (>=4 files). Returns true if handled; else fall through to one-shot.
-    if (!img) {
+    // Silent (autofix/self-heal) runs produce no visible assistant bubble — files are applied invisibly
+    if (!opts?.silent) {
+      addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
+    }
+    // Staged build for complex apps (>=4 files). Skip for silent continuations (always one-shot).
+    if (!img && !opts?.silent) {
       try {
         const handledByStaged = await runStagedBuild(userMsg, assistantId);
         if (handledByStaged) { setIsGenerating(false); return; }
@@ -538,17 +549,22 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
 
-      const finalContent = chatText || 'Done.';
-      updateMessage(assistantId, {
-        content: finalContent,
-        status:'done',
-        filesChanged: newFiles.map(f => f.path),
-      });
-      persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+      // Always run through cleanMessage so stored content is already scrubbed
+      const finalContent = cleanMessage(chatText) || 'Done.';
+      if (!opts?.silent) {
+        updateMessage(assistantId, {
+          content: finalContent,
+          status:'done',
+          filesChanged: newFiles.map(f => f.path),
+        });
+        persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+      }
 
     } catch (err: unknown) {
-      const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
-      updateMessage(assistantId, { content: errMsg, status:'error' });
+      if (!opts?.silent) {
+        const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
+        updateMessage(assistantId, { content: errMsg, status:'error' });
+      }
     } finally {
       setIsGenerating(false);
       clearStreamingContent();
