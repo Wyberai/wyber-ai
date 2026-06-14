@@ -121,6 +121,8 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Ref so event handlers always get the latest executeGeneration without stale closure
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => Promise<void>) | null>(null);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
 
@@ -194,6 +196,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     return () => clearTimeout(timer);
   }, [resolvedProjectId, hasInit]);
 
+  // Keep ref in sync with the latest executeGeneration callback
+  useEffect(() => { executeGenerationRef.current = executeGeneration; }, [executeGeneration]);
+
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       const { prompt } = e.detail;
@@ -205,14 +210,11 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       }, 100);
     };
     window.addEventListener('wyber_auto_generate', handler as EventListener);
+    // Self-heal / auto-fix: run silently — no user-visible message, no send button
     const autofixHandler = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (!detail?.prompt) return
-      setInput(detail.prompt)
-      setTimeout(() => {
-        const btn = document.querySelector('[data-send-button]') as HTMLButtonElement
-        if (btn && !btn.disabled) btn.click()
-      }, 100)
+      executeGenerationRef.current?.(detail.prompt, null, { silent: true })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
     return () => {
@@ -336,14 +338,19 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   }, [files, modelTier, resolvedUserId, resolvedProjectId, setFiles, setHasGeneratedFiles, saveProject, addMessage, persistMessage, setStreamingContent])
 
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => {
+    // Clear any stale progress steps from a previous generation before starting
+    setProgressSteps([]);
+
     // Snapshot current files for undo BEFORE generation
     if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
 
     consumeCredit();
     const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
-    addMessage({ id: uid(), role:'user', content: userContent, timestamp:Date.now(), status:'done' });
-    persistMessage('user', userContent);
+    if (!opts?.silent) {
+      addMessage({ id: uid(), role:'user', content: userContent, timestamp:Date.now(), status:'done' });
+      persistMessage('user', userContent);
+    }
 const storeProjectId = useEditorStore.getState().project?.id;
   if (resolvedProjectId && storeProjectId && storeProjectId !== resolvedProjectId) {
     console.warn('Blocked generation: project mismatch');
@@ -548,6 +555,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     } finally {
       setIsGenerating(false);
       clearStreamingContent();
+      setProgressSteps([]);
     }
   }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint]);
 
