@@ -196,9 +196,6 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     return () => clearTimeout(timer);
   }, [resolvedProjectId, hasInit]);
 
-  // Keep ref in sync with the latest executeGeneration callback
-  useEffect(() => { executeGenerationRef.current = executeGeneration; }, [executeGeneration]);
-
   useEffect(() => {
     const handler = (e: CustomEvent) => {
       const { prompt } = e.detail;
@@ -558,6 +555,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       setProgressSteps([]);
     }
   }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint]);
+
+  // Assign on every render so the autofix event handler always has the latest closure
+  executeGenerationRef.current = executeGeneration;
 
   const handleUndo = useCallback(() => {
     if (checkpoints.length === 0) return;
