@@ -6,6 +6,49 @@ interface Message {
   content: string
 }
 
+function renderMarkdown(text: string) {
+  const blocks = text.split(/\n{2,}/)
+  return blocks.map((block, bi) => {
+    const lines = block.split('\n').filter(l => l.trim())
+    // Numbered list
+    if (lines.every(l => /^\d+\.\s/.test(l.trim()))) {
+      return (
+        <ol key={bi} style={{ margin: '6px 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {lines.map((l, i) => <li key={i}>{inlineFormat(l.replace(/^\d+\.\s/, ''))}</li>)}
+        </ol>
+      )
+    }
+    // Bullet list
+    if (lines.every(l => /^[-*]\s/.test(l.trim()))) {
+      return (
+        <ul key={bi} style={{ margin: '6px 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {lines.map((l, i) => <li key={i}>{inlineFormat(l.replace(/^[-*]\s/, ''))}</li>)}
+        </ul>
+      )
+    }
+    // Mixed block — render line by line
+    return (
+      <p key={bi} style={{ margin: '4px 0' }}>
+        {lines.map((l, i) => (
+          <span key={i}>
+            {inlineFormat(l)}
+            {i < lines.length - 1 && <br />}
+          </span>
+        ))}
+      </p>
+    )
+  })
+}
+
+function inlineFormat(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g)
+  return parts.map((part, i) =>
+    /^\*\*[^*]+\*\*$/.test(part)
+      ? <strong key={i} style={{ color: '#fafafa', fontWeight: 700 }}>{part.slice(2, -2)}</strong>
+      : <span key={i}>{part}</span>
+  )
+}
+
 const SUGGESTED = [
   'How does pricing work?',
   'What can I build with Wyber?',
@@ -108,7 +151,9 @@ export function WyberChatbot() {
             {messages.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{ maxWidth: '85%', padding: '9px 12px', borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: msg.role === 'user' ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: msg.role === 'user' ? '#fff' : '#e4e4e7', fontSize: 13, lineHeight: 1.55 }}>
-                  {msg.content || <span style={{ opacity: 0.5 }}>▋</span>}
+                  {msg.role === 'assistant' && msg.content
+                    ? renderMarkdown(msg.content)
+                    : msg.content || <span style={{ opacity: 0.5 }}>▋</span>}
                 </div>
               </div>
             ))}
