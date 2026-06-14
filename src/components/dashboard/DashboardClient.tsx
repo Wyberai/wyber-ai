@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
+import { ImportModal } from '@/components/dashboard/ImportModal';
 import { WyberLogo } from '@/components/shared/WyberLogo';
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
@@ -75,6 +76,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [showTypePicker, setShowTypePicker] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
   const [promptInput, setPromptInput] = useState('');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -343,10 +345,17 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Projects</h2>
-                <button onClick={() => openChooser()} disabled={creating}
-                  style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                  + New Project
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => setShowImport(true)}
+                    style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Import
+                  </button>
+                  <button onClick={() => openChooser()} disabled={creating}
+                    style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    + New Project
+                  </button>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
@@ -404,7 +413,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><IconEmpty /></div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No projects yet</div>
-                <div style={{ fontSize: 14, marginBottom: 8 }}>Describe your first app above, or start from a template below</div>
+                <div style={{ fontSize: 14, marginBottom: 16 }}>Describe your first app above, or start from a template below</div>
+                <button onClick={() => setShowImport(true)}
+                  style={{ padding: '8px 18px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Import existing project
+                </button>
               </div>
               <div style={{ marginTop: 24 }}>
                 <TemplatesShowcase userId={profile?.id} />
@@ -423,6 +437,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         onClose={() => setShowTypePicker(false)}
         onPick={(type) => { setShowTypePicker(false); startProject(pendingPrompt, type); }}
       />
+      <ImportModal open={showImport} onClose={() => setShowImport(false)} />
     </div>
   );
 }
