@@ -6,7 +6,7 @@ import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractP
 import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
-import { detectDeps, detectDepsInCode } from '@/lib/detect-deps';
+import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
 
@@ -125,6 +125,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const [recording, setRecording] = useState(false);
   const [dismissedNoPersist, setDismissedNoPersist] = useState(false);
+  const [pendingRegulated, setPendingRegulated] = useState<{ prompt: string; img: AttachedImage | null; domains: RegulatedDomain[] } | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -620,10 +621,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
       return;
     }
 
+    // ── Regulated-domain notice (non-blocking) ──────────────────────────
+    // Only on new builds; skip if user already acknowledged this prompt.
+    const isNewBuild = Object.keys(files ?? {}).length === 0;
+    if (isNewBuild && !img) {
+      const regulated = detectRegulated(userMsg)
+      if (regulated.length > 0) {
+        setPendingRegulated({ prompt: userMsg, img, domains: regulated })
+        return
+      }
+    }
+
     // ── Pre-gen dep gate ────────────────────────────────────────────────
     // Only for new builds (no existing files), and only when there's no
     // image attached (image = screenshot-to-app, never needs a dep gate).
-    const isNewBuild = Object.keys(files ?? {}).length === 0;
     if (isNewBuild && !img) {
       const deps = detectDeps(userMsg);
       if (deps.hasAnyDep) {
@@ -739,6 +750,84 @@ const storeProjectId = useEditorStore.getState().project?.id;
             }}
             onCancel={() => setPendingPlan(null)}
           />
+        </div>
+      )}
+
+      {/* ── Regulated-domain compliance notice ─────────────────────── */}
+      {pendingRegulated && (
+        <div style={{ flexShrink: 0, borderBottom: '1px solid var(--ide-border)', background: '#0f0a00', padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+            <div style={{ fontSize: 20, lineHeight: 1, marginTop: 1 }}>⚠️</div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', letterSpacing: '-0.01em', marginBottom: 3 }}>
+                Regulated data detected — read before building
+              </div>
+              <div style={{ fontSize: 11, color: '#a3a3a3', lineHeight: 1.6 }}>
+                This prompt involves{' '}
+                <strong style={{ color: '#fef3c7' }}>
+                  {pendingRegulated.domains.map(d => d.label).join(' and ')}
+                </strong>
+                {' '}— a regulated category. Real data of this type requires:
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 29 }}>
+            {pendingRegulated.domains.map(d => (
+              <div key={d.label} style={{ fontSize: 11, color: '#fef3c7', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 6, padding: '5px 9px', lineHeight: 1.5 }}>
+                <strong>{d.label}:</strong> {d.requirement}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.6, paddingLeft: 29 }}>
+            Wyber's default storage is <strong style={{ color: '#f87171' }}>not suitable for real regulated data</strong>. Build here for prototyping and UI design only — connect your own compliant infrastructure before handling any real records.
+          </div>
+
+          <div style={{ display: 'flex', gap: 7, paddingLeft: 29 }}>
+            <button
+              onClick={async () => {
+                const { prompt, img } = pendingRegulated
+                setPendingRegulated(null)
+                // Re-run the full handleSend path but skip regulated check by injecting directly
+                setInput('')
+                setAttachedImage(null)
+                const isNew = Object.keys(files ?? {}).length === 0
+                if (isNew && !img) {
+                  const deps = detectDeps(prompt)
+                  if (deps.hasAnyDep) {
+                    let existingNames: string[] = []
+                    try {
+                      const r = await fetch('/api/secrets')
+                      if (r.ok) { const data = await r.json(); existingNames = (data.secrets ?? []).map((s: { name: string }) => s.name.toUpperCase()) }
+                    } catch { /* proceed anyway */ }
+                    const missingSupabase = deps.needsSupabase && !existingNames.some(n => n.includes('SUPABASE'))
+                    const missingStripe   = deps.needsStripe   && !existingNames.some(n => n.includes('STRIPE'))
+                    const missingComposio = deps.composioTools.filter(t => !existingNames.some(n => n.toUpperCase().includes(t.toUpperCase())))
+                    if (missingSupabase || missingStripe || missingComposio.length > 0) {
+                      const initialSecrets: Record<string, string> = {}
+                      if (missingSupabase) { initialSecrets['SUPABASE_URL'] = ''; initialSecrets['SUPABASE_ANON_KEY'] = '' }
+                      if (missingStripe)   { initialSecrets['STRIPE_PUBLISHABLE_KEY'] = '' }
+                      for (const t of missingComposio) initialSecrets[`${t.toUpperCase()}_API_KEY`] = ''
+                      setInlineSecrets(initialSecrets)
+                      setPendingGenArgs({ prompt, img, needsSupabase: missingSupabase, needsStripe: missingStripe, composioTools: missingComposio })
+                      return
+                    }
+                  }
+                }
+                await executeGeneration(prompt, img)
+              }}
+              style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: 'none', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            >
+              I understand — build as prototype only →
+            </button>
+            <button
+              onClick={() => { setPendingRegulated(null); setInput(pendingRegulated.prompt) }}
+              style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 

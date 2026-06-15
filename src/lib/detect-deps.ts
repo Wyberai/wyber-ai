@@ -22,6 +22,69 @@ export interface DetectedDeps {
   hasAnyDep: boolean
 }
 
+export interface RegulatedDomain {
+  /** Short label shown in the UI notice, e.g. 'health / PHI' */
+  label: string
+  /** One-line compliance requirement shown to the user */
+  requirement: string
+}
+
+// ── Regulated-domain keyword banks ────────────────────────────────────────────
+
+const HEALTH_KEYWORDS = [
+  'patient', 'ehr', 'emr', 'medical record', 'health record', 'phi',
+  'hipaa', 'diagnosis', 'prescription', 'clinical', 'physician', 'nurse',
+  'hospital', 'clinic', 'healthcare', 'telemedicine', 'telehealth',
+  'lab result', 'blood test', 'insurance claim', 'medical history',
+  'medication', 'treatment plan', 'intake form', 'symptom', 'vitals',
+  'radiology', 'pathology', 'icd code', 'fhir', 'hl7',
+]
+
+const FINANCIAL_PII_KEYWORDS = [
+  'ssn', 'social security number', 'tax return', 'tax id', 'ein',
+  'bank account number', 'routing number', 'credit card number', 'cvv',
+  'cardholder', 'pci', 'wire transfer', 'ach transfer',
+  'financial record', 'tax document', 'w-2', '1099', 'w2 form',
+]
+
+const GOVT_ID_KEYWORDS = [
+  'passport number', 'driver license number', 'driving license', 'state id',
+  'government id', 'national id', 'birth certificate',
+  'social security card', 'immigration record', 'visa application',
+  'background check', 'identity verification', 'kyc', 'know your customer',
+]
+
+/**
+ * Scan a prompt for regulated/sensitive domain signals.
+ * Returns an array of detected domains (empty = none).
+ * Never hard-blocks — callers must show a non-blocking notice.
+ */
+export function detectRegulated(prompt: string): RegulatedDomain[] {
+  const p = prompt.toLowerCase()
+  const domains: RegulatedDomain[] = []
+
+  if (HEALTH_KEYWORDS.some(kw => p.includes(kw))) {
+    domains.push({
+      label: 'health / PHI',
+      requirement: 'HIPAA-eligible infrastructure with a signed BAA (Business Associate Agreement)',
+    })
+  }
+  if (FINANCIAL_PII_KEYWORDS.some(kw => p.includes(kw))) {
+    domains.push({
+      label: 'financial PII',
+      requirement: 'PCI-DSS compliant storage and transmission controls',
+    })
+  }
+  if (GOVT_ID_KEYWORDS.some(kw => p.includes(kw))) {
+    domains.push({
+      label: 'government / identity data',
+      requirement: 'privacy-law-compliant storage (varies by jurisdiction)',
+    })
+  }
+
+  return domains
+}
+
 // ── keyword banks ─────────────────────────────────────────────────────────────
 
 const SUPABASE_KEYWORDS = [
