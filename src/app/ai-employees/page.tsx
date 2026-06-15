@@ -26,7 +26,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Qualifies inbound leads, drafts personalized outreach, logs every touch to your CRM.',
     tools: ['Gmail', 'HubSpot', 'LinkedIn'],
     run_mode: 'email',
-    agent_id: 'WYBER-SALES-SDR-001',
+    agent_id: 'WYBER-002',
     department: 'Sales',
   },
   {
@@ -35,7 +35,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Chases stale deals and sends timely nudges so nothing slips.',
     tools: ['Gmail', 'HubSpot', 'Slack'],
     run_mode: 'scheduled',
-    agent_id: 'WYBER-SALES-FOLLOWUP-001',
+    agent_id: 'WYBER-003',
     department: 'Sales',
   },
   // ── Support ──────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Triages tickets, answers the routine ones, escalates what needs a human.',
     tools: ['Gmail', 'Notion', 'Slack'],
     run_mode: 'email',
-    agent_id: 'WYBER-SUPPORT-TRIAGE-001',
+    agent_id: 'WYBER-016',
     department: 'Support',
   },
   {
@@ -54,7 +54,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Sorts and drafts replies to your email so you start the day at zero.',
     tools: ['Gmail'],
     run_mode: 'email',
-    agent_id: 'WYBER-SUPPORT-INBOX-001',
+    agent_id: 'WYBER-027',
     department: 'Support',
   },
   // ── Operations ───────────────────────────────────────────────────────────
@@ -64,7 +64,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Connects your tools and runs the repetitive workflows that eat your day.',
     tools: ['Slack', 'Notion', 'Google Sheets'],
     run_mode: 'scheduled',
-    agent_id: 'WYBER-OPS-ASSISTANT-001',
+    agent_id: 'WYBER-046',
     department: 'Operations',
   },
   {
@@ -73,7 +73,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Moves data between your apps so you never copy-paste again.',
     tools: ['Google Sheets', 'Airtable', 'Notion'],
     run_mode: 'scheduled',
-    agent_id: 'WYBER-OPS-DATAENTRY-001',
+    agent_id: 'WYBER-049',
     department: 'Operations',
   },
   // ── Marketing ────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Drafts posts, repurposes content, and queues it for your approval.',
     tools: ['Notion', 'Google Docs', 'Slack'],
     run_mode: 'scheduled',
-    agent_id: 'WYBER-MARKETING-CONTENT-001',
+    agent_id: 'WYBER-087',
     department: 'Marketing',
   },
   {
@@ -92,7 +92,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Monitors topics and delivers briefs on the schedule you choose.',
     tools: ['Notion', 'Slack', 'Google Docs'],
     run_mode: 'scheduled',
-    agent_id: 'WYBER-RESEARCH-ANALYST-001',
+    agent_id: 'WYBER-068',
     department: 'Research',
   },
   // ── Admin ────────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Reads requests, checks your calendar, and books meetings.',
     tools: ['Gmail', 'Google Calendar'],
     run_mode: 'email',
-    agent_id: 'WYBER-ADMIN-SCHEDULER-001',
+    agent_id: 'WYBER-072',
     department: 'Admin',
   },
   {
@@ -111,7 +111,7 @@ const EMPLOYEES: Employee[] = [
     tagline: 'Compiles your morning rundown and delivers it when you want it.',
     tools: ['Gmail', 'Notion', 'Slack'],
     run_mode: 'scheduled',
-    agent_id: 'WYBER-ADMIN-BRIEFING-001',
+    agent_id: 'WYBER-063',
     department: 'Admin',
   },
 ]
