@@ -633,10 +633,55 @@ function ConfigPanel() {
             <select value={(node.data.config as Record<string,string>).type || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), type: e.target.value } })} style={fieldStyle}>
               <option value="manual">I click Run manually</option>
               <option value="webhook">A webhook fires (from another system)</option>
-              <option value="schedule" disabled>On a schedule — coming soon</option>
+              <option value="schedule">On a schedule</option>
               <option value="form">Someone submits a form</option>
               <option value="email">An email is received</option>
             </select>
+            {(node.data.config as Record<string,string>).type === 'schedule' && (
+              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={labelStyle}>Schedule</label>
+                {[
+                  { label: 'Every hour',       cron: '0 * * * *'  },
+                  { label: 'Daily at 7 AM',    cron: '0 7 * * *'  },
+                  { label: 'Daily at 9 AM',    cron: '0 9 * * *'  },
+                  { label: 'Weekly (Mon 9 AM)',cron: '0 9 * * 1'  },
+                ].map(p => (
+                  <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa' }}>
+                    <input
+                      type="radio"
+                      name={`sched-${node.id}`}
+                      value={p.cron}
+                      checked={(node.data.config as Record<string,string>).cron_expression === p.cron}
+                      onChange={() => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), cron_expression: p.cron } })}
+                      style={{ accentColor: '#0EA5E9' }}
+                    />
+                    {p.label}
+                  </label>
+                ))}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa' }}>
+                  <input
+                    type="radio"
+                    name={`sched-${node.id}`}
+                    value="custom"
+                    checked={!['0 * * * *','0 7 * * *','0 9 * * *','0 9 * * 1'].includes((node.data.config as Record<string,string>).cron_expression || '')}
+                    onChange={() => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), cron_expression: '' } })}
+                    style={{ accentColor: '#0EA5E9' }}
+                  />
+                  Custom cron…
+                </label>
+                {!['0 * * * *','0 7 * * *','0 9 * * *','0 9 * * 1'].includes((node.data.config as Record<string,string>).cron_expression || '') && (
+                  <input
+                    value={(node.data.config as Record<string,string>).cron_expression || ''}
+                    onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), cron_expression: e.target.value } })}
+                    placeholder="e.g. 30 8 * * 1-5"
+                    style={{ ...fieldStyle, fontFamily: 'monospace', fontSize: 11 }}
+                  />
+                )}
+                <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5, marginTop: 2 }}>
+                  Credits are checked before each run. If your balance is too low the run is skipped and you get an email.
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -843,6 +888,29 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nodes, edges }),
     })
+
+    // If the trigger node has run_mode='schedule', register the schedule so
+    // the cron can pick it up. The flow ID becomes the agent_id prefixed with
+    // 'flow:' so the scheduler knows to call /api/canvas/run instead of /api/agents/run.
+    const triggerNode = nodes.find(n => n.type === 'trigger')
+    const cfg = (triggerNode?.data?.config ?? {}) as Record<string, string>
+    if (cfg.type === 'schedule' && cfg.cron_expression) {
+      fetch('/api/agents/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: `flow:${projectId}`,
+          projectId,
+          cronExpression: cfg.cron_expression,
+        }),
+      }).catch(() => {})
+    } else if (cfg.type !== 'schedule') {
+      // If user switched back to manual, deactivate the schedule
+      fetch(`/api/agents/schedule?agentId=${encodeURIComponent('flow:' + projectId)}`, {
+        method: 'DELETE',
+      }).catch(() => {})
+    }
+
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }

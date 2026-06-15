@@ -134,26 +134,27 @@ export async function GET(req: NextRequest) {
       updated_at: now.toISOString(),
     }).eq('id', schedule.id)
 
-    // Call the existing run endpoint internally. It handles its own credit
-    // deduction and execution logging — we don't re-implement that here.
+    // Route to the correct run endpoint:
+    //   flow:<uuid>  → canvas flow  → /api/canvas/run
+    //   WYBER-xxx    → gallery agent → /api/agents/run
     try {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-      const runRes = await fetch(`${baseUrl}/api/agents/run`, {
+      const isFlow = schedule.agent_id.startsWith('flow:')
+      const flowId = isFlow ? schedule.agent_id.slice(5) : null
+      const endpoint = isFlow ? `${baseUrl}/api/canvas/run` : `${baseUrl}/api/agents/run`
+
+      const body = isFlow
+        ? { flowId, triggeredBy: 'schedule' }
+        : { agentId: schedule.agent_id, projectId: schedule.project_id, input: schedule.last_input || '', triggeredBy: 'schedule' }
+
+      const runRes = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Pass user identity so /api/agents/run can auth against it.
-          // The run route normally uses cookie-based auth; for scheduled calls
-          // we use the service-role bypass header instead.
           'X-Scheduler-User-Id': schedule.user_id,
           'X-Scheduler-Secret': process.env.CRON_SECRET!,
         },
-        body: JSON.stringify({
-          agentId: schedule.agent_id,
-          projectId: schedule.project_id,
-          input: schedule.last_input || '',
-          triggeredBy: 'schedule',
-        }),
+        body: JSON.stringify(body),
       })
 
       const runData = await runRes.json()
