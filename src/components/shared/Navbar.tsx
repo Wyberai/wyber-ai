@@ -49,6 +49,7 @@ const ALL_ITEMS = RESOURCES.flatMap(g => g.items);
 const NAV_LINKS = [
   ['Web Apps', '/gallery'],
   ['Mobile', '/templates/mobile'],
+  ['AI Employees', '/ai-employees'],
   ['Agents', '/agents'],
   ['Workflows', '/workflows'],
   ['Pricing', '/pricing'],

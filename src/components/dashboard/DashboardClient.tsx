@@ -31,6 +31,7 @@ const IconPlaceholder = () => <svg width="28" height="28" viewBox="0 0 24 24" fi
 const IconEmpty = () => <svg width="40" height="40" viewBox="0 0 48 48" fill="none" stroke="#3f3f46" strokeWidth="1.5" strokeLinecap="round"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M16 10V6M32 10V6M6 18h36"/></svg>;
 const IconDocs = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>;
 const IconLearn = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>;
+const IconPeople = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
 
 // Project type badge
 const TYPE_META: Record<string, { label: string; color: string }> = {
@@ -180,13 +181,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   };
 
   const NAV = [
-    { label: 'Home',        href: '/dashboard',       icon: <IconHome /> },
-    { label: 'Templates',   href: '/gallery',         icon: <IconTemplates /> },
-    { label: 'Mobile',      href: '/templates/mobile',icon: <IconPhone /> },
-    { label: 'Workflows',   href: '/workflows',       icon: <IconZap /> },
-    { label: 'Learn',       href: '/learn',           icon: <IconLearn /> },
-    { label: 'Docs',        href: '/docs',            icon: <IconDocs /> },
-    { label: 'Settings',    href: '/settings',        icon: <IconSettings /> },
+    { label: 'Home',         href: '/dashboard',       icon: <IconHome /> },
+    { label: 'Templates',    href: '/gallery',         icon: <IconTemplates /> },
+    { label: 'Mobile',       href: '/templates/mobile',icon: <IconPhone /> },
+    { label: 'AI Employees', href: '/ai-employees',    icon: <IconPeople /> },
+    { label: 'Workflows',    href: '/workflows',       icon: <IconZap /> },
+    { label: 'Learn',        href: '/learn',           icon: <IconLearn /> },
+    { label: 'Docs',         href: '/docs',            icon: <IconDocs /> },
+    { label: 'Settings',     href: '/settings',        icon: <IconSettings /> },
   ];
 
   const ACCENT_PALETTE = ['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'];
