@@ -960,7 +960,25 @@ MOTION: opacity+translateY(8px)→(0) on mount for content blocks. All buttons/c
     const perRequestParts: string[] = []
 
     // These vary per project/prompt — keep them out of the system prompt so the cache breakpoint stays byte-stable
-    if (supabaseContext) perRequestParts.push(supabaseContext)
+    if (supabaseContext) {
+      perRequestParts.push(supabaseContext)
+    } else {
+      // No database connected — ask AI to include a storage notice in data-heavy apps
+      perRequestParts.push(`\n\n=== STORAGE CONTEXT (no backend connected) ===
+Use useState with inline mock data for all persistent data. Do NOT import or reference Supabase.
+IMPORTANT: If this app creates, edits, lists, or manages any records, users, items, tasks, or other user data, include a dismissable notice banner as the VERY FIRST child inside the root return() of App.tsx:
+
+const [_storageNotice, _setStorageNotice] = useState(true)
+...
+{_storageNotice && (
+  <div style={{position:'fixed',top:0,left:0,right:0,zIndex:9999,background:'rgba(120,53,15,0.97)',color:'#fef3c7',padding:'7px 16px',fontSize:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,backdropFilter:'blur(4px)'}}>
+    <span>⚠ Data is stored in browser memory only — resets on page refresh. Connect a database to save permanently.</span>
+    <button onClick={()=>_setStorageNotice(false)} style={{background:'none',border:'none',color:'#fef3c7',cursor:'pointer',fontSize:16,fontWeight:700,padding:'0 4px',lineHeight:1}}>×</button>
+  </div>
+)}
+
+Do NOT add this banner for: pure landing pages, portfolios, dashboards displaying only static data, or any app where the user has no ability to create or edit records. Only add it when the app actively manages user-created or user-edited data.`)
+    }
     if (knowledgeContext) perRequestParts.push(knowledgeContext)
     if (templateRef) perRequestParts.push(templateRef)
 

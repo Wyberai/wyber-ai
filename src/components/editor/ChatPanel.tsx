@@ -124,6 +124,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [progressSteps, setProgressSteps] = useState<string[]>([]);
 
   const [recording, setRecording] = useState(false);
+  const [dismissedNoPersist, setDismissedNoPersist] = useState(false);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -703,6 +704,25 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </button>
         </div>
       </div>
+
+      {/* No-backend storage banner — shown when files have data but no Supabase */}
+      {(() => {
+        if (dismissedNoPersist || isGenerating) return null
+        const allContent = Object.values(files as Record<string, { content?: string }>).map(f => f?.content ?? '').join('\n')
+        if (!allContent) return null
+        const hasData = /useState[<(][^)]*\[\]|initialData\s*[=:]\s*\[|useState\(\[/.test(allContent)
+        const hasSupabase = allContent.includes('supabase') || allContent.includes('createClient')
+        if (!hasData || hasSupabase) return null
+        return (
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 12px', background: 'rgba(120,53,15,0.85)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+            <span>⚠ Data is stored in browser memory only — resets on page refresh.</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <span style={{ color: '#fbbf24', fontWeight: 600, whiteSpace: 'nowrap' }}>Open Supabase panel → to persist</span>
+              <button onClick={() => setDismissedNoPersist(true)} style={{ background: 'none', border: 'none', color: '#fef3c7', cursor: 'pointer', fontSize: 14, fontWeight: 700, padding: 0, lineHeight: 1 }}>×</button>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Plan mode pending */}
       {pendingPlan && (
