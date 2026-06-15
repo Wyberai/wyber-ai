@@ -635,7 +635,7 @@ function ConfigPanel() {
               <option value="webhook">A webhook fires (from another system)</option>
               <option value="schedule">On a schedule</option>
               <option value="form">Someone submits a form</option>
-              <option value="email">An email is received</option>
+              <option value="email">On new Gmail email (checks every ~15 min)</option>
             </select>
             {(node.data.config as Record<string,string>).type === 'schedule' && (
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -678,6 +678,16 @@ function ConfigPanel() {
                   />
                 )}
                 <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5, marginTop: 2 }}>
+                  Credits are checked before each run. If your balance is too low the run is skipped and you get an email.
+                </div>
+              </div>
+            )}
+            {(node.data.config as Record<string,string>).type === 'email' && (
+              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ padding: '8px 10px', borderRadius: 7, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', fontSize: 11, color: '#7dd3fc', lineHeight: 1.6 }}>
+                  Wyber checks your Gmail inbox every ~15 minutes and runs this flow when a new message arrives. Connect Gmail in Settings → Integrations, then click Save to activate.
+                </div>
+                <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5 }}>
                   Credits are checked before each run. If your balance is too low the run is skipped and you get an email.
                 </div>
               </div>
@@ -905,8 +915,23 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         }),
       }).catch(() => {})
     } else if (cfg.type !== 'schedule') {
-      // If user switched back to manual, deactivate the schedule
       fetch(`/api/agents/schedule?agentId=${encodeURIComponent('flow:' + projectId)}`, {
+        method: 'DELETE',
+      }).catch(() => {})
+    }
+
+    if (cfg.type === 'email') {
+      fetch('/api/composio/triggers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentId: `flow:${projectId}`,
+          projectId,
+          sourceType: 'gmail_new_email',
+        }),
+      }).catch(() => {})
+    } else if (cfg.type !== 'email') {
+      fetch(`/api/composio/triggers?agentId=${encodeURIComponent('flow:' + projectId)}`, {
         method: 'DELETE',
       }).catch(() => {})
     }
