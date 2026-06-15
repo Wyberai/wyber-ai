@@ -3,10 +3,19 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { detectRequiredTools, ToolDefinition } from '@/lib/tool-registry'
 
+const SCHEDULE_PRESETS = [
+  { label: 'Every hour',      cron: '0 * * * *'   },
+  { label: 'Daily at 7 AM',   cron: '0 7 * * *'   },
+  { label: 'Daily at 9 AM',   cron: '0 9 * * *'   },
+  { label: 'Weekly (Mon 9AM)',cron: '0 9 * * 1'   },
+  { label: 'Custom cron…',    cron: 'custom'       },
+]
+
 
 interface Agent { agent_id: string; name: string; category: string; problem: string; outcome: string; primary_buyer: string; complexity: string; required_tools: string }
 interface Execution { id: string; status: string; summary?: string; logs: Array<{type:string;message:string}>; steps: number; started_at: string }
 interface ConnectedTool { tool_id: string; connected_at: string; credentials: Record<string,string> }
+interface Schedule { cron_expression: string; is_active: boolean; next_run_at: string | null; last_run_at: string | null }
 
 export default function AgentStudioPage() {
   const { id } = useParams()
@@ -19,6 +28,15 @@ export default function AgentStudioPage() {
   const [running, setRunning] = useState(false)
   const [currentExec, setCurrentExec] = useState<Execution|null>(null)
   const [input, setInput] = useState('')
+
+  // Schedule state
+  const [schedule, setSchedule] = useState<Schedule | null>(null)
+  const [scheduleMode, setScheduleMode] = useState<'manual' | 'scheduled'>('manual')
+  const [selectedPreset, setSelectedPreset] = useState(SCHEDULE_PRESETS[1].cron) // daily 7am
+  const [customCron, setCustomCron] = useState('')
+  const [savingSchedule, setSavingSchedule] = useState(false)
+  const [scheduleSaved, setScheduleSaved] = useState(false)
+
   const [projectId] = useState(() => {
     if (typeof window === 'undefined') return 'agent-standalone'
     // Try to get user's most recent project ID for tool connections
@@ -35,6 +53,23 @@ export default function AgentStudioPage() {
     const toolsRes = await fetch('/api/tools?projectId=' + encodeURIComponent(projectId))
     const toolsData = await toolsRes.json()
     setConnectedTools(toolsData.tools || [])
+
+    // Load existing schedule if any
+    const schedRes = await fetch('/api/agents/schedule?agentId=' + encodeURIComponent(String(id)))
+    if (schedRes.ok) {
+      const schedData = await schedRes.json()
+      if (schedData.schedule) {
+        setSchedule(schedData.schedule)
+        setScheduleMode(schedData.schedule.is_active ? 'scheduled' : 'manual')
+        const preset = SCHEDULE_PRESETS.find(p => p.cron === schedData.schedule.cron_expression)
+        if (preset && preset.cron !== 'custom') {
+          setSelectedPreset(schedData.schedule.cron_expression)
+        } else {
+          setSelectedPreset('custom')
+          setCustomCron(schedData.schedule.cron_expression)
+        }
+      }
+    }
   }, [id, projectId])
 
   useEffect(() => { load() }, [load])
@@ -54,6 +89,30 @@ export default function AgentStudioPage() {
     const data = await res.json()
     setCurrentExec(data.success ? { id: data.execution_id, status:'completed', summary: data.summary, logs: data.logs||[], steps: data.steps||0, started_at: new Date().toISOString() } : { id:'err', status:'failed', summary: data.error, logs:[], steps:0, started_at: new Date().toISOString() })
     setRunning(false)
+  }
+
+  const saveSchedule = async () => {
+    setSavingSchedule(true)
+    const cronExpr = selectedPreset === 'custom' ? customCron.trim() : selectedPreset
+    if (!cronExpr) { setSavingSchedule(false); return }
+    const res = await fetch('/api/agents/schedule', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: String(id), projectId, cronExpression: cronExpr, lastInput: input || null }),
+    })
+    const data = await res.json()
+    if (data.schedule) {
+      setSchedule(data.schedule)
+      setScheduleSaved(true)
+      setTimeout(() => setScheduleSaved(false), 2500)
+    }
+    setSavingSchedule(false)
+  }
+
+  const removeSchedule = async () => {
+    await fetch('/api/agents/schedule?agentId=' + encodeURIComponent(String(id)), { method: 'DELETE' })
+    setSchedule(null)
+    setScheduleMode('manual')
   }
 
   const allConnected = requiredTools.length === 0 || requiredTools.every(t => connectedTools.some(c => c.tool_id === t.id))
@@ -132,11 +191,80 @@ export default function AgentStudioPage() {
           <div style={{background:'#111118',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:24}}>
             <div style={{fontSize:15,fontWeight:700,marginBottom:12}}>Run Agent</div>
             <textarea value={input} onChange={e => setInput(e.target.value)} placeholder="Optional: add context for this run..."
-              style={{width:'100%',background:'#1a1a24',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:'10px 12px',color:'#f0f0f5',fontSize:13,resize:'vertical',minHeight:72,outline:'none',fontFamily:'inherit',marginBottom:12}}/>
-            <button onClick={runAgent} disabled={running||(!allConnected&&requiredTools.length>0)}
-              style={{padding:'10px 28px',borderRadius:8,border:'none',background:running||(!allConnected&&requiredTools.length>0)?'#2a2a3a':'#6366f1',color:running||(!allConnected&&requiredTools.length>0)?'#52526a':'white',fontSize:14,fontWeight:700,cursor:'pointer'}}>
-              {running?'⚡ Running agent...':'▶ Run Agent Now'}
-            </button>
+              style={{width:'100%',background:'#1a1a24',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:'10px 12px',color:'#f0f0f5',fontSize:13,resize:'vertical',minHeight:72,outline:'none',fontFamily:'inherit',marginBottom:16}}/>
+
+            {/* Run mode toggle */}
+            <div style={{display:'flex',gap:8,marginBottom:16}}>
+              {(['manual','scheduled'] as const).map(mode => (
+                <button key={mode} onClick={() => setScheduleMode(mode)}
+                  style={{flex:1,padding:'8px 0',borderRadius:8,border:`1px solid ${scheduleMode===mode?'rgba(99,102,241,0.4)':'rgba(255,255,255,0.06)'}`,background:scheduleMode===mode?'rgba(99,102,241,0.1)':'transparent',color:scheduleMode===mode?'#a5b4fc':'#71717a',fontSize:12,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}>
+                  {mode === 'manual' ? '▶  Run manually' : '⏱  Run on a schedule'}
+                </button>
+              ))}
+            </div>
+
+            {scheduleMode === 'manual' ? (
+              <>
+                <button onClick={runAgent} disabled={running||(!allConnected&&requiredTools.length>0)}
+                  style={{padding:'10px 28px',borderRadius:8,border:'none',background:running||(!allConnected&&requiredTools.length>0)?'#2a2a3a':'#6366f1',color:running||(!allConnected&&requiredTools.length>0)?'#52526a':'white',fontSize:14,fontWeight:700,cursor:'pointer'}}>
+                  {running?'⚡ Running agent...':'▶ Run Agent Now'}
+                </button>
+                {schedule?.is_active && (
+                  <div style={{marginTop:12,padding:'8px 12px',borderRadius:8,background:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.15)',fontSize:12,color:'#f59e0b',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <span>Schedule active — agent also runs automatically</span>
+                    <button onClick={removeSchedule} style={{background:'none',border:'none',color:'#ef4444',fontSize:11,fontWeight:700,cursor:'pointer'}}>Remove</button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{background:'rgba(99,102,241,0.04)',border:'1px solid rgba(99,102,241,0.12)',borderRadius:10,padding:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#a5b4fc',marginBottom:12}}>Choose schedule</div>
+
+                <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:12}}>
+                  {SCHEDULE_PRESETS.map(p => (
+                    <label key={p.cron} style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+                      <input type="radio" name="preset" value={p.cron}
+                        checked={selectedPreset === p.cron}
+                        onChange={() => setSelectedPreset(p.cron)}
+                        style={{accentColor:'#6366f1'}}/>
+                      <span style={{fontSize:13,color:'#d4d4d8'}}>{p.label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {selectedPreset === 'custom' && (
+                  <input
+                    value={customCron}
+                    onChange={e => setCustomCron(e.target.value)}
+                    placeholder="e.g. 30 8 * * 1-5  (weekdays at 8:30 AM)"
+                    style={{width:'100%',background:'#1a1a24',border:'1px solid rgba(99,102,241,0.2)',borderRadius:6,padding:'7px 10px',color:'#f0f0f5',fontSize:12,outline:'none',fontFamily:'monospace',marginBottom:12,boxSizing:'border-box'}}
+                  />
+                )}
+
+                {schedule?.is_active && schedule.next_run_at && (
+                  <div style={{fontSize:11,color:'#52526a',marginBottom:10}}>
+                    Next run: {new Date(schedule.next_run_at).toLocaleString()}
+                    {schedule.last_run_at && <> · Last: {new Date(schedule.last_run_at).toLocaleString()}</>}
+                  </div>
+                )}
+
+                <div style={{display:'flex',gap:8}}>
+                  <button onClick={saveSchedule} disabled={savingSchedule}
+                    style={{padding:'8px 20px',borderRadius:8,border:'none',background:scheduleSaved?'rgba(34,197,94,0.15)':savingSchedule?'#2a2a3a':'#6366f1',color:scheduleSaved?'#22c55e':savingSchedule?'#52526a':'white',fontSize:13,fontWeight:700,cursor:savingSchedule?'not-allowed':'pointer',transition:'all 0.2s'}}>
+                    {scheduleSaved ? '✓ Saved' : savingSchedule ? 'Saving…' : 'Save schedule'}
+                  </button>
+                  {schedule?.is_active && (
+                    <button onClick={removeSchedule}
+                      style={{padding:'8px 16px',borderRadius:8,border:'1px solid rgba(239,68,68,0.2)',background:'rgba(239,68,68,0.06)',color:'#ef4444',fontSize:13,fontWeight:600,cursor:'pointer'}}>
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <div style={{marginTop:10,fontSize:11,color:'#52526a',lineHeight:1.5}}>
+                  Credits are checked before each scheduled run. If your balance is too low, the run is skipped and you receive an email notification.
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

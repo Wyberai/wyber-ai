@@ -9,7 +9,8 @@ import { ReferralCard } from '@/components/shared/ReferralCard';
 import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
 import { ImportModal } from '@/components/dashboard/ImportModal';
-import { WyberLogo } from '@/components/shared/WyberLogo';
+import { WyberLogo } from '@/components/shared/WyberLogo'
+import { NotificationBell } from '@/components/shared/NotificationBell';
 
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
@@ -222,8 +223,9 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         overflowY: 'auto',
       }}>
         {/* Logo */}
-        <div style={{ padding: '16px 14px', borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ padding: '16px 14px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <WyberLogo markSize={26} wordmarkSize={14} />
+          <NotificationBell />
         </div>
 
         {/* User row */}

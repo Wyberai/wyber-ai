@@ -12,11 +12,26 @@ const ITER_COST = creditCost('execution', 'default') // 2 credits
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await createClient()
-    const { data: { user } } = await auth.auth.getUser()
+    // The internal agent-scheduler cron authenticates with X-Scheduler-Secret
+    // and supplies the target user's id via X-Scheduler-User-Id, bypassing
+    // cookie auth (cron has no browser session).
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isSchedulerCall =
+      schedulerSecret === process.env.CRON_SECRET && !!schedulerUserId
+
+    let user: { id: string } | null = null
+    if (isSchedulerCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const auth = await createClient()
+      const { data: { user: cookieUser } } = await auth.auth.getUser()
+      user = cookieUser
+    }
+
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { agentId, projectId, input, config } = await req.json()
+    const { agentId, projectId, input, config, triggeredBy } = await req.json()
     if (!agentId || !projectId) {
       return NextResponse.json({ error: 'agentId and projectId required' }, { status: 400 })
     }
@@ -167,6 +182,7 @@ Execute now. Return a structured summary of what you did and what you found.`
         user_id: user.id,
         status: 'running',
         input: input || null,
+        triggered_by: triggeredBy ?? 'manual',
         started_at: new Date().toISOString(),
       })
       .select('id')
