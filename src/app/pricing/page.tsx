@@ -67,8 +67,8 @@ const PLANS = [
     maxMonthly: 800,
     color: '#8b5cf6',
     features: [
-      '800 monthly credits (rollover)',
-      '30 daily credits',
+      '500 monthly credits (rollover)',
+      '20 daily credits',
       'Everything in Builder',
       'Up to 5 team members',
       'Shared agent library',
@@ -298,9 +298,9 @@ export default function PricingPage() {
                 {[
                   ['Monthly price', '$25/mo', '$18.99/mo', '24% cheaper'],
                   ['Annual price', '$21/mo', '$15.99/mo', '24% cheaper'],
-                  ['Monthly credits', '100', '150', '50% more'],
-                  ['Daily credits', '5/day', '8/day', '60% more'],
-                  ['Max credits/month', '~250', '~390', '56% more'],
+                  ['Monthly credits', '100', '250', '150% more'],
+                  ['Daily credits', '5/day', '10/day', '100% more'],
+                  ['Max credits/month', '~250', '~400', '60% more'],
                   ['Credit rollovers', '✓', '✓', 'Same'],
                   ['Top-ups available', 'Pro+ only', 'Everyone', 'Better'],
                   ['Top-up credits expire', 'Yes', 'Never', 'Better'],
@@ -392,7 +392,7 @@ export default function PricingPage() {
             { q: 'Do credits expire?', a: 'Monthly credits reset on the 1st of each month with rollover included. Top-up credits never expire — they stay in your account indefinitely.' },
             { q: 'What is a credit?', a: 'One credit = one AI generation (Standard). Premium mode = 2 credits per generation. Prebuilt templates from the gallery are free — 0 credits. We show the estimate before you build so there are no surprises.' },
             { q: 'Can I use top-ups on a free plan?', a: 'Yes. Unlike Lovable, top-ups are available to everyone — you don\'t need a subscription to buy extra credits.' },
-            { q: 'How does daily credits work?', a: 'Pro and Business users get 8 bonus credits every day on top of their monthly allocation. Unused daily credits don\'t roll over, but your monthly credits do.' },
+            { q: 'How does daily credits work?', a: 'Builder users get 10 bonus credits every day; Team users get 20 bonus credits every day — on top of your monthly allocation. Unused daily credits don\'t roll over, but your monthly credits do.' },
             { q: 'Can I switch plans?', a: 'Yes, upgrade or downgrade anytime. When upgrading, your credit balance is topped up immediately.' },
             { q: 'Do you offer refunds?', a: 'Unused credits from top-ups are refundable within 7 days. Subscription refunds follow standard billing terms.' },
           ].map(({ q, a }) => (

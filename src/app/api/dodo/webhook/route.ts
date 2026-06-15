@@ -10,10 +10,10 @@ function getAdmin() {
 }
 
 const PLANS: Record<string, { credits: number; dailyCredits: number; plan: string }> = {
-  [process.env.DODO_PRODUCT_PRO || 'UNSET1']:             { credits: 150, dailyCredits: 8, plan: 'pro' },
-  [process.env.DODO_PRODUCT_PRO_ANNUAL || 'UNSET2']:      { credits: 150, dailyCredits: 8, plan: 'pro' },
-  [process.env.DODO_PRODUCT_BUSINESS || 'UNSET3']:        { credits: 150, dailyCredits: 8, plan: 'business' },
-  [process.env.DODO_PRODUCT_BUSINESS_ANNUAL || 'UNSET4']: { credits: 150, dailyCredits: 8, plan: 'business' },
+  [process.env.DODO_PRODUCT_PRO || 'UNSET1']:             { credits: 250, dailyCredits: 10, plan: 'pro' },
+  [process.env.DODO_PRODUCT_PRO_ANNUAL || 'UNSET2']:      { credits: 250, dailyCredits: 10, plan: 'pro' },
+  [process.env.DODO_PRODUCT_BUSINESS || 'UNSET3']:        { credits: 500, dailyCredits: 20, plan: 'business' },
+  [process.env.DODO_PRODUCT_BUSINESS_ANNUAL || 'UNSET4']: { credits: 500, dailyCredits: 20, plan: 'business' },
 }
 
 const TOPUPS: Record<string, number> = {

@@ -373,7 +373,7 @@ export default function SettingsPage() {
             <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Current Plan</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800 }}>{(profile?.plan || 'Free').charAt(0).toUpperCase() + (profile?.plan || 'free').slice(1)}</div>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800 }}>{PLANS.find(p => p.id === (profile?.plan || 'free'))?.name || 'Free'}</div>
                 <div style={{ fontSize: 13, color: '#71717a', marginTop: 2 }}>
                   <span style={{ color: '#0EA5E9', fontWeight: 700 }}>{profile?.credits ?? 0} credits</span> remaining this month
                 </div>

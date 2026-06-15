@@ -141,7 +141,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const credits = profile?.credits ?? 0;
   const plan = profile?.plan ?? 'free';
   const name = profile?.full_name || profile?.email?.split('@')[0] || 'there';
-  const totalCredits = plan === 'starter' ? 500 : plan === 'pro' ? 2000 : plan === 'teams' ? 99999 : 50;
+  const totalCredits = plan === 'pro' ? 400 : plan === 'business' ? 800 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
   const openChooser = (prompt?: string) => { setPendingPrompt(prompt); setShowTypePicker(true); };
@@ -295,7 +295,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.1)'}>
               <IconBolt />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Pro</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Builder</div>
                 <div style={{ fontSize: 10, color: DIM }}>250 credits/month</div>
               </div>
             </Link>
