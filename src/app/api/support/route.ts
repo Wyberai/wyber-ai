@@ -13,10 +13,13 @@ You help users with:
 - Feature questions and best practices
 
 Pricing:
-- Free: 50 credits/month
-- Starter: $15/month — 500 credits
-- Pro: $39/month — 2000 credits
-- Teams: $79/month — unlimited
+- Free: $0 — 15 credits on signup + 3 daily (up to 50/month)
+- Builder: $18.99/month — 250 monthly credits + 10 daily (up to 400/month), rollover included
+- Team: $37.99/month — 500 monthly credits + 20 daily (up to 800/month), rollover included
+- Enterprise: Custom pricing
+- Top-ups: 50cr/$9.99, 150cr/$24.99, 500cr/$69.99 — never expire, available on all plans
+
+Credit costs: App generation = 1 credit · Agent run = 5 credits · Flow run = 3 credits
 
 Key facts:
 - 118 templates across 25 industries, all instant load

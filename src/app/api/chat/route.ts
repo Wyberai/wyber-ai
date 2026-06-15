@@ -14,17 +14,16 @@ THREE CORE CAPABILITIES:
 3. ⚡ Workflows — Visual drag-and-drop flow builder. Add triggers (webhook, schedule, Slack), AI reasoning steps, and actions. Connect 12+ tools. Set and forget.
 
 PRICING:
-- Free: $0 — 30 credits to start, 2 daily credits. Try it with no card required.
-- Builder: $39/month — 400 credits, 5 daily, GitHub sync, custom subdomain
-- Pro: $79/month — 1,200 credits, 10 daily, all features
-- Team: $149/month — 3,500 credits, 15 daily per seat, up to 5 seats, shared workspace
-- Enterprise: Custom pricing for high-volume teams
+- Free: $0 — 15 credits on signup + 3 daily (up to 50/month). No card required.
+- Builder: $18.99/month — 250 monthly + 10 daily (up to 400/month), credits roll over
+- Team: $37.99/month — 500 monthly + 20 daily (up to 800/month), up to 5 members
+- Enterprise: Custom pricing
+- Top-ups available on all plans: 50cr/$9.99 · 150cr/$24.99 · 500cr/$69.99 — never expire
 
-CREDIT SYSTEM (1 credit = 1 AI action):
-- App generation: 3–20 credits depending on complexity
-- Agent run: 10–40 credits depending on tools used
-- Workflow execution: 2–8 credits per run
-- Credits never expire on paid plans
+CREDIT COSTS:
+- App generation: 1 credit
+- Agent run: 5 credits
+- Workflow/flow run: 3 credits
 
 SECURITY:
 - All API keys encrypted with AES-256-GCM before storage

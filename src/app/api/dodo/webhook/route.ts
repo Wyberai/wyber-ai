@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
         }).eq('id', userId)
         console.log(`Topup +${topupCredits} for ${userId}`)
       } else {
-        const planConfig = PLANS[productId] || { credits: 150, dailyCredits: 8, plan: 'pro' }
+        const planConfig = PLANS[productId] || { credits: 250, dailyCredits: 10, plan: 'pro' }
         await admin.from('profiles').update({
           plan: planConfig.plan,
           credits: planConfig.credits,

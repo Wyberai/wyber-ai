@@ -4,6 +4,8 @@
  */
 
 export type ModelTier = 'fast' | 'default' | 'premium' | 'fable'
+/** DB plan values: 'free' | 'pro' (Builder) | 'business' (Team) */
+export type PlanId = 'free' | 'pro' | 'business'
 export type ActionType =
   | 'small-edit'
   | 'component'
@@ -35,12 +37,12 @@ export const MODEL_MULTIPLIERS: Record<ModelTier, number> = {
 export const MODEL_META: Record<ModelTier, {
   label: string
   tagline: string
-  minPlan: 'free' | 'starter' | 'pro' | 'teams'
+  minPlan: PlanId
 }> = {
   fast:    { label: 'Fast',    tagline: 'Quick edits & simple changes',         minPlan: 'free' },
   default: { label: 'Standard', tagline: 'Best for most apps',                  minPlan: 'free' },
-  premium: { label: 'Premium', tagline: 'Complex apps & detailed UI',           minPlan: 'starter' },
-  fable:   { label: 'Fable',   tagline: 'Most powerful — best for large apps',  minPlan: 'pro' },
+  premium: { label: 'Premium', tagline: 'Complex apps & detailed UI',           minPlan: 'pro' },
+  fable:   { label: 'Fable',   tagline: 'Most powerful — best for large apps',  minPlan: 'business' },
 }
 
 /**
@@ -92,7 +94,7 @@ export function estimateCost(
 
 /** Plans that may use a given model tier */
 export function tierAllowedForPlan(tier: ModelTier, plan: string): boolean {
-  const planRank: Record<string, number> = { free: 0, starter: 1, pro: 2, teams: 3 }
+  const planRank: Record<string, number> = { free: 0, pro: 1, business: 2 }
   const minPlanRank: Record<ModelTier, number> = { fast: 0, default: 0, premium: 1, fable: 2 }
   return (planRank[plan] ?? 0) >= minPlanRank[tier]
 }

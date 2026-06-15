@@ -22,10 +22,9 @@ export function AdminClient({ data }: { data: AdminData }) {
     { label: 'Total Projects', value: data.totalProjects, icon: '⚡', color: 'var(--green)' },
     { label: 'Total Generations', value: data.totalGenerations, icon: '◎', color: 'var(--amber)' },
     { label: 'Free Users', value: data.planBreakdown['free'] ?? 0, icon: '○', color: 'var(--text3)' },
-    { label: 'Starter Users', value: data.planBreakdown['starter'] ?? 0, icon: '◆', color: 'var(--sky)' },
-    { label: 'Pro Users', value: data.planBreakdown['pro'] ?? 0, icon: '★', color: 'var(--green)' },
-    { label: 'Teams Users', value: data.planBreakdown['teams'] ?? 0, icon: '⬡', color: 'var(--amber)' },
-    { label: 'Est. MRR', value: `$${((data.planBreakdown['starter'] ?? 0) * 15 + (data.planBreakdown['pro'] ?? 0) * 39 + (data.planBreakdown['teams'] ?? 0) * 79).toLocaleString()}`, icon: '💰', color: 'var(--green)' },
+    { label: 'Builder Users', value: data.planBreakdown['pro'] ?? 0, icon: '★', color: 'var(--sky)' },
+    { label: 'Team Users', value: data.planBreakdown['business'] ?? 0, icon: '⬡', color: 'var(--green)' },
+    { label: 'Est. MRR', value: `$${((data.planBreakdown['pro'] ?? 0) * 18.99 + (data.planBreakdown['business'] ?? 0) * 37.99).toFixed(0)}`, icon: '💰', color: 'var(--green)' },
   ];
 
   return (
@@ -94,8 +93,8 @@ export function AdminClient({ data }: { data: AdminData }) {
                       onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'}>
                       <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>{u.email}</td>
                       <td style={{ padding: '13px 16px' }}>
-                        <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 20, background: u.plan === 'pro' ? 'rgba(5,150,105,0.1)' : u.plan === 'starter' ? 'rgba(14,165,233,0.1)' : u.plan === 'teams' ? 'rgba(245,158,11,0.1)' : 'var(--bg2)', color: u.plan === 'pro' ? 'var(--green)' : u.plan === 'starter' ? 'var(--sky)' : u.plan === 'teams' ? 'var(--amber)' : 'var(--text3)', fontWeight: 600, textTransform: 'capitalize', border: '1px solid var(--border)' }}>
-                          {u.plan}
+                        <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 20, background: u.plan === 'pro' ? 'rgba(14,165,233,0.1)' : u.plan === 'business' ? 'rgba(5,150,105,0.1)' : 'var(--bg2)', color: u.plan === 'pro' ? 'var(--sky)' : u.plan === 'business' ? 'var(--green)' : 'var(--text3)', fontWeight: 600, border: '1px solid var(--border)' }}>
+                          {u.plan === 'pro' ? 'Builder' : u.plan === 'business' ? 'Team' : u.plan ?? 'free'}
                         </span>
                       </td>
                       <td style={{ padding: '13px 16px', fontSize: 13, color: 'var(--text2)' }}>{u.credits}</td>

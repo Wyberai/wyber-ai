@@ -22,9 +22,9 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createAdminClient();
 
-  const PLAN_CREDITS: Record<string, { plan: string; credits: number }> = {
-    [process.env.STRIPE_PRICE_PRO_MONTHLY ?? '']: { plan: 'pro', credits: 400 },
-    [process.env.STRIPE_PRICE_TEAMS_MONTHLY ?? '']: { plan: 'teams', credits: 1500 },
+  const PLAN_CREDITS: Record<string, { plan: string; credits: number; dailyCredits: number }> = {
+    [process.env.STRIPE_PRICE_PRO_MONTHLY ?? '']: { plan: 'pro', credits: 250, dailyCredits: 10 },
+    [process.env.STRIPE_PRICE_TEAMS_MONTHLY ?? '']: { plan: 'business', credits: 500, dailyCredits: 20 },
   };
 
   if (event.type === 'checkout.session.completed') {
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       await supabase.from('profiles').update({
         plan: config.plan,
         credits: config.credits,
+        daily_credits: config.dailyCredits,
         stripe_customer_id: session.customer,
       }).eq('id', userId);
 
