@@ -33,7 +33,7 @@ export function ReferralCard() {
             {copied ? '✓ Link copied!' : 'Share Wyber AI'}
           </div>
           <div style={{ fontSize: 10, color: '#52525b' }}>
-            {count > 0 ? `${count} referrals · ${creditsEarned} credits earned` : '50 credits per paid referral'}
+            {count > 0 ? `${count} referrals · ${creditsEarned} credits earned` : '50 credits per referral signup'}
           </div>
         </div>
       </button>

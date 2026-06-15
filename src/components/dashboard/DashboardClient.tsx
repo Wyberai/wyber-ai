@@ -296,7 +296,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               <IconBolt />
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Pro</div>
-                <div style={{ fontSize: 10, color: DIM }}>2000 credits/month</div>
+                <div style={{ fontSize: 10, color: DIM }}>250 credits/month</div>
               </div>
             </Link>
           </div>
