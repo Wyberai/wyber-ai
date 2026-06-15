@@ -824,6 +824,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   const [toolBrowseSearch, setToolBrowseSearch] = useState('')
   const [toolBrowseList, setToolBrowseList] = useState<ComposioToolkitMeta[]>([])
   const [toolBrowseLoading, setToolBrowseLoading] = useState(false)
+  const [showRunPanel, setShowRunPanel] = useState(false)
 
   useEffect(() => {
     if (!showToolBrowse || toolBrowseList.length > 0) return
@@ -1000,6 +1001,72 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 7, alignItems: 'center' }}>
           <div style={{ fontSize: 11, color: credits < 10 ? '#ef4444' : '#52525b', padding: '3px 9px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.06)' }}>
             {credits} cr
+          </div>
+          {/* Run mode button */}
+          <div style={{ position: 'relative' }}>
+            {(() => {
+              const triggerNode = nodes.find(n => n.type === 'trigger')
+              const cfg = (triggerNode?.data?.config ?? {}) as Record<string, string>
+              const modeLabel = cfg.type === 'schedule' ? '⏱ Scheduled' : cfg.type === 'email' ? '📧 On Email' : '▶ Manual'
+              return (
+                <button onClick={() => setShowRunPanel(v => !v)}
+                  style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunPanel ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunPanel ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunPanel ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
+                  {modeLabel}
+                </button>
+              )
+            })()}
+            {showRunPanel && (() => {
+              const triggerNode = nodes.find(n => n.type === 'trigger')
+              const cfg = (triggerNode?.data?.config ?? {}) as Record<string, string>
+              const currentType = cfg.type || 'manual'
+              const PRESETS = [
+                { label: 'Every hour', cron: '0 * * * *' },
+                { label: 'Daily at 7 AM', cron: '0 7 * * *' },
+                { label: 'Daily at 9 AM', cron: '0 9 * * *' },
+                { label: 'Weekly (Mon 9 AM)', cron: '0 9 * * 1' },
+              ]
+              const setMode = (type: string) => {
+                if (!triggerNode) return
+                updateNodeData(triggerNode.id, { config: { ...cfg, type } })
+              }
+              const setCron = (cron: string) => {
+                if (!triggerNode) return
+                updateNodeData(triggerNode.id, { config: { ...cfg, cron_expression: cron } })
+              }
+              return (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, width: 260, background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 14, zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>How should this run?</div>
+                  {[
+                    { type: 'manual', icon: '▶', label: 'Run manually', desc: 'You click Run each time' },
+                    { type: 'schedule', icon: '⏱', label: 'On a schedule', desc: 'Runs automatically on cron' },
+                    { type: 'email', icon: '📧', label: 'On new Gmail email', desc: 'Checks inbox every ~15 min' },
+                  ].map(opt => (
+                    <div key={opt.type} onClick={() => setMode(opt.type)}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', borderRadius: 8, marginBottom: 4, cursor: 'pointer', background: currentType === opt.type ? 'rgba(14,165,233,0.08)' : 'transparent', border: `1px solid ${currentType === opt.type ? 'rgba(14,165,233,0.25)' : 'transparent'}` }}>
+                      <span style={{ fontSize: 14, marginTop: 1 }}>{opt.icon}</span>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: currentType === opt.type ? '#7dd3fc' : '#a1a1aa' }}>{opt.label}</div>
+                        <div style={{ fontSize: 10, color: '#52525b' }}>{opt.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {currentType === 'schedule' && (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      {PRESETS.map(p => (
+                        <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa', marginBottom: 4 }}>
+                          <input type="radio" name="run-panel-cron" value={p.cron} checked={cfg.cron_expression === p.cron} onChange={() => setCron(p.cron)} style={{ accentColor: '#0EA5E9' }} />
+                          {p.label}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <button onClick={() => { handleSave(); setShowRunPanel(false) }}
+                    style={{ marginTop: 10, width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                    Save &amp; Apply
+                  </button>
+                </div>
+              )
+            })()}
           </div>
           <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
             {saved ? <><IcoCheckSm color="#22c55e" /> Saved</> : 'Save'}

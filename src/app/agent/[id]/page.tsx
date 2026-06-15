@@ -31,11 +31,13 @@ export default function AgentStudioPage() {
 
   // Schedule state
   const [schedule, setSchedule] = useState<Schedule | null>(null)
-  const [scheduleMode, setScheduleMode] = useState<'manual' | 'scheduled'>('manual')
+  const [scheduleMode, setScheduleMode] = useState<'manual' | 'scheduled' | 'email'>('manual')
   const [selectedPreset, setSelectedPreset] = useState(SCHEDULE_PRESETS[1].cron) // daily 7am
   const [customCron, setCustomCron] = useState('')
   const [savingSchedule, setSavingSchedule] = useState(false)
   const [scheduleSaved, setScheduleSaved] = useState(false)
+  const [emailTriggerActive, setEmailTriggerActive] = useState(false)
+  const [emailTriggerLoading, setEmailTriggerLoading] = useState(false)
 
   const [projectId] = useState(() => {
     if (typeof window === 'undefined') return 'agent-standalone'
@@ -68,6 +70,15 @@ export default function AgentStudioPage() {
           setSelectedPreset('custom')
           setCustomCron(schedData.schedule.cron_expression)
         }
+      }
+    }
+    // Check for active email trigger
+    const trigRes = await fetch('/api/composio/triggers?agentId=' + encodeURIComponent(String(id)))
+    if (trigRes.ok) {
+      const trigData = await trigRes.json()
+      if (trigData.subscription?.is_active) {
+        setEmailTriggerActive(true)
+        setScheduleMode('email')
       }
     }
   }, [id, projectId])
@@ -113,6 +124,24 @@ export default function AgentStudioPage() {
     await fetch('/api/agents/schedule?agentId=' + encodeURIComponent(String(id)), { method: 'DELETE' })
     setSchedule(null)
     setScheduleMode('manual')
+  }
+
+  const toggleEmailTrigger = async () => {
+    setEmailTriggerLoading(true)
+    if (emailTriggerActive) {
+      await fetch(`/api/composio/triggers?agentId=${encodeURIComponent(String(id))}`, { method: 'DELETE' })
+      setEmailTriggerActive(false)
+      setScheduleMode('manual')
+    } else {
+      const res = await fetch('/api/composio/triggers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agentId: String(id), sourceType: 'gmail_new_email' }) })
+      const data = await res.json()
+      if (data.code === 'no_gmail_connection') {
+        alert('Connect Gmail in Settings → Integrations first, then return here to activate.')
+      } else {
+        setEmailTriggerActive(true)
+      }
+    }
+    setEmailTriggerLoading(false)
   }
 
   const allConnected = requiredTools.length === 0 || requiredTools.every(t => connectedTools.some(c => c.tool_id === t.id))
@@ -194,11 +223,15 @@ export default function AgentStudioPage() {
               style={{width:'100%',background:'#1a1a24',border:'1px solid rgba(255,255,255,0.08)',borderRadius:8,padding:'10px 12px',color:'#f0f0f5',fontSize:13,resize:'vertical',minHeight:72,outline:'none',fontFamily:'inherit',marginBottom:16}}/>
 
             {/* Run mode toggle */}
-            <div style={{display:'flex',gap:8,marginBottom:16}}>
-              {(['manual','scheduled'] as const).map(mode => (
-                <button key={mode} onClick={() => setScheduleMode(mode)}
-                  style={{flex:1,padding:'8px 0',borderRadius:8,border:`1px solid ${scheduleMode===mode?'rgba(99,102,241,0.4)':'rgba(255,255,255,0.06)'}`,background:scheduleMode===mode?'rgba(99,102,241,0.1)':'transparent',color:scheduleMode===mode?'#a5b4fc':'#71717a',fontSize:12,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}>
-                  {mode === 'manual' ? '▶  Run manually' : '⏱  Run on a schedule'}
+            <div style={{display:'flex',gap:6,marginBottom:16,flexWrap:'wrap'}}>
+              {([
+                { key: 'manual',    label: '▶  Manual' },
+                { key: 'scheduled', label: '⏱  Schedule' },
+                { key: 'email',     label: '📧  On Email' },
+              ] as const).map(({ key, label }) => (
+                <button key={key} onClick={() => setScheduleMode(key)}
+                  style={{flex:1,minWidth:90,padding:'8px 4px',borderRadius:8,border:`1px solid ${scheduleMode===key?'rgba(99,102,241,0.4)':'rgba(255,255,255,0.06)'}`,background:scheduleMode===key?'rgba(99,102,241,0.1)':'transparent',color:scheduleMode===key?'#a5b4fc':'#71717a',fontSize:11,fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}>
+                  {label}
                 </button>
               ))}
             </div>
@@ -216,7 +249,7 @@ export default function AgentStudioPage() {
                   </div>
                 )}
               </>
-            ) : (
+            ) : scheduleMode === 'scheduled' ? (
               <div style={{background:'rgba(99,102,241,0.04)',border:'1px solid rgba(99,102,241,0.12)',borderRadius:10,padding:16}}>
                 <div style={{fontSize:12,fontWeight:700,color:'#a5b4fc',marginBottom:12}}>Choose schedule</div>
 
@@ -264,7 +297,22 @@ export default function AgentStudioPage() {
                   Credits are checked before each scheduled run. If your balance is too low, the run is skipped and you receive an email notification.
                 </div>
               </div>
-            )}
+            ) : scheduleMode === 'email' ? (
+              <div style={{background:'rgba(14,165,233,0.04)',border:'1px solid rgba(14,165,233,0.12)',borderRadius:10,padding:16}}>
+                <div style={{fontSize:12,fontWeight:700,color:'#7dd3fc',marginBottom:8}}>Gmail trigger — checks every ~15 min</div>
+                <div style={{fontSize:12,color:'#a1a1aa',lineHeight:1.6,marginBottom:14}}>
+                  Wyber polls your Gmail inbox every ~15 minutes. When a new email arrives, this agent runs automatically with the email as input. You must have Gmail connected in Settings → Integrations.
+                </div>
+                <button onClick={toggleEmailTrigger} disabled={emailTriggerLoading}
+                  style={{padding:'8px 20px',borderRadius:8,border:emailTriggerActive?'1px solid rgba(239,68,68,0.3)':'none',background:emailTriggerActive?'rgba(239,68,68,0.1)':emailTriggerLoading?'#2a2a3a':'#0EA5E9',color:emailTriggerActive?'#ef4444':emailTriggerLoading?'#52526a':'white',fontSize:13,fontWeight:700,cursor:emailTriggerLoading?'not-allowed':'pointer'}}>
+                  {emailTriggerLoading ? 'Working…' : emailTriggerActive ? '✕ Deactivate trigger' : '✓ Activate Gmail trigger'}
+                </button>
+                {emailTriggerActive && <div style={{marginTop:8,fontSize:11,color:'#22c55e'}}>✓ Active — agent will run when new Gmail arrives</div>}
+                <div style={{marginTop:10,fontSize:11,color:'#52526a',lineHeight:1.5}}>
+                  Credits are checked before each triggered run. If your balance is too low, the run is skipped and you receive an email notification.
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
 

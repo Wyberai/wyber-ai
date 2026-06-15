@@ -74,7 +74,29 @@ function IntegrationsTab() {
     setDisconnecting(null)
   }
 
-  const POPULAR = ['gmail', 'slack', 'github', 'notion', 'googlecalendar', 'hubspot', 'airtable', 'linear', 'jira', 'stripe']
+  const POPULAR = ['gmail', 'slack', 'googlesheets', 'googledrive', 'notion', 'googlecalendar', 'github', 'hubspot', 'airtable', 'linear', 'jira', 'stripe']
+  const DISPLAY_NAMES: Record<string, string> = {
+    gmail: 'Gmail', slack: 'Slack', github: 'GitHub', notion: 'Notion',
+    googlecalendar: 'Google Calendar', hubspot: 'HubSpot', airtable: 'Airtable',
+    linear: 'Linear', jira: 'Jira', stripe: 'Stripe',
+    googlesheets: 'Google Sheets', googledrive: 'Google Drive',
+  }
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<{ slug: string; name: string }[]>([])
+  const [searching, setSearching] = useState(false)
+
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return }
+    const t = setTimeout(() => {
+      setSearching(true)
+      fetch('/api/composio/toolkits?search=' + encodeURIComponent(searchQuery))
+        .then(r => r.json())
+        .then(d => { setSearchResults((d.toolkits ?? []).slice(0, 20).map((tk: { slug: string; name: string }) => ({ slug: tk.slug, name: tk.name }))); setSearching(false) })
+        .catch(() => setSearching(false))
+    }, 300)
+    return () => clearTimeout(t)
+  }, [searchQuery])
+
   const connectedSlugs = new Set(connections.filter(c => c.status === 'ACTIVE').map(c => c.toolkit))
   const suggestedUnconnected = POPULAR.filter(t => !connectedSlugs.has(t))
 
@@ -101,8 +123,9 @@ function IntegrationsTab() {
         ) : (
           connections.map(c => (
             <div key={c.id} style={S.row}>
+              <img src={`https://img.logo.dev/${c.toolkit.replace('google', 'google')}.com?token=pk_X8nwEg6fR3yDYrGEOFKpkA`} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} style={{ width: 24, height: 24, borderRadius: 5, objectFit: 'contain' }} />
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', textTransform: 'capitalize' }}>{c.toolkit}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{DISPLAY_NAMES[c.toolkit] ?? c.toolkit}</div>
                 <div style={{ fontSize: 11, color: '#52525b' }}>{c.authScheme} · Connected {new Date(c.connectedAt).toLocaleDateString()}</div>
               </div>
               <span style={S.badge(c.status === 'ACTIVE')}>{c.status}</span>
@@ -116,14 +139,42 @@ function IntegrationsTab() {
         )}
       </div>
 
-      {/* Suggested toolkits to connect */}
-      {suggestedUnconnected.length > 0 && (
+      {/* Search */}
+      <div style={{ marginBottom: 20 }}>
+        <input
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search 250+ integrations (Sheets, Salesforce, Zendesk…)"
+          style={{ width: '100%', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 9, padding: '10px 14px', color: '#f0f0f5', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+        />
+      </div>
+
+      {searchQuery.trim() ? (
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+            {searching ? 'Searching…' : `Results (${searchResults.length})`}
+          </div>
+          {searchResults.map(tk => (
+            <div key={tk.slug} style={S.row}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{tk.name}</div>
+                <div style={{ fontSize: 11, color: '#52525b' }}>{connectedSlugs.has(tk.slug) ? '✓ Connected' : 'Not connected'}</div>
+              </div>
+              {connectedSlugs.has(tk.slug)
+                ? <span style={S.badge(true)}>ACTIVE</span>
+                : <button onClick={() => handleConnect(tk.slug)} disabled={connecting === tk.slug} style={S.btnSm()}>{connecting === tk.slug ? 'Connecting...' : 'Connect'}</button>
+              }
+            </div>
+          ))}
+          {!searching && searchResults.length === 0 && <div style={{ fontSize: 13, color: '#52525b', textAlign: 'center', padding: 20 }}>No results for "{searchQuery}"</div>}
+        </div>
+      ) : (
         <div>
           <div style={{ fontSize: 12, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Popular Integrations</div>
-          {suggestedUnconnected.slice(0, 8).map(slug => (
+          {suggestedUnconnected.map(slug => (
             <div key={slug} style={S.row}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', textTransform: 'capitalize' }}>{slug.replace('googlecalendar', 'Google Calendar')}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{DISPLAY_NAMES[slug] ?? slug}</div>
                 <div style={{ fontSize: 11, color: '#52525b' }}>Not connected</div>
               </div>
               <button
@@ -133,9 +184,6 @@ function IntegrationsTab() {
               >{connecting === slug ? 'Connecting...' : 'Connect'}</button>
             </div>
           ))}
-          <div style={{ marginTop: 12, fontSize: 12, color: '#52525b' }}>
-            250+ more integrations available in the agent canvas tool picker.
-          </div>
         </div>
       )}
     </>
