@@ -633,7 +633,7 @@ function ConfigPanel() {
             <select value={(node.data.config as Record<string,string>).type || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), type: e.target.value } })} style={fieldStyle}>
               <option value="manual">I click Run manually</option>
               <option value="webhook">A webhook fires (from another system)</option>
-              <option value="schedule">On a schedule (e.g. every hour)</option>
+              <option value="schedule" disabled>On a schedule — coming soon</option>
               <option value="form">Someone submits a form</option>
               <option value="email">An email is received</option>
             </select>

@@ -3,8 +3,12 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { decryptCredential } from '@/lib/encryption'
 import { getToolById, detectRequiredTools } from '@/lib/tool-registry'
 import Anthropic from '@anthropic-ai/sdk'
+import { creditCost } from '@/lib/credits'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+// Cost per Anthropic call in this route (model is always claude-sonnet-4-6 = default tier)
+const ITER_COST = creditCost('execution', 'default') // 2 credits
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,6 +22,47 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = await createAdminClient()
+
+    // ── Pre-flight credit check ───────────────────────────────────────────────
+    // Require at least enough credits for the initial Anthropic call before we
+    // touch the API at all. We deduct per-call as the loop runs so the charge
+    // is exact even if the agent finishes early.
+    const { data: profile, error: profileErr } = await admin
+      .from('profiles')
+      .select('credits')
+      .eq('id', user.id)
+      .single()
+
+    if (profileErr || !profile) {
+      return NextResponse.json({ error: 'Could not read credit balance' }, { status: 500 })
+    }
+
+    let creditBalance: number = profile.credits ?? 0
+
+    if (creditBalance < ITER_COST) {
+      return NextResponse.json({
+        error: `Not enough credits. Running an agent costs ${ITER_COST} credits and you have ${creditBalance}.`,
+        needed: ITER_COST,
+        balance: creditBalance,
+      }, { status: 402 })
+    }
+
+    // Helper: deduct credits server-side and update local balance tracker.
+    // Returns false if the deduction would go negative (caller should stop).
+    async function deductCredits(amount: number): Promise<boolean> {
+      if (creditBalance < amount) return false
+      const before = creditBalance
+      creditBalance -= amount
+      await admin.from('profiles').update({
+        credits: creditBalance,
+        updated_at: new Date().toISOString(),
+      }).eq('id', user.id)
+      admin.from('credit_usage').insert({
+        user_id: user.id, amount, reason: 'agent-execution',
+        credits_before: before, credits_after: creditBalance,
+      }).then(() => {}).catch(() => {})
+      return true
+    }
 
     // Get agent definition
     const { data: agent, error: agentErr } = await admin
@@ -131,8 +176,11 @@ Execute now. Return a structured summary of what you did and what you found.`
 
     const logs: Array<{ type: string; message: string; data?: unknown }> = []
     let stepCount = 0
+    let creditsExhausted = false
 
-    // Execute with Claude — streaming with tool use
+    // ── Initial Anthropic call — deduct before calling ────────────────────────
+    await deductCredits(ITER_COST)
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
@@ -141,7 +189,7 @@ Execute now. Return a structured summary of what you did and what you found.`
       messages: [{ role: 'user', content: input || 'Execute the agent workflow now.' }],
     })
 
-    // Process tool calls
+    // Process tool-use loop
     let messages: Anthropic.MessageParam[] = [
       { role: 'user', content: input || 'Execute the agent workflow now.' }
     ]
@@ -151,6 +199,14 @@ Execute now. Return a structured summary of what you did and what you found.`
     const MAX_ITERATIONS = 10
 
     while (currentResponse.stop_reason === 'tool_use' && iterations < MAX_ITERATIONS) {
+      // ── Per-iteration credit check — stop before calling Anthropic again ────
+      if (creditBalance < ITER_COST) {
+        creditsExhausted = true
+        logs.push({ type: 'warning', message: `Agent stopped after ${iterations} iteration(s): credit balance (${creditBalance}) is below the per-call cost (${ITER_COST}). Top up to continue.` })
+        break
+      }
+      await deductCredits(ITER_COST)
+
       iterations++
       const toolUses = currentResponse.content.filter(b => b.type === 'tool_use')
       const toolResults: Anthropic.ToolResultBlockParam[] = []
@@ -208,16 +264,18 @@ Execute now. Return a structured summary of what you did and what you found.`
       })
     }
 
-    // Extract final text response
+    // Extract final text response (may be partial if credits were exhausted)
     const finalText = currentResponse.content
       .filter(b => b.type === 'text')
       .map(b => b.type === 'text' ? b.text : '')
       .join('\n')
 
+    const finalStatus = creditsExhausted ? 'credits_exhausted' : 'completed'
+
     // Update execution log
     if (executionId) {
       await admin.from('agent_executions').update({
-        status: 'completed',
+        status: finalStatus,
         output: finalText,
         logs: logs,
         steps: stepCount,
@@ -226,11 +284,13 @@ Execute now. Return a structured summary of what you did and what you found.`
     }
 
     return NextResponse.json({
-      success: true,
+      success: !creditsExhausted,
+      credits_exhausted: creditsExhausted,
       execution_id: executionId,
       summary: finalText,
       logs,
       steps: stepCount,
+      credits_remaining: creditBalance,
     })
 
   } catch (err) {
