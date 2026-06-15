@@ -91,38 +91,141 @@ async function executeTrigger(
   }
 }
 
+const MAX_TOOL_ITERATIONS = 10
+
 async function executeAiAgent(
   node: CanvasNode,
   state: Record<string, unknown>,
-): Promise<{ output: unknown; log: string[] }> {
+  userId: string,
+  toolNodes: CanvasNode[],
+): Promise<{ output: unknown; log: string[]; toolResults: Record<string, unknown> }> {
   const instructions = node.data.config.instructions || node.data.subtitle || 'Process the input and respond.'
   const model = node.data.config.model || 'claude-sonnet-4-6'
-
   const upstreamContext = Object.keys(state).length
     ? `\n\nUpstream data:\n${JSON.stringify(state, null, 2)}`
     : ''
 
-  const response = await anthropic.messages.create({
-    model,
-    max_tokens: 4096,
-    messages: [{
-      role: 'user',
-      content: instructions + upstreamContext,
-    }],
-  })
+  const toolResults: Record<string, unknown> = {}
+  const log: string[] = [`Model: ${model}`]
 
-  const text = response.content
-    .filter(b => b.type === 'text')
-    .map(b => (b as { type: 'text'; text: string }).text)
-    .join('\n')
+  // No tool nodes — plain single-turn completion
+  if (toolNodes.length === 0) {
+    const response = await anthropic.messages.create({
+      model,
+      max_tokens: 4096,
+      messages: [{ role: 'user', content: instructions + upstreamContext }],
+    })
+    const text = response.content
+      .filter(b => b.type === 'text')
+      .map(b => (b as { type: 'text'; text: string }).text)
+      .join('\n')
+    log.push(`Tokens: ${response.usage.output_tokens}`, `Length: ${text.length} chars`)
+    return { output: { text, model, tokens: response.usage.output_tokens }, log, toolResults }
+  }
+
+  // Build Claude tool definitions — one per downstream tool node.
+  // Name must be [a-zA-Z0-9_-], so we sanitise the node id.
+  const tools: import('@anthropic-ai/sdk').Anthropic.Tool[] = toolNodes.map(tn => ({
+    name: tn.id.replace(/[^a-zA-Z0-9_-]/g, '_'),
+    description: [tn.data.label, tn.data.subtitle].filter(Boolean).join(': '),
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        arguments: {
+          type: 'object',
+          description: 'Key/value pairs to pass as parameters to this tool (e.g. email address, message body, query string).',
+        },
+      },
+      required: [],
+    },
+  }))
+
+  const nodeByToolName = new Map(
+    toolNodes.map(tn => [tn.id.replace(/[^a-zA-Z0-9_-]/g, '_'), tn])
+  )
+
+  log.push(`Tools available: ${toolNodes.map(t => t.data.label).join(', ')}`)
+
+  type MsgParam = import('@anthropic-ai/sdk').Anthropic.MessageParam
+  const messages: MsgParam[] = [
+    { role: 'user', content: instructions + upstreamContext },
+  ]
+
+  let totalTokens = 0
+  let finalText = ''
+
+  for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+    const response = await anthropic.messages.create({
+      model,
+      max_tokens: 4096,
+      tools,
+      messages,
+    })
+
+    totalTokens += response.usage.output_tokens
+    messages.push({ role: 'assistant', content: response.content })
+
+    if (response.stop_reason === 'end_turn') {
+      finalText = response.content
+        .filter(b => b.type === 'text')
+        .map(b => (b as { type: 'text'; text: string }).text)
+        .join('\n')
+      log.push(`Finished in ${iter + 1} turn(s), ${totalTokens} tokens total`)
+      break
+    }
+
+    if (response.stop_reason !== 'tool_use') {
+      log.push(`Stopped: ${response.stop_reason}`)
+      break
+    }
+
+    // Execute every tool_use block Claude requested
+    const toolUseBlocks = response.content.filter(
+      (b): b is import('@anthropic-ai/sdk').Anthropic.ToolUseBlock => b.type === 'tool_use'
+    )
+
+    const toolResultContents: import('@anthropic-ai/sdk').Anthropic.ToolResultBlockParam[] = []
+
+    for (const tu of toolUseBlocks) {
+      const targetNode = nodeByToolName.get(tu.name)
+      if (!targetNode) {
+        toolResultContents.push({ type: 'tool_result', tool_use_id: tu.id, content: 'Error: unknown tool' })
+        continue
+      }
+
+      log.push(`→ ${targetNode.data.label}`)
+      // Merge upstream state with whatever arguments Claude supplied
+      const tuInput = tu.input as { arguments?: Record<string, unknown> } | Record<string, unknown>
+      const extraArgs = 'arguments' in tuInput && tuInput.arguments ? tuInput.arguments : tuInput
+
+      try {
+        const { output: toolOut, log: toolLog } = await executeToolNode(
+          targetNode,
+          { ...state, ...extraArgs },
+          userId,
+        )
+        toolLog.forEach(l => log.push(`  [${targetNode.data.label}] ${l}`))
+        toolResults[targetNode.id] = toolOut
+        toolResultContents.push({
+          type: 'tool_result',
+          tool_use_id: tu.id,
+          content: JSON.stringify(toolOut ?? null),
+        })
+      } catch (err) {
+        const msg = String(err)
+        log.push(`  [${targetNode.data.label}] Error: ${msg}`)
+        toolResults[targetNode.id] = { error: msg }
+        toolResultContents.push({ type: 'tool_result', tool_use_id: tu.id, content: `Error: ${msg}` })
+      }
+    }
+
+    messages.push({ role: 'user', content: toolResultContents })
+  }
 
   return {
-    output: { text, model, tokens: response.usage.output_tokens },
-    log: [
-      `Model: ${model}`,
-      `Tokens used: ${response.usage.output_tokens}`,
-      `Response length: ${text.length} chars`,
-    ],
+    output: { text: finalText, model, tokens: totalTokens },
+    log,
+    toolResults,
   }
 }
 
@@ -342,8 +445,23 @@ export async function POST(req: NextRequest) {
 
     const ordered = topoSort(nodes, edges)
     const steps: StepResult[] = []
-    // Accumulated state passed downstream: nodeId → output
     const stepState: Record<string, unknown> = { ...input }
+
+    // Build map: aiagent node id → directly-connected tool nodes.
+    // These will be handed to the agentic loop; the sequential pass skips them.
+    const agentToolNodes = new Map<string, CanvasNode[]>()
+    for (const n of nodes) {
+      if (n.type !== 'aiagent') continue
+      const downstream = edges
+        .filter(e => e.source === n.id)
+        .map(e => nodes.find(nd => nd.id === e.target))
+        .filter((nd): nd is CanvasNode => nd?.type === 'tool')
+      agentToolNodes.set(n.id, downstream)
+    }
+    // IDs of tool nodes owned by an aiagent loop (may be skipped in sequential pass)
+    const ownedByAgent = new Set(
+      [...agentToolNodes.values()].flatMap(arr => arr.map(n => n.id))
+    )
 
     for (const node of ordered) {
       const t0 = Date.now()
@@ -355,10 +473,40 @@ export async function POST(req: NextRequest) {
         switch (node.type) {
           case 'trigger':
             ;({ output, log } = await executeTrigger(node, stepState)); break
-          case 'aiagent':
-            ;({ output, log } = await executeAiAgent(node, stepState)); break
+
+          case 'aiagent': {
+            const toolNodes = agentToolNodes.get(node.id) ?? []
+            const result = await executeAiAgent(node, stepState, user.id, toolNodes)
+            output = result.output
+            log = result.log
+            // Inject each tool result into stepState and steps so the sequential
+            // pass knows they're done and downstream condition/output nodes see them.
+            for (const [toolNodeId, toolOut] of Object.entries(result.toolResults)) {
+              stepState[toolNodeId] = toolOut
+              const toolNode = nodes.find(n => n.id === toolNodeId)
+              steps.push({
+                nodeId: toolNodeId,
+                nodeLabel: toolNode?.data.label ?? toolNodeId,
+                nodeType: 'tool',
+                status: 'success',
+                output: toolOut,
+                log: [],
+                durationMs: 0,
+              })
+            }
+            break
+          }
+
           case 'tool':
+            // Skip if the agentic loop already executed this node
+            if (ownedByAgent.has(node.id) && stepState[node.id] !== undefined) {
+              output = stepState[node.id]
+              log = ['Executed by AI agent tool loop']
+              status = 'skipped'
+              break
+            }
             ;({ output, log } = await executeToolNode(node, stepState, user.id)); break
+
           case 'condition':
             ;({ output, log } = await executeCondition(node, stepState)); break
           case 'output':
