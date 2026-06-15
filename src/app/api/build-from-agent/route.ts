@@ -70,6 +70,30 @@ const TOOL_ALIASES: Record<string, string> = {
   'Docs': 'drive', 'YouTube/transcript': 'websearch',
 }
 
+// Composio toolkit slugs for each toolKey (uppercased to match Composio's API)
+const TOOL_COMPOSIO_SLUGS: Record<string, string> = {
+  slack:        'SLACK',
+  gmail:        'GMAIL',
+  email:        'GMAIL',
+  teams:        'MICROSOFT_TEAMS',
+  hubspot:      'HUBSPOT',
+  salesforce:   'SALESFORCE',
+  notion:       'NOTION',
+  linear:       'LINEAR',
+  jira:         'JIRA',
+  asana:        'ASANA',
+  sheets:       'GOOGLESHEETS',
+  drive:        'GOOGLEDRIVE',
+  workspace:    'GOOGLEDRIVE',
+  airtable:     'AIRTABLE',
+  github:       'GITHUB',
+  stripe:       'STRIPE',
+  quickbooks:   'QUICKBOOKS',
+  xero:         'XERO',
+  zendesk:      'ZENDESK',
+  support:      'ZENDESK',
+}
+
 interface CanvasNode {
   id: string
   type: string
@@ -160,7 +184,9 @@ function buildCanvas(agentName: string, requiredTools: string, outcome: string, 
         toolId: toolKey,
         color: tool.color,
         icon: tool.icon,
-        config: {},
+        config: TOOL_COMPOSIO_SLUGS[toolKey]
+          ? { mode: 'composio', toolkit: TOOL_COMPOSIO_SLUGS[toolKey], action: '' }
+          : { mode: 'http', url: '' },
         status: 'idle',
       }
     })
