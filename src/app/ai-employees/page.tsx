@@ -330,6 +330,34 @@ export default function AIEmployeesPage() {
             </div>
           </div>
         ))}
+
+        {/* Create your own — coming soon */}
+        <div style={{ marginTop: 16, marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: '#3f3f46', flexShrink: 0 }} />
+            <h2 style={{ fontSize: 13, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Custom</h2>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#3f3f46', marginBottom: 4 }}>Create your own AI Employee</div>
+                  <p style={{ fontSize: 12, color: '#3f3f46', lineHeight: 1.6, margin: 0 }}>Define the role, pick the tools, set the schedule. Your custom hire, built your way.</p>
+                </div>
+                <span style={{ fontSize: 10, fontWeight: 600, color: '#52525b', background: 'rgba(82,82,91,0.1)', borderRadius: 5, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>Coming soon</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {['Any tools', 'Any schedule', 'Any role'].map(t => (
+                  <span key={t} style={{ fontSize: 10, color: '#3f3f46', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 5, padding: '2px 7px' }}>{t}</span>
+                ))}
+              </div>
+              <button disabled style={{ marginTop: 'auto', width: '100%', padding: '9px 0', borderRadius: 9, background: 'transparent', border: '1px dashed rgba(255,255,255,0.08)', color: '#3f3f46', fontSize: 13, fontWeight: 700, cursor: 'not-allowed' }}>
+                Coming soon
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Pricing trust line */}
