@@ -5,6 +5,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 export const metadata: Metadata = {
   title: 'How to build a mobile app with AI in 2026 — WyberAi Blog',
   description: 'React Native + Expo from a plain-English prompt. Preview on your phone in under 60 seconds. No Xcode, no Android Studio, no code.',
+  robots: { index: false, follow: false },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', violet: '#8b5cf6' }

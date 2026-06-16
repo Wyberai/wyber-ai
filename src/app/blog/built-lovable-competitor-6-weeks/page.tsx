@@ -5,6 +5,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 export const metadata: Metadata = {
   title: 'I built a Lovable competitor in 6 weeks as a solo founder — WyberAi Blog',
   description: 'How I shipped an AI app builder from zero to live in 6 weeks, and the decisions that made it possible.',
+  robots: { index: false, follow: false },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9' }

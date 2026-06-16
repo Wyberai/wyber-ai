@@ -5,6 +5,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 export const metadata: Metadata = {
   title: 'Why WyberAi charges $18.99 instead of $25 — WyberAi Blog',
   description: 'Our prebuilt app library serves 60%+ of prompts at zero API cost. That changes the math entirely.',
+  robots: { index: false, follow: false },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', violet: '#8b5cf6' }

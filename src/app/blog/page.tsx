@@ -9,16 +9,6 @@ export const metadata: Metadata = {
 
 const POSTS = [
   {
-    slug: 'build-mobile-app-with-ai-2026',
-    title: 'How to build a mobile app with AI in 2026 — iOS and Android, no coding',
-    excerpt: 'React Native + Expo from a plain-English prompt. Preview on your phone in under 60 seconds. Here\'s exactly how it works.',
-    date: 'June 14, 2026',
-    readTime: '6 min read',
-    tag: 'Mobile',
-    tagColor: '#8b5cf6',
-    isNew: true,
-  },
-  {
     slug: 'what-are-ai-agents-guide',
     title: 'What are AI agents? A practical guide for non-technical founders',
     excerpt: 'Agents watch data, make decisions, and take action — automatically. Here\'s what they actually are, what they\'re good for, and how to build one in minutes.',
@@ -46,24 +36,6 @@ const POSTS = [
     readTime: '7 min read',
     tag: 'Guide',
     tagColor: '#0EA5E9',
-  },
-  {
-    slug: 'built-lovable-competitor-6-weeks',
-    title: 'I built a Lovable competitor in 6 weeks as a solo founder — here\'s what I did differently',
-    excerpt: 'How I shipped an AI app builder from zero to live in 6 weeks, and the decisions that made it possible.',
-    date: 'May 31, 2026',
-    readTime: '5 min read',
-    tag: 'Build in public',
-    tagColor: '#0EA5E9',
-  },
-  {
-    slug: 'why-we-charge-less-than-lovable',
-    title: 'Why WyberAi charges $18.99 instead of $25 — the math behind our pricing',
-    excerpt: 'Our prebuilt app library serves 60%+ of prompts at zero API cost. That changes the math entirely.',
-    date: 'May 30, 2026',
-    readTime: '4 min read',
-    tag: 'Product',
-    tagColor: '#8b5cf6',
   },
 ]
 
