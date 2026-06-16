@@ -73,7 +73,7 @@ export default function GalleryPage() {
             {apps.length > 0 ? `${apps.length}+` : '60+'} apps you can build<br />in under a minute
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 460, margin: '0 auto' }}>
-            Click any app to start building it instantly — no credits needed for prebuilt templates.
+            Click any app to start building it instantly â€” no credits needed for prebuilt templates.
           </p>
         </div>
 
@@ -173,4 +173,3 @@ export default function GalleryPage() {
     </div>
   )
 }
-
