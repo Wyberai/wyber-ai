@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Custom Domains — Docs' }
@@ -11,27 +11,35 @@ export default function Page() {
       intro="Point your own domain at a published Wyber web app. You'll add a DNS record at your registrar and verify ownership in Wyber."
       requirements={[
         { label: 'A published Wyber web app' },
+        { label: 'Builder or Team plan', note: 'custom domains require a paid plan' },
         { label: 'A domain you own', note: 'managed at any registrar (Namecheap, GoDaddy, Cloudflare, etc.)' },
         { label: 'Access to your DNS settings' },
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in exact steps after testing the custom domain flow end-to-end." />
         <Steps>
           <Step n={1} title="Open domain settings">
-            <TodoBlock note="Describe where to find domain settings in the Wyber editor or project settings panel." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              In the editor, click the <strong>Settings</strong> tab (or go to <strong>Settings → Domains</strong>). Find the Custom Domain section.
+            </p>
             <ScreenshotPlaceholder label="Domain settings panel" />
           </Step>
           <Step n={2} title="Enter your domain">
-            <TodoBlock note="Describe the input field and what format to enter (e.g. app.yourdomain.com vs yourdomain.com)." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Type the domain or subdomain you want to use (e.g. <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12 }}>app.yourdomain.com</code>). Click <strong>Add domain</strong>.
+            </p>
             <ScreenshotPlaceholder label="Enter domain name" />
           </Step>
           <Step n={3} title="Add the DNS record">
-            <TodoBlock note="Describe the CNAME or A record values to add. Which registrar panels to walk through?" />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Wyber shows you a CNAME record to add at your registrar. Log into your domain registrar (Cloudflare, Namecheap, GoDaddy, etc.) and add the CNAME record exactly as shown.
+            </p>
             <ScreenshotPlaceholder label="DNS record to add" />
           </Step>
           <Step n={4} title="Verify and activate">
-            <TodoBlock note="Describe how long DNS propagation takes and how Wyber confirms the domain is live." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              DNS propagation typically takes 1–10 minutes. Click <strong>Verify</strong> in Wyber. Once verified, your app is live at your custom domain with SSL provisioned automatically.
+            </p>
             <ScreenshotPlaceholder label="Domain verified state" />
           </Step>
         </Steps>

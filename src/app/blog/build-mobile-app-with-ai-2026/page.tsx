@@ -64,7 +64,7 @@ export default function Post() {
           </ul>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What it costs</h2>
-          <p>The free plan gives you 50 credits a month — enough to build 50 iterations. Each generation or edit is 1 credit. Pro is $18.99/month for ~390 credits. No credit card required to start.</p>
+          <p>The free plan gives you up to 50 credits a month (15 on signup + 3 daily). Each generation or edit is 1 credit. Builder is $18.99/month for ~400 credits. No credit card required to start.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.violet}10`, border: `1px solid ${s.violet}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Try it now — free</div>

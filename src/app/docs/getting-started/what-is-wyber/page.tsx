@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, ScreenshotPlaceholder } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'What is Wyber AI? — Docs' }
@@ -29,7 +29,6 @@ export default function Page() {
         </ul>
 
         <ScreenshotPlaceholder label="Dashboard overview — four product types" />
-        <TodoBlock note="Add screenshot of the dashboard new-project chooser showing all four types." />
       </DocSection>
 
       <DocSection title="How it works (in one sentence)">
@@ -50,7 +49,6 @@ export default function Page() {
         </ul>
       </DocSection>
 
-      {/* Next step */}
       <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'flex-end' }}>
         <Link href="/docs/getting-started/your-first-build" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
           Next: Your first build →

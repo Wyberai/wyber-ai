@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'AI Models — Docs' }
@@ -11,15 +11,42 @@ export default function Page() {
       intro="Wyber uses Claude by Anthropic to power code generation, agent planning, and workflow logic. Higher-tier plans unlock access to more powerful model versions."
     >
       <DocSection title="Available models">
-        <TodoBlock note="List which Claude model(s) are available on each plan tier. E.g. Free = Claude Haiku, Pro = Claude Sonnet, BYOK = any model including Opus 4.8. Fill in after confirming plan structure." />
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {['Model', 'Speed', 'Quality', 'Available on'].map(h => (
+                <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[
+              ['Fast (Haiku)', 'Fastest', 'Good', 'All plans'],
+              ['Standard (Sonnet)', 'Fast', 'Great', 'All plans'],
+              ['Premium (Opus)', 'Slower', 'Best', 'Builder & Team'],
+              ['Fable', 'Slowest', 'Most powerful', 'Team (BYOK)'],
+            ].map(([model, speed, quality, plans], i) => (
+              <tr key={model} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                <td style={{ padding: '10px 12px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>{model}</td>
+                <td style={{ padding: '10px 12px', color: 'rgba(255,255,255,0.6)' }}>{speed}</td>
+                <td style={{ padding: '10px 12px', color: 'rgba(255,255,255,0.6)' }}>{quality}</td>
+                <td style={{ padding: '10px 12px', color: '#0EA5E9' }}>{plans}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </DocSection>
 
       <DocSection title="How model choice affects output">
-        <TodoBlock note="Explain the trade-off: faster/cheaper models for iteration, smarter models for complex generation. One paragraph." />
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+          For most app builds, Standard (Sonnet) is the sweet spot — fast generation, excellent output quality, and 1 credit per message. Use Fast (Haiku) for quick edits and small changes where speed matters more than detail. Premium (Opus) is best for complex multi-screen apps with intricate logic, detailed UI, or large data models — it produces noticeably more complete output at the cost of longer generation time.
+        </p>
       </DocSection>
 
       <DocSection title="Using your own Anthropic key (BYOK)">
-        <TodoBlock note="Brief summary — link to /docs/ai-agents/bring-your-own-keys for the full setup steps." />
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+          You can bring your own Anthropic API key to use any Claude model — including Fable — at your own rate limits. Your key is stored encrypted and never exposed in generated code. See <Link href="/docs/ai-agents/bring-your-own-keys" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Bring your own keys</Link> for setup steps.
+        </p>
       </DocSection>
 
       <Note>Model availability may change as Anthropic releases new versions. We update the available options automatically — you'll always have access to at least the model your plan specifies.</Note>

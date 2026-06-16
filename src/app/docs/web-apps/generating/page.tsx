@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Generating a Web App — Docs' }
@@ -15,26 +15,35 @@ export default function Page() {
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in the exact steps after testing the web app generation flow end-to-end." />
         <Steps>
           <Step n={1} title="Open the dashboard and start a new project">
-            <TodoBlock note="Describe where the 'New project' button is and how to select Web App as the type." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              From the dashboard, click <strong>New project</strong> and select <strong>Web App</strong>. You'll land in the editor with an empty prompt input.
+            </p>
             <ScreenshotPlaceholder label="New project — Web App selected" />
           </Step>
           <Step n={2} title="Write your prompt">
-            <TodoBlock note="Explain what makes a good web app prompt. Any character limit? Does the UI show a credit estimate?" />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Describe the app in plain English. Include the screens, data fields, and style you want. A credit estimate of 1 credit is shown before you generate. Click <strong>Generate</strong> to start.
+            </p>
             <ScreenshotPlaceholder label="Prompt input" />
           </Step>
           <Step n={3} title="Generation runs">
-            <TodoBlock note="Describe the live streaming view — file tree, streaming code, preview loading state." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Generation takes 15–60 seconds. The file tree fills in on the left and code streams on the right. The preview pane updates live as each file is written.
+            </p>
             <ScreenshotPlaceholder label="Generation in progress" />
           </Step>
           <Step n={4} title="Preview your app">
-            <TodoBlock note="Describe the preview iframe, hot-reload, and how to interact with the live preview." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              The right panel shows a live iframe preview of your app. Click elements directly to select them (click-to-edit mode), or use the chat panel to describe larger changes.
+            </p>
             <ScreenshotPlaceholder label="Live preview pane" />
           </Step>
           <Step n={5} title="Iterate with follow-up prompts">
-            <TodoBlock note="Explain how to send follow-up prompts to change specific parts of the app." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Type follow-up prompts in the chat panel to change specific parts of the app. Each iteration costs 1 credit and creates a new snapshot — you can always go back to any previous version.
+            </p>
             <ScreenshotPlaceholder label="Chat panel with follow-up prompt" />
           </Step>
         </Steps>

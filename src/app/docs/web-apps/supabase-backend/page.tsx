@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Connecting Supabase — Docs' }
@@ -16,22 +16,29 @@ export default function Page() {
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in the exact steps after testing the Supabase connect flow end-to-end." />
         <Steps>
           <Step n={1} title="Create a Supabase project">
-            <TodoBlock note="Describe minimal steps: go to supabase.com, create org, create project, wait for provisioning." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Go to <strong>supabase.com</strong>, sign in, and create a new project. Choose a region close to your users and wait ~1 minute for provisioning.
+            </p>
             <ScreenshotPlaceholder label="Supabase new project screen" />
           </Step>
           <Step n={2} title="Copy your project credentials">
-            <TodoBlock note="Describe where to find the Project URL and anon/public key in the Supabase dashboard (Settings → API)." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              In the Supabase dashboard, go to <strong>Settings → API</strong>. Copy the <strong>Project URL</strong> and the <strong>anon/public key</strong>.
+            </p>
             <ScreenshotPlaceholder label="Supabase API settings" />
           </Step>
           <Step n={3} title="Connect in Wyber">
-            <TodoBlock note="Describe how to open the Supabase connect panel in the Wyber editor and paste credentials." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              In the Wyber editor, click the <strong>Supabase</strong> button in the top bar (or Settings → Database). Paste your Project URL and anon key and click <strong>Connect</strong>.
+            </p>
             <ScreenshotPlaceholder label="Supabase connect panel in Wyber editor" />
           </Step>
           <Step n={4} title="Verify the connection">
-            <TodoBlock note="Describe any confirmation UI — green status indicator, test query, or similar." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Wyber confirms the connection with a green status indicator. Your next generation will automatically use your Supabase project for database queries, auth, and storage.
+            </p>
             <ScreenshotPlaceholder label="Connected status" />
           </Step>
         </Steps>

@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Building a Workflow — Docs' }
@@ -14,26 +14,40 @@ export default function Page() {
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in the exact steps after testing the workflow builder end-to-end." />
         <Steps>
           <Step n={1} title="Open the Workflow builder">
-            <TodoBlock note="Describe navigation to the workflow builder from the dashboard." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              From the dashboard sidebar, click <strong>Workflows</strong>, then <strong>New workflow</strong>. You'll land on a blank canvas.
+            </p>
             <ScreenshotPlaceholder label="Workflow builder entry point" />
           </Step>
           <Step n={2} title="Add a trigger">
-            <TodoBlock note="Describe available trigger types — schedule (cron), webhook, manual. How to configure each." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Every workflow starts with a trigger node. Available trigger types:
+            </p>
+            <ul style={{ paddingLeft: 20, fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 2 }}>
+              <li><strong>Schedule</strong> — runs on a cron schedule (e.g. every day at 9 am)</li>
+              <li><strong>Webhook</strong> — runs when an HTTP POST arrives at a generated URL</li>
+              <li><strong>Manual</strong> — runs only when you click Run</li>
+            </ul>
             <ScreenshotPlaceholder label="Trigger node options" />
           </Step>
           <Step n={3} title="Add steps">
-            <TodoBlock note="Describe adding AI step nodes (prompt → Claude) and action nodes (send email, post to Slack, etc.). Node library panel." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Click <strong>+</strong> on the canvas or drag from the left node palette to add steps. Step types include AI steps (prompt → Claude reasoning), data transforms, and action nodes (send email, post to Slack, create a record, call a webhook).
+            </p>
             <ScreenshotPlaceholder label="Adding step nodes" />
           </Step>
           <Step n={4} title="Connect the nodes">
-            <TodoBlock note="Describe drawing edges between nodes to define execution order. Any conditional branching?" />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Drag from the output handle of one node to the input handle of the next to define execution order. Nodes execute left-to-right, top-to-bottom.
+            </p>
             <ScreenshotPlaceholder label="Connecting nodes" />
           </Step>
           <Step n={5} title="Save the workflow">
-            <TodoBlock note="Describe the Save button and whether the workflow is immediately active or needs to be enabled." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Click <strong>Save</strong> in the top bar. The workflow is saved in draft state — it won't run automatically until you enable it.
+            </p>
           </Step>
         </Steps>
       </DocSection>

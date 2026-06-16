@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 }
 
 const ROWS = [
-  { feature: 'Base Pro price',          wyber: '$18.99/mo',      other: '$25/mo',          winner: 'wyber' as const },
+  { feature: 'Base Builder price',       wyber: '$18.99/mo',      other: '$25/mo',          winner: 'wyber' as const },
   { feature: 'Annual price',            wyber: '$15.99/mo',      other: '~$21/mo',         winner: 'wyber' as const },
-  { feature: 'Monthly credits (base)',  wyber: '150',            other: '100',             winner: 'wyber' as const },
-  { feature: 'Daily bonus credits',     wyber: '8/day',          other: '5/day',           winner: 'wyber' as const },
-  { feature: 'Est. total credits/mo',   wyber: '~390',           other: '~250',            winner: 'wyber' as const },
+  { feature: 'Monthly credits (base)',  wyber: '250',            other: '100',             winner: 'wyber' as const },
+  { feature: 'Daily bonus credits',     wyber: '10/day',         other: '5/day',           winner: 'wyber' as const },
+  { feature: 'Est. total credits/mo',   wyber: '~400',           other: '~250',            winner: 'wyber' as const },
   { feature: 'Credit rollovers',        wyber: '✓',              other: '✓',               winner: 'tie'   as const },
   { feature: 'Top-up credits',          wyber: 'All plans',      other: 'Pro+ only',       winner: 'wyber' as const },
   { feature: 'Top-up expiry',           wyber: 'Never',          other: '12 months',       winner: 'wyber' as const },
@@ -34,7 +34,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'Is Wyber AI cheaper than Lovable?',
-    a: 'Yes. Wyber AI Pro is $18.99/month vs Lovable\'s $25/month, and you get approximately 390 usable credits per month (150 base + 8 daily) vs Lovable\'s ~250. Top-ups on Wyber never expire; Lovable top-ups expire in 12 months.',
+    a: 'Yes. Wyber AI Builder is $18.99/month vs Lovable\'s $25/month, and you get approximately 400 usable credits per month (250 base + 10 daily) vs Lovable\'s ~250. Top-ups on Wyber never expire; Lovable top-ups expire in 12 months.',
   },
   {
     q: 'Can Wyber AI build mobile apps? Lovable can\'t.',

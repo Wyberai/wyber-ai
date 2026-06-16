@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Publishing — Docs' }
@@ -14,18 +14,23 @@ export default function Page() {
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in the exact steps after testing the one-click Vercel deploy flow." />
         <Steps>
           <Step n={1} title="Click Publish">
-            <TodoBlock note="Describe where the Publish button is in the editor UI and what happens when clicked." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              In the editor top bar, click the <strong>Publish</strong> button. Wyber sends the current version of your app to Vercel automatically.
+            </p>
             <ScreenshotPlaceholder label="Publish button location" />
           </Step>
           <Step n={2} title="Wait for deployment">
-            <TodoBlock note="Describe the deployment progress UI — spinner, log output, estimated time." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Deployment typically takes 20–60 seconds. A spinner shows in the top bar. You can continue editing while it deploys.
+            </p>
             <ScreenshotPlaceholder label="Deployment in progress" />
           </Step>
           <Step n={3} title="Your app is live">
-            <TodoBlock note="Describe where the public URL appears, how to copy/share it, and what domain format it uses (e.g. wyberai.app/xyz)." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Once deployed, a live URL appears in the top bar (e.g. <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12 }}>yourapp.wyberai.app</code>). Click to open it or copy it to share. Publishing is free — it doesn't cost credits.
+            </p>
             <ScreenshotPlaceholder label="Live URL confirmation" />
           </Step>
         </Steps>

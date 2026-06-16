@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Building AI Agents — Docs' }
@@ -15,26 +15,38 @@ export default function Page() {
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in the exact steps after testing the agent canvas generation flow end-to-end." />
         <Steps>
           <Step n={1} title="Open the Agent builder">
-            <TodoBlock note="Describe how to get to the agent canvas from the dashboard — which button, which nav item." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              From the dashboard sidebar, click <strong>Agents</strong>. Then click <strong>New agent</strong>. You'll be taken to the agent canvas editor.
+            </p>
             <ScreenshotPlaceholder label="Agent builder entry point" />
           </Step>
           <Step n={2} title="Describe your agent">
-            <TodoBlock note="Explain the plain-English prompt input for canvas generation. What context helps? Any examples?" />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Type a plain-English description of what the agent should do. Include the tools it needs and the goal. Example:
+            </p>
+            <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 8, padding: '12px 16px', fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0', lineHeight: 1.7, margin: '8px 0' }}>
+              Monitor my Gmail for support emails, classify them by urgency using Claude, and create a Linear ticket for urgent ones with a summary.
+            </div>
             <ScreenshotPlaceholder label="Agent description input" />
           </Step>
           <Step n={3} title="Review the generated canvas">
-            <TodoBlock note="Describe what the generated canvas looks like — nodes types visible, edges, default zoom (now set to 75%)." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Wyber generates a visual canvas with nodes (trigger, AI step, tool actions) connected by edges. The canvas opens at 75% zoom so you can see the full flow. Each node is labelled with its role.
+            </p>
             <ScreenshotPlaceholder label="Generated agent canvas" />
           </Step>
           <Step n={4} title="Adjust nodes manually">
-            <TodoBlock note="Describe how to click a node to edit it, add new nodes from the left palette, delete nodes." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Click any node to open its edit panel on the right — you can change the prompt, rename the node, or adjust settings. Add new nodes from the left palette. Delete a node by selecting it and pressing Backspace.
+            </p>
             <ScreenshotPlaceholder label="Node edit panel" />
           </Step>
           <Step n={5} title="Connect tools via OAuth">
-            <TodoBlock note="Brief mention — link to the connecting-tools page for the full OAuth flow." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Tool nodes show a <strong>Connect</strong> button until you authorise the service. See <Link href="/docs/ai-agents/connecting-tools" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Connecting tools</Link> for the full OAuth flow.
+            </p>
           </Step>
         </Steps>
       </DocSection>

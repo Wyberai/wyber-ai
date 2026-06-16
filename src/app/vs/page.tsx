@@ -24,7 +24,7 @@ const COMPARISONS = [
     url: 'lovable.dev',
     tag: 'AI web app builder',
     summary: 'Wyber AI offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
-    wyberWins: ['More credits (~390 vs ~250/mo)', 'Lower Pro price ($18.99 vs $25)', 'Top-ups never expire', 'Mobile + agents + workflows'],
+    wyberWins: ['More credits (~400 vs ~250/mo)', 'Lower Builder price ($18.99 vs $25)', 'Top-ups never expire', 'Mobile + agents + workflows'],
   },
   {
     slug: 'bolt',

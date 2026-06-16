@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Connecting Tools (OAuth) — Docs' }
@@ -15,26 +15,36 @@ export default function Page() {
       ]}
     >
       <DocSection title="Browsing available tools">
-        <TodoBlock note="Describe the Browse Tools panel in the agent canvas left palette — search, toolkit grid, how to add a tool node." />
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+          In the agent canvas, the left panel shows a <strong>Browse Tools</strong> catalogue. Search by name or scroll by category. Click any toolkit to add it as a node on your canvas.
+        </p>
         <ScreenshotPlaceholder label="Browse Tools catalogue" />
       </DocSection>
 
       <DocSection title="The OAuth connect flow">
         <Steps>
           <Step n={1} title="Add a tool node to your canvas">
-            <TodoBlock note="Describe clicking a toolkit from the Browse Tools panel to add it as a node." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Click a toolkit in the Browse Tools panel to drop it onto the canvas as a node.
+            </p>
             <ScreenshotPlaceholder label="Tool node on canvas" />
           </Step>
           <Step n={2} title="Click Connect">
-            <TodoBlock note="Describe the Connect button on the tool node or in the node edit panel." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              The tool node shows a <strong>Connect</strong> button in its header. Click it to start the OAuth flow.
+            </p>
             <ScreenshotPlaceholder label="Connect button on tool node" />
           </Step>
           <Step n={3} title="Authorize in the popup">
-            <TodoBlock note="Describe the OAuth popup — Composio-hosted, standard permissions screen, what to click." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              A Composio-hosted OAuth popup opens. Sign in with the service account and grant the permissions shown. This is a standard OAuth screen — Wyber never sees your credentials.
+            </p>
             <ScreenshotPlaceholder label="OAuth authorization popup" />
           </Step>
           <Step n={4} title="Connection confirmed">
-            <TodoBlock note="Describe the success state — node turns green, connection listed under /api/composio/connections." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              The node turns green and shows "Connected". The tool is now available to all agents in your account — you only need to authorize once per service.
+            </p>
             <ScreenshotPlaceholder label="Tool node — connected state" />
           </Step>
         </Steps>

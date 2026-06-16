@@ -45,7 +45,7 @@ export default function Post() {
             </div>
             {[
               ['Price', '$18.99/month', '$25/month'],
-              ['Credits', '~390/month', '~250/month'],
+              ['Credits', '~400/month', '~250/month'],
               ['Cost per credit', '$0.049', '$0.100'],
               ['Top-up expiry', 'Never', 'Monthly'],
               ['Free tier', '50 credits/month', '5/day (~30/month)'],

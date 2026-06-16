@@ -109,7 +109,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'Can I add payments (Stripe)?', a: 'You can ask Wyber AI to add a Stripe checkout flow in chat. It generates the frontend components. For backend webhook handling, you\'d need to add a few lines of server code or use Supabase Edge Functions.' },
       { q: 'Who owns the code?', a: 'You do. Export the full source code anytime. It\'s standard React + Vite — take it to any developer, any hosting provider, or your own GitHub repo.' },
       { q: 'How do I handle my own domain?', a: 'Connect a custom domain in Settings → Domains. Or use your free yourapp.wyberai.app subdomain while you\'re in development.' },
-      { q: 'What does it cost to build a SaaS with Wyber AI?', a: 'The free plan gives you 50 credits/month (enough for 50 iterations). Pro is $18.99/month with ~390 credits. Each generation or edit costs 1 credit.' },
+      { q: 'What does it cost to build a SaaS with Wyber AI?', a: 'The free plan gives you up to 50 credits/month. Builder is $18.99/month with ~400 credits. Each generation or edit costs 1 credit.' },
     ],
   },
   {
@@ -205,7 +205,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'How is Wyber AI different from other AI app builders?', a: 'Every other tool covers one category. Lovable, Bolt, and v0 build web apps only. Wyber AI covers all four pillars from one workspace at one price.' },
       { q: 'Do I need technical knowledge?', a: 'No. Wyber AI is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in under 60 seconds. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-      { q: 'What does it cost?', a: 'The free plan gives you 50 credits/month — enough to build and iterate on multiple apps. Pro is $18.99/month for ~390 credits.' },
+      { q: 'What does it cost?', a: 'The free plan gives you up to 50 credits/month — enough to build and iterate on multiple apps. Builder is $18.99/month for ~400 credits.' },
     ],
   },
 ]

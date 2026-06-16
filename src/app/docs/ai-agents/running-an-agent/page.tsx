@@ -1,4 +1,4 @@
-import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, TodoBlock, Note } from '@/components/docs/DocsPage'
+import { DocsPage, DocSection, Steps, Step, ScreenshotPlaceholder, Note } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
 export const metadata = { title: 'Running an Agent — Docs' }
@@ -15,21 +15,28 @@ export default function Page() {
       ]}
     >
       <DocSection title="Step-by-step">
-        <TodoBlock note="Fill in the exact steps after testing the agent run flow end-to-end (POST /api/canvas/run)." />
         <Steps>
           <Step n={1} title="Open your agent canvas">
-            <TodoBlock note="Describe how to navigate to an existing canvas from the dashboard." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              From the dashboard sidebar, click <strong>Agents</strong> and select the agent you want to run. The canvas opens.
+            </p>
           </Step>
           <Step n={2} title="Click Run">
-            <TodoBlock note="Describe the Run button — where it is, whether it shows a confirmation, what input (if any) is required." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Click the <strong>Run</strong> button in the top bar of the canvas. If your agent has an input node (e.g. a start prompt), you'll be asked to fill it in before execution begins.
+            </p>
             <ScreenshotPlaceholder label="Run button on canvas" />
           </Step>
           <Step n={3} title="Watch the execution">
-            <TodoBlock note="Describe how the canvas visualises execution — nodes lighting up, progress indicator, log stream." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              Each node lights up as it executes. An execution log streams in the bottom panel, showing each step's inputs and outputs in real time. The overall progress bar at the top shows how many steps have completed.
+            </p>
             <ScreenshotPlaceholder label="Agent executing — nodes active" />
           </Step>
           <Step n={4} title="Review the output">
-            <TodoBlock note="Describe where the final output appears — result panel, log, or external service (e.g. a GitHub issue was created)." />
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
+              When the agent finishes, the final output is shown in the result panel on the right. If an action node sent data to an external service (created a GitHub issue, sent a Slack message), you'll see a confirmation link there.
+            </p>
             <ScreenshotPlaceholder label="Agent output / result" />
           </Step>
         </Steps>
