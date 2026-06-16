@@ -430,6 +430,73 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Done-for-you builds */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Done For You</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>
+              We build it for you
+            </h2>
+            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 480, margin: '0 auto' }}>
+              Prefer to hand it off? Book a $99 scoping call. The fee is credited toward your build.
+            </p>
+          </div>
+
+          {/* Consultation CTA */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.08) 0%, rgba(245,158,11,0.03) 100%)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 16, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap', marginBottom: 20 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <span style={{ fontSize: 28 }}>📞</span>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fafafa' }}>$99 Scoping Call</div>
+                  <div style={{ fontSize: 12, color: '#52525b' }}>60 min · Google Meet · credited toward build</div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: '#71717a', margin: 0, maxWidth: 460 }}>Tell us what you need. We scope it, give you a firm quote, and build it. Consultation fee applied to your total if you proceed — fully refundable if we&apos;re not a fit.</p>
+            </div>
+            <a href="/setup-call" style={{ flexShrink: 0, padding: '12px 24px', borderRadius: 10, background: '#f59e0b', color: '#000', fontSize: 14, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+              Book for $99 →
+            </a>
+          </div>
+
+          {/* Build tiers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px,100%), 1fr))', gap: 14 }}>
+            {[
+              { name: 'Simple Build', price: '$199', delivery: '24 hours', color: '#22c55e', icon: '⚡', items: ['Landing pages, portfolios, tools', 'No auth or database required', 'GitHub repo + Vercel deploy', '7-day support'] },
+              { name: 'Medium Build', price: '$399', delivery: '3 working days', color: BRAND, icon: '🔧', badge: 'Most common', items: ['SaaS MVP with auth + database', '3–6 screens, real user accounts', 'GitHub repo + Vercel deploy', '14-day support'] },
+              { name: 'Complex Build', price: '$799', delivery: '1 week', color: '#8b5cf6', icon: '🏗️', items: ['Full SaaS with payments + multi-roles', '6+ screens, integrations', 'GitHub repo + Vercel deploy', '30-day support'] },
+            ].map(b => (
+              <div key={b.name} style={{ position: 'relative', background: '#111113', border: `1px solid ${b.badge ? b.color + '40' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '20px', borderTop: `3px solid ${b.color}` }}>
+                {b.badge && <div style={{ position: 'absolute', top: -11, right: 14, background: b.color, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20 }}>{b.badge}</div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 20 }}>{b.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: b.color }}>{b.name}</div>
+                    <div style={{ fontSize: 10, color: '#52525b' }}>⏱ {b.delivery}</div>
+                  </div>
+                  <div style={{ marginLeft: 'auto', fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, color: '#fafafa' }}>{b.price}</div>
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  {b.items.map(item => (
+                    <div key={item} style={{ display: 'flex', gap: 7, marginBottom: 5 }}>
+                      <span style={{ color: b.color, fontSize: 11, flexShrink: 0 }}>✓</span>
+                      <span style={{ fontSize: 12, color: '#71717a' }}>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <a href="/setup-call" style={{ display: 'block', padding: '10px', borderRadius: 8, background: 'transparent', border: `1px solid ${b.color}40`, color: b.color, fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+                  Book a call →
+                </a>
+              </div>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 14 }}>
+            <a href="/complexity-guide" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>Not sure which tier? See the complexity guide →</a>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>

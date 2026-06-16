@@ -271,16 +271,65 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Five superpowers ─────────────────────────────────────────────────── */}
+      {/* ── AI Employees showcase ─────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px,100%), 1fr))', gap: 40, alignItems: 'center' }}>
+            {/* Left: copy + steps */}
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 18 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
+                AI Employees · 100 roles
+              </div>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16, color: '#fafafa' }}>
+                Hire AI that works<br />
+                <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>while you sleep.</span>
+              </h2>
+              <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.7, marginBottom: 28, maxWidth: 440 }}>
+                Each AI Employee connects to your tools, follows your process, and emails you a KPI digest after every run — no babysitting required.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+                {[
+                  { icon: '🎯', title: 'Browse 100 templates', body: 'Sales, marketing, ops, finance — pick a role and customise in plain English.' },
+                  { icon: '🔗', title: 'Connect your tools', body: 'Gmail, Slack, HubSpot, Notion — linked in one click. Real integrations.' },
+                  { icon: '📊', title: 'Get a digest every run', body: 'Scheduled runs deliver a KPI report straight to your inbox.' },
+                ].map(s => (
+                  <div key={s.title} style={{ display: 'flex', gap: 12, padding: '14px 16px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 11 }}>
+                    <span style={{ fontSize: 20, flexShrink: 0 }}>{s.icon}</span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', marginBottom: 3 }}>{s.title}</div>
+                      <div style={{ fontSize: 12, color: '#71717a' }}>{s.body}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Link href="/employees" style={{ padding: '12px 24px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
+                  Browse 100 roles →
+                </Link>
+                <Link href="/ai-employees/new" style={{ padding: '12px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>
+                  Hire now
+                </Link>
+              </div>
+            </div>
+            {/* Right: live mockup */}
+            <div>
+              <EmployeeMockup />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Also build: the other four products ─────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>One platform. Five superpowers.</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
-              Web. Mobile. Agents. Flows. Employees.
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Build &amp; automate too</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
+              Web apps. Mobile. Agents. Workflows.
             </h2>
-            <p style={{ fontSize: 15, color: '#71717a', marginTop: 14, maxWidth: 540, margin: '14px auto 0' }}>
-              Build apps in seconds, automate workflows without code, and hire AI workers that run 24/7 — all from one platform with shared credits.
+            <p style={{ fontSize: 15, color: '#71717a', marginTop: 14, maxWidth: 500, margin: '14px auto 0' }}>
+              The same platform that runs your AI employees also builds your apps and automates your ops. One credit balance works across all five products.
             </p>
           </div>
 
@@ -289,41 +338,6 @@ export default function HomePage() {
             <ProductCard eyebrow="Mobile Apps" heading="Describe it. Ship to iOS." body="Generate a real React Native app with Expo, get a live preview, and export a ready-to-publish project — one prompt." mockup={<div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20, textAlign: 'center', fontSize: 48 }}>📱</div>} ctaLabel="Build a mobile app →" ctaHref="/dashboard?new=mobile" Icon={IcoPhone} />
             <ProductCard eyebrow="AI Agents" heading="Pick one. It executes." body="5,000 pre-built agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included." mockup={<div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20, textAlign: 'center', fontSize: 48 }}>⚡</div>} ctaLabel="Browse agents →" ctaHref="/agents" Icon={IcoCpu} />
             <ProductCard eyebrow="Workflows" heading="Draw it. It runs." body="Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code." mockup={<div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20, textAlign: 'center', fontSize: 48 }}>🔀</div>} ctaLabel="Build a workflow →" ctaHref="/flows" Icon={IcoZap} />
-            <ProductCard eyebrow="AI Employees" heading="Hire. Onboard. Done." body="100 pre-built roles — SDRs, campaign managers, ops coordinators. Each runs on your tools, reports KPIs, and emails you a daily digest." mockup={<EmployeeMockup />} ctaLabel="Browse employees →" ctaHref="/employees" Icon={IcoPeople} />
-          </div>
-        </div>
-      </section>
-
-      {/* ── How AI Employees work ────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>AI Employees — how it works</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 12 }}>
-              Set up once. It works every day.
-            </h2>
-            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 480, margin: '0 auto' }}>
-              Connect to your tools, give it a role, and let it run — you get a digest email with KPIs after every shift.
-            </p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 16, marginBottom: 32 }}>
-            {[
-              { icon: '🎯', title: 'Pick a role', body: '100 templates across sales, marketing, ops, finance — each with default instructions and KPI targets.' },
-              { icon: '🔗', title: 'Connect your tools', body: 'Link Gmail, Slack, HubSpot, Notion in one click. They use real integrations, not simulations.' },
-              { icon: '⏰', title: 'Set a schedule', body: 'Daily, hourly, or trigger-based. It runs automatically while you focus on what matters.' },
-              { icon: '📊', title: 'Read the digest', body: 'Email report after every run — actions taken, KPIs hit, and anything that needs your attention.' },
-            ].map(s => (
-              <div key={s.title} style={{ padding: 20, background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12 }}>
-                <div style={{ fontSize: 28, marginBottom: 10 }}>{s.icon}</div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 6 }}>{s.title}</div>
-                <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6 }}>{s.body}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <Link href="/employees" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
-              Browse all 100 roles →
-            </Link>
           </div>
         </div>
       </section>
