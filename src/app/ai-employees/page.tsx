@@ -173,15 +173,80 @@ export default function AIEmployeesPage() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: '#3f3f46' }}>Loading…</div>
         ) : employees.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 32px' }}>
-            <div style={{ fontSize: 64, marginBottom: 20 }}>🤖</div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 10px', letterSpacing: '-0.03em' }}>Hire your first AI employee</h2>
-            <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 32px', maxWidth: 440, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
-              Set up an AI worker with a role, tools, and a schedule. It runs automatically and emails you what it did.
-            </p>
-            <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700 }}>
-              Hire your first employee →
-            </Link>
+          <div>
+            {/* Empty state hero */}
+            <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 20 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: SKY }} />
+                100 roles · connects to your tools · runs on schedule
+              </div>
+              <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>
+                Your first AI employee is 3 steps away
+              </h2>
+              <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 28px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
+                Pick a role, connect your tools, set a schedule. It works automatically and emails you a digest after every run.
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 16 }}>
+                <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
+                  + Hire your first employee
+                </Link>
+                <Link href="/employees" style={{ display: 'inline-block', color: '#a1a1aa', textDecoration: 'none', padding: '13px 22px', borderRadius: 10, fontSize: 15, fontWeight: 500, border: '1px solid rgba(255,255,255,0.1)' }}>
+                  Browse 100 templates
+                </Link>
+              </div>
+              <p style={{ fontSize: 12, color: '#3f3f46' }}>No engineers needed · 5 min setup · Email digest after every run</p>
+            </div>
+
+            {/* How it works */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 12, marginBottom: 48 }}>
+              {[
+                { icon: '🎯', step: '01', title: 'Pick a role', body: 'Choose from 100 pre-built roles across sales, marketing, ops, support, and more.' },
+                { icon: '🔗', step: '02', title: 'Connect tools', body: 'Link Gmail, Slack, HubSpot, Notion in one click. Real integrations, not simulations.' },
+                { icon: '⏰', step: '03', title: 'Set a schedule', body: 'Daily, hourly, or event-triggered. It runs while you sleep and reports back.' },
+              ].map(s => (
+                <div key={s.step} style={{ padding: '18px 20px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <div style={{ fontSize: 26, flexShrink: 0 }}>{s.icon}</div>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 800, color: SKY, letterSpacing: '0.1em', marginBottom: 4 }}>{s.step}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 5 }}>{s.title}</div>
+                    <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6 }}>{s.body}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Popular roles preview */}
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Popular roles</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Browse what others are hiring</div>
+              </div>
+              <Link href="/employees" style={{ fontSize: 13, color: SKY, textDecoration: 'none', fontWeight: 600, flexShrink: 0, marginLeft: 16 }}>See all 100 →</Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px,100%), 1fr))', gap: 12, marginBottom: 48 }}>
+              {EMPLOYEES_LEGACY.slice(0, 6).map(role => (
+                <Link key={role.title} href="/ai-employees/new" style={{ textDecoration: 'none', display: 'block', padding: '16px 18px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, transition: 'border-color 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.25)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{role.title}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: `${DEPT_COLORS[role.department]}18`, color: DEPT_COLORS[role.department], border: `1px solid ${DEPT_COLORS[role.department]}30` }}>{role.department}</span>
+                  </div>
+                  <p style={{ margin: '0 0 10px', fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{role.tagline}</p>
+                  <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                    {role.tools.slice(0, 3).map(t => (
+                      <span key={t} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)' }}>{t}</span>
+                    ))}
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div style={{ textAlign: 'center', paddingBottom: 24 }}>
+              <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 32px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
+                Hire your first employee →
+              </Link>
+            </div>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
