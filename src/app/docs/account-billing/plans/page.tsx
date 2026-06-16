@@ -8,34 +8,34 @@ export default function Page() {
     <DocsPage
       section="Account & Billing"
       title="Plans & pricing"
-      intro="WyberAi offers a free tier and paid plans. All plans give you access to all four product types — web apps, mobile apps, agents, and workflows."
+      intro="WyberAi offers a free tier and paid plans. All plans give you access to all five product types — web apps, mobile apps, agents, workflows, and AI employees."
     >
       <DocSection title="Plan comparison">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 16 }}>
           {[
             {
-              name: 'Free',
-              price: '$0',
-              sub: 'No card required',
-              color: '#52525b',
-              credits: 'Up to 50 credits/month',
-              items: ['15 credits on signup', '3 daily bonus credits', 'All 4 product types', '3 active projects', 'Community support'],
-            },
-            {
-              name: 'Builder',
-              price: '$18.99',
-              sub: '/month ($15.99 annual)',
-              color: '#8b5cf6',
-              credits: '~400 credits/month',
-              items: ['250 monthly credits', '10 daily bonus credits', 'Credit rollover', 'Unlimited projects', 'Email support', 'Custom domains'],
-            },
-            {
-              name: 'Team',
-              price: '$37.99',
-              sub: '/month ($31.99 annual)',
+              name: 'Starter',
+              price: '$49',
+              sub: '/month',
               color: '#0EA5E9',
-              credits: '~800 credits/month',
-              items: ['500 monthly credits', '20 daily bonus credits', 'Credit rollover', 'Everything in Builder', 'Priority support', 'Team collaboration (up to 5 members)'],
+              credits: '500 credits/month',
+              items: ['500 monthly credits', 'Up to 3 AI Employees', 'All 5 product types', 'Unlimited projects', 'Email support', 'Custom domains'],
+            },
+            {
+              name: 'Growth',
+              price: '$149',
+              sub: '/month',
+              color: '#8b5cf6',
+              credits: '2,000 credits/month',
+              items: ['2,000 monthly credits', 'Up to 10 AI Employees', 'Credit rollover', 'Everything in Starter', 'Priority support'],
+            },
+            {
+              name: 'Scale',
+              price: '$399',
+              sub: '/month',
+              color: '#10b981',
+              credits: '6,000 credits/month',
+              items: ['6,000 monthly credits', 'Unlimited AI Employees', 'Credit rollover', 'Everything in Growth', 'Dedicated support'],
             },
           ].map(plan => (
             <div key={plan.name} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${plan.color}40`, borderRadius: 14, padding: '20px 18px' }}>
@@ -54,7 +54,7 @@ export default function Page() {
           ))}
         </div>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-          Top-up credits ($9.99/50cr · $24.99/150cr · $69.99/500cr) are available on all plans and never expire.
+          Top-up credits are available on all plans and never expire. Done-for-you builds: $99 consultation, $199 simple (24hrs), $399 medium (3 days), $799 complex (1 week).
         </p>
       </DocSection>
 

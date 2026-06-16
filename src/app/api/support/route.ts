@@ -13,11 +13,10 @@ You help users with:
 - Feature questions and best practices
 
 Pricing:
-- Free: $0 — 15 credits on signup + 3 daily (up to 50/month)
-- Builder: $18.99/month — 250 monthly credits + 10 daily (up to 400/month), rollover included
-- Team: $37.99/month — 500 monthly credits + 20 daily (up to 800/month), rollover included
-- Enterprise: Custom pricing
-- Top-ups: 50cr/$9.99, 150cr/$24.99, 500cr/$69.99 — never expire, available on all plans
+- Starter: $49/month — 500 credits/month, up to 3 AI Employees
+- Growth: $149/month — 2,000 credits/month, up to 10 AI Employees
+- Scale: $399/month — 6,000 credits/month, unlimited AI Employees
+- Top-up credits never expire, available on all plans
 
 Credit costs: App generation = 1 credit · Agent run = 5 credits · Flow run = 3 credits
 

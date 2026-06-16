@@ -295,8 +295,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.1)'}>
               <IconBolt />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Builder</div>
-                <div style={{ fontSize: 10, color: DIM }}>250 credits/month</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Starter</div>
+                <div style={{ fontSize: 10, color: DIM }}>500 credits/month</div>
               </div>
             </Link>
           </div>

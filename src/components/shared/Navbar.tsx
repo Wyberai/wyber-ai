@@ -12,14 +12,14 @@ const RESOURCES = [
   {
     heading: 'Learn',
     items: [
-      { label: 'Learning Paths', sub: 'Four tracks from zero to shipped', href: '/learn' },
+      { label: 'Learning Paths', sub: 'Five tracks from zero to shipped', href: '/learn' },
       { label: 'Documentation', sub: 'Guides, APIs, and references', href: '/docs' },
     ],
   },
   {
     heading: 'Compare',
     items: [
-      { label: 'vs Lovable', sub: 'Credits, pricing, four pillars', href: '/vs/lovable' },
+      { label: 'vs Lovable', sub: 'Credits, pricing, five pillars', href: '/vs/lovable' },
       { label: 'vs Bolt.new', sub: 'Fixed credits vs token billing', href: '/vs/bolt' },
       { label: 'vs v0 by Vercel', sub: 'Full app vs UI components', href: '/vs/v0' },
       { label: 'vs Replit', sub: 'No-code builder vs cloud IDE', href: '/vs/replit' },

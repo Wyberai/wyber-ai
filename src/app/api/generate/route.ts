@@ -45,9 +45,9 @@ DEPLOYMENT & EXPORT:
 - Free subdomain: yourapp.wyberai.app
 
 CREDITS & PLANS:
-- Free: 15 credits on signup + 3 daily credits (up to 50/month) — no card needed
-- Builder ($18.99/mo): 250 monthly + 10 daily = ~400 credits/month total
-- Team ($37.99/mo): 500 monthly + 20 daily = ~800 credits/month total
+- Starter ($49/mo): 500 credits/month, up to 3 AI Employees
+- Growth ($149/mo): 2,000 credits/month, up to 10 AI Employees
+- Scale ($399/mo): 6,000 credits/month, unlimited AI Employees
 - Prebuilt templates: 0 credits always
 - Standard generation (Sonnet): 1 credit per message
 - Premium generation (Opus 4.8): 2 credits — best quality for complex apps
@@ -55,8 +55,8 @@ CREDITS & PLANS:
 - Credit estimate shown before every generation — no surprises
 
 vs COMPETITORS:
-- Wyber: $18.99/mo ~400 credits | Lovable: $25/mo ~250 credits | Bolt: $25/mo (tokens) | Replit: $20/mo (cloud IDE)
-- Lovable top-ups expire in 12 months, Wyber top-ups never expire
+- Wyber covers 5 pillars (web, mobile, agents, workflows, AI employees) vs competitors covering 1-2
+- Lovable, Bolt, v0 build web apps only — no AI Employees, no workflows
 - v0 by Vercel generates UI components only — not full apps
 - Replit is a full cloud IDE — powerful for developers, complex for non-technical users
 

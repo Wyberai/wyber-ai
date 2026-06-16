@@ -728,9 +728,9 @@ export default function LearnPage() {
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700, color: '#10b981', marginBottom: 2 }}>{track.title} complete!</div>
                   <div style={{ fontSize: 13, color: 'var(--text2, #8b8b9a)' }}>
-                    {progress.completedTracks.length < 4
-                      ? `${4 - progress.completedTracks.length} track${4 - progress.completedTracks.length !== 1 ? 's' : ''} to go for your certificate.`
-                      : 'All four tracks done — you earned the certificate!'}
+                    {progress.completedTracks.length < 5
+                      ? `${5 - progress.completedTracks.length} track${5 - progress.completedTracks.length !== 1 ? 's' : ''} to go for your certificate.`
+                      : 'All five tracks done — you earned the certificate!'}
                   </div>
                 </div>
               </div>
@@ -765,7 +765,7 @@ export default function LearnPage() {
               fontSize: 'clamp(16px,2.5vw,22px)', fontWeight: 800, letterSpacing: '-0.02em',
               color: 'var(--text, #f0f0f5)', margin: '0 0 8px',
             }}>
-              Complete all four tracks to earn your certificate
+              Complete all five tracks to earn your certificate
             </h3>
             <p style={{ fontSize: 13, color: 'var(--text2, #8b8b9a)', margin: 0 }}>
               {TRACKS.filter(t => !progress.completedTracks.includes(t.id)).map(t => t.title).join(', ')} remaining

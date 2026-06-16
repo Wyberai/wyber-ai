@@ -36,10 +36,11 @@ const s = {
 }
 
 const PILLARS = [
-  { id: 'web',       label: 'Web Apps',    icon: '🖥', desc: 'Full-stack React app in seconds' },
-  { id: 'mobile',    label: 'Mobile Apps', icon: '📱', desc: 'React Native + Expo, iOS & Android' },
-  { id: 'agents',    label: 'AI Agents',   icon: '🤖', desc: 'Autonomous agents with 250+ tools' },
-  { id: 'workflows', label: 'Workflows',   icon: '⚡', desc: 'Multi-step automations, no code' },
+  { id: 'web',       label: 'Web Apps',      icon: '🖥', desc: 'Full-stack React app in seconds' },
+  { id: 'mobile',    label: 'Mobile Apps',   icon: '📱', desc: 'React Native + Expo, iOS & Android' },
+  { id: 'agents',    label: 'AI Agents',     icon: '🤖', desc: 'Autonomous agents with 250+ tools' },
+  { id: 'workflows', label: 'Workflows',     icon: '⚡', desc: 'Multi-step automations, no code' },
+  { id: 'employees', label: 'AI Employees',  icon: '👥', desc: '100 roles, runs on schedule' },
 ]
 
 export function VsPageTemplate({
@@ -127,13 +128,13 @@ export function VsPageTemplate({
           </p>
         </header>
 
-        {/* Four-pillar differentiator */}
-        <section aria-labelledby="four-pillars-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
-          <h2 id="four-pillars-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
-            The key difference: Wyber does four things, not one
+        {/* Five-pillar differentiator */}
+        <section aria-labelledby="five-pillars-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
+          <h2 id="five-pillars-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
+            The key difference: Wyber does five things, not one
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
-            {pillarNote} WyberAi is the only no-code platform that covers all four pillars from one workspace.
+            {pillarNote} WyberAi is the only no-code platform that covers all five pillars from one workspace.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
             {PILLARS.map(p => (

@@ -54,8 +54,9 @@ export default function Page() {
           <tbody>
             {[
               ['Free', '15 on signup', '3/day', '~50'],
-              ['Builder ($18.99/mo)', '250', '10/day', '~400'],
-              ['Team ($37.99/mo)', '500', '20/day', '~800'],
+              ['Starter ($49/mo)', '500', '—', '500'],
+              ['Growth ($149/mo)', '2,000', '—', '2,000'],
+              ['Scale ($399/mo)', '6,000', '—', '6,000'],
             ].map(([plan, base, daily, max], i) => (
               <tr key={plan} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
                 <td style={{ padding: '10px 12px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>{plan}</td>

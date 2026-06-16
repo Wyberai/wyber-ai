@@ -4,7 +4,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Competitors (2026) — Honest Comparisons',
-  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the four-pillar difference (web + mobile + agents + workflows) stack up.',
+  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the five-pillar difference (web + mobile + agents + workflows + AI employees) stack up.',
   alternates: { canonical: 'https://wyberai.com/vs' },
   openGraph: { title: 'WyberAi vs Competitors (2026)', description: 'Compare WyberAi to every major AI builder.', url: 'https://wyberai.com/vs' },
 }
@@ -24,7 +24,7 @@ const COMPARISONS = [
     url: 'lovable.dev',
     tag: 'AI web app builder',
     summary: 'WyberAi offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
-    wyberWins: ['More credits (~400 vs ~250/mo)', 'Lower Builder price ($18.99 vs $25)', 'Top-ups never expire', 'Mobile + agents + workflows'],
+    wyberWins: ['500 credits/month on Starter ($49)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees', '5 pillars vs Lovable\'s 1'],
   },
   {
     slug: 'bolt',
@@ -81,13 +81,13 @@ export default function VsIndex() {
             WyberAi vs Every Alternative
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
-            Honest, up-to-date comparisons. WyberAi is the only platform that covers all four pillars — web apps, mobile apps, AI agents, and workflows — from one workspace.
+            Honest, up-to-date comparisons. WyberAi is the only platform that covers all five pillars — web apps, mobile apps, AI agents, workflows, and AI employees — from one workspace.
           </p>
         </header>
 
-        {/* Four pillars banner */}
+        {/* Five pillars banner */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10, marginBottom: 56 }}>
-          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🤖','AI Agents','250+ tool integrations'],['⚡','Workflows','Multi-step automation']].map(([icon,label,sub])=>(
+          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🤖','AI Agents','250+ tool integrations'],['⚡','Workflows','Multi-step automation'],['👥','AI Employees','100 roles, runs on schedule']].map(([icon,label,sub])=>(
             <div key={label} style={{ background: s.card, border: `1px solid rgba(14,165,233,0.15)`, borderRadius: 12, padding: '16px 18px', textAlign: 'center' }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.sky, marginBottom: 2 }}>{label}</div>

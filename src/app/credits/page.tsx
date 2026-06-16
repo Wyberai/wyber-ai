@@ -37,9 +37,9 @@ export default function CreditsPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.02em' }}>Plans</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
           {[
-            { plan: 'Free', price: '$0', credits: 50, color: '#52525b' },
-            { plan: 'Builder', price: '$18.99', credits: 400, color: '#0EA5E9' },
-            { plan: 'Team', price: '$37.99', credits: 800, color: '#8b5cf6' },
+            { plan: 'Starter', price: '$49', credits: 500, color: '#0EA5E9' },
+            { plan: 'Growth', price: '$149', credits: 2000, color: '#8b5cf6' },
+            { plan: 'Scale', price: '$399', credits: 6000, color: '#10b981' },
           ].map(({ plan, price, credits, color }) => (
             <div key={plan} style={{ padding: 20, borderRadius: 12, background: '#111113', border: `1px solid ${color}30` }}>
               <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>{plan}</div>
@@ -53,7 +53,7 @@ export default function CreditsPage() {
 
       <section style={{ padding: 20, borderRadius: 12, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: '#0EA5E9' }}>How we compare</h3>
-        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>Lovable charges <strong style={{ color: '#fafafa' }}>$25/month</strong> for 100 credits. WyberAi Builder gives you <strong style={{ color: '#0EA5E9' }}>up to 400 credits for $18.99/month</strong> — unlimited projects, all features included.</p>
+        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>WyberAi Starter gives you <strong style={{ color: '#0EA5E9' }}>500 credits for $49/month</strong> — unlimited projects, all 5 product types, and up to 3 AI Employees included.</p>
         <p style={{ fontSize: 11, color: '#52525b', marginTop: 12 }}>Monthly credits roll over. Top-up credits never expire. Credits are non-refundable once used.</p>
       </section>
     </div>

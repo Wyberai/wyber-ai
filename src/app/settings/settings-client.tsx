@@ -22,8 +22,8 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 const PLANS = [
   { id: 'free',     name: 'Free',    price: '$0',     credits: 50,  color: '#52525b', features: ['50 credits/month', '3 projects', 'Community support'] },
-  { id: 'pro',      name: 'Builder', price: '$18.99', credits: 250, color: '#8b5cf6', features: ['250 credits/month', 'Unlimited projects', 'Email support', 'Custom domains'] },
-  { id: 'business', name: 'Team',    price: '$37.99', credits: 500, color: '#0EA5E9', features: ['Up to 800 credits/month', 'Everything in Builder', 'Priority support', 'Team collaboration'] },
+  { id: 'pro',      name: 'Starter', price: '$49',    credits: 500,  color: '#0EA5E9', features: ['500 credits/month', 'Up to 3 AI Employees', 'Unlimited projects', 'Email support', 'Custom domains'] },
+  { id: 'business', name: 'Growth',  price: '$149',   credits: 2000, color: '#8b5cf6', features: ['2,000 credits/month', 'Up to 10 AI Employees', 'Credit rollover', 'Priority support'] },
 ];
 
 interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }
