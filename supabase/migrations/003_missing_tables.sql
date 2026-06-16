@@ -133,21 +133,23 @@ $$;
 -- ── PREBUILT_APPS ────────────────────────────────────────────
 create table if not exists public.prebuilt_apps (
   id             uuid primary key default uuid_generate_v4(),
-  slug           text unique not null,
+  app_id         text,                        -- stable human slug (optional)
   name           text not null,
   description    text,
   category       text,
-  tags           text[] default '{}',
-  files          jsonb not null default '{}', -- { "App.tsx": "...", "index.css": "..." }
+  keywords       text[] default '{}',         -- for overlaps() matching in generate route
+  files          jsonb not null default '{}', -- { "src/App.tsx": "...", "src/index.css": "..." }
+  preview_color  text default '#0EA5E9',
   framework      text not null default 'react-vite',
-  is_published   boolean not null default true,
+  valid          boolean not null default true, -- false = template not ready to serve
   use_count      int  not null default 0,
-  created_at     timestamptz default now()
+  created_at     timestamptz default now(),
+  unique (name)                               -- seed-apps route uses onConflict: 'name'
 );
 
 alter table public.prebuilt_apps enable row level security;
 create policy "public read prebuilt_apps"
-  on public.prebuilt_apps for select using (is_published = true);
+  on public.prebuilt_apps for select using (valid = true);
 
 -- ── USER_SECRETS ─────────────────────────────────────────────
 -- Encrypted user-level secrets (API keys, tokens — not project-scoped)
