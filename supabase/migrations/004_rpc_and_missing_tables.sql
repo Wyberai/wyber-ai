@@ -6,6 +6,7 @@
 -- Called by /api/cron/daily-credits on a daily schedule.
 -- Awards each user their plan's daily_credits allowance,
 -- capped so total credits never exceed a reasonable ceiling.
+drop function if exists public.add_daily_credits();
 create or replace function public.add_daily_credits()
 returns jsonb language plpgsql security definer as $$
 declare

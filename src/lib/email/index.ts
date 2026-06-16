@@ -3,7 +3,7 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
 const FROM       = 'Wyber AI <hello@wyberai.com>'
-const FROM_NOTIF = 'Wyber AI <notifications@wyberai.com>'
+const FROM_NOTIF = 'Wyber AI <hello@wyberai.com>'
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
 
 // ── Design primitives ─────────────────────────────────────────────────────────
