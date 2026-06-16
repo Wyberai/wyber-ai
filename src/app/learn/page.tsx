@@ -47,6 +47,12 @@ const IconFlow = () => (
     <path d="M9 6a3 3 0 00-3 3v2"/>
   </svg>
 )
+const IconEmployee = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+    <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+  </svg>
+)
 const IconCheck = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="20 6 9 17 4 12"/>
@@ -251,6 +257,48 @@ const TRACKS: Track[] = [
       },
     ],
   },
+  {
+    id: 'employees',
+    title: 'AI Employees',
+    color: '#38bdf8',
+    accent: 'rgba(56,189,248,0.12)',
+    icon: <IconEmployee />,
+    tagline: 'Hire AI employees that run on a schedule and execute real tasks autonomously.',
+    steps: [
+      {
+        id: 'employees-0',
+        title: 'Browse the role catalog',
+        description: 'Explore 100 enterprise roles across Sales, Marketing, Engineering, Finance, and more. Each comes with a pre-built cognitive blueprint — vector DB scope, guardrail codes, and primary tool.',
+        prompt: null,
+        builderLink: '/employees',
+        builderLabel: 'Browse Role Catalog',
+      },
+      {
+        id: 'employees-1',
+        title: 'Hire your first employee',
+        description: 'Pick a role, customize the instructions, and connect your tools via Composio. Your AI Employee gets its own system prompt derived from the cognitive blueprint.',
+        prompt: 'I want to hire a Lead Qualification Specialist. They should check our HubSpot pipeline daily, score leads 1–10 based on company size and intent signals, and send a prioritized list to Slack every morning at 8 AM.',
+        builderLink: '/ai-employees/new',
+        builderLabel: 'Hire an Employee',
+      },
+      {
+        id: 'employees-2',
+        title: 'Set a schedule',
+        description: 'Configure when your AI Employee runs — hourly, daily, weekly, or on a webhook trigger. The employee autonomously executes up to 15 tool calls per run.',
+        prompt: 'Set the Lead Qualification Specialist to run at 7:30 AM Monday through Friday. Also allow manual runs from the dashboard.',
+        builderLink: '/ai-employees',
+        builderLabel: 'Open AI Employees',
+      },
+      {
+        id: 'employees-3',
+        title: 'Review the run digest',
+        description: 'After each run, your employee generates a structured digest: actions taken, tool calls made, and outcomes. Review it in the dashboard or receive it via Slack.',
+        prompt: null,
+        builderLink: '/ai-employees',
+        builderLabel: 'Open AI Employees → Runs',
+      },
+    ],
+  },
 ]
 
 // ── Progress helpers ──────────────────────────────────────────────────────────
@@ -305,7 +353,7 @@ function CopyButton({ text }: { text: string }) {
 
 // ── Certificate card ──────────────────────────────────────────────────────────
 function CertificateCard({ name, date }: { name: string; date: string }) {
-  const shareText = encodeURIComponent(`I just earned my Wyber Certified — All Four Pillars certificate 🎓\n\nI can now build web apps, mobile apps, AI agents, and workflows in plain English with @wyberai.\n\nwww.wyberai.com/learn`)
+  const shareText = encodeURIComponent(`I just earned my Wyber Certified — All Five Pillars certificate 🎓\n\nI can now build web apps, mobile apps, AI agents, workflows, and AI employees in plain English with @wyberai.\n\nwww.wyberai.com/learn`)
   const twitterUrl = `https://twitter.com/intent/tweet?text=${shareText}`
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://wyberai.com/learn')}&summary=${shareText}`
   const ogUrl = `/api/og/certificate?name=${encodeURIComponent(name)}&date=${encodeURIComponent(date)}`
@@ -338,8 +386,8 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
       }}>
         Wyber Certified
       </h2>
-      <div style={{ fontSize: 14, color: 'var(--text2, #8b8b9a)', marginBottom: 4 }}>All Four Pillars</div>
-      <div style={{ fontSize: 13, color: 'var(--text3, #52526a)', marginBottom: 6 }}>Web Apps · Mobile · AI Agents · Workflows</div>
+      <div style={{ fontSize: 14, color: 'var(--text2, #8b8b9a)', marginBottom: 4 }}>All Five Pillars</div>
+      <div style={{ fontSize: 13, color: 'var(--text3, #52526a)', marginBottom: 6 }}>Web Apps · Mobile · AI Agents · Workflows · AI Employees</div>
 
       <div style={{ margin: '20px auto', padding: '12px 24px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', display: 'inline-block' }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text, #f0f0f5)' }}>{name}</div>
@@ -348,7 +396,7 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
 
       {/* Stars */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginBottom: 24, color: '#f59e0b' }}>
-        {[0,1,2,3].map(i => <IconStar key={i} />)}
+        {[0,1,2,3,4].map(i => <IconStar key={i} />)}
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
@@ -438,7 +486,7 @@ export default function LearnPage() {
         ? [...new Set([...prev.completedTracks, track.id])]
         : prev.completedTracks.filter(t => t !== track.id || !already)
 
-      // Check if ALL four tracks are complete
+      // Check if ALL five tracks are complete
       const allDone = TRACKS.every(t => completedTracks.includes(t.id))
       const certificateAt = allDone && !prev.certificateAt
         ? new Date().toISOString()
@@ -481,7 +529,7 @@ export default function LearnPage() {
             Learn to build with Wyber
           </h1>
           <p style={{ fontSize: 'clamp(14px,2vw,18px)', color: 'var(--text2, #8b8b9a)', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
-            Four tracks. Copy a prompt, open the builder, mark it done. Finish all four and earn your Wyber Certified certificate.
+            Five tracks. Copy a prompt, open the builder, mark it done. Finish all five and earn your Wyber Certified certificate.
           </p>
 
           {/* Overall progress bar */}

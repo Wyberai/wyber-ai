@@ -74,8 +74,8 @@ export async function GET(req: NextRequest) {
           <div style={{ fontSize: 48, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, textAlign: 'center', marginBottom: 6 }}>
             Wyber Certified
           </div>
-          <div style={{ fontSize: 20, color: '#8b8b9a', marginBottom: 4 }}>All Four Pillars</div>
-          <div style={{ fontSize: 14, color: '#52526a', marginBottom: 32 }}>Web Apps · Mobile · AI Agents · Workflows</div>
+          <div style={{ fontSize: 20, color: '#8b8b9a', marginBottom: 4 }}>All Five Pillars</div>
+          <div style={{ fontSize: 14, color: '#52526a', marginBottom: 32 }}>Web Apps · Mobile · AI Agents · Workflows · AI Employees</div>
 
           {/* Name box */}
           <div style={{
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
 
           {/* Stars */}
           <div style={{ display: 'flex', gap: 8, color: '#f59e0b', fontSize: 24 }}>
-            <span>★</span><span>★</span><span>★</span><span>★</span>
+            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
           </div>
         </div>
 
