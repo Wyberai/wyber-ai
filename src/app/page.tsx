@@ -5,20 +5,12 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 
 const BRAND = '#0EA5E9';
 
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
+// ─── Icons ─────────────────────────────────────────────────────────────────────
 const IcoCheck = ({ color = '#22c55e' }: { color?: string }) => (
   <svg width="10" height="10" viewBox="0 0 12 12" style={{ flexShrink: 0, marginTop: 1 }}>
     <path d="M2 6l3 3 5-5" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
   </svg>
 );
-const IcoMonitor  = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
-const IcoPhone    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
-const IcoCpu      = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>;
-const IcoZap      = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
-const IcoPeople   = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>;
-
-// ─── Window chrome ────────────────────────────────────────────────────────────
 
 function WindowChrome({ title }: { title: string }) {
   return (
@@ -31,75 +23,16 @@ function WindowChrome({ title }: { title: string }) {
   );
 }
 
-// ─── AI Employee mockup (hero) ────────────────────────────────────────────────
-
-function EmployeeMockup() {
-  return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: 18, fontSize: 11, fontFamily: "'Space Grotesk', sans-serif" }}>
-      <WindowChrome title="WyberAi — AI Employees" />
-
-      {/* Employee card */}
-      <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 10, padding: 12, marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <div style={{ fontSize: 22 }}>📧</div>
-          <div>
-            <div style={{ fontWeight: 700, color: '#fafafa', fontSize: 12 }}>Inbox Manager</div>
-            <div style={{ color: '#71717a', fontSize: 10 }}>AI SDR · runs daily at 09:00</div>
-          </div>
-          <div style={{ marginLeft: 'auto', background: '#22c55e', color: '#000', fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20 }}>ACTIVE</div>
-        </div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {['GMAIL', 'HUBSPOT', 'SLACK'].map(t => (
-            <span key={t} style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, background: 'rgba(14,165,233,0.1)', color: BRAND, border: '1px solid rgba(14,165,233,0.2)' }}>{t}</span>
-          ))}
-        </div>
-      </div>
-
-      {/* Live run log */}
-      <div style={{ background: '#050508', borderRadius: 8, padding: 10, fontFamily: 'monospace' }}>
-        <div style={{ color: '#52525b', fontSize: 9, letterSpacing: '0.05em', marginBottom: 6 }}>TODAY'S RUN — 09:00 UTC</div>
-        {[
-          { t: '09:00:01', msg: 'Fetched 31 emails from Gmail inbox', c: '#a1a1aa' },
-          { t: '09:00:03', msg: 'Identified 7 leads mentioning "pricing"', c: '#22c55e' },
-          { t: '09:00:05', msg: 'Drafted personalised replies × 7', c: '#a1a1aa' },
-          { t: '09:00:08', msg: 'Logged all leads to HubSpot CRM', c: BRAND },
-          { t: '09:00:09', msg: 'Posted summary to #sales-alerts', c: '#a855f7' },
-        ].map((l, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 4, minWidth: 0 }}>
-            <span style={{ color: '#3f3f46', flexShrink: 0 }}>{l.t}</span>
-            <span style={{ color: l.c, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{l.msg}</span>
-          </div>
-        ))}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8 }}>
-          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', animation: 'pulse 1.5s infinite' }} />
-          <span style={{ color: '#22c55e', fontSize: 10 }}>7 leads qualified · digest sent · 0 errors</span>
-        </div>
-      </div>
-
-      {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 10 }}>
-        {[{ label: 'Leads today', value: '7', color: '#22c55e' }, { label: 'Emails sent', value: '7', color: BRAND }, { label: 'CRM entries', value: '7', color: '#a855f7' }].map(k => (
-          <div key={k.label} style={{ background: '#0d0d11', borderRadius: 7, padding: '8px 10px', textAlign: 'center' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, color: k.color, fontFamily: "'Sora', sans-serif" }}>{k.value}</div>
-            <div style={{ fontSize: 9, color: '#52525b', marginTop: 2 }}>{k.label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Builder mockup ───────────────────────────────────────────────────────────
-
-function BuilderMockup() {
+// ─── Per-pillar mockups ─────────────────────────────────────────────────────────
+function WebAppMockup() {
   return (
     <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'monospace', fontSize: 11 }}>
       <WindowChrome title="wyberai.com — Live Build" />
       {[
-        { done: true,  active: false, label: 'Prompt received',          detail: '"Build a CRM with pipeline view"' },
-        { done: true,  active: false, label: 'Generating React code',    detail: '14 files · Supabase schema' },
-        { done: true,  active: false, label: 'Pushing to GitHub',        detail: 'wyberai/crm-abc123' },
-        { done: false, active: true,  label: 'Deployed to Vercel',       detail: 'crm-abc123.vercel.app' },
+        { done: true,  active: false, label: 'Prompt received',       detail: '"Build a CRM with pipeline view"' },
+        { done: true,  active: false, label: 'Generating React code', detail: '14 files · Supabase schema' },
+        { done: true,  active: false, label: 'Pushing to GitHub',     detail: 'wyberai/crm-abc123' },
+        { done: false, active: true,  label: 'Deployed to Vercel',    detail: 'crm-abc123.vercel.app' },
       ].map((s, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
           <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.active ? BRAND : s.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${s.active ? BRAND : s.done ? '#22c55e' : 'rgba(255,255,255,0.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
@@ -116,40 +49,195 @@ function BuilderMockup() {
   );
 }
 
-// ─── Product feature card ─────────────────────────────────────────────────────
-
-function ProductCard({ eyebrow, heading, body, mockup, ctaLabel, ctaHref, highlight = false, Icon }: {
-  eyebrow: string; heading: string; body: string; mockup: React.ReactNode;
-  ctaLabel: string; ctaHref: string; highlight?: boolean; Icon: React.FC;
-}) {
+function MobileMockup() {
   return (
-    <div style={{ background: '#111113', border: `1px solid ${highlight ? 'rgba(14,165,233,0.18)' : 'rgba(255,255,255,0.06)'}`, borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, fontWeight: 800, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>
-          <Icon />{eyebrow}
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'monospace', fontSize: 11 }}>
+      <WindowChrome title="wyberai.com — Mobile Build" />
+      {[
+        { done: true,  active: false, label: 'Scaffold Expo project',   detail: 'TypeScript · React Native' },
+        { done: true,  active: false, label: 'Generate 9 screens',       detail: 'Auth, home, profile, cart…' },
+        { done: false, active: true,  label: 'Live preview ready',       detail: 'scan QR to open on device' },
+        { done: false, active: false, label: 'Export for App Store',     detail: 'EAS Build · IPA / APK' },
+      ].map((s, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.active ? '#f97316' : s.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${s.active ? '#f97316' : s.done ? '#22c55e' : 'rgba(255,255,255,0.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+            {s.done && !s.active && <IcoCheck />}
+            {s.active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }} />}
+          </div>
+          <div>
+            <div style={{ color: s.active ? '#fafafa' : s.done ? '#a1a1aa' : '#52525b', fontWeight: s.active ? 700 : 500, fontSize: 11 }}>{s.label}</div>
+            <div style={{ color: '#3f3f46', fontSize: 10, marginTop: 2 }}>{s.detail}</div>
+          </div>
         </div>
-        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8 }}>{heading}</div>
-        <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.7 }}>{body}</div>
-      </div>
-      {mockup}
-      <Link href={ctaHref} style={{ display: 'block', textAlign: 'center', padding: '9px 0', borderRadius: 8, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.08)', color: BRAND, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
-        {ctaLabel}
-      </Link>
+      ))}
     </div>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+function AgentMockup() {
+  return (
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+      <WindowChrome title="wyberai.com — AI Agents" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {[
+          { emoji: '📧', name: 'Lead Qualifier',   status: 'Running', color: '#22c55e', detail: 'Scanned 142 emails · 9 leads found' },
+          { emoji: '📊', name: 'Report Builder',   status: 'Done',    color: BRAND,    detail: 'Monthly PDF sent to Slack' },
+          { emoji: '🔍', name: 'SEO Auditor',      status: 'Queued',  color: '#71717a', detail: 'Starts in 2 min' },
+        ].map(a => (
+          <div key={a.name} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 18 }}>{a.emoji}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 700, color: '#fafafa', fontSize: 11 }}>{a.name}</div>
+              <div style={{ color: '#52525b', fontSize: 10, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.detail}</div>
+            </div>
+            <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: a.color === '#71717a' ? 'rgba(255,255,255,0.05)' : `${a.color}15`, color: a.color, border: `1px solid ${a.color}30`, flexShrink: 0 }}>{a.status}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
+function WorkflowMockup() {
+  return (
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+      <WindowChrome title="wyberai.com — Workflows" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {[
+          { label: 'Trigger', detail: 'New form submission',        color: '#a855f7', icon: '⚡' },
+          { label: 'AI Step', detail: 'Classify lead quality',      color: BRAND,    icon: '🤖' },
+          { label: 'Branch',  detail: 'Score ≥ 7 → notify sales',  color: '#22c55e', icon: '🔀' },
+          { label: 'Action',  detail: 'Post to #leads in Slack',    color: '#f59e0b', icon: '📢' },
+        ].map((n, i, arr) => (
+          <div key={n.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'rgba(255,255,255,0.03)', border: `1px solid ${n.color}22`, borderRadius: 8, width: '100%' }}>
+              <span>{n.icon}</span>
+              <div>
+                <span style={{ fontSize: 9, fontWeight: 700, color: n.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{n.label}</span>
+                <div style={{ color: '#a1a1aa', fontSize: 10 }}>{n.detail}</div>
+              </div>
+            </div>
+            {i < arr.length - 1 && <div style={{ width: 1, height: 12, background: 'rgba(255,255,255,0.1)', marginLeft: 22 }} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EmployeeMockup() {
+  return (
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+      <WindowChrome title="wyberai.com — AI Employees" />
+      <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 9, padding: 11, marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 7 }}>
+          <div style={{ fontSize: 20 }}>📧</div>
+          <div>
+            <div style={{ fontWeight: 700, color: '#fafafa', fontSize: 11 }}>Email Marketing & Lifecycle Specialist</div>
+            <div style={{ color: '#71717a', fontSize: 9 }}>Marketing · runs daily at 09:00</div>
+          </div>
+          <div style={{ marginLeft: 'auto', background: '#22c55e', color: '#000', fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20 }}>ACTIVE</div>
+        </div>
+        <div style={{ display: 'flex', gap: 5 }}>
+          {['VDB', 'ERR', 'FN'].map(t => (
+            <span key={t} style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(14,165,233,0.1)', color: BRAND, border: '1px solid rgba(14,165,233,0.2)' }}>{t}</span>
+          ))}
+        </div>
+      </div>
+      <div style={{ background: '#050508', borderRadius: 7, padding: 9, fontFamily: 'monospace' }}>
+        <div style={{ color: '#52525b', fontSize: 9, marginBottom: 5 }}>LAST RUN — 09:00 UTC</div>
+        {[
+          { t: '09:00:01', msg: 'Fetched deliverability metrics',    c: '#a1a1aa' },
+          { t: '09:00:04', msg: 'Triggered segmentation for 847 users', c: '#22c55e' },
+          { t: '09:00:07', msg: 'BOUNCE_RATE: 1.2% — within limits',  c: BRAND },
+        ].map((l, i) => (
+          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 3, minWidth: 0 }}>
+            <span style={{ color: '#3f3f46', flexShrink: 0 }}>{l.t}</span>
+            <span style={{ color: l.c, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.msg}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Pillar config ──────────────────────────────────────────────────────────────
+const PILLARS = [
+  {
+    key: 'web',
+    label: '🌐 Web Apps',
+    eyebrow: 'Web Apps',
+    accent: BRAND,
+    heading: 'Describe it.\nIt builds.',
+    body: 'Type what you want. Wyber generates production-ready React code, provisions Supabase, and deploys to Vercel — in under 30 seconds.',
+    bullets: ['Full-stack React + Supabase', 'Auto-deploy to Vercel', 'GitHub push on every save'],
+    cta: 'Build a web app →',
+    href: '/dashboard?new=app',
+    mockup: <WebAppMockup />,
+  },
+  {
+    key: 'mobile',
+    label: '📱 Mobile Apps',
+    eyebrow: 'Mobile Apps',
+    accent: '#f97316',
+    heading: 'Describe it.\nShip to iOS.',
+    body: 'Generate a real React Native app with Expo, get a live preview, and export a ready-to-publish project — one prompt. No Xcode knowledge required.',
+    bullets: ['React Native + Expo', 'Live QR preview on device', 'Export IPA / APK via EAS Build'],
+    cta: 'Build a mobile app →',
+    href: '/dashboard?new=mobile',
+    mockup: <MobileMockup />,
+  },
+  {
+    key: 'agents',
+    label: '⚡ AI Agents',
+    eyebrow: 'AI Agents',
+    accent: '#a855f7',
+    heading: 'Pick one.\nIt executes.',
+    body: '5,000 pre-built agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included.',
+    bullets: ['5,000 pre-built agents', 'Real integrations — not mock APIs', 'Full run audit log'],
+    cta: 'Browse agents →',
+    href: '/agents',
+    mockup: <AgentMockup />,
+  },
+  {
+    key: 'workflows',
+    label: '🔀 Workflows',
+    eyebrow: 'Workflows',
+    accent: '#22c55e',
+    heading: 'Draw it.\nIt runs.',
+    body: 'Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code, no YAML.',
+    bullets: ['Visual drag-and-drop builder', 'AI steps + conditional branches', 'Scheduled or event-triggered'],
+    cta: 'Build a workflow →',
+    href: '/flows',
+    mockup: <WorkflowMockup />,
+  },
+  {
+    key: 'employees',
+    label: '🤖 AI Employees',
+    eyebrow: 'AI Employees',
+    accent: '#38bdf8',
+    heading: 'Hire one.\nIt runs on autopilot.',
+    body: '100 enterprise roles with cognitive blueprint architecture — each ships with a vector DB scope, error trace codes, and primary executable function.',
+    bullets: ['100 enterprise role templates', 'Cognitive blueprint per role', 'KPI digest after every run'],
+    cta: 'Browse 100 roles →',
+    href: '/employees',
+    mockup: <EmployeeMockup />,
+  },
+] as const;
+
+// ─── Page ───────────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activePillar, setActivePillar] = useState(0);
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
       createClient().auth.getUser().then(({ data }) => setUser(data.user));
     });
   }, []);
+
+  const pillar = PILLARS[activePillar];
 
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif", overflowX: 'hidden' }}>
@@ -160,8 +248,8 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['AI Employees', '/employees'], ['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
-            <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
+          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+            <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
               {l}
@@ -187,7 +275,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['AI Employees', '/employees'], ['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['Agents', '/agents'], ['Workflows', '/workflows'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -202,9 +290,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── HERO — AI Employees first ───────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '92vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(60px,10vw,120px) clamp(20px,4vw,48px)', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 50% at 20% 40%, rgba(14,165,233,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 70% at 80% 60%, rgba(14,165,233,0.07) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 50% 90%, rgba(14,165,233,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(60px,10vw,120px) clamp(20px,4vw,48px)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 50% at 20% 40%, rgba(14,165,233,0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 70% at 80% 60%, rgba(168,85,247,0.07) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 50% 90%, rgba(34,197,94,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
 
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 860 }}>
@@ -214,34 +302,27 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
-            Build. Ship. Automate.<br />
-            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Hire AI to run it all.
+            Build apps. Run agents.<br />
+            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              Automate everything.
             </span>
           </h1>
 
-          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 660, margin: '0 auto 14px' }}>
-            Web apps, mobile apps, AI agents, workflows — and AI employees that qualify leads, run campaigns and manage ops while you sleep. One prompt. No code. No setup.
+          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 14px' }}>
+            Web apps, mobile apps, AI agents, workflows, and AI employees — all from one prompt. No engineers, no setup, no code.
           </p>
 
           <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
-            Starts at $49/mo · 30-minute setup · No engineers needed
+            Starts at $49/mo · 30-minute setup · Cancel anytime
           </p>
 
-          {/* Product pills */}
+          {/* Five product pills */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
-            {[
-              { label: '🤖 AI Employees', href: '/employees' },
-              { label: '🌐 Web Apps', href: '/gallery' },
-              { label: '📱 Mobile Apps', href: '/templates/mobile' },
-              { label: '⚡ AI Agents', href: '/agents' },
-              { label: '🔀 Workflows', href: '/workflows' },
-            ].map(p => (
-              <Link key={p.label} href={p.href} style={{ padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 12, fontWeight: 600, textDecoration: 'none', transition: 'all 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.35)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
+            {PILLARS.map((p, i) => (
+              <button key={p.key} onClick={() => { setActivePillar(i); document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); }}
+                style={{ padding: '7px 14px', borderRadius: 20, border: `1px solid ${activePillar === i ? p.accent + '55' : 'rgba(255,255,255,0.1)'}`, background: activePillar === i ? p.accent + '15' : 'rgba(255,255,255,0.04)', color: activePillar === i ? p.accent : '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif" }}>
                 {p.label}
-              </Link>
+              </button>
             ))}
           </div>
 
@@ -254,12 +335,12 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Stats */}
+          {/* Stats — balanced across products */}
           <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { value: '100', label: 'AI Employee roles' },
-              { value: '5,000', label: 'AI Agents' },
               { value: '118', label: 'App templates' },
+              { value: '5,000', label: 'AI Agents' },
+              { value: '100', label: 'AI Employee roles' },
               { value: '30s', label: 'Avg build time' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
@@ -271,120 +352,150 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── AI Employees showcase ─────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* ── FIVE PILLARS SHOWCASE (tab switcher) ────────────────────────────── */}
+      <section id="showcase" style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+
+          {/* Tab bar */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 40, overflowX: 'auto', padding: '0 0 4px' }}>
+            {PILLARS.map((p, i) => (
+              <button key={p.key} onClick={() => setActivePillar(i)}
+                style={{ padding: '9px 18px', borderRadius: 9, border: `1px solid ${activePillar === i ? p.accent + '44' : 'rgba(255,255,255,0.07)'}`, background: activePillar === i ? p.accent + '12' : 'transparent', color: activePillar === i ? p.accent : '#52525b', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif", whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Active pillar content */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px,100%), 1fr))', gap: 40, alignItems: 'center' }}>
-            {/* Left: copy + steps */}
+            {/* Copy */}
             <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 18 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
-                AI Employees · 100 roles
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: pillar.accent + '15', border: `1px solid ${pillar.accent}33`, fontSize: 11, fontWeight: 700, color: pillar.accent, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 18 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: pillar.accent, animation: 'pulse 2s infinite' }} />
+                {pillar.eyebrow}
               </div>
-              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16, color: '#fafafa' }}>
-                Hire AI that works<br />
-                <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>while you sleep.</span>
+              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16, color: '#fafafa', whiteSpace: 'pre-line' }}>
+                {pillar.heading}
               </h2>
-              <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.7, marginBottom: 28, maxWidth: 440 }}>
-                Each AI Employee connects to your tools, follows your process, and emails you a KPI digest after every run — no babysitting required.
+              <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.7, marginBottom: 24, maxWidth: 440 }}>
+                {pillar.body}
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
-                {[
-                  { icon: '🎯', title: 'Browse 100 templates', body: 'Sales, marketing, ops, finance — pick a role and customise in plain English.' },
-                  { icon: '🔗', title: 'Connect your tools', body: 'Gmail, Slack, HubSpot, Notion — linked in one click. Real integrations.' },
-                  { icon: '📊', title: 'Get a digest every run', body: 'Scheduled runs deliver a KPI report straight to your inbox.' },
-                ].map(s => (
-                  <div key={s.title} style={{ display: 'flex', gap: 12, padding: '14px 16px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 11 }}>
-                    <span style={{ fontSize: 20, flexShrink: 0 }}>{s.icon}</span>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', marginBottom: 3 }}>{s.title}</div>
-                      <div style={{ fontSize: 12, color: '#71717a' }}>{s.body}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+                {pillar.bullets.map(b => (
+                  <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: pillar.accent + '15', border: `1px solid ${pillar.accent}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <IcoCheck color={pillar.accent} />
                     </div>
+                    <span style={{ fontSize: 13, color: '#a1a1aa' }}>{b}</span>
                   </div>
                 ))}
               </div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                <Link href="/employees" style={{ padding: '12px 24px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
-                  Browse 100 roles →
-                </Link>
-                <Link href="/ai-employees/new" style={{ padding: '12px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, fontWeight: 500, textDecoration: 'none' }}>
-                  Hire now
-                </Link>
-              </div>
+              <Link href={pillar.href} style={{ display: 'inline-block', padding: '12px 24px', borderRadius: 10, background: pillar.accent, color: pillar.key === 'mobile' ? '#fff' : '#000', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 4px 20px ${pillar.accent}33` }}>
+                {pillar.cta}
+              </Link>
             </div>
-            {/* Right: live mockup */}
-            <div>
-              <EmployeeMockup />
-            </div>
+            {/* Mockup */}
+            <div>{pillar.mockup}</div>
           </div>
         </div>
       </section>
 
-      {/* ── Also build: the other four products ─────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Build &amp; automate too</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
-              Web apps. Mobile. Agents. Workflows.
-            </h2>
-            <p style={{ fontSize: 15, color: '#71717a', marginTop: 14, maxWidth: 500, margin: '14px auto 0' }}>
-              The same platform that runs your AI employees also builds your apps and automates your ops. One credit balance works across all five products.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: 20 }}>
-            <ProductCard eyebrow="Web Apps" heading="Describe it. It builds." body="Type what you want. Wyber generates production-ready React code, provisions Supabase, and deploys to Vercel — in under 30 seconds." mockup={<BuilderMockup />} ctaLabel="Build a web app →" ctaHref="/dashboard?new=app" highlight Icon={IcoMonitor} />
-            <ProductCard eyebrow="Mobile Apps" heading="Describe it. Ship to iOS." body="Generate a real React Native app with Expo, get a live preview, and export a ready-to-publish project — one prompt." mockup={<div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20, textAlign: 'center', fontSize: 48 }}>📱</div>} ctaLabel="Build a mobile app →" ctaHref="/dashboard?new=mobile" Icon={IcoPhone} />
-            <ProductCard eyebrow="AI Agents" heading="Pick one. It executes." body="5,000 pre-built agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included." mockup={<div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20, textAlign: 'center', fontSize: 48 }}>⚡</div>} ctaLabel="Browse agents →" ctaHref="/agents" Icon={IcoCpu} />
-            <ProductCard eyebrow="Workflows" heading="Draw it. It runs." body="Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code." mockup={<div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 20, textAlign: 'center', fontSize: 48 }}>🔀</div>} ctaLabel="Build a workflow →" ctaHref="/flows" Icon={IcoZap} />
+      {/* ── Quick-link grid ────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            {PILLARS.map((p) => (
+              <Link key={p.key} href={p.href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 10, background: '#111113', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', transition: 'all 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = p.accent + '44'; (e.currentTarget as HTMLElement).style.background = p.accent + '08' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.background = '#111113' }}>
+                <span style={{ fontSize: 22 }}>{p.label.split(' ')[0]}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{p.eyebrow}</div>
+                  <div style={{ fontSize: 11, color: p.accent, fontWeight: 600 }}>{p.cta.replace(' →', '')}</div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Pricing preview ──────────────────────────────────────────────────── */}
+      {/* ── Pricing preview ─────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pricing</div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14 }}>
             One subscription. Five products.
           </h2>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 480, margin: '0 auto 44px' }}>Credits work across every product — build an app, run an agent, or hire an AI employee from the same balance.</p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px,100%), 1fr))', gap: 16, marginBottom: 28 }}>
+          {/* Plans — forced 3-column row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 48 }}>
             {[
-              { name: 'Starter', price: '$49', period: '/mo', employees: '3 AI Employees', credits: '500 credits', color: BRAND },
-              { name: 'Growth', price: '$149', period: '/mo', employees: '10 AI Employees', credits: '2,000 credits', color: BRAND, highlight: true },
-              { name: 'Scale', price: '$399', period: '/mo', employees: 'Unlimited employees', credits: '6,000 credits', color: '#8b5cf6' },
+              { name: 'Starter', price: '$49',  period: '/mo', seats: '3 AI Employees',        credits: '500 credits',   color: BRAND,      highlight: false },
+              { name: 'Growth',  price: '$149', period: '/mo', seats: '10 AI Employees',        credits: '2,000 credits', color: BRAND,      highlight: true  },
+              { name: 'Scale',   price: '$399', period: '/mo', seats: 'Unlimited AI Employees', credits: '6,000 credits', color: '#8b5cf6',  highlight: false },
             ].map(p => (
-              <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(160deg,#0d1a26,#0d1218)' : '#111113', border: `1px solid ${p.highlight ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '22px 20px', position: 'relative' }}>
-                {p.highlight && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: BRAND, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>MOST POPULAR</div>}
+              <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(160deg,#0d1a26,#0d1218)' : '#111113', border: `1px solid ${p.highlight ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '24px 20px', position: 'relative' }}>
+                {p.highlight && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: BRAND, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>MOST POPULAR</div>}
                 <div style={{ fontSize: 12, fontWeight: 700, color: p.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{p.name}</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 14 }}>
-                  <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 34, fontWeight: 800, color: '#fafafa' }}>{p.price}</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, justifyContent: 'center', marginBottom: 14 }}>
+                  <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, color: '#fafafa' }}>{p.price}</span>
                   <span style={{ fontSize: 12, color: '#52525b' }}>{p.period}</span>
                 </div>
-                <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 4 }}>{p.employees}</div>
+                <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 4 }}>{p.seats}</div>
                 <div style={{ fontSize: 12, color: '#52525b' }}>{p.credits}</div>
               </div>
             ))}
           </div>
-          <Link href="/pricing" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
+
+          {/* Done-for-you builds */}
+          <div style={{ textAlign: 'left', background: '#0d0d10', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '28px 28px 24px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#f97316', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Done-for-you</div>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 800, color: '#fafafa', marginBottom: 4 }}>We build it for you</div>
+                <div style={{ fontSize: 13, color: '#71717a', maxWidth: 420 }}>Prefer to hand it off? Book a $99 scoping call — the fee is credited toward your build.</div>
+              </div>
+              <a href="/setup-call" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: '#f97316', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
+                Book $99 consultation →
+              </a>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              {[
+                { name: 'Simple Build', price: '$199', delivery: '24 hours',        color: '#22c55e', icon: '⚡', desc: 'Landing pages, portfolios, tools. No auth or database.' },
+                { name: 'Medium Build', price: '$399', delivery: '3 working days',  color: BRAND,     icon: '🔧', desc: 'SaaS MVP with auth + database. 3–6 screens, real accounts.', badge: 'Most common' },
+                { name: 'Complex Build', price: '$799', delivery: '1 week',         color: '#8b5cf6', icon: '🏗️', desc: 'Full SaaS with payments, multi-roles, integrations.' },
+              ].map(b => (
+                <div key={b.name} style={{ background: '#111113', border: `1px solid rgba(255,255,255,0.07)`, borderRadius: 12, padding: '16px', position: 'relative' }}>
+                  {(b as any).badge && <div style={{ position: 'absolute', top: -10, left: 14, background: BRAND, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20, letterSpacing: '0.06em' }}>{(b as any).badge}</div>}
+                  <div style={{ fontSize: 18, marginBottom: 8 }}>{b.icon}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: b.color, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>{b.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
+                    <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, color: '#fafafa' }}>{b.price}</span>
+                    <span style={{ fontSize: 11, color: '#52525b' }}>{b.delivery}</span>
+                  </div>
+                  <div style={{ fontSize: 11.5, color: '#71717a', lineHeight: 1.5 }}>{b.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Link href="/pricing" style={{ display: 'inline-block', marginTop: 16, padding: '12px 28px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
             See full pricing →
           </Link>
         </div>
       </section>
 
-      {/* ── Final CTA ────────────────────────────────────────────────────────── */}
+      {/* ── Final CTA ───────────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(80px,10vw,140px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 600, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,60px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.05 }}>
             Build it. Automate it.<br />
-            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Ship it today.</span>
+            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Ship it today.</span>
           </h2>
           <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 32px' }}>
-            Your first web app goes live in 30 seconds. Your first AI agent runs in one click. No engineers needed.
+            Your first app goes live in 30 seconds. Your first agent runs in one click. No engineers, no setup.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ display: 'inline-block', padding: '16px 40px', borderRadius: 12, background: BRAND, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(14,165,233,0.35)' }}>
