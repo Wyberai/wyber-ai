@@ -67,9 +67,10 @@ create table if not exists public.project_connectors (
   api_key        text,            -- encrypted primary credential (e.g. Supabase anon key)
   config         jsonb not null default '{}', -- additional config (e.g. { url: '...' })
   connection_id  text,            -- Composio connection ID if applicable
+  connected_at   timestamptz,
   created_at     timestamptz default now(),
   updated_at     timestamptz default now(),
-  unique (user_id, project_id, service)
+  unique (project_id, service)       -- matches upsert onConflict in connectors route
 );
 
 alter table public.project_connectors enable row level security;
@@ -149,16 +150,15 @@ create policy "public read prebuilt_apps"
   on public.prebuilt_apps for select using (is_published = true);
 
 -- ── USER_SECRETS ─────────────────────────────────────────────
--- Encrypted env vars per project (secret — never sent to client)
+-- Encrypted user-level secrets (API keys, tokens — not project-scoped)
 create table if not exists public.user_secrets (
   id              uuid primary key default uuid_generate_v4(),
   user_id         uuid not null references public.profiles(id) on delete cascade,
-  project_id      uuid references public.projects(id) on delete cascade,
-  key             text not null,
-  value_encrypted text not null,    -- AES-256 encrypted at app layer
+  name            text not null,          -- normalized UPPER_SNAKE_CASE key
+  value_encrypted text not null,          -- AES-256-GCM encrypted at app layer
   created_at      timestamptz default now(),
   updated_at      timestamptz default now(),
-  unique (user_id, project_id, key)
+  unique (user_id, name)
 );
 
 alter table public.user_secrets enable row level security;
@@ -167,16 +167,19 @@ create policy "users manage own user_secrets"
   using (auth.uid() = user_id);
 
 -- ── PROJECT_ENVIRONMENTS ─────────────────────────────────────
--- Non-secret env vars (NEXT_PUBLIC_*, API base URLs, etc.)
+-- Deployment environments per project (e.g. 'live', 'staging')
+-- Each row is a snapshot of the project files at the time of promotion
 create table if not exists public.project_environments (
   id             uuid primary key default uuid_generate_v4(),
   user_id        uuid not null references public.profiles(id) on delete cascade,
-  project_id     uuid references public.projects(id) on delete cascade,
-  key            text not null,
-  value          text not null,
+  project_id     uuid not null references public.projects(id) on delete cascade,
+  name           text not null,           -- 'live' | 'staging' | custom
+  files_snapshot jsonb,                   -- project files at promotion time
+  status         text not null default 'live',
+  promoted_at    timestamptz,
   created_at     timestamptz default now(),
   updated_at     timestamptz default now(),
-  unique (user_id, project_id, key)
+  unique (project_id, name)              -- matches upsert onConflict in environments route
 );
 
 alter table public.project_environments enable row level security;
@@ -190,5 +193,5 @@ create index if not exists idx_agent_executions_project on public.agent_executio
 create index if not exists idx_credit_usage_user        on public.credit_usage(user_id);
 create index if not exists idx_flows_user               on public.flows(user_id);
 create index if not exists idx_project_connectors_proj  on public.project_connectors(project_id);
-create index if not exists idx_user_secrets_proj        on public.user_secrets(project_id);
+create index if not exists idx_user_secrets_user        on public.user_secrets(user_id);
 create index if not exists idx_project_envs_proj        on public.project_environments(project_id);
