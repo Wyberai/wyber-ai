@@ -1,376 +1,196 @@
 'use client'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-// ── Role definitions ──────────────────────────────────────────────────────────
-// Each maps to an existing agent in the gallery via agent_id.
-// run_mode values: 'manual' | 'scheduled' | 'email'
-
+// ── Types ────────────────────────────────────────────────────────────────────
 interface Employee {
-  id: string
-  title: string
-  tagline: string
-  tools: string[]
-  run_mode: 'manual' | 'scheduled' | 'email'
-  agent_id: string      // gallery agent_id to open via /api/build-from-agent
-  department: string
+  id: string; name: string; role: string; emoji: string; instructions: string
+  tools: string[]; schedule_type: string; schedule_hour: number; schedule_day: number
+  is_active: boolean; last_run_at: string | null; next_run_at: string | null
+  created_at: string; ai_employee_runs?: Run[]
+}
+interface Run {
+  id: string; status: string; summary: string | null; credits_used: number
+  started_at: string; finished_at: string | null; triggered_by: string
 }
 
-const EMPLOYEES: Employee[] = [
-  // ── Sales ────────────────────────────────────────────────────────────────
-  {
-    id: 'ai-sdr',
-    title: 'AI SDR',
-    tagline: 'Qualifies inbound leads, drafts personalized outreach, logs every touch to your CRM.',
-    tools: ['Gmail', 'HubSpot', 'LinkedIn'],
-    run_mode: 'email',
-    agent_id: 'WYBER-002',
-    department: 'Sales',
-  },
-  {
-    id: 'ai-followup-rep',
-    title: 'AI Follow-up Rep',
-    tagline: 'Chases stale deals and sends timely nudges so nothing slips.',
-    tools: ['Gmail', 'HubSpot', 'Slack'],
-    run_mode: 'scheduled',
-    agent_id: 'WYBER-003',
-    department: 'Sales',
-  },
-  // ── Support ──────────────────────────────────────────────────────────────
-  {
-    id: 'ai-support-agent',
-    title: 'AI Support Agent',
-    tagline: 'Triages tickets, answers the routine ones, escalates what needs a human.',
-    tools: ['Gmail', 'Notion', 'Slack'],
-    run_mode: 'email',
-    agent_id: 'WYBER-016',
-    department: 'Support',
-  },
-  {
-    id: 'ai-inbox-manager',
-    title: 'AI Inbox Manager',
-    tagline: 'Sorts and drafts replies to your email so you start the day at zero.',
-    tools: ['Gmail'],
-    run_mode: 'email',
-    agent_id: 'WYBER-027',
-    department: 'Support',
-  },
-  // ── Operations ───────────────────────────────────────────────────────────
-  {
-    id: 'ai-ops-assistant',
-    title: 'AI Ops Assistant',
-    tagline: 'Connects your tools and runs the repetitive workflows that eat your day.',
-    tools: ['Slack', 'Notion', 'Google Sheets'],
-    run_mode: 'scheduled',
-    agent_id: 'WYBER-046',
-    department: 'Operations',
-  },
-  {
-    id: 'ai-data-entry-clerk',
-    title: 'AI Data Entry Clerk',
-    tagline: 'Moves data between your apps so you never copy-paste again.',
-    tools: ['Google Sheets', 'Airtable', 'Notion'],
-    run_mode: 'scheduled',
-    agent_id: 'WYBER-049',
-    department: 'Operations',
-  },
-  // ── Marketing ────────────────────────────────────────────────────────────
-  {
-    id: 'ai-content-assistant',
-    title: 'AI Content Assistant',
-    tagline: 'Drafts posts, repurposes content, and queues it for your approval.',
-    tools: ['Notion', 'Google Docs', 'Slack'],
-    run_mode: 'scheduled',
-    agent_id: 'WYBER-087',
-    department: 'Marketing',
-  },
-  {
-    id: 'ai-research-analyst',
-    title: 'AI Research Analyst',
-    tagline: 'Monitors topics and delivers briefs on the schedule you choose.',
-    tools: ['Notion', 'Slack', 'Google Docs'],
-    run_mode: 'scheduled',
-    agent_id: 'WYBER-068',
-    department: 'Research',
-  },
-  // ── Admin ────────────────────────────────────────────────────────────────
-  {
-    id: 'ai-scheduler',
-    title: 'AI Scheduler',
-    tagline: 'Reads requests, checks your calendar, and books meetings.',
-    tools: ['Gmail', 'Google Calendar'],
-    run_mode: 'email',
-    agent_id: 'WYBER-072',
-    department: 'Admin',
-  },
-  {
-    id: 'ai-briefing-agent',
-    title: 'AI Briefing Agent',
-    tagline: 'Compiles your morning rundown and delivers it when you want it.',
-    tools: ['Gmail', 'Notion', 'Slack'],
-    run_mode: 'scheduled',
-    agent_id: 'WYBER-063',
-    department: 'Admin',
-  },
-]
+const SKY = '#0EA5E9'; const GREEN = '#22c55e'; const RED = '#ef4444'
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
-const DEPARTMENTS = ['Sales', 'Support', 'Operations', 'Marketing', 'Research', 'Admin']
-
-const DEPT_COLORS: Record<string, string> = {
-  Sales:      '#0EA5E9',
-  Support:    '#10b981',
-  Operations: '#f59e0b',
-  Marketing:  '#8b5cf6',
-  Research:   '#ec4899',
-  Admin:      '#6366f1',
+function scheduleLabel(emp: Employee) {
+  if (emp.schedule_type === 'manual') return 'Manual only'
+  if (emp.schedule_type === 'hourly') return 'Every hour'
+  if (emp.schedule_type === 'daily') return `Daily at ${emp.schedule_hour}:00 UTC`
+  if (emp.schedule_type === 'weekly') return `${DAYS[emp.schedule_day]} at ${emp.schedule_hour}:00 UTC`
+  return emp.schedule_type
 }
 
-const TOOL_DOMAINS: Record<string, string> = {
-  Gmail:           'gmail.com',
-  HubSpot:         'hubspot.com',
-  LinkedIn:        'linkedin.com',
-  Slack:           'slack.com',
-  Notion:          'notion.so',
-  Airtable:        'airtable.com',
-  'Google Sheets': 'sheets.google.com',
-  'Google Docs':   'docs.google.com',
-  'Google Calendar':'calendar.google.com',
+function fmtRelative(d: string | null) {
+  if (!d) return null
+  const diff = Date.now() - new Date(d).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const h = Math.floor(mins / 60)
+  if (h < 24) return `${h}h ago`
+  return `${Math.floor(h / 24)}d ago`
 }
 
-function RunModeBadge({ mode }: { mode: Employee['run_mode'] }) {
-  const map = {
-    manual:    { label: 'Run manually',        color: '#52525b', bg: 'rgba(82,82,91,0.15)' },
-    scheduled: { label: 'Runs on schedule',    color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-    email:     { label: 'Checks email ~15 min',color: '#0EA5E9', bg: 'rgba(14,165,233,0.1)' },
-  }
-  const { label, color, bg } = map[mode]
+function EmployeeCard({ emp, onRun, onToggle, onDelete, running }: {
+  emp: Employee; onRun:(id:string)=>void; onToggle:(id:string,a:boolean)=>void
+  onDelete:(id:string)=>void; running:boolean
+}) {
+  const lastRun = emp.ai_employee_runs?.[0]
   return (
-    <span style={{ fontSize: 10, fontWeight: 600, color, background: bg, borderRadius: 5, padding: '2px 7px', letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
-      {label}
-    </span>
-  )
-}
-
-function ToolPill({ tool }: { tool: string }) {
-  const domain = TOOL_DOMAINS[tool]
-  return (
-    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#71717a', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 5, padding: '2px 7px', whiteSpace: 'nowrap' }}>
-      {domain && (
-        <img src={`https://img.logo.dev/${domain}?token=pk_X4yCW7j3RwCjVnhfq2UWNw&size=32&format=webp`} width={12} height={12} alt="" style={{ borderRadius: 2, flexShrink: 0 }} />
-      )}
-      {tool}
-    </span>
-  )
-}
-
-function EmployeeCard({ emp, onHire, hiring }: { emp: Employee; onHire: (id: string, agentId: string) => void; hiring: string | null }) {
-  const deptColor = DEPT_COLORS[emp.department] ?? '#0EA5E9'
-  const isHiring = hiring === emp.id
-
-  return (
-    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14, transition: 'border-color 0.2s', cursor: 'default' }}
-      onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = `${deptColor}40`}
-      onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.07)'}>
-
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 4 }}>{emp.title}</div>
-          <p style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.6, margin: 0 }}>{emp.tagline}</p>
+    <div style={{ background:'#111115', border:`1px solid ${emp.is_active?'#1e1e26':'#111115'}`, borderRadius:16, padding:22, display:'flex', flexDirection:'column', gap:14, opacity:emp.is_active?1:0.6, transition:'all 0.2s' }}>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <div style={{ width:46, height:46, borderRadius:12, background:'#1a1a22', border:'1px solid #2a2a35', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>{emp.emoji}</div>
+          <div>
+            <div style={{ fontSize:16, fontWeight:700, color:'#e4e4e7', letterSpacing:'-0.02em' }}>{emp.name}</div>
+            <div style={{ fontSize:12, color:'#52525b', marginTop:2 }}>{emp.role}</div>
+          </div>
         </div>
-        <RunModeBadge mode={emp.run_mode} />
+        <span style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:20, background:emp.is_active?'rgba(34,197,94,0.1)':'rgba(82,82,91,0.15)', color:emp.is_active?GREEN:'#52525b', textTransform:'uppercase', letterSpacing:'0.05em' }}>{emp.is_active?'Active':'Paused'}</span>
       </div>
-
-      {/* Tools */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-        {emp.tools.map(t => <ToolPill key={t} tool={t} />)}
+      {emp.tools.length > 0 && (
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+          {emp.tools.map(t => <span key={t} style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:6, background:'rgba(14,165,233,0.08)', color:SKY, border:'1px solid rgba(14,165,233,0.15)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{t}</span>)}
+        </div>
+      )}
+      <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+        <span style={{ fontSize:12, color:'#52525b' }}>⏰ {scheduleLabel(emp)}</span>
+        {lastRun && <span style={{ fontSize:12, color:lastRun.status==='success'?GREEN:lastRun.status==='error'?RED:'#f59e0b' }}>{lastRun.status==='success'?'✓':'✕'} {fmtRelative(lastRun.started_at)}</span>}
       </div>
-
-      {/* Hire button */}
-      <button
-        onClick={() => onHire(emp.id, emp.agent_id)}
-        disabled={!!hiring}
-        style={{
-          marginTop: 'auto', width: '100%', padding: '9px 0', borderRadius: 9,
-          background: isHiring ? 'rgba(14,165,233,0.08)' : `${deptColor}18`,
-          border: `1px solid ${deptColor}40`,
-          color: isHiring ? '#52525b' : deptColor,
-          fontSize: 13, fontWeight: 700, cursor: hiring ? 'default' : 'pointer',
-          transition: 'all 0.15s',
-        }}
-        onMouseEnter={e => { if (!hiring) (e.currentTarget as HTMLElement).style.background = `${deptColor}28` }}
-        onMouseLeave={e => { if (!hiring) (e.currentTarget as HTMLElement).style.background = `${deptColor}18` }}
-      >
-        {isHiring ? 'Opening…' : 'Hire →'}
-      </button>
+      {lastRun?.summary && <p style={{ margin:0, fontSize:12, color:'#71717a', lineHeight:1.5, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{lastRun.summary}</p>}
+      <div style={{ display:'flex', gap:8, marginTop:4 }}>
+        <button onClick={() => onRun(emp.id)} disabled={running} style={{ flex:1, padding:'8px 0', borderRadius:8, background:running?'#1a1a22':SKY, border:'none', color:running?'#52525b':'#fff', fontSize:13, fontWeight:600, cursor:running?'not-allowed':'pointer', fontFamily:'inherit' }}>{running?'Running…':'▶ Run now'}</button>
+        <Link href={`/ai-employees/${emp.id}`} style={{ padding:'8px 14px', borderRadius:8, background:'#1a1a22', border:'1px solid #2a2a35', color:'#a1a1aa', fontSize:13, textDecoration:'none', display:'flex', alignItems:'center' }}>Logs</Link>
+        <button onClick={() => onToggle(emp.id, !emp.is_active)} style={{ padding:'8px 14px', borderRadius:8, background:'#1a1a22', border:'1px solid #2a2a35', color:'#a1a1aa', fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>{emp.is_active?'Pause':'Resume'}</button>
+        <button onClick={() => onDelete(emp.id)} style={{ padding:'8px 12px', borderRadius:8, background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.15)', color:RED, fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>✕</button>
+      </div>
     </div>
   )
 }
 
+// ── Legacy waitlist role cards data (kept for empty-state inspiration) ────────
+const EMPLOYEES_LEGACY = [
+  { title: 'AI SDR', tagline: 'Qualifies inbound leads, drafts personalized outreach, logs every touch to your CRM.', tools: ['Gmail', 'HubSpot', 'LinkedIn'], department: 'Sales', mode: 'Checks email ~15 min' },
+  { title: 'AI Follow-up Rep', tagline: 'Chases stale deals and sends timely nudges so nothing slips through.', tools: ['Gmail', 'HubSpot', 'Slack'], department: 'Sales', mode: 'Runs on schedule' },
+  { title: 'AI Support Agent', tagline: 'Triages tickets, answers the routine ones, escalates what needs a human.', tools: ['Gmail', 'Notion', 'Slack'], department: 'Support', mode: 'Checks email ~15 min' },
+  { title: 'AI Inbox Manager', tagline: 'Sorts and drafts replies to your email so you start the day at zero.', tools: ['Gmail'], department: 'Support', mode: 'Checks email ~15 min' },
+  { title: 'AI Ops Assistant', tagline: 'Connects your tools and runs the repetitive workflows that eat your day.', tools: ['Slack', 'Notion', 'Google Sheets'], department: 'Operations', mode: 'Runs on schedule' },
+  { title: 'AI Data Entry Clerk', tagline: 'Moves data between your apps so you never copy-paste again.', tools: ['Google Sheets', 'Airtable', 'Notion'], department: 'Operations', mode: 'Runs on schedule' },
+  { title: 'AI Content Assistant', tagline: 'Drafts posts, repurposes content, and queues it for your approval.', tools: ['Notion', 'Google Docs', 'Slack'], department: 'Marketing', mode: 'Runs on schedule' },
+  { title: 'AI Research Analyst', tagline: 'Monitors topics and delivers briefs on the schedule you choose.', tools: ['Notion', 'Slack', 'Google Docs'], department: 'Research', mode: 'Runs on schedule' },
+  { title: 'AI Scheduler', tagline: 'Reads requests, checks your calendar, and books meetings without you.', tools: ['Gmail', 'Google Calendar'], department: 'Admin', mode: 'Checks email ~15 min' },
+  { title: 'AI Briefing Agent', tagline: 'Compiles your morning rundown and delivers it when you want it.', tools: ['Gmail', 'Notion', 'Slack'], department: 'Admin', mode: 'Runs on schedule' },
+]
+
+const DEPT_COLORS: Record<string, string> = {
+  Sales: '#0EA5E9', Support: '#10b981', Operations: '#f59e0b',
+  Marketing: '#8b5cf6', Research: '#ec4899', Admin: '#6366f1',
+}
+
+const TOOL_DOMAINS: Record<string, string> = {
+  Gmail: 'gmail.com', HubSpot: 'hubspot.com', LinkedIn: 'linkedin.com',
+  Slack: 'slack.com', Notion: 'notion.so', Airtable: 'airtable.com',
+  'Google Sheets': 'sheets.google.com', 'Google Docs': 'docs.google.com',
+  'Google Calendar': 'calendar.google.com',
+}
+
 export default function AIEmployeesPage() {
-  const router = useRouter()
-  const [hiring, setHiring] = useState<string | null>(null)
-  const [activeDept, setActiveDept] = useState<string | null>(null)
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
+  const [runningIds, setRunningIds] = useState<Set<string>>(new Set())
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
 
-  const displayed = activeDept ? EMPLOYEES.filter(e => e.department === activeDept) : EMPLOYEES
-  const grouped = DEPARTMENTS.reduce((acc, dept) => {
-    const members = displayed.filter(e => e.department === dept)
-    if (members.length) acc[dept] = members
-    return acc
-  }, {} as Record<string, Employee[]>)
+  const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500) }
 
-  const handleHire = async (empId: string, agentId: string) => {
-    if (hiring) return
-    setHiring(empId)
+  const load = useCallback(async () => {
+    const res = await fetch('/api/ai-employees')
+    if (res.ok) { const d = await res.json(); setEmployees(d.employees ?? []) }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  const handleRun = async (id: string) => {
+    setRunningIds(s => new Set(s).add(id))
     try {
-      const res = await fetch('/api/build-from-agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agentId }),
-      })
-      const data = await res.json()
-      if (data.projectId) {
-        if (data.canvasData) sessionStorage.setItem(`wyber_canvas_${data.projectId}`, data.canvasData)
-        router.push(`/project/${data.projectId}?type=agent`)
-      } else if (res.status === 401) {
-        router.push('/login')
-      } else {
-        alert('Could not open this role right now. Try again shortly.')
-      }
-    } catch {
-      alert('Could not open this role. Check your connection.')
-    } finally {
-      setHiring(null)
-    }
+      const res = await fetch(`/api/ai-employees/${id}/run`, { method: 'POST' })
+      const d = await res.json()
+      if (d.success) { showToast('Run complete — check your email for the digest'); load() }
+      else showToast(d.result?.error ?? 'Run failed', false)
+    } catch { showToast('Network error', false) }
+    setRunningIds(s => { const n = new Set(s); n.delete(id); return n })
+  }
+
+  const handleToggle = async (id: string, active: boolean) => {
+    await fetch(`/api/ai-employees/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_active: active }) })
+    setEmployees(e => e.map(emp => emp.id === id ? { ...emp, is_active: active } : emp))
+    showToast(active ? 'Employee resumed' : 'Employee paused')
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this employee? This cannot be undone.')) return
+    await fetch(`/api/ai-employees/${id}`, { method: 'DELETE' })
+    setEmployees(e => e.filter(emp => emp.id !== id))
+    showToast('Employee deleted')
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: "'Space Grotesk', sans-serif", color: '#e4e4e7' }}>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:toast.ok?'#0f2a1a':'#2a0f0f', border:`1px solid ${toast.ok?'#22c55e33':'#ef444433'}`, color:toast.ok?GREEN:RED, padding:'12px 20px', borderRadius:10, fontSize:13, fontWeight:600, zIndex:9999, whiteSpace:'nowrap' }}>
+          {toast.msg}
+        </div>
+      )}
 
       {/* Nav */}
-      <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px', background: '#0d0d0f', position: 'sticky', top: 0, zIndex: 20 }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', height: 60, gap: 24 }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-            <WyberLogo markSize={24} wordmarkSize={13} />
-          </Link>
-          <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-          <span style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>AI Employees</span>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
-            <Link href="/agents" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Agent library</Link>
-            <Link href="/dashboard" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 700 }}>Your team →</Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Hero */}
-      <div style={{ maxWidth: 760, margin: '0 auto', padding: '80px 32px 56px', textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 20, padding: '5px 14px', fontSize: 11, color: '#7dd3fc', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 28 }}>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="#0EA5E9"><circle cx="5" cy="5" r="5"/></svg>
-          Now live
-        </div>
-        <h1 style={{ fontSize: 'clamp(36px, 5vw, 58px)', fontWeight: 800, lineHeight: 1.1, margin: '0 0 20px', letterSpacing: '-0.02em' }}>
-          Hire your AI team.
-        </h1>
-        <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.7, margin: '0 0 36px', maxWidth: 600, marginLeft: 'auto', marginRight: 'auto' }}>
-          AI employees that handle the busywork — connect your tools, put them to work, and they run on the schedule you set. They pause when you run low on credits, so there are never surprise bills.
-        </p>
-        <Link href="#roles" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#0EA5E9', color: '#fff', textDecoration: 'none', borderRadius: 10, padding: '12px 28px', fontSize: 15, fontWeight: 700 }}>
-          Meet your AI team →
+      <nav style={{ borderBottom:'1px solid #1a1a22', background:'#0d0d11', padding:'0 32px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
+        <Link href="/dashboard" style={{ display:'flex', alignItems:'center', gap:9, textDecoration:'none' }}>
+          <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
-      </div>
-
-      {/* Trust strip */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.01)' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto', padding: '16px 32px', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px 40px' }}>
-          {[
-            { icon: '⏱', text: 'Scheduled runs — works while you sleep' },
-            { icon: '💳', text: 'Pauses on low credits — no surprise bills' },
-            { icon: '🔒', text: 'Your data stays in your connected accounts' },
-            { icon: '✋', text: 'You stay in control — review before anything sends' },
-          ].map(t => (
-            <span key={t.text} style={{ fontSize: 12, color: '#52525b', display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span>{t.icon}</span>{t.text}
-            </span>
-          ))}
+        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+          <Link href="/dashboard" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>← Dashboard</Link>
+          <Link href="/employees" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>Browse 100 templates</Link>
+          <Link href="/org" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>Organizations</Link>
+          <Link href="/ai-employees/new" style={{ fontSize:13, fontWeight:600, color:'#fff', textDecoration:'none', padding:'7px 16px', borderRadius:8, background:SKY }}>+ Hire employee</Link>
         </div>
-      </div>
+      </nav>
 
-      {/* Roles section */}
-      <div id="roles" style={{ maxWidth: 1200, margin: '0 auto', padding: '64px 32px' }}>
-
-        {/* Department filter */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 48 }}>
-          <button
-            onClick={() => setActiveDept(null)}
-            style={{ padding: '6px 16px', borderRadius: 20, border: `1px solid ${activeDept === null ? '#0EA5E9' : 'rgba(255,255,255,0.1)'}`, background: activeDept === null ? 'rgba(14,165,233,0.12)' : 'transparent', color: activeDept === null ? '#0EA5E9' : '#71717a', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
-            All departments
-          </button>
-          {DEPARTMENTS.map(d => (
-            <button key={d} onClick={() => setActiveDept(activeDept === d ? null : d)}
-              style={{ padding: '6px 16px', borderRadius: 20, border: `1px solid ${activeDept === d ? DEPT_COLORS[d] : 'rgba(255,255,255,0.1)'}`, background: activeDept === d ? `${DEPT_COLORS[d]}15` : 'transparent', color: activeDept === d ? DEPT_COLORS[d] : '#71717a', fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>
-              {d}
-            </button>
-          ))}
+      {/* Main */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px' }}>
+        <div style={{ marginBottom: 36 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>AI Employees</h1>
+          <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Autonomous AI workers that connect to your tools, run on a schedule, and email you what they did.</p>
         </div>
 
-        {/* Department groups */}
-        {Object.entries(grouped).map(([dept, members]) => (
-          <div key={dept} style={{ marginBottom: 56 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: DEPT_COLORS[dept], flexShrink: 0 }} />
-              <h2 style={{ fontSize: 13, fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>{dept}</h2>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-              {members.map(emp => (
-                <EmployeeCard key={emp.id} emp={emp} onHire={handleHire} hiring={hiring} />
-              ))}
-            </div>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: '#3f3f46' }}>Loading…</div>
+        ) : employees.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '80px 32px' }}>
+            <div style={{ fontSize: 64, marginBottom: 20 }}>🤖</div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', margin: '0 0 10px', letterSpacing: '-0.03em' }}>Hire your first AI employee</h2>
+            <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 32px', maxWidth: 440, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
+              Set up an AI worker with a role, tools, and a schedule. It runs automatically and emails you what it did.
+            </p>
+            <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 28px', borderRadius: 10, fontSize: 15, fontWeight: 700 }}>
+              Hire your first employee →
+            </Link>
           </div>
-        ))}
-
-        {/* Create your own — coming soon */}
-        <div style={{ marginTop: 16, marginBottom: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: '#3f3f46', flexShrink: 0 }} />
-            <h2 style={{ fontSize: 13, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Custom</h2>
-            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.04)' }} />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+            {employees.map(emp => (
+              <EmployeeCard key={emp.id} emp={emp} onRun={handleRun} onToggle={handleToggle} onDelete={handleDelete} running={runningIds.has(emp.id)} />
+            ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
-            <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#3f3f46', marginBottom: 4 }}>Create your own AI Employee</div>
-                  <p style={{ fontSize: 12, color: '#3f3f46', lineHeight: 1.6, margin: 0 }}>Define the role, pick the tools, set the schedule. Your custom hire, built your way.</p>
-                </div>
-                <span style={{ fontSize: 10, fontWeight: 600, color: '#52525b', background: 'rgba(82,82,91,0.1)', borderRadius: 5, padding: '2px 7px', whiteSpace: 'nowrap', flexShrink: 0 }}>Coming soon</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {['Any tools', 'Any schedule', 'Any role'].map(t => (
-                  <span key={t} style={{ fontSize: 10, color: '#3f3f46', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 5, padding: '2px 7px' }}>{t}</span>
-                ))}
-              </div>
-              <button disabled style={{ marginTop: 'auto', width: '100%', padding: '9px 0', borderRadius: 9, background: 'transparent', border: '1px dashed rgba(255,255,255,0.08)', color: '#3f3f46', fontSize: 13, fontWeight: 700, cursor: 'not-allowed' }}>
-                Coming soon
-              </button>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* Pricing trust line */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', maxWidth: 1200, margin: '0 auto', padding: '40px 32px 80px', textAlign: 'center' }}>
-        <p style={{ fontSize: 14, color: '#52525b', maxWidth: 520, margin: '0 auto 24px' }}>
-          Every AI employee runs on credits. They work as long as you have credits and pause when you run low — you&apos;re always in control of spend.
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-          <Link href="/pricing" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>See pricing →</Link>
-          <Link href="/credits" style={{ fontSize: 13, color: '#52525b', textDecoration: 'none' }}>How credits work</Link>
-        </div>
-      </div>
-
     </div>
   )
 }

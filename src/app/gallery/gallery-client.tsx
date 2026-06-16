@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 export const dynamic = 'force-dynamic'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -20,9 +20,9 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  SaaS: '⚡', CRM: '👥', Ecommerce: '🛒', Healthcare: '🏥',
-  Education: '🎓', Finance: '💰', HR: '🏢', RealEstate: '🏠',
-  Restaurant: '🍽️', ProjectManagement: '📋', Landing: '🚀', Analytics: '📊',
+  SaaS: '?', CRM: '??', Ecommerce: '??', Healthcare: '??',
+  Education: '??', Finance: '??', HR: '??', RealEstate: '??',
+  Restaurant: '???', ProjectManagement: '??', Landing: '??', Analytics: '??',
 }
 
 export default function GalleryPage() {
@@ -61,7 +61,7 @@ export default function GalleryPage() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={13} />
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link></div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free ?</Link></div>
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
@@ -73,7 +73,7 @@ export default function GalleryPage() {
             {apps.length > 0 ? `${apps.length}+` : '60+'} apps you can build<br />in under a minute
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 460, margin: '0 auto' }}>
-            Click any app to start building it instantly — no credits needed for prebuilt templates.
+            Click any app to start building it instantly � no credits needed for prebuilt templates.
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export default function GalleryPage() {
                     {/* Icon bar */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-                        {CATEGORY_ICONS[app.category] || '⚡'}
+                        {CATEGORY_ICONS[app.category] || '?'}
                       </div>
                       <div style={{ padding: '3px 9px', borderRadius: 20, background: color + '12', fontSize: 10, fontWeight: 700, color, letterSpacing: '0.04em' }}>
                         {app.category}
@@ -143,7 +143,7 @@ export default function GalleryPage() {
                         {app.keywords?.slice(0, 2).map((k: string) => `#${k}`).join(' ')}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        Build this →
+                        Build this ?
                       </div>
                     </div>
                   </div>
@@ -157,9 +157,9 @@ export default function GalleryPage() {
         {!loading && (
           <div style={{ textAlign: 'center', marginTop: 60, padding: '40px 24px', borderRadius: 16, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.15)' }}>
             <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Sora', sans-serif", marginBottom: 8 }}>Don't see what you need?</div>
-            <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>Describe any app in plain English and Wyber AI will build it in under 30 seconds.</div>
+            <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>Describe any app in plain English and WyberAi will build it in under 30 seconds.</div>
             <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
-              Build from scratch →
+              Build from scratch ?
             </Link>
           </div>
         )}

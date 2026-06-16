@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 
 const STEPS = [
   {
-    title: 'Welcome to Wyber AI 👋',
+    title: 'Welcome to WyberAi 👋',
     desc: 'Build apps, deploy AI agents, and create workflows — all with AI. Let us show you around.',
     target: null,
   },

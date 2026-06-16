@@ -10,7 +10,7 @@ export default function Page() {
       title="Generating a mobile app"
       intro="Describe your mobile app in plain English and Wyber generates a React Native (Expo) app with a live in-browser preview — no Xcode or Android Studio needed to get started."
       requirements={[
-        { label: 'A Wyber AI account' },
+        { label: 'A WyberAi account' },
         { label: '1 credit', note: 'per generation' },
       ]}
     >

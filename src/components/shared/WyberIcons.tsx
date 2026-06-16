@@ -1,5 +1,5 @@
-// Wyber AI — Custom Icon System
-// Sky-blue flavored, exclusively designed for Wyber AI
+// WyberAi — Custom Icon System
+// Sky-blue flavored, exclusively designed for WyberAi
 // Usage: import { IconApps, IconAgents, IconFlows } from '@/components/shared/WyberIcons'
 
 const BRAND = '#0EA5E9'

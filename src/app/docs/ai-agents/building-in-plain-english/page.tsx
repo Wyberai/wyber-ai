@@ -10,7 +10,7 @@ export default function Page() {
       title="Building in plain English"
       intro="Describe what you want your agent to do and Wyber builds a visual canvas of nodes and edges — no code, no prompt engineering, just a description of the goal."
       requirements={[
-        { label: 'A Wyber AI account' },
+        { label: 'A WyberAi account' },
         { label: '1 credit', note: 'per canvas generation' },
       ]}
     >

@@ -78,7 +78,7 @@ export function SupabaseGenerator() {
     <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Header */}
       <div style={{ background: 'rgba(61,214,140,0.06)', border: '1px solid rgba(61,214,140,0.2)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-        <strong style={{ color: 'var(--green)' }}>Supabase Auto-Backend</strong> — Describe your app and Wyber AI generates a complete backend: SQL schema with RLS, TypeScript types, typed queries, and auth components ready to paste into Supabase.
+        <strong style={{ color: 'var(--green)' }}>Supabase Auto-Backend</strong> — Describe your app and WyberAi generates a complete backend: SQL schema with RLS, TypeScript types, typed queries, and auth components ready to paste into Supabase.
       </div>
 
       {/* Description */}

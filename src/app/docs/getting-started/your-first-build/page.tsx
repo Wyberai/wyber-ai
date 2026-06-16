@@ -10,7 +10,7 @@ export default function Page() {
       title="Your first build"
       intro="From sign-up to a live, shareable web app — this walkthrough covers the exact steps."
       requirements={[
-        { label: 'A Wyber AI account', note: 'free, sign up at wyberai.com/signup' },
+        { label: 'A WyberAi account', note: 'free, sign up at wyberai.com/signup' },
         { label: '1 credit', note: 'new accounts start with 15 credits (plus 3 daily)' },
       ]}
     >
@@ -64,7 +64,7 @@ export default function Page() {
       <Note>Credits are only deducted on a successful generation. If the build errors, you are not charged.</Note>
 
       <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between' }}>
-        <Link href="/docs/getting-started/what-is-wyber" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>← What is Wyber AI?</Link>
+        <Link href="/docs/getting-started/what-is-wyber" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>← What is WyberAi?</Link>
         <Link href="/docs/getting-started/how-credits-work" style={{ fontSize: 13, color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Next: How credits work →</Link>
       </div>
     </DocsPage>

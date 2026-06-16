@@ -21,7 +21,7 @@ export default async function CommunityPage() {
       {/* Header */}
       <div style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', display:'flex', alignItems:'center', height:60, gap:24 }}>
-          <Link href="/" style={{ fontSize:18, fontWeight:700, color:'#f0f0f5', textDecoration:'none' }}>Wyber AI</Link>
+          <Link href="/" style={{ fontSize:18, fontWeight:700, color:'#f0f0f5', textDecoration:'none' }}>WyberAi</Link>
           <span style={{ color:'rgba(255,255,255,0.15)' }}>|</span>
           <span style={{ fontSize:14, color:'#8b8b9a' }}>Community Gallery</span>
           <div style={{ marginLeft:'auto', display:'flex', gap:12 }}>
@@ -43,7 +43,7 @@ export default async function CommunityPage() {
             <span style={{ color:'#6366f1' }}>Clone any of them.</span>
           </h1>
           <p style={{ fontSize:16, color:'#8b8b9a', maxWidth:540, margin:'0 auto' }}>
-            Built by the Wyber AI community. Browse, clone, and make it yours in seconds.
+            Built by the WyberAi community. Browse, clone, and make it yours in seconds.
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export default async function CommunityPage() {
                 <div style={{ padding:18 }}>
                   <div style={{ fontSize:15, fontWeight:700, marginBottom:4 }}>{app.name}</div>
                   <div style={{ fontSize:12, color:'#52526a', marginBottom:14 }}>
-                    {app.description || 'Built with Wyber AI'}
+                    {app.description || 'Built with WyberAi'}
                   </div>
 
                   <div style={{ display:'flex', gap:8 }}>

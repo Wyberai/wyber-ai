@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'How to build a SaaS app without writing code in 2026 -- Wyber AI Blog',
+  title: 'How to build a SaaS app without writing code in 2026 -- WyberAi Blog',
   description: 'AI app builders have changed what is possible for solo founders. Go from idea to live product in a single afternoon.',
 };
 
@@ -29,10 +29,10 @@ export default function Post() {
           <h2>What "no code" actually means now</h2>
           <p>It does not mean drag-and-drop. It means you describe what you want in plain English, and a production-ready React or Next.js app gets generated -- complete with database schema, auth flows, API routes, and a live preview. The output is real code. Export it, push it to GitHub, self-host it. No lock-in.</p>
           <h2>A practical walkthrough</h2>
-          <p>Here is how to build a client portal with auth and a dashboard in Wyber AI:</p>
+          <p>Here is how to build a client portal with auth and a dashboard in WyberAi:</p>
           <ol>
             <li><strong>Start with a specific prompt.</strong> Instead of "build a client portal", try: "Build a client portal with email/password auth, a dashboard showing active projects, and a settings page where clients can update their profile."</li>
-            <li><strong>Pick Next.js as your framework.</strong> It is the default in Wyber AI -- SSR means your app ranks on Google from day one.</li>
+            <li><strong>Pick Next.js as your framework.</strong> It is the default in WyberAi -- SSR means your app ranks on Google from day one.</li>
             <li><strong>Iterate for free.</strong> AI error fixes never cost credits. Ask it to adjust colors, move sections, add a feature -- you only pay for successful generations.</li>
             <li><strong>Connect your backend.</strong> Add Supabase in one click -- database, auth, and file storage set up in minutes.</li>
             <li><strong>Publish and share.</strong> One click gives you a live URL. Share it before you have spent a cent on infrastructure.</li>

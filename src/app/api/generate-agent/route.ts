@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const SYSTEM = `You are Wyber AI's agent configurator. From a plain English description, find the best matching agent from the library and configure it.
+const SYSTEM = `You are WyberAi's agent configurator. From a plain English description, find the best matching agent from the library and configure it.
 
 OUTPUT FORMAT — respond ONLY with valid JSON:
 {
@@ -36,7 +36,7 @@ MATCHING RULES:
 
 const TOOL_GUIDES: Record<string, { steps: string[]; url: string; token_format: string }> = {
   'Slack': {
-    steps: ['Go to api.slack.com/apps', 'Click "Create New App" → "From scratch"', 'Name it "Wyber AI" → select your workspace', 'Go to "OAuth & Permissions" → add scope: chat:write, channels:read', 'Click "Install to Workspace" → copy Bot Token'],
+    steps: ['Go to api.slack.com/apps', 'Click "Create New App" → "From scratch"', 'Name it "WyberAi" → select your workspace', 'Go to "OAuth & Permissions" → add scope: chat:write, channels:read', 'Click "Install to Workspace" → copy Bot Token'],
     url: 'https://api.slack.com/apps',
     token_format: 'xoxb-...'
   },
@@ -46,17 +46,17 @@ const TOOL_GUIDES: Record<string, { steps: string[]; url: string; token_format: 
     token_format: 'AIza...'
   },
   'HubSpot': {
-    steps: ['Go to app.hubspot.com/settings', 'Integrations → Private Apps → Create', 'Name it "Wyber AI" → set scopes: crm.objects.contacts.write, crm.objects.deals.write', 'Click "Create app" → copy Access Token'],
+    steps: ['Go to app.hubspot.com/settings', 'Integrations → Private Apps → Create', 'Name it "WyberAi" → set scopes: crm.objects.contacts.write, crm.objects.deals.write', 'Click "Create app" → copy Access Token'],
     url: 'https://app.hubspot.com/settings',
     token_format: 'pat-na1-...'
   },
   'Airtable': {
-    steps: ['Go to airtable.com/create/tokens', 'Click "Create token" → name it "Wyber AI"', 'Add scopes: data.records:read, data.records:write', 'Add your base → Generate token → copy it'],
+    steps: ['Go to airtable.com/create/tokens', 'Click "Create token" → name it "WyberAi"', 'Add scopes: data.records:read, data.records:write', 'Add your base → Generate token → copy it'],
     url: 'https://airtable.com/create/tokens',
     token_format: 'pat...'
   },
   'Notion': {
-    steps: ['Go to notion.so/my-integrations', 'Click "New integration" → name "Wyber AI"', 'Select workspace → Submit', 'Copy Internal Integration Token', 'Share your Notion pages with the integration'],
+    steps: ['Go to notion.so/my-integrations', 'Click "New integration" → name "WyberAi"', 'Select workspace → Submit', 'Copy Internal Integration Token', 'Share your Notion pages with the integration'],
     url: 'https://notion.so/my-integrations',
     token_format: 'secret_...'
   },
@@ -66,7 +66,7 @@ const TOOL_GUIDES: Record<string, { steps: string[]; url: string; token_format: 
     token_format: 'ghp_...'
   },
   'Linear': {
-    steps: ['Go to linear.app/settings/api', 'Click "Create new API key" → name it "Wyber AI"', 'Copy the key immediately (shown only once)'],
+    steps: ['Go to linear.app/settings/api', 'Click "Create new API key" → name it "WyberAi"', 'Copy the key immediately (shown only once)'],
     url: 'https://linear.app/settings/api',
     token_format: 'lin_api_...'
   },

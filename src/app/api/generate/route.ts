@@ -12,7 +12,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MODELS = MODEL_IDS
 
 const WYBER_FEATURES = `
-ABOUT WYBER AI — your knowledge base:
+ABOUT WyberAi — your knowledge base:
 
 BUILDER:
 - AI chat that asks 5 questions before building — understands the idea fully first
@@ -20,7 +20,7 @@ BUILDER:
 - Live preview that updates in real-time as code generates
 - Visual click-to-edit — click any element in the preview to change it directly
 - Plan Mode — shows a step-by-step build plan before generating; user approves it first
-- Screenshot-to-app — paste a screenshot and Wyber AI clones the UI
+- Screenshot-to-app — paste a screenshot and WyberAi clones the UI
 
 GALLERY (118 prebuilt templates, always 0 credits):
 - CRM, sales pipeline, contact management
@@ -69,7 +69,7 @@ DONE-FOR-YOU (book at wyberai.com/setup-call):
 
 function buildMobileSystemPrompt(): string {
   return `
-You are the AI engine inside Wyber AI Mobile — a React Native + Expo app builder. You turn conversations into production-quality React Native applications. You are powered by Claude and built by SignalPulse Technologies.
+You are the AI engine inside WyberAi Mobile — a React Native + Expo app builder. You turn conversations into production-quality React Native applications. You are powered by Claude and built by SignalPulse Technologies.
 
 TECH STACK — MANDATORY:
 - React Native with Expo SDK 52
@@ -129,7 +129,7 @@ After ALL files, output one line starting with "Built:"
 
 function buildSystemPrompt(): string {
   return `
-You are the AI engine inside Wyber AI — the world's most capable app builder. You turn conversations into production-quality React applications. You are powered by Claude and built by SignalPulse Technologies.
+You are the AI engine inside WyberAi — the world's most capable app builder. You turn conversations into production-quality React applications. You are powered by Claude and built by SignalPulse Technologies.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IDENTITY & PERSONALITY
@@ -767,7 +767,7 @@ ${code}
                 .join('\n\n')
 
               const appIdLabel = best.app_id ? ` [${best.app_id}]` : ''
-              const summary = `Built: Loaded "${best.name}"${appIdLabel} from the Wyber AI gallery (0 credits).`
+              const summary = `Built: Loaded "${best.name}"${appIdLabel} from the WyberAi gallery (0 credits).`
               const full = output + '\n\n' + summary
               const encoder = new TextEncoder()
 

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'How to build a mobile app with AI in 2026 — Wyber AI Blog',
+  title: 'How to build a mobile app with AI in 2026 — WyberAi Blog',
   description: 'React Native + Expo from a plain-English prompt. Preview on your phone in under 60 seconds. No Xcode, no Android Studio, no code.',
 }
 
@@ -32,12 +32,12 @@ export default function Post() {
         <div style={{ fontSize: 16, color: s.muted, lineHeight: 1.75 }}>
           <p>Building a mobile app used to mean choosing between React Native and Swift, setting up Xcode, wrestling with simulators, and waiting for a first build that might not even run. In 2026, that's changed completely.</p>
 
-          <p>Wyber AI generates a full <strong style={{ color: s.text }}>React Native + Expo</strong> project from a plain-English description. You describe the screens, the data, and the interactions — and it generates every file: navigation, components, styling, realistic seed data. Scan the QR code and it loads on your phone. No IDE, no build step, no certificate management.</p>
+          <p>WyberAi generates a full <strong style={{ color: s.text }}>React Native + Expo</strong> project from a plain-English description. You describe the screens, the data, and the interactions — and it generates every file: navigation, components, styling, realistic seed data. Scan the QR code and it loads on your phone. No IDE, no build step, no certificate management.</p>
 
           <p>Here's exactly how it works.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 1: Describe your app</h2>
-          <p>Open Wyber AI, click <strong style={{ color: s.text }}>Mobile App</strong>, and type a description. Be specific about screens and data — the more you give it, the less you'll need to iterate.</p>
+          <p>Open WyberAi, click <strong style={{ color: s.text }}>Mobile App</strong>, and type a description. Be specific about screens and data — the more you give it, the less you'll need to iterate.</p>
 
           <div style={{ background: s.card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, fontFamily: 'monospace', fontSize: 14, color: '#e2e8f0', lineHeight: 1.7, margin: '16px 0' }}>
             Build a fitness tracker with a Home screen showing today's workout summary, a History screen with a weekly chart, and a Profile screen with total workouts and current streak. Bottom tab navigation.
@@ -56,7 +56,7 @@ export default function Post() {
 
           <p>The export is clean, production-ready React Native code. You own it completely.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What Wyber AI generates</h2>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What WyberAi generates</h2>
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {['Bottom tab navigator (React Navigation)', 'All screens with StyleSheet — no web CSS', 'Ionicons from @expo/vector-icons', 'Realistic seed data so every screen looks complete', 'Dark background design system tuned for mobile', 'package.json with the correct Expo SDK and navigation deps'].map(item => (
               <li key={item}>{item}</li>

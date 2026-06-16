@@ -71,7 +71,7 @@ export function SupportChat() {
         }}
         onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.08)'}
         onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1)'}
-        title="Chat with Wyber AI"
+        title="Chat with WyberAi"
       >
         {open
           ? <span style={{ color: '#fff', fontSize: 18, fontWeight: 300 }}>✕</span>

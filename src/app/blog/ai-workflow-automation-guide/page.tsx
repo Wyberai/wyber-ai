@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'AI workflow automation without code — Wyber AI Blog',
+  title: 'AI workflow automation without code — WyberAi Blog',
   description: 'Connect your apps, apply AI reasoning, and run automations on a schedule — all from plain English. No Zapier, no Make, no code.',
 }
 
@@ -32,15 +32,15 @@ export default function Post() {
         <div style={{ fontSize: 16, color: s.muted, lineHeight: 1.75 }}>
           <p>Zapier and Make have been the standard for workflow automation for years. They work — but they require you to build each automation step by step, tool by tool, inside their own interfaces. And neither has real AI reasoning built in: adding an AI step means patching in an OpenAI connector as an afterthought.</p>
 
-          <p>Wyber AI's workflow builder works differently. You describe the automation in plain English. It generates the full canvas — trigger, tool connections, AI reasoning nodes, and action steps — and then runs it.</p>
+          <p>WyberAi's workflow builder works differently. You describe the automation in plain English. It generates the full canvas — trigger, tool connections, AI reasoning nodes, and action steps — and then runs it.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The difference that matters: AI is first-class</h2>
-          <p>In Zapier, AI is a special module you bolt on. In Wyber AI, every workflow can include a <strong style={{ color: s.text }}>Claude reasoning node</strong> anywhere in the flow — classify this input, score this record, summarize this email, decide which branch to take. The AI step is a native node type, not an integration.</p>
+          <p>In Zapier, AI is a special module you bolt on. In WyberAi, every workflow can include a <strong style={{ color: s.text }}>Claude reasoning node</strong> anywhere in the flow — classify this input, score this record, summarize this email, decide which branch to take. The AI step is a native node type, not an integration.</p>
 
           <p>That means you can build automations that aren't purely deterministic. "If the email sounds urgent, route it to Slack. If it's a sales inquiry, add to HubSpot and draft a response." That branching logic requires judgment — and that's what the AI node provides.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>How to build a workflow</h2>
-          <p>Open Wyber AI, click <strong style={{ color: s.text }}>Workflows</strong>, and describe your automation in one sentence:</p>
+          <p>Open WyberAi, click <strong style={{ color: s.text }}>Workflows</strong>, and describe your automation in one sentence:</p>
 
           <div style={{ background: s.card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, fontFamily: 'monospace', fontSize: 14, color: '#e2e8f0', lineHeight: 1.7, margin: '16px 0' }}>
             When a new row is added to my Airtable "Job Applications" base: score the applicant 1-10 for role fit using AI, add them to HubSpot as a contact tagged with the score, and send a Slack message to #hiring with their name, role, and score.
@@ -59,17 +59,17 @@ export default function Post() {
           </ul>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>250+ integrations, no API key management</h2>
-          <p>Wyber AI uses Composio for integrations. You authenticate each app once — Gmail, Slack, HubSpot, Airtable, Notion, GitHub, Linear, Stripe, Google Sheets, and 240 more — and every workflow can use any of them without you managing API keys per tool.</p>
+          <p>WyberAi uses Composio for integrations. You authenticate each app once — Gmail, Slack, HubSpot, Airtable, Notion, GitHub, Linear, Stripe, Google Sheets, and 240 more — and every workflow can use any of them without you managing API keys per tool.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Import from n8n</h2>
-          <p>If you've already built workflows in n8n, you can import them directly. Export your n8n workflow as a JSON file (File → Download in n8n), then drag it into Wyber AI's workflow importer. Wyber AI maps 85+ n8n node types and reconstructs the canvas automatically — tools, connections, and all.</p>
+          <p>If you've already built workflows in n8n, you can import them directly. Export your n8n workflow as a JSON file (File → Download in n8n), then drag it into WyberAi's workflow importer. WyberAi maps 85+ n8n node types and reconstructs the canvas automatically — tools, connections, and all.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Workflows vs agents — when to use which</h2>
           <p>The distinction is subtle. <strong style={{ color: s.text }}>Workflows</strong> are sequential: trigger → step 1 → step 2 → done. They're best when the path is mostly predictable and you just need AI for one classification or summarization step. <strong style={{ color: s.text }}>Agents</strong> are more open-ended: they can loop, retry, and make multi-step decisions. Use an agent when the task requires ongoing judgment rather than a fixed sequence of steps.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.amber}10`, border: `1px solid ${s.amber}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Build your first workflow — free</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe it in plain English. Wyber AI generates the canvas and runs it automatically.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe it in plain English. WyberAi generates the canvas and runs it automatically.</p>
             <Link href="/dashboard?new=workflow" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.amber, color: '#000', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
               Build my workflow →
             </Link>

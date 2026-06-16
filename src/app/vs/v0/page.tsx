@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
-  title: 'Wyber AI vs v0 by Vercel (2026) — Full-App Builder vs UI Generator',
-  description: 'v0 generates UI components. Wyber AI generates full-stack apps — plus mobile apps, AI agents, and workflows. Honest comparison verified June 2026.',
+  title: 'WyberAi vs v0 by Vercel (2026) — Full-App Builder vs UI Generator',
+  description: 'v0 generates UI components. WyberAi generates full-stack apps — plus mobile apps, AI agents, and workflows. Honest comparison verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/v0' },
-  openGraph: { title: 'Wyber AI vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Verified June 2026.', url: 'https://wyberai.com/vs/v0' },
+  openGraph: { title: 'WyberAi vs v0 by Vercel (2026)', description: 'Full-stack app builder vs UI component generator. Verified June 2026.', url: 'https://wyberai.com/vs/v0' },
 }
 
 const ROWS = [
@@ -29,24 +29,24 @@ const ROWS = [
 
 const FAQS = [
   {
-    q: 'What is the main difference between Wyber AI and v0?',
-    a: 'v0 by Vercel is a UI component and page generator — it produces frontend code you integrate into an existing project. Wyber AI generates a complete, runnable full-stack application including routing, state, data, and deployment, all in one generation.',
+    q: 'What is the main difference between WyberAi and v0?',
+    a: 'v0 by Vercel is a UI component and page generator — it produces frontend code you integrate into an existing project. WyberAi generates a complete, runnable full-stack application including routing, state, data, and deployment, all in one generation.',
   },
   {
     q: 'Does v0 build mobile apps?',
-    a: 'No. v0 generates web UI components using Next.js and Tailwind. Wyber AI also builds full React Native + Expo mobile apps that run on iOS and Android.',
+    a: 'No. v0 generates web UI components using Next.js and Tailwind. WyberAi also builds full React Native + Expo mobile apps that run on iOS and Android.',
   },
   {
     q: 'Which is better for shipping fast without coding?',
-    a: 'Wyber AI. v0 is designed for developers who know how to stitch components into a project. Wyber AI outputs a working app with no assembly required — ideal for non-technical founders.',
+    a: 'WyberAi. v0 is designed for developers who know how to stitch components into a project. WyberAi outputs a working app with no assembly required — ideal for non-technical founders.',
   },
   {
-    q: 'Can Wyber AI match v0\'s design quality?',
-    a: 'v0\'s design output is excellent, particularly for Shadcn/Tailwind components. Wyber AI uses a custom dark-mode design system optimized for dashboards and SaaS UIs. For pixel-perfect component libraries, v0 still has an edge.',
+    q: 'Can WyberAi match v0\'s design quality?',
+    a: 'v0\'s design output is excellent, particularly for Shadcn/Tailwind components. WyberAi uses a custom dark-mode design system optimized for dashboards and SaaS UIs. For pixel-perfect component libraries, v0 still has an edge.',
   },
   {
-    q: 'Does Wyber AI have AI agents? v0 doesn\'t.',
-    a: 'Yes. Wyber AI includes a built-in AI agent builder and workflow automation canvas. v0 does not offer agents or automation.',
+    q: 'Does WyberAi have AI agents? v0 doesn\'t.',
+    a: 'Yes. WyberAi includes a built-in AI agent builder and workflow automation canvas. v0 does not offer agents or automation.',
   },
 ]
 
@@ -56,8 +56,8 @@ export default function VsV0() {
       slug="v0"
       competitorName="v0 by Vercel"
       competitorUrl="https://v0.dev"
-      tagline="v0 by Vercel generates polished UI components. Wyber AI generates complete full-stack applications — and adds mobile, agents, and workflows v0 doesn't cover."
-      blurb="Honest comparison of Wyber AI vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026."
+      tagline="v0 by Vercel generates polished UI components. WyberAi generates complete full-stack applications — and adds mobile, agents, and workflows v0 doesn't cover."
+      blurb="Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="v0 generates frontend UI components only — no backend, no mobile, no agents."

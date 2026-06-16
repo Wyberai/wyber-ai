@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
             </svg>
           </div>
           <span style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em' }}>
-            Wyber AI
+            WyberAi
           </span>
         </div>
 

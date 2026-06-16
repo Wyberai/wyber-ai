@@ -58,7 +58,7 @@ export function VsPageTemplate({
       {
         '@type': 'WebPage',
         '@id': `https://wyberai.com/vs/${slug}`,
-        name: `Wyber AI vs ${competitorName} (2026)`,
+        name: `WyberAi vs ${competitorName} (2026)`,
         description: blurb,
         url: `https://wyberai.com/vs/${slug}`,
         breadcrumb: {
@@ -116,7 +116,7 @@ export function VsPageTemplate({
         <header style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Comparison · Verified June 2026</div>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, margin: '0 0 12px' }}>
-            Wyber AI vs {competitorName}
+            WyberAi vs {competitorName}
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '12px auto 8px', lineHeight: 1.65 }}>{tagline}</p>
           <p style={{ fontSize: 11, color: s.dim }}>
@@ -133,7 +133,7 @@ export function VsPageTemplate({
             The key difference: Wyber does four things, not one
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
-            {pillarNote} Wyber AI is the only no-code platform that covers all four pillars from one workspace.
+            {pillarNote} WyberAi is the only no-code platform that covers all four pillars from one workspace.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
             {PILLARS.map(p => (
@@ -154,7 +154,7 @@ export function VsPageTemplate({
           <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 14, overflow: 'hidden', marginBottom: 8 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${s.border}` }} role="row">
               <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: s.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Feature</div>
-              <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: s.sky, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Wyber AI</div>
+              <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: s.sky, textTransform: 'uppercase', letterSpacing: '0.06em' }}>WyberAi</div>
               <div style={{ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: s.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{competitorName}</div>
             </div>
             {rows.map((row, i) => (
@@ -191,7 +191,7 @@ export function VsPageTemplate({
 
         {/* CTA */}
         <section style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>Try Wyber AI free</h2>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>Try WyberAi free</h2>
           <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>50 credits/month free. Build a web app, mobile app, or AI agent in under 60 seconds. No credit card required.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →

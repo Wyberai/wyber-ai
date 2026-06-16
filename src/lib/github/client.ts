@@ -32,7 +32,7 @@ export async function pushFilesToGitHub(opts: {
     baseTreeSha = commitData.data.tree.sha;
   } catch {
     // Repo might be empty — create initial commit
-    const initBlob = await octokit.git.createBlob({ owner, repo, content: '# Wyber AI Project', encoding: 'utf-8' });
+    const initBlob = await octokit.git.createBlob({ owner, repo, content: '# WyberAi Project', encoding: 'utf-8' });
     const initTree = await octokit.git.createTree({ owner, repo, tree: [{ path: 'README.md', mode: '100644', type: 'blob', sha: initBlob.data.sha }] });
     const initCommit = await octokit.git.createCommit({ owner, repo, message: 'Initial commit', tree: initTree.data.sha, parents: [] });
     await octokit.git.createRef({ owner, repo, ref: `refs/heads/${branch}`, sha: initCommit.data.sha });

@@ -2,9 +2,9 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Wyber AI for Designers', description: 'Turn your Figma designs into production code. Import, generate, and ship real apps.' };
+export const metadata: Metadata = { title: 'WyberAi for Designers', description: 'Turn your Figma designs into production code. Import, generate, and ship real apps.' };
 const FEATURES = [
-  { icon: '◈', title: 'Figma import', desc: 'Paste a Figma URL and Wyber AI converts your design to a production React component. Design in Figma, ship in Wyber.' },
+  { icon: '◈', title: 'Figma import', desc: 'Paste a Figma URL and WyberAi converts your design to a production React component. Design in Figma, ship in Wyber.' },
   { icon: '✦', title: 'AI image generation', desc: 'Generate hero illustrations, product mockups, and UI assets directly in the IDE. DALL-E 3 built in.' },
   { icon: '🎨', title: '3 design directions', desc: 'Before building, choose from 3 visual directions — color palettes, typography, layout style. Decided before a line of code is written.' },
   { icon: '✏', title: 'Draw on screenshots', desc: 'Upload a screenshot, draw on what to change, describe your edit. AI fixes exactly the area you marked.' },

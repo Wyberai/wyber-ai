@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('is_public', true)
     .single()
   return {
-    title: data ? `${data.name} — Built with Wyber AI` : 'App — Wyber AI',
-    description: data?.description || 'Built with Wyber AI',
+    title: data ? `${data.name} — Built with WyberAi` : 'App — WyberAi',
+    description: data?.description || 'Built with WyberAi',
   }
 }
 
@@ -55,7 +55,7 @@ export default async function PublishedAppPage({ params }: Props) {
     <>
       <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter, sans-serif' }}>Built with</span>
-        <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'Inter, sans-serif' }}>Wyber AI</a>
+        <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'Inter, sans-serif' }}>WyberAi</a>
       </div>
       <div dangerouslySetInnerHTML={{ __html: html }} />
     </>

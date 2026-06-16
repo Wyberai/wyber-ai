@@ -8,7 +8,7 @@ export default function Page() {
     <DocsPage
       section="Account & Billing"
       title="Credits explained"
-      intro="Credits are the unit of usage in Wyber AI. Here's a detailed breakdown of what costs credits, how your balance works, and how to get more."
+      intro="Credits are the unit of usage in WyberAi. Here's a detailed breakdown of what costs credits, how your balance works, and how to get more."
     >
       <DocSection title="Credit costs by action">
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginTop: 8 }}>

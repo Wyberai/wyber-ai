@@ -273,7 +273,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>X / Twitter</button>
                   <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>LinkedIn</button>
-                  <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out my app built with Wyber AI: ' + liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>WhatsApp</button>
+                  <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>WhatsApp</button>
                 </div>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />

@@ -10,7 +10,7 @@ export default function Page() {
       title="Generating a web app"
       intro="Describe the app you want in plain English and Wyber generates a full-stack React app — complete with UI, logic, and an optional Supabase backend."
       requirements={[
-        { label: 'A Wyber AI account' },
+        { label: 'A WyberAi account' },
         { label: '1 credit', note: 'per generation' },
       ]}
     >

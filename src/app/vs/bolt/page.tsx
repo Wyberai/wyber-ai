@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
-  title: 'Wyber AI vs Bolt.new (2026) — Honest Comparison',
-  description: 'Wyber AI vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, AI agents, and workflows Bolt doesn\'t offer. Verified June 2026.',
+  title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
+  description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, AI agents, and workflows Bolt doesn\'t offer. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/bolt' },
-  openGraph: { title: 'Wyber AI vs Bolt.new (2026)', description: 'Fixed credits, lower price, four pillars. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
+  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, lower price, four pillars. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 
 const ROWS = [
@@ -31,23 +31,23 @@ const ROWS = [
 
 const FAQS = [
   {
-    q: 'How does Wyber AI pricing compare to Bolt.new?',
-    a: 'Wyber AI Pro is $18.99/month with a fixed-credit model — you know exactly what each generation costs before you start. Bolt uses a token-based model ($25/month) where cost depends on the length of your code and prompts, making it harder to predict spend.',
+    q: 'How does WyberAi pricing compare to Bolt.new?',
+    a: 'WyberAi Pro is $18.99/month with a fixed-credit model — you know exactly what each generation costs before you start. Bolt uses a token-based model ($25/month) where cost depends on the length of your code and prompts, making it harder to predict spend.',
   },
   {
     q: 'Does Bolt.new have a mobile app builder?',
-    a: 'No. Bolt.new generates React web apps only. Wyber AI also generates full React Native + Expo mobile apps that run on iOS and Android — all from the same account.',
+    a: 'No. Bolt.new generates React web apps only. WyberAi also generates full React Native + Expo mobile apps that run on iOS and Android — all from the same account.',
   },
   {
-    q: 'Can Wyber AI build AI agents? Bolt can\'t.',
-    a: 'Wyber AI includes a dedicated AI agent builder with 250+ tool integrations (Gmail, Slack, HubSpot, GitHub, and more), cron schedules, and visual canvas editing. Bolt does not offer an agent builder.',
+    q: 'Can WyberAi build AI agents? Bolt can\'t.',
+    a: 'WyberAi includes a dedicated AI agent builder with 250+ tool integrations (Gmail, Slack, HubSpot, GitHub, and more), cron schedules, and visual canvas editing. Bolt does not offer an agent builder.',
   },
   {
     q: 'Is Bolt.new better for developers?',
-    a: 'Bolt.new is more developer-oriented — it has a full in-browser IDE. If you\'re a developer comfortable with code, Bolt\'s flexibility may appeal. Wyber AI is optimized for non-technical builders who want to describe and ship, not debug.',
+    a: 'Bolt.new is more developer-oriented — it has a full in-browser IDE. If you\'re a developer comfortable with code, Bolt\'s flexibility may appeal. WyberAi is optimized for non-technical builders who want to describe and ship, not debug.',
   },
   {
-    q: 'Can I import my Bolt project into Wyber AI?',
+    q: 'Can I import my Bolt project into WyberAi?',
     a: 'Yes. Bolt exports standard React + Vite code. You can paste or upload those files into a Wyber project and continue iterating from there.',
   },
 ]
@@ -58,8 +58,8 @@ export default function VsBolt() {
       slug="bolt"
       competitorName="Bolt.new"
       competitorUrl="https://bolt.new"
-      tagline="Bolt.new is a powerful web app builder for developers. Wyber AI offers predictable fixed-credit pricing, a friendlier interface — and mobile apps, agents, and workflows Bolt doesn't cover."
-      blurb="Honest comparison of Wyber AI vs Bolt.new: pricing model, credits, features, and the four-pillar difference. Verified June 2026."
+      tagline="Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface — and mobile apps, agents, and workflows Bolt doesn't cover."
+      blurb="Honest comparison of WyberAi vs Bolt.new: pricing model, credits, features, and the four-pillar difference. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Bolt.new builds web apps only."

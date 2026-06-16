@@ -114,7 +114,66 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
   },
 
   runFlow: async ({ sourceId, sourceType }) => {
-    set({ isRunning: true, executionLogs: [] })
+    // Pre-flight: validate connections + action slugs before the flow starts
+    set({ isRunning: true, executionLogs: [{ nodeId: 'preflight', nodeLabel: 'Pre-flight check', status: 'running', message: 'Checking tool connections and actions…', timestamp: Date.now() }] })
+    try {
+      const pf = await fetch('/api/canvas/preflight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sourceId, sourceType }),
+      })
+      if (pf.ok) {
+        const { issues, ready } = await pf.json() as { issues: Array<{ nodeId: string; nodeLabel: string; severity: string; message: string; fix: string }>; ready: boolean }
+        const errors = (issues ?? []).filter(i => i.severity === 'error')
+        const warnings = (issues ?? []).filter(i => i.severity === 'warning')
+
+        if (errors.length > 0) {
+          set({
+            isRunning: false,
+            executionLogs: [
+              {
+                nodeId: 'preflight',
+                nodeLabel: 'Pre-flight check',
+                status: 'error',
+                message: `Found ${errors.length} issue${errors.length > 1 ? 's' : ''} — fix them before running:`,
+                timestamp: Date.now(),
+              },
+              ...errors.map(issue => ({
+                nodeId: issue.nodeId,
+                nodeLabel: issue.nodeLabel,
+                status: 'error' as const,
+                message: `${issue.message}  →  ${issue.fix}`,
+                timestamp: Date.now(),
+              })),
+              ...warnings.map(issue => ({
+                nodeId: issue.nodeId,
+                nodeLabel: issue.nodeLabel,
+                status: 'error' as const,
+                message: `⚠️  ${issue.message}  →  ${issue.fix}`,
+                timestamp: Date.now(),
+              })),
+            ],
+          })
+          return
+        }
+
+        // Clear preflight log (all good), add warnings only if present
+        set({
+          executionLogs: warnings.map(issue => ({
+            nodeId: issue.nodeId,
+            nodeLabel: issue.nodeLabel,
+            status: 'error' as const,
+            message: `⚠️  ${issue.message}  →  ${issue.fix}`,
+            timestamp: Date.now(),
+          })),
+        })
+        if (!ready) {
+          // should not happen — ready=true when errors=0, but be safe
+        }
+      }
+    } catch { /* preflight unavailable — proceed optimistically */ }
+
+    set((s) => ({ isRunning: true, executionLogs: [...s.executionLogs] }))
 
     // Mark all nodes pending
     set((s) => ({

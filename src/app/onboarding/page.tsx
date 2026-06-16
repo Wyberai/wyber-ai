@@ -89,7 +89,7 @@ export default function OnboardingPage() {
 
         {step === 1 && (
           <>
-            <h1 style={S.h1}>Welcome to Wyber AI 👋</h1>
+            <h1 style={S.h1}>Welcome to WyberAi 👋</h1>
             <p style={S.sub}>You have 15 credits to start. Let's get you set up in 30 seconds.</p>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 8, display: 'block' }}>What's your name?</label>
             <input style={S.input} placeholder="Your name" value={name} onChange={e => setName(e.target.value)}

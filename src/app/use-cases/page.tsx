@@ -4,10 +4,10 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './[slug]/data'
 
 export const metadata: Metadata = {
-  title: 'Use Cases — Build Web Apps, Mobile Apps, AI Agents & Workflows | Wyber AI',
-  description: 'Explore how Wyber AI helps you build web apps, mobile apps, AI agents, and workflow automations from plain English — no code required.',
+  title: 'Use Cases — Build Web Apps, Mobile Apps, AI Agents & Workflows | WyberAi',
+  description: 'Explore how WyberAi helps you build web apps, mobile apps, AI agents, and workflow automations from plain English — no code required.',
   alternates: { canonical: 'https://wyberai.com/use-cases' },
-  openGraph: { title: 'Use Cases — Wyber AI', description: 'Build web apps, mobile apps, AI agents, and workflows from plain English. No code required.' },
+  openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps, mobile apps, AI agents, and workflows from plain English. No code required.' },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.08)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', green: '#10b981', amber: '#f59e0b', violet: '#8b5cf6' }
@@ -17,8 +17,8 @@ const PILLAR_COLORS: Record<string, string> = { web: s.sky, mobile: s.violet, ag
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: 'Wyber AI Use Cases',
-  description: 'Explore how Wyber AI helps you build web apps, mobile apps, AI agents, and workflow automations from plain English.',
+  name: 'WyberAi Use Cases',
+  description: 'Explore how WyberAi helps you build web apps, mobile apps, AI agents, and workflow automations from plain English.',
   url: 'https://wyberai.com/use-cases',
 }
 
@@ -37,7 +37,7 @@ export default function UseCasesIndex() {
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <header style={{ textAlign: 'center', marginBottom: 56 }}>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
-            What can you build with Wyber AI?
+            What can you build with WyberAi?
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
             From web dashboards to mobile apps, AI agents, and workflow automations — all from plain English, no coding required.

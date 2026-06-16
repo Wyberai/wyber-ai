@@ -53,7 +53,7 @@ export function SupabaseGenerator() {
         <div style={{ marginTop: 16, padding: '10px 12px', borderRadius: 9, background: 'rgba(63,207,142,0.05)', border: '1px solid rgba(63,207,142,0.15)' }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#3FCF8E', marginBottom: 4 }}>How it works</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            Click a template → Wyber AI generates production Supabase code → Add your SUPABASE_URL + ANON_KEY to environment → Deploy and it works.
+            Click a template → WyberAi generates production Supabase code → Add your SUPABASE_URL + ANON_KEY to environment → Deploy and it works.
           </div>
         </div>
       </div>

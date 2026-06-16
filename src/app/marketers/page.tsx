@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Wyber AI for Marketers', description: 'Launch landing pages, run experiments, build marketing tools — without waiting on engineering.' };
+export const metadata: Metadata = { title: 'WyberAi for Marketers', description: 'Launch landing pages, run experiments, build marketing tools — without waiting on engineering.' };
 const FEATURES = [
   { icon: '🎯', title: 'Landing pages in minutes', desc: 'Describe your campaign and get a conversion-optimized page live today. A/B test copy and CTAs without dev tickets.' },
   { icon: '📈', title: 'SEO-ready from day one', desc: 'Next.js SSR means every page is indexed by Google immediately. Meta tags, OG tags, and structured data generated automatically.' },

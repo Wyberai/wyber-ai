@@ -4,7 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-const SYSTEM = `You are Wyber AI's automation builder. Your job is to generate a complete workflow flow from a plain English description.
+const SYSTEM = `You are WyberAi's automation builder. Your job is to generate a complete workflow flow from a plain English description.
 
 OUTPUT FORMAT — respond ONLY with valid JSON, no markdown, no explanation:
 {

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AgentCanvas } from '@/components/editor/AgentCanvas'
 import type { Metadata } from 'next'
@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const supabase = await createClient()
   const { data: flow } = await supabase.from('flows').select('name').eq('id', id).single()
-  return { title: flow?.name ? `${flow.name} — Wyber AI` : 'Flow Builder — Wyber AI' }
+  return { title: flow?.name ? `${flow.name} — WyberAi` : 'Flow Builder — WyberAi' }
 }
 
 export default async function FlowPage({ params }: Props) {

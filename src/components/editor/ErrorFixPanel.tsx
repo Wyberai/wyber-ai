@@ -58,7 +58,7 @@ Fix the root cause. Output only the changed files.`;
   return (
     <div style={{ padding: '14px 16px' }}>
       <div style={{ background: 'rgba(61,214,140,0.05)', border: '1px solid rgba(61,214,140,0.2)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>
-        ✕ Paste an error message or console output. Wyber AI fixes it — no credit charge for errors we caused.
+        ✕ Paste an error message or console output. WyberAi fixes it — no credit charge for errors we caused.
       </div>
       <textarea
         value={errorText}

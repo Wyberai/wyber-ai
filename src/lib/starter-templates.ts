@@ -171,7 +171,7 @@ export default function App() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.center}>
-        <Text style={styles.title}>Wyber AI Mobile</Text>
+        <Text style={styles.title}>WyberAi Mobile</Text>
         <Text style={styles.subtitle}>Describe your app in the chat to get started</Text>
       </View>
     </SafeAreaView>

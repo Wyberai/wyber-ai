@@ -113,7 +113,7 @@ Keep it to 3-6 steps maximum. Each step should be a focused, atomic change.`;
   return (
     <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ background: 'var(--accent-glow)', border: '1px solid var(--accent-dim)', borderRadius: 8, padding: '8px 12px', fontSize: 12, color: 'var(--accent)', fontWeight: 500 }}>
-        ⚡ Agent Mode — describe the full feature and Wyber AI will plan and execute it step by step
+        ⚡ Agent Mode — describe the full feature and WyberAi will plan and execute it step by step
       </div>
 
       <textarea

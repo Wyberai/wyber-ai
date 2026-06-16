@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
@@ -17,14 +17,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     .eq('is_public', true)
     .single()
 
-  if (!project) return { title: 'App not found — Wyber AI' }
+  if (!project) return { title: 'App not found — WyberAi' }
 
   return {
-    title: `${project.name} — Built with Wyber AI`,
-    description: `Check out ${project.name}, built in under 60 seconds with Wyber AI. No code required.`,
+    title: `${project.name} — Built with WyberAi`,
+    description: `Check out ${project.name}, built in under 60 seconds with WyberAi. No code required.`,
     openGraph: {
-      title: `${project.name} — Built with Wyber AI`,
-      description: 'Built in under 60 seconds with Wyber AI. No code required.',
+      title: `${project.name} — Built with WyberAi`,
+      description: 'Built in under 60 seconds with WyberAi. No code required.',
       images: project.thumbnail_url
         ? [{ url: project.thumbnail_url, width: 1200, height: 630 }]
         : [{ url: `https://wyberai.com/api/og?title=${encodeURIComponent(project.name)}&sub=Built+with+Wyber+AI`, width: 1200, height: 630 }],
@@ -59,7 +59,7 @@ export default async function PublicProjectPage({ params }: Props) {
             <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
           </svg>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>Wyber AI</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
         </Link>
         <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 2px 12px rgba(14,165,233,0.35)' }}>
           Build your own free →
@@ -70,13 +70,13 @@ export default async function PublicProjectPage({ params }: Props) {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(32px,5vw,64px) clamp(16px,4vw,48px) 0' }}>
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
-            ⚡ Built with Wyber AI
+            ⚡ Built with WyberAi
           </div>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1, color: '#fafafa' }}>
             {project.name}
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.65 }}>
-            This app was built in under 60 seconds using Wyber AI — no coding required.
+            This app was built in under 60 seconds using WyberAi — no coding required.
           </p>
         </div>
 

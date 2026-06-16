@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Page not found — Wyber AI',
+  title: 'Page not found — WyberAi',
 };
 
 export default function NotFound() {

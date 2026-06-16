@@ -4,11 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 const MCP_MANIFEST = {
   name: 'wyber-ai',
   version: '1.0.0',
-  description: 'Build full-stack apps from plain English using Wyber AI',
+  description: 'Build full-stack apps from plain English using WyberAi',
   tools: [
     {
       name: 'create_project',
-      description: 'Create a new Wyber AI project',
+      description: 'Create a new WyberAi project',
       inputSchema: {
         type: 'object',
         properties: {
@@ -21,7 +21,7 @@ const MCP_MANIFEST = {
     },
     {
       name: 'send_message',
-      description: 'Send a build message to a Wyber AI project',
+      description: 'Send a build message to a WyberAi project',
       inputSchema: {
         type: 'object',
         properties: {
@@ -33,7 +33,7 @@ const MCP_MANIFEST = {
     },
     {
       name: 'list_projects',
-      description: 'List all projects in your Wyber AI workspace',
+      description: 'List all projects in your WyberAi workspace',
       inputSchema: { type: 'object', properties: {} },
     },
     {

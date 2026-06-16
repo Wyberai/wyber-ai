@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wyber AI Preview</title>
+<title>WyberAi Preview</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Inter', -apple-system, sans-serif; background: #0A0A0A; color: #F5F5F5; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }

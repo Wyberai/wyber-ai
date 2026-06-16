@@ -59,7 +59,7 @@ export function ClonePanel({ onClose }: { onClose?: () => void }) {
     <div style={{ padding: 16, background: 'var(--bg-base)', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Clone a Website</div>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 16 }}>
-        Paste any URL — Wyber AI scrapes it and builds a React clone in seconds.
+        Paste any URL — WyberAi scrapes it and builds a React clone in seconds.
       </p>
       <input
         value={url}

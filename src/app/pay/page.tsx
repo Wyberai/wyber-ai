@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Pay for your Wyber AI Build',
-  description: 'Complete payment for your Wyber AI app build.',
+  title: 'Pay for your WyberAi Build',
+  description: 'Complete payment for your WyberAi app build.',
   robots: 'noindex',
 }
 

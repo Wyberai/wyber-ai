@@ -529,7 +529,7 @@ export default function SettingsPage() {
         {/* API KEYS */}
         {tab === 'api-keys' && <>
           <h1 style={S.h2}>API Keys</h1>
-          <p style={S.sub}>Use the Wyber AI API to build on top of our platform. Keep your keys secret.</p>
+          <p style={S.sub}>Use the WyberAi API to build on top of our platform. Keep your keys secret.</p>
 
           <div style={S.card}>
             <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Your API Key</div>
@@ -730,7 +730,7 @@ export default function SettingsPage() {
 
           <div style={{ ...S.card, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.03)' }}>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Delete account</div>
-            <div style={{ fontSize: 13, color: '#71717a', marginBottom: 14 }}>Permanently delete your Wyber AI account and all associated data. This cannot be undone.</div>
+            <div style={{ fontSize: 13, color: '#71717a', marginBottom: 14 }}>Permanently delete your WyberAi account and all associated data. This cannot be undone.</div>
             <label style={S.label}>Type your email to confirm</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} placeholder={profile?.email || 'your@email.com'} style={{ ...S.input, flex: 1 }} />

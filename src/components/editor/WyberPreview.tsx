@@ -314,7 +314,7 @@ export default function WyberPreview({
         <iframe
           ref={iframeRef}
           src={previewURL || 'about:blank'}
-          title="Wyber AI Preview"
+          title="WyberAi Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
           style={{
             width: '100%',

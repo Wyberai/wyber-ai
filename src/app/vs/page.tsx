@@ -3,17 +3,17 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Wyber AI vs Competitors (2026) — Honest Comparisons',
-  description: 'Compare Wyber AI to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the four-pillar difference (web + mobile + agents + workflows) stack up.',
+  title: 'WyberAi vs Competitors (2026) — Honest Comparisons',
+  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. See how pricing, credits, and the four-pillar difference (web + mobile + agents + workflows) stack up.',
   alternates: { canonical: 'https://wyberai.com/vs' },
-  openGraph: { title: 'Wyber AI vs Competitors (2026)', description: 'Compare Wyber AI to every major AI builder.', url: 'https://wyberai.com/vs' },
+  openGraph: { title: 'WyberAi vs Competitors (2026)', description: 'Compare WyberAi to every major AI builder.', url: 'https://wyberai.com/vs' },
 }
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
-  name: 'Wyber AI vs Competitors',
-  description: 'Compare Wyber AI to Lovable, Bolt.new, v0, Replit, and Cursor. Verified June 2026.',
+  name: 'WyberAi vs Competitors',
+  description: 'Compare WyberAi to Lovable, Bolt.new, v0, Replit, and Cursor. Verified June 2026.',
   url: 'https://wyberai.com/vs',
 }
 
@@ -23,7 +23,7 @@ const COMPARISONS = [
     name: 'Lovable',
     url: 'lovable.dev',
     tag: 'AI web app builder',
-    summary: 'Wyber AI offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
+    summary: 'WyberAi offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.',
     wyberWins: ['More credits (~400 vs ~250/mo)', 'Lower Builder price ($18.99 vs $25)', 'Top-ups never expire', 'Mobile + agents + workflows'],
   },
   {
@@ -31,7 +31,7 @@ const COMPARISONS = [
     name: 'Bolt.new',
     url: 'bolt.new',
     tag: 'AI web app builder',
-    summary: 'Wyber AI uses fixed-credit pricing (no token surprises) and adds mobile apps, agents, and workflows Bolt doesn\'t offer.',
+    summary: 'WyberAi uses fixed-credit pricing (no token surprises) and adds mobile apps, agents, and workflows Bolt doesn\'t offer.',
     wyberWins: ['Predictable fixed credits', 'Daily bonus credits', 'Guided for non-technical users', 'Mobile + agents + workflows'],
   },
   {
@@ -39,7 +39,7 @@ const COMPARISONS = [
     name: 'v0 by Vercel',
     url: 'v0.dev',
     tag: 'UI component generator',
-    summary: 'v0 generates UI components. Wyber AI generates complete full-stack apps — plus mobile, agents, and workflows.',
+    summary: 'v0 generates UI components. WyberAi generates complete full-stack apps — plus mobile, agents, and workflows.',
     wyberWins: ['Complete app in one generation', 'Database + auth included', 'No assembly required', 'Mobile + agents + workflows'],
   },
   {
@@ -47,7 +47,7 @@ const COMPARISONS = [
     name: 'Replit',
     url: 'replit.com',
     tag: 'Cloud IDE',
-    summary: 'Replit is an IDE for developers. Wyber AI is a no-code builder for founders — faster, cheaper, and more predictable.',
+    summary: 'Replit is an IDE for developers. WyberAi is a no-code builder for founders — faster, cheaper, and more predictable.',
     wyberWins: ['No coding knowledge needed', 'Predictable fixed credits', '< 60 second app generation', 'Mobile + agents + workflows'],
   },
   {
@@ -55,7 +55,7 @@ const COMPARISONS = [
     name: 'Cursor',
     url: 'cursor.com',
     tag: 'AI code editor',
-    summary: 'Cursor makes developers faster. Wyber AI builds complete apps from plain English — no developer needed.',
+    summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.',
     wyberWins: ['Zero coding required', 'App in < 60 seconds', 'Live preview + one-click deploy', 'Mobile + agents + workflows'],
   },
 ]
@@ -78,10 +78,10 @@ export default function VsIndex() {
         <header style={{ textAlign: 'center', marginBottom: 56 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Verified June 2026</div>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
-            Wyber AI vs Every Alternative
+            WyberAi vs Every Alternative
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
-            Honest, up-to-date comparisons. Wyber AI is the only platform that covers all four pillars — web apps, mobile apps, AI agents, and workflows — from one workspace.
+            Honest, up-to-date comparisons. WyberAi is the only platform that covers all four pillars — web apps, mobile apps, AI agents, and workflows — from one workspace.
           </p>
         </header>
 
@@ -105,7 +105,7 @@ export default function VsIndex() {
                 <div style={{ flex: 1, minWidth: 240 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, color: s.text }}>
-                      Wyber AI vs {c.name}
+                      WyberAi vs {c.name}
                     </h2>
                     <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.05)', color: s.muted, border: `1px solid ${s.border}` }}>
                       {c.tag}
@@ -130,7 +130,7 @@ export default function VsIndex() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try Wyber AI free — 50 credits/month</h2>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 50 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>Web app, mobile app, AI agent, or workflow. No credit card required.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →

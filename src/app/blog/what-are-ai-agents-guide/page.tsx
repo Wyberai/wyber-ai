@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'What are AI agents? A practical guide for non-technical founders — Wyber AI Blog',
+  title: 'What are AI agents? A practical guide for non-technical founders — WyberAi Blog',
   description: 'Agents watch data, make decisions, and take action automatically. Here\'s what they actually are, what they\'re good for, and how to build one without code.',
 }
 
@@ -42,7 +42,7 @@ export default function Post() {
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What agents are actually good for</h2>
           <p>The best use cases for agents share three characteristics: the trigger is well-defined (a new email, a new row, 8 AM every morning), the decision requires some intelligence (classify this, summarize that, score this lead), and the action is something you currently do manually and hate doing.</p>
 
-          <p>Real examples from Wyber AI users:</p>
+          <p>Real examples from WyberAi users:</p>
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               'Every morning at 8 AM: check Gmail for investor emails, summarize each one with key asks, send a Slack DM',
@@ -58,7 +58,7 @@ export default function Post() {
           {[
             { label: 'Trigger', desc: 'What kicks the agent off. A cron schedule ("every day at 9 AM"), a webhook ("when a new form submission arrives"), or a manual run for testing.' },
             { label: 'Reasoning', desc: 'The AI step. A Claude node that classifies, scores, summarizes, extracts, or decides. This is what separates an agent from a plain automation — it can handle ambiguous input.' },
-            { label: 'Actions', desc: 'What happens next. Send a Slack message, create a HubSpot contact, add a row to Google Sheets, post a Linear ticket. Wyber AI connects to 250+ apps via Composio.' },
+            { label: 'Actions', desc: 'What happens next. Send a Slack message, create a HubSpot contact, add a row to Google Sheets, post a Linear ticket. WyberAi connects to 250+ apps via Composio.' },
           ].map(part => (
             <div key={part.label} style={{ background: s.card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, marginBottom: 10 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.green, marginBottom: 4 }}>{part.label}</div>
@@ -67,7 +67,7 @@ export default function Post() {
           ))}
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>How to build one without code</h2>
-          <p>In Wyber AI's agent builder, you describe the agent in plain English — the trigger, what you want it to reason about, and what it should do with the result. The builder generates the visual canvas: each step appears as a node, connected by arrows.</p>
+          <p>In WyberAi's agent builder, you describe the agent in plain English — the trigger, what you want it to reason about, and what it should do with the result. The builder generates the visual canvas: each step appears as a node, connected by arrows.</p>
 
           <p>You connect your tools once in Settings → Integrations (Gmail, Slack, HubSpot, etc.), then activate. The agent runs automatically from that point on.</p>
 
@@ -82,7 +82,7 @@ export default function Post() {
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.green}10`, border: `1px solid ${s.green}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Build your first agent — free</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe what you want the agent to watch and do. Wyber AI builds the canvas, picks the tools, and runs it for you.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe what you want the agent to watch and do. WyberAi builds the canvas, picks the tools, and runs it for you.</p>
             <Link href="/dashboard?new=agent" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.green, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
               Build my agent →
             </Link>

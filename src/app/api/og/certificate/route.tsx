@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
                 <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
               </svg>
             </div>
-            <span style={{ fontSize: 26, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>Wyber AI</span>
+            <span style={{ fontSize: 26, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
           </div>
 
           {/* Seal */}

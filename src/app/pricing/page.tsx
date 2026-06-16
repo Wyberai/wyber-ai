@@ -277,7 +277,7 @@ export default function PricingPage() {
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Always know what you're spending before you build</div>
             <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65 }}>
-              Wyber AI shows you the estimated credit cost before every generation. Type your prompt, see the estimate, build with confidence. No surprises.
+              WyberAi shows you the estimated credit cost before every generation. Type your prompt, see the estimate, build with confidence. No surprises.
             </div>
           </div>
         </div>
@@ -289,7 +289,7 @@ export default function PricingPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  {['', 'Lovable Pro', 'Wyber AI Pro', 'Difference'].map(h => (
+                  {['', 'Lovable Pro', 'WyberAi Pro', 'Difference'].map(h => (
                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
                   ))}
                 </tr>
@@ -371,7 +371,7 @@ export default function PricingPage() {
         {/* Special programs */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 60 }}>
           {[
-            { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on Wyber AI Discord.', cta: 'Join free', href: 'https://discord.gg/A5KsFv2P' },
+            { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on WyberAi Discord.', cta: 'Join free', href: 'https://discord.gg/A5KsFv2P' },
             { icon: '🎓', title: 'Wyber for Students', desc: '50% off Pro with valid student email. Learning to build? Build for less.', cta: 'Apply now', href: 'mailto:students@wyberai.com' },
             { icon: '🏢', title: 'Wyber for Startups', desc: '3 months free Pro for pre-seed startups. Build your MVP without burning runway.', cta: 'Apply now', href: 'mailto:startups@wyberai.com' },
             { icon: '🎁', title: 'Gift Credits', desc: 'Send credits to a builder you know. Coming soon — join the waitlist.', cta: 'Notify me', href: 'mailto:hello@wyberai.com?subject=Gift Credits Waitlist' },

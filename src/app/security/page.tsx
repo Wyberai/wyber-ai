@@ -1,7 +1,7 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Security — Wyber AI', description: 'How Wyber AI protects your code, credentials, and data at every layer.' };
+export const metadata: Metadata = { title: 'Security — WyberAi', description: 'How WyberAi protects your code, credentials, and data at every layer.' };
 const CHECKS = [
   { icon: '🔒', title: 'HTTPS everywhere', desc: 'All traffic encrypted via TLS 1.3. No plain-text connections, ever.' },
   { icon: '🛡', title: 'Row Level Security', desc: 'Every Supabase table enforces RLS. Your data is isolated and inaccessible to other accounts.' },

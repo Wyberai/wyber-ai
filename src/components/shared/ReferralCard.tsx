@@ -30,7 +30,7 @@ export function ReferralCard() {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={copied ? '#22c55e' : '#71717a'} strokeWidth="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16,6 12,2 8,6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         <div>
           <div style={{ fontSize: 12, fontWeight: 600, color: copied ? '#22c55e' : '#fafafa', fontFamily: 'inherit' }}>
-            {copied ? '✓ Link copied!' : 'Share Wyber AI'}
+            {copied ? '✓ Link copied!' : 'Share WyberAi'}
           </div>
           <div style={{ fontSize: 10, color: '#52525b' }}>
             {count > 0 ? `${count} referrals · ${creditsEarned} credits earned` : '50 credits per referral signup'}

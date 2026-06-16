@@ -32,7 +32,7 @@ export function FigmaImportPanel({ onImport }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 0' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Figma Import</div>
-      <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>Paste a Figma share link and Wyber AI converts it to a React component.</div>
+      <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>Paste a Figma share link and WyberAi converts it to a React component.</div>
 
       <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: 'var(--text2)', lineHeight: 1.6 }}>
         <strong style={{ color: 'var(--sky)' }}>How to get a share link:</strong><br />

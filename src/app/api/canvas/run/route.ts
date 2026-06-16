@@ -243,6 +243,31 @@ async function executeHttpTool(
 
   if (!url) return { output: null, log: ['Error: no URL configured'] }
 
+  // SSRF guard: only allow HTTPS to public hosts
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'https:') {
+      return { output: null, log: [`Error: only HTTPS URLs are allowed (got ${parsed.protocol})`] }
+    }
+    const hostname = parsed.hostname.toLowerCase()
+    const privatePatterns = [
+      /^localhost$/,
+      /^127\./,
+      /^10\./,
+      /^172\.(1[6-9]|2\d|3[01])\./,
+      /^192\.168\./,
+      /^169\.254\./,   // link-local / AWS metadata
+      /^::1$/,
+      /^0\.0\.0\.0$/,
+      /^fd[0-9a-f]{2}:/i,  // IPv6 ULA
+    ]
+    if (privatePatterns.some(p => p.test(hostname))) {
+      return { output: null, log: [`Error: requests to private/internal addresses are not allowed`] }
+    }
+  } catch {
+    return { output: null, log: ['Error: invalid URL'] }
+  }
+
   // Resolve {{SECRET:NAME}} placeholders server-side
   url = await resolveSecrets(url, userId)
   bodyStr = await resolveSecrets(bodyStr, userId)
@@ -339,33 +364,135 @@ async function executeComposioTool(
     }
   }
 
-  // Execute the action with upstream state as arguments
-  const result = await composio.tools.execute(action, {
-    userId,
-    arguments: state as Record<string, unknown>,
-    dangerouslySkipVersionCheck: true,
-  })
-
-  return {
-    output: result,
-    log: [
-      `Composio: ${action}`,
-      `Toolkit: ${toolkit}`,
-      `Result: ${JSON.stringify(result).slice(0, 200)}`,
-    ],
+  // Validate the action slug exists before executing
+  let availableSlugs: string[] = []
+  try {
+    const tools = await composio.tools.get(userId, { toolkits: [toolkit.toUpperCase()], limit: 100 })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    availableSlugs = (Array.isArray(tools) ? tools : []).map((t: any) => t.function?.name ?? t.name ?? '').filter(Boolean)
+    const exists = availableSlugs.includes(action)
+    if (!exists) {
+      const suggestions = availableSlugs
+        .filter(s => s.toLowerCase().includes(action.split('_').slice(1).join('_').toLowerCase().slice(0, 6)))
+        .slice(0, 3)
+      return {
+        output: null,
+        log: [
+          `Action "${action}" not found in ${toolkit}.`,
+          suggestions.length
+            ? `Did you mean: ${suggestions.join(', ')}?`
+            : `Available actions include: ${availableSlugs.slice(0, 5).join(', ')}`,
+          'Open this tool node in the canvas and pick a valid action from the dropdown.',
+        ],
+      }
+    }
+  } catch {
+    // If validation fetch fails, attempt execution anyway
   }
+
+  // Execute the action with upstream state as arguments
+  try {
+    const result = await composio.tools.execute(action, {
+      userId,
+      arguments: state as Record<string, unknown>,
+      dangerouslySkipVersionCheck: true,
+    })
+    return {
+      output: result,
+      log: [
+        `Composio: ${action}`,
+        `Toolkit: ${toolkit}`,
+        `Result: ${JSON.stringify(result).slice(0, 200)}`,
+      ],
+    }
+  } catch (err) {
+    const msg = String(err)
+    const isNotFound = msg.includes('ToolNotFound') || msg.includes('not found') || msg.includes('invalid slug')
+    return {
+      output: null,
+      log: [
+        `Error executing ${action}: ${msg}`,
+        ...(isNotFound && availableSlugs.length
+          ? [`Valid ${toolkit} actions: ${availableSlugs.slice(0, 5).join(', ')}`]
+          : []),
+      ],
+    }
+  }
+}
+
+/**
+ * Safe condition evaluator — no eval / new Function.
+ * Supports: ==, !=, >, >=, <, <=, &&, ||, !, contains, startsWith, endsWith
+ * Values are resolved from dot-notation paths into `state` (e.g. "step1.output.count").
+ * Throws on any unrecognised token so untrusted input can never reach JS execution.
+ */
+function safeEval(rule: string, state: Record<string, unknown>): boolean {
+  const resolve = (token: string): unknown => {
+    token = token.trim()
+    if (token === 'true') return true
+    if (token === 'false') return false
+    if (token === 'null') return null
+    if (/^-?\d+(\.\d+)?$/.test(token)) return Number(token)
+    if (/^"[^"]*"$/.test(token) || /^'[^']*'$/.test(token)) return token.slice(1, -1)
+    // dot-path into state
+    return token.split('.').reduce<unknown>((obj, key) => {
+      if (obj != null && typeof obj === 'object') return (obj as Record<string, unknown>)[key]
+      return undefined
+    }, state)
+  }
+
+  const strip = (s: string) => s.trim().replace(/^\(|\)$/g, '').trim()
+
+  // OR
+  const orParts = rule.split(/\s*\|\|\s*/)
+  if (orParts.length > 1) return orParts.some(p => safeEval(p.trim(), state))
+
+  // AND
+  const andParts = rule.split(/\s*&&\s*/)
+  if (andParts.length > 1) return andParts.every(p => safeEval(p.trim(), state))
+
+  // NOT
+  if (/^!\s*/.test(rule)) return !safeEval(rule.slice(1).trim(), state)
+
+  // Comparisons
+  const cmpMatch = rule.match(/^(.+?)\s*(===?|!==?|>=|<=|>|<)\s*(.+)$/)
+  if (cmpMatch) {
+    const [, left, op, right] = cmpMatch
+    const l = resolve(strip(left))
+    const r = resolve(strip(right))
+    switch (op) {
+      case '==': case '===': return l == r   // eslint-disable-line eqeqeq
+      case '!=': case '!==': return l != r   // eslint-disable-line eqeqeq
+      case '>':  return Number(l) >  Number(r)
+      case '>=': return Number(l) >= Number(r)
+      case '<':  return Number(l) <  Number(r)
+      case '<=': return Number(l) <= Number(r)
+    }
+  }
+
+  // String helpers: contains(path, "val"), startsWith(...), endsWith(...)
+  const fnMatch = rule.match(/^(contains|startsWith|endsWith)\s*\(\s*(.+?)\s*,\s*(.+?)\s*\)$/)
+  if (fnMatch) {
+    const [, fn, left, right] = fnMatch
+    const l = String(resolve(strip(left)) ?? '')
+    const r = String(resolve(strip(right)) ?? '')
+    if (fn === 'contains')   return l.includes(r)
+    if (fn === 'startsWith') return l.startsWith(r)
+    if (fn === 'endsWith')   return l.endsWith(r)
+  }
+
+  // Plain truthy check on a state path
+  return Boolean(resolve(strip(rule)))
 }
 
 async function executeCondition(
   node: CanvasNode,
   state: Record<string, unknown>,
 ): Promise<{ output: unknown; log: string[] }> {
-  const rule = node.data.config.rule || 'true'
+  const rule = (node.data.config.rule || 'true').trim()
   let result = false
   try {
-    // Safe-ish: only evaluates a simple expression in a sandboxed function
-    // eslint-disable-next-line no-new-func
-    result = Boolean(new Function('state', `"use strict"; return (${rule})`)(state))
+    result = safeEval(rule, state)
   } catch (e) {
     return { output: { result: false, error: String(e) }, log: [`Condition error: ${e}`] }
   }

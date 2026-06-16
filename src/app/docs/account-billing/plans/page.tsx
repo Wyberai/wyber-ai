@@ -8,7 +8,7 @@ export default function Page() {
     <DocsPage
       section="Account & Billing"
       title="Plans & pricing"
-      intro="Wyber AI offers a free tier and paid plans. All plans give you access to all four product types — web apps, mobile apps, agents, and workflows."
+      intro="WyberAi offers a free tier and paid plans. All plans give you access to all four product types — web apps, mobile apps, agents, and workflows."
     >
       <DocSection title="Plan comparison">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 16 }}>

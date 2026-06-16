@@ -2,7 +2,7 @@ import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Connectors — Wyber AI', description: 'Connect your app to 35+ services. Airtable, Notion, HubSpot, Stripe, Slack, Anthropic, and more.' };
+export const metadata: Metadata = { title: 'Connectors — WyberAi', description: 'Connect your app to 35+ services. Airtable, Notion, HubSpot, Stripe, Slack, Anthropic, and more.' };
 const CONNECTORS = [
   { name:'Airtable', icon:'⬡', color:'#F59E0B', cat:'Data' },
   { name:'Notion', icon:'◈', color:'#374151', cat:'Data' },

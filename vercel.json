@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/agent-scheduler",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/employee-scheduler",
+      "schedule": "*/15 * * * *"
     }
   ],
   "headers": [

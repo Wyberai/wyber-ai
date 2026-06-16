@@ -89,7 +89,7 @@ export function WyberChatbot() {
       if (!hasGreeted) {
         setMessages([{
           role: 'assistant',
-          content: "Hi! I'm the Wyber AI assistant. I can help you understand what Wyber does, how pricing works, or how to get started. What would you like to know?"
+          content: "Hi! I'm the WyberAi assistant. I can help you understand what Wyber does, how pricing works, or how to get started. What would you like to know?"
         }])
         setHasGreeted(true)
       }
@@ -140,7 +140,7 @@ export function WyberChatbot() {
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>⚡</div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Wyber AI</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>WyberAi</div>
               <div style={{ fontSize: 11, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> Online
               </div>
@@ -174,11 +174,11 @@ export function WyberChatbot() {
             </button>
           </div>
           <div style={{ textAlign: 'center', padding: '6px 0 10px', fontSize: 10, color: '#3f3f46' }}>
-            Powered by Wyber AI · <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free →</a>
+            Powered by WyberAi · <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free →</a>
           </div>
         </div>
       )}
-      <button onClick={() => setOpen(v => !v)} style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '50%', border: 'none', background: '#0EA5E9', boxShadow: '0 8px 32px rgba(14,165,233,0.4)', cursor: 'pointer', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} aria-label="Chat with Wyber AI">
+      <button onClick={() => setOpen(v => !v)} style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '50%', border: 'none', background: '#0EA5E9', boxShadow: '0 8px 32px rgba(14,165,233,0.4)', cursor: 'pointer', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} aria-label="Chat with WyberAi">
         {open ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>}
       </button>
       <style>{`@keyframes chatSlideUp{from{opacity:0;transform:translateY(12px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}`}</style>

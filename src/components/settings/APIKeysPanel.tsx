@@ -36,14 +36,14 @@ export function APIKeysPanel() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>API Keys</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Access the Wyber AI API and MCP server</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Access the WyberAi API and MCP server</div>
         </div>
         <button onClick={() => setCreating(!creating)} style={{ padding: '7px 14px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 12, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ New key</button>
       </div>
 
       <div style={{ padding: '12px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>MCP Server — for Claude Desktop & Cursor</div>
-        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>Add to your MCP client config to build Wyber AI projects from Claude or Cursor:</div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>Add to your MCP client config to build WyberAi projects from Claude or Cursor:</div>
         <code style={{ display: 'block', padding: '8px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 11, color: 'var(--sky)', fontFamily: 'monospace' }}>
           https://wyberai.com/api/mcp
         </code>
@@ -70,7 +70,7 @@ export function APIKeysPanel() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {keys.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text3)', fontSize: 12, background: 'var(--bg2)', borderRadius: 9, border: '1px solid var(--border)' }}>No API keys yet. Create one to use the Wyber AI API or MCP server.</div>
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text3)', fontSize: 12, background: 'var(--bg2)', borderRadius: 9, border: '1px solid var(--border)' }}>No API keys yet. Create one to use the WyberAi API or MCP server.</div>
         ) : keys.map(k => (
           <div key={k.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--bg2)' }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#34D399', flexShrink: 0 }} />

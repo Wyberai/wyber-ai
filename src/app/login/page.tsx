@@ -47,7 +47,7 @@ export default function LoginPage() {
           <p style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: '#EDF4FF', lineHeight: 1.3, marginBottom: 16 }}>
             "I built my first SaaS dashboard in 4 minutes. No code. Just described what I wanted."
           </p>
-          <p style={{ fontSize: 14, color: '#334E6A' }}>— Early Wyber AI user</p>
+          <p style={{ fontSize: 14, color: '#334E6A' }}>— Early WyberAi user</p>
         </div>
         <p style={{ fontSize: 12, color: '#1E2D44' }}>A product by SignalPulse Technologies · Wyoming, USA · © 2026</p>
       </div>

@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
-  const { projectId, format } = await req.json();
+  // Auth: only the project owner may export
+  const auth = await createClient()
+  const { data: { user } } = await auth.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabase = await createAdminClient();
+  const { projectId, format } = await req.json();
+  if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
+
+  const supabase = createServiceClient();
   const { data: project } = await supabase
     .from('projects')
     .select('*')
     .eq('id', projectId)
+    .eq('user_id', user.id)   // ownership check — service client used only after this gate
     .single();
 
   if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
@@ -52,7 +59,7 @@ export async function POST(req: NextRequest) {
     // Add a README
     zip.file('WYBER_EXPORT.md', `# ${project.name}
 
-Exported from Wyber AI on ${new Date().toLocaleDateString()}
+Exported from WyberAi on ${new Date().toLocaleDateString()}
 
 ## Framework
 ${project.framework}
@@ -66,7 +73,7 @@ npm install
 npm run dev
 \`\`\`
 
-Your code belongs to you. No Wyber AI dependency required to run this app.
+Your code belongs to you. No WyberAi dependency required to run this app.
 `);
 
     const buffer = Buffer.from(await zip.generateAsync({ type: 'arraybuffer' }));

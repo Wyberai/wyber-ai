@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     await fetch('https://api.github.com/user/repos', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: repo, private: false, auto_init: false, description: `Built with Wyber AI - wyberai.com` }),
+      body: JSON.stringify({ name: repo, private: false, auto_init: false, description: `Built with WyberAi - wyberai.com` }),
     })
 
     // Push all files
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       })
       const existing = existsRes.ok ? await existsRes.json() : null
       const body: any = {
-        message: `Update ${cleanPath} via Wyber AI`,
+        message: `Update ${cleanPath} via WyberAi`,
         content: Buffer.from(file.content || '').toString('base64'),
       }
       if (existing?.sha) body.sha = existing.sha

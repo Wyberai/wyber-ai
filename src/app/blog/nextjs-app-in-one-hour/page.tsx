@@ -4,8 +4,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Build a production Next.js app in under an hour with AI -- Wyber AI Blog',
-  description: 'Next.js is the default framework in Wyber AI. SSR, SEO, and performance out of the box. A step-by-step walkthrough.',
+  title: 'Build a production Next.js app in under an hour with AI -- WyberAi Blog',
+  description: 'Next.js is the default framework in WyberAi. SSR, SEO, and performance out of the box. A step-by-step walkthrough.',
 };
 
 export default function Post() {
@@ -22,7 +22,7 @@ export default function Post() {
           Build a production Next.js app in under an hour with AI
         </h1>
         <div className="wy-prose">
-          <p>Next.js is the default framework in Wyber AI for a reason. Server-side rendering means your app is indexed by Google from day one. Performance is significantly better than client-only React for dynamic data. And it deploys to Vercel in one click.</p>
+          <p>Next.js is the default framework in WyberAi for a reason. Server-side rendering means your app is indexed by Google from day one. Performance is significantly better than client-only React for dynamic data. And it deploys to Vercel in one click.</p>
           <h2>Step 1: Write a specific prompt (5 minutes)</h2>
           <p>The quality of your output is directly proportional to the specificity of your prompt. Do not say "build a landing page." Instead:</p>
           <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', lineHeight: 1.7, margin: '16px 0' }}>

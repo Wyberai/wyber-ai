@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 export const metadata: Metadata = {
-  title: 'Status — Wyber AI System Status',
-  description: 'Live status for Wyber AI services: AI generation, live preview, authentication, database, deployment, and email.',
+  title: 'Status — WyberAi System Status',
+  description: 'Live status for WyberAi services: AI generation, live preview, authentication, database, deployment, and email.',
 };
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';

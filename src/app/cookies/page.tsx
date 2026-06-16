@@ -3,8 +3,8 @@ import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy — Wyber AI',
-  description: 'How Wyber AI uses cookies and similar technologies.',
+  title: 'Cookie Policy — WyberAi',
+  description: 'How WyberAi uses cookies and similar technologies.',
 };
 
 const COOKIES = [
@@ -13,19 +13,19 @@ const COOKIES = [
     type: 'Essential',
     purpose: 'Stores your cookie consent preference so we don\'t show the banner on every visit.',
     duration: '1 year',
-    provider: 'Wyber AI',
+    provider: 'WyberAi',
   },
   {
     name: 'wyber-theme',
     type: 'Functional',
     purpose: 'Remembers your dark/light mode preference across sessions.',
     duration: '1 year',
-    provider: 'Wyber AI',
+    provider: 'WyberAi',
   },
   {
     name: 'sb-* (Supabase)',
     type: 'Essential',
-    purpose: 'Authentication session cookies that keep you signed in to your Wyber AI account.',
+    purpose: 'Authentication session cookies that keep you signed in to your WyberAi account.',
     duration: 'Session / 7 days',
     provider: 'Supabase',
   },
@@ -40,8 +40,8 @@ const COOKIES = [
 
 const SECTIONS = [
   ['What are cookies?', 'Cookies are small text files stored on your device when you visit a website. They help websites remember information about your visit — like whether you\'re signed in, your preferences, and how you use the site.'],
-  ['What cookies do we use?', 'Wyber AI uses only essential and functional cookies. We do not use advertising cookies, tracking cookies, or third-party analytics cookies. We do not sell data to advertisers.'],
-  ['Essential cookies', 'These cookies are required for Wyber AI to function. They enable core features like authentication and security. You cannot opt out of essential cookies while using the service.'],
+  ['What cookies do we use?', 'WyberAi uses only essential and functional cookies. We do not use advertising cookies, tracking cookies, or third-party analytics cookies. We do not sell data to advertisers.'],
+  ['Essential cookies', 'These cookies are required for WyberAi to function. They enable core features like authentication and security. You cannot opt out of essential cookies while using the service.'],
   ['Functional cookies', 'These cookies remember your preferences (like dark/light mode) to improve your experience. They are not strictly necessary but make the product more comfortable to use.'],
   ['Third-party cookies', 'We use Supabase for authentication and Vercel for hosting. These services may set their own cookies necessary for their operation. We do not use Google Analytics, Facebook Pixel, or any advertising network cookies.'],
   ['How to control cookies', 'You can control cookies through the cookie consent banner shown on your first visit. You can also clear cookies through your browser settings at any time. Note that clearing essential cookies will sign you out of your account.'],
@@ -67,7 +67,7 @@ export default function CookiePolicyPage() {
       <div style={S.content}>
         <div style={S.tag}>Legal</div>
         <h1 style={S.h1}>Cookie Policy</h1>
-        <p style={S.meta}>Last updated: May 2026 · Wyber AI · wyberai.com</p>
+        <p style={S.meta}>Last updated: May 2026 · WyberAi · wyberai.com</p>
 
         {SECTIONS.map(([title, body]) => (
           <div key={title as string} style={S.section}>

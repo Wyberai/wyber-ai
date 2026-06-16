@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
           <div style={{ width: 40, height: 40, borderRadius: 10, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
           </div>
-          <span style={{ fontSize: 24, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>Wyber AI</span>
+          <span style={{ fontSize: 24, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
         </div>
         {/* Content */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

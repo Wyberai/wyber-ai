@@ -63,7 +63,7 @@ async function findMatchingAgents(query: string, limit = 3) {
     .slice(0, limit)
 }
 
-const SYSTEM = `You are the Wyber AI Agent Builder assistant — a brilliant, concise AI that helps users build and deploy AI agents visually on a canvas.
+const SYSTEM = `You are the WyberAi Agent Builder assistant — a brilliant, concise AI that helps users build and deploy AI agents visually on a canvas.
 
 Your job:
 1. Understand what the user is trying to automate or solve

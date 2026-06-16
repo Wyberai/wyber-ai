@@ -188,7 +188,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // Brand new project — seed starter template + greeting (skip if no template for this framework)
     const template = STARTER_TEMPLATES[framework];
     if (template) setFiles(template);
-    const greeting = { id: uid(), role:'assistant' as const, content:`**Wyber AI ready** — describe what to build, paste a screenshot, or pick a template.`, timestamp:Date.now(), status:'done' as const };
+    const greeting = { id: uid(), role:'assistant' as const, content:`**WyberAi ready** — describe what to build, paste a screenshot, or pick a template.`, timestamp:Date.now(), status:'done' as const };
     addMessage(greeting);
   }, [hydrated, hasInit, files, messages, framework, setFiles, addMessage]);
 
@@ -689,7 +689,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       <div style={{ padding:'0 12px', height:40, display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:'1px solid var(--ide-border)', background:'var(--bg-base)', flexShrink:0 }}>
         <div style={{ display:'flex', alignItems:'center', gap:6 }}>
           <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--ide-green)', boxShadow:'0 0 6px rgba(34,197,94,0.5)' }} />
-          <span style={{ fontSize:12, fontWeight:600, color:'var(--ide-text)', letterSpacing:'-0.02em' }}>Wyber AI</span>
+          <span style={{ fontSize:12, fontWeight:600, color:'var(--ide-text)', letterSpacing:'-0.02em' }}>WyberAi</span>
           {lastModel && lastCreditCost && (
             <span style={{ fontSize:10, padding:'1px 6px', borderRadius:10, background:'var(--bg-overlay)', color:'var(--ide-text3)', border:'1px solid var(--ide-border)' }}>
               {lastCreditCost}cr

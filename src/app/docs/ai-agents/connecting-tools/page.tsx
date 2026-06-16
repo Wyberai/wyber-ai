@@ -10,7 +10,7 @@ export default function Page() {
       title="Connecting tools (OAuth)"
       intro="Wyber uses Composio to connect your agent to 250+ external services — GitHub, Gmail, Slack, Notion, and more — via a standard OAuth flow. You authorize once, and the agent can act on your behalf."
       requirements={[
-        { label: 'A Wyber AI account' },
+        { label: 'A WyberAi account' },
         { label: 'An account with the service you want to connect', note: 'e.g. GitHub, Google, Slack' },
       ]}
     >

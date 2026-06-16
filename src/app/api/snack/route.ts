@@ -138,8 +138,8 @@ export async function POST(req: NextRequest) {
     const payload = {
       manifest: {
         sdkVersion: '52.0.0',
-        name: name || 'Wyber AI Mobile App',
-        description: description || 'Generated with Wyber AI',
+        name: name || 'WyberAi Mobile App',
+        description: description || 'Generated with WyberAi',
         dependencies: resolvedDeps,
       },
       code,

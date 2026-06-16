@@ -1,14 +1,14 @@
 import { DocsPage, DocSection, ScreenshotPlaceholder } from '@/components/docs/DocsPage'
 import Link from 'next/link'
 
-export const metadata = { title: 'What is Wyber AI? — Docs' }
+export const metadata = { title: 'What is WyberAi? — Docs' }
 
 export default function Page() {
   return (
     <DocsPage
       section="Getting Started"
-      title="What is Wyber AI?"
-      intro="Wyber AI is a plain-English product builder. Describe what you want to build and Wyber generates a working app — web, mobile, agent, or workflow — with no code required."
+      title="What is WyberAi?"
+      intro="WyberAi is a plain-English product builder. Describe what you want to build and Wyber generates a working app — web, mobile, agent, or workflow — with no code required."
     >
       <DocSection title="The four pillars">
         <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 16 }}>

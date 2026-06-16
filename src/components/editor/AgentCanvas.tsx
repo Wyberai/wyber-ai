@@ -199,7 +199,7 @@ const TOOLKIT_TOP_ACTIONS: Record<string, string[]> = {
   SLACK:     ['SLACK_SENDS_A_MESSAGE_TO_A_SLACK_CHANNEL', 'SLACK_LIST_CHANNELS', 'SLACK_FETCH_CONVERSATION_HISTORY', 'SLACK_SCHEDULE_MESSAGE_TO_A_CHANNEL', 'SLACK_LIST_MEMBERS_OF_CHANNEL'],
   GITHUB:    ['GITHUB_CREATE_AN_ISSUE', 'GITHUB_LIST_PULL_REQUESTS', 'GITHUB_CREATE_A_PULL_REQUEST', 'GITHUB_CREATE_A_REPO', 'GITHUB_SEARCH_CODE', 'GITHUB_COMMIT_EVENT'],
   HUBSPOT:   ['HUBSPOT_CREATE_CONTACT', 'HUBSPOT_UPDATE_CONTACT', 'HUBSPOT_LIST_CONTACTS', 'HUBSPOT_CREATE_DEAL', 'HUBSPOT_UPDATE_DEAL', 'HUBSPOT_SEARCH_OBJECTS'],
-  NOTION:    ['NOTION_CREATE_PAGE', 'NOTION_QUERY_A_DATABASE', 'NOTION_UPDATE_PAGE', 'NOTION_SEARCH', 'NOTION_APPEND_BLOCK_CHILDREN'],
+  NOTION:    ['NOTION_CREATE_A_PAGE', 'NOTION_QUERY_A_DATABASE', 'NOTION_UPDATE_A_PAGE', 'NOTION_SEARCH', 'NOTION_APPEND_BLOCK_CHILDREN'],
   AIRTABLE:  ['AIRTABLE_LIST_RECORDS', 'AIRTABLE_CREATE_RECORD', 'AIRTABLE_UPDATE_RECORD', 'AIRTABLE_DELETE_RECORD', 'AIRTABLE_SEARCH_RECORDS'],
   STRIPE:    ['STRIPE_LIST_CUSTOMERS', 'STRIPE_CREATE_CUSTOMER', 'STRIPE_CREATE_A_PAYMENT_LINK', 'STRIPE_RETRIEVE_BALANCE', 'STRIPE_LIST_SUBSCRIPTIONS'],
   LINEAR:    ['LINEAR_CREATE_ISSUE', 'LINEAR_UPDATE_ISSUE', 'LINEAR_GET_ISSUES', 'LINEAR_CREATE_COMMENT', 'LINEAR_LIST_PROJECTS'],
@@ -759,8 +759,11 @@ function ExecutionLog() {
           const isRun = log.status === 'running'
           // Detect "not connected" error messages from canvas/run
           const connectMatch = log.message.match(/not connected.*?Connect it.*?integrations/i) ||
-            log.message.match(/needs.*connection/i)
-          const toolkitMatch = log.message.match(/\b([A-Z]{2,})\b.*?not connected/i)
+            log.message.match(/needs.*connection/i) ||
+            log.message.match(/Settings.*?Integrations.*?connect/i) ||
+            log.message.match(/connect.*?Settings.*?Integrations/i)
+          const toolkitMatch = log.message.match(/\b([A-Z]{2,})\b.*?not connected/i) ||
+            log.message.match(/connect\s+([A-Z]{2,})/i)
           const toolkitName = toolkitMatch?.[1]
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 11, fontFamily: 'monospace', padding: '1px 0', flexWrap: 'wrap' }}>
@@ -1182,7 +1185,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                     {isAgent ? <IcoCpu size={36} color="#8b5cf6" /> : <IcoZap size={36} color="#0EA5E9" />}
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Add nodes or describe your use case in the chat →</div>
-                  <div style={{ fontSize: 11 }}>Wyber AI will match and load the right {isAgent ? 'agent' : 'workflow'} automatically</div>
+                  <div style={{ fontSize: 11 }}>WyberAi will match and load the right {isAgent ? 'agent' : 'workflow'} automatically</div>
                 </div>
               </Panel>
             )}

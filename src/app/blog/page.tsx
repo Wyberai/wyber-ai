@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Blog — Wyber AI',
+  title: 'Blog — WyberAi',
   description: 'Build logs, product guides, and deep dives on AI app building — web apps, mobile apps, AI agents, and workflow automation.',
 }
 
@@ -58,7 +58,7 @@ const POSTS = [
   },
   {
     slug: 'why-we-charge-less-than-lovable',
-    title: 'Why Wyber AI charges $18.99 instead of $25 — the math behind our pricing',
+    title: 'Why WyberAi charges $18.99 instead of $25 — the math behind our pricing',
     excerpt: 'Our prebuilt app library serves 60%+ of prompts at zero API cost. That changes the math entirely.',
     date: 'May 30, 2026',
     readTime: '4 min read',
@@ -93,7 +93,7 @@ export default function BlogPage() {
             Build logs, guides, and product news
           </h1>
           <p style={{ fontSize: 15, color: s.muted, lineHeight: 1.65, margin: 0, maxWidth: 520 }}>
-            Web apps, mobile apps, AI agents, and workflow automation — from the team building Wyber AI.
+            Web apps, mobile apps, AI agents, and workflow automation — from the team building WyberAi.
           </p>
         </header>
 

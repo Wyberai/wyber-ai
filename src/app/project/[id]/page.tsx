@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { IDELayout } from '@/components/editor/IDELayout'
 import { AgentCanvas } from '@/components/editor/AgentCanvas'
@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const supabase = await createClient()
   const { data: project } = await supabase.from('projects').select('name').eq('id', id).single()
-  return { title: project?.name ? `${project.name} — Wyber AI` : 'Editor — Wyber AI' }
+  return { title: project?.name ? `${project.name} — WyberAi` : 'Editor — WyberAi' }
 }
 
 export default async function ProjectPage({ params, searchParams }: Props) {

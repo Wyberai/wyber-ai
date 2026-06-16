@@ -3,12 +3,12 @@ import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About — Wyber AI',
-  description: 'Wyber AI is built by SignalPulse Technologies. We build tools that help founders ship faster.',
+  title: 'About — WyberAi',
+  description: 'WyberAi is built by SignalPulse Technologies. We build tools that help founders ship faster.',
 };
 
 const PRODUCTS = [
-  { name: 'Wyber AI', desc: 'AI-powered app builder. Turn ideas into live apps.', url: 'https://wyberai.com', icon: '⚡' },
+  { name: 'WyberAi', desc: 'AI-powered app builder. Turn ideas into live apps.', url: 'https://wyberai.com', icon: '⚡' },
   { name: 'Recon Signal', desc: 'Executive intelligence platform for B2B leaders.', url: 'https://reconsignal.com', icon: '◎' },
   { name: 'Setu Agents', desc: 'AI agents for business automation.', url: 'https://setuagents.com', icon: '◈' },
   { name: 'Continuum API', desc: 'Email validation and enrichment API.', url: 'https://continuumapi.com', icon: '⬡' },
@@ -25,7 +25,7 @@ export default function AboutPage() {
           We build tools that help<br /><em style={{ color: 'var(--sky)' }}>founders ship faster.</em>
         </h1>
         <p style={{ fontSize: 18, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 600, margin: 0 }}>
-          Wyber AI is a product of SignalPulse Technologies — a focused software company building AI-powered tools for founders, marketers, and developers.
+          WyberAi is a product of SignalPulse Technologies — a focused software company building AI-powered tools for founders, marketers, and developers.
         </p>
       </div>
 

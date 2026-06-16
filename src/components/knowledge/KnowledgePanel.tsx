@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 
 const DEFAULTS = [
-  { key: 'brand', label: 'Brand name', placeholder: 'e.g. Wyber AI' },
+  { key: 'brand', label: 'Brand name', placeholder: 'e.g. WyberAi' },
   { key: 'colors', label: 'Brand colors', placeholder: 'e.g. Primary: #7C3AED, Background: #0D0D0F' },
   { key: 'font', label: 'Preferred font', placeholder: 'e.g. DM Sans' },
   { key: 'stack', label: 'Tech preferences', placeholder: 'e.g. Always use Tailwind, prefer TypeScript, use Zod for validation' },
@@ -33,7 +33,7 @@ export function KnowledgePanel() {
   return (
     <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-        Custom Knowledge is injected into every generation as context. Set your brand, stack preferences, and coding rules — Wyber AI will follow them consistently.
+        Custom Knowledge is injected into every generation as context. Set your brand, stack preferences, and coding rules — WyberAi will follow them consistently.
       </div>
 
       {DEFAULTS.map(({ key, label, placeholder }) => (

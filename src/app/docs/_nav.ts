@@ -16,7 +16,7 @@ export const DOC_NAV: DocSection[] = [
     slug: 'getting-started',
     icon: 'rocket',
     links: [
-      { label: 'What is Wyber AI?', href: '/docs/getting-started/what-is-wyber' },
+      { label: 'What is WyberAi?', href: '/docs/getting-started/what-is-wyber' },
       { label: 'Your first build', href: '/docs/getting-started/your-first-build' },
       { label: 'How credits work', href: '/docs/getting-started/how-credits-work' },
     ],

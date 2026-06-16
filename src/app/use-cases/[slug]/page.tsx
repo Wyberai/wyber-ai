@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
@@ -125,7 +125,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
         {/* Starter prompt */}
         <section style={{ marginBottom: 64, background: s.card, borderRadius: 14, padding: 'clamp(20px,3vw,32px)', border: `1px solid ${color}25` }}>
           <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Ready-to-use starter prompt</div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 800, margin: '0 0 16px' }}>Copy this prompt and paste it into Wyber AI</h2>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 800, margin: '0 0 16px' }}>Copy this prompt and paste it into WyberAi</h2>
           <div style={{ background: '#0d0d10', borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, fontSize: 14, color: '#e2e8f0', lineHeight: 1.7, fontFamily: 'monospace', marginBottom: 20, whiteSpace: 'pre-wrap' }}>
             {uc.promptExample}
           </div>
@@ -165,7 +165,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
 
         {/* See also */}
         <div style={{ marginTop: 40, paddingTop: 32, borderTop: `1px solid ${s.border}` }}>
-          <div style={{ fontSize: 12, color: s.dim, marginBottom: 12 }}>Compare Wyber AI</div>
+          <div style={{ fontSize: 12, color: s.dim, marginBottom: 12 }}>Compare WyberAi</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {['lovable','bolt','v0','replit','cursor'].map(slug => (
               <Link key={slug} href={`/vs/${slug}`} style={{ fontSize: 13, padding: '5px 12px', borderRadius: 8, border: `1px solid ${s.border}`, color: s.muted, textDecoration: 'none', background: s.card }}>

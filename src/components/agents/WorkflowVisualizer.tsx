@@ -24,7 +24,7 @@ function inferWorkflow(name: string, tools: string, complexity: string): Workflo
   if (t.includes('slack')) steps.push({ id:'n', type:'action', label:'Notify owner in Slack', tool:'Slack', color:'#E01E5A' })
   else steps.push({ id:'n', type:'action', label:'Send email notification', tool:'Email', color:'#EA4335' })
 
-  steps.push({ id:'log', type:'action', label:'Log to execution history', tool:'Wyber AI', color:'#22c55e' })
+  steps.push({ id:'log', type:'action', label:'Log to execution history', tool:'WyberAi', color:'#22c55e' })
   return steps
 }
 

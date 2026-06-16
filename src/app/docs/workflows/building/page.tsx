@@ -10,7 +10,7 @@ export default function Page() {
       title="Building a workflow"
       intro="Workflows are visual automations — a sequence of triggers, AI steps, and actions that run on a schedule or in response to an event."
       requirements={[
-        { label: 'A Wyber AI account' },
+        { label: 'A WyberAi account' },
       ]}
     >
       <DocSection title="Step-by-step">

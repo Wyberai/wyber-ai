@@ -22,7 +22,7 @@ export default function DocsIndexPage() {
           Documentation
         </div>
         <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', color: TEXT, margin: '0 0 14px', lineHeight: 1.15 }}>
-          Wyber AI Docs
+          WyberAi Docs
         </h1>
         <p style={{ fontSize: 16, color: TEXT2, lineHeight: 1.7, maxWidth: 540, margin: 0 }}>
           Everything you need to build web apps, mobile apps, AI agents, and workflows — in plain English, no code required.
@@ -52,7 +52,7 @@ export default function DocsIndexPage() {
       {/* Quick start CTA */}
       <div style={{ background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 12, padding: '28px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 5 }}>New to Wyber AI?</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 5 }}>New to WyberAi?</div>
           <div style={{ fontSize: 13, color: TEXT3 }}>Start with the getting-started guide — you'll have an app live in minutes.</div>
         </div>
         <Link href="/docs/getting-started/what-is-wyber" style={{ padding: '9px 20px', borderRadius: 8, background: SKY, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>

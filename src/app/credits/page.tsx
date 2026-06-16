@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-export const metadata: Metadata = { title: 'Credits & Pricing — Wyber AI', description: 'Understand how Wyber AI credits work and what each generation costs.' }
+export const metadata: Metadata = { title: 'Credits & Pricing — WyberAi', description: 'Understand how WyberAi credits work and what each generation costs.' }
 
 export default function CreditsPage() {
   return (
@@ -53,7 +53,7 @@ export default function CreditsPage() {
 
       <section style={{ padding: 20, borderRadius: 12, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: '#0EA5E9' }}>How we compare</h3>
-        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>Lovable charges <strong style={{ color: '#fafafa' }}>$25/month</strong> for 100 credits. Wyber AI Builder gives you <strong style={{ color: '#0EA5E9' }}>up to 400 credits for $18.99/month</strong> — unlimited projects, all features included.</p>
+        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>Lovable charges <strong style={{ color: '#fafafa' }}>$25/month</strong> for 100 credits. WyberAi Builder gives you <strong style={{ color: '#0EA5E9' }}>up to 400 credits for $18.99/month</strong> — unlimited projects, all features included.</p>
         <p style={{ fontSize: 11, color: '#52525b', marginTop: 12 }}>Monthly credits roll over. Top-up credits never expire. Credits are non-refundable once used.</p>
       </section>
     </div>

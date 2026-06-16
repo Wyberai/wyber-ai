@@ -8,7 +8,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    // Wyber AI is dark-only — always dark
+    // WyberAi is dark-only — always dark
     setTheme('dark');
     document.documentElement.setAttribute('data-theme', 'dark');
     localStorage.setItem('wyber-theme', 'dark');

@@ -1,11 +1,11 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Changelog — Wyber AI', description: 'Every feature, fix, and improvement — logged as we ship.' };
+export const metadata: Metadata = { title: 'Changelog — WyberAi', description: 'Every feature, fix, and improvement — logged as we ship.' };
 const RELEASES = [
   { date:'May 28, 2026', version:'v0.9', tag:'Major release', color:'#0EA5E9', items:[
     { type:'new', text:'MCP server — connect to Claude Desktop, Cursor at wyberai.com/api/mcp' },
-    { type:'new', text:'Wyber API + API key management — build on top of Wyber AI' },
+    { type:'new', text:'Wyber API + API key management — build on top of WyberAi' },
     { type:'new', text:'35 app connectors — Airtable, Notion, HubSpot, Slack, Anthropic, ElevenLabs, BigQuery, Snowflake and 27 more' },
     { type:'new', text:'Draw on images — upload a screenshot, draw what to change, AI fixes exactly that area' },
     { type:'new', text:'Test / Live environments — promote builds to live without breaking production' },
@@ -28,7 +28,7 @@ const RELEASES = [
     { type:'improved', text:'Deploy to Vercel — one-click production deployment from the IDE' },
   ]},
   { date:'May 15, 2026', version:'v0.7', tag:'Launch', color:'#059669', items:[
-    { type:'new', text:'Public launch — Wyber AI is live at wyberai.com' },
+    { type:'new', text:'Public launch — WyberAi is live at wyberai.com' },
     { type:'new', text:'Core AI generation — React, Vue, Next.js, Vanilla JS from plain English' },
     { type:'new', text:'E2B sandbox — live preview of every generation' },
     { type:'new', text:'Free tier — 50 credits/month, no card required' },
@@ -47,7 +47,7 @@ export default function ChangelogPage() {
       <Navbar />
       <div className="wy-section">
         <div className="wy-sec-tag">Changelog</div>
-        <h1 className="wy-h2">What's new in <em>Wyber AI</em></h1>
+        <h1 className="wy-h2">What's new in <em>WyberAi</em></h1>
         <p style={{ fontSize:15, color:'var(--text2)', maxWidth:480, lineHeight:1.75, marginBottom:52 }}>Every feature, improvement, and fix — logged as we ship.</p>
         <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
           {RELEASES.map(r=>(

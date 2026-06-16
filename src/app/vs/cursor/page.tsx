@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
-  title: 'Wyber AI vs Cursor (2026) — No-Code Builder vs AI Code Editor',
-  description: 'Wyber AI vs Cursor: no-code app generation vs AI-assisted coding. Wyber builds complete apps from plain English; Cursor makes writing code faster for developers. Verified June 2026.',
+  title: 'WyberAi vs Cursor (2026) — No-Code Builder vs AI Code Editor',
+  description: 'WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Wyber builds complete apps from plain English; Cursor makes writing code faster for developers. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/cursor' },
-  openGraph: { title: 'Wyber AI vs Cursor (2026)', description: 'No-code app builder vs AI code editor. Verified June 2026.', url: 'https://wyberai.com/vs/cursor' },
+  openGraph: { title: 'WyberAi vs Cursor (2026)', description: 'No-code app builder vs AI code editor. Verified June 2026.', url: 'https://wyberai.com/vs/cursor' },
 }
 
 const ROWS = [
@@ -30,28 +30,28 @@ const ROWS = [
 
 const FAQS = [
   {
-    q: 'What is the main difference between Wyber AI and Cursor?',
-    a: 'They solve different problems. Cursor is an AI-powered code editor — it makes experienced developers write code faster. Wyber AI is a no-code app builder — it generates complete applications from plain English, no coding experience needed.',
+    q: 'What is the main difference between WyberAi and Cursor?',
+    a: 'They solve different problems. Cursor is an AI-powered code editor — it makes experienced developers write code faster. WyberAi is a no-code app builder — it generates complete applications from plain English, no coding experience needed.',
   },
   {
     q: 'Can a non-technical person use Cursor?',
-    a: 'Cursor assumes you understand code — it autocompletes, suggests, and refactors, but you need to know what you\'re asking for. Wyber AI requires no coding knowledge: describe your app and it\'s built for you.',
+    a: 'Cursor assumes you understand code — it autocompletes, suggests, and refactors, but you need to know what you\'re asking for. WyberAi requires no coding knowledge: describe your app and it\'s built for you.',
   },
   {
     q: 'Which is faster for building an MVP?',
-    a: 'Wyber AI. A complete app generates in under 60 seconds. With Cursor, even with AI assistance, building a full-stack app takes hours and requires development knowledge to stitch everything together.',
+    a: 'WyberAi. A complete app generates in under 60 seconds. With Cursor, even with AI assistance, building a full-stack app takes hours and requires development knowledge to stitch everything together.',
   },
   {
     q: 'Does Cursor build mobile apps?',
-    a: 'No. Cursor is an editor — it helps you write code in any language but doesn\'t generate or deploy apps on its own. Wyber AI generates full React Native + Expo mobile apps with live device preview.',
+    a: 'No. Cursor is an editor — it helps you write code in any language but doesn\'t generate or deploy apps on its own. WyberAi generates full React Native + Expo mobile apps with live device preview.',
   },
   {
-    q: 'Can developers use both Wyber AI and Cursor?',
-    a: 'Yes — many do. Use Wyber AI to generate the initial app fast, export the source code, then open it in Cursor for deeper customization. You get the speed of Wyber with the control of a full IDE.',
+    q: 'Can developers use both WyberAi and Cursor?',
+    a: 'Yes — many do. Use WyberAi to generate the initial app fast, export the source code, then open it in Cursor for deeper customization. You get the speed of Wyber with the control of a full IDE.',
   },
   {
-    q: 'Does Wyber AI have AI agents? Cursor doesn\'t.',
-    a: 'Wyber AI includes a dedicated agent builder with 250+ integrations and workflow automation. Cursor is an editor only — it doesn\'t run autonomous agents or automations.',
+    q: 'Does WyberAi have AI agents? Cursor doesn\'t.',
+    a: 'WyberAi includes a dedicated agent builder with 250+ integrations and workflow automation. Cursor is an editor only — it doesn\'t run autonomous agents or automations.',
   },
 ]
 
@@ -61,8 +61,8 @@ export default function VsCursor() {
       slug="cursor"
       competitorName="Cursor"
       competitorUrl="https://cursor.com"
-      tagline="Cursor is the AI code editor developers love. Wyber AI is the no-code app builder non-technical founders need — complete apps in seconds, plus mobile, agents, and workflows."
-      blurb="Honest comparison of Wyber AI vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Verified June 2026."
+      tagline="Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete apps in seconds, plus mobile, agents, and workflows."
+      blurb="Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Cursor is a code editor — it has no app generation, mobile builder, agent builder, or workflow automation."
