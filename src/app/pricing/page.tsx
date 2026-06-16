@@ -3,120 +3,238 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-const CREDIT_COST = {
-  app_build: 1,       // Generate an app
-  app_edit: 1,        // Edit / iterate
-  agent_run: 5,       // Run an AI agent
-  flow_run: 3,        // Execute an automation flow
-}
+const BRAND = '#0EA5E9'
+
+// ── Plan definitions ──────────────────────────────────────────────────────────
 
 const PLANS = [
   {
-    id: 'free',
-    name: 'Free',
-    monthlyPrice: 0,
-    annualPrice: 0,
-    credits: 15,
-    dailyCredits: 3,
-    maxMonthly: 50,
-    color: '#52525b',
+    id: 'starter',
+    name: 'Starter',
+    monthlyPrice: 49,
+    annualPrice: 39,
+    planKey: 'starter_monthly',
+    color: '#0EA5E9',
+    highlight: false,
+    badge: null,
+    tagline: 'For founders exploring AI employees',
+    employeeSlots: 3,
+    credits: 500,
     features: [
-      '15 credits on signup',
-      '3 daily credits (up to 50/month)',
-      'App generation (1 cr each)',
-      'Browse 5,000 AI agents',
-      '5 agent runs/month (5 cr each)',
+      '3 AI Employees',
+      '500 credits/month (rollover)',
+      'Scheduled & manual runs',
+      'Gmail, Slack, Notion, HubSpot',
+      'KPI tracking & digest emails',
+      'Web & mobile app builder',
+      'Custom employee domain',
       'Community support',
     ],
-    cta: 'Start free',
-    ctaHref: '/signup',
-    highlight: false,
   },
   {
-    id: 'builder',
-    name: 'Builder',
-    monthlyPrice: 18.99,
-    annualPrice: 15.99,
-    credits: 250,
-    dailyCredits: 10,
-    maxMonthly: 400,
+    id: 'growth',
+    name: 'Growth',
+    monthlyPrice: 149,
+    annualPrice: 119,
+    planKey: 'growth_monthly',
     color: '#0EA5E9',
-    features: [
-      '250 monthly credits (rollover)',
-      '10 daily credits',
-      'App generation — 1 credit',
-      'Agent runs — 5 credits each',
-      'Flow runs — 3 credits each',
-      'GitHub sync + custom subdomain',
-      'Supabase database connection',
-      'Priority support',
-    ],
-    cta: 'Start Builder',
-    ctaHref: null,
-    planKey: 'pro_monthly',
     highlight: true,
     badge: 'MOST POPULAR',
+    tagline: 'For teams serious about AI automation',
+    employeeSlots: 10,
+    credits: 2000,
+    features: [
+      '10 AI Employees',
+      '2,000 credits/month (rollover)',
+      'All 30+ tool integrations',
+      'Custom domain routing',
+      'KPI dashboards & reports',
+      'Org management & multi-user',
+      'AI Workflows & Agents',
+      'Web & mobile builder',
+      'Priority support',
+    ],
   },
   {
-    id: 'team',
-    name: 'Team',
-    monthlyPrice: 37.99,
-    annualPrice: 31.99,
-    credits: 500,
-    dailyCredits: 20,
-    maxMonthly: 800,
+    id: 'scale',
+    name: 'Scale',
+    monthlyPrice: 399,
+    annualPrice: 319,
+    planKey: 'scale_monthly',
     color: '#8b5cf6',
-    features: [
-      '500 monthly credits (rollover)',
-      '20 daily credits',
-      'Everything in Builder',
-      'Up to 5 team members',
-      'Shared agent library',
-      'Shared flow library',
-      'Team credential store',
-      'Audit logs & usage analytics',
-    ],
-    cta: 'Start Team',
-    ctaHref: null,
-    planKey: 'business_monthly',
     highlight: false,
+    badge: 'BEST VALUE',
+    tagline: 'For agencies and high-growth companies',
+    employeeSlots: -1, // unlimited
+    credits: 6000,
+    features: [
+      'Unlimited AI Employees',
+      '6,000 credits/month (rollover)',
+      'Multiple orgs (white-label)',
+      'Custom domain per org',
+      'Priority run queue',
+      'Advanced KPI analytics',
+      'Everything in Growth',
+      'Dedicated Slack support',
+      'Quarterly strategy call',
+    ],
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     monthlyPrice: null,
     annualPrice: null,
-    credits: null,
-    dailyCredits: null,
-    maxMonthly: null,
+    planKey: null,
     color: '#f59e0b',
+    highlight: false,
+    badge: null,
+    tagline: 'Custom contracts, SLAs, dedicated infra',
+    employeeSlots: -1,
+    credits: -1,
     features: [
-      'Everything in Team',
-      'Unlimited seats',
-      'Volume credit pricing',
-      'Custom integrations',
+      'Everything in Scale',
+      'Unlimited orgs & seats',
       'SSO / SAML',
       'SLA guarantee',
+      'Dedicated infra',
+      'Volume credit pricing',
+      'Custom integrations',
       'Dedicated success manager',
-      'Custom contracts & invoicing',
     ],
-    cta: 'Contact us',
-    ctaHref: 'mailto:hello@wyberai.com',
-    highlight: false,
   },
 ]
 
-const TOPUPS = [
-  { credits: 50,  price: 9.99,  key: 'topup_50',  label: 'Small top-up' },
-  { credits: 150, price: 24.99, key: 'topup_150', label: 'Medium top-up' },
-  { credits: 500, price: 69.99, key: 'topup_500', label: 'Large top-up' },
-]
+// ── Icons ─────────────────────────────────────────────────────────────────────
 
+const IcoCheck = ({ color = '#22c55e' }: { color?: string }) => (
+  <svg width="11" height="11" viewBox="0 0 12 12" style={{ flexShrink: 0, marginTop: 1 }}>
+    <path d="M2 6l3 3 5-5" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+  </svg>
+)
+
+// ── Plan card ──────────────────────────────────────────────────────────────────
+
+function PlanCard({
+  plan,
+  annual,
+  loading,
+  onCheckout,
+}: {
+  plan: typeof PLANS[0]
+  annual: boolean
+  loading: string | null
+  onCheckout: (key: string) => void
+}) {
+  const price = annual ? plan.annualPrice : plan.monthlyPrice
+  const isLoading = loading === plan.planKey || loading === plan.planKey?.replace('monthly', 'annual')
+
+  return (
+    <div style={{
+      position: 'relative',
+      background: plan.highlight ? 'linear-gradient(160deg, #0d1a26 0%, #0d1218 100%)' : '#111113',
+      border: `1px solid ${plan.highlight ? 'rgba(14,165,233,0.35)' : plan.id === 'scale' ? 'rgba(139,92,246,0.25)' : 'rgba(255,255,255,0.08)'}`,
+      borderRadius: 18,
+      padding: '28px 24px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 0,
+    }}>
+      {plan.badge && (
+        <div style={{
+          position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)',
+          background: plan.highlight ? BRAND : '#8b5cf6',
+          color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 12px',
+          borderRadius: 20, letterSpacing: '0.08em', whiteSpace: 'nowrap',
+        }}>{plan.badge}</div>
+      )}
+
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: plan.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{plan.name}</div>
+        <div style={{ fontSize: 12, color: '#52525b', marginBottom: 16, lineHeight: 1.5 }}>{plan.tagline}</div>
+
+        {price !== null ? (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 42, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>${price}</span>
+            <span style={{ fontSize: 13, color: '#52525b' }}>/mo{annual ? ' · billed annually' : ''}</span>
+          </div>
+        ) : (
+          <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-0.03em', color: '#fafafa' }}>Custom</div>
+        )}
+
+        {annual && price !== null && (
+          <div style={{ fontSize: 11, color: '#22c55e', marginTop: 4, fontWeight: 600 }}>
+            Save ${((plan.monthlyPrice! - plan.annualPrice!) * 12).toFixed(0)}/year
+          </div>
+        )}
+      </div>
+
+      {/* Employee + credit pills */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: `${plan.color}12`, border: `1px solid ${plan.color}30`, color: plan.color }}>
+          {plan.employeeSlots === -1 ? 'Unlimited' : plan.employeeSlots} AI Employees
+        </div>
+        {plan.credits > 0 && (
+          <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e' }}>
+            {plan.credits.toLocaleString()} credits/mo
+          </div>
+        )}
+      </div>
+
+      {/* CTA */}
+      {plan.planKey ? (
+        <button
+          onClick={() => onCheckout(annual ? plan.planKey!.replace('monthly', 'annual') : plan.planKey!)}
+          disabled={!!isLoading}
+          style={{
+            width: '100%', padding: '13px 0', borderRadius: 10,
+            background: isLoading ? '#1a1a22' : plan.highlight ? BRAND : plan.id === 'scale' ? '#8b5cf6' : 'rgba(255,255,255,0.06)',
+            border: plan.highlight || plan.id === 'scale' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+            color: isLoading ? '#52525b' : '#fff',
+            fontSize: 14, fontWeight: 700, cursor: isLoading ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit', marginBottom: 22,
+            boxShadow: plan.highlight && !isLoading ? '0 4px 20px rgba(14,165,233,0.3)' : 'none',
+            transition: 'all 0.15s',
+          }}
+        >
+          {isLoading ? 'Redirecting…' : `Start ${plan.name} →`}
+        </button>
+      ) : (
+        <a
+          href="mailto:hello@wyberai.com?subject=Enterprise enquiry"
+          style={{
+            display: 'block', width: '100%', padding: '13px 0', borderRadius: 10,
+            background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)',
+            color: '#f59e0b', fontSize: 14, fontWeight: 700, textDecoration: 'none',
+            textAlign: 'center', fontFamily: 'inherit', marginBottom: 22,
+          }}
+        >
+          Contact us →
+        </a>
+      )}
+
+      {/* Divider */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: 18 }} />
+
+      {/* Features */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {plan.features.map(f => (
+          <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
+            <IcoCheck color={plan.id === 'scale' ? '#8b5cf6' : plan.id === 'enterprise' ? '#f59e0b' : '#22c55e'} />
+            <span style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.5 }}>{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true)
   const [loading, setLoading] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<{ id: string } | null>(null)
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
@@ -125,286 +243,168 @@ export default function PricingPage() {
   }, [])
 
   const handleCheckout = async (planKey: string) => {
+    if (!user) { window.location.href = '/login?next=/pricing'; return }
     setLoading(planKey)
     try {
-      const key = annual && planKey.includes('monthly') ? planKey.replace('monthly', 'annual') : planKey
       const res = await fetch('/api/dodo/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey: key }),
+        body: JSON.stringify({ planKey }),
       })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else if (res.status === 401) {
-        // Not logged in — redirect to signup then back
-        window.location.href = '/signup?next=/pricing'
-      } else {
-        console.error('Checkout error:', data)
-        alert(`Error: ${data.error || 'Unknown error'}. Contact hello@wyberai.com`)
-      }
-    } catch (err) {
-      alert('Network error. Please try again.')
+      const d = await res.json()
+      if (d.url) window.location.href = d.url
+      else alert(d.error ?? 'Checkout error')
+    } catch {
+      alert('Network error')
+    } finally {
+      setLoading(null)
     }
-    setLoading(null)
   }
 
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
 
       {/* Nav */}
-      <nav style={{ padding: '16px 40px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>{user
-            ? <>
-                <Link href="/dashboard" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Dashboard</Link>
-                <Link href="/settings?tab=billing" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>My Plan</Link>
-              </>
-            : <>
-                <Link href="/login" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>Sign in</Link>
-                <Link href="/signup" style={{ padding: '7px 18px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started free</Link>
-              </>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <Link href="/employees" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none', padding: '6px 12px', borderRadius: 7 }}>Browse employees</Link>
+          {user
+            ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
+            : <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started →</Link>
           }
         </div>
       </nav>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '60px 24px' }}>
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14, lineHeight: 1.1 }}>
-            Build apps, run agents, automate workflows
-          </h1>
-          <p style={{ fontSize: 16, color: '#71717a', maxWidth: 480, margin: '0 auto 28px', lineHeight: 1.65 }}>
-            Apps cost 1 credit · Agent runs cost 5 credits · Flow runs cost 3 credits. Credits never expire. Top up anytime.
-          </p>
-
-          {/* Annual toggle */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '6px', borderRadius: 12, background: '#111113', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <button onClick={() => setAnnual(false)} style={{ padding: '6px 16px', borderRadius: 8, border: 'none', background: !annual ? '#fafafa' : 'transparent', color: !annual ? '#09090b' : '#71717a', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>Monthly</button>
-            <button onClick={() => setAnnual(true)} style={{ padding: '6px 16px', borderRadius: 8, border: 'none', background: annual ? '#fafafa' : 'transparent', color: annual ? '#09090b' : '#71717a', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 7, transition: 'all 0.15s' }}>
-              Annual
-              <span style={{ fontSize: 10, fontWeight: 800, padding: '1px 7px', borderRadius: 20, background: '#22c55e', color: '#fff' }}>SAVE 16%</span>
-            </button>
-          </div>
+      {/* Hero */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px) 0', textAlign: 'center' }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(14,165,233,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
         </div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: BRAND, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 24 }}>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
+          Simple, transparent pricing
+        </div>
+        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,64px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
+          Hire AI. Replace busywork.<br />
+          <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+            Grow without headcount.
+          </span>
+        </h1>
+        <p style={{ fontSize: 'clamp(15px,1.5vw,18px)', color: '#71717a', maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.65 }}>
+          One AI SDR that qualifies leads 24/7 is worth more than $149/mo. Every plan includes web & mobile app building on top.
+        </p>
 
-        {/* Plan cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: 12, marginBottom: 60 }}>
-          {PLANS.map(p => (
-            <div key={p.id} style={{ position: 'relative', padding: 24, borderRadius: 16, background: p.highlight ? 'rgba(14,165,233,0.05)' : '#111113', border: `1px solid ${p.highlight ? '#0EA5E9' : 'rgba(255,255,255,0.07)'}`, display: 'flex', flexDirection: 'column' }}>
-              {p.badge && (
-                <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: '#0EA5E9', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 12px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>
-                  {p.badge}
-                </div>
-              )}
+        {/* Annual toggle */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 30, padding: '5px 6px', marginBottom: 56 }}>
+          <button onClick={() => setAnnual(false)} style={{ padding: '7px 18px', borderRadius: 24, background: !annual ? '#1a1a22' : 'transparent', border: !annual ? '1px solid rgba(255,255,255,0.12)' : 'none', color: !annual ? '#fafafa' : '#52525b', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>Monthly</button>
+          <button onClick={() => setAnnual(true)} style={{ padding: '7px 18px', borderRadius: 24, background: annual ? '#1a1a22' : 'transparent', border: annual ? '1px solid rgba(255,255,255,0.12)' : 'none', color: annual ? '#fafafa' : '#52525b', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 7 }}>
+            Annual
+            <span style={{ fontSize: 10, fontWeight: 800, background: '#22c55e', color: '#000', padding: '2px 7px', borderRadius: 10 }}>SAVE 20%</span>
+          </button>
+        </div>
+      </section>
 
-              <div style={{ fontSize: 11, fontWeight: 700, color: p.color, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{p.name}</div>
-
-              <div style={{ marginBottom: 16 }}>
-                {p.monthlyPrice === null ? (
-                  <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800 }}>Custom</div>
-                ) : p.monthlyPrice === 0 ? (
-                  <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, letterSpacing: '-0.04em' }}>$0</div>
-                ) : (
-                  <>
-                    <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, letterSpacing: '-0.04em' }}>
-                      ${annual ? p.annualPrice : p.monthlyPrice}
-                      <span style={{ fontSize: 14, fontWeight: 400, color: '#52525b' }}>/mo</span>
-                    </div>
-                    {annual && <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>Billed annually · Save ${(((p.monthlyPrice || 0) - (p.annualPrice || 0)) * 12).toFixed(0)}/year</div>}
-                  </>
-                )}
-              </div>
-
-              {p.maxMonthly && (
-                <div style={{ padding: '8px 12px', borderRadius: 8, background: p.color + '10', border: `1px solid ${p.color}25`, marginBottom: 16, fontSize: 12 }}>
-                  <span style={{ fontWeight: 700, color: p.color }}>{p.credits} monthly</span>
-                  <span style={{ color: '#71717a' }}> + {p.dailyCredits} daily</span>
-                  <span style={{ color: '#52525b', fontSize: 11 }}> = up to {p.maxMonthly}/mo</span>
-                </div>
-              )}
-
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
-                {p.features.map(f => (
-                  <div key={f} style={{ display: 'flex', gap: 8, fontSize: 13, color: '#a1a1aa', alignItems: 'flex-start' }}>
-                    <span style={{ color: p.color, flexShrink: 0, marginTop: 1 }}>✓</span>{f}
-                  </div>
-                ))}
-              </div>
-
-              {p.ctaHref ? (
-                <Link href={p.ctaHref} style={{ display: 'block', padding: '10px', borderRadius: 9, textAlign: 'center', background: p.highlight ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : '#a1a1aa', fontSize: 13, fontWeight: 700, textDecoration: 'none', border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.1)', transition: 'all 0.15s' }}>
-                  {p.cta}
-                </Link>
-              ) : (
-                <button
-                  onClick={() => p.planKey && handleCheckout(p.planKey)}
-                  disabled={loading === p.planKey}
-                  style={{ width: '100%', padding: '10px', borderRadius: 9, border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.1)', background: p.highlight ? '#0EA5E9' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : '#a1a1aa', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
-                  {loading === p.planKey ? 'Loading...' : p.cta}
-                </button>
-              )}
-            </div>
+      {/* Plans grid */}
+      <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px,100%), 1fr))', gap: 20 }}>
+          {PLANS.map(plan => (
+            <PlanCard key={plan.id} plan={plan} annual={annual} loading={loading} onCheckout={handleCheckout} />
           ))}
         </div>
+      </section>
 
-        {/* Top-ups */}
-        <div style={{ marginBottom: 60 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 6 }}>Credit top-ups</h2>
-          <p style={{ fontSize: 13, color: '#71717a', marginBottom: 20 }}>Need more credits? Top up anytime. These credits never expire — ever.</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-            {TOPUPS.map(t => (
-              <div key={t.key} style={{ padding: 18, borderRadius: 12, background: '#111113', border: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                <div>
-                  <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 700 }}>{t.credits} credits</div>
-                  <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>${(t.price / t.credits).toFixed(3)}/credit · never expires</div>
-                </div>
-                <button onClick={() => handleCheckout(t.key)} disabled={loading === t.key}
-                  style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                  ${t.price}
-                </button>
-              </div>
-            ))}
+      {/* ROI callout */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', background: 'linear-gradient(135deg, rgba(14,165,233,0.06) 0%, rgba(14,165,233,0.02) 100%)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 20, padding: 'clamp(28px,4vw,48px)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>The math is obvious</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>One hired employee pays for Scale 40x over</h2>
+            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>A junior SDR costs $60K/yr. Your AI SDR runs 24/7 at $399/mo. That&apos;s a $55K saving — before counting nights, weekends, and zero onboarding.</p>
           </div>
-        </div>
-
-        {/* Credit estimator callout */}
-        <div style={{ padding: 24, borderRadius: 16, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)', marginBottom: 60, display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-          <div style={{ fontSize: 32, flexShrink: 0 }}>💡</div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Always know what you're spending before you build</div>
-            <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65 }}>
-              WyberAi shows you the estimated credit cost before every generation. Type your prompt, see the estimate, build with confidence. No surprises.
-            </div>
-          </div>
-        </div>
-
-        {/* Compare vs Lovable */}
-        <div style={{ marginBottom: 60 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 20 }}>How we compare</h2>
-          <div style={{ overflow: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                  {['', 'Lovable Pro', 'WyberAi Pro', 'Difference'].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ['Monthly price', '$25/mo', '$18.99/mo', '24% cheaper'],
-                  ['Annual price', '$21/mo', '$15.99/mo', '24% cheaper'],
-                  ['Monthly credits', '100', '250', '150% more'],
-                  ['Daily credits', '5/day', '10/day', '100% more'],
-                  ['Max credits/month', '~250', '~400', '60% more'],
-                  ['Credit rollovers', '✓', '✓', 'Same'],
-                  ['Top-ups available', 'Pro+ only', 'Everyone', 'Better'],
-                  ['Top-up credits expire', 'Yes', 'Never', 'Better'],
-                  ['Credit estimate before build', '✗', '✓', 'Unique'],
-                ].map(([label, lovable, wyber, diff]) => (
-                  <tr key={label} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <td style={{ padding: '12px 16px', fontWeight: 500 }}>{label}</td>
-                    <td style={{ padding: '12px 16px', color: '#71717a' }}>{lovable}</td>
-                    <td style={{ padding: '12px 16px', color: '#0EA5E9', fontWeight: 600 }}>{wyber}</td>
-                    <td style={{ padding: '12px 16px', color: '#22c55e', fontSize: 12 }}>{diff}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-
-        {/* Done For You */}
-        <div style={{ marginBottom: 60 }}>
-          <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', fontSize: 11, fontWeight: 700, color: '#8b5cf6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>Done for you</div>
-            <h2 style={{ fontSize: 'clamp(22px,3vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>Have an idea? We'll build it for you.</h2>
-            <p style={{ fontSize: 14, color: '#71717a', maxWidth: 480, margin: '0 auto' }}>Start with a 60-minute consultation. We scope your app, agree on a price, then build and deliver it — no coding required from you.</p>
-          </div>
-
-          {/* Consultation card */}
-          <div style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(14,165,233,0.08))', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 14, padding: '20px 24px', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Step 1 — Start here</div>
-              <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>60-Minute Build Consultation</div>
-              <div style={{ fontSize: 13, color: '#71717a' }}>We scope your app, agree on complexity tier, give you a firm quote and delivery date.</div>
-              <div style={{ fontSize: 12, color: '#71717a', marginTop: 4 }}>💳 Fee credited toward your build if you proceed</div>
-            </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 36, fontWeight: 800, color: '#8b5cf6', lineHeight: 1 }}>$99</div>
-              <Link href="/setup-call" style={{ display: 'inline-block', marginTop: 10, padding: '9px 20px', borderRadius: 9, background: '#8b5cf6', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Book a session →</Link>
-            </div>
-          </div>
-
-          {/* Build tiers */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 16 }}>
             {[
-              { icon: '⚡', name: 'Simple Build', price: '$199', delivery: '24 hours', color: '#22c55e', examples: 'Landing pages, portfolios, tools', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4nveFV1qZ31hP5cR2d' },
-              { icon: '🔧', name: 'Medium Build', price: '$399', delivery: '3 working days', color: '#0EA5E9', examples: 'SaaS MVPs, booking systems, CRMs', badge: 'Most common', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4o4Slt7VZfJr1AS2mb' },
-              { icon: '🏗️', name: 'Complex Build', price: '$799', delivery: '1 week', color: '#8b5cf6', examples: 'Full SaaS with payments, multi-role apps', link: 'https://checkout.dodopayments.com/buy/pdt_0Ng4oEF3oofJnrbHmuuDO' },
-            ].map(tier => (
-              <div key={tier.name} style={{ background: '#111113', border: `1px solid ${tier.color}30`, borderRadius: 12, padding: 18, borderTop: `3px solid ${tier.color}`, position: 'relative' }}>
-                {tier.badge && <div style={{ position: 'absolute', top: -10, right: 14, padding: '2px 9px', borderRadius: 20, background: tier.color, color: '#fff', fontSize: 10, fontWeight: 700 }}>{tier.badge}</div>}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 20 }}>{tier.icon}</span>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: tier.color }}>{tier.name}</div>
-                    <div style={{ fontSize: 11, color: '#71717a' }}>⏱ {tier.delivery}</div>
-                  </div>
-                </div>
-                <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>{tier.price}</div>
-                <div style={{ fontSize: 12, color: '#71717a', marginBottom: 14, lineHeight: 1.5 }}>{tier.examples}</div>
-                <Link href="/setup-call" style={{ display: 'block', padding: '8px', borderRadius: 8, border: `1px solid ${tier.color}`, color: tier.color, fontSize: 12, fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>Book consultation first →</Link>
+              { label: 'AI SDR cost/year', value: '$4,788', sub: 'Scale plan annually', color: BRAND },
+              { label: 'Human SDR cost/year', value: '$60,000+', sub: 'Salary + benefits + tools', color: '#52525b' },
+              { label: 'Your saving', value: '$55,212', sub: 'Reinvest in growth', color: '#22c55e' },
+              { label: 'Typical ROI', value: '12×', sub: 'On first qualified deal', color: '#a855f7' },
+            ].map(({ label, value, sub, color }) => (
+              <div key={label} style={{ textAlign: 'center', padding: '18px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color, letterSpacing: '-0.03em', marginBottom: 4 }}>{value}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#fafafa', marginBottom: 3 }}>{label}</div>
+                <div style={{ fontSize: 11, color: '#52525b' }}>{sub}</div>
               </div>
             ))}
           </div>
-          <div style={{ textAlign: 'center', marginTop: 14 }}>
-            <Link href="/complexity-guide" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none' }}>What counts as Simple, Medium, or Complex? →</Link>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {[
+              ['What counts as a credit?', 'App generation costs 1 credit, editing 1 credit, running an AI employee costs 1 credit per tool iteration (up to 15 per run). Each plan includes more than enough for daily employee runs plus active building.'],
+              ['Can I hire more than my plan allows?', 'Yes — you can add credit top-ups or upgrade your plan at any time. Unused credits roll over each month.'],
+              ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
+              ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. Growth and Scale include all integrations.'],
+              ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record. Scale supports multiple orgs, each with their own domain.'],
+              ['What happens if I cancel?', 'You keep access until the end of your billing period. Your employees, KPI data, and app builds are retained for 30 days so you can export everything.'],
+            ].map(([q, a], i) => (
+              <details key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '18px 0' }}>
+                <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#e4e4e7', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  {q}
+                  <span style={{ color: '#52525b', fontSize: 18, flexShrink: 0 }}>+</span>
+                </summary>
+                <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.7, marginTop: 12, marginBottom: 0 }}>{a}</p>
+              </details>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Special programs */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 60 }}>
-          {[
-            { icon: '💬', title: 'Discord Community', desc: 'Ask questions, share builds, get feature previews. Join 100+ builders on WyberAi Discord.', cta: 'Join free', href: 'https://discord.gg/A5KsFv2P' },
-            { icon: '🎓', title: 'Wyber for Students', desc: '50% off Pro with valid student email. Learning to build? Build for less.', cta: 'Apply now', href: 'mailto:students@wyberai.com' },
-            { icon: '🏢', title: 'Wyber for Startups', desc: '3 months free Pro for pre-seed startups. Build your MVP without burning runway.', cta: 'Apply now', href: 'mailto:startups@wyberai.com' },
-            { icon: '🎁', title: 'Gift Credits', desc: 'Send credits to a builder you know. Coming soon — join the waitlist.', cta: 'Notify me', href: 'mailto:hello@wyberai.com?subject=Gift Credits Waitlist' },
-          ].map(p => (
-            <div key={p.title} style={{ padding: 18, borderRadius: 12, background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <div style={{ fontSize: 24, marginBottom: 10 }}>{p.icon}</div>
-              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{p.title}</div>
-              <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6, marginBottom: 12 }}>{p.desc}</div>
-              <Link href={p.href} style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none' }}>{p.cta} →</Link>
-            </div>
+      {/* Bottom CTA */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', maxWidth: 560, margin: '0 auto' }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
+            Your first AI employee<br />
+            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              starts working tonight.
+            </span>
+          </h2>
+          <p style={{ fontSize: 15, color: '#71717a', marginBottom: 28, lineHeight: 1.65 }}>30-minute setup. No engineers. Just describe what you need and watch it run.</p>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
+              Start hiring →
+            </Link>
+            <Link href="/employees" style={{ padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
+              Browse 100 employees
+            </Link>
+          </div>
+          <div style={{ marginTop: 14, fontSize: 12, color: '#3f3f46' }}>No credit card required to explore · Cancel anytime</div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer style={{ padding: '28px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <WyberLogo markSize={20} wordmarkSize={13} />
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Employees', '/employees'], ['Blog', '/blog']].map(([l, h]) => (
+            <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>{l}</Link>
           ))}
         </div>
+      </footer>
 
-        {/* FAQ */}
-        <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 16 }}>FAQ</h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {[
-            { q: 'Do credits expire?', a: 'Monthly credits reset on the 1st of each month with rollover included. Top-up credits never expire — they stay in your account indefinitely.' },
-            { q: 'What is a credit?', a: 'One credit = one AI generation (Standard). Premium mode = 2 credits per generation. Prebuilt templates from the gallery are free — 0 credits. We show the estimate before you build so there are no surprises.' },
-            { q: 'Can I use top-ups on a free plan?', a: 'Yes. Unlike Lovable, top-ups are available to everyone — you don\'t need a subscription to buy extra credits.' },
-            { q: 'How does daily credits work?', a: 'Builder users get 10 bonus credits every day; Team users get 20 bonus credits every day — on top of your monthly allocation. Unused daily credits don\'t roll over, but your monthly credits do.' },
-            { q: 'Can I switch plans?', a: 'Yes, upgrade or downgrade anytime. When upgrading, your credit balance is topped up immediately.' },
-            { q: 'Do you offer refunds?', a: 'Unused credits from top-ups are refundable within 7 days. Subscription refunds follow standard billing terms.' },
-          ].map(({ q, a }) => (
-            <div key={q} style={{ padding: '16px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>{q}</div>
-              <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65 }}>{a}</div>
-            </div>
-          ))}
-        </div>
-
-      </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        details[open] > summary span { transform: rotate(45deg); display: inline-block; }
+        details summary::-webkit-details-marker { display: none; }
+      `}</style>
     </div>
   )
 }

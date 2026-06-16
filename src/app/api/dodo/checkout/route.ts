@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 const PRODUCT_IDS: Record<string, string | undefined> = {
-  'pro_monthly':       process.env.DODO_PRODUCT_PRO,
-  'pro_annual':        process.env.DODO_PRODUCT_PRO_ANNUAL,
-  'business_monthly':  process.env.DODO_PRODUCT_BUSINESS,
-  'business_annual':   process.env.DODO_PRODUCT_BUSINESS_ANNUAL,
-  'topup_50':          process.env.DODO_TOPUP_50,
-  'topup_150':         process.env.DODO_TOPUP_150,
-  'topup_500':         process.env.DODO_TOPUP_500,
+  'starter_monthly': process.env.DODO_PRODUCT_STARTER,
+  'starter_annual':  process.env.DODO_PRODUCT_STARTER_ANNUAL,
+  'growth_monthly':  process.env.DODO_PRODUCT_GROWTH,
+  'growth_annual':   process.env.DODO_PRODUCT_GROWTH_ANNUAL,
+  'scale_monthly':   process.env.DODO_PRODUCT_SCALE,
+  'scale_annual':    process.env.DODO_PRODUCT_SCALE_ANNUAL,
 }
 
 export async function POST(req: NextRequest) {
@@ -25,11 +24,9 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: 'DODO_PAYMENTS_API_KEY not set' }, { status: 503 })
 
     const origin = req.headers.get('origin') || 'https://wyberai.com'
-    const isTopup = planKey.startsWith('topup_')
 
     console.log('Checkout:', { keyLen: apiKey.length, planKey, productId })
 
-    // Direct API call — no SDK needed
     const res = await fetch('https://live.dodopayments.com/checkouts', {
       method: 'POST',
       headers: {
@@ -39,7 +36,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         product_cart: [{ product_id: productId, quantity: 1 }],
         customer: { email: user.email, name: user.email?.split('@')[0] },
-        return_url: `${origin}/dashboard?${isTopup ? 'topup=1' : 'upgraded=1'}`,
+        return_url: `${origin}/dashboard?upgraded=1`,
         metadata: { user_id: user.id, plan: planKey },
       }),
     })
