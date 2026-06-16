@@ -210,30 +210,47 @@ export default function HomePage() {
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 860 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: BRAND, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
-            Introducing AI Employees — 100 roles available
+            One platform · Five superpowers
           </div>
 
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
-            Hire AI that works<br />
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
+            Build. Ship. Automate.<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              while you sleep.
+              Hire AI to run it all.
             </span>
           </h1>
 
-          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 14px' }}>
-            AI Employees that qualify leads, run campaigns, manage ops — on a schedule, with real tools, reporting KPIs every day. Plus a full platform to build the apps they run on.
+          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 660, margin: '0 auto 14px' }}>
+            Web apps, mobile apps, AI agents, workflows — and AI employees that qualify leads, run campaigns and manage ops while you sleep. One prompt. No code. No setup.
           </p>
 
           <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
             Starts at $49/mo · 30-minute setup · No engineers needed
           </p>
 
+          {/* Product pills */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
+            {[
+              { label: '🤖 AI Employees', href: '/employees' },
+              { label: '🌐 Web Apps', href: '/gallery' },
+              { label: '📱 Mobile Apps', href: '/templates/mobile' },
+              { label: '⚡ AI Agents', href: '/agents' },
+              { label: '🔀 Workflows', href: '/workflows' },
+            ].map(p => (
+              <Link key={p.label} href={p.href} style={{ padding: '7px 14px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 12, fontWeight: 600, textDecoration: 'none', transition: 'all 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.35)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
+                {p.label}
+              </Link>
+            ))}
+          </div>
+
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 52 }}>
-            <Link href="/employees" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
-              Browse 100 employees →
+            <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
+              Start for free →
             </Link>
-            <Link href="/signup" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
-              Start building free
+            <Link href="/pricing" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
+              See pricing
             </Link>
           </div>
 
@@ -241,9 +258,9 @@ export default function HomePage() {
           <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
               { value: '100', label: 'AI Employee roles' },
-              { value: '30+', label: 'Tool integrations' },
-              { value: '24/7', label: 'Automated runs' },
-              { value: '$49', label: 'Starts at /mo' },
+              { value: '5,000', label: 'AI Agents' },
+              { value: '118', label: 'App templates' },
+              { value: '30s', label: 'Avg build time' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{s.value}</div>
@@ -344,10 +361,10 @@ export default function HomePage() {
           <div style={{ textAlign: 'center', marginBottom: 52 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>One platform. Five superpowers.</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1 }}>
-              Employees run on top of everything WyberAi builds
+              Web. Mobile. Agents. Flows. Employees.
             </h2>
             <p style={{ fontSize: 15, color: '#71717a', marginTop: 14, maxWidth: 520, margin: '14px auto 0' }}>
-              Your AI employees can trigger flows, generate apps, and chat with agents — all within one platform.
+              Every tool your product needs — built, wired, and running from a single prompt. Credits work across all of them.
             </p>
           </div>
 

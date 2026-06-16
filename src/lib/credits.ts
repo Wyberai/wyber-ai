@@ -50,15 +50,15 @@ export const MODEL_META: Record<ModelTier, {
  * Multiply by MODEL_MULTIPLIERS[tier] and round.
  */
 const BASE_COSTS: Record<ActionType, number> = {
-  'small-edit':      2,
-  'component':       4,
-  'web-build':      10,
-  'mobile-build':   10,
-  'agent-create':    6,
-  'workflow-create': 6,
-  'ai-helper':       1,
-  'image-gen':       3,
-  'execution':       2,
+  'small-edit':      5,
+  'component':       8,
+  'web-build':      20,
+  'mobile-build':   25,
+  'agent-create':    8,
+  'workflow-create': 8,
+  'ai-helper':       2,
+  'image-gen':       5,
+  'execution':       3,  // per AI node/iteration — agents, flows, employee runs
 }
 
 /**

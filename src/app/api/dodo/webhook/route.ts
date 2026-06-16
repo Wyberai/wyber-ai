@@ -4,6 +4,7 @@ import {
   sendUpgradeConfirmEmail,
   sendRenewalEmail,
   sendCancellationEmail,
+  sendTopupEmail,
 } from '@/lib/email'
 
 function getAdmin() {
@@ -12,6 +13,12 @@ function getAdmin() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
+}
+
+const TOPUPS: Record<string, number> = {
+  [process.env.DODO_TOPUP_200  || 'TOPUP_UNSET1']: 200,
+  [process.env.DODO_TOPUP_600  || 'TOPUP_UNSET2']: 600,
+  [process.env.DODO_TOPUP_2000 || 'TOPUP_UNSET3']: 2000,
 }
 
 // Plan config keyed by Dodo product ID env var
@@ -91,6 +98,20 @@ export async function POST(req: NextRequest) {
     const userEmail = profile?.email as string | undefined
 
     if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
+      // Check if it's a top-up first
+      const topupCredits = TOPUPS[productId]
+      if (topupCredits) {
+        const before = (profile?.credits as number) || 0
+        const newBalance = before + topupCredits
+        await admin.from('profiles').update({
+          credits: newBalance,
+          updated_at: new Date().toISOString(),
+        }).eq('id', userId)
+        console.log(`Topup +${topupCredits} for ${userId}`)
+        if (userEmail) sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
+        return NextResponse.json({ received: true })
+      }
+
       const planConfig = PLANS[productId] || { credits: 500, dailyCredits: 20, plan: 'starter', label: 'Starter', employees: 3 }
       await admin.from('profiles').update({
         plan: planConfig.plan,

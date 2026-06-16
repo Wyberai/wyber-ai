@@ -8,6 +8,9 @@ const PRODUCT_IDS: Record<string, string | undefined> = {
   'growth_annual':   process.env.DODO_PRODUCT_GROWTH_ANNUAL,
   'scale_monthly':   process.env.DODO_PRODUCT_SCALE,
   'scale_annual':    process.env.DODO_PRODUCT_SCALE_ANNUAL,
+  'topup_200':       process.env.DODO_TOPUP_200,
+  'topup_600':       process.env.DODO_TOPUP_600,
+  'topup_2000':      process.env.DODO_TOPUP_2000,
 }
 
 export async function POST(req: NextRequest) {
@@ -24,6 +27,7 @@ export async function POST(req: NextRequest) {
     if (!apiKey) return NextResponse.json({ error: 'DODO_PAYMENTS_API_KEY not set' }, { status: 503 })
 
     const origin = req.headers.get('origin') || 'https://wyberai.com'
+    const isTopup = planKey.startsWith('topup_')
 
     console.log('Checkout:', { keyLen: apiKey.length, planKey, productId })
 
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         product_cart: [{ product_id: productId, quantity: 1 }],
         customer: { email: user.email, name: user.email?.split('@')[0] },
-        return_url: `${origin}/dashboard?upgraded=1`,
+        return_url: `${origin}/dashboard?${isTopup ? 'topup=1' : 'upgraded=1'}`,
         metadata: { user_id: user.id, plan: planKey },
       }),
     })

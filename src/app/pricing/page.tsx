@@ -17,17 +17,17 @@ const PLANS = [
     color: '#0EA5E9',
     highlight: false,
     badge: null,
-    tagline: 'For founders exploring AI employees',
+    tagline: 'For founders getting started',
     employeeSlots: 3,
     credits: 500,
     features: [
-      '3 AI Employees',
       '500 credits/month (rollover)',
-      'Scheduled & manual runs',
+      '3 AI Employees (scheduled runs)',
+      'Web & mobile app builder',
+      '20 web builds · 25 mobile builds',
+      'AI Agents & Workflows',
       'Gmail, Slack, Notion, HubSpot',
       'KPI tracking & digest emails',
-      'Web & mobile app builder',
-      'Custom employee domain',
       'Community support',
     ],
   },
@@ -40,18 +40,18 @@ const PLANS = [
     color: '#0EA5E9',
     highlight: true,
     badge: 'MOST POPULAR',
-    tagline: 'For teams serious about AI automation',
+    tagline: 'For teams building on AI seriously',
     employeeSlots: 10,
     credits: 2000,
     features: [
-      '10 AI Employees',
       '2,000 credits/month (rollover)',
+      '10 AI Employees',
       'All 30+ tool integrations',
       'Custom domain routing',
       'KPI dashboards & reports',
       'Org management & multi-user',
-      'AI Workflows & Agents',
-      'Web & mobile builder',
+      'Priority agent & flow runs',
+      'Web & mobile app builder',
       'Priority support',
     ],
   },
@@ -65,11 +65,11 @@ const PLANS = [
     highlight: false,
     badge: 'BEST VALUE',
     tagline: 'For agencies and high-growth companies',
-    employeeSlots: -1, // unlimited
+    employeeSlots: -1,
     credits: 6000,
     features: [
-      'Unlimited AI Employees',
       '6,000 credits/month (rollover)',
+      'Unlimited AI Employees',
       'Multiple orgs (white-label)',
       'Custom domain per org',
       'Priority run queue',
@@ -102,6 +102,22 @@ const PLANS = [
       'Dedicated success manager',
     ],
   },
+]
+
+const TOPUPS = [
+  { credits: 200,  price: 19,  key: 'topup_200',  label: 'Boost',  desc: '~10 web builds' },
+  { credits: 600,  price: 49,  key: 'topup_600',  label: 'Power',  desc: '~30 web builds' },
+  { credits: 2000, price: 149, key: 'topup_2000', label: 'Studio', desc: '~100 web builds', badge: 'Best value' },
+]
+
+const CREDIT_TABLE = [
+  { action: 'Web app build',        cost: '20 credits', icon: '🌐' },
+  { action: 'Mobile app build',     cost: '25 credits', icon: '📱' },
+  { action: 'App edit / iteration', cost: '5 credits',  icon: '✏️' },
+  { action: 'AI Agent run (per step)', cost: '3 credits', icon: '⚡' },
+  { action: 'Workflow AI node',     cost: '3 credits',  icon: '🔀' },
+  { action: 'AI Employee iteration', cost: '3 credits', icon: '🤖' },
+  { action: 'Image generation',     cost: '5 credits',  icon: '🎨' },
 ]
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -261,6 +277,25 @@ export default function PricingPage() {
     }
   }
 
+  const handleTopup = async (key: string) => {
+    if (!user) { window.location.href = '/login?next=/pricing'; return }
+    setLoading(key)
+    try {
+      const res = await fetch('/api/dodo/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planKey: key }),
+      })
+      const d = await res.json()
+      if (d.url) window.location.href = d.url
+      else alert(d.error ?? 'Checkout error')
+    } catch {
+      alert('Network error')
+    } finally {
+      setLoading(null)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
 
@@ -341,13 +376,67 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* What does a credit buy? */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px,100%),1fr))', gap: 40, alignItems: 'start' }}>
+          {/* Credit table */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>What 1 credit buys you</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>Credits work across everything</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {CREDIT_TABLE.map(row => (
+                <div key={row.action} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: '#111113', borderRadius: 9, gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 16 }}>{row.icon}</span>
+                    <span style={{ fontSize: 13, color: '#a1a1aa' }}>{row.action}</span>
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: BRAND, whiteSpace: 'nowrap', background: 'rgba(14,165,233,0.08)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(14,165,233,0.15)' }}>{row.cost}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 12, color: '#3f3f46', marginTop: 14, lineHeight: 1.6 }}>
+              Credits roll over every month. Use them for builds, agents, employees, and flows — all from the same balance.
+            </p>
+          </div>
+
+          {/* Top-ups */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Need more? Top up anytime</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>One-time credit packs</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {TOPUPS.map(t => (
+                <div key={t.key} style={{ position: 'relative', background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                  {t.badge && (
+                    <div style={{ position: 'absolute', top: -10, right: 16, background: '#f59e0b', color: '#000', fontSize: 9, fontWeight: 800, padding: '2px 9px', borderRadius: 20 }}>{t.badge}</div>
+                  )}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{t.credits.toLocaleString()} credits</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', padding: '2px 7px', borderRadius: 10 }}>{t.label}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#52525b' }}>{t.desc} · never expires</div>
+                  </div>
+                  <button
+                    onClick={() => handleTopup(t.key)}
+                    disabled={loading === t.key}
+                    style={{ padding: '9px 18px', borderRadius: 9, background: loading === t.key ? '#1a1a22' : 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: loading === t.key ? '#52525b' : '#f59e0b', fontSize: 13, fontWeight: 700, cursor: loading === t.key ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {loading === t.key ? '…' : `$${t.price}`}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 12, color: '#3f3f46', marginTop: 14 }}>Top-up credits stack on top of your monthly plan and never expire.</p>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
-              ['What counts as a credit?', 'App generation costs 1 credit, editing 1 credit, running an AI employee costs 1 credit per tool iteration (up to 15 per run). Each plan includes more than enough for daily employee runs plus active building.'],
+              ['What counts as a credit?', 'Web app builds cost 20 credits, mobile builds 25 credits, small edits 5 credits. AI agent steps, workflow AI nodes, and AI employee iterations each cost 3 credits. Image generation is 5 credits. Top-up packs can be added anytime and never expire.'],
               ['Can I hire more than my plan allows?', 'Yes — you can add credit top-ups or upgrade your plan at any time. Unused credits roll over each month.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
               ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. Growth and Scale include all integrations.'],
