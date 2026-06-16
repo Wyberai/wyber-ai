@@ -6,8 +6,8 @@
 -- Called by /api/cron/daily-credits on a daily schedule.
 -- Awards each user their plan's daily_credits allowance,
 -- capped so total credits never exceed a reasonable ceiling.
-drop function if exists public.add_daily_credits();
-create or replace function public.add_daily_credits()
+drop function if exists public.add_daily_credits() cascade;
+create function public.add_daily_credits()
 returns jsonb language plpgsql security definer as $$
 declare
   updated_count int;
@@ -25,7 +25,8 @@ $$;
 
 -- ── RPC: increment_app_use ────────────────────────────────────
 -- Called by the generate route when a prebuilt template is served.
-create or replace function public.increment_app_use(app_id uuid)
+drop function if exists public.increment_app_use(uuid) cascade;
+create function public.increment_app_use(app_id uuid)
 returns void language plpgsql security definer as $$
 begin
   update public.prebuilt_apps
