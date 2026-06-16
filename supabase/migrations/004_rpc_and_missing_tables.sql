@@ -6,20 +6,14 @@
 -- Called by /api/cron/daily-credits on a daily schedule.
 -- Awards each user their plan's daily_credits allowance,
 -- capped so total credits never exceed a reasonable ceiling.
-drop function if exists public.add_daily_credits() cascade;
-create function public.add_daily_credits()
-returns jsonb language plpgsql security definer as $$
-declare
-  updated_count int;
+create or replace function public.add_daily_credits()
+returns void language plpgsql security definer as $$
 begin
   update public.profiles
   set
     credits    = credits + daily_credits,
     updated_at = now()
   where daily_credits > 0;
-
-  get diagnostics updated_count = row_count;
-  return json_build_object('updated', updated_count, 'ts', now());
 end;
 $$;
 
