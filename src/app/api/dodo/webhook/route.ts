@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import {
+  sendUpgradeConfirmEmail,
+  sendRenewalEmail,
+  sendCancellationEmail,
+  sendTopupEmail,
+} from '@/lib/email'
 
 function getAdmin() {
   return createClient(
@@ -85,17 +91,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true, warning: 'no user_id' })
     }
 
+    // Fetch profile email for all events that need it
+    const { data: profile } = await admin.from('profiles').select('email, credits, topup_credits').eq('id', userId).single()
+    const userEmail = profile?.email as string | undefined
+
     // payment.succeeded or subscription.active → grant access
     if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
       const topupCredits = TOPUPS[productId]
       if (topupCredits) {
-        const { data: profile } = await admin.from('profiles').select('credits, topup_credits').eq('id', userId).single()
+        const before = profile?.credits || 0
+        const newBalance = before + topupCredits
         await admin.from('profiles').update({
-          credits: (profile?.credits || 0) + topupCredits,
+          credits: newBalance,
           topup_credits: (profile?.topup_credits || 0) + topupCredits,
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
         console.log(`Topup +${topupCredits} for ${userId}`)
+        if (userEmail) sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
       } else {
         const planConfig = PLANS[productId] || { credits: 250, dailyCredits: 10, plan: 'pro' }
         await admin.from('profiles').update({
@@ -106,6 +118,8 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
         console.log(`Plan activated: ${planConfig.plan} for ${userId}`)
+        const planLabel = planConfig.plan === 'pro' ? 'Builder' : 'Team'
+        if (userEmail) sendUpgradeConfirmEmail(userEmail, planLabel, planConfig.credits).catch(() => {})
       }
     }
 
@@ -113,26 +127,30 @@ export async function POST(req: NextRequest) {
     if (eventType === 'subscription.renewed') {
       const planConfig = PLANS[productId]
       if (planConfig) {
-        const { data: profile } = await admin.from('profiles').select('credits, topup_credits').eq('id', userId).single()
         const rollover = Math.min(profile?.credits || 0, planConfig.credits)
+        const newBalance = planConfig.credits + rollover + (profile?.topup_credits || 0)
         await admin.from('profiles').update({
-          credits: planConfig.credits + rollover + (profile?.topup_credits || 0),
+          credits: newBalance,
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
         console.log(`Renewed for ${userId}, rollover: ${rollover}`)
+        const planLabel = planConfig.plan === 'pro' ? 'Builder' : 'Team'
+        if (userEmail) sendRenewalEmail(userEmail, planLabel, planConfig.credits, rollover).catch(() => {})
       }
     }
 
     // subscription.cancelled → drop to free
     if (eventType === 'subscription.cancelled') {
-      const { data: profile } = await admin.from('profiles').select('topup_credits').eq('id', userId).single()
+      const { data: cancelProfile } = await admin.from('profiles').select('email, topup_credits, plan').eq('id', userId).single()
       await admin.from('profiles').update({
         plan: 'free',
-        credits: 10 + (profile?.topup_credits || 0),
+        credits: 10 + (cancelProfile?.topup_credits || 0),
         subscription_status: 'cancelled',
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
       console.log(`Cancelled for ${userId}`)
+      const planLabel = cancelProfile?.plan === 'pro' ? 'Builder' : 'Team'
+      if (cancelProfile?.email) sendCancellationEmail(cancelProfile.email, planLabel).catch(() => {})
     }
 
     return NextResponse.json({ received: true })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/supabase/server';
+import { sendSecurityAlertEmail } from '@/lib/email';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' });
 
@@ -58,9 +59,17 @@ Respond ONLY with JSON, no markdown:
           blocked: result.blocked,
           reason: result.reason,
         });
-      } catch {
-        // safety_reports table not yet created — non-critical
-      }
+        // Notify the project owner
+        const { data: proj } = await supabase
+          .from('projects').select('name, user_id').eq('id', projectId).single();
+        if (proj) {
+          const { data: prof } = await supabase
+            .from('profiles').select('email').eq('id', proj.user_id).single();
+          if (prof?.email) {
+            sendSecurityAlertEmail(prof.email, proj.name, result.flags).catch(() => {});
+          }
+        }
+      } catch { /* non-critical */ }
     }
 
     return NextResponse.json(result);

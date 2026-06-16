@@ -4,6 +4,7 @@ import { decryptCredential } from '@/lib/encryption'
 import { getToolById, detectRequiredTools } from '@/lib/tool-registry'
 import Anthropic from '@anthropic-ai/sdk'
 import { creditCost } from '@/lib/credits'
+import { sendAgentCompletedEmail, sendAgentFailedEmail } from '@/lib/email'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
     // is exact even if the agent finishes early.
     const { data: profile, error: profileErr } = await admin
       .from('profiles')
-      .select('credits')
+      .select('credits, email')
       .eq('id', user.id)
       .single()
 
@@ -53,6 +54,7 @@ export async function POST(req: NextRequest) {
     }
 
     let creditBalance: number = profile.credits ?? 0
+    const userEmail: string = profile.email ?? ''
 
     if (creditBalance < ITER_COST) {
       return NextResponse.json({
@@ -297,6 +299,14 @@ Execute now. Return a structured summary of what you did and what you found.`
         steps: stepCount,
         completed_at: new Date().toISOString(),
       }).eq('id', executionId)
+    }
+
+    // Fire-and-forget email notifications
+    if (userEmail && agent?.name) {
+      const creditsUsed = (profile.credits ?? 0) - creditBalance
+      if (finalStatus === 'completed') {
+        sendAgentCompletedEmail(userEmail, agent.name, stepCount, creditsUsed, finalText.slice(0, 300)).catch(() => {})
+      }
     }
 
     return NextResponse.json({

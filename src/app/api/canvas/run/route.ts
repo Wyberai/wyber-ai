@@ -4,6 +4,7 @@ import { getDecryptedSecret } from '@/lib/get-decrypted-secret'
 import Anthropic from '@anthropic-ai/sdk'
 import { creditCost } from '@/lib/credits'
 import { Composio } from '@composio/core'
+import { sendWorkflowCompletedEmail, sendWorkflowFailedEmail } from '@/lib/email'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -526,11 +527,25 @@ export async function POST(req: NextRequest) {
     }
 
     // Increment run_count for flows
+    let flowName = 'Workflow'
     if (sourceType === 'flow') {
-      db.from('flows').update({ run_count: db.rpc as any, last_run_at: new Date().toISOString() })
-        .eq('id', sourceId).then(() => {}).catch(() => {})
-      // Simple increment via raw SQL
+      const { data: flowMeta } = await db.from('flows').select('name').eq('id', sourceId).single()
+      flowName = flowMeta?.name ?? 'Workflow'
       db.rpc('increment_flow_run_count', { flow_id: sourceId }).catch(() => {})
+    }
+
+    // Email notification (fire-and-forget)
+    const hasError = steps.some(s => s.status === 'error')
+    const admin = await createAdminClient()
+    const { data: prof } = await admin.from('profiles').select('email').eq('id', user.id).single()
+    if (prof?.email) {
+      const creditsUsed = steps.filter(s => s.nodeType === 'ai').length * creditCost('execution', 'default')
+      if (hasError) {
+        const errStep = steps.find(s => s.status === 'error')
+        sendWorkflowFailedEmail(prof.email, flowName, errStep?.log?.[0] ?? 'Unknown error').catch(() => {})
+      } else {
+        sendWorkflowCompletedEmail(prof.email, flowName, creditsUsed).catch(() => {})
+      }
     }
 
     return NextResponse.json({ success: true, steps, nodeCount: ordered.length })

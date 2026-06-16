@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { sendTemplatePublishedEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,6 +35,13 @@ export async function POST(req: NextRequest) {
     }).select('id').single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Notify the publisher
+    const { data: prof } = await admin.from('profiles').select('email').eq('id', user.id).single();
+    if (prof?.email) {
+      const templateUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'}/templates/${data.id}`;
+      sendTemplatePublishedEmail(prof.email, name.trim(), templateUrl).catch(() => {});
+    }
 
     return NextResponse.json({ id: data.id, success: true });
   } catch (err) {

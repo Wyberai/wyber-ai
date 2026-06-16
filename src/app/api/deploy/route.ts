@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { sendDeploySuccessEmail } from '@/lib/email';
 
 // Build scaffold files needed for Vercel to build the app
 function getBuildScaffold(framework: string, projectName: string): Record<string, string> {
@@ -220,6 +221,15 @@ export async function POST(req: NextRequest) {
       });
     } catch (e) {
       console.error('Supabase save error:', e);
+    }
+
+    // Email notification — fire-and-forget
+    if (userId) {
+      const supabase = await createAdminClient();
+      const { data: prof } = await supabase.from('profiles').select('email').eq('id', userId).single();
+      if (prof?.email) {
+        sendDeploySuccessEmail(prof.email, projectName ?? 'Your app', deployedUrl).catch(() => {});
+      }
     }
 
     return NextResponse.json({
