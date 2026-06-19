@@ -29,7 +29,6 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
   try {
     const supabase = createClient()
 
-    // Extract key terms from prompt for DB query
     const words = prompt.toLowerCase()
       .replace(/[^a-z0-9 ]/g, ' ')
       .split(' ')
@@ -38,7 +37,35 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
 
     if (words.length === 0) return null
 
-    // Query DB for apps matching any keywords
+    // Try GCS-cached index first for faster matching
+    const gcsBucket = process.env.GCS_TEMPLATE_BUCKET
+    if (gcsBucket) {
+      try {
+        const indexRes = await fetch(`https://storage.googleapis.com/${gcsBucket}/index/web.json`, {
+          next: { revalidate: 300 },
+        })
+        if (indexRes.ok) {
+          const index = await indexRes.json() as Array<{ id: string; name: string; category: string; description: string; preview_color: string }>
+          let bestId: string | null = null
+          let bestScore = 0
+          for (const entry of index) {
+            const entryWords = entry.name.toLowerCase().split(/[\s\-&/,]+/)
+            const score = scoreMatch(prompt, entryWords)
+            if (score > bestScore) { bestScore = score; bestId = entry.id }
+          }
+          if (bestId && bestScore >= 3) {
+            const templateRes = await fetch(`https://storage.googleapis.com/${gcsBucket}/templates/${bestId}.json`)
+            if (templateRes.ok) {
+              const template = await templateRes.json() as PrebuiltApp
+              supabase.rpc('increment_app_use', { app_id: bestId }).then(() => {})
+              return template
+            }
+          }
+        }
+      } catch { /* fall through to Supabase */ }
+    }
+
+    // Fallback: query Supabase directly
     const { data: candidates } = await supabase
       .from('prebuilt_apps')
       .select('id, name, category, keywords, files, preview_color')
@@ -48,7 +75,6 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
 
     if (!candidates || candidates.length === 0) return null
 
-    // Score each candidate
     let best: PrebuiltApp | null = null
     let bestScore = 0
 
@@ -60,10 +86,8 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
       }
     }
 
-    // Only return if confident enough
     if (bestScore < 3) return null
 
-    // Increment use count silently
     if (best) {
       supabase.rpc('increment_app_use', { app_id: best.id }).then(() => {})
     }
