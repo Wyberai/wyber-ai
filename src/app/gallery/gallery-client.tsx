@@ -20,9 +20,11 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-  SaaS: '?', CRM: '??', Ecommerce: '??', Healthcare: '??',
-  Education: '??', Finance: '??', HR: '??', RealEstate: '??',
-  Restaurant: '???', ProjectManagement: '??', Landing: '??', Analytics: '??',
+  SaaS: '🚀', CRM: '🤝', Ecommerce: '🛒', Healthcare: '🏥',
+  Education: '🎓', Finance: '💰', HR: '👥', RealEstate: '🏠',
+  Restaurant: '🍽️', ProjectManagement: '📋', Landing: '🌐', Analytics: '📊',
+  Legal: '⚖️', Travel: '✈️', Social: '💬', Media: '🎬',
+  Logistics: '📦', NonProfit: '❤️', 'E-commerce': '🛒',
 }
 
 export default function GalleryPage() {
@@ -61,7 +63,7 @@ export default function GalleryPage() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={13} />
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free ?</Link></div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}><Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link></div>
       </nav>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
@@ -143,7 +145,7 @@ export default function GalleryPage() {
                         {app.keywords?.slice(0, 2).map((k: string) => `#${k}`).join(' ')}
                       </div>
                       <div style={{ fontSize: 11, fontWeight: 700, color, display: 'flex', alignItems: 'center', gap: 4 }}>
-                        Build this ?
+                        Build this →
                       </div>
                     </div>
                   </div>
@@ -159,7 +161,7 @@ export default function GalleryPage() {
             <div style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Sora', sans-serif", marginBottom: 8 }}>Don't see what you need?</div>
             <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>Describe any app in plain English and WyberAi will build it in under 30 seconds.</div>
             <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}>
-              Build from scratch ?
+              Build from scratch →
             </Link>
           </div>
         )}
