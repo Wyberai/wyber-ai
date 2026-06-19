@@ -1334,38 +1334,103 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
       }
     }
 
-    const stream = await client.messages.stream({
-      model,
-      max_tokens: stageMaxTokens,
-      system: [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }],
-      messages: [...trimmedHistory, { role: 'user', content: userContent }],
-    })
-
-    // Log prompt-cache metrics after stream ends (fire-and-forget)
-    stream.finalMessage().then(msg => {
-      const u = msg.usage as Record<string, number>
-      console.log(`[generate cache] creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
-    }).catch(() => {})
+    // Try Anthropic primary, fallback to Vertex AI Gemini on failure
+    let usedModel = model
+    let readable: ReadableStream<Uint8Array>
 
     const encoder = new TextEncoder()
-    const readable = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-              controller.enqueue(encoder.encode(event.delta.text))
+    const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
+    const systemBlocks = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
+
+    try {
+      const stream = await client.messages.stream({
+        model,
+        max_tokens: stageMaxTokens,
+        system: systemBlocks,
+        messages: finalMessages,
+      })
+
+      stream.finalMessage().then(msg => {
+        const u = msg.usage as Record<string, number>
+        console.log(`[generate cache] creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+      }).catch(() => {})
+
+      readable = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const event of stream) {
+              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                controller.enqueue(encoder.encode(event.delta.text))
+              }
             }
-          }
-        } catch (err) { console.error('Stream error:', err) }
-        finally { controller.close() }
-      },
-    })
+          } catch (err) { console.error('Stream error:', err) }
+          finally { controller.close() }
+        },
+      })
+    } catch (anthropicErr) {
+      console.error('[generate] Anthropic failed, trying Vertex AI Gemini fallback:', String(anthropicErr))
+
+      // Fallback: Vertex AI Gemini
+      const vertexKey = process.env.VERTEX_AI_API_KEY || process.env.GOOGLE_AI_API_KEY
+      if (!vertexKey) throw anthropicErr
+
+      usedModel = 'gemini-2.5-flash'
+      const userText = typeof userContent === 'string'
+        ? userContent
+        : (userContent as Array<{ type: string; text?: string }>).filter(b => b.type === 'text').map(b => b.text).join('\n')
+
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${vertexKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: staticSystemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: userText }] }],
+            generationConfig: { maxOutputTokens: stageMaxTokens, temperature: 0.7 },
+          }),
+        },
+      )
+
+      if (!geminiRes.ok) {
+        const errText = await geminiRes.text()
+        throw new Error(`Gemini fallback also failed: ${geminiRes.status} ${errText.slice(0, 200)}`)
+      }
+
+      readable = new ReadableStream({
+        async start(controller) {
+          try {
+            const reader = geminiRes.body!.getReader()
+            const decoder = new TextDecoder()
+            let buffer = ''
+            while (true) {
+              const { done, value } = await reader.read()
+              if (done) break
+              buffer += decoder.decode(value, { stream: true })
+              const lines = buffer.split('\n')
+              buffer = lines.pop() || ''
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue
+                const json = line.slice(6)
+                if (json === '[DONE]') continue
+                try {
+                  const parsed = JSON.parse(json) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
+                  const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
+                  if (text) controller.enqueue(encoder.encode(text))
+                } catch { /* skip malformed SSE */ }
+              }
+            }
+          } catch (err) { console.error('Gemini stream error:', err) }
+          finally { controller.close() }
+        },
+      })
+    }
 
     return new Response(readable, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
-        'X-Model-Used': model,
+        'X-Model-Used': usedModel,
         'X-Credits-Used': String(cost),
         'X-Credits-Tier': resolvedTier,
       },
