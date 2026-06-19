@@ -988,6 +988,26 @@ let _canvasWebhookUrl: string | null = null
 
 // ─── Main Canvas ──────────────────────────────────────────────────────────────
 
+interface RunLogStep {
+  nodeId: string
+  nodeLabel: string
+  nodeType: string
+  status: 'success' | 'error' | 'skipped'
+  output: unknown
+  log: string[]
+  durationMs: number
+}
+
+interface RunLogEntry {
+  id: string
+  status: 'success' | 'error' | 'partial'
+  node_count: number
+  duration_ms: number
+  triggered_by: string
+  created_at: string
+  steps: RunLogStep[]
+}
+
 interface Props {
   projectId: string
   projectName: string
@@ -1013,6 +1033,10 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   const [toolBrowseLoading, setToolBrowseLoading] = useState(false)
   const [showRunPanel, setShowRunPanel] = useState(false)
   const [canvasWebhookUrl, setCanvasWebhookUrl] = useState<string | null>(initialWebhookUrl ?? null)
+  const [showRunHistory, setShowRunHistory] = useState(false)
+  const [runHistory, setRunHistory] = useState<RunLogEntry[]>([])
+  const [runHistoryLoading, setRunHistoryLoading] = useState(false)
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
 
   // Expose webhook URL for the ConfigPanel (module-level so sub-component can read it)
   useEffect(() => { _canvasWebhookUrl = canvasWebhookUrl }, [canvasWebhookUrl])
@@ -1081,6 +1105,17 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         .finally(() => setLoadingCanvas(false))
     }
   }, [projectId, saveTarget])
+
+  const loadRunHistory = async () => {
+    if (saveTarget !== 'flow') return
+    setRunHistoryLoading(true)
+    try {
+      const r = await fetch(`/api/flows/${projectId}/runs?limit=20`)
+      const d = await r.json()
+      setRunHistory(d.runs ?? [])
+    } catch {}
+    setRunHistoryLoading(false)
+  }
 
   const handleSave = async () => {
     const url = saveTarget === 'project'
@@ -1268,6 +1303,13 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               )
             })()}
           </div>
+          {saveTarget === 'flow' && (
+            <button onClick={() => { setShowRunHistory(v => !v); if (!showRunHistory) loadRunHistory() }}
+              title="Run history"
+              style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunHistory ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunHistory ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunHistory ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+              📋 Runs
+            </button>
+          )}
           <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
             {saved ? <><IcoCheckSm color="#22c55e" /> Saved</> : 'Save'}
           </button>
@@ -1402,6 +1444,74 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <CanvasChat key={projectId} projectId={projectId} canvasType={canvasType} />
         </div>
       </div>
+
+      {/* Run History Modal */}
+      {showRunHistory && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={() => setShowRunHistory(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'relative', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, width: 720, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,0.7)', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f5' }}>Run history</div>
+                <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>Last 20 executions of this flow</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <button onClick={loadRunHistory} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+                <button onClick={() => setShowRunHistory(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>×</button>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
+              {runHistoryLoading ? (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>Loading...</div>
+              ) : runHistory.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>No runs yet. Hit Run to execute this flow.</div>
+              ) : (
+                runHistory.map(run => {
+                  const isExpanded = expandedRunId === run.id
+                  const statusColor = run.status === 'success' ? '#22c55e' : run.status === 'partial' ? '#f59e0b' : '#ef4444'
+                  const statusIcon = run.status === 'success' ? '✓' : run.status === 'partial' ? '~' : '✗'
+                  return (
+                    <div key={run.id} style={{ marginBottom: 8, background: '#0d0d0f', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, overflow: 'hidden' }}>
+                      <div onClick={() => setExpandedRunId(isExpanded ? null : run.id)}
+                        style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: statusColor, width: 16 }}>{statusIcon}</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600 }}>{new Date(run.created_at).toLocaleString()}</div>
+                          <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>
+                            {run.node_count} nodes · {run.duration_ms}ms · {run.triggered_by}
+                          </div>
+                        </div>
+                        <span style={{ color: '#3f3f46', fontSize: 11 }}>{isExpanded ? '▲' : '▼'}</span>
+                      </div>
+                      {isExpanded && (
+                        <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)', padding: '10px 14px' }}>
+                          {(run.steps || []).map((step, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6, fontSize: 11 }}>
+                              <span style={{ color: step.status === 'success' ? '#22c55e' : step.status === 'error' ? '#ef4444' : '#52525b', flexShrink: 0 }}>
+                                {step.status === 'success' ? '✓' : step.status === 'error' ? '✗' : '○'}
+                              </span>
+                              <div style={{ flex: 1 }}>
+                                <span style={{ color: '#a1a1aa', fontWeight: 600 }}>{step.nodeLabel}</span>
+                                <span style={{ color: '#3f3f46', marginLeft: 6 }}>({step.nodeType})</span>
+                                {step.durationMs > 0 && <span style={{ color: '#3f3f46', marginLeft: 6 }}>{step.durationMs}ms</span>}
+                                {step.log?.length > 0 && (
+                                  <div style={{ marginTop: 3, fontFamily: 'monospace', color: '#52525b', fontSize: 10, lineHeight: 1.5 }}>
+                                    {step.log.map((l, li) => <div key={li}>{l}</div>)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes spin  { to { transform: rotate(360deg); } }

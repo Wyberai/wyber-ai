@@ -595,8 +595,11 @@ export async function POST(req: NextRequest) {
       sourceId: string
       sourceType: 'project' | 'flow'
       input?: Record<string, unknown>
+      webhookInput?: Record<string, unknown>
     }
-    const { sourceId, sourceType = 'flow', input = {} } = body
+    const { sourceId, sourceType = 'flow', input = {}, webhookInput } = body
+    const triggeredBy: 'manual' | 'webhook' | 'schedule' = webhookInput ? 'webhook' : 'manual'
+    const effectiveInput = webhookInput ? { ...input, webhook: webhookInput } : input
     if (!sourceId) return NextResponse.json({ error: 'sourceId required' }, { status: 400 })
 
     const db = createServiceClient()
@@ -641,7 +644,7 @@ export async function POST(req: NextRequest) {
 
     const ordered = topoSort(nodes, edges)
     const steps: StepResult[] = []
-    const stepState: Record<string, unknown> = { ...input }
+    const stepState: Record<string, unknown> = { ...effectiveInput }
 
     // Build map: aiagent node id → directly-connected tool nodes.
     // These will be handed to the agentic loop; the sequential pass skips them.
@@ -729,8 +732,23 @@ export async function POST(req: NextRequest) {
       db.rpc('increment_flow_run_count', { flow_id: sourceId }).catch(() => {})
     }
 
-    // Email notification (fire-and-forget)
     const hasError = steps.some(s => s.status === 'error')
+    const totalDurationMs = steps.reduce((acc, s) => acc + s.durationMs, 0)
+    const runStatus = hasError ? (steps.some(s => s.status === 'success') ? 'partial' : 'error') : 'success'
+
+    // Store run trace log (fire-and-forget)
+    db.from('flow_run_logs').insert({
+      user_id: user.id,
+      source_id: sourceId,
+      source_type: sourceType,
+      status: runStatus,
+      node_count: ordered.length,
+      steps: steps as unknown as Record<string, unknown>[],
+      duration_ms: totalDurationMs,
+      triggered_by: triggeredBy,
+    }).then(() => {}).catch(() => {})
+
+    // Email notification (fire-and-forget)
     const admin = await createAdminClient()
     const { data: prof } = await admin.from('profiles').select('email').eq('id', user.id).single()
     if (prof?.email) {
