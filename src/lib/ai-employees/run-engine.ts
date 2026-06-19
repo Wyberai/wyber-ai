@@ -117,6 +117,18 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'WYBERAI_speak',
+    description: 'Convert text to speech and save an audio message. Use to deliver voice summaries, alerts, or briefings that the user can play back. Great for end-of-run audio reports.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        text:  { type: 'string', description: 'The text to speak aloud (max 500 words)' },
+        label: { type: 'string', description: 'Short label for this audio clip, e.g. "Daily sales briefing" or "Alert: low inventory"' },
+      },
+      required: ['text'],
+    },
+  },
+  {
     name: 'WYBERAI_browser',
     description: 'Control a web browser to research, scrape, search, or interact with websites. Use for: reading web pages, extracting data, searching the web, or filling forms (requires Browserbase key).',
     input_schema: {
@@ -249,6 +261,20 @@ async function handleWyberTool(
       return { result: `Generated ${input.type}. ${d.url ? `URL: ${d.url}` : JSON.stringify(d).slice(0, 200)}` }
     } catch (e) {
       return { result: `Generation failed: ${String(e)}` }
+    }
+  }
+
+  if (toolName === 'WYBERAI_speak') {
+    try {
+      const res = await fetch(`${baseUrl}/api/ai-employees/voice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Internal-User-Id': userId },
+        body: JSON.stringify({ text: input.text, label: input.label, employee_id: employeeId }),
+      })
+      const d = await res.json()
+      return { result: d.message ?? `Audio generated: ${d.audio_url ?? 'saved to run log'}` }
+    } catch (e) {
+      return { result: `Voice generation failed: ${String(e)}` }
     }
   }
 

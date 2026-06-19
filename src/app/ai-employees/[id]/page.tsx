@@ -78,9 +78,11 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   const [running, setRunning] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'runs' | 'kpis' | 'context'>('runs')
+  const [activeTab, setActiveTab] = useState<'runs' | 'kpis' | 'context' | 'voice'>('runs')
   const [escalations, setEscalations] = useState<Array<{ id: string; question: string; context: string; created_at: string }>>([])
   const [resolvingId, setResolvingId] = useState<string | null>(null)
+  const [voiceClips, setVoiceClips] = useState<Array<{ id: string; label: string; text: string; audio_url: string | null; provider: string; created_at: string }>>([])
+  const [playingClipId, setPlayingClipId] = useState<string | null>(null)
 
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500) }
 
@@ -108,12 +110,14 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const load = useCallback(async () => {
-    const [empRes, kpiRes] = await Promise.all([
+    const [empRes, kpiRes, voiceRes] = await Promise.all([
       fetch(`/api/ai-employees/${id}`),
       fetch(`/api/ai-employees/${id}/kpis`),
+      fetch(`/api/ai-employees/voice?employee_id=${id}&limit=20`),
     ])
     if (empRes.ok) { const d = await empRes.json(); setEmployee(d.employee) }
     if (kpiRes.ok) { const d = await kpiRes.json(); setKpiLogs(d.logs ?? []) }
+    if (voiceRes.ok) { const d = await voiceRes.json(); setVoiceClips(d.clips ?? []) }
     setLoading(false)
     loadEscalations()
   }, [id, loadEscalations])
@@ -268,9 +272,9 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Tabs */}
         <div style={{ display:'flex', gap:6, marginBottom:20 }}>
-          {(['runs','kpis','context'] as const).map(t => (
+          {(['runs','kpis','context','voice'] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)} style={{ ...TAB, background: activeTab === t ? '#1e1e26' : 'transparent', color: activeTab === t ? '#e4e4e7' : '#52525b' }}>
-              {t === 'runs' ? `Runs (${runs.length})` : t === 'kpis' ? `KPIs (${kpis.length})` : 'Context'}
+              {t === 'runs' ? `Runs (${runs.length})` : t === 'kpis' ? `KPIs (${kpis.length})` : t === 'voice' ? `Voice (${voiceClips.length})` : 'Context'}
             </button>
           ))}
         </div>
@@ -418,6 +422,58 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                   {employee.tools.map(t => <span key={t} style={{ fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:6, background:'rgba(14,165,233,0.08)', color:SKY, border:'1px solid rgba(14,165,233,0.15)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{t}</span>)}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* ── Voice tab ────────────────────────────────────────────────────────── */}
+        {activeTab === 'voice' && (
+          <div>
+            <div style={{ background:'rgba(14,165,233,0.05)', border:'1px solid rgba(14,165,233,0.12)', borderRadius:12, padding:'14px 18px', marginBottom:18 }}>
+              <p style={{ fontSize:12, color:'#71717a', margin:0 }}>
+                Voice clips are generated when your employee calls <code style={{ color:SKY }}>WYBERAI_speak</code> in its instructions. To enable audio output, add <code style={{ color:SKY }}>ELEVENLABS_API_KEY</code> or <code style={{ color:SKY }}>OPENAI_API_KEY</code> to your environment. Without a key, clips are saved as text-only transcripts.
+              </p>
+            </div>
+            {voiceClips.length === 0 ? (
+              <div style={{ textAlign:'center', padding:'60px 0', color:'#3f3f46' }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🎙️</div>
+                <p style={{ fontSize:14 }}>No voice clips yet. Tell your employee to call WYBERAI_speak in its instructions.</p>
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {voiceClips.map(clip => {
+                  const isPlaying = playingClipId === clip.id
+                  return (
+                    <div key={clip.id} style={{ background:'#111115', border:'1px solid #1e1e26', borderRadius:12, padding:'14px 18px' }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
+                        {clip.audio_url ? (
+                          <button
+                            onClick={() => {
+                              if (isPlaying) {
+                                setPlayingClipId(null)
+                              } else {
+                                setPlayingClipId(clip.id)
+                                const audio = new Audio(clip.audio_url!)
+                                audio.play()
+                                audio.onended = () => setPlayingClipId(null)
+                              }
+                            }}
+                            style={{ width:34, height:34, borderRadius:'50%', border:'none', background: isPlaying ? 'rgba(34,197,94,0.15)' : 'rgba(14,165,233,0.12)', color: isPlaying ? GREEN : SKY, cursor:'pointer', fontSize:14, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}
+                          >
+                            {isPlaying ? '■' : '▶'}
+                          </button>
+                        ) : (
+                          <div style={{ width:34, height:34, borderRadius:'50%', background:'#1e1e26', display:'flex', alignItems:'center', justifyContent:'center', color:'#3f3f46', fontSize:14, flexShrink:0 }}>🎙️</div>
+                        )}
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:13, fontWeight:600, color:'#e4e4e7' }}>{clip.label}</div>
+                          <div style={{ fontSize:10, color:'#3f3f46', marginTop:2 }}>{fmtDate(clip.created_at)} · {clip.audio_url ? clip.provider : 'text only'}</div>
+                        </div>
+                      </div>
+                      <p style={{ fontSize:12, color:'#71717a', lineHeight:1.6, margin:0, paddingLeft:46 }}>{clip.text.slice(0, 200)}{clip.text.length > 200 ? '…' : ''}</p>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
