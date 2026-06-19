@@ -129,31 +129,54 @@ function EmployeeMockup() {
   return (
     <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
       <WindowChrome title="wyberai.com — AI Employees" />
-      <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 9, padding: 11, marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 7 }}>
-          <div style={{ fontSize: 20 }}>📧</div>
-          <div>
-            <div style={{ fontWeight: 700, color: '#fafafa', fontSize: 11 }}>Email Marketing & Lifecycle Specialist</div>
-            <div style={{ color: '#71717a', fontSize: 9 }}>Marketing · runs daily at 09:00</div>
+      {[
+        { emoji: '📧', name: 'Email Marketing Manager', dept: 'Marketing · daily 09:00', status: 'Active', color: '#22c55e', detail: 'Sent weekly digest to 2,400 subscribers' },
+        { emoji: '🧑‍💼', name: 'SDR (Sales Dev Rep)',    dept: 'Sales · daily 08:00',    status: 'Active', color: '#22c55e', detail: 'Qualified 12 inbound leads this morning' },
+        { emoji: '📊', name: 'Finance Analyst',         dept: 'Finance · weekly Mon',   status: 'Running', color: BRAND,     detail: 'Building monthly P&L report…' },
+      ].map(a => (
+        <div key={a.name} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <span style={{ fontSize: 18 }}>{a.emoji}</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontWeight: 700, color: '#fafafa', fontSize: 11 }}>{a.name}</div>
+            <div style={{ color: '#52525b', fontSize: 10, marginTop: 1 }}>{a.dept}</div>
+            <div style={{ color: '#71717a', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.detail}</div>
           </div>
-          <div style={{ marginLeft: 'auto', background: '#22c55e', color: '#000', fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20 }}>ACTIVE</div>
+          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: `${a.color}15`, color: a.color, border: `1px solid ${a.color}30`, flexShrink: 0 }}>{a.status}</span>
         </div>
-        <div style={{ display: 'flex', gap: 5 }}>
-          {['VDB', 'ERR', 'FN'].map(t => (
-            <span key={t} style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(14,165,233,0.1)', color: BRAND, border: '1px solid rgba(14,165,233,0.2)' }}>{t}</span>
-          ))}
-        </div>
-      </div>
-      <div style={{ background: '#050508', borderRadius: 7, padding: 9, fontFamily: 'monospace' }}>
-        <div style={{ color: '#52525b', fontSize: 9, marginBottom: 5 }}>LAST RUN — 09:00 UTC</div>
+      ))}
+      <div style={{ fontSize: 10, color: '#3f3f46', textAlign: 'center', paddingTop: 4 }}>Emails you a summary after every run · No oversight needed</div>
+    </div>
+  );
+}
+
+function GTMMockup() {
+  return (
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+      <WindowChrome title="wyberai.com — GTM Engine" />
+      <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>ICP Match · 142 leads found</div>
         {[
-          { t: '09:00:01', msg: 'Fetched deliverability metrics',    c: '#a1a1aa' },
-          { t: '09:00:04', msg: 'Triggered segmentation for 847 users', c: '#22c55e' },
-          { t: '09:00:07', msg: 'BOUNCE_RATE: 1.2% — within limits',  c: BRAND },
-        ].map((l, i) => (
-          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 3, minWidth: 0 }}>
-            <span style={{ color: '#3f3f46', flexShrink: 0 }}>{l.t}</span>
-            <span style={{ color: l.c, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.msg}</span>
+          { label: 'Title', value: 'VP Engineering, CTO' },
+          { label: 'Company', value: 'SaaS · 50–500 employees' },
+          { label: 'Signal', value: 'Raised Series A in last 6mo' },
+        ].map(r => (
+          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+            <span style={{ color: '#52525b' }}>{r.label}</span>
+            <span style={{ color: '#a1a1aa', fontWeight: 600 }}>{r.value}</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {[
+          { day: 'Day 0', type: '✉️ Email', detail: 'Personalised cold intro sent', color: '#10b981' },
+          { day: 'Day 3', type: '⏳ Wait',  detail: 'Watching for reply / open',   color: '#52525b' },
+          { day: 'Day 4', type: '✉️ Email', detail: 'Case study follow-up queued', color: '#10b981' },
+          { day: 'Day 7', type: '📞 Call',  detail: 'Script ready in your dialer', color: '#f97316' },
+        ].map((s, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 7 }}>
+            <span style={{ fontSize: 9, color: '#3f3f46', width: 30, flexShrink: 0 }}>{s.day}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: s.color, flexShrink: 0 }}>{s.type}</span>
+            <span style={{ fontSize: 10, color: '#52525b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.detail}</span>
           </div>
         ))}
       </div>
@@ -217,11 +240,23 @@ const PILLARS = [
     eyebrow: 'AI Employees',
     accent: '#38bdf8',
     heading: 'Hire one.\nIt runs on autopilot.',
-    body: '100 enterprise roles with cognitive blueprint architecture — each ships with a vector DB scope, error trace codes, and primary executable function.',
-    bullets: ['100 enterprise role templates', 'Cognitive blueprint per role', 'KPI digest after every run'],
+    body: '100 pre-built roles — the equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
+    bullets: ['100 roles across 12 departments', 'Runs daily, weekly, or hourly — you choose', 'KPI tracking + email digest after every run'],
     cta: 'Browse 100 roles →',
     href: '/employees',
     mockup: <EmployeeMockup />,
+  },
+  {
+    key: 'gtm',
+    label: '🎯 GTM Engine',
+    eyebrow: 'GTM Engine',
+    accent: '#10b981',
+    heading: 'Define your ICP.\nWyber fills your pipeline.',
+    body: 'Describe who you sell to. Wyber finds matching leads, enriches them with verified emails and signals, and launches a multi-step sequence across email, call, and LinkedIn — all from one canvas.',
+    bullets: ['ICP-driven lead discovery via Apollo', '10 battle-tested outreach sequences', 'Visual campaign canvas — drag, connect, launch'],
+    cta: 'Open GTM Engine →',
+    href: '/gtm',
+    mockup: <GTMMockup />,
   },
 ] as const;
 
@@ -248,7 +283,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -275,7 +310,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -298,7 +333,7 @@ export default function HomePage() {
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 860 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: BRAND, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
-            One platform · Five superpowers
+            One platform · Six pillars
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
@@ -309,11 +344,11 @@ export default function HomePage() {
           </h1>
 
           <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 14px' }}>
-            Web apps, mobile apps, AI agents, workflows, and AI employees — all from one prompt. No engineers, no setup, no code.
+            Web apps, mobile apps, AI agents, workflows, AI employees, and a full GTM engine — all from one platform. No engineers, no setup, no code.
           </p>
 
           <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
-            Starts at $49/mo · 30-minute setup · Cancel anytime
+            Starts at $99/mo · 30-minute setup · Cancel anytime
           </p>
 
           {/* Five product pills */}
@@ -339,8 +374,9 @@ export default function HomePage() {
           <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
               { value: '118', label: 'App templates' },
-              { value: '5,000', label: 'AI Agents' },
+              { value: '5,000+', label: 'AI Agents' },
               { value: '100', label: 'AI Employee roles' },
+              { value: '10', label: 'GTM sequences' },
               { value: '30s', label: 'Avg build time' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
@@ -424,16 +460,17 @@ export default function HomePage() {
         <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pricing</div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14 }}>
-            One subscription. Five products.
+            One subscription. Six products.
           </h2>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 480, margin: '0 auto 44px' }}>Credits work across every product — build an app, run an agent, or hire an AI employee from the same balance.</p>
+          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Credits work across every pillar — build an app, run an agent, hire an AI employee, or launch a GTM campaign from the same balance.</p>
 
-          {/* Plans — forced 3-column row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 48 }}>
+          {/* Plans — forced 4-column row */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 48 }}>
             {[
-              { name: 'Starter', price: '$49',  period: '/mo', seats: '3 AI Employees',        credits: '500 credits',   color: BRAND,      highlight: false },
-              { name: 'Growth',  price: '$149', period: '/mo', seats: '10 AI Employees',        credits: '2,000 credits', color: BRAND,      highlight: true  },
-              { name: 'Scale',   price: '$399', period: '/mo', seats: 'Unlimited AI Employees', credits: '6,000 credits', color: '#8b5cf6',  highlight: false },
+              { name: 'Builder',  price: '$99',  period: '/mo', seats: '3 AI Employees',         credits: '300 credits',   color: BRAND,     highlight: false },
+              { name: 'Operator', price: '$249', period: '/mo', seats: '10 AI Employees',         credits: '900 credits',   color: BRAND,     highlight: false },
+              { name: 'Founder',  price: '$499', period: '/mo', seats: 'Unlimited AI Employees + full GTM', credits: '2,000 credits', color: '#10b981', highlight: true  },
+              { name: 'Scale',    price: '$999', period: '/mo', seats: 'Unlimited everything',    credits: '5,000 credits', color: '#8b5cf6', highlight: false },
             ].map(p => (
               <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(160deg,#0d1a26,#0d1218)' : '#111113', border: `1px solid ${p.highlight ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '24px 20px', position: 'relative' }}>
                 {p.highlight && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: BRAND, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>MOST POPULAR</div>}
@@ -505,7 +542,7 @@ export default function HomePage() {
               View pricing →
             </Link>
           </div>
-          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>Starts at $49/mo · 30 min setup · Cancel anytime</div>
+          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>Starts at $99/mo · 30 min setup · Cancel anytime</div>
         </div>
       </section>
 

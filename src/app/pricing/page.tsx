@@ -503,10 +503,10 @@ export default function PricingPage() {
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
-              ['What counts as a credit?', 'Web app builds cost 20 credits, mobile builds 25 credits, small edits 5 credits. AI agent steps, workflow AI nodes, and AI employee iterations each cost 3 credits. Image generation is 5 credits. Top-up packs can be added anytime and never expire.'],
+              ['What counts as a credit?', 'Web/mobile app builds cost 15 credits, small edits 4 credits, AI agent runs 8 credits, workflow runs 4 credits, AI employee runs 15 credits, GTM ICP + sequence generation 20 credits, lead enrichment 2 credits per contact. Image generation is 5 credits. Top-up packs can be added anytime and never expire.'],
               ['Can I hire more than my plan allows?', 'Yes — you can add credit top-ups or upgrade your plan at any time. Unused credits roll over each month.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
-              ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. Growth and Scale include all integrations.'],
+              ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. Operator, Founder, and Scale include all integrations.'],
               ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record. Scale supports multiple orgs, each with their own domain.'],
               ['What happens if I cancel?', 'You keep access until the end of your billing period. Your employees, KPI data, and app builds are retained for 30 days so you can export everything.'],
             ].map(([q, a], i) => (
