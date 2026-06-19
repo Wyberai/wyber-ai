@@ -22,7 +22,7 @@ BUILDER:
 - Plan Mode — shows a step-by-step build plan before generating; user approves it first
 - Screenshot-to-app — paste a screenshot and WyberAi clones the UI
 
-GALLERY (118 prebuilt templates, always 0 credits):
+GALLERY (500+ prebuilt templates, always 0 credits):
 - CRM, sales pipeline, contact management
 - Admin dashboards, analytics, KPI reporting
 - E-commerce, product catalog, shopping cart
@@ -36,7 +36,7 @@ GALLERY (118 prebuilt templates, always 0 credits):
 - Banking dashboard, budgeting, transactions
 - Portfolio, personal site, resume
 - Chat apps, messaging UIs
-- And 100+ more — load instantly at zero credit cost
+- And 500+ more — load instantly at zero credit cost
 
 DEPLOYMENT & EXPORT:
 - One-click deploy to Vercel — live URL in under 60 seconds

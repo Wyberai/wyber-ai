@@ -41,7 +41,7 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
   { id: 'agent',      label: 'Agent',      desc: 'Autonomous multi-step builder' },
   { id: 'figma',      label: 'Figma',      desc: 'Import Figma designs as React components' },
   { id: 'knowledge',  label: 'Knowledge',  desc: 'Your project brain — sent with every prompt' },
-  { id: 'templates',  label: 'Templates',  desc: '118 instant templates' },
+  { id: 'templates',  label: 'Templates',  desc: '500+ instant templates' },
   { id: 'database',   label: 'Database',   desc: 'Connect Supabase' },
   { id: 'themes',     label: 'Themes',     desc: 'Colors & styling' },
   { id: 'connectors', label: 'Connectors', desc: 'Stripe, Resend & more' },

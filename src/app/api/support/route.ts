@@ -22,7 +22,7 @@ Pricing:
 Credit costs: Web/mobile build = 15cr · Edit = 4cr · Agent run = 8cr · Workflow run = 4cr · AI Employee run = 15cr · GTM sequence = 20cr · Lead enrich = 2cr/contact
 
 Key facts:
-- 118 templates across 25 industries, all instant load
+- 500+ templates across 30+ industries, all instant load
 - Deploy to Vercel with one click
 - Export full source code as ZIP
 - GitHub sync available

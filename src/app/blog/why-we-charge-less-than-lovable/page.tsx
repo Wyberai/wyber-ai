@@ -32,7 +32,7 @@ export default function Post() {
           <p>But that's not how WyberAi works.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The prebuilt library changes the math</h2>
-          <p>WyberAi maintains a library of 118 prebuilt app templates — CRM, invoicing, HR, analytics, e-commerce, booking, and more. When a user prompt matches a template closely (which happens roughly 60% of the time), we serve the template directly and personalize it with a much smaller, cheaper generation call.</p>
+          <p>WyberAi maintains a library of 500+ prebuilt app templates — CRM, invoicing, HR, analytics, e-commerce, booking, and more. When a user prompt matches a template closely (which happens roughly 60% of the time), we serve the template directly and personalize it with a much smaller, cheaper generation call.</p>
 
           <p>The template serves the structure. The LLM only needs to fill in the specifics. A generation that would otherwise cost $0.12 in API calls costs $0.02. That savings flows directly to you as lower prices and more credits per dollar.</p>
 
