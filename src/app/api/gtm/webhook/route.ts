@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 // Handles inbound webhooks from Smartlead, Instantly, JustCall, Aircall
 // Each provider sends to: /api/gtm/webhook?provider=smartlead&user=<user_id>
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   if (!provider || !userId) return NextResponse.json({ error: 'Missing params' }, { status: 400 })
 
-  const supabase = createServerClient()
+  const supabase = await createClient()
   const body = await req.json()
 
   let event_type: string | null = null

@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
@@ -14,7 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default async function LeadsPage() {
-  const supabase = createServerClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: leads, count } = user ? await supabase

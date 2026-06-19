@@ -1,10 +1,10 @@
-import { createServerClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import GTMInboxClient from './GTMInboxClient'
 
 export default async function GTMInboxPage() {
-  const supabase = createServerClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: events } = user ? await supabase
