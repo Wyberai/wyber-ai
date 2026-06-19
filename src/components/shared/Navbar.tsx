@@ -52,6 +52,7 @@ const NAV_LINKS = [
   ['AI Employees', '/ai-employees'],
   ['Agents', '/agents'],
   ['Workflows', '/workflows'],
+  ['GTM', '/gtm'],
   ['Pricing', '/pricing'],
 ] as const;
 
