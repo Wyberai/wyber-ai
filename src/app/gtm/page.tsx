@@ -33,7 +33,7 @@ export default async function GTMPage() {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, maxWidth: 680, width: '100%' }}>
           {[
-            { icon: '🎯', title: 'ICP-driven discovery', body: 'Describe your ideal customer. We search Apollo's 270M+ contact database.' },
+            { icon: '🎯', title: 'ICP-driven discovery', body: "Describe your ideal customer. We search Apollo's 270M+ contact database." },
             { icon: '✉️', title: 'Multi-step sequences', body: '10 battle-tested outreach templates across email, call, and LinkedIn.' },
             { icon: '🗺️', title: 'Visual campaign canvas', body: 'Drag, connect, and launch campaigns from a no-code flow builder.' },
             { icon: '📊', title: 'Live analytics', body: 'Open rates, reply rates, and pipeline value updated in real time.' },
