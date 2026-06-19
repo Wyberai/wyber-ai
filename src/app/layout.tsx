@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from '@/lib/theme';
 import { CookieBanner } from '@/components/shared/CookieBanner';
 import { WyberChatbot } from '@/components/shared/WyberChatbot';
+import { CommandPalette } from '@/components/shared/CommandPalette';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
 import Script from 'next/script'
 import { Suspense } from 'react'
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Suspense>
           </ThemeProvider>
           <CookieBanner />
+          <CommandPalette />
           <Suspense fallback={null}><WyberChatbot /></Suspense>
         </PostHogProvider>
       </body>

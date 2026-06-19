@@ -78,7 +78,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
     messages, isGenerating, addMessage, updateMessage, setMessages,
     setIsGenerating, setStreamingContent, clearStreamingContent,
-    setFiles, files, framework, consumeCredit, credits, setHasGeneratedFiles,
+    setFiles, files, framework, consumeCredit, credits, hasGeneratedFiles, setHasGeneratedFiles,
     project, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints,
   } = useEditorStore();
 
@@ -1054,6 +1054,32 @@ const storeProjectId = useEditorStore.getState().project?.id;
               }}
               onClose={() => setMentionQuery(null)}
             />
+          )}
+          {/* Smart prompt suggestions — show contextual chips when input is empty */}
+          {!input && !isGenerating && !pendingGenArgs && !pendingPlan && credits > 0 && messages.length > 0 && (
+            <div style={{ display: 'flex', gap: 4, padding: '6px 10px 0', flexWrap: 'wrap' }}>
+              {(hasGeneratedFiles
+                ? [
+                    { label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with persistent theme. Use CSS variables for all colors.' },
+                    { label: 'Connect Supabase', prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' },
+                    { label: 'Add settings page', prompt: 'Add a Settings page with profile info, notification preferences, and theme toggle.' },
+                    { label: 'Make responsive', prompt: 'Make the entire app fully responsive. Mobile-first layout, collapsible sidebar, stacked cards on small screens.' },
+                    { label: 'Add animations', prompt: 'Add subtle micro-animations: fade-in on mount, hover lift on cards, smooth transitions on navigation.' },
+                  ]
+                : [
+                    { label: 'CRM dashboard', prompt: 'Build a CRM dashboard with leads table, pipeline columns, and KPI cards.' },
+                    { label: 'SaaS landing page', prompt: 'Build a modern SaaS landing page with hero, features, pricing, and CTA sections.' },
+                    { label: 'Project manager', prompt: 'Build a project management app with Kanban board, task details, and team view.' },
+                    { label: 'E-commerce store', prompt: 'Build an e-commerce store with product grid, shopping cart, and checkout flow.' },
+                  ]
+              ).slice(0, 4).map(s => (
+                <button key={s.label} onClick={() => { setInput(s.prompt); textareaRef.current?.focus() }}
+                  style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
+                  onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = '#0EA5E9'; (e.target as HTMLElement).style.color = '#0EA5E9' }}
+                  onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = 'var(--ide-border)'; (e.target as HTMLElement).style.color = 'var(--ide-text3)' }}
+                >{s.label}</button>
+              ))}
+            </div>
           )}
           <textarea
             ref={textareaRef} value={input}
