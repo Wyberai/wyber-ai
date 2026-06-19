@@ -8,6 +8,7 @@ interface WyberPreviewProps {
   projectId: string
   isGenerating?: boolean
   onError?: (error: string) => void
+  onFilesFixed?: (fixes: Record<string, string>) => void
 }
 
 type PreviewStatus = 'idle' | 'compiling' | 'ready' | 'error'
@@ -17,6 +18,7 @@ export default function WyberPreview({
   projectId,
   isGenerating = false,
   onError,
+  onFilesFixed,
 }: WyberPreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const prevBlobURL = useRef<string | null>(null)
@@ -28,6 +30,9 @@ export default function WyberPreview({
   const [phase, setPhase] = useState<1 | 2>(1)
   const [previewURL, setPreviewURL] = useState<string | null>(null)
   const [esbuildReady, setEsbuildReady] = useState(false)
+  const [healing, setHealing] = useState(false)
+  const [healToast, setHealToast] = useState<string | null>(null)
+  const healAttempted = useRef<string | null>(null)
 
   // Pre-initialize esbuild-wasm on mount (Phase 3: eager init)
   useEffect(() => {
@@ -96,6 +101,49 @@ export default function WyberPreview({
       onError?.(msg)
     }
   }, [projectId, onError])
+
+  // Self-healing: auto-fix errors using AI (0 credits, always free)
+  const attemptAutoHeal = useCallback(async (errorMsg: string) => {
+    if (healing || !onFilesFixed) return
+    if (healAttempted.current === errorMsg) return
+    healAttempted.current = errorMsg
+    setHealing(true)
+
+    const fileMap: Record<string, string> = {}
+    for (const [path, file] of Object.entries(files)) {
+      if (file?.content) fileMap[path] = file.content
+    }
+
+    try {
+      const res = await fetch('/api/auto-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: errorMsg, files: fileMap }),
+      })
+      const data = await res.json() as { fixed: boolean; files?: Record<string, string>; filesChanged?: string[] }
+
+      if (data.fixed && data.files) {
+        onFilesFixed(data.files)
+        const changedNames = (data.filesChanged ?? Object.keys(data.files)).map(p => p.split('/').pop()).join(', ')
+        setHealToast(`Auto-fixed ${changedNames}`)
+        setError(null)
+        setStatus('compiling')
+        setTimeout(() => setHealToast(null), 4000)
+      }
+    } catch { /* silent fail — user can still manually fix */ }
+    setHealing(false)
+  }, [files, healing, onFilesFixed])
+
+  // Trigger auto-heal when an error occurs (not during generation)
+  useEffect(() => {
+    if (status === 'error' && error && !isGenerating && onFilesFixed) {
+      const timer = setTimeout(() => attemptAutoHeal(error), 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [status, error, isGenerating, attemptAutoHeal, onFilesFixed])
+
+  // Reset heal tracker when files change
+  useEffect(() => { healAttempted.current = null }, [files])
 
   // Compile when files change (debounced 400ms — Phase 3 optimization)
   useEffect(() => {
@@ -171,10 +219,22 @@ export default function WyberPreview({
               Live · {compileDuration}ms · Phase {phase}
             </div>
           )}
-          {status === 'error' && (
+          {status === 'error' && !healing && (
             <div style={{ fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: 9 }}>●</span>
               Build error
+            </div>
+          )}
+          {healing && (
+            <div style={{ fontSize: 11, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 5 }}>
+              <div style={{
+                width: 8, height: 8,
+                border: '1.5px solid rgba(245,158,11,0.3)',
+                borderTopColor: '#f59e0b',
+                borderRadius: '50%',
+                animation: 'spin 0.7s linear infinite',
+              }} />
+              Self-healing...
             </div>
           )}
           {status === 'idle' && !hasFiles && (
@@ -327,8 +387,25 @@ export default function WyberPreview({
         />
       </div>
 
+      {/* Self-heal success toast */}
+      {healToast && (
+        <div style={{
+          position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(13,148,136,0.95)', color: '#fff', padding: '8px 16px',
+          borderRadius: 8, fontSize: 12, fontWeight: 600, zIndex: 100,
+          display: 'flex', alignItems: 'center', gap: 6,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          animation: 'healIn 0.3s ease',
+        }}>
+          <span style={{ fontSize: 14 }}>&#10003;</span>
+          {healToast}
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>0 credits</span>
+        </div>
+      )}
+
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes healIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
       `}</style>
     </div>
   )

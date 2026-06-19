@@ -146,14 +146,66 @@ export function PreviewPanel() {
     }
   }, [html, editMode])
 
-  const tryToFix = useCallback(() => {
+  const [healToast, setHealToast] = useState<string | null>(null)
+  const healAttempted = useRef<string | null>(null)
+  const { setFiles } = useEditorStore()
+
+  const tryToFix = useCallback(async () => {
     if (!error || fixing) return
     setFixing(true)
     lastBuiltKey.current = ''
+
+    // Try auto-fix API first (instant, 0 credits)
+    try {
+      const fileMap: Record<string, string> = {}
+      for (const [path, file] of Object.entries(files)) {
+        if ((file as { content?: string })?.content) fileMap[path] = (file as { content: string }).content
+      }
+
+      const res = await fetch('/api/auto-fix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: error.slice(0, 1000), files: fileMap }),
+      })
+      const data = await res.json() as { fixed: boolean; files?: Record<string, string>; filesChanged?: string[] }
+
+      if (data.fixed && data.files) {
+        const updatedFiles = { ...files }
+        for (const [path, content] of Object.entries(data.files)) {
+          const existing = updatedFiles[path] as { content: string; path: string; language: string } | undefined
+          updatedFiles[path] = {
+            path,
+            content,
+            language: existing?.language ?? 'typescript',
+          }
+        }
+        setFiles(updatedFiles as typeof files)
+        const names = (data.filesChanged ?? Object.keys(data.files)).map(p => p.split('/').pop()).join(', ')
+        setHealToast(`Auto-fixed ${names}`)
+        setError(null)
+        setTimeout(() => setHealToast(null), 4000)
+        setFixing(false)
+        return
+      }
+    } catch { /* fall through to chat-based fix */ }
+
+    // Fallback: send to chat for AI fix
     const prompt = `The app failed to build with this error. Fix the exact file and syntax causing it, and return the corrected file(s):\n\n${error.slice(0, 600)}`
     window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt } }))
     setTimeout(() => setFixing(false), 3000)
-  }, [error, fixing])
+  }, [error, fixing, files, setFiles])
+
+  // Auto-trigger self-heal on build errors (once per unique error)
+  useEffect(() => {
+    if (error && !building && !isGenerating && !fixing) {
+      if (healAttempted.current === error) return
+      healAttempted.current = error
+      const t = setTimeout(() => tryToFix(), 2000)
+      return () => clearTimeout(t)
+    }
+  }, [error, building, isGenerating, fixing, tryToFix])
+
+  useEffect(() => { healAttempted.current = null }, [files])
 
   const sendVisualEdit = () => {
     if (!selectedEl || !editInstruction.trim()) return
@@ -176,9 +228,9 @@ Find this element in the code and apply the change.`
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
       {/* Toolbar */}
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
-        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: building ? '#f59e0b' : error ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : 'none', transition: 'all 0.3s' }} />
+        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: fixing ? '#f59e0b' : building ? '#f59e0b' : error ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : fixing ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: fixing ? 'pulse 1s ease infinite' : 'none' }} />
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
-          {isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : error ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
+          {fixing ? 'Self-healing...' : isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : error ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
         </span>
         {html && !building && !error && (
           <button onClick={toggleEditMode} title="Click an element to edit it"
@@ -278,7 +330,26 @@ Find this element in the code and apply the change.`
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !building && !isGenerating && !error ? 'block' : 'none', background: '#09090b' }}
         />
       </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      {/* Self-heal success toast */}
+      {healToast && (
+        <div style={{
+          position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(13,148,136,0.95)', color: '#fff', padding: '8px 16px',
+          borderRadius: 8, fontSize: 12, fontWeight: 600, zIndex: 100,
+          display: 'flex', alignItems: 'center', gap: 6,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+          animation: 'healIn 0.3s ease',
+        }}>
+          <span>&#10003;</span>
+          {healToast}
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>0 credits</span>
+        </div>
+      )}
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        @keyframes healIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+      `}</style>
     </div>
   )
 }
