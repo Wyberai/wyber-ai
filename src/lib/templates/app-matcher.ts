@@ -37,15 +37,12 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
 
     if (words.length === 0) return null
 
-    // Try GCS-cached index first for faster matching
-    const gcsBucket = process.env.GCS_TEMPLATE_BUCKET
-    if (gcsBucket) {
+    // Try GCS-cached index first for faster matching (private bucket, authenticated)
+    const { isGcsConfigured, fetchTemplateIndex, fetchTemplateFromGcs } = await import('@/lib/gcs-template-cache')
+    if (isGcsConfigured()) {
       try {
-        const indexRes = await fetch(`https://storage.googleapis.com/${gcsBucket}/index/web.json`, {
-          next: { revalidate: 300 },
-        })
-        if (indexRes.ok) {
-          const index = await indexRes.json() as Array<{ id: string; name: string; category: string; description: string; preview_color: string }>
+        const index = await fetchTemplateIndex('web')
+        if (index.length > 0) {
           let bestId: string | null = null
           let bestScore = 0
           for (const entry of index) {
@@ -54,11 +51,10 @@ export async function findPrebuiltMatch(prompt: string): Promise<PrebuiltApp | n
             if (score > bestScore) { bestScore = score; bestId = entry.id }
           }
           if (bestId && bestScore >= 3) {
-            const templateRes = await fetch(`https://storage.googleapis.com/${gcsBucket}/templates/${bestId}.json`)
-            if (templateRes.ok) {
-              const template = await templateRes.json() as PrebuiltApp
+            const template = await fetchTemplateFromGcs(bestId)
+            if (template) {
               supabase.rpc('increment_app_use', { app_id: bestId }).then(() => {})
-              return template
+              return template as PrebuiltApp
             }
           }
         }
