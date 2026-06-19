@@ -299,6 +299,56 @@ const TRACKS: Track[] = [
       },
     ],
   },
+  {
+    id: 'gtm',
+    title: 'GTM Engine',
+    color: '#10b981',
+    accent: 'rgba(16,185,129,0.12)',
+    icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+    tagline: 'Define your ICP, find leads, and launch outreach sequences — all from one place.',
+    steps: [
+      {
+        id: 'gtm-0',
+        title: 'Define your ICP',
+        description: 'Tell Wyber who you sell to — industry, company size, seniority, geography. The AI builds your Ideal Customer Profile and calculates your total addressable market.',
+        prompt: 'My ICP is VP of Engineering at Series A-C SaaS companies with 50-500 employees in the US. Our value prop is reducing deployment time by 80% with AI-powered CI/CD.',
+        builderLink: '/gtm/setup',
+        builderLabel: 'Set up ICP',
+      },
+      {
+        id: 'gtm-1',
+        title: 'Find and import leads',
+        description: 'Search Apollo\'s 270M+ contact database or import your own CSV. Wyber enriches each lead with verified emails, company data, and intent signals.',
+        prompt: null,
+        builderLink: '/gtm/leads/import',
+        builderLabel: 'Import Leads',
+      },
+      {
+        id: 'gtm-2',
+        title: 'Build a sequence',
+        description: 'Pick from 10 battle-tested outreach templates or build your own. Multi-channel: email, call, LinkedIn, and meeting booking steps with AI personalization.',
+        prompt: null,
+        builderLink: '/gtm/sequences',
+        builderLabel: 'Browse Sequences',
+      },
+      {
+        id: 'gtm-3',
+        title: 'Launch a campaign',
+        description: 'Create a campaign on the visual canvas. Connect your sequence, select your lead list, and launch. A/B test subject lines and track opens, replies, and meetings booked.',
+        prompt: null,
+        builderLink: '/gtm/campaigns/new',
+        builderLabel: 'Create Campaign',
+      },
+      {
+        id: 'gtm-4',
+        title: 'Sync to your CRM',
+        description: 'Two-way sync with HubSpot or Salesforce. Qualified leads push to your CRM automatically with ICP scores, intent signals, and enrichment data.',
+        prompt: null,
+        builderLink: '/gtm/settings',
+        builderLabel: 'Connect CRM',
+      },
+    ],
+  },
 ]
 
 // ── Progress helpers ──────────────────────────────────────────────────────────
