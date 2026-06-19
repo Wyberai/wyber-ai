@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useEditorStore } from '@/store/editor';
 
 const ChatPanel       = dynamic(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })), { ssr: false });
 const KnowledgePanel  = dynamic(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })), { ssr: false });
@@ -9,6 +10,8 @@ const ThemePanel      = dynamic(() => import('../themes/ThemePanel').then(m => (
 const ConnectorsPanel = dynamic(() => import('./ConnectorsPanel').then(m => ({ default: m.ConnectorsPanel })), { ssr: false });
 const SupabasePanel   = dynamic(() => import('./SupabasePanel').then(m => ({ default: m.SupabasePanel })), { ssr: false });
 const VersionHistory  = dynamic(() => import('./VersionHistory').then(m => ({ default: m.VersionHistory })), { ssr: false });
+const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ default: m.AgentMode })), { ssr: false });
+const FigmaImportPanel = dynamic(() => import('./FigmaImportPanel').then(m => ({ default: m.FigmaImportPanel })), { ssr: false });
 
 interface Props {
   projectId?: string;
@@ -19,10 +22,12 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'knowledge' | 'templates' | 'database' | 'themes' | 'connectors' | 'history';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'themes' | 'connectors' | 'history';
 
 const TAB_ICONS: Record<string, JSX.Element> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
+  agent: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  figma: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M5 9h7M5 15h7M12 9h7M12 15h7"/></svg>,
   knowledge: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>,
   templates: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>,
   database: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
@@ -33,6 +38,8 @@ const TAB_ICONS: Record<string, JSX.Element> = {
 
 const TABS: { id: Tab; label: string; desc: string }[] = [
   { id: 'chat',       label: 'Chat',       desc: 'Build & edit with AI' },
+  { id: 'agent',      label: 'Agent',      desc: 'Autonomous multi-step builder' },
+  { id: 'figma',      label: 'Figma',      desc: 'Import Figma designs as React components' },
   { id: 'knowledge',  label: 'Knowledge',  desc: 'Your project brain — sent with every prompt' },
   { id: 'templates',  label: 'Templates',  desc: '118 instant templates' },
   { id: 'database',   label: 'Database',   desc: 'Connect Supabase' },
@@ -44,6 +51,14 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
 export function RightPanel({ projectId, userId, onClose }: Props) {
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
+  const { files, setFiles } = useEditorStore();
+
+  // FigmaImportPanel callback — add the imported component to the editor store and switch to chat
+  const handleFigmaImport = (code: string, fileName: string) => {
+    const path = `components/${fileName.replace(/\s+/g, '')}Figma.tsx`;
+    setFiles({ ...files, [path]: { path, content: code, language: 'typescript' } });
+    setActive('chat');
+  };
 
   return (
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg-base)', borderLeft: '1px solid var(--ide-border)' }}>
@@ -90,6 +105,8 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
 
         <div style={{ flex: 1, overflow: 'hidden' }}>
           {active === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
+          {active === 'agent'      && <div style={scrollStyle}><AgentMode /></div>}
+          {active === 'figma'      && <div style={scrollStyle}><FigmaImportPanel onImport={handleFigmaImport} /></div>}
           {active === 'knowledge'  && <KnowledgePanel projectId={projectId} />}
           {active === 'templates'  && <div style={scrollStyle}><TemplateGallery onClose={() => setActive('chat')} /></div>}
           {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}

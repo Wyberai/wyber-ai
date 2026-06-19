@@ -116,6 +116,34 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
       required: ['kpi_name', 'value', 'unit'],
     },
   },
+  {
+    name: 'WYBERAI_browser',
+    description: 'Control a web browser to research, scrape, search, or interact with websites. Use for: reading web pages, extracting data, searching the web, or filling forms (requires Browserbase key).',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['navigate', 'search_web', 'extract_structured', 'fill_form', 'click', 'screenshot'],
+          description: 'Browser action to perform. navigate=fetch+read a URL. search_web=web search query. extract_structured=extract specific data from URL. fill_form/click/screenshot=interactive browser (needs BROWSERBASE_API_KEY).',
+        },
+        url:   { type: 'string', description: 'URL to navigate to or extract from (for navigate, extract_structured, fill_form, click, screenshot)' },
+        query: { type: 'string', description: 'Search query (for search_web action)' },
+        extract_fields: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific fields to extract from the page (for extract_structured). E.g. ["price", "company name", "email", "job title"]',
+        },
+        form_data: {
+          type: 'object',
+          additionalProperties: { type: 'string' },
+          description: 'Form field values to fill in (for fill_form). E.g. {"email": "user@example.com", "name": "John"}',
+        },
+        selector: { type: 'string', description: 'CSS selector or element description to click (for click action)' },
+      },
+      required: ['action'],
+    },
+  },
 ]
 
 async function handleWyberTool(
@@ -221,6 +249,20 @@ async function handleWyberTool(
       return { result: `Generated ${input.type}. ${d.url ? `URL: ${d.url}` : JSON.stringify(d).slice(0, 200)}` }
     } catch (e) {
       return { result: `Generation failed: ${String(e)}` }
+    }
+  }
+
+  if (toolName === 'WYBERAI_browser') {
+    try {
+      const res = await fetch(`${baseUrl}/api/ai-employees/browser`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Internal-User-Id': userId },
+        body: JSON.stringify(input),
+      })
+      const d = await res.json()
+      return { result: typeof d.result === 'string' ? d.result : JSON.stringify(d).slice(0, 3000) }
+    } catch (e) {
+      return { result: `Browser action failed: ${String(e)}` }
     }
   }
 
