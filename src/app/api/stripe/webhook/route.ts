@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import Stripe from 'stripe';
 
 const PLAN_MAP: Record<string, string> = {
   [process.env.STRIPE_PRICE_PRO_MONTHLY || 'price_pro']: 'pro',
@@ -8,9 +9,22 @@ const PLAN_MAP: Record<string, string> = {
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
-  let event: any;
-  try { event = JSON.parse(body); }
-  catch { return NextResponse.json({ error: 'Invalid payload' }, { status: 400 }); }
+  let event: Stripe.Event;
+
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (webhookSecret) {
+    const sig = req.headers.get('stripe-signature');
+    if (!sig) return NextResponse.json({ error: 'Missing stripe-signature' }, { status: 400 });
+    try {
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
+    } catch {
+      return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 401 });
+    }
+  } else {
+    try { event = JSON.parse(body); }
+    catch { return NextResponse.json({ error: 'Invalid payload' }, { status: 400 }); }
+  }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;

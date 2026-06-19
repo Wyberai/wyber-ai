@@ -337,21 +337,21 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
-            Build apps. Run agents.<br />
+            Your engineer, your sales team,<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Automate everything.
+              your entire ops — in one prompt.
             </span>
           </h1>
 
           <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 14px' }}>
-            Web apps, mobile apps, AI agents, workflows, AI employees, and a full GTM engine — all from one platform. No engineers, no setup, no code.
+            Describe what you want to build or automate. Wyber ships it — web apps, mobile apps, AI agents, workflows, AI employees that work every day, and a GTM engine that fills your pipeline.
           </p>
 
           <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
-            Starts at $99/mo · 30-minute setup · Cancel anytime
+            Starts at $99/mo · No engineers needed · Cancel anytime
           </p>
 
-          {/* Five product pills */}
+          {/* Six pillar pills */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
             {PILLARS.map((p, i) => (
               <button key={p.key} onClick={() => { setActivePillar(i); document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); }}

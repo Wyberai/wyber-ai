@@ -25,10 +25,10 @@ export default function NotFound() {
       <div style={{ flex: 1, maxWidth: 560, margin: '0 auto', padding: 'clamp(80px,14vw,140px) clamp(16px,4vw,40px)', textAlign: 'center' }}>
         <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(72px,16vw,120px)', fontWeight: 400, color: 'var(--sky)', lineHeight: 1, marginBottom: 16, opacity: 0.3 }}>404</div>
         <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,4vw,40px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 14px', lineHeight: 1.2 }}>
-          This page doesn't exist.
+          This page went rogue.
         </h1>
         <p style={{ fontSize: 16, color: 'var(--text2)', lineHeight: 1.65, margin: '0 0 40px' }}>
-          The page you're looking for may have moved or never existed. Let's get you back on track.
+          It seems this page doesn't exist — or maybe it just went off and built its own product. Either way, let's get you back to building things.
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/" style={{ padding: '12px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontWeight: 700, fontSize: 14, display: 'inline-block' }}>

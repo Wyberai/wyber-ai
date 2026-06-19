@@ -57,7 +57,13 @@ export default async function PublishedAppPage({ params }: Props) {
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter, sans-serif' }}>Built with</span>
         <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'Inter, sans-serif' }}>WyberAi</a>
       </div>
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
+      <iframe
+        srcDoc={html}
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }}
+        title={project.name}
+      />
     </>
   )
 }

@@ -75,8 +75,8 @@ const APPS = [
 export async function POST(req: NextRequest) {
   try {
     const authKey = req.headers.get('x-admin-key')
-    const secret = process.env.ADMIN_SECRET_KEY || 'wyber-admin-2026'
-    if (authKey !== secret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const adminSecret = process.env.ADMIN_SECRET_KEY
+    if (!adminSecret || authKey !== adminSecret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const admin = getAdmin()
 

@@ -15,7 +15,8 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 export async function POST(req: NextRequest) {
   try {
     const authKey = req.headers.get('x-admin-key')
-    if (authKey !== (process.env.ADMIN_SECRET_KEY || 'wyber-admin-2026')) {
+    const adminSecret = process.env.ADMIN_SECRET_KEY
+    if (!adminSecret || authKey !== adminSecret) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const { offset = 0 } = await req.json().catch(() => ({}))

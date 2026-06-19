@@ -19,7 +19,7 @@ const RESOURCES = [
   {
     heading: 'Compare',
     items: [
-      { label: 'vs Lovable', sub: 'Credits, pricing, five pillars', href: '/vs/lovable' },
+      { label: 'vs Lovable', sub: 'Credits, pricing, six pillars', href: '/vs/lovable' },
       { label: 'vs Bolt.new', sub: 'Fixed credits vs token billing', href: '/vs/bolt' },
       { label: 'vs v0 by Vercel', sub: 'Full app vs UI components', href: '/vs/v0' },
       { label: 'vs Replit', sub: 'No-code builder vs cloud IDE', href: '/vs/replit' },

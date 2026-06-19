@@ -199,7 +199,7 @@ export async function sendCreditLowEmail(to: string, remaining: number) {
         </div>
       `).join('')}
     </div>
-    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Starter plan</a> for 500 credits/month at $49.')}
+    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> for 300 credits/month at $99.')}
   `, `${remaining} credits remaining`)
 
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `Low credits: ${remaining} remaining on WyberAi`, html })

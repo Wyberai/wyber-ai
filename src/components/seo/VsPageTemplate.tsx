@@ -130,11 +130,11 @@ export function VsPageTemplate({
 
         {/* Five-pillar differentiator */}
         <section aria-labelledby="five-pillars-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
-          <h2 id="five-pillars-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
-            The key difference: Wyber does five things, not one
+          <h2 id="six-pillars-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
+            The key difference: Wyber does six things, not one
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
-            {pillarNote} WyberAi is the only no-code platform that covers all five pillars from one workspace.
+            {pillarNote} WyberAi is the only no-code platform that covers all six pillars from one workspace.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
             {PILLARS.map(p => (

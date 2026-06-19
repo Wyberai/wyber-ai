@@ -3,7 +3,7 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
-  description: 'WyberAi vs Lovable: five product pillars (web apps, mobile apps, AI agents, workflows, AI employees) vs Lovable\'s web-only builder. Verified June 2026.',
+  description: 'WyberAi vs Lovable: six pillars (web apps, mobile apps, AI agents, workflows, AI employees, GTM engine) vs Lovable\'s web-only builder. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/lovable' },
   openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Six pillars vs one. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
 }
