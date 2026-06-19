@@ -80,6 +80,18 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'WYBERAI_remember',
+    description: 'Save a key-value fact to your persistent memory. Call this to remember important information across future runs (e.g. last processed record ID, learned preferences, progress state).',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        key:   { type: 'string', description: 'Short descriptive key, e.g. "last_lead_id" or "preferred_tone"' },
+        value: { type: 'string', description: 'The value to remember' },
+      },
+      required: ['key', 'value'],
+    },
+  },
+  {
     name: 'WYBERAI_log_kpi',
     description: 'Log a KPI value for this run. ALWAYS call this for every KPI you were given targets for, reporting the actual value you achieved.',
     input_schema: {
@@ -98,8 +110,22 @@ async function handleWyberTool(
   toolName: string,
   input: Record<string, unknown>,
   userId: string,
+  employeeId?: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db?: any,
 ): Promise<{ result: string; kpiResult?: KpiResult }> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+  if (toolName === 'WYBERAI_remember' && db && employeeId) {
+    const key = input.key as string
+    const value = input.value as string
+    try {
+      await db.from('employee_memory').upsert({ employee_id: employeeId, user_id: userId, key, value, updated_at: new Date().toISOString() }, { onConflict: 'employee_id,key' })
+      return { result: `Remembered: ${key} = ${value}` }
+    } catch (e) {
+      return { result: `Failed to save memory: ${String(e)}` }
+    }
+  }
 
   if (toolName === 'WYBERAI_log_kpi') {
     const kpiResult: KpiResult = {
@@ -210,6 +236,16 @@ export async function runEmployee(
     // Combine composio + wyber tools
     const allTools = [...composioToolDefs, ...WYBER_TOOLS]
 
+    // ── Load persistent memory ─────────────────────────────────────────────────
+    const { data: memoryRows } = await db
+      .from('employee_memory')
+      .select('key, value')
+      .eq('employee_id', employee.id)
+      .limit(50)
+    const memoryBlock = memoryRows && memoryRows.length > 0
+      ? `\n\nPERSISTENT MEMORY (facts you've learned from previous runs):\n${memoryRows.map(r => `• ${r.key}: ${r.value}`).join('\n')}\n\nYou can update this memory by calling WYBERAI_remember at the end of this run.`
+      : '\n\nPERSISTENT MEMORY: Empty — this is your first run or no facts saved yet. Call WYBERAI_remember to save important facts for future runs.'
+
     // ── Build KPI targets string ───────────────────────────────────────────────
     const kpis = employee.kpis ?? []
     const kpiBlock = kpis.length > 0
@@ -223,7 +259,7 @@ export async function runEmployee(
 
     // ── System prompt ──────────────────────────────────────────────────────────
     const systemPrompt = `You are ${employee.emoji} ${employee.name}, an AI employee with the role: ${employee.role}.
-${contextBlock}
+${contextBlock}${memoryBlock}
 YOUR TASK:
 ${employee.instructions}
 
@@ -281,7 +317,7 @@ No text outside the JSON.`
           let resultStr: string
 
           if (isWyberTool) {
-            const { result, kpiResult } = await handleWyberTool(tu.name, tu.input as Record<string, unknown>, userId)
+            const { result, kpiResult } = await handleWyberTool(tu.name, tu.input as Record<string, unknown>, userId, employee.id, db)
             resultStr = result
             if (kpiResult) kpiResults.push(kpiResult)
           } else {

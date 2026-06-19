@@ -125,6 +125,57 @@ DESIGN QUALITY:
 COMPLETENESS RULE:
 Every import must have a corresponding file. Never truncate. Output every planned file.
 
+PUSH NOTIFICATIONS — include when the app has notifications, alerts, reminders, or messaging:
+When the user's app concept calls for notifications (delivery updates, reminders, alerts, new messages, order status, etc.), add push notification support using expo-notifications. Always include this as a lib/notifications.ts helper file and call registerForPushNotificationsAsync() in App.tsx useEffect.
+
+<file path="lib/notifications.ts">
+import * as Notifications from 'expo-notifications'
+import * as Device from 'expo-device'
+import { Platform } from 'react-native'
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+})
+
+export async function registerForPushNotificationsAsync(): Promise<string | null> {
+  if (!Device.isDevice) return null
+  const { status: existingStatus } = await Notifications.getPermissionsAsync()
+  let finalStatus = existingStatus
+  if (existingStatus !== 'granted') {
+    const { status } = await Notifications.requestPermissionsAsync()
+    finalStatus = status
+  }
+  if (finalStatus !== 'granted') return null
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+    })
+  }
+  const token = (await Notifications.getExpoPushTokenAsync()).data
+  return token
+}
+
+export async function scheduleLocalNotification(title: string, body: string, seconds = 1) {
+  await Notifications.scheduleNotificationAsync({
+    content: { title, body, sound: true },
+    trigger: { seconds },
+  })
+}
+</file>
+
+OTA UPDATES — always include expo-updates configuration:
+Add the following to app.json / app.config.js (output as a comment in App.tsx if not creating app.json):
+  "updates": { "enabled": true, "checkAutomatically": "ON_LOAD", "fallbackToCacheTimeout": 0 }
+And add this snippet to App.tsx (after imports, inside the root component useEffect):
+  import * as Updates from 'expo-updates'
+  // In useEffect: const { isAvailable } = await Updates.checkForUpdateAsync(); if (isAvailable) await Updates.fetchUpdateAsync(); await Updates.reloadAsync()
+
 After ALL files, output one line starting with "Built:"
 `
 }

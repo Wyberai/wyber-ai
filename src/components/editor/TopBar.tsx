@@ -40,6 +40,48 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
+  const [showSnapshots, setShowSnapshots] = useState(false);
+  const [snapshots, setSnapshots] = useState<Array<{ id: string; label: string; created_at: string }>>([]);
+  const [snapshotLoading, setSnapshotLoading] = useState(false);
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+
+  const openSnapshots = async () => {
+    if (!projectId) return;
+    setShowSnapshots(true);
+    setSnapshotLoading(true);
+    const res = await fetch(`/api/snapshots?project_id=${projectId}`);
+    if (res.ok) { const { snapshots: s } = await res.json(); setSnapshots(s || []); }
+    setSnapshotLoading(false);
+  };
+
+  const saveSnapshot = async (label: string) => {
+    if (!projectId || savingSnapshot) return;
+    setSavingSnapshot(true);
+    const filesPayload = Object.fromEntries(Object.entries(files).map(([k, v]) => [k, (v as any).content ?? v]));
+    const res = await fetch('/api/snapshots', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ project_id: projectId, label, files: filesPayload }) });
+    if (res.ok) { const { snapshot } = await res.json(); setSnapshots(prev => [snapshot, ...prev]); }
+    setSavingSnapshot(false);
+  };
+
+  const restoreSnapshot = async (id: string) => {
+    if (restoringId) return;
+    setRestoringId(id);
+    const res = await fetch(`/api/snapshots/${id}`);
+    if (res.ok) {
+      const { snapshot } = await res.json();
+      const { setFiles } = useEditorStore.getState();
+      const restored = Object.fromEntries(Object.entries(snapshot.files as Record<string, string>).map(([k, v]) => [k, { content: v, language: k.endsWith('.tsx') || k.endsWith('.ts') ? 'typescript' : 'css' }]));
+      setFiles(restored);
+      setShowSnapshots(false);
+    }
+    setRestoringId(null);
+  };
+
+  const deleteSnapshot = async (id: string) => {
+    await fetch(`/api/snapshots?id=${id}`, { method: 'DELETE' });
+    setSnapshots(prev => prev.filter(s => s.id !== id));
+  };
 
   const handleExport = async () => {
     if (exporting) return;
@@ -220,6 +262,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         </div>
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
+        {Object.keys(files).length > 2 && (
+          <button onClick={openSnapshots} title="Version history" style={{ ...btn, padding: '5px 8px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
+        )}
         <button onClick={handleExport} disabled={exporting} title="Export as ZIP" style={{ ...btn, padding: '5px 8px' }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
         </button>
@@ -239,6 +286,40 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}
       </div>
+
+      {showSnapshots && (
+        <div onClick={() => setShowSnapshots(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 24, width: 480, maxHeight: '70vh', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Version history</span>
+              <button onClick={() => setShowSnapshots(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1 }}>×</button>
+            </div>
+            <button
+              onClick={() => { const label = prompt('Label for this version (optional):') ?? ''; saveSnapshot(label); }}
+              disabled={savingSnapshot}
+              style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}
+            >
+              {savingSnapshot ? 'Saving…' : '+ Save current version'}
+            </button>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {snapshotLoading && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>Loading…</div>}
+              {!snapshotLoading && snapshots.length === 0 && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>No saved versions yet. Click above to save the current state.</div>}
+              {snapshots.map(s => (
+                <div key={s.id} style={{ background: 'var(--bg-elevated)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid var(--ide-border)' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>{s.label || 'Untitled version'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>{new Date(s.created_at).toLocaleString()}</div>
+                  </div>
+                  <button onClick={() => restoreSnapshot(s.id)} disabled={!!restoringId} style={{ fontSize: 11, fontWeight: 600, color: '#0EA5E9', background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>
+                    {restoringId === s.id ? 'Restoring…' : 'Restore'}
+                  </button>
+                  <button onClick={() => deleteSnapshot(s.id)} style={{ fontSize: 11, color: '#ef4444', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>Delete</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showShareModal && (
         <div onClick={() => setShowShareModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

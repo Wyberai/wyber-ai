@@ -21,6 +21,10 @@ const NODE_COLORS: Record<string, string> = {
   email: '#10b981', call: '#f97316', linkedin: '#0077b5',
   wait: '#52525b', branch: '#f59e0b', crm: '#ef4444',
   sdr_employee: '#38bdf8', suppress: '#ef4444', notify: '#8b5cf6',
+  // Intelligence nodes
+  ab_test: '#ec4899', meeting: '#0EA5E9', intent: '#f59e0b',
+  lead_score: '#22c55e', warmup: '#38bdf8', personalize: '#a855f7',
+  visitor: '#06b6d4',
 }
 
 // ─── Generic GTM node ─────────────────────────────────────────────────────────
@@ -87,13 +91,20 @@ const defaultEdges: any[] = [
 const SIDEBAR_NODES = [
   { group: 'Audience', items: [
     { type: 'audience', icon: '🎯', label: 'ICP Segment' },
+    { type: 'intent', icon: '📡', label: 'Intent signal', creditCost: '1cr/lead' },
+    { type: 'visitor', icon: '👁', label: 'Site visitor' },
     { type: 'enrich', icon: '🔍', label: 'Enrich leads' },
+    { type: 'lead_score', icon: '⭐', label: 'Lead score' },
     { type: 'filter', icon: '⚗️', label: 'Filter' },
   ]},
   { group: 'Outreach', items: [
+    { type: 'warmup', icon: '🔥', label: 'Email warmup' },
     { type: 'email', icon: '✉️', label: 'Email step' },
+    { type: 'ab_test', icon: '🧪', label: 'A/B test' },
+    { type: 'personalize', icon: '✨', label: 'AI personalise' },
     { type: 'call', icon: '📞', label: 'Call step', creditCost: '2cr/call' },
     { type: 'linkedin', icon: '💼', label: 'LinkedIn DM' },
+    { type: 'meeting', icon: '📅', label: 'Book meeting' },
     { type: 'wait', icon: '⏳', label: 'Wait' },
     { type: 'branch', icon: '⑂', label: 'Branch' },
   ]},
@@ -290,6 +301,104 @@ function NodeEditor({ node, onClose, onChange }: { node: any; onClose: () => voi
         <>
           <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Description</label>
           <textarea value={d.description || ''} onChange={e => onChange(node.id, { description: e.target.value })} rows={3} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 10 }} />
+        </>
+      )}
+
+      {d.type === 'ab_test' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Split traffic between two email variants. Wyber picks the winner after 48h by open rate.</div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Variant A — subject</label>
+          <input value={d.subject_a || ''} onChange={e => onChange(node.id, { subject_a: e.target.value })} placeholder="Subject A..." style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Variant B — subject</label>
+          <input value={d.subject_b || ''} onChange={e => onChange(node.id, { subject_b: e.target.value })} placeholder="Subject B..." style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Split ratio</label>
+          <select value={d.split || '50/50'} onChange={e => onChange(node.id, { split: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}>
+            <option>50/50</option><option>70/30</option><option>80/20</option>
+          </select>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Pick winner after (hrs)</label>
+          <input type="number" value={d.winner_after_hours || 48} onChange={e => onChange(node.id, { winner_after_hours: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+        </>
+      )}
+
+      {d.type === 'meeting' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Insert a meeting booking link into the sequence. Wyber detects clicks and marks the lead as converted.</div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Calendly / booking URL</label>
+          <input value={d.booking_url || ''} onChange={e => onChange(node.id, { booking_url: e.target.value })} placeholder="https://calendly.com/yourname/30min" style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>CTA button text</label>
+          <input value={d.cta_text || 'Book a 30-min call →'} onChange={e => onChange(node.id, { cta_text: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+        </>
+      )}
+
+      {d.type === 'intent' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Trigger outreach when a buying signal fires — hiring in relevant roles, new funding, or tech stack change.</div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Signal type</label>
+          <select value={d.signal_type || 'job_posting'} onChange={e => onChange(node.id, { signal_type: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }}>
+            <option value="job_posting">Job posting (hiring signal)</option>
+            <option value="funding">New funding round</option>
+            <option value="tech_change">Tech stack change</option>
+            <option value="g2_review">G2 / Capterra review posted</option>
+            <option value="linkedin_engage">LinkedIn engagement spike</option>
+          </select>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Keywords to watch</label>
+          <input value={d.keywords || ''} onChange={e => onChange(node.id, { keywords: e.target.value })} placeholder="e.g. sales engineer, GTM, RevOps" style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+        </>
+      )}
+
+      {d.type === 'lead_score' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Score each lead 0–100 based on fit + engagement. Only route leads above the threshold to the next step.</div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Score threshold (min to pass)</label>
+          <input type="number" min={0} max={100} value={d.threshold || 60} onChange={e => onChange(node.id, { threshold: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Scoring factors</label>
+          {['ICP title match', 'Company size fit', 'Email opened', 'Visited website', 'Intent signal fired'].map(f => (
+            <label key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: s.muted, marginBottom: 6, cursor: 'pointer' }}>
+              <input type="checkbox" defaultChecked style={{ accentColor: color }} />
+              {f}
+            </label>
+          ))}
+        </>
+      )}
+
+      {d.type === 'warmup' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>Check domain health before sending. Wyber verifies SPF/DKIM/DMARC and warns if inbox placement is at risk.</div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Sending domain</label>
+          <input value={d.domain || ''} onChange={e => onChange(node.id, { domain: e.target.value })} placeholder="mail.yourcompany.com" style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none', marginBottom: 8 }} />
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Daily send cap (recommended: start low)</label>
+          <input type="number" value={d.daily_cap || 50} onChange={e => onChange(node.id, { daily_cap: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+        </>
+      )}
+
+      {d.type === 'visitor' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>De-anonymise website visitors. Add the Wyber tracking pixel to your site and trigger sequences when target companies visit.</div>
+          <div style={{ background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '10px 12px', marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: '#52525b', marginBottom: 4 }}>Tracking pixel (paste into {'<head>'})</div>
+            <code style={{ fontSize: 10, color: '#38bdf8', wordBreak: 'break-all' }}>{'<script src="https://wyberai.com/pixel.js" data-key="YOUR_KEY"></script>'}</code>
+          </div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Min pages visited before trigger</label>
+          <input type="number" value={d.min_pages || 2} onChange={e => onChange(node.id, { min_pages: Number(e.target.value) })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+        </>
+      )}
+
+      {d.type === 'personalize' && (
+        <>
+          <div style={{ fontSize: 11, color: s.muted, marginBottom: 8, lineHeight: 1.5 }}>AI rewrites each email using the lead's LinkedIn bio, recent posts, company news, and job title — before sending.</div>
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Personalisation sources</label>
+          {['LinkedIn profile', 'Recent LinkedIn posts', 'Company news (last 30d)', 'Job title & department', 'Tech stack'].map(f => (
+            <label key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: s.muted, marginBottom: 6, cursor: 'pointer' }}>
+              <input type="checkbox" defaultChecked style={{ accentColor: color }} />
+              {f}
+            </label>
+          ))}
+          <label style={{ display: 'block', fontSize: 11, color: s.muted, marginTop: 8, marginBottom: 4 }}>Personalisation tone</label>
+          <select value={d.tone || 'concise'} onChange={e => onChange(node.id, { tone: e.target.value })} style={{ width: '100%', background: '#0b0d12', border: `1px solid ${s.border}`, borderRadius: 7, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }}>
+            <option value="concise">Concise &amp; direct</option>
+            <option value="friendly">Friendly &amp; warm</option>
+            <option value="executive">Executive &amp; formal</option>
+          </select>
         </>
       )}
 

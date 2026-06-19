@@ -98,6 +98,11 @@ const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: strin
   tool:      { color: '#10b981', bg: 'rgba(16,185,129,0.08)', label: 'Use a tool',        helpText: 'Connect to an external app (Gmail, Slack, etc.)', Icon: IcoTool },
   condition: { color: '#f59e0b', bg: 'rgba(245,158,11,0.08)', label: 'Decision point',    helpText: 'Take different paths based on a condition', Icon: IcoDiamond },
   output:    { color: '#22c55e', bg: 'rgba(34,197,94,0.08)',  label: 'Final result',      helpText: 'What the agent produces or sends when done', Icon: IcoCheck },
+  error:     { color: '#ef4444', bg: 'rgba(239,68,68,0.08)',  label: 'Error handler',     helpText: 'Catch errors from previous steps and handle gracefully', Icon: IcoX },
+  webhook:   { color: '#06b6d4', bg: 'rgba(6,182,212,0.08)', label: 'Webhook trigger',   helpText: 'Start this flow when an external system sends a request', Icon: IcoZap },
+  transform: { color: '#a855f7', bg: 'rgba(168,85,247,0.08)', label: 'Transform data',   helpText: 'Parse JSON, map fields, filter arrays, or reshape data', Icon: IcoCpu },
+  loop:      { color: '#f97316', bg: 'rgba(249,115,22,0.08)', label: 'Loop / iterate',   helpText: 'Repeat steps for each item in a list', Icon: IcoCpu },
+  delay:     { color: '#52525b', bg: 'rgba(82,82,91,0.08)',   label: 'Wait / delay',     helpText: 'Pause the flow for a set duration before continuing', Icon: IcoDiamond },
 }
 
 const STATUS_COLORS = { idle: 'rgba(255,255,255,0.12)', running: '#f59e0b', success: '#22c55e', error: '#ef4444' }
@@ -164,7 +169,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
   )
 }
 
-const NODE_TYPES = { trigger: WyberNode, aiagent: WyberNode, tool: WyberNode, condition: WyberNode, output: WyberNode }
+const NODE_TYPES = { trigger: WyberNode, aiagent: WyberNode, tool: WyberNode, condition: WyberNode, output: WyberNode, error: WyberNode, webhook: WyberNode, transform: WyberNode, loop: WyberNode, delay: WyberNode }
 const EDGE_TYPES = { default: WyberEdge, wyber: WyberEdge }
 
 // ─── Config Panel ─────────────────────────────────────────────────────────────
@@ -721,6 +726,169 @@ function ConfigPanel() {
           </div>
         )}
 
+        {nodeType === 'webhook' && (
+          <>
+            <div>
+              <label style={labelStyle}>Webhook URL</label>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  readOnly
+                  value={(node.data.config as Record<string,string>).url || `https://wyberai.com/api/webhook/${node.id}`}
+                  style={{ ...fieldStyle, flex: 1, fontFamily: 'monospace', fontSize: 10, color: '#a1a1aa' }}
+                />
+                <button
+                  onClick={() => navigator.clipboard.writeText((node.data.config as Record<string,string>).url || `https://wyberai.com/api/webhook/${node.id}`)}
+                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(6,182,212,0.3)', background: 'rgba(6,182,212,0.08)', color: '#06b6d4', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
+                >
+                  Copy
+                </button>
+              </div>
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>Send a POST request to this URL to trigger the flow. The request body is available as <code style={{ color: '#06b6d4' }}>{'{{webhook.body}}'}</code> in later steps.</div>
+            </div>
+            <div>
+              <label style={labelStyle}>Secret header (optional)</label>
+              <input value={(node.data.config as Record<string,string>).secret || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), secret: e.target.value } })} placeholder="e.g. my-secret-token" style={fieldStyle} />
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>If set, the caller must pass this as <code style={{ color: '#a1a1aa' }}>X-Wyber-Secret</code>.</div>
+            </div>
+          </>
+        )}
+
+        {nodeType === 'transform' && (
+          <>
+            <div>
+              <label style={labelStyle}>Operation</label>
+              <select
+                value={(node.data.config as Record<string,string>).op || 'map'}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), op: e.target.value } })}
+                style={fieldStyle}
+              >
+                <option value="map">Map fields (reshape an object)</option>
+                <option value="filter">Filter array (keep matching items)</option>
+                <option value="parse_json">Parse JSON string → object</option>
+                <option value="stringify">Stringify object → JSON string</option>
+                <option value="pick">Pick keys from object</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>
+                {(node.data.config as Record<string,string>).op === 'filter' ? 'Filter expression' : 'Field mapping (JSON)'}
+              </label>
+              <textarea
+                value={(node.data.config as Record<string,string>).mapping || ''}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), mapping: e.target.value } })}
+                placeholder={(node.data.config as Record<string,string>).op === 'filter'
+                  ? 'e.g. item.score > 50'
+                  : '{"name": "{{input.full_name}}", "email": "{{input.email_address}}"}'}
+                rows={4}
+                style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: 10 }}
+              />
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>Use {'{{step_name.field}}'} to reference data from earlier steps.</div>
+            </div>
+          </>
+        )}
+
+        {nodeType === 'loop' && (
+          <>
+            <div>
+              <label style={labelStyle}>List to iterate over</label>
+              <input
+                value={(node.data.config as Record<string,string>).list_field || ''}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), list_field: e.target.value } })}
+                placeholder="e.g. {{trigger.leads}} or {{ai_step.results}}"
+                style={fieldStyle}
+              />
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>Each item is available as <code style={{ color: '#a1a1aa' }}>{'{{loop.item}}'}</code> inside the loop body.</div>
+            </div>
+            <div>
+              <label style={labelStyle}>Max iterations (safety limit)</label>
+              <select
+                value={(node.data.config as Record<string,string>).max_iter || '100'}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), max_iter: e.target.value } })}
+                style={fieldStyle}
+              >
+                {['10','25','50','100','250','500'].map(n => <option key={n} value={n}>{n} items</option>)}
+              </select>
+            </div>
+          </>
+        )}
+
+        {nodeType === 'error' && (
+          <>
+            <div>
+              <label style={labelStyle}>On error — what should happen?</label>
+              <select
+                value={(node.data.config as Record<string,string>).strategy || 'retry'}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), strategy: e.target.value } })}
+                style={fieldStyle}
+              >
+                <option value="retry">Retry the failed step</option>
+                <option value="continue">Log error and continue</option>
+                <option value="stop">Stop the flow</option>
+                <option value="notify">Notify me then stop</option>
+              </select>
+            </div>
+            {(node.data.config as Record<string,string>).strategy === 'retry' && (
+              <>
+                <div>
+                  <label style={labelStyle}>Retry attempts</label>
+                  <select
+                    value={(node.data.config as Record<string,string>).retries || '3'}
+                    onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), retries: e.target.value } })}
+                    style={fieldStyle}
+                  >
+                    {['1','2','3','5'].map(n => <option key={n} value={n}>{n}×</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Wait between retries</label>
+                  <select
+                    value={(node.data.config as Record<string,string>).retry_delay || '30s'}
+                    onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), retry_delay: e.target.value } })}
+                    style={fieldStyle}
+                  >
+                    {[['10s','10 seconds'],['30s','30 seconds'],['1m','1 minute'],['5m','5 minutes']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+              </>
+            )}
+            <div>
+              <label style={labelStyle}>Fallback message (optional)</label>
+              <input
+                value={(node.data.config as Record<string,string>).fallback_msg || ''}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), fallback_msg: e.target.value } })}
+                placeholder="e.g. Could not process — please try again"
+                style={fieldStyle}
+              />
+            </div>
+          </>
+        )}
+
+        {nodeType === 'delay' && (
+          <div>
+            <label style={labelStyle}>Wait for how long?</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="number"
+                min={1}
+                value={(node.data.config as Record<string,string>).amount || '5'}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), amount: e.target.value } })}
+                style={{ ...fieldStyle, width: 80, flexShrink: 0 }}
+              />
+              <select
+                value={(node.data.config as Record<string,string>).unit || 'minutes'}
+                onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), unit: e.target.value } })}
+                style={fieldStyle}
+              >
+                <option value="seconds">Seconds</option>
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>The flow pauses here before continuing to the next step. Credits are only consumed when the flow resumes.</div>
+          </div>
+        )}
+
         <div>
           <label style={labelStyle}>Notes (optional)</label>
           <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="Describe what this step does, so you remember later." rows={2} style={{ ...fieldStyle, resize: 'none' }} />
@@ -797,9 +965,14 @@ function ExecutionLog() {
 
 const PALETTE: { type: WyberNodeType; description: string }[] = [
   { type: 'trigger',   description: 'How it starts' },
+  { type: 'webhook',   description: 'External trigger' },
   { type: 'aiagent',  description: 'Add an AI step' },
   { type: 'tool',     description: 'Connect an app' },
+  { type: 'transform', description: 'Reshape data' },
+  { type: 'loop',     description: 'Iterate a list' },
   { type: 'condition', description: 'Add a decision' },
+  { type: 'delay',    description: 'Wait / pause' },
+  { type: 'error',    description: 'Handle errors' },
   { type: 'output',   description: 'Show the result' },
 ]
 
