@@ -105,7 +105,7 @@ const PLANS = [
 const TOPUPS = [
   { credits: 300,  price: 24,  key: 'topup_300',  label: 'Boost',  desc: '~20 web builds' },
   { credits: 900,  price: 59,  key: 'topup_900',  label: 'Power',  desc: '~60 web builds' },
-  { credits: 2000, price: 119, key: 'topup_2000', label: 'Studio', desc: '~130 web builds', badge: 'Best value' },
+  { credits: 2000, price: 119, key: 'topup_2000', label: 'Studio', desc: '~130 web builds', badge: 'Best value' as string | undefined },
 ]
 
 const CREDIT_TABLE = [
@@ -542,6 +542,28 @@ export default function PricingPage() {
             </Link>
           </div>
           <div style={{ marginTop: 14, fontSize: 12, color: '#3f3f46' }}>No credit card required to explore · Cancel anytime</div>
+        </div>
+      </section>
+
+      {/* Payment trust strip */}
+      <section style={{ padding: '24px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0d0d10' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            <span style={{ fontSize: 12, color: '#52525b', fontWeight: 600 }}>Payments secured by</span>
+            <span style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 700 }}>Dodo Payments</span>
+          </div>
+          {[
+            { icon: '🔒', label: 'SSL encrypted' },
+            { icon: '🛡️', label: 'PCI DSS compliant' },
+            { icon: '↩️', label: 'Cancel anytime' },
+            { icon: '💳', label: 'Visa · Mastercard · PayPal' },
+          ].map(({ icon, label }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ fontSize: 13 }}>{icon}</span>
+              <span style={{ fontSize: 11, color: '#3f3f46' }}>{label}</span>
+            </div>
+          ))}
         </div>
       </section>
 

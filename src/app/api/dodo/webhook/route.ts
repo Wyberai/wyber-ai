@@ -16,8 +16,8 @@ function getAdmin() {
 }
 
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_200  || 'TOPUP_UNSET1']: 200,
-  [process.env.DODO_TOPUP_600  || 'TOPUP_UNSET2']: 600,
+  [process.env.DODO_TOPUP_300  || 'TOPUP_UNSET1']: 300,
+  [process.env.DODO_TOPUP_900  || 'TOPUP_UNSET2']: 900,
   [process.env.DODO_TOPUP_2000 || 'TOPUP_UNSET3']: 2000,
 }
 

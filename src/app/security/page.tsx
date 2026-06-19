@@ -11,6 +11,7 @@ const CHECKS = [
   { icon: '🔍', title: 'Automatic security scan', desc: 'Every deployment scanned for exposed keys, open endpoints, and missing auth before going live.' },
   { icon: '◎', title: 'Isolated workspaces', desc: 'Each project is logically separated. No cross-account data access is possible.' },
   { icon: '↻', title: 'Continuous monitoring', desc: 'Platform activity monitored for anomalous behavior and abuse in real time.' },
+  { icon: '💳', title: 'Dodo Payments — PCI DSS', desc: 'All payments processed by Dodo Payments. We never touch or store card numbers. PCI DSS compliant checkout.' },
 ];
 const COMPLIANCE = [
   { label: 'HTTPS / TLS 1.3', ok: true },
@@ -18,6 +19,7 @@ const COMPLIANCE = [
   { label: 'Encrypted secrets at rest', ok: true },
   { label: 'No model training on user data', ok: true },
   { label: 'Automatic security scan on deploy', ok: true },
+  { label: 'PCI DSS compliant payments (Dodo Payments)', ok: true },
   { label: 'GDPR compliant', ok: true },
   { label: 'SOC 2 Type II', ok: false, note: 'In progress' },
   { label: 'ISO 27001', ok: false, note: 'Planned' },
