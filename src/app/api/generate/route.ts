@@ -80,7 +80,7 @@ TECH STACK — MANDATORY:
 - Navigation peer deps (REQUIRED alongside ANY @react-navigation package): react-native-screens, react-native-safe-area-context, react-native-gesture-handler — import GestureHandlerRootView from 'react-native-gesture-handler' and wrap the root navigator
 - Styling: StyleSheet.create() — NO Tailwind, NO web CSS
 - Icons: @expo/vector-icons (Ionicons, MaterialCommunityIcons)
-- Data: useState + useEffect with inline initial data (no external DBs unless user asks)
+- Data: useState + useEffect with inline initial data by default. When Supabase is connected (injected in context), use it for ALL data and auth — do NOT use inline mock data.
 
 OUTPUT FORMAT — MANDATORY:
 Every file must be output as:
@@ -531,7 +531,7 @@ function isValidMime(m: string): m is ValidMime {
   return ['image/jpeg','image/png','image/gif','image/webp'].includes(m)
 }
 
-async function getSupabaseContext(projectId: string): Promise<string> {
+async function getSupabaseContext(projectId: string, projectType?: string): Promise<string> {
   if (!projectId) return ''
   try {
     // Use service-role client so RLS doesn't block this server-side lookup
@@ -555,6 +555,87 @@ async function getSupabaseContext(projectId: string): Promise<string> {
       try { anonKey = decrypt(anonKey) } catch {}
     }
 
+    // ── React Native / Expo mobile context ──────────────────────────────────
+    if (projectType === 'mobile') {
+      return `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUPABASE IS CONNECTED — USE IT FOR EVERYTHING (REACT NATIVE)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The user has connected their own Supabase project. Use it for ALL data and auth.
+These are the user's own keys — they are safe to embed in client code.
+
+── STEP 1: Create lib/supabase.ts FIRST ──
+<file path="lib/supabase.ts">
+import { createClient } from '@supabase/supabase-js'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+export const supabase = createClient('${url}', '${anonKey}', {
+  auth: {
+    storage: AsyncStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+})
+</file>
+
+── STEP 2: Auth ──
+Methods (same as web):
+  // Sign up:  await supabase.auth.signUp({ email, password })
+  // Sign in:  await supabase.auth.signInWithPassword({ email, password })
+  // Sign out: await supabase.auth.signOut()
+  // Current session: const { data: { session } } = await supabase.auth.getSession()
+
+Listen for auth changes (in App.tsx useEffect):
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setUser(session?.user ?? null)
+  })
+
+Auth UI — build a Screen with two TextInput fields (email, password) and two
+TouchableOpacity buttons (Sign Up / Sign In). Show this screen when user is null.
+Add a Sign Out button in your tab bar or header when user is logged in.
+
+── STEP 3: Database CRUD ──
+  // Fetch: const { data } = await supabase.from('items').select('*').order('created_at', { ascending: false })
+  // Insert: await supabase.from('items').insert({ user_id: user.id, ...fields })
+  // Update: await supabase.from('items').update({ field: value }).eq('id', id)
+  // Delete: await supabase.from('items').delete().eq('id', id)
+
+useEffect pattern (re-run when user changes):
+  useEffect(() => {
+    if (!user) { setItems([]); return }
+    setLoading(true)
+    supabase.from('items').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => { setItems(data || []); setLoading(false) })
+  }, [user])
+
+── STEP 4: SQL block at the end ──
+Output the SQL to run in Supabase at the VERY END as a comment:
+/* SQL TO RUN IN SUPABASE DASHBOARD → SQL EDITOR:
+create table if not exists items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users on delete cascade not null,
+  title text not null,
+  created_at timestamptz default now()
+);
+alter table items enable row level security;
+create policy "Users manage own items" on items for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+*/
+
+── MANDATORY CHECKLIST ──
+[x] lib/supabase.ts with AsyncStorage session persistence and the real URL/key above
+[x] Auth state (user / setUser) managed in App.tsx
+[x] onAuthStateChange listener in App.tsx useEffect
+[x] Auth screen shown when !user
+[x] Sign out accessible when logged in
+[x] All data fetches inside useEffect scoped to logged-in user
+[x] SQL block at the end
+`
+    }
+
+    // ── Web (React / Next.js) context — unchanged ────────────────────────────
     return `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -844,7 +925,7 @@ ${code}
     const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
-    const supabaseContext = projectId ? await getSupabaseContext(projectId) : ''
+    const supabaseContext = projectId ? await getSupabaseContext(projectId, projectType) : ''
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence, then immediately output your changes.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.'
