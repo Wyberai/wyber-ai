@@ -3,7 +3,7 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Replit (2026) — AI App Builder vs Cloud IDE',
-  description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and six pillars Replit doesn\'t have. Verified June 2026.',
+  description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and six products Replit doesn\'t have. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/replit' },
   openGraph: { title: 'WyberAi vs Replit (2026)', description: 'AI app builder vs cloud IDE. Verified June 2026.', url: 'https://wyberai.com/vs/replit' },
 }
@@ -35,7 +35,7 @@ const FAQS = [
   },
   {
     q: 'Is WyberAi cheaper than Replit?',
-    a: 'WyberAi Builder is $99/month for 300 credits vs Replit Core at $20/month. Wyber covers 6 pillars including AI Employees, mobile apps, agents, and workflows that Replit doesn\'t offer as dedicated no-code tools.',
+    a: 'WyberAi Builder is $99/month for 300 credits vs Replit Core at $20/month. Wyber covers 6 products including AI Employees, mobile apps, agents, and workflows that Replit doesn\'t offer as dedicated no-code tools.',
   },
   {
     q: 'Does Replit have a mobile app builder?',
@@ -57,8 +57,8 @@ export default function VsReplit() {
       slug="replit"
       competitorName="Replit"
       competitorUrl="https://replit.com"
-      tagline="Replit is a powerful cloud IDE for developers. WyberAi is a no-code app builder for founders — with predictable pricing and six pillars Replit doesn't cover."
-      blurb="Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the five-pillar difference. Verified June 2026."
+      tagline="Replit is a powerful cloud IDE for developers. WyberAi is a no-code app builder for founders — with predictable pricing and six products Replit doesn't cover."
+      blurb="Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the six-product difference. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Replit is an IDE — it doesn't have dedicated mobile, agent, or workflow builders."

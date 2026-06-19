@@ -35,12 +35,13 @@ const s = {
   sky: '#0EA5E9',
 }
 
-const PILLARS = [
+const PRODUCTS = [
   { id: 'web',       label: 'Web Apps',      icon: '🖥', desc: 'Full-stack React app in seconds' },
   { id: 'mobile',    label: 'Mobile Apps',   icon: '📱', desc: 'React Native + Expo, iOS & Android' },
   { id: 'agents',    label: 'AI Agents',     icon: '🤖', desc: 'Autonomous agents with 250+ tools' },
   { id: 'workflows', label: 'Workflows',     icon: '⚡', desc: 'Multi-step automations, no code' },
   { id: 'employees', label: 'AI Employees',  icon: '👥', desc: '100 roles, runs on schedule' },
+  { id: 'gtm',       label: 'GTM Engine',    icon: '🎯', desc: 'ICP, leads, sequences, outreach' },
 ]
 
 export function VsPageTemplate({
@@ -128,16 +129,16 @@ export function VsPageTemplate({
           </p>
         </header>
 
-        {/* Five-pillar differentiator */}
-        <section aria-labelledby="five-pillars-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
-          <h2 id="six-pillars-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
+        {/* Six-product differentiator */}
+        <section aria-labelledby="six-products-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
+          <h2 id="six-products-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
             The key difference: Wyber does six things, not one
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
             {pillarNote} WyberAi is the only no-code platform that covers all six products from one workspace.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
-            {PILLARS.map(p => (
+            {PRODUCTS.map(p => (
               <div key={p.id} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, padding: '14px 16px' }}>
                 <div style={{ fontSize: 20, marginBottom: 6 }}>{p.icon}</div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: s.sky, marginBottom: 3 }}>{p.label}</div>

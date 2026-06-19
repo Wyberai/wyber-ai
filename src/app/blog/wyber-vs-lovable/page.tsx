@@ -54,7 +54,7 @@ export default function Post() {
           <h2>Where WyberAi wins</h2>
           <p><strong>Framework flexibility.</strong> Lovable generates React/TanStack only. WyberAi supports React, Next.js, Vue, and Vanilla JS.</p>
           <p><strong>Free AI error fixes.</strong> In Lovable, every generation costs credits -- including AI mistakes. In WyberAi, fixing errors is always free.</p>
-          <p><strong>Scope.</strong> WyberAi covers six pillars (web apps, mobile, agents, workflows, AI employees, GTM) vs Lovable's web-only builder — a fundamentally different value proposition.</p>
+          <p><strong>Scope.</strong> WyberAi covers six products (web apps, mobile, agents, workflows, AI employees, GTM) vs Lovable's web-only builder — a fundamentally different value proposition.</p>
           <h2>Where Lovable wins</h2>
           <p><strong>Community.</strong> 160K Discord members. If you want to learn alongside other builders, Lovable's community is unmatched.</p>
           <p><strong>Visual editor.</strong> Click any element to edit without prompting. WyberAi does not have this yet.</p>

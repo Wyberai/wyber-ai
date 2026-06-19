@@ -3,9 +3,9 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
-  description: 'WyberAi vs Lovable: six pillars (web apps, mobile apps, AI agents, workflows, AI employees, GTM engine) vs Lovable\'s web-only builder. Verified June 2026.',
+  description: 'WyberAi vs Lovable: six products (web apps, mobile apps, AI agents, workflows, AI employees, GTM engine) vs Lovable\'s web-only builder. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/lovable' },
-  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Six pillars vs one. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
+  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Six products vs one. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
 }
 
 const ROWS = [
@@ -32,7 +32,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Lovable?',
-    a: 'WyberAi Builder is $99/month for 300 credits vs Lovable\'s $25/month for ~250 credits. WyberAi costs more but covers 6 pillars including AI Employees, mobile apps, agents, and workflows that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
+    a: 'WyberAi Builder is $99/month for 300 credits vs Lovable\'s $25/month for ~250 credits. WyberAi costs more but covers 6 products including AI Employees, mobile apps, agents, and workflows that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
   },
   {
     q: 'Can WyberAi build mobile apps? Lovable can\'t.',
@@ -58,8 +58,8 @@ export default function VsLovable() {
       slug="lovable"
       competitorName="Lovable"
       competitorUrl="https://lovable.dev"
-      tagline="Lovable is the leading AI web app builder. Wyber covers 6 pillars — mobile apps, AI agents, workflows, and AI Employees that Lovable doesn't have."
-      blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and the five-pillar difference. Verified June 2026."
+      tagline="Lovable is the leading AI web app builder. Wyber covers 6 products — mobile apps, AI agents, workflows, and AI Employees that Lovable doesn't have."
+      blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and the six-product difference. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Lovable builds web apps only."
