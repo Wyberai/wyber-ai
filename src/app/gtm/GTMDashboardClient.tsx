@@ -121,8 +121,8 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
               { icon: '🎯', label: hasProfile ? 'Edit ICP profile' : 'Set up ICP', sub: 'Company + ideal customer', href: '/gtm/setup', color: s.orange },
               { icon: '🌍', label: 'Market intelligence', sub: 'See your total addressable market', href: '/gtm/market', color: s.sky },
               { icon: '👤', label: 'Import leads', sub: 'Apollo search or CSV upload', href: '/gtm/leads/import', color: s.violet },
-              { icon: '📊', label: 'Analytics', sub: 'Opens, clicks, replies, calls', href: '/gtm/leads', color: s.green },
-              { icon: '📥', label: 'Reply inbox', sub: 'AI-drafted responses ready', href: '/gtm/inbox', color: '#f59e0b' },
+              { icon: '📚', label: 'Sequence templates', sub: '10 high-converting sequences', href: '/gtm/sequences', color: '#f59e0b' },
+              { icon: '📥', label: 'Reply inbox', sub: 'AI-drafted responses ready', href: '/gtm/inbox', color: s.green },
               { icon: '🔗', label: 'Connect tools', sub: 'Apollo, Smartlead, JustCall...', href: '/gtm/settings', color: s.muted },
             ].map(item => (
               <Link key={item.label} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: s.card, border: `1px solid ${s.border}`, borderRadius: 9, textDecoration: 'none' }}>

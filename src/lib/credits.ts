@@ -12,10 +12,15 @@ export type ActionType =
   | 'web-build'
   | 'mobile-build'
   | 'agent-create'
+  | 'agent-run'
   | 'workflow-create'
+  | 'workflow-run'
   | 'ai-helper'
   | 'image-gen'
-  | 'execution' // per AI node per canvas run
+  | 'execution'
+  | 'employee-run'
+  | 'gtm-icp-sequence'
+  | 'gtm-lead-enrich'
 
 /** Anthropic model IDs for each tier */
 export const MODEL_IDS: Record<ModelTier, string> = {
@@ -50,15 +55,20 @@ export const MODEL_META: Record<ModelTier, {
  * Multiply by MODEL_MULTIPLIERS[tier] and round.
  */
 const BASE_COSTS: Record<ActionType, number> = {
-  'small-edit':      5,
-  'component':       8,
-  'web-build':      20,
-  'mobile-build':   25,
-  'agent-create':    8,
-  'workflow-create': 8,
-  'ai-helper':       2,
-  'image-gen':       5,
-  'execution':       3,  // per AI node/iteration — agents, flows, employee runs
+  'small-edit':         4,
+  'component':          8,
+  'web-build':         15,
+  'mobile-build':      15,
+  'agent-create':       8,
+  'agent-run':          8,
+  'workflow-create':    4,
+  'workflow-run':       4,
+  'ai-helper':          2,
+  'image-gen':          5,
+  'execution':          4,
+  'employee-run':      15,
+  'gtm-icp-sequence':  20,
+  'gtm-lead-enrich':    2,
 }
 
 /**

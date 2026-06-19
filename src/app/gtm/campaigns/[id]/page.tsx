@@ -9,14 +9,15 @@ const s = {
   orange: '#f97316', green: '#10b981', yellow: '#f59e0b', sky: '#0EA5E9', violet: '#8b5cf6',
 }
 
-export default async function CampaignDetailPage({ params }: { params: { id: string } }) {
+export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: campaign } = await supabase
     .from('gtm_campaigns')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user?.id || '')
     .single()
 
@@ -37,7 +38,7 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link href={`/gtm/campaigns/${params.id}/canvas`} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: s.violet, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Edit canvas</Link>
+          <Link href={`/gtm/campaigns/${id}/canvas`} style={{ padding: '7px 14px', borderRadius: 8, background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.3)', color: s.violet, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Edit canvas</Link>
           <Link href="/gtm/campaigns" style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${s.border}`, color: s.muted, fontSize: 12, textDecoration: 'none' }}>← Campaigns</Link>
         </div>
       </nav>
@@ -83,7 +84,7 @@ export default async function CampaignDetailPage({ params }: { params: { id: str
             {campaign.canvas ? (
               <div>
                 {campaign.canvas.nodes?.length || 0} nodes · {campaign.canvas.edges?.length || 0} connections
-                <div style={{ marginTop: 8 }}><Link href={`/gtm/campaigns/${params.id}/canvas`} style={{ color: s.violet, textDecoration: 'none', fontWeight: 700 }}>Open canvas editor →</Link></div>
+                <div style={{ marginTop: 8 }}><Link href={`/gtm/campaigns/${id}/canvas`} style={{ color: s.violet, textDecoration: 'none', fontWeight: 700 }}>Open canvas editor →</Link></div>
               </div>
             ) : (
               <div>No canvas built yet. <Link href="/gtm/campaigns/new" style={{ color: s.sky, textDecoration: 'none' }}>Create one →</Link></div>

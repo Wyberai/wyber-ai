@@ -9,115 +9,115 @@ const BRAND = '#0EA5E9'
 
 const PLANS = [
   {
-    id: 'starter',
-    name: 'Starter',
-    monthlyPrice: 49,
-    annualPrice: 39,
-    planKey: 'starter_monthly',
+    id: 'builder',
+    name: 'Builder',
+    monthlyPrice: 99,
+    annualPrice: 79,
+    planKey: 'builder_monthly',
     color: '#0EA5E9',
     highlight: false,
     badge: null,
-    tagline: 'For founders getting started',
+    tagline: 'For founders launching fast',
     employeeSlots: 3,
-    credits: 500,
+    credits: 300,
     features: [
-      '500 credits/month (rollover)',
+      '300 credits/month (rollover)',
       '3 AI Employees (scheduled runs)',
       'Web & mobile app builder',
-      '20 web builds · 25 mobile builds',
+      '20 web builds · 10 mobile builds',
       'AI Agents & Workflows',
+      'GTM — ICP setup + TAM view',
       'Gmail, Slack, Notion, HubSpot',
-      'KPI tracking & digest emails',
       'Community support',
     ],
   },
   {
-    id: 'growth',
-    name: 'Growth',
-    monthlyPrice: 149,
-    annualPrice: 119,
-    planKey: 'growth_monthly',
+    id: 'operator',
+    name: 'Operator',
+    monthlyPrice: 249,
+    annualPrice: 199,
+    planKey: 'operator_monthly',
     color: '#0EA5E9',
-    highlight: true,
+    highlight: false,
     badge: 'MOST POPULAR',
     tagline: 'For teams building on AI seriously',
     employeeSlots: 10,
-    credits: 2000,
+    credits: 900,
     features: [
-      '2,000 credits/month (rollover)',
+      '900 credits/month (rollover)',
       '10 AI Employees',
       'All 30+ tool integrations',
+      'GTM — campaigns + lead import',
       'Custom domain routing',
       'KPI dashboards & reports',
       'Org management & multi-user',
-      'Priority agent & flow runs',
-      'Web & mobile app builder',
       'Priority support',
+    ],
+  },
+  {
+    id: 'founder',
+    name: 'Founder',
+    monthlyPrice: 499,
+    annualPrice: 399,
+    planKey: 'founder_monthly',
+    color: '#8b5cf6',
+    highlight: true,
+    badge: 'NEW',
+    tagline: 'Your startup in a box — fully autonomous',
+    employeeSlots: -1,
+    credits: 2000,
+    features: [
+      '2,000 credits/month (rollover)',
+      'Unlimited AI Employees',
+      'Full GTM — canvas + sequences + calling',
+      'AI SDR Employee (auto-qualifies leads)',
+      'GTM Analyst (weekly performance reports)',
+      'Multiple orgs (white-label)',
+      'Priority run queue',
+      'Dedicated Slack support',
     ],
   },
   {
     id: 'scale',
     name: 'Scale',
-    monthlyPrice: 399,
-    annualPrice: 319,
+    monthlyPrice: 999,
+    annualPrice: 799,
     planKey: 'scale_monthly',
-    color: '#8b5cf6',
+    color: '#f59e0b',
     highlight: false,
     badge: 'BEST VALUE',
     tagline: 'For agencies and high-growth companies',
     employeeSlots: -1,
-    credits: 6000,
+    credits: 5000,
     features: [
-      '6,000 credits/month (rollover)',
-      'Unlimited AI Employees',
-      'Multiple orgs (white-label)',
+      '5,000 credits/month (rollover)',
+      'Unlimited everything',
+      'Multiple orgs with white-label',
       'Custom domain per org',
-      'Priority run queue',
       'Advanced KPI analytics',
-      'Everything in Growth',
-      'Dedicated Slack support',
+      'Everything in Founder',
       'Quarterly strategy call',
-    ],
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    monthlyPrice: null,
-    annualPrice: null,
-    planKey: null,
-    color: '#f59e0b',
-    highlight: false,
-    badge: null,
-    tagline: 'Custom contracts, SLAs, dedicated infra',
-    employeeSlots: -1,
-    credits: -1,
-    features: [
-      'Everything in Scale',
-      'Unlimited orgs & seats',
-      'SSO / SAML',
-      'SLA guarantee',
-      'Dedicated infra',
       'Volume credit pricing',
-      'Custom integrations',
-      'Dedicated success manager',
     ],
   },
 ]
 
 const TOPUPS = [
-  { credits: 200,  price: 19,  key: 'topup_200',  label: 'Boost',  desc: '~10 web builds' },
-  { credits: 600,  price: 49,  key: 'topup_600',  label: 'Power',  desc: '~30 web builds' },
-  { credits: 2000, price: 149, key: 'topup_2000', label: 'Studio', desc: '~100 web builds', badge: 'Best value' },
+  { credits: 300,  price: 24,  key: 'topup_300',  label: 'Boost',  desc: '~20 web builds' },
+  { credits: 900,  price: 59,  key: 'topup_900',  label: 'Power',  desc: '~60 web builds' },
+  { credits: 2000, price: 119, key: 'topup_2000', label: 'Studio', desc: '~130 web builds', badge: 'Best value' },
 ]
 
 const CREDIT_TABLE = [
-  { action: 'Web app build',        cost: '20 credits', icon: '🌐' },
-  { action: 'Mobile app build',     cost: '25 credits', icon: '📱' },
-  { action: 'App edit / iteration', cost: '5 credits',  icon: '✏️' },
-  { action: 'AI Agent run (per step)', cost: '3 credits', icon: '⚡' },
-  { action: 'Workflow AI node',     cost: '3 credits',  icon: '🔀' },
-  { action: 'AI Employee iteration', cost: '3 credits', icon: '🤖' },
-  { action: 'Image generation',     cost: '5 credits',  icon: '🎨' },
+  { action: 'Web app build',          cost: '15 credits', icon: '🌐' },
+  { action: 'Mobile app build',       cost: '15 credits', icon: '📱' },
+  { action: 'App edit / iteration',   cost: '4 credits',  icon: '✏️' },
+  { action: 'AI Agent run',           cost: '8 credits',  icon: '⚡' },
+  { action: 'Workflow run',           cost: '4 credits',  icon: '🔀' },
+  { action: 'AI Employee run',        cost: '15 credits', icon: '🤖' },
+  { action: 'GTM ICP + sequence gen', cost: '20 credits', icon: '🎯' },
+  { action: 'Lead enrichment',        cost: '2 credits',  icon: '👤' },
+  { action: 'Image generation',       cost: '5 credits',  icon: '🎨' },
 ]
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -329,7 +329,7 @@ export default function PricingPage() {
           </span>
         </h1>
         <p style={{ fontSize: 'clamp(15px,1.5vw,18px)', color: '#71717a', maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.65 }}>
-          One AI SDR that qualifies leads 24/7 is worth more than $149/mo. Every plan includes web & mobile app building on top.
+          One AI SDR that qualifies leads 24/7 is worth more than $249/mo. Every plan includes web &amp; mobile app building, GTM, agents, and AI employees.
         </p>
 
         {/* Annual toggle */}
@@ -357,7 +357,7 @@ export default function PricingPage() {
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>The math is obvious</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>One hired employee pays for Scale 40x over</h2>
-            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>A junior SDR costs $60K/yr. Your AI SDR runs 24/7 at $399/mo. That&apos;s a $55K saving — before counting nights, weekends, and zero onboarding.</p>
+            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>A junior SDR costs $60K/yr. Your AI SDR runs 24/7 at $499/mo (Founder plan). That&apos;s a $54K saving — before counting nights, weekends, and zero onboarding time.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 16 }}>
             {[
