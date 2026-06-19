@@ -11,14 +11,18 @@ export default function CreditsPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.02em' }}>What uses credits</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[
-            ['Standard generation', '1 credit', 'Describe an app or request changes'],
-            ['Premium generation', '2 credits', 'Complex builds with larger context'],
+            ['Web / mobile app build', '15 credits', 'Full-stack React or React Native app generated'],
+            ['App edit / iteration', '4 credits', 'Any change, fix, or refinement to an existing build'],
+            ['AI Agent run', '8 credits', 'Run any of the 5,000+ pre-built agents'],
+            ['Workflow run', '4 credits', 'Trigger a visual automation flow'],
+            ['AI Employee run', '15 credits', 'Scheduled autonomous employee run'],
+            ['GTM ICP + sequence gen', '20 credits', 'Generate ICP profile and outreach sequence with AI'],
+            ['Lead enrichment', '2 credits', 'Per contact imported/enriched via Apollo'],
+            ['Image generation', '5 credits', 'AI-generated image or asset'],
             ['Template load', '0 credits', 'Instant template loading — always free'],
             ['Auto-fix errors', '0 credits', 'When we cause an error, fixing it is free'],
             ['Export ZIP', '0 credits', 'Download your code — always free'],
             ['Deploy to Vercel', '0 credits', 'One-click deployment — always free'],
-            ['GitHub sync', '0 credits', 'Push to GitHub — always free'],
-            ['Version history', '0 credits', 'Save and restore snapshots — always free'],
           ].map(([action, cost, desc]) => (
             <div key={action as string} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', borderRadius: 10, background: '#111113', border: '1px solid rgba(255,255,255,0.07)' }}>
               <div style={{ flex: 1 }}>
@@ -37,9 +41,10 @@ export default function CreditsPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.02em' }}>Plans</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
           {[
-            { plan: 'Starter', price: '$49', credits: 500, color: '#0EA5E9' },
-            { plan: 'Growth', price: '$149', credits: 2000, color: '#8b5cf6' },
-            { plan: 'Scale', price: '$399', credits: 6000, color: '#10b981' },
+            { plan: 'Builder',  price: '$99',  credits: 300,  color: '#0EA5E9' },
+            { plan: 'Operator', price: '$249', credits: 900,  color: '#8b5cf6' },
+            { plan: 'Founder',  price: '$499', credits: 2000, color: '#10b981' },
+            { plan: 'Scale',    price: '$999', credits: 5000, color: '#f97316' },
           ].map(({ plan, price, credits, color }) => (
             <div key={plan} style={{ padding: 20, borderRadius: 12, background: '#111113', border: `1px solid ${color}30` }}>
               <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>{plan}</div>
@@ -53,7 +58,7 @@ export default function CreditsPage() {
 
       <section style={{ padding: 20, borderRadius: 12, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: '#0EA5E9' }}>How we compare</h3>
-        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>WyberAi Starter gives you <strong style={{ color: '#0EA5E9' }}>500 credits for $49/month</strong> — unlimited projects, all 5 product types, and up to 3 AI Employees included.</p>
+        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>WyberAi Builder gives you <strong style={{ color: '#0EA5E9' }}>300 credits for $99/month</strong> — unlimited projects, all 6 pillars, and up to 3 AI Employees included. Credits work across every product.</p>
         <p style={{ fontSize: 11, color: '#52525b', marginTop: 12 }}>Monthly credits roll over. Top-up credits never expire. Credits are non-refundable once used.</p>
       </section>
     </div>

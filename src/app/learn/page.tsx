@@ -268,7 +268,7 @@ const TRACKS: Track[] = [
       {
         id: 'employees-0',
         title: 'Browse the role catalog',
-        description: 'Explore 100 enterprise roles across Sales, Marketing, Engineering, Finance, and more. Each comes with a pre-built cognitive blueprint — vector DB scope, guardrail codes, and primary tool.',
+        description: 'Explore 100 roles across Sales, Marketing, Engineering, Finance, and more. Each is the AI equivalent of a senior specialist — they run on a schedule, complete real tasks, and report back.',
         prompt: null,
         builderLink: '/employees',
         builderLabel: 'Browse Role Catalog',
@@ -276,7 +276,7 @@ const TRACKS: Track[] = [
       {
         id: 'employees-1',
         title: 'Hire your first employee',
-        description: 'Pick a role, customize the instructions, and connect your tools via Composio. Your AI Employee gets its own system prompt derived from the cognitive blueprint.',
+        description: 'Pick a role, customize the instructions, and connect your tools via Composio. Your AI Employee runs on your schedule and emails you what it did.',
         prompt: 'I want to hire a Lead Qualification Specialist. They should check our HubSpot pipeline daily, score leads 1–10 based on company size and intent signals, and send a prioritized list to Slack every morning at 8 AM.',
         builderLink: '/ai-employees/new',
         builderLabel: 'Hire an Employee',

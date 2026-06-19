@@ -8,34 +8,42 @@ export default function Page() {
     <DocsPage
       section="Account & Billing"
       title="Plans & pricing"
-      intro="WyberAi offers a free tier and paid plans. All plans give you access to all five product types — web apps, mobile apps, agents, workflows, and AI employees."
+      intro="WyberAi offers a free tier and paid plans. All plans give you access to all six pillars — web apps, mobile apps, AI agents, workflows, AI employees, and the GTM engine."
     >
       <DocSection title="Plan comparison">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
           {[
             {
-              name: 'Starter',
-              price: '$49',
+              name: 'Builder',
+              price: '$99',
               sub: '/month',
               color: '#0EA5E9',
-              credits: '500 credits/month',
-              items: ['500 monthly credits', 'Up to 3 AI Employees', 'All 5 product types', 'Unlimited projects', 'Email support', 'Custom domains'],
+              credits: '300 credits/month',
+              items: ['300 monthly credits', 'Up to 3 AI Employees', 'All 6 pillars', 'Unlimited projects', 'Email support'],
             },
             {
-              name: 'Growth',
-              price: '$149',
+              name: 'Operator',
+              price: '$249',
               sub: '/month',
               color: '#8b5cf6',
+              credits: '900 credits/month',
+              items: ['900 monthly credits', 'Up to 10 AI Employees', 'Credit rollover', 'Everything in Builder', 'Priority support'],
+            },
+            {
+              name: 'Founder',
+              price: '$499',
+              sub: '/month',
+              color: '#10b981',
               credits: '2,000 credits/month',
-              items: ['2,000 monthly credits', 'Up to 10 AI Employees', 'Credit rollover', 'Everything in Starter', 'Priority support'],
+              items: ['2,000 monthly credits', 'Unlimited AI Employees', 'Full GTM access', 'Everything in Operator', 'Priority support'],
             },
             {
               name: 'Scale',
-              price: '$399',
+              price: '$999',
               sub: '/month',
-              color: '#10b981',
-              credits: '6,000 credits/month',
-              items: ['6,000 monthly credits', 'Unlimited AI Employees', 'Credit rollover', 'Everything in Growth', 'Dedicated support'],
+              color: '#f97316',
+              credits: '5,000 credits/month',
+              items: ['5,000 monthly credits', 'Unlimited everything', 'Credit rollover', 'Everything in Founder', 'Dedicated support'],
             },
           ].map(plan => (
             <div key={plan.name} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${plan.color}40`, borderRadius: 14, padding: '20px 18px' }}>

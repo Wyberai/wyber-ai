@@ -21,9 +21,11 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 const PLANS = [
-  { id: 'free',     name: 'Free',    price: '$0',     credits: 50,  color: '#52525b', features: ['50 credits/month', '3 projects', 'Community support'] },
-  { id: 'pro',      name: 'Starter', price: '$49',    credits: 500,  color: '#0EA5E9', features: ['500 credits/month', 'Up to 3 AI Employees', 'Unlimited projects', 'Email support', 'Custom domains'] },
-  { id: 'business', name: 'Growth',  price: '$149',   credits: 2000, color: '#8b5cf6', features: ['2,000 credits/month', 'Up to 10 AI Employees', 'Credit rollover', 'Priority support'] },
+  { id: 'free',     name: 'Free',     price: '$0',    credits: 50,   color: '#52525b', features: ['50 credits/month', '3 projects', 'Community support'] },
+  { id: 'builder',  name: 'Builder',  price: '$99',   credits: 300,  color: '#0EA5E9', features: ['300 credits/month', 'Up to 3 AI Employees', 'All 6 pillars', 'Unlimited projects', 'Email support'] },
+  { id: 'operator', name: 'Operator', price: '$249',  credits: 900,  color: '#8b5cf6', features: ['900 credits/month', 'Up to 10 AI Employees', 'Credit rollover', 'Priority support'] },
+  { id: 'founder',  name: 'Founder',  price: '$499',  credits: 2000, color: '#10b981', features: ['2,000 credits/month', 'Unlimited AI Employees', 'Full GTM access', 'Priority support'] },
+  { id: 'scale',    name: 'Scale',    price: '$999',  credits: 5000, color: '#f97316', features: ['5,000 credits/month', 'Unlimited everything', 'Dedicated support'] },
 ];
 
 interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }

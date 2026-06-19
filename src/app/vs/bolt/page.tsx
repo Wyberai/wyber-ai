@@ -5,12 +5,12 @@ export const metadata: Metadata = {
   title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
   description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, AI agents, and workflows Bolt doesn\'t offer. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/bolt' },
-  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, five pillars. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
+  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, six pillars. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 
 const ROWS = [
-  { feature: 'Starter price',           wyber: '$49/mo',            other: '$25/mo',            winner: 'other' as const },
-  { feature: 'Starter credits/mo',      wyber: '500',               other: '~250 tokens equiv', winner: 'wyber' as const },
+  { feature: 'Starter price',           wyber: '$99/mo (Builder)',            other: '$25/mo',            winner: 'other' as const },
+  { feature: 'Starter credits/mo',      wyber: '300',               other: '~250 tokens equiv', winner: 'wyber' as const },
   { feature: 'Free tier',               wyber: '50 credits/month',  other: '1M tokens/mo',      winner: 'tie'   as const },
   { feature: 'Usage model',             wyber: 'Fixed credits',     other: 'Tokens (per char)', winner: 'wyber' as const },
   { feature: 'Unused credits rollover', wyber: '✓ Always',          other: '✓ Up to 2 months',  winner: 'wyber' as const },
@@ -32,7 +32,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Bolt.new?',
-    a: 'WyberAi Starter is $49/month for 500 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also covers 5 pillars vs Bolt\'s web-only focus.',
+    a: 'WyberAi Builder is $99/month for 300 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also covers 6 pillars vs Bolt\'s web-only focus.',
   },
   {
     q: 'Does Bolt.new have a mobile app builder?',

@@ -13,13 +13,15 @@ FIVE CORE CAPABILITIES:
 2. 📱 Mobile Apps — Generate full React Native + Expo apps for iOS and Android. Describe the screens and navigation; Wyber builds it all, ready to scan on your device.
 3. 🤖 AI Agents — Browse 5,000 pre-built AI agents across 18 industries. Connect your own tools (Slack, HubSpot, Gmail, Airtable, etc.), click Run, and Claude executes the agent automatically.
 4. ⚡ Workflows — Visual drag-and-drop flow builder. Add triggers (webhook, schedule, Slack), AI reasoning steps, and actions. Connect 12+ tools. Set and forget.
-5. 👥 AI Employees — Hire from 100 enterprise roles (Sales, Marketing, Engineering, Finance, etc.). Each AI Employee has a cognitive blueprint, runs on a schedule, and executes real tasks autonomously using Composio tools.
+5. 👥 AI Employees — 100 roles across 12 departments (Sales, Marketing, Finance, Engineering, etc.). Think of each as the equivalent of a senior specialist: they run on a schedule, connect to your tools via Composio, and email you a summary of what they did.
+6. 🎯 GTM Engine — Define your ICP, find leads via Apollo, launch multi-step outreach sequences across email + call + LinkedIn. Visual campaign canvas. 10 battle-tested sequence templates included.
 
 PRICING:
-- Starter: $49/month — 500 credits/month, up to 3 AI Employees
-- Growth: $149/month — 2,000 credits/month, up to 10 AI Employees
-- Scale: $399/month — 6,000 credits/month, unlimited AI Employees
-- Top-ups available on all plans: credits never expire
+- Builder: $99/month — 300 credits/month, up to 3 AI Employees
+- Operator: $249/month — 900 credits/month, up to 10 AI Employees
+- Founder: $499/month — 2,000 credits/month, unlimited AI Employees + full GTM access
+- Scale: $999/month — 5,000 credits/month, unlimited everything
+- Annual billing saves ~20%. Top-ups available on all plans: credits never expire.
 
 DONE-FOR-YOU BUILDS:
 - $99 consultation — Wyber team scopes, quotes, and builds for you
@@ -29,10 +31,14 @@ DONE-FOR-YOU BUILDS:
 - Book at wyberai.com/setup-call
 
 CREDIT COSTS:
-- App generation: 1 credit
-- Agent run: 5 credits
-- Workflow/flow run: 3 credits
-- AI Employee run: 10 credits
+- Web/mobile app build: 15 credits
+- App edit/iteration: 4 credits
+- AI Agent run: 8 credits
+- Workflow run: 4 credits
+- AI Employee run: 15 credits
+- GTM ICP + sequence generation: 20 credits
+- Lead enrichment: 2 credits per contact
+- Image generation: 5 credits
 
 SECURITY:
 - All API keys encrypted with AES-256-GCM before storage
@@ -43,7 +49,7 @@ SUPPORTED TOOLS FOR AGENTS & WORKFLOWS:
 Slack, Gmail, HubSpot, Airtable, Notion, GitHub, Stripe, SendGrid, Linear, OpenAI, Custom Webhooks, Supabase
 
 COMPARED TO COMPETITORS:
-- vs Lovable: Wyber has apps + 5,000 agents + automations. Lovable is apps only. Wyber costs $39 vs Lovable's $25 but gives 3x the product.
+- vs Lovable: Wyber has 6 pillars (apps, mobile, agents, workflows, AI employees, GTM). Lovable is apps only. Wyber costs more but covers everything a startup needs to build and grow.
 - vs Bolt: Similar app generation, but no agents or automations.
 - vs Zapier/Make: Wyber adds AI reasoning to every automation step. Not just connect-the-dots but intelligent decision-making.
 - vs Taskade: Both do apps + agents + automations. Wyber has a larger agent library (5,000 vs templates).

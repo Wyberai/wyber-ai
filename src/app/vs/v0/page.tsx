@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 const ROWS = [
   { feature: 'Primary output',           wyber: 'Full-stack web app',     other: 'UI components / pages', winner: 'wyber' as const },
-  { feature: 'Starter price',            wyber: '$49/mo',                 other: '$20/mo',                winner: 'other' as const },
+  { feature: 'Starter price',            wyber: '$99/mo (Builder)',                 other: '$20/mo',                winner: 'other' as const },
   { feature: 'Complete app in one gen',  wyber: '✓',                      other: '✗ Requires assembly',   winner: 'wyber' as const },
   { feature: 'Database provisioning',    wyber: '✓ Auto (Supabase)',       other: '✗',                     winner: 'wyber' as const },
   { feature: 'Authentication',           wyber: '✓ Built-in',             other: '✗ Manual integration',  winner: 'wyber' as const },

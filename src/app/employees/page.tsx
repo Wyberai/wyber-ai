@@ -43,13 +43,13 @@ export default function EmployeesGalleryPage() {
       {/* Hero */}
       <div style={{ textAlign: 'center', padding: '72px 32px 56px', maxWidth: 760, margin: '0 auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 20, padding: '5px 14px', fontSize: 11, color: '#7dd3fc', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 24 }}>
-          Enterprise Cognitive Blueprint · 100 Roles
+          100 Roles · 12 Departments · Runs on autopilot
         </div>
         <h1 style={{ fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, margin: '0 0 18px', fontFamily: "'Sora', sans-serif" }}>
           Your AI workforce.<br /><span style={{ color: '#0EA5E9' }}>Ready to deploy.</span>
         </h1>
         <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, margin: '0 0 36px', maxWidth: 580, marginLeft: 'auto', marginRight: 'auto' }}>
-          Each role ships with a pre-built cognitive architecture — vector DB scope, guardrail error codes, and a primary executable function. Hire one, connect your tools, and it runs on autopilot.
+          Each AI Employee is the equivalent of hiring a senior specialist — they run on your schedule, connect to your tools, complete real tasks, and email you a summary of everything they did. No management required.
         </p>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
           {departments.map(d => (
@@ -91,21 +91,17 @@ export default function EmployeesGalleryPage() {
                       {/* Tagline */}
                       <p style={{ fontSize: 11.5, color: '#71717a', lineHeight: 1.55, margin: 0 }}>{t.tagline}</p>
 
-                      {/* Blueprint badges */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
-                          <span style={{ fontSize: 9, fontWeight: 700, color: '#52525b', letterSpacing: '0.06em', flexShrink: 0, paddingTop: 1 }}>VDB</span>
-                          <span style={{ fontSize: 10, color: '#52525b', lineHeight: 1.4 }}>{t.vector_db_scope.split(':')[0]}</span>
+                      {/* Tool chips */}
+                      {t.default_tools?.length > 0 && (
+                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                          {(t.default_tools as string[]).slice(0, 3).map((tool: string) => (
+                            <span key={tool} style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: `${col}0d`, border: `1px solid ${col}22`, color: col, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>{tool}</span>
+                          ))}
+                          {t.default_tools.length > 3 && (
+                            <span style={{ fontSize: 9, color: '#3f3f46', padding: '2px 7px' }}>+{t.default_tools.length - 3}</span>
+                          )}
                         </div>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 9, fontWeight: 700, color: '#ef4444', letterSpacing: '0.06em', flexShrink: 0 }}>ERR</span>
-                          <code style={{ fontSize: 9.5, color: '#7f1d1d', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)', borderRadius: 4, padding: '1px 6px', fontFamily: 'monospace', letterSpacing: '0.02em' }}>{t.guardrail_code}</code>
-                        </div>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          <span style={{ fontSize: 9, fontWeight: 700, color: '#52525b', letterSpacing: '0.06em', flexShrink: 0 }}>FN</span>
-                          <code style={{ fontSize: 9.5, color: '#3f3f46', background: '#111115', border: '1px solid #1e1e26', borderRadius: 4, padding: '1px 6px', fontFamily: 'monospace' }}>{t.primary_tool}()</code>
-                        </div>
-                      </div>
+                      )}
 
                       {/* CTA */}
                       <div style={{ fontSize: 11, color: col, fontWeight: 600, marginTop: 'auto', paddingTop: 4 }}>Hire this employee →</div>
