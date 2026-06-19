@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { Confetti } from '@/components/shared/Confetti'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -31,6 +32,8 @@ export function PreviewPanel() {
   const [msgIdx, setMsgIdx] = useState(0)
   const [seconds, setSeconds] = useState(0)
   const [fixing, setFixing] = useState(false)
+  const [confettiTrigger, setConfettiTrigger] = useState(0)
+  const isFirstBuild = useRef(true)
   const [editMode, setEditMode] = useState(false)
   const [selectedEl, setSelectedEl] = useState<SelectedEl | null>(null)
   const [editInstruction, setEditInstruction] = useState('')
@@ -74,6 +77,10 @@ export function PreviewPanel() {
       if (data.url) {
         setHtml(data.url + (data.url.includes('?') ? '&' : '?') + 't=' + Date.now())
         setError(null)
+        if (isFirstBuild.current) {
+          isFirstBuild.current = false
+          setConfettiTrigger(c => c + 1)
+        }
       } else {
         setError(data.error || 'Build failed')
       }
@@ -226,6 +233,7 @@ Find this element in the code and apply the change.`
 
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
+      <Confetti trigger={confettiTrigger} />
       {/* Toolbar */}
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: fixing ? '#f59e0b' : building ? '#f59e0b' : error ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : fixing ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: fixing ? 'pulse 1s ease infinite' : 'none' }} />
