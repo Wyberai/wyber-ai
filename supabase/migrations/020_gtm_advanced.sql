@@ -40,7 +40,27 @@ alter table gtm_leads add column if not exists score_tier text;
 alter table gtm_leads add column if not exists score_reason text;
 alter table gtm_leads add column if not exists scored_at timestamptz;
 
--- Sequence enrollments conditional branching
+-- Sequence enrollments (create if not exists, then add new column)
+create table if not exists gtm_sequence_enrollments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  sequence_id uuid not null references gtm_sequences(id) on delete cascade,
+  lead_id uuid not null references gtm_leads(id) on delete cascade,
+  status text not null default 'active' check (status in ('active','paused','completed','replied','bounced','unsubscribed')),
+  current_step integer not null default 0,
+  last_action_at timestamptz,
+  completed_at timestamptz,
+  step_results jsonb not null default '{}',
+  branch_taken text,
+  created_at timestamptz not null default now(),
+  unique(sequence_id, lead_id)
+);
+alter table gtm_sequence_enrollments enable row level security;
+create policy "Users manage own enrollments" on gtm_sequence_enrollments for all
+  using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create index if not exists gtm_seq_enroll_user_idx on gtm_sequence_enrollments(user_id, status);
+
+-- Add branch_taken if table already existed without it
 alter table gtm_sequence_enrollments add column if not exists branch_taken text;
 
 -- Campaign active variant for A/B
