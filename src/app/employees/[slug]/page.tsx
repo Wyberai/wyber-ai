@@ -11,6 +11,29 @@ const DEPT_COLOR: Record<string, string> = {
 
 interface Kpi { name: string; description: string; unit: string; target: number }
 
+function humanAnalogy(department: string, role: string): string {
+  const map: Record<string, string> = {
+    Sales: 'a senior Sales professional with 8+ years closing enterprise deals',
+    Marketing: 'a Marketing Manager with an MBA and 10 years of campaign experience',
+    Support: 'a Customer Success specialist who handled hundreds of tickets a month',
+    Operations: 'an Operations Manager who has streamlined dozens of business processes',
+    Finance: 'a Finance Analyst with CFA credentials and a decade in FP&A',
+    HR: 'an HR Business Partner with 10 years of talent management experience',
+    Engineering: 'a Senior Engineer with 10+ years shipping production systems',
+    Data: 'a Data Analyst with deep expertise in BI and reporting',
+    Research: 'a Research Analyst who has delivered 50+ market intelligence reports',
+    Commerce: 'a Senior E-Commerce Manager who has scaled 8-figure online stores',
+    Executive: 'a Chief of Staff with an MBA from a top business school',
+    Admin: 'an Executive Assistant managing a C-suite calendar at a Fortune 500',
+    Legal: 'a paralegal with 10 years of contract and compliance experience',
+  }
+  return map[department] ?? `a senior ${role} with 10+ years of hands-on experience`
+}
+
+function whatTheyDo(tagline: string, name: string, department: string, role: string): string {
+  return `${name} is the AI equivalent of ${humanAnalogy(department, role)}. ${tagline} They run on your chosen schedule, never drop the ball, and email you a clear summary of everything they did — so you stay in the loop without doing the work yourself.`
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const db = createServiceClient()
@@ -84,17 +107,26 @@ export default async function EmployeeTemplatePage({ params, searchParams }: {
       {/* Content grid */}
       <div style={{ maxWidth: 900, margin: '48px auto 80px', padding: '0 32px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {/* Description */}
+          {/* Human analogy / marketing description */}
           <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 24 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>What this employee does</div>
-            <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, margin: 0 }}>{t.description}</p>
+            <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.8, margin: 0 }}>{whatTheyDo(t.tagline, t.name, t.department, t.role)}</p>
           </div>
 
-          {/* Default instructions */}
-          <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Sample instructions</div>
-            <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.7, margin: 0, fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>"{t.default_instructions}"</p>
-            <p style={{ fontSize: 11, color: '#3f3f46', margin: '12px 0 0' }}>These are pre-filled when you hire this employee. You can customize them during onboarding.</p>
+          {/* Value bullets */}
+          <div style={{ background: `${col}08`, border: `1px solid ${col}20`, borderRadius: 14, padding: 24 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: col, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>Why teams hire this employee</div>
+            {[
+              `Works 24/7 — no sick days, no context-switching, no chasing`,
+              `Pays for itself in the first week by replacing hours of manual work`,
+              `You set the KPIs. It reports back. No micromanagement needed.`,
+              `Connects directly to your existing tools — no new software to learn`,
+            ].map((b, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < 3 ? 10 : 0, alignItems: 'flex-start' }}>
+                <span style={{ color: col, flexShrink: 0, marginTop: 1 }}>✓</span>
+                <span style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.55 }}>{b}</span>
+              </div>
+            ))}
           </div>
 
           {/* How it works */}
