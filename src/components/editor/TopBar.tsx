@@ -45,6 +45,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [savingSnapshot, setSavingSnapshot] = useState(false);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [showTeam, setShowTeam] = useState(false);
+  const [collaborators, setCollaborators] = useState<Array<{ id: string; collaborator_email: string; role: string; status: string; invited_at: string }>>([]);
+  const [teamLoading, setTeamLoading] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
+  const [inviting, setInviting] = useState(false);
+  const [inviteMsg, setInviteMsg] = useState('');
 
   const openSnapshots = async () => {
     if (!projectId) return;
@@ -81,6 +88,41 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const deleteSnapshot = async (id: string) => {
     await fetch(`/api/snapshots?id=${id}`, { method: 'DELETE' });
     setSnapshots(prev => prev.filter(s => s.id !== id));
+  };
+
+  const openTeam = async () => {
+    if (!projectId) return;
+    setShowTeam(true);
+    setTeamLoading(true);
+    const res = await fetch(`/api/projects/${projectId}/collaborators`);
+    if (res.ok) { const { collaborators: c } = await res.json(); setCollaborators(c || []); }
+    setTeamLoading(false);
+  };
+
+  const sendInvite = async () => {
+    if (!projectId || !inviteEmail.trim() || inviting) return;
+    setInviting(true);
+    setInviteMsg('');
+    const res = await fetch(`/api/projects/${projectId}/collaborators`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setInviteMsg('Invite sent!');
+      setInviteEmail('');
+      openTeam();
+    } else {
+      setInviteMsg(data.error ?? 'Failed to invite');
+    }
+    setInviting(false);
+  };
+
+  const removeCollaborator = async (id: string) => {
+    if (!projectId) return;
+    await fetch(`/api/projects/${projectId}/collaborators?id=${id}`, { method: 'DELETE' });
+    setCollaborators(prev => prev.filter(c => c.id !== id));
   };
 
   const handleExport = async () => {
@@ -262,6 +304,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         </div>
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
+        {projectId && (
+          <button onClick={openTeam} title="Team & collaborators" style={{ ...btn, padding: '5px 8px' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </button>
+        )}
         {Object.keys(files).length > 2 && (
           <button onClick={openSnapshots} title="Version history" style={{ ...btn, padding: '5px 8px' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -405,6 +452,63 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   )}
                 </div>
               </>
+            )}
+          </div>
+        </div>
+      )}
+      {showTeam && (
+        <div onClick={() => setShowTeam(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 14, padding: 24, width: 480, maxHeight: '70vh', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Team & Collaborators</div>
+                <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>Invite teammates to view or edit this project</div>
+              </div>
+              <button onClick={() => setShowTeam(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1 }}>×</button>
+            </div>
+
+            {/* Invite form */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                style={{ flex: 1, background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, padding: '7px 11px', outline: 'none', fontFamily: 'var(--font-sans)' }}
+                placeholder="colleague@company.com"
+                value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendInvite()}
+              />
+              <select value={inviteRole} onChange={e => setInviteRole(e.target.value as 'editor' | 'viewer')}
+                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, padding: '7px 8px', outline: 'none', fontFamily: 'var(--font-sans)', cursor: 'pointer' }}>
+                <option value="editor">Editor</option>
+                <option value="viewer">Viewer</option>
+              </select>
+              <button onClick={sendInvite} disabled={inviting || !inviteEmail.trim()}
+                style={{ padding: '7px 16px', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer', opacity: !inviteEmail.trim() ? 0.5 : 1 }}>
+                {inviting ? '...' : 'Invite'}
+              </button>
+            </div>
+            {inviteMsg && <div style={{ fontSize: 12, color: inviteMsg === 'Invite sent!' ? '#22c55e' : '#ef4444' }}>{inviteMsg}</div>}
+
+            {/* Collaborators list */}
+            {teamLoading ? (
+              <div style={{ fontSize: 13, color: 'var(--ide-text3)' }}>Loading...</div>
+            ) : collaborators.length === 0 ? (
+              <div style={{ fontSize: 13, color: 'var(--ide-text3)', textAlign: 'center', padding: '12px 0' }}>No collaborators yet. Invite someone above.</div>
+            ) : (
+              collaborators.map(c => (
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 9, border: '1px solid var(--ide-border)' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#1a1a2e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#0EA5E9', flexShrink: 0 }}>
+                    {c.collaborator_email[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: 'var(--ide-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.collaborator_email}</div>
+                    <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 1 }}>{c.role} · {c.status}</div>
+                  </div>
+                  <button onClick={() => removeCollaborator(c.id)}
+                    style={{ background: 'none', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 6, color: '#ef4444', cursor: 'pointer', fontSize: 11, padding: '3px 8px', fontFamily: 'var(--font-sans)' }}>
+                    Remove
+                  </button>
+                </div>
+              ))
             )}
           </div>
         </div>
