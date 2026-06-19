@@ -176,6 +176,159 @@ And add this snippet to App.tsx (after imports, inside the root component useEff
   import * as Updates from 'expo-updates'
   // In useEffect: const { isAvailable } = await Updates.checkForUpdateAsync(); if (isAvailable) await Updates.fetchUpdateAsync(); await Updates.reloadAsync()
 
+IN-APP PURCHASES WITH REVENUECAT — include when the app has subscriptions, premium features, or payments:
+When the user's app concept calls for monetisation (subscriptions, one-time purchases, premium tiers, unlock features), add RevenueCat using react-native-purchases. Always create lib/purchases.ts and a screens/PaywallScreen.tsx.
+
+<file path="lib/purchases.ts">
+import Purchases, { LOG_LEVEL, PurchasesPackage } from 'react-native-purchases'
+import { Platform } from 'react-native'
+
+// Call once on app launch — replace with your RevenueCat API keys
+export async function initPurchases() {
+  Purchases.setLogLevel(LOG_LEVEL.VERBOSE)
+  if (Platform.OS === 'ios') {
+    await Purchases.configure({ apiKey: 'appl_YOUR_REVENUECAT_IOS_KEY' })
+  } else {
+    await Purchases.configure({ apiKey: 'goog_YOUR_REVENUECAT_ANDROID_KEY' })
+  }
+}
+
+export async function getOfferings() {
+  try {
+    const offerings = await Purchases.getOfferings()
+    return offerings.current
+  } catch (e) {
+    console.error('RevenueCat getOfferings error', e)
+    return null
+  }
+}
+
+export async function purchasePackage(pkg: PurchasesPackage) {
+  try {
+    const { customerInfo } = await Purchases.purchasePackage(pkg)
+    return { success: true, customerInfo }
+  } catch (e: unknown) {
+    const err = e as { userCancelled?: boolean; message?: string }
+    if (!err.userCancelled) console.error('Purchase error', err)
+    return { success: false, userCancelled: err.userCancelled }
+  }
+}
+
+export async function restorePurchases() {
+  try {
+    const customerInfo = await Purchases.restorePurchases()
+    return customerInfo
+  } catch (e) {
+    console.error('Restore error', e)
+    return null
+  }
+}
+
+export async function getCustomerInfo() {
+  try {
+    return await Purchases.getCustomerInfo()
+  } catch (e) {
+    return null
+  }
+}
+
+export function hasPremium(customerInfo: Awaited<ReturnType<typeof Purchases.getCustomerInfo>> | null): boolean {
+  if (!customerInfo) return false
+  return Object.keys(customerInfo.entitlements.active).length > 0
+}
+</file>
+
+<file path="screens/PaywallScreen.tsx">
+import React, { useEffect, useState } from 'react'
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { PurchasesOffering, PurchasesPackage } from 'react-native-purchases'
+import { getOfferings, purchasePackage, restorePurchases } from '../lib/purchases'
+
+export default function PaywallScreen({ navigation }: { navigation: unknown }) {
+  const nav = navigation as { goBack: () => void }
+  const [offering, setOffering] = useState<PurchasesOffering | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [purchasing, setPurchasing] = useState(false)
+
+  useEffect(() => {
+    getOfferings().then(o => { setOffering(o); setLoading(false) })
+  }, [])
+
+  const handlePurchase = async (pkg: PurchasesPackage) => {
+    setPurchasing(true)
+    const result = await purchasePackage(pkg)
+    setPurchasing(false)
+    if (result.success) {
+      Alert.alert('Welcome to Premium!', 'Your purchase is active.')
+      nav.goBack()
+    } else if (!result.userCancelled) {
+      Alert.alert('Purchase failed', 'Please try again.')
+    }
+  }
+
+  const handleRestore = async () => {
+    const info = await restorePurchases()
+    if (info && Object.keys(info.entitlements.active).length > 0) {
+      Alert.alert('Restored!', 'Your purchases have been restored.')
+      nav.goBack()
+    } else {
+      Alert.alert('Nothing to restore', 'No active subscriptions found.')
+    }
+  }
+
+  return (
+    <SafeAreaView style={s.root}>
+      <ScrollView contentContainerStyle={s.scroll}>
+        <Text style={s.title}>Unlock Premium</Text>
+        <Text style={s.sub}>Get full access to all features</Text>
+        {loading ? (
+          <ActivityIndicator color="#0EA5E9" style={{ marginTop: 32 }} />
+        ) : !offering ? (
+          <Text style={s.err}>No packages available. Check your RevenueCat dashboard.</Text>
+        ) : (
+          offering.availablePackages.map(pkg => (
+            <TouchableOpacity key={pkg.identifier} style={s.pkgCard} onPress={() => handlePurchase(pkg)} disabled={purchasing}>
+              <View>
+                <Text style={s.pkgTitle}>{pkg.product.title}</Text>
+                <Text style={s.pkgDesc}>{pkg.product.description}</Text>
+              </View>
+              <Text style={s.pkgPrice}>{pkg.product.priceString}</Text>
+            </TouchableOpacity>
+          ))
+        )}
+        <TouchableOpacity onPress={handleRestore} style={s.restoreBtn}>
+          <Text style={s.restoreText}>Restore purchases</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#09090b' },
+  scroll: { padding: 24, paddingBottom: 48 },
+  title: { fontSize: 28, fontWeight: '800', color: '#f4f4f5', textAlign: 'center', marginBottom: 8 },
+  sub: { fontSize: 15, color: '#71717a', textAlign: 'center', marginBottom: 32 },
+  err: { color: '#ef4444', textAlign: 'center', marginTop: 16 },
+  pkgCard: { backgroundColor: '#18181b', borderRadius: 14, padding: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
+  pkgTitle: { fontSize: 16, fontWeight: '700', color: '#f4f4f5', marginBottom: 4 },
+  pkgDesc: { fontSize: 13, color: '#71717a', maxWidth: 200 },
+  pkgPrice: { fontSize: 18, fontWeight: '800', color: '#0EA5E9' },
+  restoreBtn: { marginTop: 16, alignItems: 'center' },
+  restoreText: { color: '#52525b', fontSize: 13, textDecorationLine: 'underline' },
+})
+</file>
+
+Setup instructions (output as comments in App.tsx when RevenueCat is included):
+// REVENUECAT SETUP:
+// 1. npx expo install react-native-purchases
+// 2. Add to app.json plugins: ["react-native-purchases"]
+// 3. Replace 'appl_YOUR_REVENUECAT_IOS_KEY' and 'goog_YOUR_REVENUECAT_ANDROID_KEY' in lib/purchases.ts
+// 4. Create products in App Store Connect + Google Play Console
+// 5. Link them as "Offerings" in RevenueCat dashboard at app.revenuecat.com
+// Call initPurchases() early in App.tsx root useEffect
+
 After ALL files, output one line starting with "Built:"
 `
 }

@@ -99,6 +99,7 @@ async function executeAiAgent(
   state: Record<string, unknown>,
   userId: string,
   toolNodes: CanvasNode[],
+  sourceId?: string,
 ): Promise<{ output: unknown; log: string[]; toolResults: Record<string, unknown> }> {
   const instructions = node.data.config.instructions || node.data.subtitle || 'Process the input and respond.'
   const model = node.data.config.model || 'claude-sonnet-4-6'
@@ -109,18 +110,41 @@ async function executeAiAgent(
   const toolResults: Record<string, unknown> = {}
   const log: string[] = [`Model: ${model}`]
 
+  // ── Load persistent memory ────────────────────────────────────────────────
+  let memoryBlock = ''
+  if (sourceId) {
+    try {
+      const db = createServiceClient()
+      const { data: mem } = await db
+        .from('agent_memory')
+        .select('memory_summary, run_count')
+        .eq('user_id', userId)
+        .eq('source_id', sourceId)
+        .eq('agent_node_id', node.id)
+        .maybeSingle()
+      if (mem?.memory_summary) {
+        memoryBlock = `\n\nMEMORY FROM PREVIOUS RUNS (${mem.run_count} runs):\n${mem.memory_summary}`
+        log.push(`Memory loaded (${mem.run_count} prior runs)`)
+      }
+    } catch { /* memory is best-effort */ }
+  }
+
   // No tool nodes — plain single-turn completion
   if (toolNodes.length === 0) {
     const response = await anthropic.messages.create({
       model,
       max_tokens: 4096,
-      messages: [{ role: 'user', content: instructions + upstreamContext }],
+      messages: [{ role: 'user', content: instructions + memoryBlock + upstreamContext }],
     })
     const text = response.content
       .filter(b => b.type === 'text')
       .map(b => (b as { type: 'text'; text: string }).text)
       .join('\n')
     log.push(`Tokens: ${response.usage.output_tokens}`, `Length: ${text.length} chars`)
+
+    // Save memory summary (fire-and-forget)
+    if (sourceId) void saveAgentMemory(userId, sourceId, node.id, text, instructions, log)
+
     return { output: { text, model, tokens: response.usage.output_tokens }, log, toolResults }
   }
 
@@ -149,7 +173,7 @@ async function executeAiAgent(
 
   type MsgParam = import('@anthropic-ai/sdk').Anthropic.MessageParam
   const messages: MsgParam[] = [
-    { role: 'user', content: instructions + upstreamContext },
+    { role: 'user', content: instructions + memoryBlock + upstreamContext },
   ]
 
   let totalTokens = 0
@@ -223,11 +247,55 @@ async function executeAiAgent(
     messages.push({ role: 'user', content: toolResultContents })
   }
 
+  // Save memory (fire-and-forget)
+  if (sourceId) void saveAgentMemory(userId, sourceId, node.id, finalText, instructions, log)
+
   return {
     output: { text: finalText, model, tokens: totalTokens },
     log,
     toolResults,
   }
+}
+
+async function saveAgentMemory(
+  userId: string,
+  sourceId: string,
+  nodeId: string,
+  lastOutput: string,
+  instructions: string,
+  log: string[],
+): Promise<void> {
+  try {
+    const db = createServiceClient()
+    // Build concise summary with AI
+    const summaryRes = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      messages: [{
+        role: 'user',
+        content: `Summarise what this AI agent did in one paragraph (max 200 words) for future memory injection.\nInstructions: ${instructions.slice(0, 200)}\nOutput: ${lastOutput.slice(0, 600)}\nKey actions: ${log.slice(-5).join('; ')}`
+      }]
+    })
+    const summary = summaryRes.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+
+    await db.from('agent_memory').upsert({
+      user_id: userId,
+      source_id: sourceId,
+      agent_node_id: nodeId,
+      memory_summary: summary,
+      last_run_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'user_id,source_id,agent_node_id',
+      ignoreDuplicates: false,
+    })
+    // Also increment run_count with a raw update
+    await db.rpc('increment_agent_memory_run_count', {
+      p_user_id: userId,
+      p_source_id: sourceId,
+      p_node_id: nodeId,
+    }).then(() => {}).catch(() => {})
+  } catch { /* memory save is best-effort */ }
 }
 
 async function executeHttpTool(
@@ -604,7 +672,7 @@ export async function POST(req: NextRequest) {
 
           case 'aiagent': {
             const toolNodes = agentToolNodes.get(node.id) ?? []
-            const result = await executeAiAgent(node, stepState, user.id, toolNodes)
+            const result = await executeAiAgent(node, stepState, user.id, toolNodes, sourceId)
             output = result.output
             log = result.log
             // Inject each tool result into stepState and steps so the sequential

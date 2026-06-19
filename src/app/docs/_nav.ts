@@ -40,6 +40,7 @@ export const DOC_NAV: DocSection[] = [
       { label: 'Generating a mobile app', href: '/docs/mobile-apps/generating' },
       { label: 'The live preview', href: '/docs/mobile-apps/live-preview' },
       { label: 'Exporting to Expo', href: '/docs/mobile-apps/exporting-to-expo' },
+      { label: 'App Store submission', href: '/docs/mobile-apps/app-store-submission' },
     ],
   },
   {
