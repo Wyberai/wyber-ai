@@ -163,6 +163,63 @@ export default function Home() {
 }`),
   },
 
+  'svelte': {
+    'src/App.svelte': f('src/App.svelte', `<script>
+  let count = 0;
+</script>
+
+<main>
+  <h1 style="color:#0EA5E9">Your app will appear here</h1>
+  <p>Describe what you want to build in the chat</p>
+  <button on:click={() => count++}>Count: {count}</button>
+</main>
+
+<style>
+  main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-family: system-ui; }
+  h1 { font-size: 28px; font-weight: 700; margin: 0; }
+  p { color: #a1a1aa; margin: 0; }
+  button { padding: 10px 24px; font-size: 16px; border-radius: 8px; border: none; background: #7c6ef7; color: white; cursor: pointer; }
+</style>`),
+    'src/main.js': f('src/main.js', `import App from './App.svelte';
+const app = new App({ target: document.getElementById('app') });
+export default app;`),
+    'index.html': f('index.html', `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>App</title></head>
+<body><div id="app"></div><script type="module" src="/src/main.js"></script></body>
+</html>`),
+    'package.json': f('package.json', `{
+  "name": "app",
+  "version": "0.1.0",
+  "scripts": { "dev": "vite", "build": "vite build" },
+  "devDependencies": { "@sveltejs/vite-plugin-svelte": "^4.0.0", "svelte": "^5.0.0", "vite": "^5.4.0" }
+}`),
+    'vite.config.js': f('vite.config.js', `import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
+export default defineConfig({ plugins: [svelte()] });`),
+  },
+
+  'astro': {
+    'src/pages/index.astro': f('src/pages/index.astro', `---
+const title = 'Your app will appear here';
+---
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>{title}</title></head>
+<body style="margin:0; font-family:system-ui; min-height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;">
+  <h1 style="color:#0EA5E9; font-size:28px; font-weight:700;">{title}</h1>
+  <p style="color:#a1a1aa;">Describe what you want to build in the chat</p>
+</body>
+</html>`),
+    'package.json': f('package.json', `{
+  "name": "app",
+  "version": "0.1.0",
+  "scripts": { "dev": "astro dev", "build": "astro build" },
+  "dependencies": { "astro": "^5.0.0" }
+}`),
+    'astro.config.mjs': f('astro.config.mjs', `import { defineConfig } from 'astro/config';
+export default defineConfig({});`),
+  },
+
   'react-native': {
     'App.tsx': f('App.tsx', `import React from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';

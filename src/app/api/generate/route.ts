@@ -57,7 +57,7 @@ CREDITS & PLANS:
 - Credit estimate shown before every generation — no surprises
 
 vs COMPETITORS:
-- Wyber covers 5 pillars (web, mobile, agents, workflows, AI employees) vs competitors covering 1-2
+- Wyber covers 6 products (web, mobile, agents, workflows, AI employees, GTM engine) vs competitors covering 1-2
 - Lovable, Bolt, v0 build web apps only — no AI Employees, no workflows
 - v0 by Vercel generates UI components only — not full apps
 - Replit is a full cloud IDE — powerful for developers, complex for non-technical users
@@ -328,6 +328,37 @@ Setup instructions (output as comments in App.tsx when RevenueCat is included):
 // 4. Create products in App Store Connect + Google Play Console
 // 5. Link them as "Offerings" in RevenueCat dashboard at app.revenuecat.com
 // Call initPurchases() early in App.tsx root useEffect
+
+CAMERA & IMAGE PICKER — include when the app needs photos, scanning, or image capture:
+When the user's app concept needs camera access (photo upload, document scanning, profile pictures, QR codes), add expo-camera and/or expo-image-picker.
+
+Use expo-image-picker for gallery/camera selection:
+  import * as ImagePicker from 'expo-image-picker'
+  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1,1], quality: 0.8 })
+  if (!result.canceled) { setImage(result.assets[0].uri) }
+
+Use expo-camera for live camera view:
+  import { CameraView, useCameraPermissions } from 'expo-camera'
+  const [permission, requestPermission] = useCameraPermissions()
+
+LOCATION & GPS — include when the app needs maps, location tracking, or geofencing:
+  import * as Location from 'expo-location'
+  const { status } = await Location.requestForegroundPermissionsAsync()
+  const location = await Location.getCurrentPositionAsync({})
+  // location.coords.latitude, location.coords.longitude
+
+For maps: use react-native-maps (MapView) — import MapView, { Marker } from 'react-native-maps'
+
+BIOMETRICS & SECURE AUTH — include when the app needs fingerprint, face ID, or secure authentication:
+  import * as LocalAuthentication from 'expo-local-authentication'
+  const hasHardware = await LocalAuthentication.hasHardwareAsync()
+  const isEnrolled = await LocalAuthentication.isEnrolledAsync()
+  const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Authenticate to continue', fallbackLabel: 'Use passcode' })
+  if (result.success) { /* authenticated */ }
+
+For secure storage of tokens: import * as SecureStore from 'expo-secure-store'
+  await SecureStore.setItemAsync('token', value)
+  const token = await SecureStore.getItemAsync('token')
 
 After ALL files, output one line starting with "Built:"
 `

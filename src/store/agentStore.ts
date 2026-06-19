@@ -4,7 +4,7 @@ import {
   applyNodeChanges, applyEdgeChanges, addEdge,
 } from '@xyflow/react'
 
-export type WyberNodeType = 'trigger' | 'aiagent' | 'tool' | 'condition' | 'output' | 'error' | 'webhook' | 'transform' | 'loop' | 'delay'
+export type WyberNodeType = 'trigger' | 'aiagent' | 'tool' | 'condition' | 'output' | 'error' | 'webhook' | 'transform' | 'loop' | 'delay' | 'subflow' | 'parallel'
 
 export interface WyberNodeData {
   label: string
@@ -85,6 +85,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
     const labels: Record<WyberNodeType, string> = {
       trigger: 'Trigger', aiagent: 'AI Agent', tool: 'Tool Action', condition: 'Condition', output: 'Output',
       error: 'Error Handler', webhook: 'Webhook', transform: 'Transform', loop: 'Loop', delay: 'Delay',
+      subflow: 'Sub-workflow', parallel: 'Parallel',
     }
     const x = 80 + (get().nodes.length % 3) * 280
     const y = 180 + Math.floor(get().nodes.length / 3) * 180

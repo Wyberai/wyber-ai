@@ -1,6 +1,6 @@
 export interface SequenceStep {
   day: number
-  type: 'email' | 'call' | 'linkedin' | 'wait' | 'task'
+  type: 'email' | 'call' | 'linkedin' | 'wait' | 'task' | 'meeting'
   subject?: string
   body?: string
   script?: string

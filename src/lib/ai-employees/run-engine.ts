@@ -117,6 +117,42 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'WYBERAI_notify_slack',
+    description: 'Send a message to the user\'s Slack workspace. Use this to alert the team about important events, completed tasks, or findings that need attention. Requires the user to have connected Slack via Composio.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        message: { type: 'string', description: 'The message to send to Slack' },
+        channel: { type: 'string', description: 'Slack channel name (without #). Defaults to #general if not specified.' },
+      },
+      required: ['message'],
+    },
+  },
+  {
+    name: 'WYBERAI_delegate',
+    description: 'Delegate a sub-task to another AI Employee by role. The other employee runs independently and returns its result. Use this to coordinate work across departments (e.g. SDR delegates research to Market Analyst). Only works if the target employee exists and is active.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        target_role: { type: 'string', description: 'The role of the AI Employee to delegate to (e.g. "Market Analyst", "Content Writer", "SDR")' },
+        task: { type: 'string', description: 'Description of the task to delegate' },
+        context: { type: 'string', description: 'Relevant context the target employee needs' },
+      },
+      required: ['target_role', 'task'],
+    },
+  },
+  {
+    name: 'WYBERAI_search_knowledge',
+    description: 'Search the role-specific knowledge base for relevant information. Returns matching documents, SOPs, or company guidelines uploaded by the user for this role.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'What to search for in the knowledge base' },
+      },
+      required: ['query'],
+    },
+  },
+  {
     name: 'WYBERAI_speak',
     description: 'Convert text to speech and save an audio message. Use to deliver voice summaries, alerts, or briefings that the user can play back. Great for end-of-run audio reports.',
     input_schema: {
@@ -126,6 +162,21 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
         label: { type: 'string', description: 'Short label for this audio clip, e.g. "Daily sales briefing" or "Alert: low inventory"' },
       },
       required: ['text'],
+    },
+  },
+  {
+    name: 'WYBERAI_phone_call',
+    description: 'Make or receive an AI phone call. The AI Employee can call a phone number and have a conversation following a script, or listen for inbound calls. Requires BLAND_AI_API_KEY (bland.ai) for voice calling. Use for SDR cold calls, customer support callbacks, appointment confirmations.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        action:       { type: 'string', enum: ['make_call', 'check_status'], description: 'make_call starts a new call, check_status checks an existing call' },
+        phone_number: { type: 'string', description: 'Phone number to call in E.164 format (e.g. +14155551234)' },
+        script:       { type: 'string', description: 'The conversation script/objective for the AI voice agent on the call' },
+        call_id:      { type: 'string', description: 'For check_status: the call ID returned from make_call' },
+        max_duration: { type: 'number', description: 'Max call duration in seconds (default 300 = 5 min)' },
+      },
+      required: ['action'],
     },
   },
   {
@@ -264,6 +315,69 @@ async function handleWyberTool(
     }
   }
 
+  if (toolName === 'WYBERAI_notify_slack') {
+    try {
+      const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
+      const channel = (input.channel as string) || 'general'
+      const result = await composio.tools.execute('SLACK_SENDS_A_MESSAGE_TO_A_SLACK_CHANNEL', {
+        userId,
+        arguments: { channel, text: input.message as string },
+        dangerouslySkipVersionCheck: true,
+      })
+      return { result: `Slack message sent to #${channel}: "${(input.message as string).slice(0, 100)}"` }
+    } catch (e) {
+      return { result: `Slack notification failed (is Slack connected via Composio?): ${String(e)}` }
+    }
+  }
+
+  if (toolName === 'WYBERAI_delegate' && db) {
+    try {
+      const targetRole = (input.target_role as string).toLowerCase()
+      const { data: targets } = await db
+        .from('ai_employees')
+        .select('id, name, role, instructions, tools, company_context, kpis')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+      const target = (targets ?? []).find((e: { role: string }) => e.role.toLowerCase().includes(targetRole))
+      if (!target) return { result: `No active AI Employee found with role matching "${input.target_role}". Available roles: ${(targets ?? []).map((e: { role: string }) => e.role).join(', ')}` }
+
+      const delegatePrompt = `You are ${target.name} (${target.role}). A colleague has delegated the following task to you:\n\nTASK: ${input.task}\nCONTEXT: ${input.context ?? 'none provided'}\n\nYour instructions: ${target.instructions}\n\nComplete this task concisely. Return your findings/results in 2-3 paragraphs.`
+
+      const delegateRes = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: delegatePrompt }],
+      })
+      const delegateText = delegateRes.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+      return { result: `[Delegated to ${target.name} (${target.role})]\n\n${delegateText}` }
+    } catch (e) {
+      return { result: `Delegation failed: ${String(e)}` }
+    }
+  }
+
+  if (toolName === 'WYBERAI_search_knowledge' && db && employeeId) {
+    try {
+      const { data: docs } = await db
+        .from('employee_knowledge')
+        .select('title, content')
+        .eq('employee_id', employeeId)
+        .textSearch('content', input.query as string, { type: 'websearch' })
+        .limit(5)
+      if (!docs?.length) {
+        const { data: allDocs } = await db
+          .from('employee_knowledge')
+          .select('title, content')
+          .eq('employee_id', employeeId)
+          .limit(5)
+        if (!allDocs?.length) return { result: 'Knowledge base is empty. Ask the user to upload documents in the employee settings.' }
+        return { result: `No exact matches for "${input.query}". Here are the available documents:\n${allDocs.map((d: { title: string; content: string }) => `- ${d.title}: ${d.content.slice(0, 200)}...`).join('\n')}` }
+      }
+      return { result: `Knowledge base results for "${input.query}":\n${docs.map((d: { title: string; content: string }) => `### ${d.title}\n${d.content.slice(0, 500)}`).join('\n\n')}` }
+    } catch {
+      return { result: 'Knowledge base search failed. The employee_knowledge table may not exist yet.' }
+    }
+  }
+
   if (toolName === 'WYBERAI_speak') {
     try {
       const res = await fetch(`${baseUrl}/api/ai-employees/voice`, {
@@ -276,6 +390,50 @@ async function handleWyberTool(
     } catch (e) {
       return { result: `Voice generation failed: ${String(e)}` }
     }
+  }
+
+  if (toolName === 'WYBERAI_phone_call') {
+    const blandKey = process.env.BLAND_AI_API_KEY
+    if (!blandKey) {
+      return { result: 'Phone calling requires BLAND_AI_API_KEY. Add it to your environment to enable AI voice calls via bland.ai.' }
+    }
+
+    const action = input.action as string
+    if (action === 'make_call') {
+      if (!input.phone_number || !input.script) return { result: 'phone_number and script are required for make_call' }
+      try {
+        const res = await fetch('https://api.bland.ai/v1/calls', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: blandKey },
+          body: JSON.stringify({
+            phone_number: input.phone_number,
+            task: input.script,
+            max_duration: (input.max_duration as number) || 300,
+            voice: 'maya',
+            wait_for_greeting: true,
+            record: true,
+          }),
+        })
+        const data = await res.json() as { call_id?: string; status?: string }
+        return { result: `Call initiated to ${input.phone_number}. Call ID: ${data.call_id ?? 'unknown'}. Status: ${data.status ?? 'queued'}` }
+      } catch (e) {
+        return { result: `Call failed: ${String(e)}` }
+      }
+    }
+
+    if (action === 'check_status' && input.call_id) {
+      try {
+        const res = await fetch(`https://api.bland.ai/v1/calls/${input.call_id}`, {
+          headers: { Authorization: blandKey },
+        })
+        const data = await res.json() as { status?: string; transcript?: string; duration?: number }
+        return { result: `Call ${input.call_id}: status=${data.status}, duration=${data.duration ?? 0}s. Transcript: ${(data.transcript ?? '').slice(0, 500)}` }
+      } catch (e) {
+        return { result: `Status check failed: ${String(e)}` }
+      }
+    }
+
+    return { result: 'Unknown phone_call action' }
   }
 
   if (toolName === 'WYBERAI_browser') {

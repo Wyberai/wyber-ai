@@ -103,6 +103,8 @@ const NODE_META: Record<WyberNodeType, { color: string; bg: string; label: strin
   transform: { color: '#a855f7', bg: 'rgba(168,85,247,0.08)', label: 'Transform data',   helpText: 'Parse JSON, map fields, filter arrays, or reshape data', Icon: IcoCpu },
   loop:      { color: '#f97316', bg: 'rgba(249,115,22,0.08)', label: 'Loop / iterate',   helpText: 'Repeat steps for each item in a list', Icon: IcoCpu },
   delay:     { color: '#52525b', bg: 'rgba(82,82,91,0.08)',   label: 'Wait / delay',     helpText: 'Pause the flow for a set duration before continuing', Icon: IcoDiamond },
+  subflow:   { color: '#0d9488', bg: 'rgba(13,148,136,0.08)', label: 'Sub-workflow',    helpText: 'Run another saved flow as a reusable module inside this flow', Icon: IcoCpu },
+  parallel:  { color: '#e879f9', bg: 'rgba(232,121,249,0.08)', label: 'Parallel split',  helpText: 'Run multiple branches at the same time, then merge results', Icon: IcoZap },
 }
 
 const STATUS_COLORS = { idle: 'rgba(255,255,255,0.12)', running: '#f59e0b', success: '#22c55e', error: '#ef4444' }
@@ -169,7 +171,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
   )
 }
 
-const NODE_TYPES = { trigger: WyberNode, aiagent: WyberNode, tool: WyberNode, condition: WyberNode, output: WyberNode, error: WyberNode, webhook: WyberNode, transform: WyberNode, loop: WyberNode, delay: WyberNode }
+const NODE_TYPES = { trigger: WyberNode, aiagent: WyberNode, tool: WyberNode, condition: WyberNode, output: WyberNode, error: WyberNode, webhook: WyberNode, transform: WyberNode, loop: WyberNode, delay: WyberNode, subflow: WyberNode, parallel: WyberNode }
 const EDGE_TYPES = { default: WyberEdge, wyber: WyberEdge }
 
 // ─── Config Panel ─────────────────────────────────────────────────────────────
@@ -895,6 +897,53 @@ function ConfigPanel() {
           </div>
         )}
 
+        {nodeType === 'subflow' && (
+          <div>
+            <label style={labelStyle}>Flow ID to run</label>
+            <input
+              value={(node.data.config as Record<string,string>).flow_id || ''}
+              onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), flow_id: e.target.value } })}
+              placeholder="Paste the flow ID from /flows"
+              style={fieldStyle}
+            />
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>The sub-flow runs with this node's input and returns its output to the next step.</div>
+            <label style={{ ...labelStyle, marginTop: 10 }}>Pass input as</label>
+            <select
+              value={(node.data.config as Record<string,string>).input_mode || 'inherit'}
+              onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), input_mode: e.target.value } })}
+              style={fieldStyle}
+            >
+              <option value="inherit">Inherit from previous step</option>
+              <option value="custom">Custom JSON input</option>
+            </select>
+          </div>
+        )}
+
+        {nodeType === 'parallel' && (
+          <div>
+            <label style={labelStyle}>Number of parallel branches</label>
+            <input
+              type="number"
+              min={2}
+              max={5}
+              value={(node.data.config as Record<string,string>).branches || '2'}
+              onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), branches: e.target.value } })}
+              style={{ ...fieldStyle, width: 80 }}
+            />
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>All branches run simultaneously. The flow continues only after every branch finishes.</div>
+            <label style={{ ...labelStyle, marginTop: 10 }}>Merge strategy</label>
+            <select
+              value={(node.data.config as Record<string,string>).merge || 'wait_all'}
+              onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), merge: e.target.value } })}
+              style={fieldStyle}
+            >
+              <option value="wait_all">Wait for all branches</option>
+              <option value="first_success">Use first successful result</option>
+              <option value="merge_array">Merge results into array</option>
+            </select>
+          </div>
+        )}
+
         <div>
           <label style={labelStyle}>Notes (optional)</label>
           <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="Describe what this step does, so you remember later." rows={2} style={{ ...fieldStyle, resize: 'none' }} />
@@ -979,6 +1028,8 @@ const PALETTE: { type: WyberNodeType; description: string }[] = [
   { type: 'condition', description: 'Add a decision' },
   { type: 'delay',    description: 'Wait / pause' },
   { type: 'error',    description: 'Handle errors' },
+  { type: 'subflow',  description: 'Run sub-flow' },
+  { type: 'parallel', description: 'Parallel split' },
   { type: 'output',   description: 'Show the result' },
 ]
 

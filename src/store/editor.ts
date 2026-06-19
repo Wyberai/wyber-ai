@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
-export type Framework = 'react-vite' | 'next' | 'vue' | 'vanilla' | 'react-native';
+export type Framework = 'react-vite' | 'next' | 'vue' | 'svelte' | 'astro' | 'vanilla' | 'react-native';
 
 export interface FileNode {
   path: string;
