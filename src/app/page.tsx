@@ -337,14 +337,14 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
-            Your engineer, your sales team,<br />
+            From idea to live app — in seconds.<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              your entire ops — in one prompt.
+              Then automate everything else.
             </span>
           </h1>
 
           <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 14px' }}>
-            Describe what you want to build or automate. Wyber ships it — web apps, mobile apps, AI agents, workflows, AI employees that work every day, and a GTM engine that fills your pipeline.
+            Build web apps and mobile apps in plain English. Then add AI agents, automated workflows, AI employees who run on a daily schedule, and a GTM engine that fills your pipeline — all from one platform.
           </p>
 
           <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
