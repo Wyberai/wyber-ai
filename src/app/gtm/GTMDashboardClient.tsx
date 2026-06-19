@@ -40,7 +40,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
         {/* Header */}
         <div style={{ marginBottom: 32, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Pillar 6 · GTM</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>GTM Engine</div>
             <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4 }}>
               {hasProfile ? `${profile.company_name} — GTM` : 'Go-to-Market'}
             </h1>

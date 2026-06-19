@@ -8,7 +8,7 @@ export default function Page() {
     <DocsPage
       section="Account & Billing"
       title="Plans & pricing"
-      intro="WyberAi offers a free tier and paid plans. All plans give you access to all six pillars — web apps, mobile apps, AI agents, workflows, AI employees, and the GTM engine."
+      intro="WyberAi offers a free tier and paid plans. All plans give you access to all six products — web apps, mobile apps, AI agents, workflows, AI employees, and the GTM engine."
     >
       <DocSection title="Plan comparison">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
@@ -19,7 +19,7 @@ export default function Page() {
               sub: '/month',
               color: '#0EA5E9',
               credits: '300 credits/month',
-              items: ['300 monthly credits', 'Up to 3 AI Employees', 'All 6 pillars', 'Unlimited projects', 'Email support'],
+              items: ['300 monthly credits', 'Up to 3 AI Employees', 'All 6 products', 'Unlimited projects', 'Email support'],
             },
             {
               name: 'Operator',

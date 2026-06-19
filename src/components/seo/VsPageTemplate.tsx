@@ -134,7 +134,7 @@ export function VsPageTemplate({
             The key difference: Wyber does six things, not one
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
-            {pillarNote} WyberAi is the only no-code platform that covers all six pillars from one workspace.
+            {pillarNote} WyberAi is the only no-code platform that covers all six products from one workspace.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
             {PILLARS.map(p => (

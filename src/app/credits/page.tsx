@@ -58,7 +58,7 @@ export default function CreditsPage() {
 
       <section style={{ padding: 20, borderRadius: 12, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.2)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: '#0EA5E9' }}>How we compare</h3>
-        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>WyberAi Builder gives you <strong style={{ color: '#0EA5E9' }}>300 credits for $99/month</strong> — unlimited projects, all 6 pillars, and up to 3 AI Employees included. Credits work across every product.</p>
+        <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.8 }}>WyberAi Builder gives you <strong style={{ color: '#0EA5E9' }}>300 credits for $99/month</strong> — unlimited projects, all 6 products, and up to 3 AI Employees included. Credits work across every product.</p>
         <p style={{ fontSize: 11, color: '#52525b', marginTop: 12 }}>Monthly credits roll over. Top-up credits never expire. Credits are non-refundable once used.</p>
       </section>
     </div>

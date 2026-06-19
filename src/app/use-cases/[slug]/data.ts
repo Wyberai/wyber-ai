@@ -184,7 +184,7 @@ export const USE_CASES: UseCase[] = [
     pillar: 'web',
     pillarLabel: 'Web Apps',
     pillarColor: '#0EA5E9',
-    tagline: 'The only platform that covers all six pillars: web apps, mobile apps, AI agents, workflows, AI employees, and a full GTM engine.',
+    tagline: 'The only platform that covers all six products: web apps, mobile apps, AI agents, workflows, AI employees, and a full GTM engine.',
     body: [
       'Every other AI app builder does one thing. WyberAi does six: it builds web apps, mobile apps, AI agents, workflow automations, deploys AI employees, and runs your go-to-market — all from the same workspace, all from plain English.',
       'There\'s no learning curve, no template assembly, and no "coming soon" features for what you actually need today. Describe what you want and it\'s built.',
@@ -202,7 +202,7 @@ export const USE_CASES: UseCase[] = [
     ctaHref: '/dashboard',
     faqs: [
       { q: 'What can WyberAi build?', a: 'WyberAi builds web apps (React, full-stack), mobile apps (React Native + Expo), AI agents (autonomous, connected to 250+ tools), and workflow automations — all from plain English.' },
-      { q: 'How is WyberAi different from other AI app builders?', a: 'Every other tool covers one category. Lovable, Bolt, and v0 build web apps only. WyberAi covers all six pillars — including AI Employees and a full GTM engine — from one workspace at one price.' },
+      { q: 'How is WyberAi different from other AI app builders?', a: 'Every other tool covers one category. Lovable, Bolt, and v0 build web apps only. WyberAi covers all six products — including AI Employees and a full GTM engine — from one workspace at one price.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in under 60 seconds. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
       { q: 'What does it cost?', a: 'Plans start at $99/month (Builder: 300 credits, 3 AI Employees). Operator is $249/month (900 credits, 10 AI Employees). Founder is $499/month (2,000 credits, unlimited AI Employees + GTM). Scale is $999/month (5,000 credits, unlimited everything).' },

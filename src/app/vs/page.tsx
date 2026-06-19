@@ -81,7 +81,7 @@ export default function VsIndex() {
             WyberAi vs Every Alternative
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
-            Honest, up-to-date comparisons. WyberAi is the only platform that covers all six pillars — web apps, mobile apps, AI agents, workflows, and AI employees — from one workspace.
+            Honest, up-to-date comparisons. WyberAi is the only platform that covers all six products — web apps, mobile apps, AI agents, workflows, and AI employees — from one workspace.
           </p>
         </header>
 

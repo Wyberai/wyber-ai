@@ -52,12 +52,12 @@ function TypeBadge({ type }: { type?: string }) {
 }
 
 const QUICK_PROMPTS = [
-  'Build a SaaS analytics dashboard with MRR, churn rate, and customer health scores',
-  'Build a CRM with lead pipeline, email sequences, and deal forecasting',
-  'Build a VC portfolio management platform with fund analytics and deal tracking',
-  'Build an HR platform with onboarding tracker, org chart, and performance reviews',
-  'Build a customer support hub with ticket queue, SLA tracking, and escalations',
-  'Build a revenue operations dashboard with pipeline scoring and forecast analytics',
+  'Build a landing page with email waitlist and early access form',
+  'Create a SaaS dashboard with subscription billing and usage metrics',
+  'Build a marketplace where freelancers can list services and get hired',
+  'Create a booking app with calendar, payments, and client management',
+  'Build a mobile app for my food delivery startup',
+  'Create a B2B sales CRM for my early-stage startup',
 ];
 
 // Colors
@@ -210,6 +210,27 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         </div>
       )}
 
+      {/* Mobile bottom nav */}
+      {isMobile && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 56, background: SIDEBAR_BG, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', zIndex: 50 }}>
+          {[
+            { label: 'Home',    href: '/dashboard',   icon: <IconHome /> },
+            { label: 'Build',   href: '/gallery',     icon: <IconTemplates /> },
+            { label: 'Agents',  href: '/agents',      icon: <IconAgents /> },
+            { label: 'GTM',     href: '/gtm',         icon: <IconZap /> },
+          ].map(item => (
+            <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 10, fontWeight: 600 }}>
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
+          <button onClick={() => setSidebarOpen(v => !v)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            More
+          </button>
+        </div>
+      )}
+
       {/* Mobile sidebar backdrop */}
       {isMobile && sidebarOpen && (
         <div onClick={() => setSidebarOpen(false)}
@@ -304,7 +325,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       </aside>
 
       {/* Main */}
-      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', marginTop: isMobile ? 52 : 0, width: isMobile ? '100%' : undefined }}>
+      <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', marginTop: isMobile ? 52 : 0, paddingBottom: isMobile ? 56 : 0, width: isMobile ? '100%' : undefined }}>
 
         {/* Hero / prompt area */}
         <div style={{ position: 'relative', minHeight: isMobile ? 260 : 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '28px 16px 20px' : '40px 24px', overflow: 'hidden' }}>
