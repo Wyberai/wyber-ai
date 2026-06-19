@@ -92,6 +92,18 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'WYBERAI_escalate',
+    description: 'Pause and ask the human for approval before taking an irreversible or high-risk action (e.g. sending emails to many contacts, deleting data, spending money, publishing publicly). Call this BEFORE the action, not after. The run will pause until the user approves or rejects.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        question: { type: 'string', description: 'The specific question or approval request for the human. Be concrete: what exactly will you do, to what, and why.' },
+        context:  { type: 'string', description: 'Relevant context the human needs to decide (e.g. list of recipients, data to be deleted, cost estimate).' },
+      },
+      required: ['question'],
+    },
+  },
+  {
     name: 'WYBERAI_log_kpi',
     description: 'Log a KPI value for this run. ALWAYS call this for every KPI you were given targets for, reporting the actual value you achieved.',
     input_schema: {
@@ -115,6 +127,40 @@ async function handleWyberTool(
   db?: any,
 ): Promise<{ result: string; kpiResult?: KpiResult }> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+
+  if (toolName === 'WYBERAI_escalate' && db && employeeId) {
+    const question = input.question as string
+    const context = (input.context as string) ?? ''
+    // We need runId — passed via employeeId slot; actual runId comes as 6th arg
+    // Insert escalation row
+    const { data: esc, error: escErr } = await db
+      .from('employee_escalations')
+      .insert({ employee_id: employeeId, run_id: (input.__runId as string) ?? employeeId, user_id: userId, question, context })
+      .select('id')
+      .single()
+    if (escErr || !esc) return { result: 'Escalation failed to create — proceeding without approval.' }
+
+    // Poll for up to 10 minutes (every 10 s × 60 = 600s max)
+    const maxWaitMs = 10 * 60 * 1000
+    const pollInterval = 10_000
+    const deadline = Date.now() + maxWaitMs
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, pollInterval))
+      const { data: row } = await db
+        .from('employee_escalations')
+        .select('status, decision')
+        .eq('id', esc.id)
+        .single()
+      if (row?.status === 'approved') {
+        return { result: `APPROVED by human. Decision note: "${row.decision || 'none'}". Proceed.` }
+      }
+      if (row?.status === 'rejected') {
+        return { result: `REJECTED by human. Decision note: "${row.decision || 'none'}". Do NOT proceed with this action — find an alternative or stop.` }
+      }
+    }
+    // Timeout — default to requiring approval before continuing
+    return { result: 'Escalation timed out waiting for human response. Do NOT proceed with the risky action — mark this as pending and stop.' }
+  }
 
   if (toolName === 'WYBERAI_remember' && db && employeeId) {
     const key = input.key as string
@@ -317,7 +363,8 @@ No text outside the JSON.`
           let resultStr: string
 
           if (isWyberTool) {
-            const { result, kpiResult } = await handleWyberTool(tu.name, tu.input as Record<string, unknown>, userId, employee.id, db)
+            const toolInput = { ...(tu.input as Record<string, unknown>), __runId: runId }
+            const { result, kpiResult } = await handleWyberTool(tu.name, toolInput, userId, employee.id, db)
             resultStr = result
             if (kpiResult) kpiResults.push(kpiResult)
           } else {

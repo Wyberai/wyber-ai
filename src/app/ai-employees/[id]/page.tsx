@@ -79,8 +79,33 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'runs' | 'kpis' | 'context'>('runs')
+  const [escalations, setEscalations] = useState<Array<{ id: string; question: string; context: string; created_at: string }>>([])
+  const [resolvingId, setResolvingId] = useState<string | null>(null)
 
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500) }
+
+  const loadEscalations = useCallback(async () => {
+    const res = await fetch('/api/escalations?status=pending')
+    if (res.ok) {
+      const d = await res.json()
+      // filter to this employee
+      setEscalations((d.escalations ?? []).filter((e: { employee_id: string }) => e.employee_id === id))
+    }
+  }, [id])
+
+  const resolveEscalation = async (escId: string, action: 'approved' | 'rejected', decision = '') => {
+    setResolvingId(escId)
+    const res = await fetch(`/api/escalations/${escId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, decision }),
+    })
+    if (res.ok) {
+      showToast(action === 'approved' ? 'Approved — employee will continue' : 'Rejected — employee will stop')
+      setEscalations(prev => prev.filter(e => e.id !== escId))
+    }
+    setResolvingId(null)
+  }
 
   const load = useCallback(async () => {
     const [empRes, kpiRes] = await Promise.all([
@@ -90,9 +115,17 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
     if (empRes.ok) { const d = await empRes.json(); setEmployee(d.employee) }
     if (kpiRes.ok) { const d = await kpiRes.json(); setKpiLogs(d.logs ?? []) }
     setLoading(false)
-  }, [id])
+    loadEscalations()
+  }, [id, loadEscalations])
 
   useEffect(() => { load() }, [load])
+
+  // Poll escalations every 15s while running
+  useEffect(() => {
+    if (!running) return
+    const t = setInterval(loadEscalations, 15_000)
+    return () => clearInterval(t)
+  }, [running, loadEscalations])
 
   const handleRun = async () => {
     setRunning(true)
@@ -154,6 +187,47 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
       </nav>
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '36px 32px 80px' }}>
+
+        {/* Human-in-the-loop escalation banners */}
+        {escalations.length > 0 && (
+          <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {escalations.map(esc => (
+              <div key={esc.id} style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 12, padding: '14px 18px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: AMBER, marginBottom: 3 }}>Waiting for your approval</div>
+                    <div style={{ fontSize: 13, color: '#e4e4e7', lineHeight: 1.5, marginBottom: esc.context ? 8 : 12 }}>{esc.question}</div>
+                    {esc.context && (
+                      <div style={{ fontSize: 12, color: '#71717a', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '8px 10px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', marginBottom: 12 }}>{esc.context}</div>
+                    )}
+                    <div style={{ fontSize: 10, color: '#52525b', marginBottom: 10 }}>{new Date(esc.created_at).toLocaleString()}</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        disabled={resolvingId === esc.id}
+                        onClick={() => resolveEscalation(esc.id, 'approved')}
+                        style={{ padding: '6px 16px', borderRadius: 7, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)', color: GREEN, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        {resolvingId === esc.id ? '…' : '✓ Approve'}
+                      </button>
+                      <button
+                        disabled={resolvingId === esc.id}
+                        onClick={() => {
+                          const note = window.prompt('Reason for rejecting (optional):') ?? ''
+                          resolveEscalation(esc.id, 'rejected', note)
+                        }}
+                        style={{ padding: '6px 16px', borderRadius: 7, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: RED, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        ✗ Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:20, marginBottom:28, flexWrap:'wrap' }}>
           <div style={{ display:'flex', alignItems:'center', gap:16 }}>

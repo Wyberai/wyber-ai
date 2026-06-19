@@ -39,6 +39,7 @@ export default async function FlowPage({ params }: Props) {
       projectId={id}
       projectName={flow.name || 'Untitled Flow'}
       canvasType="workflow"
+      webhookUrl={flow.webhook_url ?? null}
       initialProfile={{
         credits: profile?.credits ?? 0,
         plan: profile?.plan ?? 'free',

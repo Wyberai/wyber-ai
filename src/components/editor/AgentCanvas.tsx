@@ -730,19 +730,25 @@ function ConfigPanel() {
           <>
             <div>
               <label style={labelStyle}>Webhook URL</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  readOnly
-                  value={(node.data.config as Record<string,string>).url || `https://wyberai.com/api/webhook/${node.id}`}
-                  style={{ ...fieldStyle, flex: 1, fontFamily: 'monospace', fontSize: 10, color: '#a1a1aa' }}
-                />
-                <button
-                  onClick={() => navigator.clipboard.writeText((node.data.config as Record<string,string>).url || `https://wyberai.com/api/webhook/${node.id}`)}
-                  style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(6,182,212,0.3)', background: 'rgba(6,182,212,0.08)', color: '#06b6d4', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
-                >
-                  Copy
-                </button>
-              </div>
+              {_canvasWebhookUrl ? (
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : 'https://wyberai.com'}${_canvasWebhookUrl}`}
+                    style={{ ...fieldStyle, flex: 1, fontFamily: 'monospace', fontSize: 10, color: '#a1a1aa' }}
+                  />
+                  <button
+                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}${_canvasWebhookUrl}`)}
+                    style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(6,182,212,0.3)', background: 'rgba(6,182,212,0.08)', color: '#06b6d4', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
+                  >
+                    Copy
+                  </button>
+                </div>
+              ) : (
+                <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 11, color: '#f59e0b', lineHeight: 1.5 }}>
+                  Save this flow to generate your unique webhook URL.
+                </div>
+              )}
               <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>Send a POST request to this URL to trigger the flow. The request body is available as <code style={{ color: '#06b6d4' }}>{'{{webhook.body}}'}</code> in later steps.</div>
             </div>
             <div>
@@ -976,6 +982,10 @@ const PALETTE: { type: WyberNodeType; description: string }[] = [
   { type: 'output',   description: 'Show the result' },
 ]
 
+// Module-level slot so ConfigPanel (sibling component) can read the live webhook URL
+// set by AgentCanvas on mount/update without prop-drilling through ReactFlow internals
+let _canvasWebhookUrl: string | null = null
+
 // ─── Main Canvas ──────────────────────────────────────────────────────────────
 
 interface Props {
@@ -986,9 +996,10 @@ interface Props {
   /** 'project' → saves to /api/projects/[id]/canvas (projects table)
    *  'flow'    → saves to /api/flows/[id] (flows table, default for /flows/[id] route) */
   saveTarget?: 'project' | 'flow'
+  webhookUrl?: string | null
 }
 
-export function AgentCanvas({ projectId, projectName, canvasType, initialProfile, saveTarget = 'flow' }: Props) {
+export function AgentCanvas({ projectId, projectName, canvasType, initialProfile, saveTarget = 'flow', webhookUrl: initialWebhookUrl }: Props) {
   const router = useRouter()
   const [saved, setSaved] = useState(false)
   const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project')
@@ -1001,6 +1012,11 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   const [toolBrowseList, setToolBrowseList] = useState<ComposioToolkitMeta[]>([])
   const [toolBrowseLoading, setToolBrowseLoading] = useState(false)
   const [showRunPanel, setShowRunPanel] = useState(false)
+  const [canvasWebhookUrl, setCanvasWebhookUrl] = useState<string | null>(initialWebhookUrl ?? null)
+
+  // Expose webhook URL for the ConfigPanel (module-level so sub-component can read it)
+  useEffect(() => { _canvasWebhookUrl = canvasWebhookUrl }, [canvasWebhookUrl])
+  useEffect(() => { return () => { _canvasWebhookUrl = null } }, [])
 
   useEffect(() => {
     if (!showToolBrowse || toolBrowseList.length > 0) return
@@ -1070,11 +1086,19 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
     const url = saveTarget === 'project'
       ? `/api/projects/${projectId}/canvas`
       : `/api/flows/${projectId}`
-    await fetch(url, {
+    const saveRes = await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nodes, edges }),
     })
+    // If a webhook node is present, re-fetch the flow to get the generated webhook_url
+    if (saveTarget === 'flow' && nodes.some(n => n.type === 'webhook')) {
+      try {
+        const flowData = await fetch(`/api/flows/${projectId}`).then(r => r.json())
+        if (flowData?.flow?.webhook_url) setCanvasWebhookUrl(flowData.flow.webhook_url)
+      } catch { /* non-critical */ }
+    }
+    void saveRes
 
     // If the trigger node has run_mode='schedule', register the schedule so
     // the cron can pick it up. The flow ID becomes the agent_id prefixed with
