@@ -196,16 +196,22 @@ export async function POST(req: NextRequest) {
           Logistics: '#f59e0b', Events: '#a855f7', Creative: '#e879f9',
         }
 
-        await admin.from('prebuilt_apps').insert({
+        const { error: insertErr } = await admin.from('prebuilt_apps').insert({
           name: appName,
           category: cat,
           description: `${appName} — complete ready-to-use ${cat.toLowerCase()} application.`,
           keywords,
           preview_color: colors[cat] ?? '#0EA5E9',
           valid: true,
+          files: {},
+          use_count: 0,
         })
-        created.push(`${cat}: ${appName}`)
-        total++
+        if (insertErr) {
+          created.push(`[ERROR] ${cat}: ${appName} — ${insertErr.message}`)
+        } else {
+          created.push(`${cat}: ${appName}`)
+          total++
+        }
       }
     }
     return NextResponse.json({ type: 'web', created: total, apps: created, total_possible: Object.values(WEB_CATEGORIES).flat().length })
@@ -226,16 +232,22 @@ export async function POST(req: NextRequest) {
         const keywords = appName.toLowerCase().split(/[\s&/,]+/).filter(w => w.length > 2)
         keywords.push('mobile', 'react-native', cat.toLowerCase())
 
-        await admin.from('prebuilt_apps').insert({
+        const { error: insertErr } = await admin.from('prebuilt_apps').insert({
           name: `${appName} (Mobile)`,
           category: `Mobile-${cat}`,
           description: `${appName} — React Native + Expo mobile app for ${cat.toLowerCase()}.`,
           keywords,
           preview_color: '#10b981',
           valid: true,
+          files: {},
+          use_count: 0,
         })
-        created.push(`Mobile-${cat}: ${appName}`)
-        total++
+        if (insertErr) {
+          created.push(`[ERROR] Mobile-${cat}: ${appName} — ${insertErr.message}`)
+        } else {
+          created.push(`Mobile-${cat}: ${appName}`)
+          total++
+        }
       }
     }
     return NextResponse.json({ type: 'mobile', created: total, apps: created, total_possible: Object.values(MOBILE_CATEGORIES).flat().length })
