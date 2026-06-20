@@ -77,7 +77,7 @@ export function PreviewPanel() {
       if (data.url) {
         setHtml(data.url + (data.url.includes('?') ? '&' : '?') + 't=' + Date.now())
         setError(null)
-        if (isFirstBuild.current) {
+        if (isFirstBuild.current && Object.keys(files).length > 3) {
           isFirstBuild.current = false
           setConfettiTrigger(c => c + 1)
         }

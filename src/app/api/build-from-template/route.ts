@@ -140,7 +140,8 @@ export async function POST(req: NextRequest) {
         first_prompt: `Build a ${template.name}: ${template.description || template.name}`,
       }).select('id').single()
       if (projErr || !project) return NextResponse.json({ error: projErr?.message || 'Failed to create project' }, { status: 500 })
-      return NextResponse.json({ projectId: project.id, autoGenerate: true })
+      const prompt = `Build a ${template.name}: ${template.description || template.name}`
+      return NextResponse.json({ projectId: project.id, prompt })
     }
 
     // 1. Normalize paths into a proper Vite layout
