@@ -23,7 +23,7 @@ function WindowChrome({ title }: { title: string }) {
   );
 }
 
-// ─── Per-pillar mockups ─────────────────────────────────────────────────────────
+// ─── Per-product mockups ────────────────────────────────────────────────────────
 function WebAppMockup() {
   return (
     <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'monospace', fontSize: 11 }}>
@@ -184,7 +184,7 @@ function GTMMockup() {
   );
 }
 
-// ─── Pillar config ──────────────────────────────────────────────────────────────
+// ─── Product config ─────────────────────────────────────────────────────────────
 const PILLARS = [
   {
     key: 'web',
@@ -193,7 +193,7 @@ const PILLARS = [
     accent: BRAND,
     heading: 'Describe it.\nIt builds.',
     body: 'Type what you want. Wyber generates production-ready React code, provisions Supabase, and deploys to Vercel — in under 30 seconds.',
-    bullets: ['Full-stack React + Supabase', 'Auto-deploy to Vercel', 'GitHub push on every save'],
+    bullets: ['500+ templates · React, Vue, Svelte, Astro', 'Self-healing preview — errors fix themselves', 'Team collaboration · Figma import · Cmd+K'],
     cta: 'Build a web app →',
     href: '/dashboard?new=app',
     mockup: <WebAppMockup />,
@@ -205,7 +205,7 @@ const PILLARS = [
     accent: '#f97316',
     heading: 'Describe it.\nShip to iOS.',
     body: 'Generate a real React Native app with Expo, get a live preview, and export a ready-to-publish project — one prompt. No Xcode knowledge required.',
-    bullets: ['React Native + Expo', 'Live QR preview on device', 'Export IPA / APK via EAS Build'],
+    bullets: ['React Native + Expo · camera, GPS, biometrics', 'Push notifications · RevenueCat in-app purchases', 'App Store submission guide · OTA updates'],
     cta: 'Build a mobile app →',
     href: '/dashboard?new=mobile',
     mockup: <MobileMockup />,
@@ -217,7 +217,7 @@ const PILLARS = [
     accent: '#a855f7',
     heading: 'Pick one.\nIt executes.',
     body: '5,000 pre-built agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included.',
-    bullets: ['5,000 pre-built agents', 'Real integrations — not mock APIs', 'Full run audit log'],
+    bullets: ['5,000 pre-built agents with persistent memory', 'Browser control · voice calls · 250+ tools', 'Real-time trace logs · multi-agent coordination'],
     cta: 'Browse agents →',
     href: '/agents',
     mockup: <AgentMockup />,
@@ -229,7 +229,7 @@ const PILLARS = [
     accent: '#22c55e',
     heading: 'Draw it.\nIt runs.',
     body: 'Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code, no YAML.',
-    bullets: ['Visual drag-and-drop builder', 'AI steps + conditional branches', 'Scheduled or event-triggered'],
+    bullets: ['100+ templates · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · 15 starter automations'],
     cta: 'Build a workflow →',
     href: '/flows',
     mockup: <WorkflowMockup />,
@@ -241,7 +241,7 @@ const PILLARS = [
     accent: '#38bdf8',
     heading: 'Hire one.\nIt runs on autopilot.',
     body: '100 pre-built roles — the equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
-    bullets: ['100 roles across 12 departments', 'Runs daily, weekly, or hourly — you choose', 'KPI tracking + email digest after every run'],
+    bullets: ['100 roles · browser control · voice output · phone calls', 'Slack notifications · agent-to-agent delegation', 'Human-in-the-loop escalation · KPI dashboards'],
     cta: 'Browse 100 roles →',
     href: '/employees',
     mockup: <EmployeeMockup />,
@@ -253,7 +253,7 @@ const PILLARS = [
     accent: '#10b981',
     heading: 'Define your ICP.\nWyber fills your pipeline.',
     body: 'Describe who you sell to. Wyber finds matching leads, enriches them with verified emails and signals, and launches a multi-step sequence across email, call, and LinkedIn — all from one canvas.',
-    bullets: ['ICP-driven lead discovery via Apollo', '10 battle-tested outreach sequences', 'Visual campaign canvas — drag, connect, launch'],
+    bullets: ['Intent signals · waterfall enrichment · lead scoring', 'A/B testing · email warmup · CRM sync', 'Meeting booking · AI personalization · visitor tracking'],
     cta: 'Open GTM Engine →',
     href: '/gtm',
     mockup: <GTMMockup />,
@@ -351,7 +351,7 @@ export default function HomePage() {
             Starts at $99/mo · No engineers needed · Cancel anytime
           </p>
 
-          {/* Six pillar pills */}
+          {/* Six product pills */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
             {PILLARS.map((p, i) => (
               <button key={p.key} onClick={() => { setActivePillar(i); document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); }}
@@ -373,11 +373,11 @@ export default function HomePage() {
           {/* Stats — balanced across products */}
           <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { value: '118', label: 'App templates' },
+              { value: '500+', label: 'App templates' },
               { value: '5,000+', label: 'AI Agents' },
+              { value: '100+', label: 'Workflow templates' },
               { value: '100', label: 'AI Employee roles' },
               { value: '10', label: 'GTM sequences' },
-              { value: '30s', label: 'Avg build time' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{s.value}</div>
@@ -388,7 +388,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── FIVE PILLARS SHOWCASE (tab switcher) ────────────────────────────── */}
+      {/* ── SIX PRODUCTS SHOWCASE (tab switcher) ─────────────────────────── */}
       <section id="showcase" style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 

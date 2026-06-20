@@ -26,7 +26,7 @@ const CONNECTORS = [
   { name:'Paddle', icon:'🏓', color:'#0FA46A', cat:'Payments' },
   { name:'OpenAI', icon:'✦', color:'#10A37F', cat:'AI' },
   { name:'Anthropic', icon:'◎', color:'#D4A574', cat:'AI' },
-  { name:'ElevenLabs', icon:'🎙', color:'#9333EA', cat:'AI' },
+  { name:'ElevenLabs', icon:'🎙', color:'#9333EA', cat:'AI', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
   { name:'Perplexity', icon:'🔎', color:'#20B2AA', cat:'AI' },
   { name:'Replicate', icon:'◈', color:'#374151', cat:'AI' },
   { name:'GitHub', icon:'⌥', color:'#24292E', cat:'Dev' },
@@ -49,15 +49,21 @@ export default function ConnectorsPage() {
         <p style={{ fontSize:15, color:'var(--text2)', maxWidth:520, lineHeight:1.75, marginBottom:8 }}>Add any connector inside the IDE in one click. Your API keys are encrypted and never exposed in generated code.</p>
         <p style={{ fontSize:13, color:'var(--text3)', marginBottom:40 }}>{CONNECTORS.length} connectors · more added weekly</p>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(170px,1fr))', gap:8, marginBottom:48 }}>
-          {CONNECTORS.map(c=>(
-            <div key={c.name} className="wy-card" style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:10 }}>
-              <div style={{ width:32, height:32, borderRadius:8, background:['#24292E','#374151','#1B1B1B'].includes(c.color) ? 'var(--bg3)' : c.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.icon}</div>
-              <div>
-                <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', letterSpacing:'-0.01em' }}>{c.name}</div>
-                <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>{c.cat}</div>
-              </div>
-            </div>
-          ))}
+          {CONNECTORS.map(c=>{
+            const inner = (
+              <>
+                <div style={{ width:32, height:32, borderRadius:8, background:['#24292E','#374151','#1B1B1B'].includes(c.color) ? 'var(--bg3)' : c.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.icon}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', letterSpacing:'-0.01em' }}>{c.name}</div>
+                  <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>{c.cat}</div>
+                </div>
+              </>
+            )
+            const style = { padding:'14px 16px', display:'flex', alignItems:'center', gap:10 } as const
+            return (c as any).url
+              ? <a key={c.name} href={(c as any).url} target="_blank" rel="noopener noreferrer" className="wy-card" style={{ ...style, textDecoration:'none', color:'inherit' }}>{inner}</a>
+              : <div key={c.name} className="wy-card" style={style}>{inner}</div>
+          })}
         </div>
         <div style={{ padding:'28px 32px', borderRadius:16, background:'var(--sky3)', border:'1px solid rgba(14,165,233,0.2)', display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
           <div>
