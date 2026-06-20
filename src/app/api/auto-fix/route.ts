@@ -27,15 +27,31 @@ export async function POST(req: NextRequest) {
     .map(([path, content]) => `--- ${path} ---\n${(content as string).slice(0, 3000)}`)
     .join('\n\n')
 
-  const prompt = `A React app has a build/runtime error. Fix it and return ONLY the corrected file(s).
+  // Detect error type for better fix guidance
+  const isRuntime = error.toLowerCase().includes('runtime') || error.includes('is not defined') || error.includes('Cannot read') || error.includes('is not a function') || error.includes('undefined')
+  const isSyntax = error.includes('SyntaxError') || error.includes('Unexpected token') || error.includes('Parse error')
+  const isImport = error.includes('Could not resolve') || error.includes('Module not found') || error.includes('Cannot find module') || error.includes('is not exported')
+  const isType = error.includes('TypeError') || error.includes('is not assignable') || error.includes('Property') && error.includes('does not exist')
+
+  const errorType = isRuntime ? 'RUNTIME' : isSyntax ? 'SYNTAX' : isImport ? 'IMPORT' : isType ? 'TYPE' : 'BUILD'
+
+  const prompt = `A React app has a ${errorType} error. Fix it and return ONLY the corrected file(s).
 
 ERROR:
 ${error.slice(0, 1000)}
 
-${fileName ? `The error is most likely in: ${fileName}` : ''}
+ERROR TYPE: ${errorType}
+${fileName ? `Most likely in: ${fileName}` : ''}
 
 FILES:
 ${fileList.slice(0, 12000)}
+
+FIX STRATEGY (based on error type):
+${isImport ? '- Add the missing import or remove the unused one. Check if the module name is spelled correctly.' : ''}
+${isRuntime ? '- A variable, function, or property is undefined at runtime. Add null checks, default values, or fix the reference.' : ''}
+${isSyntax ? '- Fix the syntax error — missing bracket, comma, semicolon, or malformed JSX.' : ''}
+${isType ? '- Fix the type mismatch — wrong prop type, missing property, or incorrect function signature.' : ''}
+${!isImport && !isRuntime && !isSyntax && !isType ? '- Analyze the error message carefully and fix the root cause.' : ''}
 
 RULES:
 - Return ONLY the files you changed, using this exact format for each:
@@ -44,11 +60,8 @@ RULES:
 </file>
 - Fix the root cause, not just the symptom
 - Do NOT add comments explaining the fix
-- Do NOT change any working functionality
-- If the error is a missing import, add it
-- If the error is a type error, fix the type
-- If the error is a syntax error, fix the syntax
-- Keep all existing styling and logic intact
+- Do NOT change any working functionality or styling
+- Output the COMPLETE file, not a partial diff
 - Return ONLY <file> blocks, no prose`
 
   try {

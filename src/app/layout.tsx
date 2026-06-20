@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/lib/theme';
 import { CookieBanner } from '@/components/shared/CookieBanner';
 import { WyberChatbot } from '@/components/shared/WyberChatbot';
 import { CommandPalette } from '@/components/shared/CommandPalette';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
 import Script from 'next/script'
 import { Suspense } from 'react'
@@ -65,9 +66,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <PostHogProvider>
           <ThemeProvider>
-            <Suspense>
-              {children}
-            </Suspense>
+            <ErrorBoundary fallbackMessage="WyberAI hit an unexpected error">
+              <Suspense>
+                {children}
+              </Suspense>
+            </ErrorBoundary>
           </ThemeProvider>
           <CookieBanner />
           <CommandPalette />

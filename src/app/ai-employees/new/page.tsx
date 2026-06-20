@@ -68,17 +68,19 @@ function NewEmployeePage() {
     setSaving(true)
     setError(null)
     try {
-      const res = await fetch('/api/ai-employees', {
+      const { resilientFetch, friendlyError } = await import('@/lib/error-resilience')
+      const res = await resilientFetch('/api/ai-employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim(), role: role.trim(), emoji, instructions: instructions.trim(), tools, schedule_type: scheduleType, schedule_hour: scheduleHour, schedule_day: scheduleDay, template_id: templateId }),
-      })
+      }, { maxRetries: 1, onRetry: () => setError('Retrying...') })
       const d = await res.json()
-      if (!res.ok) { setError(d.error ?? 'Failed to create employee'); setSaving(false); return }
-      // Always go through onboarding after creation
+      if (!res.ok) { setError(friendlyError(d.error ?? 'Failed to create employee')); setSaving(false); return }
       router.push(`/ai-employees/${d.employee.id}/onboard`)
-    } catch {
-      setError('Network error — please try again.')
+    } catch (e) {
+      const { friendlyError, reportError } = await import('@/lib/error-resilience')
+      setError(friendlyError(String(e)))
+      reportError('ai_employee_create', String(e))
       setSaving(false)
     }
   }

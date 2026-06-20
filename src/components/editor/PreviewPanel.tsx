@@ -115,10 +115,27 @@ export function PreviewPanel() {
   useEffect(() => {
     if (iframeRef.current && html) {
       iframeRef.current.src = html
+      // Inject runtime error capture after iframe loads
+      const iframe = iframeRef.current
+      const injectErrorCapture = () => {
+        try {
+          const iframeWindow = iframe.contentWindow
+          if (!iframeWindow) return
+          iframeWindow.onerror = (msg, source, lineno) => {
+            window.postMessage({ type: 'wyber-runtime-error', message: String(msg), source: source?.split('/').pop(), lineno }, '*')
+            return true
+          }
+          iframeWindow.onunhandledrejection = (e: PromiseRejectionEvent) => {
+            window.postMessage({ type: 'wyber-runtime-error', message: String(e.reason) }, '*')
+          }
+        } catch { /* cross-origin iframe — can't inject, which is fine */ }
+      }
+      iframe.addEventListener('load', injectErrorCapture, { once: true })
+      return () => iframe.removeEventListener('load', injectErrorCapture)
     }
   }, [html])
 
-  // Listen for element-selected messages from the preview iframe
+  // Listen for messages from the preview iframe (element selection + runtime errors)
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== 'object') return
@@ -130,10 +147,18 @@ export function PreviewPanel() {
           classes: e.data.classes || '',
         })
       }
+      // Capture runtime errors from inside the iframe
+      if (e.data.type === 'wyber-runtime-error') {
+        const runtimeErr = `Runtime error: ${e.data.message || 'Unknown error'}${e.data.source ? ` in ${e.data.source}` : ''}${e.data.lineno ? `:${e.data.lineno}` : ''}`
+        console.warn('[Preview] Runtime error caught:', runtimeErr)
+        if (!error && !fixing && !isGenerating) {
+          setError(runtimeErr)
+        }
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [])
+  }, [error, fixing, isGenerating])
 
   // Tell the iframe when edit mode toggles
   const toggleEditMode = () => {
@@ -154,7 +179,7 @@ export function PreviewPanel() {
   }, [html, editMode])
 
   const [healToast, setHealToast] = useState<string | null>(null)
-  const healAttempted = useRef<string | null>(null)
+  const healAttempted = useRef<Record<string, number>>({})
   const { setFiles } = useEditorStore()
 
   const tryToFix = useCallback(async () => {
@@ -172,7 +197,11 @@ export function PreviewPanel() {
       const res = await fetch('/api/auto-fix', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: error.slice(0, 1000), files: fileMap }),
+        body: JSON.stringify({
+          error: error.slice(0, 1000),
+          files: fileMap,
+          fileName: error.match(/in (src\/\S+)/)?.[1] || error.match(/(\S+\.tsx?)/)?.[1],
+        }),
       })
       const data = await res.json() as { fixed: boolean; files?: Record<string, string>; filesChanged?: string[] }
 
@@ -202,17 +231,19 @@ export function PreviewPanel() {
     setTimeout(() => setFixing(false), 3000)
   }, [error, fixing, files, setFiles])
 
-  // Auto-trigger self-heal on build errors (once per unique error)
+  // Auto-trigger self-heal on errors (up to 3 attempts per unique error)
   useEffect(() => {
     if (error && !building && !isGenerating && !fixing) {
-      if (healAttempted.current === error) return
-      healAttempted.current = error
-      const t = setTimeout(() => tryToFix(), 2000)
+      const attempts = healAttempted.current[error] ?? 0
+      if (attempts >= 3) return
+      healAttempted.current[error] = attempts + 1
+      const delay = attempts === 0 ? 1500 : 3000
+      const t = setTimeout(() => tryToFix(), delay)
       return () => clearTimeout(t)
     }
   }, [error, building, isGenerating, fixing, tryToFix])
 
-  useEffect(() => { healAttempted.current = null }, [files])
+  useEffect(() => { healAttempted.current = {} }, [files])
 
   const sendVisualEdit = () => {
     if (!selectedEl || !editInstruction.trim()) return

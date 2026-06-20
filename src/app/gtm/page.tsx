@@ -49,18 +49,24 @@ export default async function GTMPage() {
     )
   }
 
-  const [profileRes, campaignsRes, leadsRes] = await Promise.all([
-    supabase.from('gtm_profiles').select('*').eq('user_id', user.id).single(),
-    supabase.from('gtm_campaigns').select('id,name,status,type,stats,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
-    supabase.from('gtm_leads').select('id,status', { count: 'exact', head: false }).eq('user_id', user.id).limit(1),
-  ])
+  let profile = null, campaigns: any[] = [], totalLeads = 0
+  try {
+    const [profileRes, campaignsRes, leadsRes] = await Promise.all([
+      supabase.from('gtm_profiles').select('*').eq('user_id', user.id).single(),
+      supabase.from('gtm_campaigns').select('id,name,status,type,stats,created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
+      supabase.from('gtm_leads').select('id,status', { count: 'exact', head: false }).eq('user_id', user.id).limit(1),
+    ])
+    profile = profileRes.data
+    campaigns = campaignsRes.data || []
+    totalLeads = leadsRes.count || 0
+  } catch { /* graceful fallback — show empty dashboard */ }
 
   return (
     <GTMDashboardClient
       user={user}
-      profile={profileRes.data}
-      campaigns={campaignsRes.data || []}
-      totalLeads={leadsRes.count || 0}
+      profile={profile}
+      campaigns={campaigns}
+      totalLeads={totalLeads}
     />
   )
 }
