@@ -85,19 +85,27 @@ export async function POST(req: NextRequest) {
 
         const text = response.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
 
-        const fileRegex = /<file\s+path="([^"]+)">([\s\S]*?)<\/file>/g
         const files: Record<string, { path: string; content: string; language: string }> = {}
+        const langMap: Record<string, string> = { tsx: 'typescript', jsx: 'javascript', ts: 'typescript', js: 'javascript', css: 'css', html: 'html', json: 'json' }
+
+        // Try <file path="...">...</file> format first
+        const fileRegex = /<file\s+path="([^"]+)">([\s\S]*?)<\/file>/g
         let match
         while ((match = fileRegex.exec(text)) !== null) {
-          const path = match[1]
-          const content = match[2].trim()
-          const ext = path.split('.').pop() ?? ''
-          const langMap: Record<string, string> = { tsx: 'typescript', jsx: 'javascript', ts: 'typescript', js: 'javascript', css: 'css', html: 'html', json: 'json' }
-          files[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+          const p = match[1]; const ext = p.split('.').pop() ?? ''
+          files[p] = { path: p, content: match[2].trim(), language: langMap[ext] ?? 'plaintext' }
+        }
+
+        // Fallback: if no <file> blocks, treat entire output as App.tsx
+        if (Object.keys(files).length === 0) {
+          let code = text.replace(/```(?:tsx|jsx|typescript|javascript)?\n?/g, '').replace(/```\n?/g, '').trim()
+          if (code.includes('export default') || code.includes('function App')) {
+            files['src/App.tsx'] = { path: 'src/App.tsx', content: code, language: 'typescript' }
+          }
         }
 
         if (Object.keys(files).length < 1) {
-          results.push(`[SKIP] ${app.name}: no files parsed`)
+          results.push(`[SKIP] ${app.name}: no usable code in response`)
           continue
         }
 
