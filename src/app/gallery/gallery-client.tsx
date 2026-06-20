@@ -72,7 +72,7 @@ export default function GalleryPage() {
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 14 }}>App Gallery</div>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14, lineHeight: 1.1 }}>
-            {apps.length > 0 ? `${apps.length}+` : '60+'} apps you can build<br />in under a minute
+            {apps.length > 0 ? `${apps.length}+` : '500+'} apps you can build<br />in under a minute
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 460, margin: '0 auto' }}>
             Click any app to start building it instantly — no credits needed for prebuilt templates.

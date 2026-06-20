@@ -403,7 +403,7 @@ function CopyButton({ text }: { text: string }) {
 
 // ── Certificate card ──────────────────────────────────────────────────────────
 function CertificateCard({ name, date }: { name: string; date: string }) {
-  const shareText = encodeURIComponent(`I just earned my Wyber Certified — All Five Pillars certificate 🎓\n\nI can now build web apps, mobile apps, AI agents, workflows, and AI employees in plain English with @wyberai.\n\nwww.wyberai.com/learn`)
+  const shareText = encodeURIComponent(`I just earned my Wyber Certified — All Six Products certificate 🎓\n\nI can now build web apps, mobile apps, AI agents, workflows, and AI employees in plain English with @wyberai.\n\nwww.wyberai.com/learn`)
   const twitterUrl = `https://twitter.com/intent/tweet?text=${shareText}`
   const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://wyberai.com/learn')}&summary=${shareText}`
   const ogUrl = `/api/og/certificate?name=${encodeURIComponent(name)}&date=${encodeURIComponent(date)}`
@@ -436,7 +436,7 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
       }}>
         Wyber Certified
       </h2>
-      <div style={{ fontSize: 14, color: 'var(--text2, #8b8b9a)', marginBottom: 4 }}>All Five Pillars</div>
+      <div style={{ fontSize: 14, color: 'var(--text2, #8b8b9a)', marginBottom: 4 }}>All Six Products</div>
       <div style={{ fontSize: 13, color: 'var(--text3, #52526a)', marginBottom: 6 }}>Web Apps · Mobile · AI Agents · Workflows · AI Employees</div>
 
       <div style={{ margin: '20px auto', padding: '12px 24px', background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', display: 'inline-block' }}>

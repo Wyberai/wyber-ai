@@ -74,8 +74,8 @@ export async function GET(req: NextRequest) {
           <div style={{ fontSize: 48, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, textAlign: 'center', marginBottom: 6 }}>
             Wyber Certified
           </div>
-          <div style={{ fontSize: 20, color: '#8b8b9a', marginBottom: 4 }}>All Five Pillars</div>
-          <div style={{ fontSize: 14, color: '#52526a', marginBottom: 32 }}>Web Apps · Mobile · AI Agents · Workflows · AI Employees</div>
+          <div style={{ fontSize: 20, color: '#8b8b9a', marginBottom: 4 }}>All Six Products</div>
+          <div style={{ fontSize: 14, color: '#52526a', marginBottom: 32 }}>Web Apps · Mobile · AI Agents · Workflows · AI Employees · GTM Engine</div>
 
           {/* Name box */}
           <div style={{
