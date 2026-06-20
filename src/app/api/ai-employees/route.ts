@@ -45,6 +45,15 @@ export async function POST(req: NextRequest) {
 
   const db = createServiceClient()
 
+  // Ensure profile exists (FK constraint: ai_employees.user_id → profiles.id)
+  await db.from('profiles').upsert({
+    id: user.id,
+    email: user.email,
+    full_name: user.email?.split('@')[0] ?? 'User',
+    credits: 50,
+    plan: 'free',
+  }, { onConflict: 'id', ignoreDuplicates: true })
+
   // If template_id provided, fetch template to pre-fill kpis
   let templateKpis = null
   if (body.template_id) {

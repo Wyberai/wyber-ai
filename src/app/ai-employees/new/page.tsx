@@ -75,7 +75,7 @@ function NewEmployeePage() {
         body: JSON.stringify({ name: name.trim(), role: role.trim(), emoji, instructions: instructions.trim(), tools, schedule_type: scheduleType, schedule_hour: scheduleHour, schedule_day: scheduleDay, template_id: templateId }),
       }, { maxRetries: 1, onRetry: () => setError('Retrying...') })
       const d = await res.json()
-      if (!res.ok) { setError(friendlyError(d.error ?? 'Failed to create employee')); setSaving(false); return }
+      if (!res.ok) { setError(d.error ?? 'Failed to create employee'); setSaving(false); return }
       router.push(`/ai-employees/${d.employee.id}/onboard`)
     } catch (e) {
       const { friendlyError, reportError } = await import('@/lib/error-resilience')

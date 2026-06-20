@@ -290,11 +290,18 @@ export default function FlowsPage() {
   const [creating, setCreating] = useState<string | null>(null)
   const router = useRouter()
 
+  const [flowError, setFlowError] = useState<string | null>(null)
   useEffect(() => {
     fetch('/api/flows').then(r => {
-      if (r.status === 401) { router.push('/login'); return r.json() }
+      if (r.status === 401) { router.push('/login'); return null }
       return r.json()
-    }).then(d => { if (d) { setFlows(d.flows || []); setLoading(false) } })
+    }).then(d => {
+      if (d) {
+        if (d.error) { setFlowError(typeof d.error === 'string' ? d.error : 'Failed to load flows'); setLoading(false); return }
+        setFlows(d.flows || [])
+        setLoading(false)
+      }
+    }).catch(() => { setFlowError('Network error loading flows'); setLoading(false) })
   }, [router])
 
   const createFlow = async () => {
@@ -350,6 +357,13 @@ export default function FlowsPage() {
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 32 }}>
+
+        {/* Error banner */}
+        {flowError && (
+          <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 13 }}>
+            {flowError}
+          </div>
+        )}
 
         {/* My flows tab */}
         {tab === 'my-flows' && (
