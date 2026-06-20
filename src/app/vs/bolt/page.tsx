@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
   description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, AI agents, and workflows Bolt doesn\'t offer. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/bolt' },
-  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, six pillars. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
+  openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, six products. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 
 const ROWS = [
@@ -18,21 +18,21 @@ const ROWS = [
   { feature: 'Mobile app builder',      wyber: '✓ React Native',    other: '✗ Web only',        winner: 'wyber' as const },
   { feature: 'AI agent builder',        wyber: '✓ Built-in',        other: '✗',                 winner: 'wyber' as const },
   { feature: 'Workflow automation',     wyber: '✓ Built-in',        other: '✗',                 winner: 'wyber' as const },
-  { feature: 'Prebuilt app library',    wyber: '118 at 0 cost',    other: 'None',              winner: 'wyber' as const },
+  { feature: 'Prebuilt app library',    wyber: '500+ at 0 cost',    other: 'None',              winner: 'wyber' as const },
   { feature: 'Credit estimate upfront', wyber: '✓',                 other: '✗',                 winner: 'wyber' as const },
   { feature: 'Visual click-to-edit',    wyber: '✓',                 other: 'Limited',           winner: 'wyber' as const },
   { feature: 'Supabase integration',    wyber: '✓ Auto',            other: '✓ Manual config',   winner: 'tie'   as const },
   { feature: 'GitHub sync',             wyber: '✓',                 other: '✓',                 winner: 'tie'   as const },
   { feature: 'Vercel deployment',       wyber: '✓',                 other: '✓',                 winner: 'tie'   as const },
   { feature: 'Non-technical users',     wyber: '✓ Guided',          other: 'Developer-focused', winner: 'wyber' as const },
-  { feature: 'Team collaboration',      wyber: 'Coming soon',       other: '✓ Teams plan',      winner: 'other' as const },
+  { feature: 'Team collaboration',      wyber: '✓ Built-in',       other: '✓ Teams plan',      winner: 'other' as const },
   { feature: 'India/APAC pricing',      wyber: '✓ INR soon',        other: 'USD only',          winner: 'wyber' as const },
 ]
 
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Bolt.new?',
-    a: 'WyberAi Builder is $99/month for 300 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also covers 6 pillars vs Bolt\'s web-only focus.',
+    a: 'WyberAi Builder is $99/month for 300 fixed credits — you always know the cost before generating. Bolt uses a token-based model ($25/month) where cost depends on prompt length, making it harder to predict spend. Wyber also covers 6 products vs Bolt\'s web-only focus.',
   },
   {
     q: 'Does Bolt.new have a mobile app builder?',
@@ -59,7 +59,7 @@ export default function VsBolt() {
       competitorName="Bolt.new"
       competitorUrl="https://bolt.new"
       tagline="Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface — and mobile apps, agents, and workflows Bolt doesn't cover."
-      blurb="Honest comparison of WyberAi vs Bolt.new: pricing model, credits, features, and the four-pillar difference. Verified June 2026."
+      blurb="Honest comparison of WyberAi vs Bolt.new: pricing model, credits, features, and the six-product difference. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Bolt.new builds web apps only."

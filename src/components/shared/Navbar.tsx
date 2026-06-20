@@ -12,7 +12,7 @@ const RESOURCES = [
   {
     heading: 'Learn',
     items: [
-      { label: 'Learning Paths', sub: 'Five tracks from zero to shipped', href: '/learn' },
+      { label: 'Learning Paths', sub: 'Six tracks from zero to shipped', href: '/learn' },
       { label: 'Documentation', sub: 'Guides, APIs, and references', href: '/docs' },
     ],
   },

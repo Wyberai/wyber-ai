@@ -536,7 +536,7 @@ export default function LearnPage() {
         ? [...new Set([...prev.completedTracks, track.id])]
         : prev.completedTracks.filter(t => t !== track.id || !already)
 
-      // Check if ALL five tracks are complete
+      // Check if ALL six tracks are complete
       const allDone = TRACKS.every(t => completedTracks.includes(t.id))
       const certificateAt = allDone && !prev.certificateAt
         ? new Date().toISOString()
@@ -579,7 +579,7 @@ export default function LearnPage() {
             Learn to build with Wyber
           </h1>
           <p style={{ fontSize: 'clamp(14px,2vw,18px)', color: 'var(--text2, #8b8b9a)', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
-            Five tracks. Copy a prompt, open the builder, mark it done. Finish all five and earn your Wyber Certified certificate.
+            Six tracks. Copy a prompt, open the builder, mark it done. Finish all five and earn your Wyber Certified certificate.
           </p>
 
           {/* Overall progress bar */}
@@ -780,7 +780,7 @@ export default function LearnPage() {
                   <div style={{ fontSize: 13, color: 'var(--text2, #8b8b9a)' }}>
                     {progress.completedTracks.length < 5
                       ? `${5 - progress.completedTracks.length} track${5 - progress.completedTracks.length !== 1 ? 's' : ''} to go for your certificate.`
-                      : 'All five tracks done — you earned the certificate!'}
+                      : 'All six tracks done — you earned the certificate!'}
                   </div>
                 </div>
               </div>
@@ -815,7 +815,7 @@ export default function LearnPage() {
               fontSize: 'clamp(16px,2.5vw,22px)', fontWeight: 800, letterSpacing: '-0.02em',
               color: 'var(--text, #f0f0f5)', margin: '0 0 8px',
             }}>
-              Complete all five tracks to earn your certificate
+              Complete all six tracks to earn your certificate
             </h3>
             <p style={{ fontSize: 13, color: 'var(--text2, #8b8b9a)', margin: 0 }}>
               {TRACKS.filter(t => !progress.completedTracks.includes(t.id)).map(t => t.title).join(', ')} remaining

@@ -3,9 +3,9 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Why WyberAi charges $18.99 instead of $25 — WyberAi Blog',
-  description: 'Our prebuilt app library serves 60%+ of prompts at zero API cost. That changes the math entirely.',
-  robots: { index: false, follow: false },
+  title: 'How WyberAi keeps pricing transparent — WyberAi Blog',
+  description: 'Our 500+ prebuilt app library serves 60%+ of prompts at zero API cost. Here\'s how our credit system works.',
+  robots: { index: true, follow: true },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', violet: '#8b5cf6' }
@@ -24,12 +24,12 @@ export default function Post() {
           <span style={{ fontSize: 12, color: s.dim }}>May 30, 2026 · 4 min read</span>
         </div>
         <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
-          Why WyberAi charges $18.99 instead of $25 — the math behind our pricing
+          How WyberAi keeps pricing transparent — the math behind our credits
         </h1>
         <div style={{ fontSize: 16, color: s.muted, lineHeight: 1.75 }}>
-          <p>The common assumption is that AI app builders are expensive because every generation hits an LLM API. At $3–5 per million input tokens, that adds up fast. If that were the whole story, $25/month for 250 credits would actually be thin margins.</p>
+          <p>AI app builders are assumed expensive because every generation hits an LLM API. At $3–15 per million tokens, that adds up fast. If that were the whole story, flat credit pricing would be impossible.</p>
 
-          <p>But that's not how WyberAi works.</p>
+          <p>Here's how WyberAi makes it work.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The prebuilt library changes the math</h2>
           <p>WyberAi maintains a library of 500+ prebuilt app templates — CRM, invoicing, HR, analytics, e-commerce, booking, and more. When a user prompt matches a template closely (which happens roughly 60% of the time), we serve the template directly and personalize it with a much smaller, cheaper generation call.</p>
@@ -42,15 +42,16 @@ export default function Post() {
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The comparison</h2>
           <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${s.border}`, margin: '20px 0' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', background: 'rgba(255,255,255,0.04)', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: s.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              <span>Feature</span><span>WyberAi Pro</span><span>Lovable Pro</span>
+              <span>Feature</span><span>WyberAi Builder</span><span>Lovable Starter</span>
             </div>
             {[
-              ['Price', '$18.99/month', '$25/month'],
-              ['Credits', '~400/month', '~250/month'],
-              ['Cost per credit', '$0.049', '$0.100'],
+              ['Price', '$99/month', '$25/month'],
+              ['Credits', '300/month', '~250/month'],
+              ['Products included', '6 (web, mobile, agents, workflows, employees, GTM)', '1 (web only)'],
+              ['Templates', '500+ at 0 credits', 'Limited'],
               ['Top-up expiry', 'Never', 'Monthly'],
               ['Free tier', '50 credits/month', '5/day (~30/month)'],
-              ['Error fixes', 'Always free', 'Cost credits'],
+              ['Error fixes', 'Self-healing (always free)', 'Cost credits'],
             ].map(([feat, wyber, lovable], i) => (
               <div key={feat} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', padding: '11px 16px', fontSize: 13, borderTop: `1px solid ${s.border}`, background: i % 2 === 0 ? s.card : 'transparent' }}>
                 <span style={{ fontWeight: 500, color: s.text }}>{feat}</span>

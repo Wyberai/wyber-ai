@@ -19,7 +19,7 @@ const ROWS = [
   { feature: 'AI agent builder',        wyber: '✓ Built-in',     other: '✗',               winner: 'wyber' as const },
   { feature: 'Workflow automation',     wyber: '✓ Built-in',     other: '✗',               winner: 'wyber' as const },
   { feature: 'AI Employees',           wyber: '✓ 100 roles',    other: '✗',               winner: 'wyber' as const },
-  { feature: 'Prebuilt app library',    wyber: '118 at 0 cost', other: 'Templates',       winner: 'wyber' as const },
+  { feature: 'Prebuilt app library',    wyber: '500+ at 0 cost', other: 'Templates',       winner: 'wyber' as const },
   { feature: 'Visual click-to-edit',    wyber: '✓',              other: '✓',               winner: 'tie'   as const },
   { feature: 'GitHub sync',             wyber: '✓',              other: '✓',               winner: 'tie'   as const },
   { feature: 'Supabase integration',    wyber: '✓ Auto',         other: '✓ Auto',          winner: 'tie'   as const },
