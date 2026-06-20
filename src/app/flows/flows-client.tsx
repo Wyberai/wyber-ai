@@ -385,39 +385,60 @@ export default function FlowsPage() {
 
         {/* Templates tab */}
         {tab === 'templates' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCatFilter(cat)}
-                  style={{ padding: '5px 14px', borderRadius: 99, border: `1px solid ${catFilter === cat ? SKY : BORDER}`, background: catFilter === cat ? 'rgba(14,165,233,0.1)' : 'transparent', color: catFilter === cat ? SKY : MUTED, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
-                >{cat}</button>
-              ))}
+          <div style={{ display: 'flex', gap: 24 }}>
+            {/* Sidebar */}
+            <div style={{ width: 180, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Category</div>
+              {CATEGORIES.map(cat => {
+                const count = cat === 'All' ? TEMPLATES.length : TEMPLATES.filter(t => t.category === cat).length
+                const catColors: Record<string, string> = { Sales: '#10b981', Support: '#f59e0b', Marketing: '#e879f9', Ops: '#0EA5E9', Engineering: '#8b5cf6', Product: '#06b6d4', Finance: '#22c55e', Productivity: '#f97316' }
+                const color = catColors[cat] || SKY
+                return (
+                  <button key={cat} onClick={() => setCatFilter(cat)}
+                    style={{ padding: '7px 12px', borderRadius: 7, border: 'none', textAlign: 'left', background: catFilter === cat ? color + '12' : 'transparent', color: catFilter === cat ? color : '#71717a', fontSize: 12, fontWeight: catFilter === cat ? 600 : 400, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.1s' }}>
+                    <span>{cat}</span>
+                    <span style={{ fontSize: 10, color: '#3f3f46' }}>{count}</span>
+                  </button>
+                )
+              })}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 16 }}>
-              {filtered.map(tpl => (
-                <div key={tpl.name} style={{ background: SURFACE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <span style={{ fontSize: 24, lineHeight: 1 }}>{tpl.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f5', marginBottom: 3 }}>{tpl.name}</div>
-                      <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{tpl.description}</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 'auto' }}>
-                    <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, background: 'rgba(255,255,255,0.04)', color: MUTED, fontWeight: 600 }}>{tpl.category}</span>
-                    <span style={{ fontSize: 11, color: '#3f3f46' }}>{tpl.nodes.length} steps</span>
-                    <button
-                      onClick={() => createFromTemplate(tpl)}
-                      disabled={creating === tpl.name}
-                      style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 7, border: 'none', background: SKY, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+            {/* Cards */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: MUTED, marginBottom: 16 }}>Showing {filtered.length} templates</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
+                {filtered.map(tpl => {
+                  const catColors: Record<string, string> = { Sales: '#10b981', Support: '#f59e0b', Marketing: '#e879f9', Ops: '#0EA5E9', Engineering: '#8b5cf6', Product: '#06b6d4', Finance: '#22c55e', Productivity: '#f97316' }
+                  const color = catColors[tpl.category] || SKY
+                  return (
+                    <div key={tpl.name} style={{
+                      background: `linear-gradient(135deg, ${color}08 0%, ${SURFACE} 60%)`,
+                      border: `1px solid ${color}20`,
+                      borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 10,
+                      transition: 'all 0.2s',
+                    }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = color + '50'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 24px ${color}12` }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = color + '20'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
                     >
-                      {creating === tpl.name ? 'Creating…' : 'Use template →'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{tpl.icon}</div>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{tpl.category}</span>
+                      </div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f5', lineHeight: 1.3 }}>{tpl.name}</div>
+                      <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5, flex: 1 }}>{tpl.description}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                        <span style={{ fontSize: 11, color: '#3f3f46' }}>{tpl.nodes.length} steps</span>
+                        <button
+                          onClick={() => createFromTemplate(tpl)}
+                          disabled={creating === tpl.name}
+                          style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: color, color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+                        >
+                          {creating === tpl.name ? 'Creating…' : 'Use template →'}
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}

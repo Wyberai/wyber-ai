@@ -58,62 +58,72 @@ export default function EmployeesGalleryPage() {
         </div>
       </div>
 
-      {/* Grid by department */}
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px 80px' }}>
-        {departments.map(dept => (
-          <section key={dept} id={dept.toLowerCase()} style={{ marginBottom: 60 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-              <div style={{ width: 3, height: 22, borderRadius: 2, background: DEPT_COLOR[dept] ?? '#0EA5E9' }} />
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '-0.02em' }}>{dept}</h2>
-              <span style={{ fontSize: 11, color: '#3f3f46', background: '#111115', border: '1px solid #1e1e26', borderRadius: 6, padding: '2px 8px' }}>{byDept[dept]?.length} roles</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: 12 }}>
-              {byDept[dept]?.map(t => {
-                const col = DEPT_COLOR[t.department] ?? '#0EA5E9'
-                return (
-                  <Link key={t.slug} href={`/employees/${t.slug}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ background: '#0f1014', border: `1px solid #1e1e26`, borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 11, height: '100%', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}>
-                      {/* accent stripe */}
-                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: col, opacity: 0.5 }} />
+      {/* Sidebar + grid layout */}
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 32px 80px', display: 'flex', gap: 28 }}>
+        {/* Sidebar */}
+        <div style={{ width: 180, flexShrink: 0, position: 'sticky', top: 72, alignSelf: 'flex-start' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Departments</div>
+          <div style={{ fontSize: 12, color: '#52525b', marginBottom: 12 }}>{EMPLOYEE_TEMPLATES.length} roles total</div>
+          {departments.map(d => (
+            <a key={d} href={`#${d.toLowerCase()}`} className="emp-side-link"
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 12px', borderRadius: 7, textDecoration: 'none', color: '#71717a', fontSize: 12, transition: 'all 0.1s' }}>
+              <span>{d}</span>
+              <span style={{ fontSize: 10, color: '#3f3f46' }}>{byDept[d]?.length}</span>
+            </a>
+          ))}
+        </div>
 
-                      {/* Header */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                          <div style={{ width: 38, height: 38, borderRadius: 9, background: `${col}12`, border: `1px solid ${col}22`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>{t.emoji}</div>
-                          <div>
+        {/* Main content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {departments.map(dept => {
+            const col = DEPT_COLOR[dept] ?? '#0EA5E9'
+            return (
+              <section key={dept} id={dept.toLowerCase()} style={{ marginBottom: 48 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <div style={{ width: 3, height: 20, borderRadius: 2, background: col }} />
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>{dept}</h2>
+                  <span style={{ fontSize: 10, color: '#3f3f46' }}>{byDept[dept]?.length} roles</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                  {byDept[dept]?.map(t => (
+                    <Link key={t.slug} href={`/employees/${t.slug}`} style={{ textDecoration: 'none' }}>
+                      <div style={{
+                        background: `linear-gradient(135deg, ${col}08 0%, #0f1014 60%)`,
+                        border: `1px solid ${col}20`,
+                        borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10,
+                        height: '100%', cursor: 'pointer', transition: 'all 0.2s',
+                      }} className="emp-card">
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 8, background: col + '18', border: `1px solid ${col}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{t.emoji}</div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', lineHeight: 1.3 }}>{t.name}</div>
-                            <div style={{ fontSize: 10, color: col, marginTop: 2, fontWeight: 600, letterSpacing: '0.03em' }}>{t.department}</div>
                           </div>
+                          {t.popular && <span style={{ fontSize: 8, fontWeight: 700, padding: '2px 6px', borderRadius: 8, background: col + '15', color: col, letterSpacing: '0.04em', textTransform: 'uppercase', flexShrink: 0 }}>Popular</span>}
                         </div>
-                        {t.popular && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: 'rgba(14,165,233,0.1)', color: '#0EA5E9', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0, marginTop: 2 }}>Popular</span>}
+                        <p style={{ fontSize: 11, color: '#71717a', lineHeight: 1.55, margin: 0, flex: 1 }}>{t.tagline}</p>
+                        {t.default_tools?.length > 0 && (
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {(t.default_tools as string[]).slice(0, 3).map((tool: string) => (
+                              <span key={tool} style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: col + '0d', border: `1px solid ${col}22`, color: col, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>{tool}</span>
+                            ))}
+                            {t.default_tools.length > 3 && <span style={{ fontSize: 8, color: '#3f3f46', padding: '2px 4px' }}>+{t.default_tools.length - 3}</span>}
+                          </div>
+                        )}
+                        <div style={{ fontSize: 11, color: col, fontWeight: 600, marginTop: 'auto' }}>Hire this employee →</div>
                       </div>
-
-                      {/* Tagline */}
-                      <p style={{ fontSize: 11.5, color: '#71717a', lineHeight: 1.55, margin: 0 }}>{t.tagline}</p>
-
-                      {/* Tool chips */}
-                      {t.default_tools?.length > 0 && (
-                        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                          {(t.default_tools as string[]).slice(0, 3).map((tool: string) => (
-                            <span key={tool} style={{ fontSize: 9, fontWeight: 600, padding: '2px 7px', borderRadius: 5, background: `${col}0d`, border: `1px solid ${col}22`, color: col, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>{tool}</span>
-                          ))}
-                          {t.default_tools.length > 3 && (
-                            <span style={{ fontSize: 9, color: '#3f3f46', padding: '2px 7px' }}>+{t.default_tools.length - 3}</span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* CTA */}
-                      <div style={{ fontSize: 11, color: col, fontWeight: 600, marginTop: 'auto', paddingTop: 4 }}>Hire this employee →</div>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        ))}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )
+          })}
+        </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        .emp-side-link:hover { background: rgba(14,165,233,0.08); color: #0EA5E9 !important; }
+        .emp-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.08); }
+      `}</style>
     </div>
   )
 }
