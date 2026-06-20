@@ -2,60 +2,117 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 
+export const maxDuration = 300
+
 function getAdmin() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    { auth: { autoRefreshToken: false, persistSession: false } },
   )
 }
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+const SYSTEM = `You generate complete, self-contained React apps. Output ONLY <file> blocks — no prose.
+
+Rules:
+- Dark theme: bg #09090b, cards #111113, border rgba(255,255,255,0.08), text #fafafa, accent #0EA5E9
+- Inline styles only (style={{ }}) — no CSS files, no Tailwind
+- import { useState } from 'react' — no other imports
+- Realistic mock data (8-15 records with names, dates, numbers)
+- export default function App() as the main component
+- Every file must be complete and syntactically valid JSX
+- Max 250 lines per file
+- Use proper spacing, hierarchy, and visual polish
+
+Required files:
+<file path="src/App.tsx">...complete app with all components inline...</file>
+<file path="src/index.css">*, *::before, *::after { box-sizing: border-box; } body { margin: 0; }</file>
+
+Output ONLY these <file> blocks. Nothing else.`
+
 export async function POST(req: NextRequest) {
   try {
     const authKey = req.headers.get('x-admin-key')
-    const adminSecret = process.env.ADMIN_SECRET_KEY
-    if (!adminSecret || authKey !== adminSecret) {
+    if (authKey !== process.env.ADMIN_SECRET_KEY) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const { offset = 0 } = await req.json().catch(() => ({}))
+
+    const body = await req.json().catch(() => ({})) as { offset?: number; limit?: number; ids?: string[] }
     const admin = getAdmin()
 
-    const { data: apps } = await admin
-      .from('prebuilt_apps')
-      .select('id, name, category, description, keywords')
-      .range(offset, offset + 9)
+    let apps: any[]
+    if (body.ids?.length) {
+      const { data } = await admin.from('prebuilt_apps').select('id, name, category, description').in('id', body.ids)
+      apps = data ?? []
+    } else {
+      const offset = body.offset ?? 0
+      const limit = Math.min(body.limit ?? 5, 10)
+      const { data } = await admin
+        .from('prebuilt_apps')
+        .select('id, name, category, description')
+        .eq('valid', true)
+        .or('files.eq.{},files.is.null')
+        .range(offset, offset + limit - 1)
+      apps = data ?? []
+    }
 
-    if (!apps?.length) return NextResponse.json({ done: true, generated: 0 })
+    if (!apps.length) return NextResponse.json({ done: true, generated: 0 })
 
     let count = 0
+    const results: string[] = []
+
     for (const app of apps) {
       try {
         const response = await anthropic.messages.create({
-          model: 'claude-haiku-4-5-20251001',
-          max_tokens: 1500,
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          system: SYSTEM,
           messages: [{
             role: 'user',
-            content: `Generate a complete self-contained React component for a "${app.name}" app.
-Category: ${app.category}. Description: ${app.description}.
-Rules: inline styles only, dark theme (#09090b bg, #111113 cards, #fafafa text, #0EA5E9 accent), realistic mock data, under 200 lines, no imports except useState from react.
-Start directly with: import { useState } from 'react'`
-          }]
+            content: `Build a "${app.name}" app. Category: ${app.category}. ${app.description || ''}`,
+          }],
         })
-        const code = response.content[0].type === 'text'
-          ? response.content[0].text.replace(/```jsx?\n?/g, '').replace(/```\n?/g, '').trim()
-          : ''
-        await admin.from('prebuilt_apps').update({ files: { code, generated: true } }).eq('id', app.id)
+
+        const text = response.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+
+        const fileRegex = /<file\s+path="([^"]+)">([\s\S]*?)<\/file>/g
+        const files: Record<string, { path: string; content: string; language: string }> = {}
+        let match
+        while ((match = fileRegex.exec(text)) !== null) {
+          const path = match[1]
+          const content = match[2].trim()
+          const ext = path.split('.').pop() ?? ''
+          const langMap: Record<string, string> = { tsx: 'typescript', jsx: 'javascript', ts: 'typescript', js: 'javascript', css: 'css', html: 'html', json: 'json' }
+          files[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+        }
+
+        if (Object.keys(files).length < 1) {
+          results.push(`[SKIP] ${app.name}: no files parsed`)
+          continue
+        }
+
+        // Ensure index.css exists
+        if (!files['src/index.css']) {
+          files['src/index.css'] = { path: 'src/index.css', content: '*, *::before, *::after { box-sizing: border-box; }\nbody { margin: 0; padding: 0; }', language: 'css' }
+        }
+
+        await admin.from('prebuilt_apps').update({ files }).eq('id', app.id)
+        results.push(`[OK] ${app.name}: ${Object.keys(files).length} files`)
         count++
-        console.log(`Generated: ${app.name}`)
       } catch (err) {
-        console.error(`Failed ${app.name}:`, String(err))
+        results.push(`[ERROR] ${app.name}: ${String(err).slice(0, 100)}`)
       }
     }
-    return NextResponse.json({ generated: count, offset, next: offset + 10, remaining: 100 - (offset + 10) })
+
+    return NextResponse.json({
+      generated: count,
+      total: apps.length,
+      results,
+      hasMore: apps.length >= (body.limit ?? 5),
+    })
   } catch (err) {
-    console.error('Error:', String(err))
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
