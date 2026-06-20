@@ -109,7 +109,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'Can I add payments (Stripe)?', a: 'You can ask WyberAi to add a Stripe checkout flow in chat. It generates the frontend components. For backend webhook handling, you\'d need to add a few lines of server code or use Supabase Edge Functions.' },
       { q: 'Who owns the code?', a: 'You do. Export the full source code anytime. It\'s standard React + Vite — take it to any developer, any hosting provider, or your own GitHub repo.' },
       { q: 'How do I handle my own domain?', a: 'Connect a custom domain in Settings → Domains. Or use your free yourapp.wyberai.app subdomain while you\'re in development.' },
-      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $99/month (Builder: 300 credits/month). Web and mobile builds cost 15 credits; edits cost 4 credits. Done-for-you builds start at $199.' },
+      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 150 credits/month). Web and mobile builds cost 10 credits; edits cost 3 credits. Done-for-you builds start at $199.' },
     ],
   },
   {
@@ -205,7 +205,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'How is WyberAi different from other AI app builders?', a: 'Every other tool covers one category. Lovable, Bolt, and v0 build web apps only. WyberAi covers all six products — including AI Employees and a full GTM engine — from one workspace at one price.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in under 60 seconds. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-      { q: 'What does it cost?', a: 'Plans start at $99/month (Builder: 300 credits, 3 AI Employees). Operator is $249/month (900 credits, 10 AI Employees). Founder is $499/month (2,000 credits, unlimited AI Employees + GTM). Scale is $999/month (5,000 credits, unlimited everything).' },
+      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Growth is $399/month (4,000 credits). Scale is $799/month (10,000 credits). Every plan unlocks all features — credits are the only currency.' },
     ],
   },
 ]

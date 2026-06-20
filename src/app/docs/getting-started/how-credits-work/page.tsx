@@ -20,12 +20,14 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Web app generation (any size)', '1'],
-              ['Mobile app generation', '1'],
-              ['Agent canvas generation', '1'],
-              ['Agent run', '5'],
-              ['Workflow run', '3'],
-              ['Follow-up prompt / iteration', '1'],
+              ['Web/mobile app build', '10'],
+              ['App edit', '3'],
+              ['AI Agent run', '5'],
+              ['AI Employee run', '5'],
+              ['Workflow run', '2'],
+              ['GTM campaign action', '3'],
+              ['Lead enrichment', '1'],
+              ['Image generation', '3'],
               ['Prebuilt gallery template', '0 — always free'],
               ['Preview, browse, navigate', '0 — always free'],
             ].map(([action, cost], i) => (
@@ -40,7 +42,7 @@ export default function Page() {
 
       <DocSection title="Free credits & plans">
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-          Free accounts get <strong>15 credits on signup</strong> plus <strong>3 daily bonus credits</strong> that refill every 24 hours — up to 50 credits per month. No credit card required.
+          Free accounts get <strong>15 credits on signup</strong> plus <strong>3 daily bonus credits</strong> that refill every 24 hours — up to ~50 credits per month. No credit card required. Paid plans start at $29/month (Starter: 150 credits).
         </p>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginTop: 8 }}>
           Paid plans give you more monthly credits and a larger daily bonus. See the <Link href="/docs/account-billing/plans" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Plans & pricing</Link> page for a full comparison.

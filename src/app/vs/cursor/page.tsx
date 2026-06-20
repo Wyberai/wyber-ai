@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const ROWS = [
   { feature: 'Primary use case',        wyber: 'No-code app builder',      other: 'AI-assisted code editor', winner: 'tie'   as const },
   { feature: 'Target user',             wyber: 'Non-technical founders',   other: 'Software developers',     winner: 'tie'   as const },
-  { feature: 'Base price',              wyber: '$99/mo (Builder)',          other: '$20/mo (Pro)',             winner: 'other' as const },
+  { feature: 'Base price',              wyber: '$29/mo (Starter)',          other: '$20/mo (Pro)',             winner: 'tie'   as const },
   { feature: 'Coding required',         wyber: 'None',                     other: '✓ Full IDE',               winner: 'wyber' as const },
   { feature: 'App generation speed',    wyber: '< 60 seconds',            other: 'Hours (code-assisted)',    winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗ (editor only)',          winner: 'wyber' as const },

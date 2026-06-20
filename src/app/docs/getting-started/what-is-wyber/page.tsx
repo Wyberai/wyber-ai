@@ -10,7 +10,7 @@ export default function Page() {
       title="What is WyberAi?"
       intro="WyberAi is a plain-English product builder. Describe what you want to build and Wyber generates a working app — web, mobile, agent, or workflow — with no code required."
     >
-      <DocSection title="The six pillars">
+      <DocSection title="The six products">
         <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 16 }}>
           Wyber covers six distinct capabilities — all from one platform, one credit balance:
         </p>

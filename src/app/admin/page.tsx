@@ -75,7 +75,7 @@ export default async function AdminPage() {
       creditUsage: creditUsage ?? [],
       planBreakdown,
       genByDay,
-      estimatedMRR: ((planBreakdown['builder'] ?? 0) * 99 + (planBreakdown['operator'] ?? 0) * 249 + (planBreakdown['founder'] ?? 0) * 499 + (planBreakdown['scale'] ?? 0) * 999),
+      estimatedMRR: ((planBreakdown['starter'] ?? 0) * 29 + (planBreakdown['builder'] ?? 0) * 79 + (planBreakdown['pro'] ?? 0) * 199 + (planBreakdown['growth'] ?? 0) * 399 + (planBreakdown['scale'] ?? 0) * 799),
     }} />
   );
 }

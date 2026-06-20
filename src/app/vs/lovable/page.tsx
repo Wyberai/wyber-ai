@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 }
 
 const ROWS = [
-  { feature: 'Starter price',           wyber: '$99/mo (Builder)',         other: '$25/mo',          winner: 'other' as const },
-  { feature: 'Starter credits/mo',      wyber: '300',            other: '~250',            winner: 'wyber' as const },
+  { feature: 'Starter price',           wyber: '$29/mo (Starter)',         other: '$25/mo',          winner: 'tie'   as const },
+  { feature: 'Starter credits/mo',      wyber: '150',            other: '~250',            winner: 'other' as const },
   { feature: 'Credit rollovers',        wyber: '✓',              other: '✓',               winner: 'tie'   as const },
   { feature: 'Top-up credits',          wyber: 'All plans',      other: 'Pro+ only',       winner: 'wyber' as const },
   { feature: 'Top-up expiry',           wyber: 'Never',          other: '12 months',       winner: 'wyber' as const },
@@ -32,7 +32,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Lovable?',
-    a: 'WyberAi Builder is $99/month for 300 credits vs Lovable\'s $25/month for ~250 credits. WyberAi costs more but covers 6 products including AI Employees, mobile apps, agents, and workflows that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
+    a: 'WyberAi Starter is $29/month for 150 credits vs Lovable\'s $25/month for ~250 credits. WyberAi is comparably priced but covers 6 products including AI Employees, mobile apps, agents, and workflows that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
   },
   {
     q: 'Can WyberAi build mobile apps? Lovable can\'t.',

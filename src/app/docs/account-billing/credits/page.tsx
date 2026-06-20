@@ -20,11 +20,14 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Web app generation', '1'],
-              ['Mobile app generation', '1'],
-              ['Agent canvas generation', '1'],
-              ['Agent run', '5'],
-              ['Workflow / flow run', '3'],
+              ['Web/mobile app build', '10'],
+              ['App edit', '3'],
+              ['AI Agent run', '5'],
+              ['AI Employee run', '5'],
+              ['Workflow run', '2'],
+              ['GTM campaign action', '3'],
+              ['Lead enrichment', '1'],
+              ['Image generation', '3'],
               ['Prebuilt template (gallery)', '0 — always free'],
             ].map(([action, cost], i) => (
               <tr key={action} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
@@ -54,10 +57,11 @@ export default function Page() {
           <tbody>
             {[
               ['Free', '15 on signup', '3/day', '~50'],
-              ['Builder ($99/mo)', '300', '—', '300'],
-              ['Operator ($249/mo)', '900', '—', '900'],
-              ['Founder ($499/mo)', '2,000', '—', '2,000'],
-              ['Scale ($999/mo)', '5,000', '—', '5,000'],
+              ['Starter ($29/mo)', '150', '—', '150'],
+              ['Builder ($79/mo)', '500', '—', '500'],
+              ['Pro ($199/mo)', '1,500', '—', '1,500'],
+              ['Growth ($399/mo)', '4,000', '—', '4,000'],
+              ['Scale ($799/mo)', '10,000', '—', '10,000'],
             ].map(([plan, base, daily, max], i) => (
               <tr key={plan} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
                 <td style={{ padding: '10px 12px', color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>{plan}</td>

@@ -45,8 +45,8 @@ export default function Post() {
               <span>Feature</span><span>WyberAi Builder</span><span>Lovable Starter</span>
             </div>
             {[
-              ['Price', '$99/month', '$25/month'],
-              ['Credits', '300/month', '~250/month'],
+              ['Price', '$29/month (Starter)', '$25/month'],
+              ['Credits', '150/month', '~250/month'],
               ['Products included', '6 (web, mobile, agents, workflows, employees, GTM)', '1 (web only)'],
               ['Templates', '500+ at 0 credits', 'Limited'],
               ['Top-up expiry', 'Never', 'Monthly'],
