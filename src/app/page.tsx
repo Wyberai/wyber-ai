@@ -348,7 +348,7 @@ export default function HomePage() {
           </p>
 
           <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
-            Starts at $99/mo · No engineers needed · Cancel anytime
+            Starts at $29/mo · No engineers needed · Cancel anytime
           </p>
 
           {/* Six product pills */}
@@ -467,20 +467,21 @@ export default function HomePage() {
           {/* Plans — forced 4-column row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 48 }}>
             {[
-              { name: 'Builder',  price: '$99',  period: '/mo', seats: '3 AI Employees',         credits: '300 credits',   color: BRAND,     highlight: false },
-              { name: 'Operator', price: '$249', period: '/mo', seats: '10 AI Employees',         credits: '900 credits',   color: BRAND,     highlight: false },
-              { name: 'Founder',  price: '$499', period: '/mo', seats: 'Unlimited AI Employees + full GTM', credits: '2,000 credits', color: '#10b981', highlight: true  },
-              { name: 'Scale',    price: '$999', period: '/mo', seats: 'Unlimited everything',    credits: '5,000 credits', color: '#8b5cf6', highlight: false },
+              { name: 'Starter',  price: '$29',  credits: '150',    color: '#22c55e', highlight: false },
+              { name: 'Builder',  price: '$79',  credits: '500',    color: BRAND,     highlight: false, badge: 'MOST POPULAR' },
+              { name: 'Pro',      price: '$199', credits: '1,500',  color: '#8b5cf6', highlight: true,  badge: 'BEST VALUE' },
+              { name: 'Growth',   price: '$399', credits: '4,000',  color: '#f59e0b', highlight: false },
+              { name: 'Scale',    price: '$799', credits: '10,000', color: '#f97316', highlight: false },
             ].map(p => (
               <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(160deg,#0d1a26,#0d1218)' : '#111113', border: `1px solid ${p.highlight ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '24px 20px', position: 'relative' }}>
-                {p.highlight && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: BRAND, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>MOST POPULAR</div>}
+                {(p as any).badge && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: p.highlight ? BRAND : '#8b5cf6', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{(p as any).badge}</div>}
                 <div style={{ fontSize: 12, fontWeight: 700, color: p.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{p.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, justifyContent: 'center', marginBottom: 14 }}>
                   <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, color: '#fafafa' }}>{p.price}</span>
-                  <span style={{ fontSize: 12, color: '#52525b' }}>{p.period}</span>
+                  <span style={{ fontSize: 12, color: '#52525b' }}>/mo</span>
                 </div>
-                <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 4 }}>{p.seats}</div>
-                <div style={{ fontSize: 12, color: '#52525b' }}>{p.credits}</div>
+                <div style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>{p.credits} credits</div>
+                <div style={{ fontSize: 11, color: '#52525b', marginTop: 3 }}>All features unlocked</div>
               </div>
             ))}
           </div>
@@ -542,7 +543,7 @@ export default function HomePage() {
               View pricing →
             </Link>
           </div>
-          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>Starts at $99/mo · 30 min setup · Cancel anytime</div>
+          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>Starts at $29/mo · 30 min setup · Cancel anytime</div>
         </div>
       </section>
 

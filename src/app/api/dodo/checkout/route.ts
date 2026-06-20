@@ -4,18 +4,20 @@ import { createClient } from '@/lib/supabase/server'
 // Plan keys sent from pricing page → Dodo product ID env vars
 const PRODUCT_IDS: Record<string, string | undefined> = {
   // Subscriptions — monthly
+  'starter_monthly':  process.env.DODO_PRODUCT_STARTER,
   'builder_monthly':  process.env.DODO_PRODUCT_BUILDER,
-  'operator_monthly': process.env.DODO_PRODUCT_OPERATOR,
-  'founder_monthly':  process.env.DODO_PRODUCT_FOUNDER,
+  'pro_monthly':      process.env.DODO_PRODUCT_PRO,
+  'growth_monthly':   process.env.DODO_PRODUCT_GROWTH,
   'scale_monthly':    process.env.DODO_PRODUCT_SCALE,
   // Subscriptions — annual
+  'starter_annual':   process.env.DODO_PRODUCT_STARTER_ANNUAL,
   'builder_annual':   process.env.DODO_PRODUCT_BUILDER_ANNUAL,
-  'operator_annual':  process.env.DODO_PRODUCT_OPERATOR_ANNUAL,
-  'founder_annual':   process.env.DODO_PRODUCT_FOUNDER_ANNUAL,
+  'pro_annual':       process.env.DODO_PRODUCT_PRO_ANNUAL,
+  'growth_annual':    process.env.DODO_PRODUCT_GROWTH_ANNUAL,
   'scale_annual':     process.env.DODO_PRODUCT_SCALE_ANNUAL,
   // One-time credit top-ups
-  'topup_300':  process.env.DODO_TOPUP_300,
-  'topup_900':  process.env.DODO_TOPUP_900,
+  'topup_200':  process.env.DODO_TOPUP_200,
+  'topup_600':  process.env.DODO_TOPUP_600,
   'topup_2000': process.env.DODO_TOPUP_2000,
 }
 

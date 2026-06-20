@@ -16,21 +16,23 @@ function getAdmin() {
 }
 
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_300  || 'TOPUP_UNSET1']: 300,
-  [process.env.DODO_TOPUP_900  || 'TOPUP_UNSET2']: 900,
+  [process.env.DODO_TOPUP_200  || 'TOPUP_UNSET1']: 200,
+  [process.env.DODO_TOPUP_600  || 'TOPUP_UNSET2']: 600,
   [process.env.DODO_TOPUP_2000 || 'TOPUP_UNSET3']: 2000,
 }
 
-// Plan config keyed by Dodo product ID env var — matches new 4-tier pricing
-const PLANS: Record<string, { credits: number; dailyCredits: number; plan: string; label: string; employees: number }> = {
-  [process.env.DODO_PRODUCT_BUILDER         || 'UNSET_B1']: { credits: 300,  dailyCredits: 12,  plan: 'builder',  label: 'Builder',  employees: 3  },
-  [process.env.DODO_PRODUCT_BUILDER_ANNUAL  || 'UNSET_B2']: { credits: 300,  dailyCredits: 12,  plan: 'builder',  label: 'Builder',  employees: 3  },
-  [process.env.DODO_PRODUCT_OPERATOR        || 'UNSET_O1']: { credits: 900,  dailyCredits: 36,  plan: 'operator', label: 'Operator', employees: 10 },
-  [process.env.DODO_PRODUCT_OPERATOR_ANNUAL || 'UNSET_O2']: { credits: 900,  dailyCredits: 36,  plan: 'operator', label: 'Operator', employees: 10 },
-  [process.env.DODO_PRODUCT_FOUNDER         || 'UNSET_F1']: { credits: 2000, dailyCredits: 80,  plan: 'founder',  label: 'Founder',  employees: -1 },
-  [process.env.DODO_PRODUCT_FOUNDER_ANNUAL  || 'UNSET_F2']: { credits: 2000, dailyCredits: 80,  plan: 'founder',  label: 'Founder',  employees: -1 },
-  [process.env.DODO_PRODUCT_SCALE           || 'UNSET_S1']: { credits: 5000, dailyCredits: 200, plan: 'scale',    label: 'Scale',    employees: -1 },
-  [process.env.DODO_PRODUCT_SCALE_ANNUAL    || 'UNSET_S2']: { credits: 5000, dailyCredits: 200, plan: 'scale',    label: 'Scale',    employees: -1 },
+// Plan config keyed by Dodo product ID env var — matches new 5-tier pricing
+const PLANS: Record<string, { credits: number; dailyCredits: number; plan: string; label: string }> = {
+  [process.env.DODO_PRODUCT_STARTER         || 'UNSET_ST1']: { credits: 150,   dailyCredits: 6,   plan: 'starter',  label: 'Starter'  },
+  [process.env.DODO_PRODUCT_STARTER_ANNUAL  || 'UNSET_ST2']: { credits: 150,   dailyCredits: 6,   plan: 'starter',  label: 'Starter'  },
+  [process.env.DODO_PRODUCT_BUILDER         || 'UNSET_B1']:  { credits: 500,   dailyCredits: 20,  plan: 'builder',  label: 'Builder'  },
+  [process.env.DODO_PRODUCT_BUILDER_ANNUAL  || 'UNSET_B2']:  { credits: 500,   dailyCredits: 20,  plan: 'builder',  label: 'Builder'  },
+  [process.env.DODO_PRODUCT_PRO             || 'UNSET_P1']:  { credits: 1500,  dailyCredits: 60,  plan: 'pro',      label: 'Pro'      },
+  [process.env.DODO_PRODUCT_PRO_ANNUAL      || 'UNSET_P2']:  { credits: 1500,  dailyCredits: 60,  plan: 'pro',      label: 'Pro'      },
+  [process.env.DODO_PRODUCT_GROWTH          || 'UNSET_G1']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
+  [process.env.DODO_PRODUCT_GROWTH_ANNUAL   || 'UNSET_G2']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
+  [process.env.DODO_PRODUCT_SCALE           || 'UNSET_S1']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
+  [process.env.DODO_PRODUCT_SCALE_ANNUAL    || 'UNSET_S2']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
 }
 
 export async function POST(req: NextRequest) {
@@ -114,12 +116,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true })
       }
 
-      const planConfig = PLANS[productId] || { credits: 500, dailyCredits: 20, plan: 'starter', label: 'Starter', employees: 3 }
+      const planConfig = PLANS[productId] || { credits: 150, dailyCredits: 6, plan: 'starter', label: 'Starter' }
       await admin.from('profiles').update({
         plan: planConfig.plan,
         credits: planConfig.credits,
         daily_credits: planConfig.dailyCredits,
-        max_ai_employees: planConfig.employees,
         subscription_status: 'active',
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
@@ -146,7 +147,6 @@ export async function POST(req: NextRequest) {
       await admin.from('profiles').update({
         plan: 'free',
         credits: 50,
-        max_ai_employees: 0,
         subscription_status: 'cancelled',
         updated_at: new Date().toISOString(),
       }).eq('id', userId)

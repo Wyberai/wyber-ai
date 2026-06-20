@@ -164,28 +164,81 @@ export default function CommunityProgramsPage() {
                 </div>
 
                 {!status && (
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 11, fontWeight: 600, color: '#52525b', marginBottom: 6, display: 'block' }}>{p.proofLabel}</label>
-                      <input
-                        value={proofValues[p.id] || ''}
-                        onChange={e => setProofValues(prev => ({ ...prev, [p.id]: e.target.value }))}
-                        placeholder={p.proofPlaceholder}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#0d0d10', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
-                      />
+                  <div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: p.id === 'blood_donor' ? 10 : 0 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: 11, fontWeight: 600, color: '#52525b', marginBottom: 6, display: 'block' }}>{p.proofLabel}</label>
+                        <input
+                          value={proofValues[p.id] || ''}
+                          onChange={e => setProofValues(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          placeholder={p.proofPlaceholder}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#0d0d10', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+                        />
+                      </div>
+                      <button
+                        onClick={() => handleSubmit(p.id)}
+                        disabled={submitting === p.id || !proofValues[p.id]?.trim()}
+                        style={{
+                          padding: '10px 20px', borderRadius: 8, border: 'none',
+                          background: submitting === p.id ? '#1a1a22' : p.color,
+                          color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting === p.id ? 'wait' : 'pointer',
+                          fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
+                        }}
+                      >
+                        {submitting === p.id ? 'Submitting...' : 'Submit'}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleSubmit(p.id)}
-                      disabled={submitting === p.id || !proofValues[p.id]?.trim()}
-                      style={{
-                        padding: '10px 20px', borderRadius: 8, border: 'none',
-                        background: submitting === p.id ? '#1a1a22' : p.color,
-                        color: '#fff', fontSize: 13, fontWeight: 700, cursor: submitting === p.id ? 'wait' : 'pointer',
-                        fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
-                      }}
-                    >
-                      {submitting === p.id ? 'Submitting...' : 'Submit'}
-                    </button>
+                    {p.id === 'blood_donor' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                        <span style={{ fontSize: 11, color: '#3f3f46' }}>or upload a photo directly</span>
+                        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
+                      </div>
+                    )}
+                    {p.id === 'blood_donor' && (
+                      <div style={{ marginTop: 10 }}>
+                        <label
+                          style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                            padding: '14px 16px', borderRadius: 10,
+                            border: '2px dashed rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.04)',
+                            color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                            transition: 'all 0.15s',
+                          }}
+                          onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = 'rgba(239,68,68,0.5)'; (e.target as HTMLElement).style.background = 'rgba(239,68,68,0.08)' }}
+                          onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = 'rgba(239,68,68,0.25)'; (e.target as HTMLElement).style.background = 'rgba(239,68,68,0.04)' }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          Upload blood donation selfie
+                          <input
+                            type="file"
+                            accept="image/*"
+                            style={{ display: 'none' }}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (!file) return
+                              setSubmitting('blood_donor')
+                              try {
+                                const { createClient } = await import('@/lib/supabase/client')
+                                const supabase = createClient()
+                                const fileName = `blood-donor/${Date.now()}-${file.name}`
+                                const { error: uploadErr } = await supabase.storage.from('community-proofs').upload(fileName, file, { contentType: file.type })
+                                if (uploadErr) { showToast('Upload failed: ' + uploadErr.message, false); setSubmitting(null); return }
+                                const { data: urlData } = supabase.storage.from('community-proofs').getPublicUrl(fileName)
+                                setProofValues(prev => ({ ...prev, blood_donor: urlData.publicUrl }))
+                                showToast('Photo uploaded! Click Submit to complete.')
+                              } catch { showToast('Upload failed — try pasting a URL instead', false) }
+                              setSubmitting(null)
+                            }}
+                          />
+                        </label>
+                        {proofValues['blood_donor']?.includes('supabase') && (
+                          <div style={{ marginTop: 8, fontSize: 11, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span>&#10003;</span> Photo uploaded — click Submit above to complete
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -9,92 +9,110 @@ const BRAND = '#0EA5E9'
 
 const PLANS = [
   {
-    id: 'builder',
-    name: 'Builder',
-    monthlyPrice: 99,
-    annualPrice: 79,
-    planKey: 'builder_monthly',
-    color: '#0EA5E9',
+    id: 'starter',
+    name: 'Starter',
+    monthlyPrice: 29,
+    annualPrice: 23,
+    planKey: 'starter_monthly',
+    color: '#22c55e',
     highlight: false,
     badge: null,
-    tagline: 'One person. Six products. Ship this week.',
-    employeeSlots: 3,
-    credits: 300,
+    tagline: 'Try AI ops risk-free. All features unlocked.',
+    credits: 150,
+    perCredit: '$0.19',
     features: [
-      '300 tasks/month — never expire',
-      '3 AI Employees running on autopilot',
+      '150 credits/month — never expire',
+      'All features unlocked — no gates',
       'Build web & mobile apps in plain English',
-      '20 web builds · 10 mobile builds included',
-      'AI Agents & Workflows for any process',
-      'GTM Engine — ICP setup + lead discovery',
-      'Gmail, Slack, Notion, HubSpot integrations',
+      'AI Agents, Workflows, AI Employees',
+      'GTM Engine — ICP + lead discovery',
+      'Templates, self-healing, export, deploy — free',
       'Community support',
     ],
   },
   {
-    id: 'operator',
-    name: 'Operator',
-    monthlyPrice: 249,
-    annualPrice: 199,
-    planKey: 'operator_monthly',
+    id: 'builder',
+    name: 'Builder',
+    monthlyPrice: 79,
+    annualPrice: 63,
+    planKey: 'builder_monthly',
     color: '#0EA5E9',
     highlight: false,
     badge: 'MOST POPULAR',
-    tagline: 'Replace your junior team. Run ops on autopilot.',
-    employeeSlots: 10,
-    credits: 900,
+    tagline: 'Ship products and run ops every week.',
+    credits: 500,
+    perCredit: '$0.16',
     features: [
-      '900 tasks/month — never expire',
-      '10 AI Employees across any department',
-      'All 30+ tool integrations unlocked',
-      'GTM — campaigns, sequences + lead import',
-      'Custom domain routing',
-      'KPI dashboards emailed weekly',
-      'Multi-user org management',
+      '500 credits/month — never expire',
+      'All features unlocked — no gates',
+      'Build web & mobile apps in plain English',
+      'AI Agents, Workflows, AI Employees',
+      'GTM Engine — campaigns + sequences',
+      'Gmail, Slack, Notion, HubSpot integrations',
       'Priority support',
     ],
   },
   {
-    id: 'founder',
-    name: 'Founder',
-    monthlyPrice: 499,
-    annualPrice: 399,
-    planKey: 'founder_monthly',
+    id: 'pro',
+    name: 'Pro',
+    monthlyPrice: 199,
+    annualPrice: 159,
+    planKey: 'pro_monthly',
     color: '#8b5cf6',
     highlight: true,
-    badge: 'NEW',
-    tagline: 'Your whole go-to-market on autopilot. Zero headcount.',
-    employeeSlots: -1,
-    credits: 2000,
+    badge: 'BEST VALUE',
+    tagline: 'Replace your junior team. Run everything on autopilot.',
+    credits: 1500,
+    perCredit: '$0.13',
     features: [
-      '2,000 tasks/month — never expire',
-      'Unlimited AI Employees — every department',
+      '1,500 credits/month — never expire',
+      'All features unlocked — no gates',
       'Full GTM — visual canvas + sequences + calling',
-      'AI SDR who qualifies leads while you sleep',
-      'GTM Analyst emailing you weekly performance reports',
-      'Multiple orgs — white-label for clients',
+      'AI SDR qualifying leads while you sleep',
+      'Multi-user org management',
       'Priority run queue — your jobs go first',
+      'Priority support',
+    ],
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    monthlyPrice: 399,
+    annualPrice: 319,
+    planKey: 'growth_monthly',
+    color: '#f59e0b',
+    highlight: false,
+    badge: null,
+    tagline: 'Scale your go-to-market. Zero headcount.',
+    credits: 4000,
+    perCredit: '$0.10',
+    features: [
+      '4,000 credits/month — never expire',
+      'All features unlocked — no gates',
+      'Multiple orgs — white-label for clients',
+      'KPI dashboards emailed weekly',
+      'Custom domain routing',
       'Dedicated Slack support line',
+      'Priority run queue',
     ],
   },
   {
     id: 'scale',
     name: 'Scale',
-    monthlyPrice: 999,
-    annualPrice: 799,
+    monthlyPrice: 799,
+    annualPrice: 639,
     planKey: 'scale_monthly',
-    color: '#f59e0b',
+    color: '#f97316',
     highlight: false,
-    badge: 'BEST VALUE',
+    badge: null,
     tagline: 'Agency-scale AI. Run 10+ clients without growing headcount.',
-    employeeSlots: -1,
-    credits: 5000,
+    credits: 10000,
+    perCredit: '$0.08',
     features: [
-      '5,000 tasks/month — never expire',
-      'Unlimited everything across all clients',
+      '10,000 credits/month — never expire',
+      'All features unlocked — no gates',
       'Multiple white-label orgs with custom domains',
       'Advanced KPI analytics per client',
-      'Everything in Founder, plus:',
       'Quarterly strategy call with the Wyber team',
       'Volume credit pricing for heavy usage',
       'SLA commitment on run queue',
@@ -103,21 +121,20 @@ const PLANS = [
 ]
 
 const TOPUPS = [
-  { credits: 300,  price: 24,  key: 'topup_300',  label: 'Boost',  desc: '~20 web builds' },
-  { credits: 900,  price: 59,  key: 'topup_900',  label: 'Power',  desc: '~60 web builds' },
-  { credits: 2000, price: 119, key: 'topup_2000', label: 'Studio', desc: '~130 web builds', badge: 'Best value' as string | undefined },
+  { credits: 200,  price: 19,  key: 'topup_200',  label: 'Boost',  desc: '~20 web builds' },
+  { credits: 600,  price: 49,  key: 'topup_600',  label: 'Power',  desc: '~60 web builds' },
+  { credits: 2000, price: 99,  key: 'topup_2000', label: 'Studio', desc: '~200 web builds', badge: 'Best value' as string | undefined },
 ]
 
 const CREDIT_TABLE = [
-  { action: 'Web app build',          cost: '15 credits', icon: '🌐' },
-  { action: 'Mobile app build',       cost: '15 credits', icon: '📱' },
-  { action: 'App edit / iteration',   cost: '4 credits',  icon: '✏️' },
-  { action: 'AI Agent run',           cost: '8 credits',  icon: '⚡' },
-  { action: 'Workflow run',           cost: '4 credits',  icon: '🔀' },
-  { action: 'AI Employee run',        cost: '15 credits', icon: '🤖' },
-  { action: 'GTM ICP + sequence gen', cost: '20 credits', icon: '🎯' },
-  { action: 'Lead enrichment',        cost: '2 credits',  icon: '👤' },
-  { action: 'Image generation',       cost: '5 credits',  icon: '🎨' },
+  { action: 'Web / mobile app build',  cost: '10 credits', icon: '🌐' },
+  { action: 'App edit / iteration',     cost: '3 credits',  icon: '✏️' },
+  { action: 'AI Agent run',             cost: '5 credits',  icon: '⚡' },
+  { action: 'AI Employee run',          cost: '5 credits',  icon: '🤖' },
+  { action: 'Workflow run',             cost: '2 credits',  icon: '🔀' },
+  { action: 'GTM campaign action',      cost: '3 credits',  icon: '🎯' },
+  { action: 'Lead enrichment',          cost: '1 credit',   icon: '👤' },
+  { action: 'Image generation',         cost: '3 credits',  icon: '🎨' },
 ]
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -185,14 +202,16 @@ function PlanCard({
         )}
       </div>
 
-      {/* Employee + credit pills */}
+      {/* Credit pills */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: `${plan.color}12`, border: `1px solid ${plan.color}30`, color: plan.color }}>
-          {plan.employeeSlots === -1 ? 'Unlimited' : plan.employeeSlots} AI Employees
-        </div>
         {plan.credits > 0 && (
           <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22c55e' }}>
             {plan.credits.toLocaleString()} credits/mo
+          </div>
+        )}
+        {plan.perCredit && (
+          <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: `${plan.color}12`, border: `1px solid ${plan.color}30`, color: plan.color }}>
+            {plan.perCredit}/credit
           </div>
         )}
       </div>
@@ -329,7 +348,7 @@ export default function PricingPage() {
           </span>
         </h1>
         <p style={{ fontSize: 'clamp(15px,1.5vw,18px)', color: '#71717a', maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.65 }}>
-          One AI SDR that qualifies leads 24/7 is worth more than $249/mo. Every plan includes web &amp; mobile app building, GTM, agents, and AI employees.
+          Every plan unlocks ALL features. The only difference is credit count. No employee caps, no agent limits, no feature gates.
         </p>
 
         {/* Annual toggle */}
@@ -357,7 +376,7 @@ export default function PricingPage() {
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>The math is obvious</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>One hired employee pays for Scale 40x over</h2>
-            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>A junior SDR costs $60K/yr. Your AI SDR runs 24/7 at $499/mo (Founder plan). That&apos;s a $54K saving — before counting nights, weekends, and zero onboarding time.</p>
+            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>A junior SDR costs $60K/yr. Your AI SDR runs 24/7 at $199/mo (Pro plan). That&apos;s a $57K saving — before counting nights, weekends, and zero onboarding time.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 16 }}>
             {[
@@ -503,11 +522,11 @@ export default function PricingPage() {
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
-              ['What counts as a credit?', 'Web/mobile app builds cost 15 credits, small edits 4 credits, AI agent runs 8 credits, workflow runs 4 credits, AI employee runs 15 credits, GTM ICP + sequence generation 20 credits, lead enrichment 2 credits per contact. Image generation is 5 credits. Top-up packs can be added anytime and never expire.'],
-              ['Can I hire more than my plan allows?', 'Yes — you can add credit top-ups or upgrade your plan at any time. Unused credits roll over each month.'],
+              ['What counts as a credit?', 'Web/mobile app builds cost 10 credits, edits 3 credits, AI agent runs 5 credits, AI employee runs 5 credits, workflow runs 2 credits, GTM campaign actions 3 credits, lead enrichment 1 credit per contact, image generation 3 credits. Templates, self-healing, export, deploy, and GitHub push are always free. Top-up packs can be added anytime and never expire.'],
+              ['Are features locked behind higher plans?', 'No. Every plan unlocks ALL features — web apps, mobile apps, AI agents, workflows, AI employees, GTM engine, all integrations. The only difference between plans is how many credits you get.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
-              ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. Operator, Founder, and Scale include all integrations.'],
-              ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record. Scale supports multiple orgs, each with their own domain.'],
+              ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. All integrations are available on every plan.'],
+              ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record. Growth and Scale support multiple orgs, each with their own domain.'],
               ['What happens if I cancel?', 'You keep access until the end of your billing period. Your employees, KPI data, and app builds are retained for 30 days so you can export everything.'],
             ].map(([q, a], i) => (
               <details key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '18px 0' }}>
@@ -542,6 +561,32 @@ export default function PricingPage() {
             </Link>
           </div>
           <div style={{ marginTop: 14, fontSize: 12, color: '#3f3f46' }}>No credit card required to explore · Cancel anytime</div>
+        </div>
+      </section>
+
+      {/* Community programs */}
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Community</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>Community programs</h2>
+            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>We believe in giving back. These programs reward our community for doing good.</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px,100%), 1fr))', gap: 14 }}>
+            {[
+              { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get 50% extra credits on your next top-up.', color: '#ef4444', reward: '50% extra credits' },
+              { emoji: '📣', title: 'Build in Public', desc: 'Share what you built with WyberAI on Twitter/LinkedIn and get 50 free credits instantly.', color: BRAND, reward: '50 free credits' },
+              { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan. Verified through ID.me — we never see your medical records.', color: '#a855f7', reward: '50% off any plan' },
+              { emoji: '🌟', title: 'Open Source Builder', desc: 'Maintain a repo with 50+ stars? Get 30% off your plan.', color: '#f59e0b', reward: '30% off any plan' },
+            ].map(p => (
+              <Link key={p.title} href="/community-programs" style={{ textDecoration: 'none', background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
+                <div style={{ fontSize: 28 }}>{p.emoji}</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{p.title}</div>
+                <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5, flex: 1 }}>{p.desc}</div>
+                <div style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 8, background: p.color + '12', color: p.color, border: `1px solid ${p.color}25`, alignSelf: 'flex-start' }}>{p.reward}</div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 

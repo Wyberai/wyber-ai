@@ -55,20 +55,20 @@ export const MODEL_META: Record<ModelTier, {
  * Multiply by MODEL_MULTIPLIERS[tier] and round.
  */
 const BASE_COSTS: Record<ActionType, number> = {
-  'small-edit':         4,
-  'component':          8,
-  'web-build':         15,
-  'mobile-build':      15,
-  'agent-create':       8,
-  'agent-run':          8,
-  'workflow-create':    4,
-  'workflow-run':       4,
-  'ai-helper':          2,
-  'image-gen':          5,
-  'execution':          4,
-  'employee-run':      15,
-  'gtm-icp-sequence':  20,
-  'gtm-lead-enrich':    2,
+  'small-edit':         3,
+  'component':          5,
+  'web-build':         10,
+  'mobile-build':      10,
+  'agent-create':       5,
+  'agent-run':          5,
+  'workflow-create':    2,
+  'workflow-run':       2,
+  'ai-helper':          1,
+  'image-gen':          3,
+  'execution':          5,
+  'employee-run':       5,
+  'gtm-icp-sequence':   3,
+  'gtm-lead-enrich':    1,
 }
 
 /**

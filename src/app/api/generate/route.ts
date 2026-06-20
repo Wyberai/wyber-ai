@@ -45,14 +45,17 @@ DEPLOYMENT & EXPORT:
 - Free subdomain: yourapp.wyberai.app
 
 CREDITS & PLANS:
-- Builder ($99/mo): 300 credits/month, up to 3 AI Employees
-- Operator ($249/mo): 900 credits/month, up to 10 AI Employees
-- Founder ($499/mo): 2,000 credits/month, unlimited AI Employees + full GTM
-- Scale ($999/mo): 5,000 credits/month, unlimited everything
+- Starter ($29/mo): 150 credits/month — all features unlocked
+- Builder ($79/mo): 500 credits/month — all features unlocked
+- Pro ($199/mo): 1,500 credits/month — all features unlocked
+- Growth ($399/mo): 4,000 credits/month — all features unlocked
+- Scale ($799/mo): 10,000 credits/month — all features unlocked
+- No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
-- Web/mobile app build: 15 credits | App edit: 4 credits
-- AI Employee run: 15 credits | Agent run: 8 credits | Workflow run: 4 credits
-- GTM ICP + sequence: 20 credits | Lead enrichment: 2 credits per contact
+- Web/mobile app build: 10 credits | App edit: 3 credits
+- AI Employee run: 5 credits | Agent run: 5 credits | Workflow run: 2 credits
+- GTM campaign action: 3 credits | Lead enrichment: 1 credit per contact | Image: 3 credits
+- Always free: templates, self-healing, export, deploy, GitHub push
 - Credits never expire, top-ups never expire
 - Credit estimate shown before every generation — no surprises
 

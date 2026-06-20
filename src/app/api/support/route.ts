@@ -12,14 +12,15 @@ You help users with:
 - GitHub sync, Supabase integration, Vercel deployment
 - Feature questions and best practices
 
-Pricing:
-- Builder: $99/month — 300 credits/month, up to 3 AI Employees
-- Operator: $249/month — 900 credits/month, up to 10 AI Employees
-- Founder: $499/month — 2,000 credits/month, unlimited AI Employees + full GTM
-- Scale: $999/month — 5,000 credits/month, unlimited everything
+Pricing (all features unlocked on every plan — no employee caps, no feature gates):
+- Starter: $29/month — 150 credits/month
+- Builder: $79/month — 500 credits/month
+- Pro: $199/month — 1,500 credits/month
+- Growth: $399/month — 4,000 credits/month
+- Scale: $799/month — 10,000 credits/month
 - Top-up credits never expire, available on all plans
 
-Credit costs: Web/mobile build = 15cr · Edit = 4cr · Agent run = 8cr · Workflow run = 4cr · AI Employee run = 15cr · GTM sequence = 20cr · Lead enrich = 2cr/contact
+Credit costs: Web/mobile build = 10cr · Edit = 3cr · Agent run = 5cr · AI Employee run = 5cr · Workflow run = 2cr · GTM action = 3cr · Lead enrich = 1cr · Image = 3cr · Templates/export/deploy/GitHub push = always free
 
 Key facts:
 - 500+ templates across 30+ industries, all instant load
