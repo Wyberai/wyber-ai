@@ -26,7 +26,7 @@ export default function GalleryPage() {
   const [apps, setApps] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
-  const [activeGroup, setActiveGroup] = useState('All')
+  const [activeGroup, setActiveGroup] = useState('Web Apps')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'popular' | 'name' | 'newest'>('popular')
   const [page, setPage] = useState(1)

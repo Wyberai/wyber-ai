@@ -130,7 +130,17 @@ export async function POST(req: NextRequest) {
 
     const rawFiles = (template.files || {}) as Record<string, FileVal>
     if (Object.keys(rawFiles).length < 2) {
-      return NextResponse.json({ error: 'Template has no files' }, { status: 422 })
+      // Template is metadata-only (no pre-generated code) — create project and redirect
+      // The user can generate from the editor using the template name as the prompt
+      const { data: project, error: projErr } = await admin.from('projects').insert({
+        user_id: user.id,
+        name: template.name,
+        framework: (template.category as string)?.startsWith('Mobile') ? 'react-native' : 'react-vite',
+        files: {},
+        first_prompt: `Build a ${template.name}: ${template.description || template.name}`,
+      }).select('id').single()
+      if (projErr || !project) return NextResponse.json({ error: projErr?.message || 'Failed to create project' }, { status: 500 })
+      return NextResponse.json({ projectId: project.id, autoGenerate: true })
     }
 
     // 1. Normalize paths into a proper Vite layout

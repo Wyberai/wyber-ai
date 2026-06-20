@@ -141,7 +141,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const credits = profile?.credits ?? 0;
   const plan = profile?.plan ?? 'free';
   const name = profile?.full_name || profile?.email?.split('@')[0] || 'there';
-  const totalCredits = plan === 'pro' ? 400 : plan === 'business' ? 800 : 50;
+  const totalCredits = plan === 'scale' ? 10000 : plan === 'growth' ? 4000 : plan === 'pro' ? 1500 : plan === 'builder' ? 500 : plan === 'starter' ? 150 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
   const openChooser = (prompt?: string) => { setPendingPrompt(prompt); setShowTypePicker(true); };
@@ -162,7 +162,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         router.push(`/project/${data[0].id}?type=${type}`);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Project creation failed:', err);
+      alert('Failed to create project. Please try logging out and back in.');
       setCreating(false);
     }
   };
@@ -183,11 +184,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
   const NAV = [
     { label: 'Home',         href: '/dashboard',       icon: <IconHome /> },
-    { label: 'Templates',    href: '/gallery',         icon: <IconTemplates /> },
-    { label: 'Mobile',       href: '/templates/mobile',icon: <IconPhone /> },
+    { label: 'Web Apps',      href: '/gallery',         icon: <IconTemplates /> },
+    { label: 'Mobile Apps',  href: '/templates/mobile',icon: <IconPhone /> },
     { label: 'AI Agents',    href: '/agents',          icon: <IconAgents /> },
-    { label: 'AI Employees', href: '/ai-employees',    icon: <IconPeople /> },
     { label: 'Workflows',    href: '/workflows',       icon: <IconZap /> },
+    { label: 'AI Employees', href: '/ai-employees',    icon: <IconPeople /> },
+    { label: 'GTM Engine',   href: '/gtm',             icon: <IconAgents /> },
     { label: 'Learn',        href: '/learn',           icon: <IconLearn /> },
     { label: 'Docs',         href: '/docs',            icon: <IconDocs /> },
     { label: 'Settings',     href: '/settings',        icon: <IconSettings /> },
