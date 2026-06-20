@@ -49,16 +49,24 @@ export async function POST(req: NextRequest) {
     } else {
       const offset = body.offset ?? 0
       const limit = Math.min(body.limit ?? 5, 10)
+      // Get templates that either have no files, empty files, or old single-code format
       const { data } = await admin
         .from('prebuilt_apps')
-        .select('id, name, category, description')
+        .select('id, name, category, description, files')
         .eq('valid', true)
-        .or('files.eq.{},files.is.null')
         .range(offset, offset + limit - 1)
-      apps = data ?? []
+      // Filter to only templates needing regeneration
+      const needsRegen = (data ?? []).filter(app => {
+        const f = app.files as Record<string, unknown> | null
+        if (!f || Object.keys(f).length === 0) return true
+        if (typeof (f as any).code === 'string') return true // old format
+        if (!f['src/App.tsx'] && !f['src/App.jsx']) return true // no app entry
+        return false
+      })
+      apps = needsRegen
     }
 
-    if (!apps.length) return NextResponse.json({ done: true, generated: 0 })
+    if (!apps.length) return NextResponse.json({ done: true, generated: 0, message: 'No templates need regeneration in this range' })
 
     let count = 0
     const results: string[] = []
