@@ -352,7 +352,7 @@ export default function HomePage() {
           </p>
 
           {/* Six product pills */}
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
+          <div className="wyb-product-pills" style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
             {PILLARS.map((p, i) => (
               <button key={p.key} onClick={() => { setActivePillar(i); document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); }}
                 style={{ padding: '7px 14px', borderRadius: 20, border: `1px solid ${activePillar === i ? p.accent + '55' : 'rgba(255,255,255,0.1)'}`, background: activePillar === i ? p.accent + '15' : 'rgba(255,255,255,0.04)', color: activePillar === i ? p.accent : '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -392,7 +392,7 @@ export default function HomePage() {
       <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <p style={{ fontSize: 11, color: '#3f3f46', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 20 }}>Trusted by founders and teams building the future</p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(24px,4vw,48px)', flexWrap: 'wrap', opacity: 0.5 }}>
+          <div className="wyb-trust-logos" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(24px,4vw,48px)', flexWrap: 'wrap', opacity: 0.5 }}>
             {['SignalPulse', 'ReconSignal', 'CloudFirst', 'NexaTech', 'VertexAI Labs', 'DataForge'].map(name => (
               <span key={name} style={{ fontSize: 15, fontWeight: 700, color: '#52525b', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>{name}</span>
             ))}
@@ -421,7 +421,7 @@ export default function HomePage() {
               <span style={{ marginLeft: 12, fontSize: 11, color: '#52525b' }}>wyberai.com — Building your app</span>
             </div>
             {/* Demo content */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 340 }}>
+            <div className="wyb-demo-split" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 340 }}>
               {/* Chat side */}
               <div style={{ padding: 20, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ fontSize: 10, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Chat</div>
@@ -496,7 +496,7 @@ export default function HomePage() {
               They built. They shipped. They didn&apos;t look back.
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+          <div className="wyb-testimonials" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
             {[
               { name: 'Arjun M.', role: 'Solo Founder', quote: 'I built my entire SaaS MVP in one afternoon. The AI understood my vision better than most freelancers I\'ve hired. The self-healing preview saved me hours of debugging.', avatar: 'AM', color: '#0EA5E9' },
               { name: 'Sarah K.', role: 'Marketing Lead', quote: 'The GTM Engine found 200 qualified leads in our ICP within minutes. We launched our first email sequence the same day. Our SDR couldn\'t believe it.', avatar: 'SK', color: '#10b981' },
@@ -530,7 +530,7 @@ export default function HomePage() {
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 40 }}>
             Three steps. No engineers.
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+          <div className="wyb-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {[
               { step: '01', title: 'Describe', desc: 'Tell WyberAI what you want in plain English. A CRM, a mobile app, an outreach campaign — anything.', color: BRAND },
               { step: '02', title: 'Build', desc: 'AI generates production-ready code, previews it live, and auto-fixes any errors. Pick from 500+ templates or start custom.', color: '#a855f7' },
@@ -623,7 +623,7 @@ export default function HomePage() {
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Credits work across every product — build an app, run an agent, hire an AI employee, or launch a GTM campaign from the same balance.</p>
 
           {/* Plans — forced 4-column row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 48 }}>
+          <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 48 }}>
             {[
               { name: 'Starter',  price: '$29',  credits: '150',    color: '#22c55e', highlight: false },
               { name: 'Builder',  price: '$79',  credits: '500',    color: BRAND,     highlight: false, badge: 'MOST POPULAR' },
@@ -656,7 +656,7 @@ export default function HomePage() {
                 Book $99 consultation →
               </a>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div className="wyb-builds-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
                 { name: 'Simple Build', price: '$199', delivery: '24 hours',        color: '#22c55e', icon: '⚡', desc: 'Landing pages, portfolios, tools. No auth or database.' },
                 { name: 'Medium Build', price: '$399', delivery: '3 working days',  color: BRAND,     icon: '🔧', desc: 'SaaS MVP with auth + database. 3–6 screens, real accounts.', badge: 'Most common' },
@@ -728,6 +728,20 @@ export default function HomePage() {
         @media (max-width: 768px) {
           .wyb-nav-desktop { display: none !important; }
           .wyb-nav-hamburger { display: flex !important; }
+          .wyb-plans-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .wyb-testimonials { grid-template-columns: 1fr !important; }
+          .wyb-steps { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .wyb-demo-split { grid-template-columns: 1fr !important; }
+          .wyb-trust-logos { gap: 16px !important; }
+          .wyb-product-pills { gap: 6px !important; }
+          .wyb-product-pills button { font-size: 11px !important; padding: 5px 10px !important; }
+          .wyb-quick-grid { grid-template-columns: 1fr !important; }
+          .wyb-builds-grid { grid-template-columns: 1fr !important; }
+          .wyb-roi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .wyb-plans-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .wyb-testimonials { grid-template-columns: repeat(2, 1fr) !important; }
         }
         @media (min-width: 769px) {
           .wyb-nav-hamburger { display: none !important; }

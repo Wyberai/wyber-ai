@@ -363,7 +363,7 @@ export default function PricingPage() {
 
       {/* Plans grid */}
       <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+        <div className="wyb-pricing-grid" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
           {PLANS.map(plan => (
             <PlanCard key={plan.id} plan={plan} annual={annual} loading={loading} onCheckout={handleCheckout} />
           ))}
@@ -627,6 +627,12 @@ export default function PricingPage() {
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         details[open] > summary span { transform: rotate(45deg); display: inline-block; }
         details summary::-webkit-details-marker { display: none; }
+        @media (max-width: 768px) {
+          .wyb-pricing-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .wyb-pricing-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        }
       `}</style>
     </div>
   )
