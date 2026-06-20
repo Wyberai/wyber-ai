@@ -363,7 +363,7 @@ export default function PricingPage() {
 
       {/* Plans grid */}
       <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px,100%), 1fr))', gap: 20 }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
           {PLANS.map(plan => (
             <PlanCard key={plan.id} plan={plan} annual={annual} loading={loading} onCheckout={handleCheckout} />
           ))}

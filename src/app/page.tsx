@@ -496,7 +496,7 @@ export default function HomePage() {
               They built. They shipped. They didn&apos;t look back.
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px,100%), 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
             {[
               { name: 'Arjun M.', role: 'Solo Founder', quote: 'I built my entire SaaS MVP in one afternoon. The AI understood my vision better than most freelancers I\'ve hired. The self-healing preview saved me hours of debugging.', avatar: 'AM', color: '#0EA5E9' },
               { name: 'Sarah K.', role: 'Marketing Lead', quote: 'The GTM Engine found 200 qualified leads in our ICP within minutes. We launched our first email sequence the same day. Our SDR couldn\'t believe it.', avatar: 'SK', color: '#10b981' },
@@ -623,7 +623,7 @@ export default function HomePage() {
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Credits work across every product — build an app, run an agent, hire an AI employee, or launch a GTM campaign from the same balance.</p>
 
           {/* Plans — forced 4-column row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 48 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 48 }}>
             {[
               { name: 'Starter',  price: '$29',  credits: '150',    color: '#22c55e', highlight: false },
               { name: 'Builder',  price: '$79',  credits: '500',    color: BRAND,     highlight: false, badge: 'MOST POPULAR' },
