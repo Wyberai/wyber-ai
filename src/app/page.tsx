@@ -388,6 +388,164 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── TRUST BAR ────────────────────────────────────────────────────── */}
+      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
+          <p style={{ fontSize: 11, color: '#3f3f46', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 20 }}>Trusted by founders and teams building the future</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(24px,4vw,48px)', flexWrap: 'wrap', opacity: 0.5 }}>
+            {['SignalPulse', 'ReconSignal', 'CloudFirst', 'NexaTech', 'VertexAI Labs', 'DataForge'].map(name => (
+              <span key={name} style={{ fontSize: 15, fontWeight: 700, color: '#52525b', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>{name}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── LIVE DEMO ──────────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>See it in action</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
+              Describe it. Watch it build. Ship it.
+            </h2>
+            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto' }}>Type what you want in plain English. WyberAI generates every file, previews it live, and deploys — all in under a minute.</p>
+          </div>
+
+          {/* Animated terminal demo */}
+          <div style={{ background: '#0d0d12', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
+            {/* Window chrome */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118' }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
+              <span style={{ marginLeft: 12, fontSize: 11, color: '#52525b' }}>wyberai.com — Building your app</span>
+            </div>
+            {/* Demo content */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 340 }}>
+              {/* Chat side */}
+              <div style={{ padding: 20, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ fontSize: 10, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Chat</div>
+                <div style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: '12px 12px 12px 2px', padding: '10px 14px', fontSize: 13, color: '#e4e4e7', lineHeight: 1.5, marginBottom: 12 }}>
+                  Build me a project management app with a Kanban board, team members, task details with priority labels, and a dark theme.
+                </div>
+                <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: '12px 12px 2px 12px', padding: '10px 14px', fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <span style={{ fontSize: 10, color: '#a855f7' }}>W</span>
+                    </div>
+                    <span style={{ fontSize: 10, color: '#8b5cf6', fontWeight: 700 }}>WyberAI</span>
+                  </div>
+                  Building your Kanban board with drag-and-drop columns, team avatars, priority badges, and a clean dark UI. Generating 6 files...
+                </div>
+                <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {['App.tsx', 'KanbanBoard.tsx', 'TaskCard.tsx', 'TeamPanel.tsx', 'index.css', 'types.ts'].map((f, i) => (
+                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: i < 5 ? '#22c55e' : '#f59e0b' }}>
+                      <span>{i < 5 ? '✓' : '⟳'}</span>
+                      <span style={{ color: '#a1a1aa', fontFamily: 'monospace' }}>{f}</span>
+                      {i < 5 && <span style={{ color: '#3f3f46', marginLeft: 'auto', fontSize: 10 }}>{(i + 1) * 0.8}s</span>}
+                      {i === 5 && <span style={{ color: '#f59e0b', marginLeft: 'auto', fontSize: 10 }}>writing...</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Preview side */}
+              <div style={{ padding: 20, background: '#09090b' }}>
+                <div style={{ fontSize: 10, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Live Preview</span>
+                  <span style={{ color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
+                    Building
+                  </span>
+                </div>
+                {/* Fake Kanban preview */}
+                <div style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 12, height: 280, display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
+                    {['To Do', 'In Progress', 'Done'].map(col => (
+                      <div key={col} style={{ flex: 1, fontSize: 9, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{col}</div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+                    {[
+                      [{ t: 'Design homepage', p: 'High', c: '#ef4444' }, { t: 'Write API docs', p: 'Medium', c: '#f59e0b' }],
+                      [{ t: 'Build auth flow', p: 'High', c: '#ef4444' }, { t: 'Setup CI/CD', p: 'Low', c: '#22c55e' }],
+                      [{ t: 'Deploy v1.0', p: 'Done', c: '#22c55e' }],
+                    ].map((col, ci) => (
+                      <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {col.map(task => (
+                          <div key={task.t} style={{ background: '#0d0d12', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '8px 7px' }}>
+                            <div style={{ fontSize: 10, color: '#e4e4e7', fontWeight: 600, marginBottom: 4 }}>{task.t}</div>
+                            <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: task.c + '15', color: task.c, fontWeight: 700 }}>{task.p}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ───────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>What builders say</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em' }}>
+              They built. They shipped. They didn&apos;t look back.
+            </h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px,100%), 1fr))', gap: 16 }}>
+            {[
+              { name: 'Arjun M.', role: 'Solo Founder', quote: 'I built my entire SaaS MVP in one afternoon. The AI understood my vision better than most freelancers I\'ve hired. The self-healing preview saved me hours of debugging.', avatar: 'AM', color: '#0EA5E9' },
+              { name: 'Sarah K.', role: 'Marketing Lead', quote: 'The GTM Engine found 200 qualified leads in our ICP within minutes. We launched our first email sequence the same day. Our SDR couldn\'t believe it.', avatar: 'SK', color: '#10b981' },
+              { name: 'Dev P.', role: 'Agency Owner', quote: 'We deliver 3x more client projects now. Build the app, set up the workflow, hire an AI employee to monitor it — all from one dashboard. Clients think we\'re a team of 20.', avatar: 'DP', color: '#8b5cf6' },
+              { name: 'Lisa T.', role: 'Product Manager', quote: 'The Kanban workflow templates saved our ops team 15 hours a week. We connected Slack, HubSpot, and Gmail in minutes. No developer needed.', avatar: 'LT', color: '#f59e0b' },
+            ].map(t => (
+              <div key={t.name} style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: t.color + '15', border: `1px solid ${t.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: t.color }}>{t.avatar}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{t.name}</div>
+                    <div style={{ fontSize: 11, color: '#52525b' }}>{t.role}</div>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.7, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>
+                <div style={{ display: 'flex', gap: 2, marginTop: 12 }}>
+                  {[1,2,3,4,5].map(s => (
+                    <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 40 }}>
+            Three steps. No engineers.
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+            {[
+              { step: '01', title: 'Describe', desc: 'Tell WyberAI what you want in plain English. A CRM, a mobile app, an outreach campaign — anything.', color: BRAND },
+              { step: '02', title: 'Build', desc: 'AI generates production-ready code, previews it live, and auto-fixes any errors. Pick from 500+ templates or start custom.', color: '#a855f7' },
+              { step: '03', title: 'Ship', desc: 'Deploy to Vercel in one click. Push to GitHub. Set up AI employees to run your ops on autopilot.', color: '#22c55e' },
+            ].map(s => (
+              <div key={s.step} style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: 48, fontWeight: 800, fontFamily: "'Sora', sans-serif", color: s.color + '25', letterSpacing: '-0.04em', marginBottom: 8 }}>{s.step}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>{s.title}</div>
+                <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── SIX PRODUCTS SHOWCASE (tab switcher) ─────────────────────────── */}
       <section id="showcase" style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
