@@ -24,18 +24,18 @@ export type ActionType =
 
 /** Anthropic model IDs for each tier */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-haiku-4-5-20251001',
-  default: 'claude-sonnet-4-6',
+  fast:    'claude-sonnet-4-6',
+  default: 'claude-opus-4-8',
   premium: 'claude-opus-4-8',
   fable:   'claude-fable-5',
 }
 
-/** Cost multiplier relative to sonnet (= 1.0) */
+/** Cost multiplier relative to default (opus = 1.0) */
 export const MODEL_MULTIPLIERS: Record<ModelTier, number> = {
-  fast:    0.3,
+  fast:    0.5,
   default: 1.0,
-  premium: 2.5,
-  fable:   4.0,
+  premium: 1.0,
+  fable:   2.0,
 }
 
 /** Human-readable model info for UI */
@@ -44,9 +44,9 @@ export const MODEL_META: Record<ModelTier, {
   tagline: string
   minPlan: PlanId
 }> = {
-  fast:    { label: 'Fast',    tagline: 'Quick edits & simple changes',         minPlan: 'free' },
-  default: { label: 'Standard', tagline: 'Best for most apps',                  minPlan: 'free' },
-  premium: { label: 'Premium', tagline: 'Complex apps & detailed UI',           minPlan: 'pro' },
+  fast:    { label: 'Fast',    tagline: 'Sonnet — quick edits & simple changes', minPlan: 'free' },
+  default: { label: 'Standard', tagline: 'Opus — best quality for every app',   minPlan: 'free' },
+  premium: { label: 'Premium', tagline: 'Opus — same power, priority queue',    minPlan: 'pro' },
   fable:   { label: 'Fable',   tagline: 'Most powerful — best for large apps',  minPlan: 'business' },
 }
 

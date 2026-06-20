@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { EMPLOYEE_TEMPLATES } from '@/lib/employee-templates'
+import { getToolLogo } from '@/lib/tool-logos'
 
 const DEPT_COLOR: Record<string, string> = {
   Sales:       '#0EA5E9',
@@ -102,11 +103,16 @@ export default function EmployeesGalleryPage() {
                         </div>
                         <p style={{ fontSize: 11, color: '#71717a', lineHeight: 1.55, margin: 0, flex: 1 }}>{t.tagline}</p>
                         {t.default_tools?.length > 0 && (
-                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                            {(t.default_tools as string[]).slice(0, 3).map((tool: string) => (
-                              <span key={tool} style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: col + '0d', border: `1px solid ${col}22`, color: col, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>{tool}</span>
-                            ))}
-                            {t.default_tools.length > 3 && <span style={{ fontSize: 8, color: '#3f3f46', padding: '2px 4px' }}>+{t.default_tools.length - 3}</span>}
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+                            {(t.default_tools as string[]).slice(0, 4).map((tool: string) => {
+                              const logo = getToolLogo(tool)
+                              return logo ? (
+                                <img key={tool} src={logo} alt={tool} width={18} height={18} style={{ borderRadius: 4, background: '#1a1a22' }} title={tool} />
+                              ) : (
+                                <span key={tool} style={{ fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: col + '0d', border: `1px solid ${col}22`, color: col, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>{tool}</span>
+                              )
+                            })}
+                            {t.default_tools.length > 4 && <span style={{ fontSize: 8, color: '#3f3f46' }}>+{t.default_tools.length - 4}</span>}
                           </div>
                         )}
                         <div style={{ fontSize: 11, color: col, fontWeight: 600, marginTop: 'auto' }}>Hire this employee →</div>
