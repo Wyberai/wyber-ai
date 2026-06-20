@@ -571,7 +571,7 @@ export default function PricingPage() {
       <footer style={{ padding: '28px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <WyberLogo markSize={20} wordmarkSize={13} />
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Employees', '/employees'], ['Blog', '/blog']].map(([l, h]) => (
+          {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Community Programs', '/community-programs'], ['Blog', '/blog']].map(([l, h]) => (
             <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>{l}</Link>
           ))}
         </div>
