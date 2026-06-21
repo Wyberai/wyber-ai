@@ -195,7 +195,7 @@ const PILLARS = [
     body: 'Type what you want. Wyber generates production-ready React code from scratch, provisions Supabase, and deploys to Vercel — in a few minutes.',
     bullets: ['Always fresh code — never stale templates', 'Self-healing preview — errors fix themselves', 'Team collaboration · Figma import · Cmd+K'],
     cta: 'Build a web app →',
-    href: '/dashboard?new=app',
+    href: '/gallery',
     mockup: <WebAppMockup />,
   },
   {
@@ -231,8 +231,7 @@ const PILLARS = [
     body: 'Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code, no YAML.',
     bullets: ['Drag-and-drop canvas · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · schedule triggers · 12+ tool integrations'],
     cta: 'Build a workflow →',
-    href: '/flows',
-
+    href: '/workflows',
     mockup: <WorkflowMockup />,
   },
   {
@@ -244,7 +243,7 @@ const PILLARS = [
     body: 'The equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
     bullets: ['Choose from 100 roles or create your own', 'Slack notifications · browser control · voice output', 'Human-in-the-loop escalation · daily email digests'],
     cta: 'Hire an AI employee →',
-    href: '/ai-employees',
+    href: '/employees',
     mockup: <EmployeeMockup />,
   },
   {
@@ -284,7 +283,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/dashboard?new=app'], ['AI Agents', '/agents'], ['Workflows', '/flows'], ['AI Employees', '/ai-employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -311,7 +310,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/dashboard?new=app'], ['AI Agents', '/agents'], ['Workflows', '/flows'], ['AI Employees', '/ai-employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -388,11 +387,11 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px,100%), 1fr))', gap: 14 }}>
             {[
-              { emoji: '🌐', title: 'Web Apps', desc: 'Describe any app in plain English. AI generates production-ready React code, previews live, deploys to Vercel.', color: BRAND, href: '/dashboard?new=app' },
-              { emoji: '📱', title: 'Mobile Apps', desc: 'Generate React Native + Expo apps for iOS and Android. Preview on your phone via QR code.', color: '#f97316', href: '/dashboard?new=mobile' },
+              { emoji: '🌐', title: 'Web Apps', desc: 'Describe any app in plain English. AI generates production-ready React code, previews live, deploys to Vercel.', color: BRAND, href: '/gallery' },
+              { emoji: '📱', title: 'Mobile Apps', desc: 'Generate React Native + Expo apps for iOS and Android. Preview on your phone via QR code.', color: '#f97316', href: '/signup' },
               { emoji: '⚡', title: 'AI Agents', desc: '5,000+ agents across 18 industries. Connect your tools, click Run. Full audit trail.', color: '#a855f7', href: '/agents' },
-              { emoji: '🔀', title: 'Workflows', desc: 'Visual drag-and-drop automations. Wire triggers, AI steps, and actions. Schedule and forget.', color: '#22c55e', href: '/flows' },
-              { emoji: '🤖', title: 'AI Employees', desc: 'Hire AI that runs daily, connects your tools, and emails you results. 100 roles available.', color: '#38bdf8', href: '/ai-employees' },
+              { emoji: '🔀', title: 'Workflows', desc: 'Visual drag-and-drop automations. Wire triggers, AI steps, and actions. Schedule and forget.', color: '#22c55e', href: '/workflows' },
+              { emoji: '🤖', title: 'AI Employees', desc: 'Hire AI that runs daily, connects your tools, and emails you results. 100 roles available.', color: '#38bdf8', href: '/employees' },
               { emoji: '🎯', title: 'GTM Engine', desc: 'Define your ICP, find leads, launch multi-step outreach across email, call, and LinkedIn.', color: '#10b981', href: '/gtm' },
             ].map(p => (
               <Link key={p.title} href={p.href} style={{ display: 'block', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textDecoration: 'none', transition: 'all 0.2s' }}
@@ -408,19 +407,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── BOTTOM CTA ─────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
-        <div style={{ maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>
-            Ready to build?
-          </h2>
-          <p style={{ fontSize: 15, color: '#71717a', marginBottom: 28 }}>Describe what you want. AI does the rest.</p>
-          <Link href="/signup" style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
-            Start for free →
-          </Link>
-          <p style={{ fontSize: 12, color: '#52525b', marginTop: 10 }}>No credit card required</p>
-        </div>
-      </section>
+      {/* Bottom CTA removed — hero CTA is enough */}
 
       {/* ── Pricing preview ─────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -500,7 +487,7 @@ export default function HomePage() {
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Ship it today.</span>
           </h2>
           <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 32px' }}>
-            Your first app goes live in 30 seconds. Your first agent runs in one click. No engineers, no setup.
+            Describe what you want. AI builds it in minutes. No engineers, no setup, no stale templates.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ display: 'inline-block', padding: '16px 40px', borderRadius: 12, background: BRAND, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(14,165,233,0.35)' }}>
