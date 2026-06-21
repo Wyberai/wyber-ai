@@ -24,7 +24,13 @@ export async function GET() {
     .order('created_at', { referencedTable: 'ai_employee_runs', ascending: false })
     .limit(5, { referencedTable: 'ai_employee_runs' })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('AI Employees fetch error:', error.message, error.code)
+    if (error.message?.includes('permission denied')) {
+      return NextResponse.json({ error: 'Database setup needed — please run the ai_employees migration. Contact support if this persists.' }, { status: 500 })
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
   return NextResponse.json({ employees: data ?? [] })
 }
 

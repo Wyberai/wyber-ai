@@ -54,7 +54,7 @@ export default function WorkflowsPage() {
       if (data.flow?.id) {
         router.push('/flows/' + data.flow.id)
       } else {
-        setUseError(data.error || 'Failed to create workflow. Please try again.')
+        setUseError(typeof data.error === 'string' ? data.error : data.error?.message || 'Failed to create workflow. Please try again.')
         setLaunching(null)
       }
     } catch {

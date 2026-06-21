@@ -19,7 +19,7 @@ export async function GET() {
     const admin = await createAdminClient()
     const { data } = await admin.from('flows').select('*').eq('user_id', user.id).order('updated_at', { ascending: false })
     return NextResponse.json({ flows: data || [] })
-  } catch (err) { return NextResponse.json({ error: String(err) }, { status: 500 }) }
+  } catch (err: any) { return NextResponse.json({ error: err?.message || String(err) }, { status: 500 }) }
 }
 
 export async function POST(req: NextRequest) {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       is_active: false, run_count: 0,
       ...(webhookUrl ? { webhook_url: webhookUrl } : {}),
     }).select('*').single()
-    if (error) throw error
+    if (error) return NextResponse.json({ error: error.message || 'Failed to create flow' }, { status: 500 })
     return NextResponse.json({ flow: data })
-  } catch (err) { return NextResponse.json({ error: String(err) }, { status: 500 }) }
+  } catch (err: any) { return NextResponse.json({ error: err?.message || String(err) }, { status: 500 }) }
 }
