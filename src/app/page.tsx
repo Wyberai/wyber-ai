@@ -229,7 +229,7 @@ const PILLARS = [
     accent: '#22c55e',
     heading: 'Draw it.\nIt runs.',
     body: 'Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code, no YAML.',
-    bullets: ['300+ pre-built automations · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · schedule triggers · tool integrations'],
+    bullets: ['Drag-and-drop canvas · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · schedule triggers · 12+ tool integrations'],
     cta: 'Build a workflow →',
     href: '/flows',
 
@@ -241,8 +241,8 @@ const PILLARS = [
     eyebrow: 'AI Employees',
     accent: '#38bdf8',
     heading: 'Hire one.\nIt runs on autopilot.',
-    body: '100 pre-built roles — the equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
-    bullets: ['100 roles · browser control · voice output · phone calls', 'Slack notifications · agent-to-agent delegation', 'Human-in-the-loop escalation · KPI dashboards'],
+    body: 'The equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
+    bullets: ['Choose from 100 roles or create your own', 'Slack notifications · browser control · voice output', 'Human-in-the-loop escalation · daily email digests'],
     cta: 'Hire an AI employee →',
     href: '/ai-employees',
     mockup: <EmployeeMockup />,
@@ -371,18 +371,16 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Stats — balanced across products */}
-          <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* Stats — simple, credible, story-driven */}
+          <div style={{ display: 'flex', gap: 40, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { value: '6', label: 'Products in one platform' },
-              { value: '5,000+', label: 'AI Agents' },
-              { value: '300+', label: 'Workflow automations' },
-              { value: '100', label: 'AI Employee roles' },
-              { value: '∞', label: 'Fresh builds — never stale' },
+              { value: '6 products', label: 'Apps · Agents · Workflows · AI Employees · GTM · Mobile' },
+              { value: '1 platform', label: 'One subscription. One credit system. No feature gates.' },
+              { value: '0 engineers', label: 'Describe what you want in plain English. AI does the rest.' },
             ].map(s => (
-              <div key={s.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: '#52525b', fontWeight: 500, marginTop: 2 }}>{s.label}</div>
+              <div key={s.value} style={{ textAlign: 'center', maxWidth: 220 }}>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{s.value}</div>
+                <div style={{ fontSize: 12, color: '#52525b', fontWeight: 500, marginTop: 4, lineHeight: 1.4 }}>{s.label}</div>
               </div>
             ))}
           </div>
