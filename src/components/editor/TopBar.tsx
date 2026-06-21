@@ -393,6 +393,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? 'Copied!' : 'Copy'}</button>
                     <button onClick={() => window.open(liveUrl, '_blank')} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Open</button>
                   </div>
+                  <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, color: '#0EA5E9', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                    Re-publish with latest changes
+                  </button>
                 </div>
 
                 <div style={{ display: 'flex', gap: 8 }}>
