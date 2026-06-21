@@ -185,13 +185,10 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const NAV = [
     { label: 'Home',         href: '/dashboard',       icon: <IconHome /> },
     { label: 'Web Apps',      href: '/gallery',         icon: <IconTemplates /> },
-    { label: 'Mobile Apps',  href: '/templates/mobile',icon: <IconPhone /> },
     { label: 'AI Agents',    href: '/agents',          icon: <IconAgents /> },
     { label: 'Workflows',    href: '/workflows',       icon: <IconZap /> },
     { label: 'AI Employees', href: '/ai-employees',    icon: <IconPeople /> },
     { label: 'GTM Engine',   href: '/gtm',             icon: <IconAgents /> },
-    { label: 'Learn',        href: '/learn',           icon: <IconLearn /> },
-    { label: 'Docs',         href: '/docs',            icon: <IconDocs /> },
     { label: 'Settings',     href: '/settings',        icon: <IconSettings /> },
   ];
 

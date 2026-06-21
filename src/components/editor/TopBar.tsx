@@ -273,11 +273,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         </Link>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
         <div style={{ display: 'flex', background: 'var(--bg-elevated)', borderRadius: 7, padding: 2, gap: 1 }}>
-          <button style={{ ...btn, border: 'none', borderRadius: 5, padding: '4px 10px', background: !showCode ? 'var(--surface)' : 'transparent', color: !showCode ? 'var(--ide-text)' : 'var(--ide-text3)' }} onClick={() => showCode && onToggleCode?.()}>Preview</button>
-          <button style={{ ...btn, border: 'none', borderRadius: 5, padding: '4px 10px', background: showCode ? 'var(--surface)' : 'transparent', color: showCode ? 'var(--ide-text)' : 'var(--ide-text3)' }} onClick={() => !showCode && onToggleCode?.()}>
-            <svg width="11" height="10" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 2L1 6l4 4M11 2l4 4-4 4M9 1l-2 10"/></svg>
-            Code
-          </button>
+          <span style={{ ...btn, border: 'none', borderRadius: 5, padding: '4px 10px', background: 'var(--surface)', color: 'var(--ide-text)' }}>Preview</span>
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
           {editingName ? (
