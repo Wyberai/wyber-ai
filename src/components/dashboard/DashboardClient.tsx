@@ -183,13 +183,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   };
 
   const NAV = [
-    { label: 'Home',         href: '/dashboard',       icon: <IconHome /> },
-    { label: 'Web Apps',      href: '/dashboard?new=app', icon: <IconTemplates /> },
-    { label: 'AI Agents',    href: '/agents',          icon: <IconAgents /> },
+    { label: 'Home',         href: '/dashboard',        icon: <IconHome /> },
+    { label: 'Web Apps',     href: '/dashboard?new=app', icon: <IconTemplates /> },
+    { label: 'Mobile Apps',  href: '/dashboard?new=mobile', icon: <IconPhone /> },
+    { label: 'AI Agents',    href: '/agents',           icon: <IconAgents /> },
     { label: 'Workflows',    href: '/flows',            icon: <IconZap /> },
-    { label: 'AI Employees', href: '/ai-employees',    icon: <IconPeople /> },
-    { label: 'GTM Engine',   href: '/gtm',             icon: <IconAgents /> },
-    { label: 'Settings',     href: '/settings',        icon: <IconSettings /> },
+    { label: 'AI Employees', href: '/ai-employees',     icon: <IconPeople /> },
+    { label: 'GTM Engine',   href: '/gtm',              icon: <IconAgents /> },
+    { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
   ];
 
   const ACCENT_PALETTE = ['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'];
