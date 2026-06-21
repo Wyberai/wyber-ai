@@ -218,7 +218,7 @@ const PILLARS = [
     heading: 'Pick one.\nIt executes.',
     body: '5,000+ agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included.',
     bullets: ['5,000+ agents with persistent memory', 'Browser control · voice calls · 250+ tools', 'Real-time trace logs · multi-agent coordination'],
-    cta: 'Browse agents →',
+    cta: 'Deploy an agent →',
     href: '/agents',
     mockup: <AgentMockup />,
   },
@@ -232,6 +232,7 @@ const PILLARS = [
     bullets: ['300+ pre-built automations · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · schedule triggers · tool integrations'],
     cta: 'Build a workflow →',
     href: '/flows',
+
     mockup: <WorkflowMockup />,
   },
   {
@@ -242,8 +243,8 @@ const PILLARS = [
     heading: 'Hire one.\nIt runs on autopilot.',
     body: '100 pre-built roles — the equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
     bullets: ['100 roles · browser control · voice output · phone calls', 'Slack notifications · agent-to-agent delegation', 'Human-in-the-loop escalation · KPI dashboards'],
-    cta: 'Browse 100 roles →',
-    href: '/employees',
+    cta: 'Hire an AI employee →',
+    href: '/ai-employees',
     mockup: <EmployeeMockup />,
   },
   {
@@ -283,7 +284,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/dashboard?new=app'], ['AI Agents', '/agents'], ['Workflows', '/flows'], ['AI Employees', '/ai-employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -310,7 +311,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/dashboard?new=app'], ['AI Agents', '/agents'], ['Workflows', '/flows'], ['AI Employees', '/ai-employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
