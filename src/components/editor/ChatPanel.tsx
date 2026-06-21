@@ -49,7 +49,16 @@ function cleanMessage(text: string): string {
   });
   const builtLine = lines.find(l => l.startsWith('Built:'));
   if (builtLine) return builtLine;
-  return lines.join('\n').trim();
+  let result = lines.join('\n').trim();
+  // Keep responses short — take first 2 sentences max
+  const sentences = result.split(/(?<=[.!])\s+/).filter(s => s.length > 5);
+  if (sentences.length > 2) result = sentences.slice(0, 2).join(' ');
+  // Strip technical jargon patterns
+  result = result.replace(/\b(I'll|I will|I've|I have|I am|I'm going to|Let me|Here's what I did|Here's the)\b/gi, '').trim();
+  result = result.replace(/^\s*[-—–]\s*/gm, '');
+  result = result.replace(/\s{2,}/g, ' ').trim();
+  if (!result || result.length < 3) result = 'Done — check the preview.';
+  return result;
 }
 
 function renderMessage(text: string) {

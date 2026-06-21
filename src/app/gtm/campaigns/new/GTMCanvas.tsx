@@ -141,6 +141,12 @@ export default function GTMCanvas() {
     setNodes(ns => [...ns, newNode])
   }
 
+  function removeNode(id: string) {
+    setNodes(ns => ns.filter(n => n.id !== id))
+    setEdges(es => es.filter(e => e.source !== id && e.target !== id))
+    if (selectedNode?.id === id) setSelectedNode(null)
+  }
+
   async function generateAI() {
     setAiLoading(true)
     const res = await fetch('/api/gtm/generate-canvas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ campaign_name: campaignName }) })
@@ -240,7 +246,7 @@ export default function GTMCanvas() {
         {selectedNode && (
           <NodeEditor node={selectedNode} onClose={() => setSelectedNode(null)} onChange={(id, patch) => {
             setNodes(ns => ns.map(n => n.id === id ? { ...n, data: { ...n.data, ...patch } } : n))
-          }} />
+          }} onDelete={(id) => removeNode(id)} />
         )}
       </div>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); .react-flow__attribution{display:none!important;} input{color-scheme:dark;} textarea{color-scheme:dark;}`}</style>
@@ -248,7 +254,7 @@ export default function GTMCanvas() {
   )
 }
 
-function NodeEditor({ node, onClose, onChange }: { node: any; onClose: () => void; onChange: (id: string, patch: any) => void }) {
+function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose: () => void; onChange: (id: string, patch: any) => void; onDelete: (id: string) => void }) {
   const d = node.data as any
   const color = NODE_COLORS[d.type] || '#0EA5E9'
   const [aiGen, setAiGen] = useState(false)
@@ -407,6 +413,10 @@ function NodeEditor({ node, onClose, onChange }: { node: any; onClose: () => voi
           {aiGen ? '✦ Generating...' : `✦ AI write ${d.type === 'call' ? 'script' : 'email'}`}
         </button>
       )}
+
+      <button onClick={() => onDelete(node.id)} style={{ width: '100%', padding: '9px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginTop: 12 }}>
+        Delete this node
+      </button>
     </div>
   )
 }

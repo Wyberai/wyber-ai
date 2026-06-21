@@ -31,6 +31,61 @@ const PLANS = [
 
 interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }
 
+function CreditHistory() {
+  const [history, setHistory] = useState<{ id: string; amount: number; reason: string; credits_before: number; credits_after: number; created_at: string }[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/credits/deduct')
+      .then(r => r.json())
+      .then(d => {
+        if (d.history) setHistory(d.history)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [])
+
+  const reasonLabels: Record<string, string> = {
+    'web-build': '🌐 Web app build',
+    'mobile-build': '📱 Mobile app build',
+    'small-edit': '✏️ Edit',
+    'agent-run': '⚡ Agent run',
+    'ai-employee-run': '🤖 AI Employee run',
+    'agent-execution': '⚡ Agent execution',
+    'canvas-execution': '🔀 Workflow run',
+    'execution': '⚡ Execution',
+    'employee-run': '🤖 Employee run',
+    'image-gen': '🖼️ Image generation',
+    'gtm-icp-sequence': '🎯 GTM campaign',
+    'gtm-lead-enrich': '🎯 Lead enrichment',
+  }
+
+  return (
+    <div style={{ marginTop: 20 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Credit usage history</div>
+      {loading ? (
+        <div style={{ fontSize: 12, color: '#52525b' }}>Loading...</div>
+      ) : history.length === 0 ? (
+        <div style={{ fontSize: 12, color: '#52525b', padding: '16px 0' }}>No credit usage yet. Start building to see your history here.</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {history.slice(0, 20).map((h, i) => (
+            <div key={h.id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#111113', borderRadius: 8, fontSize: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>{reasonLabels[h.reason] || h.reason}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ color: '#ef4444', fontWeight: 600 }}>-{h.amount}</span>
+                <span style={{ color: '#52525b', fontSize: 10 }}>{new Date(h.created_at).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function IntegrationsTab() {
   const [connections, setConnections] = useState<Connection[]>([])
   const [loading, setLoading] = useState(true)
@@ -424,7 +479,10 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <a href="/credits" style={{ fontSize: 13, color: '#0EA5E9', display: 'inline-block', marginTop: 4 }}>View full credits & pricing breakdown →</a>
+          <a href="/credits" style={{ fontSize: 13, color: '#0EA5E9', display: 'inline-block', marginTop: 4, marginBottom: 20 }}>View full credits & pricing breakdown →</a>
+
+          {/* Credit usage history */}
+          <CreditHistory />
         </>}
 
         {/* MODELS & CREDITS */}

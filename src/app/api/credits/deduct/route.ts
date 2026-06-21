@@ -93,7 +93,15 @@ export async function GET() {
       .eq('id', user.id)
       .single()
 
-    return NextResponse.json({ credits: profile?.credits ?? 0, plan: profile?.plan ?? 'free' })
+    // Also fetch credit usage history
+    const { data: history } = await admin
+      .from('credit_usage')
+      .select('id, amount, reason, credits_before, credits_after, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    return NextResponse.json({ credits: profile?.credits ?? 0, plan: profile?.plan ?? 'free', history: history || [] })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
