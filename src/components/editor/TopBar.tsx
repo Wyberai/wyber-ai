@@ -183,8 +183,10 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       if (url) {
         setDeployUrl(url);
         setShowShareModal(true);
+      } else {
+        alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
       }
-    } catch {}
+    } catch (e) { alert('Publish failed: ' + (e instanceof Error ? e.message : 'Network error')); }
     setDeploying(false);
   };
 

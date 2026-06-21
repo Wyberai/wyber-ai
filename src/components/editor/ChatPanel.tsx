@@ -511,7 +511,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
         failedPaths = result.failedPaths;
       }
-      // 3. Persist if anything changed
+      // 3. Sanitize — strip any stray merge conflict markers the AI left behind
+      for (const [path, file] of Object.entries(updatedFiles)) {
+        const c = typeof file === 'string' ? file : (file as any)?.content
+        if (c && (c.includes('<<<<<<<') || c.includes('=======') || c.includes('>>>>>>>'))) {
+          const cleaned = c.replace(/^<<<<<<<.*$/gm, '').replace(/^=======\s*$/gm, '').replace(/^>>>>>>>.*$/gm, '')
+          if (typeof file === 'string') updatedFiles[path] = cleaned
+          else (file as any).content = cleaned
+        }
+      }
+      // 4. Persist if anything changed
       if (newFiles.length > 0 || editBlocks.length > 0) {
         setFiles(updatedFiles);
         setHasGeneratedFiles(true);
