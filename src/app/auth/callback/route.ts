@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (user) {
-      // Upsert profile -- always ensure 50 credits on first login
+      // Create profile on first signup only — never overwrite existing credits/plan
       await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email ?? '',
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
         updated_at: new Date().toISOString(),
       }, {
         onConflict: 'id',
-        ignoreDuplicates: false,
+        ignoreDuplicates: true,
       });
 
       return NextResponse.redirect(`${origin}${next}`);
