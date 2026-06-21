@@ -326,213 +326,99 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '90vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(60px,10vw,120px) clamp(20px,4vw,48px)', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 50% at 20% 40%, rgba(14,165,233,0.1) 0%, transparent 60%), radial-gradient(ellipse 60% 70% at 80% 60%, rgba(168,85,247,0.07) 0%, transparent 60%), radial-gradient(ellipse 40% 40% at 50% 90%, rgba(34,197,94,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '40px 40px', pointerEvents: 'none' }} />
+      {/* ── HERO — Lovable-inspired: clean, single CTA ─────────────────── */}
+      <section style={{ position: 'relative', minHeight: '85vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(80px,12vw,160px) clamp(20px,4vw,48px) clamp(60px,8vw,100px)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(14,165,233,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 860 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: BRAND, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
-            Build · Ship · Automate
-          </div>
-
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
-            From idea to live app — in minutes.<br />
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: 800 }}>
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
+            Build something<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Then automate everything else.
+              with WyberAi
             </span>
           </h1>
 
-          <p style={{ fontSize: 'clamp(15px,1.8vw,20px)', color: '#71717a', lineHeight: 1.65, maxWidth: 640, margin: '0 auto 14px' }}>
-            Build web apps and mobile apps in plain English. Then add AI agents, automated workflows, AI employees who run on a daily schedule, and a GTM engine that fills your pipeline — all from one platform.
+          <p style={{ fontSize: 'clamp(16px,2vw,22px)', color: '#71717a', lineHeight: 1.6, maxWidth: 520, margin: '0 auto 40px' }}>
+            Create apps, deploy agents, and automate your business by chatting with AI
           </p>
 
-          <p style={{ fontSize: 13, color: '#52525b', marginBottom: 36 }}>
-            Starts at $29/mo · No engineers needed · Cancel anytime
-          </p>
-
-          {/* Six product pills */}
-          <div className="wyb-product-pills" style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
-            {PILLARS.map((p, i) => (
-              <button key={p.key} onClick={() => { setActivePillar(i); document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' }); }}
-                style={{ padding: '7px 14px', borderRadius: 20, border: `1px solid ${activePillar === i ? p.accent + '55' : 'rgba(255,255,255,0.1)'}`, background: activePillar === i ? p.accent + '15' : 'rgba(255,255,255,0.04)', color: activePillar === i ? p.accent : '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif" }}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 52 }}>
-            <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
-              Start for free →
+          {/* Single input CTA — like Lovable */}
+          <div style={{ maxWidth: 520, margin: '0 auto 48px', position: 'relative' }}>
+            <Link href="/signup" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderRadius: 14, background: '#111113', border: '1px solid rgba(255,255,255,0.1)', textDecoration: 'none', transition: 'all 0.2s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.1)'}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12l2 2 4-4"/></svg>
+              <span style={{ flex: 1, textAlign: 'left', color: '#52525b', fontSize: 15 }}>Describe the app you want to build...</span>
+              <span style={{ padding: '8px 18px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700 }}>Start free →</span>
             </Link>
-            <Link href="/pricing" style={{ padding: '14px 28px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
-              See pricing
-            </Link>
-          </div>
-
-          {/* Stats — simple, credible, story-driven */}
-          <div style={{ display: 'flex', gap: 40, justifyContent: 'center', flexWrap: 'wrap' }}>
-            {[
-              { value: '6 products', label: 'Apps · Agents · Workflows · AI Employees · GTM · Mobile' },
-              { value: '1 platform', label: 'One subscription. One credit system. No feature gates.' },
-              { value: '0 engineers', label: 'Describe what you want in plain English. AI does the rest.' },
-            ].map(s => (
-              <div key={s.value} style={{ textAlign: 'center', maxWidth: 220 }}>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: '#52525b', fontWeight: 500, marginTop: 4, lineHeight: 1.4 }}>{s.label}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* ── WHAT YOU CAN BUILD IN 1 HOUR ──────────────────────────────── */}
-      <section style={{ padding: '48px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: 11, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 16 }}>What you can do in 1 hour</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px,100%), 1fr))', gap: 12, textAlign: 'left' }}>
-            {[
-              { icon: '🌐', time: '0–10 min', title: 'Build a web app', desc: 'Describe your idea, get production-ready React code with live preview', color: BRAND },
-              { icon: '📱', time: '10–20 min', title: 'Build a mobile app', desc: 'Generate a React Native app, scan QR to preview on your phone', color: '#f97316' },
-              { icon: '⚡', time: '20–30 min', title: 'Deploy AI agents', desc: 'Pick from 5,000+ agents, connect your tools, click Run', color: '#a855f7' },
-              { icon: '🔀', time: '30–40 min', title: 'Set up workflows', desc: 'Wire triggers, AI steps, and actions — visual drag-and-drop', color: '#22c55e' },
-              { icon: '🤖', time: '40–50 min', title: 'Hire AI employees', desc: 'Pick a role, set a schedule — they work and email you what they did', color: '#38bdf8' },
-              { icon: '🎯', time: '50–60 min', title: 'Launch your GTM', desc: 'Define your ICP, find leads, launch multi-step outreach', color: '#10b981' },
-            ].map(s => (
-              <div key={s.title} style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-                <div style={{ fontSize: 24, flexShrink: 0 }}>{s.icon}</div>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: s.color, letterSpacing: '0.06em', marginBottom: 4 }}>{s.time}</div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 4 }}>{s.title}</div>
-                  <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{s.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── YOUR FIRST HOUR — VISUAL JOURNEY ──────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* ── MEET WYBERAI — 3 steps, Lovable-style ──────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: '#0b0b0e' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Your first hour on WyberAi</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
-              From zero to a fully automated business
-            </h2>
-            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 560, margin: '0 auto' }}>No templates. No stale code. AI builds everything fresh — and it only takes an hour to set up all six products.</p>
+          <div style={{ textAlign: 'center', marginBottom: 56 }}>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em' }}>Meet WyberAi</h2>
           </div>
-
-          {/* Visual timeline */}
-          <div style={{ position: 'relative' }}>
-            {/* Vertical line */}
-            <div style={{ position: 'absolute', left: 28, top: 0, bottom: 0, width: 2, background: 'linear-gradient(to bottom, rgba(14,165,233,0.3), rgba(168,85,247,0.3), rgba(34,197,94,0.3), rgba(56,189,248,0.3), rgba(249,115,22,0.3), rgba(16,185,129,0.3))', borderRadius: 1 }} />
-
+          <div className="wyb-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40 }}>
             {[
-              { time: '0:00', emoji: '🌐', title: 'Describe your web app', what: '"Build me an invoice tracker with client management, payment status, and PDF export"', result: 'AI generates 8 files of production React code. Live preview renders in real-time. Self-healing fixes any build errors automatically.', color: BRAND, output: 'Live app running in preview' },
-              { time: '0:10', emoji: '📱', title: 'Build a mobile companion', what: '"Now make a mobile version — client can check invoice status, get push notifications when paid"', result: 'React Native + Expo app generated. Scan QR code with your phone to preview. Camera, GPS, biometrics supported out of the box.', color: '#f97316', output: 'Running on your phone via Expo' },
-              { time: '0:20', emoji: '⚡', title: 'Deploy an AI agent', what: 'Pick "Invoice Follow-up Agent" from 5,000+ options. Connect Gmail + Stripe.', result: 'Agent monitors unpaid invoices, drafts personalized follow-up emails, and logs everything. Full audit trail with each run.', color: '#a855f7', output: 'Agent running with trace logs' },
-              { time: '0:30', emoji: '🔀', title: 'Wire a workflow', what: 'Drag: Stripe webhook → AI classifier → Slack notification → Google Sheets log', result: 'Every payment triggers: AI categorizes it, alerts your team in Slack, and logs to your spreadsheet. Runs 24/7.', color: '#22c55e', output: '4-step automation running' },
-              { time: '0:40', emoji: '🤖', title: 'Hire an AI employee', what: 'Hire "AI Accounts Receivable Clerk". Set schedule: daily at 9 AM.', result: 'Every morning it checks overdue invoices, sends reminders, updates your CRM, and emails you a digest of what it did.', color: '#38bdf8', output: 'Daily email digest arriving' },
-              { time: '0:50', emoji: '🎯', title: 'Launch your GTM', what: 'Define ICP: "CFOs at 50-200 person SaaS companies". Import 500 leads from Apollo.', result: 'Multi-step outreach: personalized email → 3-day wait → follow-up with case study → phone call script. All automated.', color: '#10b981', output: 'Pipeline filling up' },
-            ].map((step, i) => (
-              <div key={step.time} style={{ display: 'flex', gap: 24, marginBottom: i < 5 ? 40 : 0, position: 'relative' }}>
-                {/* Timeline dot */}
-                <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: step.color + '15', border: `2px solid ${step.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{step.emoji}</div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: step.color, marginTop: 6, fontFamily: 'monospace' }}>{step.time}</div>
-                </div>
-                {/* Content card */}
-                <div style={{ flex: 1, background: '#111113', border: `1px solid ${step.color}20`, borderRadius: 14, padding: '20px 22px', transition: 'all 0.2s' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>{step.title}</div>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#a1a1aa', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.5 }}>
-                    {step.what}
-                  </div>
-                  <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: '0 0 12px' }}>{step.result}</p>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 8, background: step.color + '12', border: `1px solid ${step.color}25` }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: step.color }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: step.color }}>{step.output}</span>
-                  </div>
-                </div>
+              { step: '01', title: 'Start with an idea', desc: 'Describe the app, agent, or workflow you want to create — or drop in screenshots and docs.', color: BRAND },
+              { step: '02', title: 'Watch it come to life', desc: 'AI builds your project in real-time. Fresh code every time — never stale templates. Preview as it builds.', color: '#a855f7' },
+              { step: '03', title: 'Refine and ship', desc: 'Iterate with simple feedback. Deploy to a live URL, connect tools, and automate — all in one click.', color: '#22c55e' },
+            ].map(s => (
+              <div key={s.step} style={{ textAlign: 'center' }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: s.color + '12', border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22, fontWeight: 800, color: s.color, fontFamily: "'Sora', sans-serif" }}>{s.step}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>{s.title}</div>
+                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
               </div>
             ))}
-          </div>
-
-          {/* CTA after timeline */}
-          <div style={{ textAlign: 'center', marginTop: 48 }}>
-            <Link href="/signup" style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
-              Start your first hour free →
-            </Link>
-            <p style={{ fontSize: 12, color: '#52525b', marginTop: 10 }}>No credit card required · 50 free credits</p>
           </div>
         </div>
       </section>
 
-      {/* ── SIX PRODUCTS SHOWCASE (tab switcher) ─────────────────────────── */}
-      <section id="showcase" style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-
-          {/* Tab bar */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 40, overflowX: 'auto', padding: '0 0 4px' }}>
-            {PILLARS.map((p, i) => (
-              <button key={p.key} onClick={() => setActivePillar(i)}
-                style={{ padding: '9px 18px', borderRadius: 9, border: `1px solid ${activePillar === i ? p.accent + '44' : 'rgba(255,255,255,0.07)'}`, background: activePillar === i ? p.accent + '12' : 'transparent', color: activePillar === i ? p.accent : '#52525b', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Space Grotesk', sans-serif", whiteSpace: 'nowrap', transition: 'all 0.15s' }}>
-                {p.label}
-              </button>
-            ))}
+      {/* ── DISCOVER PRODUCTS — card grid like Lovable templates ────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
+              Six products, one platform
+            </h2>
+            <p style={{ fontSize: 15, color: '#71717a', marginTop: 8 }}>Everything you need to build, launch, and grow — in one place.</p>
           </div>
-
-          {/* Active pillar content */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(340px,100%), 1fr))', gap: 40, alignItems: 'center' }}>
-            {/* Copy */}
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: pillar.accent + '15', border: `1px solid ${pillar.accent}33`, fontSize: 11, fontWeight: 700, color: pillar.accent, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 18 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: pillar.accent, animation: 'pulse 2s infinite' }} />
-                {pillar.eyebrow}
-              </div>
-              <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3.5vw,48px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16, color: '#fafafa', whiteSpace: 'pre-line' }}>
-                {pillar.heading}
-              </h2>
-              <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.7, marginBottom: 24, maxWidth: 440 }}>
-                {pillar.body}
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
-                {pillar.bullets.map(b => (
-                  <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: pillar.accent + '15', border: `1px solid ${pillar.accent}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <IcoCheck color={pillar.accent} />
-                    </div>
-                    <span style={{ fontSize: 13, color: '#a1a1aa' }}>{b}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href={pillar.href} style={{ display: 'inline-block', padding: '12px 24px', borderRadius: 10, background: pillar.accent, color: pillar.key === 'mobile' ? '#fff' : '#000', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 4px 20px ${pillar.accent}33` }}>
-                {pillar.cta}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px,100%), 1fr))', gap: 14 }}>
+            {[
+              { emoji: '🌐', title: 'Web Apps', desc: 'Describe any app in plain English. AI generates production-ready React code, previews live, deploys to Vercel.', color: BRAND, href: '/dashboard?new=app' },
+              { emoji: '📱', title: 'Mobile Apps', desc: 'Generate React Native + Expo apps for iOS and Android. Preview on your phone via QR code.', color: '#f97316', href: '/dashboard?new=mobile' },
+              { emoji: '⚡', title: 'AI Agents', desc: '5,000+ agents across 18 industries. Connect your tools, click Run. Full audit trail.', color: '#a855f7', href: '/agents' },
+              { emoji: '🔀', title: 'Workflows', desc: 'Visual drag-and-drop automations. Wire triggers, AI steps, and actions. Schedule and forget.', color: '#22c55e', href: '/flows' },
+              { emoji: '🤖', title: 'AI Employees', desc: 'Hire AI that runs daily, connects your tools, and emails you results. 100 roles available.', color: '#38bdf8', href: '/ai-employees' },
+              { emoji: '🎯', title: 'GTM Engine', desc: 'Define your ICP, find leads, launch multi-step outreach across email, call, and LinkedIn.', color: '#10b981', href: '/gtm' },
+            ].map(p => (
+              <Link key={p.title} href={p.href} style={{ display: 'block', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textDecoration: 'none', transition: 'all 0.2s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = p.color + '44'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 40px ${p.color}15` }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>{p.emoji}</div>
+                <div style={{ fontSize: 17, fontWeight: 800, color: '#fafafa', marginBottom: 6, fontFamily: "'Sora', sans-serif" }}>{p.title}</div>
+                <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: '0 0 16px' }}>{p.desc}</p>
+                <span style={{ fontSize: 12, fontWeight: 700, color: p.color }}>{p.title === 'Web Apps' ? 'Start building' : p.title === 'AI Agents' ? 'Browse agents' : p.title === 'AI Employees' ? 'Hire one' : 'Get started'} →</span>
               </Link>
-            </div>
-            {/* Mockup */}
-            <div>{pillar.mockup}</div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── Quick-link grid ────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 310px), 1fr))', gap: 12 }}>
-            {PILLARS.map((p) => (
-              <Link key={p.key} href={p.href} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderRadius: 10, background: '#111113', border: '1px solid rgba(255,255,255,0.06)', textDecoration: 'none', transition: 'all 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = p.accent + '44'; (e.currentTarget as HTMLElement).style.background = p.accent + '08' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.background = '#111113' }}>
-                <span style={{ fontSize: 22 }}>{p.label.split(' ')[0]}</span>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{p.eyebrow}</div>
-                  <div style={{ fontSize: 11, color: p.accent, fontWeight: 600 }}>{p.cta.replace(' →', '')}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
+      {/* ── BOTTOM CTA ─────────────────────────────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>
+            Ready to build?
+          </h2>
+          <p style={{ fontSize: 15, color: '#71717a', marginBottom: 28 }}>Describe what you want. AI does the rest.</p>
+          <Link href="/signup" style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
+            Start for free →
+          </Link>
+          <p style={{ fontSize: 12, color: '#52525b', marginTop: 10 }}>No credit card required</p>
         </div>
       </section>
 
