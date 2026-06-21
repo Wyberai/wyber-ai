@@ -79,7 +79,9 @@ export function PreviewPanel() {
         setError(null)
         if (isFirstBuild.current && Object.keys(files).length > 3) {
           isFirstBuild.current = false
-          setConfettiTrigger(c => c + 1)
+          // Only celebrate if user actually generated this app (not loaded from template)
+          const isTemplate = !project?.first_prompt
+          if (!isTemplate) setConfettiTrigger(c => c + 1)
         }
       } else {
         setError(data.error || 'Build failed')

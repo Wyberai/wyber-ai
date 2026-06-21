@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { WORKFLOW_GALLERY, WORKFLOW_CATEGORIES } from '@/lib/templates/workflow-gallery'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { BrandLogo, getBrandDomain } from '@/components/shared/BrandLogo'
 
 export default function WorkflowsPage() {
   const router = useRouter()
@@ -102,13 +103,16 @@ export default function WorkflowsPage() {
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.65 }}>
             {WORKFLOW_GALLERY.length} pre-built automation workflows across 7 business categories. Click any template to open it in the canvas builder with nodes pre-wired.
           </p>
-          <div style={{ display: 'flex', gap: 8, maxWidth: 420, margin: '0 auto' }}>
+          <div style={{ display: 'flex', gap: 8, maxWidth: 520, margin: '0 auto' }}>
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search workflows..."
               style={{ flex: 1, padding: '10px 16px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#fafafa', fontSize: 14, outline: 'none', fontFamily: 'inherit' }}
             />
+            <Link href="/flows" style={{ padding: '10px 20px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>
+              + New Workflow
+            </Link>
           </div>
         </div>
 
@@ -174,7 +178,9 @@ export default function WorkflowsPage() {
 
                 {/* Node flow preview */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16, flexWrap: 'wrap' }}>
-                  {t.nodes.map((node, i) => (
+                  {t.nodes.map((node, i) => {
+                    const toolDomain = getBrandDomain(node.tool.toLowerCase())
+                    return (
                     <div key={node.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <span style={{
                         fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 8,
@@ -182,7 +188,9 @@ export default function WorkflowsPage() {
                         color: NODE_TYPE_COLOR[node.type],
                         border: `1px solid ${NODE_TYPE_COLOR[node.type]}25`,
                         whiteSpace: 'nowrap',
+                        display: 'flex', alignItems: 'center', gap: 4,
                       }}>
+                        {toolDomain && <BrandLogo domain={toolDomain} name={node.tool} size={14} />}
                         {node.tool}
                       </span>
                       {i < t.nodes.length - 1 && (
@@ -191,7 +199,8 @@ export default function WorkflowsPage() {
                         </svg>
                       )}
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {/* Footer */}

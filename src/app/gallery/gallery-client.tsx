@@ -42,7 +42,7 @@ export default function GalleryPage() {
           setApps(data || [])
           setLoading(false)
         })
-    })
+    }).catch(() => setLoading(false))
   }, [])
 
   const visibleCategories = useMemo(() => {

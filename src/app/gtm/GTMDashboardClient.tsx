@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
@@ -17,9 +18,22 @@ interface Props {
 
 export default function GTMDashboardClient({ user, profile, campaigns, totalLeads }: Props) {
   const hasProfile = !!profile?.company_name
-  const activeCampaigns = campaigns.filter(c => c.status === 'active').length
-  const totalSent = campaigns.reduce((a, c) => a + (c.stats?.sent || 0), 0)
-  const totalReplies = campaigns.reduce((a, c) => a + (c.stats?.replies || 0), 0)
+  const activeCampaigns = (campaigns || []).filter(c => c.status === 'active').length
+  const totalSent = (campaigns || []).reduce((a, c) => a + (c.stats?.sent || 0), 0)
+  const totalReplies = (campaigns || []).reduce((a, c) => a + (c.stats?.replies || 0), 0)
+  const [editing, setEditing] = useState(false)
+  const [gtmName, setGtmName] = useState(hasProfile ? `${profile.company_name} — GTM` : 'Go-to-Market')
+  const [saving, setSaving] = useState(false)
+
+  const handleRename = async () => {
+    if (!gtmName.trim()) return
+    setSaving(true)
+    try {
+      await fetch('/api/gtm/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: gtmName.trim() }) })
+    } catch {}
+    setSaving(false)
+    setEditing(false)
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -41,9 +55,19 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
         <div style={{ marginBottom: 32, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>GTM Engine</div>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4 }}>
-              {hasProfile ? `${profile.company_name} — GTM` : 'Go-to-Market'}
-            </h1>
+            {editing ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input value={gtmName} onChange={e => setGtmName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus
+                  style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', background: '#111113', border: `1px solid ${s.border}`, borderRadius: 8, color: s.text, padding: '4px 12px', outline: 'none', width: 320 }} />
+                <button onClick={handleRename} disabled={saving} style={{ padding: '6px 14px', borderRadius: 6, background: s.sky, color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{saving ? '...' : 'Save'}</button>
+                <button onClick={() => setEditing(false)} style={{ padding: '6px 14px', borderRadius: 6, background: 'transparent', color: s.muted, border: `1px solid ${s.border}`, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+              </div>
+            ) : (
+              <h1 onClick={() => setEditing(true)} title="Click to rename" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4, cursor: 'pointer', borderBottom: '1px dashed transparent' }}
+                onMouseEnter={e => (e.currentTarget.style.borderBottomColor = s.muted)} onMouseLeave={e => (e.currentTarget.style.borderBottomColor = 'transparent')}>
+                {gtmName} <span style={{ fontSize: 14, color: s.dim, fontWeight: 400 }}>✎</span>
+              </h1>
+            )}
             <p style={{ fontSize: 14, color: s.muted }}>Find customers, run outreach, book meetings. All from one canvas.</p>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>

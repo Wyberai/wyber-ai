@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { BrandLogo, getBrandDomain } from '@/components/shared/BrandLogo'
 
 interface Flow { id: string; name: string; description: string; is_active: boolean; run_count: number; updated_at: string; nodes: unknown[] }
 
@@ -297,7 +298,7 @@ export default function FlowsPage() {
       return r.json()
     }).then(d => {
       if (d) {
-        if (d.error) { setFlowError(typeof d.error === 'string' ? d.error : 'Failed to load flows'); setLoading(false); return }
+        if (d.error) { setFlowError(typeof d.error === 'string' ? d.error : typeof d.error === 'object' ? JSON.stringify(d.error) : 'Failed to load flows'); setLoading(false); return }
         setFlows(d.flows || [])
         setLoading(false)
       }
@@ -388,7 +389,7 @@ export default function FlowsPage() {
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f5', flex: 1 }}>{flow.name}</span>
                       <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 8, background: flow.is_active ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.04)', color: flow.is_active ? '#22c55e' : MUTED, fontWeight: 700 }}>{flow.is_active ? 'ACTIVE' : 'DRAFT'}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>{flow.description || 'No description'}</div>
+                    <div style={{ fontSize: 12, color: MUTED, marginBottom: 12 }}>{typeof flow.description === 'string' ? flow.description : 'No description'}</div>
                     <div style={{ fontSize: 11, color: '#3f3f46' }}>{(flow.nodes || []).length} steps · {flow.run_count} runs</div>
                   </div>
                 </Link>
@@ -439,6 +440,14 @@ export default function FlowsPage() {
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f0f5', lineHeight: 1.3 }}>{tpl.name}</div>
                       <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5, flex: 1 }}>{tpl.description}</div>
+                      {/* Tool logos */}
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4, marginBottom: 8 }}>
+                        {Array.from(new Set((tpl.nodes as any[]).map(n => n.data?.config?.toolkit).filter(Boolean))).map(toolkit => {
+                          const domain = getBrandDomain(toolkit.toLowerCase())
+                          return domain ? <BrandLogo key={toolkit} domain={domain} name={toolkit} size={20} style={{ borderRadius: 4, border: '1px solid rgba(255,255,255,0.08)' }} /> : null
+                        })}
+                      </div>
+
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
                         <span style={{ fontSize: 11, color: '#3f3f46' }}>{tpl.nodes.length} steps</span>
                         <button

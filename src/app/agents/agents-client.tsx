@@ -16,6 +16,27 @@ const COMPLEXITY_COLOR: Record<string,string> = {
   Enterprise: '#8b5cf6', Growth: '#22c55e', Ready: '#0EA5E9'
 }
 
+const CATEGORY_ICON: Record<string, { emoji: string; color: string }> = {
+  'Sales & Revenue': { emoji: '🎯', color: '#10b981' },
+  'Customer Support': { emoji: '🎧', color: '#f59e0b' },
+  'Finance': { emoji: '💰', color: '#22c55e' },
+  'Marketing': { emoji: '📣', color: '#e879f9' },
+  'HR & People': { emoji: '👥', color: '#6366f1' },
+  'IT & Security': { emoji: '🔒', color: '#ef4444' },
+  'Operations': { emoji: '⚙️', color: '#0EA5E9' },
+  'Legal & Compliance': { emoji: '⚖️', color: '#8b5cf6' },
+  'Executive': { emoji: '👔', color: '#f97316' },
+  'Healthcare': { emoji: '🏥', color: '#14b8a6' },
+  'Real Estate': { emoji: '🏠', color: '#06b6d4' },
+  'Insurance': { emoji: '🛡️', color: '#3b82f6' },
+  'Ecommerce': { emoji: '🛒', color: '#ec4899' },
+  'Education': { emoji: '📚', color: '#a855f7' },
+  'Nonprofit': { emoji: '💚', color: '#22c55e' },
+  'Government': { emoji: '🏛️', color: '#64748b' },
+  'Hospitality': { emoji: '🏨', color: '#f59e0b' },
+  'Professional Services': { emoji: '💼', color: '#0EA5E9' },
+}
+
 interface Agent {
   id: string; agent_id: string; name: string; category: string;
   primary_buyer: string; problem: string; outcome: string;
@@ -44,10 +65,11 @@ export default function AgentsPage() {
         ...(featured && { featured: 'true' }),
       })
       const res = await fetch(`/api/agents?${params}`)
+      if (res.status === 401) { router.push('/login?next=/agents'); return }
       const data = await res.json()
       setAgents(data.agents || [])
       setTotal(data.total || 0)
-    } finally { setLoading(false) }
+    } catch { /* network error — loading state clears in finally */ } finally { setLoading(false) }
   }, [page, category, search, featured])
 
   useEffect(() => { fetchAgents() }, [fetchAgents])
@@ -198,9 +220,11 @@ export default function AgentsPage() {
 
                 {/* Agent header */}
                 <div style={{ display:'flex', alignItems:'flex-start', gap:12, marginBottom:12 }}>
-                  <div style={{ width:40, height:40, borderRadius:10, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
-                    🤖
+                  {(() => { const ci = CATEGORY_ICON[agent.category] || { emoji: '🤖', color: '#0EA5E9' }; return (
+                  <div style={{ width:40, height:40, borderRadius:10, background:`${ci.color}12`, border:`1px solid ${ci.color}25`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
+                    {ci.emoji}
                   </div>
+                  ) })()}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:14, fontWeight:700, color:'#fafafa', marginBottom:3, lineHeight:1.3 }}>{agent.name}</div>
                     <div style={{ fontSize:11, color:'#52525b' }}>{agent.agent_id} · {agent.category}</div>

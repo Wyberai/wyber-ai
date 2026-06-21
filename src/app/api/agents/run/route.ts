@@ -69,11 +69,16 @@ export async function POST(req: NextRequest) {
     async function deductCredits(amount: number): Promise<boolean> {
       if (creditBalance < amount) return false
       const before = creditBalance
-      creditBalance -= amount
-      await admin.from('profiles').update({
-        credits: creditBalance,
-        updated_at: new Date().toISOString(),
-      }).eq('id', user.id)
+      // Atomic: only deduct if DB still has enough credits
+      const { data: updated, error } = await admin
+        .from('profiles')
+        .update({ credits: Math.max(0, creditBalance - amount), updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+        .gte('credits', amount)
+        .select('credits')
+        .single()
+      if (error || !updated) return false
+      creditBalance = updated.credits
       admin.from('credit_usage').insert({
         user_id: user.id, amount, reason: 'agent-execution',
         credits_before: before, credits_after: creditBalance,

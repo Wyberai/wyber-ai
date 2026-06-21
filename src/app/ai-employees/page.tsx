@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { BrandLogo, getBrandDomain } from '@/components/shared/BrandLogo'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Employee {
@@ -56,7 +57,12 @@ function EmployeeCard({ emp, onRun, onToggle, onDelete, running }: {
       </div>
       {emp.tools.length > 0 && (
         <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
-          {emp.tools.map(t => <span key={t} style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:6, background:'rgba(14,165,233,0.08)', color:SKY, border:'1px solid rgba(14,165,233,0.15)', textTransform:'uppercase', letterSpacing:'0.05em' }}>{t}</span>)}
+          {emp.tools.map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
+            <span key={t} style={{ fontSize:10, fontWeight:600, padding:'2px 8px', borderRadius:6, background:'rgba(14,165,233,0.08)', color:SKY, border:'1px solid rgba(14,165,233,0.15)', letterSpacing:'0.05em', display:'inline-flex', alignItems:'center', gap:4 }}>
+              {domain && <BrandLogo domain={domain} name={t} size={14} />}
+              {t}
+            </span>
+          ) })}
         </div>
       )}
       <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
@@ -108,9 +114,14 @@ export default function AIEmployeesPage() {
 
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500) }
 
+  const [loadError, setLoadError] = useState<string | null>(null)
   const load = useCallback(async () => {
-    const res = await fetch('/api/ai-employees')
-    if (res.ok) { const d = await res.json(); setEmployees(d.employees ?? []) }
+    try {
+      const res = await fetch('/api/ai-employees')
+      if (res.ok) { const d = await res.json(); setEmployees(d.employees ?? []) }
+      else if (res.status === 401) { window.location.href = '/login?next=/ai-employees'; return }
+      else { const d = await res.json().catch(() => ({})); setLoadError(d.error || 'Failed to load employees') }
+    } catch { setLoadError('Network error — please check your connection') }
     setLoading(false)
   }, [])
 
@@ -170,9 +181,16 @@ export default function AIEmployeesPage() {
           <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Autonomous AI workers that connect to your tools, run on a schedule, and email you what they did.</p>
         </div>
 
+        {loadError && (
+          <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>{loadError}</span>
+            <button onClick={() => { setLoadError(null); setLoading(true); load() }} style={{ background: 'transparent', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444', borderRadius: 6, padding: '4px 12px', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>Retry</button>
+          </div>
+        )}
+
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 0', color: '#3f3f46' }}>Loading…</div>
-        ) : employees.length === 0 ? (
+        ) : employees.length === 0 && !loadError ? (
           <div>
             {/* Empty state hero */}
             <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
@@ -234,9 +252,12 @@ export default function AIEmployeesPage() {
                   </div>
                   <p style={{ margin: '0 0 10px', fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{role.tagline}</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                    {role.tools.slice(0, 3).map(t => (
-                      <span key={t} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)' }}>{t}</span>
-                    ))}
+                    {role.tools.slice(0, 3).map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
+                      <span key={t} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                        {domain && <BrandLogo domain={domain} name={t} size={12} />}
+                        {t}
+                      </span>
+                    ) })}
                   </div>
                 </Link>
               ))}

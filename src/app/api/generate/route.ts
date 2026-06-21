@@ -1005,15 +1005,16 @@ export async function POST(req: NextRequest) {
         }), { status: 402 })
       }
 
-      // Deduct before streaming — atomic update
+      // Atomic deduct — only succeeds if credits still >= cost (prevents race condition)
       const { data: updated, error: deductErr } = await admin
         .from('profiles')
         .update({ credits: balance - cost, updated_at: new Date().toISOString() })
         .eq('id', user.id)
+        .gte('credits', cost)
         .select('credits')
         .single()
-      if (deductErr) {
-        return new Response(JSON.stringify({ error: 'Credit deduction failed' }), { status: 500 })
+      if (deductErr || !updated) {
+        return new Response(JSON.stringify({ error: 'Insufficient credits' }), { status: 402 })
       }
 
       // Log usage (fire-and-forget)

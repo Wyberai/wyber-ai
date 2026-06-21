@@ -634,8 +634,9 @@ export async function POST(req: NextRequest) {
           balance,
         }, { status: 402 })
       }
-      // Deduct before running
-      await admin.from('profiles').update({ credits: balance - runCost, updated_at: new Date().toISOString() }).eq('id', user.id)
+      // Atomic deduct — only succeeds if credits still >= runCost
+      const { data: deducted, error: dedErr } = await admin.from('profiles').update({ credits: balance - runCost, updated_at: new Date().toISOString() }).eq('id', user.id).gte('credits', runCost).select('credits').single()
+      if (dedErr || !deducted) return NextResponse.json({ error: 'Credit deduction failed — please try again' }, { status: 402 })
       admin.from('credit_usage').insert({
         user_id: user.id, amount: runCost, reason: 'canvas-execution',
         credits_before: balance, credits_after: balance - runCost,

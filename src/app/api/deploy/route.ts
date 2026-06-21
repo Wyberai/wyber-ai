@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { sendDeploySuccessEmail } from '@/lib/email';
 
 // Build scaffold files needed for Vercel to build the app
@@ -120,6 +120,10 @@ function ensureEntryPoints(
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { projectId, userId, files, projectName, framework = 'react-vite' } = await req.json();
 
     const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
