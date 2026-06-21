@@ -141,17 +141,22 @@ export async function POST(req: NextRequest) {
 
         const validSlugs = validSlugsCache.get(toolkit)!
         if (validSlugs.size > 0 && !validSlugs.has(action)) {
-          // Find closest match
+          // Auto-fix: find the closest valid action and suggest it
           const keyword = action.split('_').slice(1).join('_').toLowerCase()
           const suggestions = [...validSlugs].filter(s => s.toLowerCase().includes(keyword.slice(0, 5))).slice(0, 3)
-          issues.push({
-            nodeId: node.id, nodeLabel: node.data.label,
-            severity: 'error',
-            message: `Action "${action}" doesn't exist in ${toolkit}.`,
-            fix: suggestions.length
-              ? `Did you mean: ${suggestions.join(', ')}? Click the node and pick from the dropdown.`
-              : `Click the node and select a valid action from the ${toolkit} dropdown.`,
-          })
+          if (suggestions.length === 1) {
+            // Auto-select the single match — no error needed
+            (node.data.config as Record<string, string>).action = suggestions[0]
+          } else {
+            issues.push({
+              nodeId: node.id, nodeLabel: node.data.label,
+              severity: 'error',
+              message: action ? `Action "${action}" doesn't exist in ${toolkit}.` : `No action selected for ${toolkit}.`,
+              fix: suggestions.length
+                ? `Did you mean: ${suggestions.join(', ')}? Click the node and pick from the dropdown.`
+                : `Click the node and select a valid action from the ${toolkit} dropdown.`,
+            })
+          }
         }
       }
     }
