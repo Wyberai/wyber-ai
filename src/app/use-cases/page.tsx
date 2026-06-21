@@ -70,7 +70,7 @@ export default function UseCasesIndex() {
 
         <div style={{ marginTop: 56, textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building free — 50 credits/month</h2>
-          <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. First app in under 60 seconds.</p>
+          <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. First app in minutes.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →
           </Link>

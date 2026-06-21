@@ -48,7 +48,7 @@ export default function Post() {
               ['Price', '$29/month (Starter)', '$25/month'],
               ['Credits', '150/month', '~250/month'],
               ['Products included', '6 (web, mobile, agents, workflows, employees, GTM)', '1 (web only)'],
-              ['Templates', '500+ at 0 credits', 'Limited'],
+              ['Templates', 'Always fresh AI code', 'Limited'],
               ['Top-up expiry', 'Never', 'Monthly'],
               ['Free tier', '50 credits/month', '5/day (~30/month)'],
               ['Error fixes', 'Self-healing (always free)', 'Cost credits'],

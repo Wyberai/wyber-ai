@@ -21,10 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return {
     title: `${project.name} — Built with WyberAi`,
-    description: `Check out ${project.name}, built in under 60 seconds with WyberAi. No code required.`,
+    description: `Check out ${project.name}, built in minutes with WyberAi. No code required.`,
     openGraph: {
       title: `${project.name} — Built with WyberAi`,
-      description: 'Built in under 60 seconds with WyberAi. No code required.',
+      description: 'Built in minutes with WyberAi. No code required.',
       images: project.thumbnail_url
         ? [{ url: project.thumbnail_url, width: 1200, height: 630 }]
         : [{ url: `https://wyberai.com/api/og?title=${encodeURIComponent(project.name)}&sub=Built+with+Wyber+AI`, width: 1200, height: 630 }],
@@ -76,7 +76,7 @@ export default async function PublicProjectPage({ params }: Props) {
             {project.name}
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.65 }}>
-            This app was built in under 60 seconds using WyberAi — no coding required.
+            This app was built in minutes using WyberAi — no coding required.
           </p>
         </div>
 

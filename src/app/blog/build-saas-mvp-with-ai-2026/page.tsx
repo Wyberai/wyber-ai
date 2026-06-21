@@ -38,16 +38,16 @@ export default function Post() {
           </div>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 2: Generate the app</h2>
-          <p>Paste that prompt into WyberAi and pick <strong style={{ color: s.text }}>Web App</strong>. Generation takes under 60 seconds. You get a complete React + Vite project: routing, components, data tables, stat cards, charts, and realistic seed data. No scaffolding, no boilerplate, no blank screens.</p>
+          <p>Paste that prompt into WyberAi and pick <strong style={{ color: s.text }}>Web App</strong>. Generation takes in a few minutes. You get a complete React + Vite project: routing, components, data tables, stat cards, charts, and realistic seed data. No scaffolding, no boilerplate, no blank screens.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 3: Connect a real database</h2>
           <p>The generated app works with local state by default. To make it production-ready, connect a Supabase project in Settings → Connectors. WyberAi rewrites the app to use a live Postgres database with Row Level Security — each user only sees their own data. Auth (sign-up, login, password reset) is included automatically.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 4: Deploy to a live URL</h2>
-          <p>Click <strong style={{ color: s.text }}>Deploy</strong> and the app publishes to Vercel in under 60 seconds. You get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>yourapp.wyberai.app</code>. Share it with your first five users the same day you had the idea.</p>
+          <p>Click <strong style={{ color: s.text }}>Deploy</strong> and the app publishes to Vercel in minutes. You get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>yourapp.wyberai.app</code>. Share it with your first five users the same day you had the idea.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 5: Iterate based on feedback</h2>
-          <p>Every change is a chat message. "Add an export to CSV button on the invoices table." "Show a red badge on the sidebar when there are overdue invoices." "Add a notes field to each client record." Each edit costs 1 credit (about 2 cents on the Pro plan) and takes under 60 seconds.</p>
+          <p>Every change is a chat message. "Add an export to CSV button on the invoices table." "Show a red badge on the sidebar when there are overdue invoices." "Add a notes field to each client record." Each edit costs 1 credit (about 2 cents on the Pro plan) and takes in a few minutes.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The full stack you get</h2>
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -56,7 +56,7 @@ export default function Post() {
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Build your SaaS MVP today — free</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 credits a month on the free plan. First app in under 60 seconds. No credit card required.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 credits a month on the free plan. First app in minutes. No credit card required.</p>
             <Link href="/dashboard?new=app" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free →</Link>
           </div>
         </div>

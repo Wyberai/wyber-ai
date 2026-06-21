@@ -56,7 +56,7 @@ const COMPARISONS = [
     url: 'cursor.com',
     tag: 'AI code editor',
     summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.',
-    wyberWins: ['Zero coding required', 'App in < 60 seconds', 'Live preview + one-click deploy', 'Mobile + agents + workflows'],
+    wyberWins: ['Zero coding required', 'App in A few minutes', 'Live preview + one-click deploy', 'Mobile + agents + workflows'],
   },
 ]
 

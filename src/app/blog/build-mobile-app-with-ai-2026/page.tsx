@@ -4,7 +4,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
   title: 'How to build a mobile app with AI in 2026 — WyberAi Blog',
-  description: 'React Native + Expo from a plain-English prompt. Preview on your phone in under 60 seconds. No Xcode, no Android Studio, no code.',
+  description: 'React Native + Expo from a plain-English prompt. Preview on your phone in minutes. No Xcode, no Android Studio, no code.',
   robots: { index: false, follow: false },
 }
 
@@ -45,7 +45,7 @@ export default function Post() {
           </div>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 2: Preview on your phone</h2>
-          <p>Generation takes under 60 seconds. When it finishes, you'll see a QR code in the preview pane. Open the <strong style={{ color: s.text }}>Expo Go</strong> app on your iPhone or Android and scan it — your app loads instantly. No USB cable, no Xcode, no build queue.</p>
+          <p>Generation takes in a few minutes. When it finishes, you'll see a QR code in the preview pane. Open the <strong style={{ color: s.text }}>Expo Go</strong> app on your iPhone or Android and scan it — your app loads instantly. No USB cable, no Xcode, no build queue.</p>
 
           <p>What you get is a real React Native app running on real hardware, not a web wrapper or a mockup. Touch interactions, navigation gestures, platform fonts — all native.</p>
 
@@ -69,7 +69,7 @@ export default function Post() {
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.violet}10`, border: `1px solid ${s.violet}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Try it now — free</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe your mobile app and get a working React Native + Expo project in under 60 seconds.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>Describe your mobile app and get a working React Native + Expo project in minutes.</p>
             <Link href="/dashboard?new=mobile" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.violet, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
               Build my mobile app →
             </Link>

@@ -36,7 +36,7 @@ const s = {
 }
 
 const PRODUCTS = [
-  { id: 'web',       label: 'Web Apps',      icon: '🖥', desc: 'Full-stack React app in seconds' },
+  { id: 'web',       label: 'Web Apps',      icon: '🖥', desc: 'Full-stack React app in minutes' },
   { id: 'mobile',    label: 'Mobile Apps',   icon: '📱', desc: 'React Native + Expo, iOS & Android' },
   { id: 'agents',    label: 'AI Agents',     icon: '🤖', desc: 'Autonomous agents with 250+ tools' },
   { id: 'workflows', label: 'Workflows',     icon: '⚡', desc: 'Multi-step automations, no code' },
@@ -194,7 +194,7 @@ export function VsPageTemplate({
         {/* CTA */}
         <section style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>Try WyberAi free</h2>
-          <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>50 credits/month free. Build a web app, mobile app, or AI agent in under 60 seconds. No credit card required.</p>
+          <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>50 credits/month free. Build a web app, mobile app, or AI agent in minutes. No credit card required.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →
           </Link>

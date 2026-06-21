@@ -124,7 +124,7 @@ const TRACKS: Track[] = [
       {
         id: 'web-4',
         title: 'Deploy to a live URL',
-        description: 'One click publishes to Vercel. Your app gets a free wyberai.app subdomain in under 60 seconds. Connect a custom domain any time.',
+        description: 'One click publishes to Vercel. Your app gets a free wyberai.app subdomain in minutes. Connect a custom domain any time.',
         prompt: null,
         builderLink: '/dashboard',
         builderLabel: 'Open your project → Deploy',

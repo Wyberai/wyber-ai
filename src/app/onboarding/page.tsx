@@ -12,7 +12,7 @@ const PERSONAS = [
 ];
 
 const PRODUCTS = [
-  { id: 'web', icon: '🌐', label: 'Web apps', desc: 'Dashboards, SaaS tools, landing pages — built in React in seconds.' },
+  { id: 'web', icon: '🌐', label: 'Web apps', desc: 'Dashboards, SaaS tools, landing pages — AI builds fresh React code in minutes.' },
   { id: 'mobile', icon: '📱', label: 'Mobile apps', desc: 'iOS & Android with Expo. Preview on your phone instantly.' },
   { id: 'agents', icon: '🤖', label: 'AI Agents', desc: '5,000 pre-built agents. Connect tools and let them work.' },
   { id: 'workflows', icon: '⚡', label: 'Workflows', desc: 'Visual automations. Chain triggers, AI steps, and actions.' },

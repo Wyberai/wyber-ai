@@ -14,7 +14,7 @@ const COMPARISON = [
   { feature: 'Free tier', wyber: '50 credits/month', lovable: '5 daily (~30/month)' },
   { feature: 'Starting price', wyber: '$99/month (Builder)', lovable: '$25/month' },
   { feature: 'Products included', wyber: '6 (web, mobile, agents, workflows, employees, GTM)', lovable: '1 (web only)' },
-  { feature: 'Templates', wyber: '500+ at 0 credits', lovable: 'Limited' },
+  { feature: 'Templates', wyber: 'Always fresh AI code', lovable: 'Limited' },
   { feature: 'AI error fixes', wyber: 'Self-healing (always free)', lovable: 'Costs credits' },
   { feature: 'MCP server', wyber: 'Yes -- wyberai.com/api/mcp', lovable: 'Yes -- mcp.lovable.dev' },
   { feature: 'Figma import', wyber: 'Yes', lovable: 'Yes' },

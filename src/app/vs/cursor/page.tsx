@@ -13,11 +13,11 @@ const ROWS = [
   { feature: 'Target user',             wyber: 'Non-technical founders',   other: 'Software developers',     winner: 'tie'   as const },
   { feature: 'Base price',              wyber: '$29/mo (Starter)',          other: '$20/mo (Pro)',             winner: 'tie'   as const },
   { feature: 'Coding required',         wyber: 'None',                     other: '✓ Full IDE',               winner: 'wyber' as const },
-  { feature: 'App generation speed',    wyber: '< 60 seconds',            other: 'Hours (code-assisted)',    winner: 'wyber' as const },
+  { feature: 'App generation speed',    wyber: 'A few minutes',            other: 'Hours (code-assisted)',    winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗ (editor only)',          winner: 'wyber' as const },
   { feature: 'AI agent builder',        wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
   { feature: 'Workflow automation',     wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
-  { feature: 'Prebuilt app library',    wyber: '500+ at 0 cost',           other: 'None',                     winner: 'wyber' as const },
+  { feature: 'Code generation',    wyber: 'Always fresh AI code',           other: 'None',                     winner: 'wyber' as const },
   { feature: 'Live preview',            wyber: '✓ Real-time',              other: 'Run locally',              winner: 'wyber' as const },
   { feature: 'One-click deploy',        wyber: '✓ Vercel',                 other: '✗ Manual deploy',          winner: 'wyber' as const },
   { feature: 'Any language/framework',  wyber: 'React/React Native',      other: '✓ All languages',          winner: 'other' as const },
@@ -39,7 +39,7 @@ const FAQS = [
   },
   {
     q: 'Which is faster for building an MVP?',
-    a: 'WyberAi. A complete app generates in under 60 seconds. With Cursor, even with AI assistance, building a full-stack app takes hours and requires development knowledge to stitch everything together.',
+    a: 'WyberAi. A complete app generates in minutes. With Cursor, even with AI assistance, building a full-stack app takes hours and requires development knowledge to stitch everything together.',
   },
   {
     q: 'Does Cursor build mobile apps?',
@@ -61,7 +61,7 @@ export default function VsCursor() {
       slug="cursor"
       competitorName="Cursor"
       competitorUrl="https://cursor.com"
-      tagline="Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete apps in seconds, plus mobile, agents, and workflows."
+      tagline="Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete apps in minutes, plus mobile, agents, and workflows."
       blurb="Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}

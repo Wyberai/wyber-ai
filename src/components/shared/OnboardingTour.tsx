@@ -24,7 +24,7 @@ const STEPS = [
   },
   {
     title: "You're Ready!",
-    desc: 'Start with a template or describe your own idea. Your app will be live in under 60 seconds.',
+    desc: 'Start with a template or describe your own idea. Your app will be live in minutes.',
     target: null,
   },
 ]

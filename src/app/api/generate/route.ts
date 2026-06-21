@@ -39,7 +39,7 @@ GALLERY (500+ prebuilt templates, always 0 credits):
 - And 500+ more — load instantly at zero credit cost
 
 DEPLOYMENT & EXPORT:
-- One-click deploy to Vercel — live URL in under 60 seconds
+- One-click deploy to Vercel — live URL in minutes
 - GitHub sync — push generated code to any repo with one click
 - Export full source code anytime — user owns it completely
 - Free subdomain: yourapp.wyberai.app
