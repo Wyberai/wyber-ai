@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     apple: '/icon.svg',
   },
   metadataBase: new URL('https://wyberai.com'),
-  title: { default: 'WyberAi — Six products: web apps, mobile apps, AI agents, workflows, AI employees & GTM', template: '%s | WyberAi' },
+  title: { default: 'WyberAi — Build, ship, and automate your entire business with AI', template: '%s | WyberAi' },
   description: 'One platform, one prompt, no code. Build web apps, mobile apps, AI agents, and workflow automations — then hire AI employees and launch GTM campaigns that fill your pipeline.',
   keywords: ['AI app builder', 'no-code AI', 'build web app with AI', 'mobile app builder', 'AI agents', 'workflow automation', 'AI employees', 'GTM engine', 'lead generation AI', 'WyberAi'],
   authors: [{ name: 'WyberAi', url: 'https://wyberai.com' }],

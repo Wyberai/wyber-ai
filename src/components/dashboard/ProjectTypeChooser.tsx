@@ -1,6 +1,6 @@
 'use client';
 
-export type ProjectType = 'app' | 'mobile' | 'agent' | 'workflow';
+export type ProjectType = 'app' | 'mobile' | 'agent' | 'workflow' | 'employee' | 'gtm';
 
 interface ChooserProps {
   open: boolean;
@@ -12,52 +12,53 @@ const CARDS: {
   type: ProjectType;
   title: string;
   desc: string;
-  icon: React.ReactNode;
-  available: boolean;
+  emoji: string;
+  color: string;
+  redirect?: string;
 }[] = [
   {
     type: 'app',
     title: 'Web App',
-    desc: 'Dashboards, SaaS tools, internal apps — built and deployed instantly.',
-    available: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
-      </svg>
-    ),
+    desc: 'Dashboards, SaaS tools, internal apps — AI builds from scratch in minutes.',
+    emoji: '🌐',
+    color: '#0EA5E9',
   },
   {
     type: 'mobile',
     title: 'Mobile App',
-    desc: 'iOS & Android apps with React Native — preview live as you build.',
-    available: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="5" y="2" width="14" height="20" rx="2" /><path d="M12 18h.01" />
-      </svg>
-    ),
+    desc: 'iOS & Android apps with React Native — preview live on your phone.',
+    emoji: '📱',
+    color: '#f97316',
   },
   {
     type: 'agent',
     title: 'AI Agent',
     desc: 'Autonomous agents that run tasks, call tools, and work on your behalf.',
-    available: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="3" /><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" />
-      </svg>
-    ),
+    emoji: '⚡',
+    color: '#a855f7',
   },
   {
     type: 'workflow',
     title: 'Workflow',
-    desc: 'Automations that connect apps and move data — no code required.',
-    available: true,
-    icon: (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="6" height="6" rx="1" /><rect x="15" y="15" width="6" height="6" rx="1" /><path d="M9 6h6a3 3 0 0 1 3 3v6" />
-      </svg>
-    ),
+    desc: 'Visual automations that connect apps and run on schedule — no code.',
+    emoji: '🔀',
+    color: '#22c55e',
+  },
+  {
+    type: 'employee',
+    title: 'AI Employee',
+    desc: 'Hire an AI that runs daily, connects your tools, and emails you results.',
+    emoji: '🤖',
+    color: '#38bdf8',
+    redirect: '/ai-employees/new',
+  },
+  {
+    type: 'gtm',
+    title: 'GTM Campaign',
+    desc: 'Find leads, enrich contacts, launch multi-step outreach sequences.',
+    emoji: '🎯',
+    color: '#10b981',
+    redirect: '/gtm',
   },
 ];
 
@@ -75,38 +76,38 @@ export function ProjectTypeChooser({ open, onClose, onPick }: ChooserProps) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: '100%', maxWidth: 720,
+          width: '100%', maxWidth: 780,
           background: '#15171f', border: '1px solid #262a36', borderRadius: 16,
           padding: 28, boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f4f4f5', margin: 0 }}>What do you want to build?</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#f4f4f5', margin: 0 }}>What would you like to build today?</h2>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#71717a', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>&times;</button>
         </div>
-        <p style={{ color: '#a1a1aa', fontSize: 14, margin: '0 0 22px' }}>Pick a starting point. You can describe the details next.</p>
+        <p style={{ color: '#a1a1aa', fontSize: 14, margin: '0 0 22px' }}>Pick a product. Everything is built fresh by AI — no stale templates.</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
           {CARDS.map((c) => (
             <button
               key={c.type}
-              onClick={() => c.available && onPick(c.type)}
-              disabled={!c.available}
-              style={{
-                textAlign: 'left', cursor: c.available ? 'pointer' : 'not-allowed',
-                background: 'linear-gradient(180deg, #1b1e27 0%, #181b23 100%)',
-                border: '1px solid #262a36', borderRadius: 12, padding: 18,
-                display: 'flex', flexDirection: 'column', gap: 10, position: 'relative',
-                opacity: c.available ? 1 : 0.55, transition: 'all 0.15s ease',
+              onClick={() => {
+                if (c.redirect) { window.location.href = c.redirect; onClose(); }
+                else onPick(c.type);
               }}
-              onMouseEnter={(e) => { if (c.available) { e.currentTarget.style.borderColor = '#0EA5E9'; e.currentTarget.style.transform = 'translateY(-2px)'; } }}
+              style={{
+                textAlign: 'left', cursor: 'pointer',
+                background: 'linear-gradient(180deg, #1b1e27 0%, #181b23 100%)',
+                border: '1px solid #262a36', borderRadius: 12, padding: 16,
+                display: 'flex', flexDirection: 'column', gap: 8,
+                transition: 'all 0.15s ease', fontFamily: 'inherit',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#262a36'; e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {c.icon}
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#f4f4f5' }}>{c.title}</div>
-              <div style={{ fontSize: 12.5, color: '#a1a1aa', lineHeight: 1.5 }}>{c.desc}</div>
+              <div style={{ fontSize: 28 }}>{c.emoji}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#f4f4f5' }}>{c.title}</div>
+              <div style={{ fontSize: 11.5, color: '#a1a1aa', lineHeight: 1.5 }}>{c.desc}</div>
             </button>
           ))}
         </div>

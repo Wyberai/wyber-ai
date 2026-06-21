@@ -1024,11 +1024,11 @@ export async function POST(req: NextRequest) {
       }).then(() => {}).catch(() => {})
     }
 
-    // ── SMART PREBUILT TEMPLATE MATCHING ────────────────────────────
-    // Skip for mobile: prebuilt_apps contains web (React/Vite) files — returning them for a mobile
-    // prompt produces a gallery hit with web files that Expo Snack cannot run.
+    // ── TEMPLATE MATCHING DISABLED ──────────────────────────────────
+    // All code is generated fresh from scratch — no stale templates.
+    // This ensures users always get the latest, highest-quality output.
     const hasExisting = fileContext && fileContext.length > 200
-    if (!hasExisting && projectType !== 'mobile') {
+    if (false) { // disabled: always generate fresh
       try {
         const supabase = await createClient()
 

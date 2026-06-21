@@ -192,8 +192,8 @@ const PILLARS = [
     eyebrow: 'Web Apps',
     accent: BRAND,
     heading: 'Describe it.\nIt builds.',
-    body: 'Type what you want. Wyber generates production-ready React code, provisions Supabase, and deploys to Vercel — in under 30 seconds.',
-    bullets: ['500+ templates · React, Vue, Svelte, Astro', 'Self-healing preview — errors fix themselves', 'Team collaboration · Figma import · Cmd+K'],
+    body: 'Type what you want. Wyber generates production-ready React code from scratch, provisions Supabase, and deploys to Vercel — in a few minutes.',
+    bullets: ['Always fresh code — never stale templates', 'Self-healing preview — errors fix themselves', 'Team collaboration · Figma import · Cmd+K'],
     cta: 'Build a web app →',
     href: '/dashboard?new=app',
     mockup: <WebAppMockup />,
@@ -216,8 +216,8 @@ const PILLARS = [
     eyebrow: 'AI Agents',
     accent: '#a855f7',
     heading: 'Pick one.\nIt executes.',
-    body: '5,000 pre-built agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included.',
-    bullets: ['5,000 pre-built agents with persistent memory', 'Browser control · voice calls · 250+ tools', 'Real-time trace logs · multi-agent coordination'],
+    body: '5,000+ agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included.',
+    bullets: ['5,000+ agents with persistent memory', 'Browser control · voice calls · 250+ tools', 'Real-time trace logs · multi-agent coordination'],
     cta: 'Browse agents →',
     href: '/agents',
     mockup: <AgentMockup />,
@@ -229,7 +229,7 @@ const PILLARS = [
     accent: '#22c55e',
     heading: 'Draw it.\nIt runs.',
     body: 'Visual flow builder. Wire triggers, AI steps, and actions. Branch on conditions. Schedule runs. No code, no YAML.',
-    bullets: ['100+ templates · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · 15 starter automations'],
+    bullets: ['300+ pre-built automations · sub-workflows · parallel execution', 'Error handling · data transforms · loops · delays', 'Webhook triggers · schedule triggers · tool integrations'],
     cta: 'Build a workflow →',
     href: '/flows',
     mockup: <WorkflowMockup />,
@@ -279,11 +279,11 @@ export default function HomePage() {
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+        <Link href={user ? '/dashboard' : '/'} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -310,7 +310,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/gallery'], ['Mobile', '/templates/mobile'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -333,11 +333,11 @@ export default function HomePage() {
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 860 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 700, color: BRAND, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 28 }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
-            The AI Business Platform
+            Build · Ship · Automate
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(38px,6vw,78px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 24 }}>
-            From idea to live app — in seconds.<br />
+            From idea to live app — in minutes.<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Then automate everything else.
             </span>
@@ -373,11 +373,11 @@ export default function HomePage() {
           {/* Stats — balanced across products */}
           <div style={{ display: 'flex', gap: 32, justifyContent: 'center', flexWrap: 'wrap' }}>
             {[
-              { value: '500+', label: 'App templates' },
+              { value: '6', label: 'Products in one platform' },
               { value: '5,000+', label: 'AI Agents' },
-              { value: '100+', label: 'Workflow templates' },
+              { value: '300+', label: 'Workflow automations' },
               { value: '100', label: 'AI Employee roles' },
-              { value: '10', label: 'GTM sequences' },
+              { value: '∞', label: 'Fresh builds — never stale' },
             ].map(s => (
               <div key={s.label} style={{ textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{s.value}</div>
@@ -388,13 +388,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── TRUST BAR ────────────────────────────────────────────────────── */}
-      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
+      {/* ── WHAT YOU CAN BUILD IN 1 HOUR ──────────────────────────────── */}
+      <section style={{ padding: '48px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: 11, color: '#3f3f46', letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600, marginBottom: 20 }}>Trusted by founders and teams building the future</p>
-          <div className="wyb-trust-logos" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(24px,4vw,48px)', flexWrap: 'wrap', opacity: 0.5 }}>
-            {['SignalPulse', 'ReconSignal', 'CloudFirst', 'NexaTech', 'VertexAI Labs', 'DataForge'].map(name => (
-              <span key={name} style={{ fontSize: 15, fontWeight: 700, color: '#52525b', letterSpacing: '-0.02em', fontFamily: "'Sora', sans-serif" }}>{name}</span>
+          <p style={{ fontSize: 11, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 16 }}>What you can do in 1 hour</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px,100%), 1fr))', gap: 12, textAlign: 'left' }}>
+            {[
+              { icon: '🌐', time: '0–10 min', title: 'Build a web app', desc: 'Describe your idea, get production-ready React code with live preview', color: BRAND },
+              { icon: '📱', time: '10–20 min', title: 'Build a mobile app', desc: 'Generate a React Native app, scan QR to preview on your phone', color: '#f97316' },
+              { icon: '⚡', time: '20–30 min', title: 'Deploy AI agents', desc: 'Pick from 5,000+ agents, connect your tools, click Run', color: '#a855f7' },
+              { icon: '🔀', time: '30–40 min', title: 'Set up workflows', desc: 'Wire triggers, AI steps, and actions — visual drag-and-drop', color: '#22c55e' },
+              { icon: '🤖', time: '40–50 min', title: 'Hire AI employees', desc: 'Pick a role, set a schedule — they work and email you what they did', color: '#38bdf8' },
+              { icon: '🎯', time: '50–60 min', title: 'Launch your GTM', desc: 'Define your ICP, find leads, launch multi-step outreach', color: '#10b981' },
+            ].map(s => (
+              <div key={s.title} style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '16px 18px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                <div style={{ fontSize: 24, flexShrink: 0 }}>{s.icon}</div>
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: s.color, letterSpacing: '0.06em', marginBottom: 4 }}>{s.time}</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa', marginBottom: 4 }}>{s.title}</div>
+                  <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{s.desc}</div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
@@ -487,41 +501,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ───────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>What builders say</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em' }}>
-              They built. They shipped. They didn&apos;t look back.
-            </h2>
-          </div>
-          <div className="wyb-testimonials" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-            {[
-              { name: 'Arjun M.', role: 'Solo Founder', quote: 'I built my entire SaaS MVP in one afternoon. The AI understood my vision better than most freelancers I\'ve hired. The self-healing preview saved me hours of debugging.', avatar: 'AM', color: '#0EA5E9' },
-              { name: 'Sarah K.', role: 'Marketing Lead', quote: 'The GTM Engine found 200 qualified leads in our ICP within minutes. We launched our first email sequence the same day. Our SDR couldn\'t believe it.', avatar: 'SK', color: '#10b981' },
-              { name: 'Dev P.', role: 'Agency Owner', quote: 'We deliver 3x more client projects now. Build the app, set up the workflow, hire an AI employee to monitor it — all from one dashboard. Clients think we\'re a team of 20.', avatar: 'DP', color: '#8b5cf6' },
-              { name: 'Lisa T.', role: 'Product Manager', quote: 'The Kanban workflow templates saved our ops team 15 hours a week. We connected Slack, HubSpot, and Gmail in minutes. No developer needed.', avatar: 'LT', color: '#f59e0b' },
-            ].map(t => (
-              <div key={t.name} style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '24px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: t.color + '15', border: `1px solid ${t.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700, color: t.color }}>{t.avatar}</div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{t.name}</div>
-                    <div style={{ fontSize: 11, color: '#52525b' }}>{t.role}</div>
-                  </div>
-                </div>
-                <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.7, margin: 0 }}>&ldquo;{t.quote}&rdquo;</p>
-                <div style={{ display: 'flex', gap: 2, marginTop: 12 }}>
-                  {[1,2,3,4,5].map(s => (
-                    <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="#f59e0b"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Testimonials removed — will add real ones post-launch */}
 
       {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -533,7 +513,7 @@ export default function HomePage() {
           <div className="wyb-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {[
               { step: '01', title: 'Describe', desc: 'Tell WyberAI what you want in plain English. A CRM, a mobile app, an outreach campaign — anything.', color: BRAND },
-              { step: '02', title: 'Build', desc: 'AI generates production-ready code, previews it live, and auto-fixes any errors. Pick from 500+ templates or start custom.', color: '#a855f7' },
+              { step: '02', title: 'Build', desc: 'AI generates production-ready code from scratch, previews it live, and auto-fixes any errors. Always fresh, never stale templates.', color: '#a855f7' },
               { step: '03', title: 'Ship', desc: 'Deploy to Vercel in one click. Push to GitHub. Set up AI employees to run your ops on autopilot.', color: '#22c55e' },
             ].map(s => (
               <div key={s.step} style={{ textAlign: 'left' }}>

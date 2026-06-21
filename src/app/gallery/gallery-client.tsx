@@ -82,18 +82,18 @@ export default function GalleryPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(32px,4vw,56px) clamp(16px,4vw,48px)' }}>
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Template Gallery</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Prebuilt Web Apps</div>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>
-            {apps.length > 0 ? `${apps.length}` : '500+'} templates, zero credits
+            {apps.length > 0 ? `${apps.length}` : ''} ready-to-use web apps
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 500 }}>Click any template to start building instantly. All prebuilt templates load at zero cost.</p>
+          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 500 }}>Click any app to load it instantly. Or go to the dashboard and describe something completely custom — AI builds it from scratch in minutes.</p>
         </div>
 
         {/* Search + Sort bar */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 28, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
             <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.35 }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fafafa" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates..."
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search web apps..."
               style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#111113', color: '#fafafa', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
@@ -117,7 +117,7 @@ export default function GalleryPage() {
             <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Browse by category</div>
 
             {/* Group toggles */}
-            {['All', 'Web Apps', 'Mobile Apps'].map(g => (
+            {['Web Apps'].map(g => (
               <button key={g} onClick={() => { setActiveGroup(g); setActiveCategory('All') }}
                 style={{
                   padding: '8px 12px', borderRadius: 8, border: 'none', textAlign: 'left',
