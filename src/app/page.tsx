@@ -414,114 +414,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── LIVE DEMO ──────────────────────────────────────────────────────── */}
+      {/* ── YOUR FIRST HOUR — VISUAL JOURNEY ──────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>See it in action</div>
+          <div style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Your first hour on WyberAi</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
-              Describe it. Watch it build. Ship it.
+              From zero to a fully automated business
             </h2>
-            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto' }}>Type what you want in plain English. WyberAI generates every file, previews it live, and deploys — all in under a minute.</p>
+            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 560, margin: '0 auto' }}>No templates. No stale code. AI builds everything fresh — and it only takes an hour to set up all six products.</p>
           </div>
 
-          {/* Animated terminal demo */}
-          <div style={{ background: '#0d0d12', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.4)' }}>
-            {/* Window chrome */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118' }}>
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57' }} />
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#febc2e' }} />
-              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840' }} />
-              <span style={{ marginLeft: 12, fontSize: 11, color: '#52525b' }}>wyberai.com — Building your app</span>
-            </div>
-            {/* Demo content */}
-            <div className="wyb-demo-split" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', minHeight: 340 }}>
-              {/* Chat side */}
-              <div style={{ padding: 20, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ fontSize: 10, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Chat</div>
-                <div style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: '12px 12px 12px 2px', padding: '10px 14px', fontSize: 13, color: '#e4e4e7', lineHeight: 1.5, marginBottom: 12 }}>
-                  Build me a project management app with a Kanban board, team members, task details with priority labels, and a dark theme.
-                </div>
-                <div style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: '12px 12px 2px 12px', padding: '10px 14px', fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: 10, color: '#a855f7' }}>W</span>
-                    </div>
-                    <span style={{ fontSize: 10, color: '#8b5cf6', fontWeight: 700 }}>WyberAI</span>
-                  </div>
-                  Building your Kanban board with drag-and-drop columns, team avatars, priority badges, and a clean dark UI. Generating 6 files...
-                </div>
-                <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {['App.tsx', 'KanbanBoard.tsx', 'TaskCard.tsx', 'TeamPanel.tsx', 'index.css', 'types.ts'].map((f, i) => (
-                    <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: i < 5 ? '#22c55e' : '#f59e0b' }}>
-                      <span>{i < 5 ? '✓' : '⟳'}</span>
-                      <span style={{ color: '#a1a1aa', fontFamily: 'monospace' }}>{f}</span>
-                      {i < 5 && <span style={{ color: '#3f3f46', marginLeft: 'auto', fontSize: 10 }}>{(i + 1) * 0.8}s</span>}
-                      {i === 5 && <span style={{ color: '#f59e0b', marginLeft: 'auto', fontSize: 10 }}>writing...</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Preview side */}
-              <div style={{ padding: 20, background: '#09090b' }}>
-                <div style={{ fontSize: 10, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span>Live Preview</span>
-                  <span style={{ color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
-                    Building
-                  </span>
-                </div>
-                {/* Fake Kanban preview */}
-                <div style={{ background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 12, height: 280, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
-                    {['To Do', 'In Progress', 'Done'].map(col => (
-                      <div key={col} style={{ flex: 1, fontSize: 9, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{col}</div>
-                    ))}
-                  </div>
-                  <div style={{ display: 'flex', gap: 4, flex: 1 }}>
-                    {[
-                      [{ t: 'Design homepage', p: 'High', c: '#ef4444' }, { t: 'Write API docs', p: 'Medium', c: '#f59e0b' }],
-                      [{ t: 'Build auth flow', p: 'High', c: '#ef4444' }, { t: 'Setup CI/CD', p: 'Low', c: '#22c55e' }],
-                      [{ t: 'Deploy v1.0', p: 'Done', c: '#22c55e' }],
-                    ].map((col, ci) => (
-                      <div key={ci} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {col.map(task => (
-                          <div key={task.t} style={{ background: '#0d0d12', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '8px 7px' }}>
-                            <div style={{ fontSize: 10, color: '#e4e4e7', fontWeight: 600, marginBottom: 4 }}>{task.t}</div>
-                            <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 4, background: task.c + '15', color: task.c, fontWeight: 700 }}>{task.p}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          {/* Visual timeline */}
+          <div style={{ position: 'relative' }}>
+            {/* Vertical line */}
+            <div style={{ position: 'absolute', left: 28, top: 0, bottom: 0, width: 2, background: 'linear-gradient(to bottom, rgba(14,165,233,0.3), rgba(168,85,247,0.3), rgba(34,197,94,0.3), rgba(56,189,248,0.3), rgba(249,115,22,0.3), rgba(16,185,129,0.3))', borderRadius: 1 }} />
 
-      {/* Testimonials removed — will add real ones post-launch */}
-
-      {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 40 }}>
-            Three steps. No engineers.
-          </h2>
-          <div className="wyb-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
             {[
-              { step: '01', title: 'Describe', desc: 'Tell WyberAI what you want in plain English. A CRM, a mobile app, an outreach campaign — anything.', color: BRAND },
-              { step: '02', title: 'Build', desc: 'AI generates production-ready code from scratch, previews it live, and auto-fixes any errors. Always fresh, never stale templates.', color: '#a855f7' },
-              { step: '03', title: 'Ship', desc: 'Deploy to Vercel in one click. Push to GitHub. Set up AI employees to run your ops on autopilot.', color: '#22c55e' },
-            ].map(s => (
-              <div key={s.step} style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: 48, fontWeight: 800, fontFamily: "'Sora', sans-serif", color: s.color + '25', letterSpacing: '-0.04em', marginBottom: 8 }}>{s.step}</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>{s.title}</div>
-                <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+              { time: '0:00', emoji: '🌐', title: 'Describe your web app', what: '"Build me an invoice tracker with client management, payment status, and PDF export"', result: 'AI generates 8 files of production React code. Live preview renders in real-time. Self-healing fixes any build errors automatically.', color: BRAND, output: 'Live app running in preview' },
+              { time: '0:10', emoji: '📱', title: 'Build a mobile companion', what: '"Now make a mobile version — client can check invoice status, get push notifications when paid"', result: 'React Native + Expo app generated. Scan QR code with your phone to preview. Camera, GPS, biometrics supported out of the box.', color: '#f97316', output: 'Running on your phone via Expo' },
+              { time: '0:20', emoji: '⚡', title: 'Deploy an AI agent', what: 'Pick "Invoice Follow-up Agent" from 5,000+ options. Connect Gmail + Stripe.', result: 'Agent monitors unpaid invoices, drafts personalized follow-up emails, and logs everything. Full audit trail with each run.', color: '#a855f7', output: 'Agent running with trace logs' },
+              { time: '0:30', emoji: '🔀', title: 'Wire a workflow', what: 'Drag: Stripe webhook → AI classifier → Slack notification → Google Sheets log', result: 'Every payment triggers: AI categorizes it, alerts your team in Slack, and logs to your spreadsheet. Runs 24/7.', color: '#22c55e', output: '4-step automation running' },
+              { time: '0:40', emoji: '🤖', title: 'Hire an AI employee', what: 'Hire "AI Accounts Receivable Clerk". Set schedule: daily at 9 AM.', result: 'Every morning it checks overdue invoices, sends reminders, updates your CRM, and emails you a digest of what it did.', color: '#38bdf8', output: 'Daily email digest arriving' },
+              { time: '0:50', emoji: '🎯', title: 'Launch your GTM', what: 'Define ICP: "CFOs at 50-200 person SaaS companies". Import 500 leads from Apollo.', result: 'Multi-step outreach: personalized email → 3-day wait → follow-up with case study → phone call script. All automated.', color: '#10b981', output: 'Pipeline filling up' },
+            ].map((step, i) => (
+              <div key={step.time} style={{ display: 'flex', gap: 24, marginBottom: i < 5 ? 40 : 0, position: 'relative' }}>
+                {/* Timeline dot */}
+                <div style={{ width: 56, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: step.color + '15', border: `2px solid ${step.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>{step.emoji}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: step.color, marginTop: 6, fontFamily: 'monospace' }}>{step.time}</div>
+                </div>
+                {/* Content card */}
+                <div style={{ flex: 1, background: '#111113', border: `1px solid ${step.color}20`, borderRadius: 14, padding: '20px 22px', transition: 'all 0.2s' }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>{step.title}</div>
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#a1a1aa', fontStyle: 'italic', marginBottom: 12, lineHeight: 1.5 }}>
+                    {step.what}
+                  </div>
+                  <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: '0 0 12px' }}>{step.result}</p>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 8, background: step.color + '12', border: `1px solid ${step.color}25` }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: step.color }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: step.color }}>{step.output}</span>
+                  </div>
+                </div>
               </div>
             ))}
+          </div>
+
+          {/* CTA after timeline */}
+          <div style={{ textAlign: 'center', marginTop: 48 }}>
+            <Link href="/signup" style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
+              Start your first hour free →
+            </Link>
+            <p style={{ fontSize: 12, color: '#52525b', marginTop: 10 }}>No credit card required · 50 free credits</p>
           </div>
         </div>
       </section>
