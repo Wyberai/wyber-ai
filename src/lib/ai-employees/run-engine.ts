@@ -476,13 +476,13 @@ export async function runEmployee(
     // ── Check credits ──────────────────────────────────────────────────────────
     const { data: profile } = await db.from('profiles').select('credits, email').eq('id', userId).single()
 
-    if (!profile || profile.credits < MAX_RUN_COST) {
+    if (!profile || profile.credits < ITER_COST) {
       await db.from('ai_employee_runs').update({
         status: 'error',
-        error_message: `Insufficient credits (have ${profile?.credits ?? 0}, need ${MAX_RUN_COST})`,
+        error_message: `Insufficient credits (have ${profile?.credits ?? 0}, need at least ${ITER_COST})`,
         finished_at: new Date().toISOString(),
       }).eq('id', runId)
-      return { summary: `${employee.name} couldn't run — not enough credits.`, actionsTaken: [], kpiResults: [], creditsUsed: 0, error: 'Insufficient credits' }
+      return { summary: `${employee.name} couldn't run — you need at least ${ITER_COST} credits.`, actionsTaken: [], kpiResults: [], creditsUsed: 0, error: 'Insufficient credits' }
     }
 
     // ── Fetch Composio tools ───────────────────────────────────────────────────
@@ -632,9 +632,10 @@ No text outside the JSON.`
 
     // ── Deduct credits ─────────────────────────────────────────────────────────
     if (creditsUsed > 0) {
+      const newBalance = Math.max(0, profile.credits - creditsUsed)
       const { data: updated } = await db
         .from('profiles')
-        .update({ credits: profile.credits - creditsUsed })
+        .update({ credits: newBalance })
         .eq('id', userId)
         .select('credits')
         .single()

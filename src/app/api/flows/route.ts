@@ -29,12 +29,52 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { name, description, nodes, edges } = await req.json()
     const admin = await createAdminClient()
-    const webhookUrl = hasWebhookNode(nodes || [])
+
+    // Convert workflow gallery format to React Flow canvas format if needed
+    const canvasNodes = (nodes || []).map((n: any) => {
+      if (n.data) return n // already in React Flow format
+      // Template format: { id, type, label, tool, position, config }
+      // Canvas format: { id, type, position, data: { label, subtitle, config, status } }
+      const toolkitMap: Record<string, string> = {
+        'Gmail': 'GMAIL', 'Slack': 'SLACK', 'HubSpot': 'HUBSPOT', 'Notion': 'NOTION',
+        'GitHub': 'GITHUB', 'Linear': 'LINEAR', 'Stripe': 'STRIPE', 'Claude AI': '',
+        'Webhook': '', 'Logic': '', 'End': '', 'Form': '', 'Schedule': '', 'HTTP': '',
+        'Google Sheets': 'GOOGLESHEETS', 'Airtable': 'AIRTABLE', 'LinkedIn': 'LINKEDIN',
+        'Twitter': 'TWITTER', 'Calendly': 'CALENDLY',
+      }
+      const typeMap: Record<string, string> = {
+        'trigger': 'trigger', 'ai': 'aiagent', 'action': 'tool', 'condition': 'condition', 'end': 'output',
+      }
+      const toolkit = toolkitMap[n.tool] ?? ''
+      return {
+        id: n.id,
+        type: typeMap[n.type] || n.type,
+        position: n.position || { x: 300, y: 200 },
+        data: {
+          label: n.label || n.tool || '',
+          subtitle: n.config?.instructions || n.config?.message || n.config?.condition || '',
+          config: {
+            ...n.config,
+            ...(toolkit ? { mode: 'composio', toolkit } : {}),
+            ...(n.type === 'ai' ? { model: 'claude-sonnet-4-6', instructions: n.config?.instructions || '' } : {}),
+          },
+          status: 'idle',
+        },
+      }
+    })
+
+    const canvasEdges = (edges || []).map((e: any) => ({
+      ...e,
+      animated: true,
+      style: e.style || { stroke: '#0EA5E9', strokeWidth: 2 },
+    }))
+
+    const webhookUrl = hasWebhookNode(canvasNodes)
       ? `/api/webhook/${generateWebhookToken()}`
       : null
     const { data, error } = await admin.from('flows').insert({
       user_id: user.id, name: name || 'New Automation',
-      description: description || '', nodes: nodes || [], edges: edges || [],
+      description: description || '', nodes: canvasNodes, edges: canvasEdges,
       is_active: false, run_count: 0,
       ...(webhookUrl ? { webhook_url: webhookUrl } : {}),
     }).select('*').single()
