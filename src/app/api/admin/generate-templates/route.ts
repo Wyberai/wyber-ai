@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
         // Fallback: if no <file> blocks, treat entire output as App.tsx
         if (Object.keys(files).length === 0) {
           let code = text.replace(/```(?:tsx|jsx|typescript|javascript)?\n?/g, '').replace(/```\n?/g, '').trim()
+          code = code.replace(/^<file\s+path="[^"]*">\s*/g, '').replace(/\s*<\/file>\s*$/g, '')
           if (code.includes('export default') || code.includes('function App')) {
             files['src/App.tsx'] = { path: 'src/App.tsx', content: code, language: 'typescript' }
           }

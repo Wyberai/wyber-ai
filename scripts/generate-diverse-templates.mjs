@@ -272,7 +272,7 @@ async function generateOne(app, index) {
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 6000,
+      max_tokens: 16000,
       system: buildSystemPrompt(theme, layout, categoryHint),
       messages: [{
         role: 'user',
@@ -293,6 +293,8 @@ Make this VISUALLY STUNNING. This should look like a real product, not a tutoria
 
     if (Object.keys(files).length === 0) {
       let code = text.replace(/```(?:tsx|jsx|typescript|javascript)?\n?/g, '').replace(/```\n?/g, '').trim()
+      // Strip any <file> tags that weren't closed (truncated response)
+      code = code.replace(/^<file\s+path="[^"]*">\s*/g, '').replace(/\s*<\/file>\s*$/g, '')
       if (code.includes('export default') || code.includes('function App')) {
         files['src/App.tsx'] = { path: 'src/App.tsx', content: code, language: 'typescript' }
       }
