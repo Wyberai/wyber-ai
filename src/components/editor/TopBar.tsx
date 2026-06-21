@@ -172,9 +172,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     } catch {}
   };
 
-  const handleDeploy = async (force = false) => {
+  const handleDeploy = async () => {
     if (!projectId || deploying) return;
-    if (deployUrl && !force) { setShowShareModal(true); return; }
     setDeploying(true);
     try {
       const res = await fetch('/api/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId }) });
@@ -380,7 +379,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>Your app is ready to go live on <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
-                <button onClick={() => { setShowShareModal(false); handleDeploy(true); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                   Publish now
                 </button>
               </div>
