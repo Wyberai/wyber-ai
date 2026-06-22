@@ -97,7 +97,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [input, setInput] = useState('');
   const [buildMsgIdx, setBuildMsgIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
-  const BUILD_MSGS = ['Building your app...', 'Writing clean code...', 'Crafting every component...', 'Making it beautiful...', 'Almost there...', 'Putting on the finishing touches...', 'Just a few more lines...'];
+  const isFirstBuild = !hasGeneratedFiles;
+  const BUILD_MSGS = isFirstBuild
+    ? ['Planning your app...', 'Setting up the design system...', 'Writing components...', 'Wiring up interactions...', 'Adding realistic data...', 'Polishing the UI...', 'Almost there...']
+    : ['Applying your changes...', 'Updating components...', 'Refining the code...', 'Almost done...'];
 
   useEffect(() => {
     if (!isGenerating) { setBuildMsgIdx(0); setElapsed(0); return; }

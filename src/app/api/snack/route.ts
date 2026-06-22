@@ -1,43 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// Authoritative versions from expo/expo bundledNativeModules.json @ sdk-52 tag
-const SDK52_VERSIONS: Record<string, string> = {
-  // Navigation
-  '@react-navigation/native': '^6.1.18',
-  '@react-navigation/native-stack': '^6.11.0',
-  '@react-navigation/stack': '^6.4.1',
-  '@react-navigation/bottom-tabs': '^6.6.1',
-  '@react-navigation/drawer': '^6.7.2',
-  '@react-navigation/material-top-tabs': '^6.6.14',
+// Authoritative versions for Expo SDK 54 (compatible with Expo Go latest)
+const SDK_VERSIONS: Record<string, string> = {
+  // Navigation (v7 for SDK 54)
+  '@react-navigation/native': '^7.0.0',
+  '@react-navigation/native-stack': '^7.0.0',
+  '@react-navigation/stack': '^7.0.0',
+  '@react-navigation/bottom-tabs': '^7.0.0',
+  '@react-navigation/drawer': '^7.0.0',
+  '@react-navigation/material-top-tabs': '^7.0.0',
   // Icons
   '@expo/vector-icons': '~14.0.4',
   // React Native community
-  'react-native-safe-area-context': '4.12.0',
-  'react-native-screens': '~4.4.0',
-  'react-native-gesture-handler': '~2.20.2',
-  'react-native-reanimated': '~3.16.1',
-  'react-native-svg': '15.8.0',
-  'react-native-maps': '1.18.0',
-  'react-native-webview': '13.12.5',
-  '@react-native-async-storage/async-storage': '1.23.1',
-  '@react-native-community/slider': '4.5.5',
+  'react-native-safe-area-context': '~4.14.0',
+  'react-native-screens': '~4.9.2',
+  'react-native-gesture-handler': '~2.24.0',
+  'react-native-reanimated': '~3.17.4',
+  'react-native-svg': '~15.11.2',
+  'react-native-maps': '~1.20.1',
+  'react-native-webview': '~13.13.4',
+  '@react-native-async-storage/async-storage': '~2.1.2',
+  '@react-native-community/slider': '~4.5.6',
   // Expo modules
-  'expo-status-bar': '~2.0.1',
-  'expo-constants': '~17.0.8',
-  'expo-font': '~13.0.4',
-  'expo-splash-screen': '~0.29.24',
-  'expo-linear-gradient': '~14.0.2',
-  'expo-blur': '~14.0.3',
-  'expo-image': '~2.0.7',
-  'expo-av': '~15.0.2',
-  'expo-video': '~2.0.6',
-  'expo-camera': '~16.0.18',
-  'expo-location': '~18.0.10',
-  'expo-haptics': '~14.0.1',
-  'expo-clipboard': '~7.0.1',
-  'expo-sharing': '~13.0.1',
-  'expo-file-system': '~18.0.12',
+  'expo-status-bar': '~2.2.3',
+  'expo-constants': '~17.1.6',
+  'expo-font': '~13.3.1',
+  'expo-splash-screen': '~0.30.8',
+  'expo-linear-gradient': '~14.1.4',
+  'expo-blur': '~14.1.4',
+  'expo-image': '~2.2.5',
+  'expo-av': '~15.1.4',
+  'expo-video': '~2.2.6',
+  'expo-camera': '~16.1.6',
+  'expo-location': '~18.1.5',
+  'expo-haptics': '~14.1.4',
+  'expo-clipboard': '~7.1.4',
+  'expo-sharing': '~13.1.4',
+  'expo-file-system': '~18.1.8',
 }
 
 // Packages that are built into React Native / Expo SDK — no declaration needed
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     const detectedPkgs = parseImports(allCode)
     const resolvedDeps: Record<string, string> = {}
     for (const pkg of detectedPkgs) {
-      const version = SDK52_VERSIONS[pkg]
+      const version = SDK_VERSIONS[pkg]
       if (version) resolvedDeps[pkg] = version
       // Unknown packages: pass with '*' so Snack tries to resolve them
       else resolvedDeps[pkg] = '*'
@@ -127,9 +127,9 @@ export async function POST(req: NextRequest) {
     // @react-navigation requires these peer deps — Snack won't auto-resolve them
     const NAV_PKGS = ['@react-navigation/native', '@react-navigation/native-stack', '@react-navigation/stack', '@react-navigation/bottom-tabs', '@react-navigation/drawer', '@react-navigation/material-top-tabs']
     if (detectedPkgs.some(p => NAV_PKGS.includes(p))) {
-      if (!resolvedDeps['react-native-screens']) resolvedDeps['react-native-screens'] = SDK52_VERSIONS['react-native-screens']
-      if (!resolvedDeps['react-native-safe-area-context']) resolvedDeps['react-native-safe-area-context'] = SDK52_VERSIONS['react-native-safe-area-context']
-      if (!resolvedDeps['react-native-gesture-handler']) resolvedDeps['react-native-gesture-handler'] = SDK52_VERSIONS['react-native-gesture-handler']
+      if (!resolvedDeps['react-native-screens']) resolvedDeps['react-native-screens'] = SDK_VERSIONS['react-native-screens']
+      if (!resolvedDeps['react-native-safe-area-context']) resolvedDeps['react-native-safe-area-context'] = SDK_VERSIONS['react-native-safe-area-context']
+      if (!resolvedDeps['react-native-gesture-handler']) resolvedDeps['react-native-gesture-handler'] = SDK_VERSIONS['react-native-gesture-handler']
     }
 
     // Exact payload shape from snack-sdk Session.ts saveAsync():
@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
     // dependencies (top-level): { pkg: { version: versionString } }
     const payload = {
       manifest: {
-        sdkVersion: '52.0.0',
+        sdkVersion: '54.0.0',
         name: name || 'WyberAi Mobile App',
         description: description || 'Generated with WyberAi',
         dependencies: resolvedDeps,

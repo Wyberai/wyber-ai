@@ -12,12 +12,8 @@ const PERSONAS = [
 ];
 
 const PRODUCTS = [
-  { id: 'web', icon: '🌐', label: 'Web apps', desc: 'Dashboards, SaaS tools, landing pages — AI builds fresh React code in minutes.' },
-  { id: 'mobile', icon: '📱', label: 'Mobile apps', desc: 'iOS & Android with Expo. Preview on your phone instantly.' },
-  { id: 'agents', icon: '🤖', label: 'AI Agents', desc: '5,000 pre-built agents. Connect tools and let them work.' },
-  { id: 'workflows', icon: '⚡', label: 'Workflows', desc: 'Visual automations. Chain triggers, AI steps, and actions.' },
-  { id: 'employees', icon: '💼', label: 'AI Employees', desc: '100 roles that run on schedule. SDR, analyst, support — all AI.' },
-  { id: 'gtm', icon: '🎯', label: 'GTM Engine', desc: 'Define your ICP. Wyber finds leads and runs outreach.' },
+  { id: 'web', icon: '🌐', label: 'Web apps', desc: 'Dashboards, SaaS tools, landing pages, websites — AI builds fresh React code and deploys to a live URL in minutes.' },
+  { id: 'mobile', icon: '📱', label: 'Mobile apps', desc: 'iOS & Android apps with React Native + Expo. Preview on your phone instantly via QR code.' },
 ];
 
 export default function OnboardingPage() {
@@ -42,10 +38,6 @@ export default function OnboardingPage() {
 
     const routes: Record<string, string> = {
       mobile: '/dashboard?new=mobile',
-      agents: '/agents',
-      workflows: '/flows',
-      employees: '/ai-employees',
-      gtm: '/gtm',
     };
 
     if (routes[product]) { router.push(routes[product]); return; }
@@ -75,7 +67,7 @@ export default function OnboardingPage() {
       <div style={S.box}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
           <WyberLogo markSize={40} showWordmark={false} />
-          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.055em', color: 'var(--text)' }}>Wyber<span style={{ color: 'var(--sky)' }}>AI</span></span>
+          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.055em', color: 'var(--text)' }}>Wyber<span style={{ color: 'var(--sky)' }}>Ai</span></span>
         </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
@@ -86,7 +78,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <>
             <h1 style={S.h1}>Welcome to WyberAi</h1>
-            <p style={S.sub}>Six products. One platform. Let's get you set up in 30 seconds.</p>
+            <p style={S.sub}>Build web and mobile apps with AI. Let's get you set up in 30 seconds.</p>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 8, display: 'block' }}>What should we call you?</label>
             <input
               style={S.input}
@@ -134,7 +126,7 @@ export default function OnboardingPage() {
         {step === 3 && (
           <>
             <h1 style={S.h1}>Where do you want to start?</h1>
-            <p style={S.sub}>Pick one to begin — you can access all six products any time from the dashboard.</p>
+            <p style={S.sub}>Pick one to begin — you can switch any time from the dashboard.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
               {PRODUCTS.map(p => (
                 <button key={p.id} onClick={() => setProduct(p.id)}

@@ -171,7 +171,10 @@ export function MobilePreviewPanel() {
                     <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#e4e4e7' }}>Your app is ready</div>
                       <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.6, maxWidth: 240 }}>
-                        For the best experience, install <strong style={{ color: '#a1a1aa' }}>Expo Go</strong> on your phone (<a href="https://apps.apple.com/app/expo-go/id982107779" target="_blank" rel="noopener" style={{ color: '#0EA5E9' }}>iOS</a> / <a href="https://play.google.com/store/apps/details?id=host.exp.exponent" target="_blank" rel="noopener" style={{ color: '#0EA5E9' }}>Android</a>) and scan the QR code to preview your app live on your device.
+                          Install <strong style={{ color: '#a1a1aa' }}>Expo Go</strong> on your phone (<a href="https://apps.apple.com/app/expo-go/id982107779" target="_blank" rel="noopener" style={{ color: '#0EA5E9' }}>iOS</a> / <a href="https://play.google.com/store/apps/details?id=host.exp.exponent" target="_blank" rel="noopener" style={{ color: '#0EA5E9' }}>Android</a>). Open the link below and scan the QR code to preview live on your device.
+                      </div>
+                      <div style={{ fontSize: 10, color: '#3f3f46', lineHeight: 1.5, maxWidth: 240, marginTop: 2 }}>
+                        Uses Expo SDK 54. Make sure your Expo Go app is up to date.
                       </div>
                     </div>
 

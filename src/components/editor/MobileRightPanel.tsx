@@ -219,22 +219,88 @@ interface Props {
   projectName?: string
 }
 
+function DatabaseTab({ projectId }: { projectId?: string }) {
+  const [url, setUrl] = useState('')
+  const [anonKey, setAnonKey] = useState('')
+  const [connected, setConnected] = useState(false)
+  const [testing, setTesting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!projectId) return
+    fetch(`/api/connectors?projectId=${projectId}`).then(r => r.json()).then(d => {
+      if (d.supabase?.url) { setUrl(d.supabase.url); setAnonKey('••••••••'); setConnected(true) }
+    }).catch(() => {})
+  }, [projectId])
+
+  const handleConnect = async () => {
+    if (!url.trim() || !anonKey.trim() || !projectId) return
+    setTesting(true); setError(null)
+    try {
+      const testRes = await fetch(`${url.replace(/\/$/, '')}/rest/v1/`, { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } })
+      if (!testRes.ok) { setError('Connection failed — check your URL and key'); setTesting(false); return }
+      await fetch('/api/connectors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, service: 'supabase', apiKey: anonKey, config: { url } }) })
+      setConnected(true)
+    } catch { setError('Network error') }
+    setTesting(false)
+  }
+
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 4 }}>Connect Supabase</div>
+      <div style={{ fontSize: 11, color: '#52525b', marginBottom: 16, lineHeight: 1.5 }}>
+        Add a backend to persist data, auth, and storage. Your next generation will use it automatically.
+      </div>
+      {connected ? (
+        <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 14 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>Connected</div>
+          <div style={{ fontSize: 11, color: '#71717a', wordBreak: 'break-all' }}>{url}</div>
+          <button onClick={() => { setConnected(false); setUrl(''); setAnonKey('') }} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#71717a', cursor: 'pointer', padding: '4px 10px', fontSize: 10 }}>Disconnect</button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 4 }}>Project URL</div>
+            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://xxxxx.supabase.co"
+              style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace' }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 4 }}>Anon / Public Key</div>
+            <input value={anonKey} onChange={e => setAnonKey(e.target.value)} placeholder="eyJhbGciOi..."
+              style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace' }} />
+          </div>
+          {error && <div style={{ fontSize: 11, color: '#ef4444' }}>{error}</div>}
+          <button onClick={handleConnect} disabled={testing || !url.trim() || !anonKey.trim()}
+            style={{ padding: '9px 0', borderRadius: 8, background: testing ? '#1a1a22' : '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: testing ? 'not-allowed' : 'pointer' }}>
+            {testing ? 'Testing connection...' : 'Connect Supabase'}
+          </button>
+          <div style={{ fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
+            Find these in your Supabase dashboard → Settings → API. The anon key is safe for client-side use.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function MobileRightPanel({ projectId, projectName }: Props) {
-  const [tab, setTab] = useState<'store' | 'publish'>('store')
+  const [tab, setTab] = useState<'database' | 'store' | 'publish'>('database')
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#10121a' }}>
       {/* Tab bar */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-        {(['store', 'publish'] as const).map(t => (
+        {(['database', 'store', 'publish'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             style={{ flex: 1, padding: '10px 0', background: 'none', border: 'none', borderBottom: `2px solid ${tab === t ? '#0EA5E9' : 'transparent'}`, color: tab === t ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            {t === 'store' ? 'Store Listing' : 'Publish Guide'}
+            {t === 'database' ? 'Database' : t === 'store' ? 'Store Listing' : 'Publish Guide'}
           </button>
         ))}
       </div>
 
-      {tab === 'store'
+      {tab === 'database'
+        ? <DatabaseTab projectId={projectId} />
+        : tab === 'store'
         ? <StoreListing projectId={projectId} projectName={projectName} />
         : <PublishGuide />
       }

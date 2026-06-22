@@ -22,6 +22,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     setEditingName(false)
     if (!newName || newName === displayName || !initialProject?.id) return
     setDisplayName(newName)
+    document.title = `${newName} — WyberAi`
     try { await fetch('/api/projects/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: initialProject.id, name: newName }) }) } catch {}
   }
 

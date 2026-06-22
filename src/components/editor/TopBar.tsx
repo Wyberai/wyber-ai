@@ -161,8 +161,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     const newName = nameInput.trim();
     setEditingName(false);
     if (!newName || !projectId || newName === project?.name) return;
-    // Optimistic store update
     if (project) setProject({ ...project, name: newName });
+    document.title = `${newName} — WyberAi`;
     try {
       await fetch('/api/projects/rename', {
         method: 'POST',
