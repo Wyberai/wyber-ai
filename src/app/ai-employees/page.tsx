@@ -244,6 +244,14 @@ export default function AIEmployeesPage() {
               <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Hire a manager for any department</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px,100%), 1fr))', gap: 14, marginBottom: 48 }}>
+              {/* Create your own — first card */}
+              <Link href="/ai-employees/new" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '28px 20px', background: 'rgba(14,165,233,0.04)', border: '2px dashed rgba(14,165,233,0.2)', borderRadius: 14, transition: 'all 0.2s', minHeight: 180 }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.5)'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.08)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.2)'; (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.04)' }}>
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(14,165,233,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 12, color: SKY }}>+</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#fafafa', marginBottom: 4 }}>Create your own</div>
+                <div style={{ fontSize: 12, color: '#71717a', textAlign: 'center', lineHeight: 1.5 }}>Custom role, tools, KPIs, and instructions — build exactly the employee you need</div>
+              </Link>
               {EMPLOYEE_ROLES.map(role => (
                 <Link key={role.slug} href={`/ai-employees/roles/${role.slug}`} style={{ textDecoration: 'none', display: 'block', padding: '20px', background: '#111113', border: `1px solid ${role.color}15`, borderRadius: 14, transition: 'all 0.2s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '40'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
