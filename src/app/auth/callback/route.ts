@@ -27,12 +27,17 @@ export async function GET(request: Request) {
     const { data: { user }, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (user) {
+      // Students with .edu emails get double credits on signup
+      const isStudent = user.email?.endsWith('.edu') || user.email?.includes('.edu.')
+      const signupCredits = isStudent ? 100 : 50
+
       // Create profile on first signup only — never overwrite existing credits/plan
       await supabase.from('profiles').upsert({
         id: user.id,
         email: user.email ?? '',
-        credits: 50,
+        credits: signupCredits,
         plan: 'free',
+        is_student: isStudent || false,
         onboarded: true,
         updated_at: new Date().toISOString(),
       }, {

@@ -1171,106 +1171,44 @@ ${code}
     
     const wyberDNA = `
 
-=== WYBER HOUSE STYLE — MANDATORY for every generated app ===
+=== WYBER HOUSE STYLE — MANDATORY ===
 
-PHILOSOPHY: Premium, modern SaaS aesthetic. Use Tailwind CSS via CDN for styling — className="..." not style={{}}. The index.html MUST include <script src="https://cdn.tailwindcss.com"></script> in the <head>. This makes Tailwind available instantly with zero config. The app must look like it belongs on Dribbble or Product Hunt — shadcn/ui-level polish.
+TECH STACK:
+- Tailwind CSS via CDN — use className="..." for ALL styling, never style={{}}
+- index.html MUST include: <script src="https://cdn.tailwindcss.com"></script>
+- Lucide React icons: import { Icon } from 'lucide-react' — ALWAYS set size prop
+- Font: Inter (system default in Tailwind)
 
-── TYPOGRAPHY (both fonts are preloaded — just reference them) ──
-:root { font-family: 'Inter', -apple-system, sans-serif; }
-Headings: font-family: 'Space Grotesk', sans-serif; letter-spacing: -0.02em to -0.04em; font-weight: 700-800
-Body: Inter, weights 400-500, line-height 1.5
-Label / uppercase: font-size 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase
+DESIGN QUALITY — shadcn/ui level:
+- Dark mode by default: bg-zinc-950, cards bg-zinc-900, borders border-zinc-800
+- Rounded corners: rounded-lg on cards, rounded-md on buttons/inputs
+- Subtle borders: border border-zinc-800, hover:border-zinc-700
+- Shadows: shadow-sm on cards, shadow-lg on modals
+- Spacing: p-6 on cards, gap-4 between elements, space-y-6 for sections
+- Typography: text-sm for body, text-xs for labels, text-2xl font-bold for headings
+- Muted text: text-zinc-400 for secondary, text-zinc-500 for tertiary
+- Accent: indigo-500 for primary actions, emerald-500 for success, amber-500 for warning, red-500 for danger
+- Transitions: transition-all duration-150 on interactive elements
+- Hover states: hover:bg-zinc-800 on cards, hover:bg-indigo-600 on primary buttons
 
-── COMPLETE TOKEN SET — BOTH THEMES (MANDATORY in src/index.css) ──
-CRITICAL: define BOTH :root (dark default) AND [data-theme="light"] so toggling never breaks.
+COMPONENT PATTERNS (write inline, shadcn-style):
+- Button primary: className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+- Button secondary: className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-md border border-zinc-700 transition-colors"
+- Card: className="bg-zinc-900 border border-zinc-800 rounded-lg p-6"
+- Input: className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-md text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+- Badge: className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+- Table: className="w-full text-sm" with thead text-zinc-400 and tbody divide-y divide-zinc-800
+- Sidebar: className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col" with nav items using hover:bg-zinc-800/50
+- Stat card: className="bg-zinc-900 border border-zinc-800 rounded-lg p-4" with text-2xl font-bold for number
 
-:root {
-  /* Dark — default */
-  --bg: #0a0a0f;
-  --surface: #111118;
-  --elevated: #1a1a24;
-  --border: rgba(255,255,255,0.06);
-  --border-hover: rgba(255,255,255,0.14);
-  --text: #f0f0f5;
-  --text-2: #8b8b9a;
-  --text-3: #52526a;
-  --accent: #6366f1;
-  --accent-hover: #5558e8;
-  --accent-glow: rgba(99,102,241,0.12);
-  --green: #22c55e; --green-bg: rgba(34,197,94,0.08);
-  --amber: #f59e0b; --amber-bg: rgba(245,158,11,0.08);
-  --red: #ef4444;   --red-bg: rgba(239,68,68,0.08);
-  --blue: #0EA5E9;  --blue-bg: rgba(14,165,233,0.08);
-  --r: 8px; --r-lg: 12px; --r-xl: 16px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.5);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
-}
-[data-theme="light"] {
-  /* Light — complete guaranteed-contrast set */
-  --bg: #f5f5f7;
-  --surface: #ffffff;
-  --elevated: #f0f0f5;
-  --border: rgba(0,0,0,0.08);
-  --border-hover: rgba(0,0,0,0.18);
-  --text: #09090b;
-  --text-2: #52525b;
-  --text-3: #a1a1aa;
-  --accent: #6366f1;
-  --accent-hover: #4f52e0;
-  --accent-glow: rgba(99,102,241,0.10);
-  --green: #16a34a; --green-bg: rgba(22,163,74,0.08);
-  --amber: #b45309; --amber-bg: rgba(180,83,9,0.08);
-  --red: #dc2626;   --red-bg: rgba(220,38,38,0.08);
-  --blue: #0284c7;  --blue-bg: rgba(2,132,199,0.08);
-  --shadow: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
-}
-
-── THEME TOGGLE (include in every app topbar) ──
-State: const [isDark, setIsDark] = useState(true)
-Handler:
-  const toggleTheme = () => {
-    const next = !isDark
-    setIsDark(next)
-    document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light')
-  }
-On mount: document.documentElement.setAttribute('data-theme', 'dark')
-Render (lucide Sun/Moon icons):
-  <button onClick={toggleTheme} style={{background:'none',border:'1px solid var(--border)',borderRadius:'var(--r)',padding:'6px 8px',color:'var(--text-2)',cursor:'pointer',display:'flex',alignItems:'center'}} title="Toggle theme">
-    {isDark ? <Sun size={15}/> : <Moon size={15}/>}
-  </button>
-Import: import { Sun, Moon } from 'lucide-react'
-
-── SVG / ICON DIMENSIONS — CRITICAL RULE ──
-ALL SVGs MUST have explicit pixel width and height. NEVER write width="100%" or height="100%" on an <svg> element — this causes the SVG to expand and cover the entire UI as a solid black shape.
-
-WRONG (causes black blob bug): <svg width="100%" viewBox="0 0 24 24">...</svg>
-CORRECT: <svg width={24} height={24} viewBox="0 0 24 24">...</svg>
-
-Rules by context:
-- Lucide icons: ALWAYS use the size prop — <Settings size={18}/>, <Plus size={16}/>. Never omit size.
-- Sidebar logo SVG: width={28} height={28} MAX. Never larger.
-- Inline decorative SVG: explicit px only, max 64px unless it is a hero full-bleed illustration.
-- Any SVG in a flex container: add flexShrink: 0 to prevent it stretching.
-
-── CONTRAST — ABSOLUTE RULES ──
-NEVER place text on a background of the same color family without meeting 4.5:1 contrast.
-- Body text: var(--text) on var(--bg) or var(--surface) ✓
-- Secondary text: var(--text-2) on var(--surface) or var(--elevated) ✓
-- var(--text-3): ONLY for timestamps, placeholders, disabled labels — NEVER for interactive or body text
-- Badge foreground must contrast with badge background: use the --green/--amber/--red/--blue tokens on their respective --*-bg
-- Chart axes, tick labels, tooltip text: must be var(--text-2) minimum — not var(--text-3)
-- In light mode: all dark-mode assumptions break. Use semantic vars only — never hardcode #1a1a24 or rgba(255,255,255,0.X) inline.
-
-── VISUAL DEPTH & POLISH (every app must have these) ──
-SURFACES: --bg (darkest) → --surface (cards) → --elevated (inputs, dropdowns). Never flatten to one color.
-CARDS: border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: var(--r-lg); padding: 20px 24px.
-HOVER: translateY(-2px) + box-shadow: var(--shadow-lg) + border-color: var(--border-hover). Transition: all 0.15s ease.
-KEY METRIC: the single most important KPI gets a gradient text fill (background-clip:text, WebkitBackgroundClip:'text', color:'transparent', backgroundImage:'linear-gradient(135deg, var(--accent), var(--blue))').
-SPACING: 16-24px card padding; 24-32px between sections; 8px between related elements. 4/8px scale. Never cram.
-TYPOGRAPHY HIERARCHY: section heading 20px Space Grotesk 700; stat value 28-32px Space Grotesk 800 tight; body 13-14px Inter; label 11px uppercase 600.
-STATES: every empty search result → empty state (icon opacity 0.3 + short helpful message). Loading → shimmer skeleton divs, not bare spinners. Every interactive element → hover + focus ring.
-MOTION: opacity+translateY(8px)→(0) on mount for content blocks. All buttons/cards transition 0.15-0.2s ease.
+CRITICAL RULES:
+- NEVER use style={{}}. Always className with Tailwind.
+- ALL Lucide icons MUST have size prop: <Settings size={18} />
+- SVGs must have explicit width/height numbers, never "100%"
+- Every empty state: icon + helpful message, never blank
+- Every loading state: animate-pulse skeleton, never bare spinner
+- Every interactive element: hover + focus ring
+- index.css should be minimal: @tailwind base/components/utilities is NOT needed with CDN — just body { margin: 0; }
 `
     // ── Staged generation modes ──
     // Static system prompt (cacheable) — per-request context injected into user message instead.
@@ -1294,9 +1232,9 @@ IMPORTANT: If this app creates, edits, lists, or manages any records, users, ite
 const [_storageNotice, _setStorageNotice] = useState(true)
 ...
 {_storageNotice && (
-  <div style={{position:'fixed',top:0,left:0,right:0,zIndex:9999,background:'rgba(120,53,15,0.97)',color:'#fef3c7',padding:'7px 16px',fontSize:12,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,backdropFilter:'blur(4px)'}}>
+  <div className="fixed top-0 left-0 right-0 z-50 bg-amber-900/95 text-amber-100 px-4 py-2 text-xs flex items-center justify-between gap-3 backdrop-blur-sm">
     <span>⚠ Data is stored in browser memory only — resets on page refresh. Connect a database to save permanently.</span>
-    <button onClick={()=>_setStorageNotice(false)} style={{background:'none',border:'none',color:'#fef3c7',cursor:'pointer',fontSize:16,fontWeight:700,padding:'0 4px',lineHeight:1}}>×</button>
+    <button onClick={()=>_setStorageNotice(false)} className="text-amber-100 hover:text-white text-lg font-bold leading-none">×</button>
   </div>
 )}
 
