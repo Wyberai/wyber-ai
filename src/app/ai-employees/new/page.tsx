@@ -39,9 +39,27 @@ function NewEmployeePage() {
   const [scheduleHour, setScheduleHour] = useState(9)
   const [scheduleDay, setScheduleDay] = useState(1)
 
-  // Pre-fill from template
+  // Pre-fill from URL params (role page passes these) or legacy template slug
   useEffect(() => {
-    if (!templateSlug || templateLoaded) return
+    if (templateLoaded) return
+    const urlRole = searchParams.get('role')
+    const urlDept = searchParams.get('dept')
+    const urlTools = searchParams.get('tools')
+    const urlInstructions = searchParams.get('instructions')
+
+    if (urlRole) {
+      setName(urlRole)
+      setRole(urlRole)
+      if (urlInstructions) setInstructions(urlInstructions)
+      if (urlTools) setTools(urlTools.split(',').map(t => t.trim().toUpperCase()))
+      // Set emoji based on department
+      const deptEmojis: Record<string, string> = { Marketing: '📣', Sales: '🎯', Operations: '⚙️', Finance: '💰', 'Customer Success': '🎧', 'HR & People': '👥', Engineering: '🔧', Product: '📋' }
+      if (urlDept && deptEmojis[urlDept]) setEmoji(deptEmojis[urlDept])
+      setTemplateLoaded(true)
+      return
+    }
+
+    if (!templateSlug) return
     fetch(`/api/employee-templates?slug=${templateSlug}`)
       .then(r => r.json())
       .then(d => {
@@ -55,7 +73,7 @@ function NewEmployeePage() {
         setTools(t.default_tools ?? [])
         setTemplateLoaded(true)
       })
-  }, [templateSlug, templateLoaded])
+  }, [templateSlug, templateLoaded, searchParams])
 
   const toggleTool = (t: string) => setTools(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])
 

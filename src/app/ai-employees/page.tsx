@@ -314,7 +314,7 @@ export default function AIEmployeesPage() {
                   <div style={{ fontSize: 20, color: SKY, marginBottom: 6 }}>+</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Custom role</div>
                 </Link>
-                {EMPLOYEE_ROLES.slice(0, 7).map(r => (
+                {EMPLOYEE_ROLES.map(r => (
                   <Link key={r.slug} href={`/ai-employees/roles/${r.slug}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '14px', background: '#111113', border: '1px solid #1e1e26', borderRadius: 12, transition: 'border-color 0.15s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = r.color + '40'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#1e1e26'}>
