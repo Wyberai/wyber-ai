@@ -408,12 +408,10 @@ export default function SettingsPage() {
             <div style={{ ...S.row, marginBottom: 0 }}>
               <div>
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Appearance</div>
-                <div style={{ fontSize: 12, color: '#71717a' }}>Choose your preferred theme</div>
+                <div style={{ fontSize: 12, color: '#71717a' }}>WyberAi uses dark mode for the best coding experience</div>
               </div>
               <div style={{ display: 'flex', gap: 6 }}>
-                {['Dark', 'Light', 'System'].map(t => (
-                  <button key={t} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.1)', background: t === 'Dark' ? 'rgba(255,255,255,0.08)' : 'transparent', color: t === 'Dark' ? '#fafafa' : '#71717a', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>{t}</button>
-                ))}
+                <span style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.08)', color: '#fafafa', fontSize: 12, fontFamily: 'inherit' }}>Dark</span>
               </div>
             </div>
           </div>
