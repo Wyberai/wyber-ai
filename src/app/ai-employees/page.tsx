@@ -168,7 +168,7 @@ export default function AIEmployeesPage() {
 
       {/* Nav */}
       <nav style={{ borderBottom:'1px solid #1a1a22', background:'#0d0d11', padding:'0 32px', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:50 }}>
-        <Link href="/dashboard" style={{ display:'flex', alignItems:'center', gap:9, textDecoration:'none' }}>
+        <Link href="/" style={{ display:'flex', alignItems:'center', gap:9, textDecoration:'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
         <div style={{ display:'flex', gap:10, alignItems:'center' }}>

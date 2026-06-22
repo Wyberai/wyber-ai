@@ -12,12 +12,12 @@ const PRODUCTS: Record<string, { emoji: string; color: string; tagline: string; 
     tagline: 'AI department heads that think, act, and learn like 10-year veterans. Not chatbots — real agentic employees.',
     launchDate: 'New employee released every Monday',
     features: [
-      { title: 'Proactive, not reactive', desc: 'They don\'t wait for instructions. They monitor your email, CRM, and tools — then act on what they find. A Marketing Manager that spots a competitor launch and drafts your counter-messaging before you wake up.' },
-      { title: '4-layer memory', desc: 'Short-term task state, semantic knowledge (your brand guidelines, ICP), episodic memory (past decisions and outcomes), and tool memory. They remember what worked and what didn\'t — like a real employee.' },
-      { title: 'Human-in-the-loop', desc: 'Every outbound action goes through your approval. They draft, you approve. One bad email destroys a reputation — your AI employees know that.' },
-      { title: 'Sense → Reason → Act', desc: 'They scan for signals (new hires, funding rounds, job posts), score them by revenue potential, then execute — draft emails, update CRM, alert your team. All autonomously.' },
-      { title: 'Business-grade intelligence', desc: 'They understand MEDDPICC, multi-touch attribution, SaaS metrics, buying committees. Not just "summarize this email" — they evaluate impact and recommend next moves.' },
-      { title: 'Self-correcting', desc: 'A weekly critic agent reviews every action taken. If reps ignore its nudges 3 times, it changes its approach. It learns what gets attention and what gets ignored.' },
+      { title: 'Proactive, not reactive', desc: 'They don\'t wait for instructions. They monitor your tools, inboxes, and dashboards — then act on what they find before you even ask.' },
+      { title: '4-layer memory', desc: 'Short-term task state, semantic knowledge (your brand, processes, preferences), episodic memory (past decisions and outcomes), and tool memory. They learn what works.' },
+      { title: 'Human-in-the-loop', desc: 'Every outbound action goes through your approval. They draft, you approve. No rogue emails, no unauthorized changes — you stay in control.' },
+      { title: 'Connects 30+ tools', desc: 'Gmail, Slack, HubSpot, Notion, Google Sheets, Stripe, GitHub, Linear — they plug into the tools your business already runs on and take real action.' },
+      { title: '8 departments covered', desc: 'Marketing, Sales, Finance, Operations, HR, Engineering, Product, Customer Success. Pick a department head or create a custom role for any function.' },
+      { title: 'Self-correcting', desc: 'A weekly review cycle evaluates every action taken. If something isn\'t working, the employee adjusts its approach. It learns from outcomes, not just instructions.' },
     ],
   },
   'Workflows': {
@@ -74,10 +74,10 @@ export default function ComingSoonPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
       <nav style={{ padding: '0 32px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(9,9,11,0.95)', backdropFilter: 'blur(12px)' }}>
-        <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
         </Link>
-        <Link href="/dashboard" style={{ fontSize: 12, color: '#71717a', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)' }}>← Dashboard</Link>
+        <Link href="/" style={{ fontSize: 12, color: '#71717a', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)' }}>← Home</Link>
       </nav>
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '56px 32px' }}>

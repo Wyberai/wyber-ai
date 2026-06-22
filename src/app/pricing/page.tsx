@@ -297,13 +297,13 @@ export default function PricingPage() {
           Simple, transparent pricing
         </div>
         <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,64px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
-          Hire AI. Replace busywork.<br />
+          Build apps with AI.<br />
           <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Grow without headcount.
+            Pay only for what you use.
           </span>
         </h1>
         <p style={{ fontSize: 'clamp(15px,1.5vw,18px)', color: '#71717a', maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.65 }}>
-          Every plan unlocks ALL features. The only difference is credit count. No employee caps, no agent limits, no feature gates.
+          Every plan unlocks ALL features. The only difference is credit count. No project limits, no feature gates. 50 free credits on signup.
         </p>
 
         {/* Annual toggle */}
@@ -322,31 +322,6 @@ export default function PricingPage() {
           {PLANS.map(plan => (
             <PlanCard key={plan.id} plan={plan} annual={annual} loading={loading} onCheckout={handleCheckout} />
           ))}
-        </div>
-      </section>
-
-      {/* ROI callout */}
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', background: 'linear-gradient(135deg, rgba(14,165,233,0.06) 0%, rgba(14,165,233,0.02) 100%)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 20, padding: 'clamp(28px,4vw,48px)' }}>
-          <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>The math is obvious</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>One hired employee pays for Scale 40x over</h2>
-            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>A junior SDR costs $60K/yr. Your AI SDR runs 24/7 at $199/mo (Pro plan). That&apos;s a $57K saving — before counting nights, weekends, and zero onboarding time.</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 16 }}>
-            {[
-              { label: 'AI SDR cost/year', value: '$4,788', sub: 'Scale plan annually', color: BRAND },
-              { label: 'Human SDR cost/year', value: '$60,000+', sub: 'Salary + benefits + tools', color: '#52525b' },
-              { label: 'Your saving', value: '$55,212', sub: 'Reinvest in growth', color: '#22c55e' },
-              { label: 'Typical ROI', value: '12×', sub: 'On first qualified deal', color: '#a855f7' },
-            ].map(({ label, value, sub, color }) => (
-              <div key={label} style={{ textAlign: 'center', padding: '18px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color, letterSpacing: '-0.03em', marginBottom: 4 }}>{value}</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#fafafa', marginBottom: 3 }}>{label}</div>
-                <div style={{ fontSize: 11, color: '#52525b' }}>{sub}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -501,21 +476,21 @@ export default function PricingPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 560, margin: '0 auto' }}>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
-            Your first AI employee<br />
+            Your next app is<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              starts working tonight.
+              one prompt away.
             </span>
           </h2>
-          <p style={{ fontSize: 15, color: '#71717a', marginBottom: 28, lineHeight: 1.65 }}>30-minute setup. No engineers. Just describe what you need and watch it run.</p>
+          <p style={{ fontSize: 15, color: '#71717a', marginBottom: 28, lineHeight: 1.65 }}>50 free credits on signup. No credit card required. Describe your app and ship it today.</p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
-              Start hiring →
+              Start building for free →
             </Link>
-            <Link href="/employees" style={{ padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
-              Browse 100 employees
+            <Link href="/gallery" style={{ padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
+              Browse templates
             </Link>
           </div>
-          <div style={{ marginTop: 14, fontSize: 12, color: '#3f3f46' }}>No credit card required to explore · Cancel anytime</div>
+          <div style={{ marginTop: 14, fontSize: 12, color: '#3f3f46' }}>50 free credits · No credit card · Cancel anytime</div>
         </div>
       </section>
 
