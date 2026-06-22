@@ -113,89 +113,92 @@ function NewEmployeePage() {
       </nav>
 
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px 32px 80px' }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>Hire a new AI employee</h1>
-        <p style={{ color: '#52525b', fontSize: 14, margin: '0 0 36px' }}>Define what they do, what tools they use, and when they run.</p>
+        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>Hire an AI employee</h1>
+        <p style={{ color: '#52525b', fontSize: 14, margin: '0 0 36px' }}>Give them a name, tell them what to do, pick their tools. They start working immediately.</p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-          {/* Emoji */}
+          {/* Name — one field that's clear */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 10 }}>Pick an emoji</label>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {EMOJI_PICKS.map(e => (
-                <button key={e} type="button" onClick={() => setEmoji(e)} style={{ fontSize: 22, width: 44, height: 44, borderRadius: 10, border: `2px solid ${emoji === e ? SKY : '#2a2a35'}`, background: emoji === e ? 'rgba(14,165,233,0.1)' : '#111115', cursor: 'pointer' }}>{e}</button>
-              ))}
-            </div>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>What should we call this employee?</label>
+            <input value={name} onChange={e => { setName(e.target.value); if (!role || role === name) setRole(e.target.value) }} placeholder="e.g. Marketing Manager, Sales SDR, Inbox Assistant" required style={inputStyle} />
+            <input type="hidden" value={role || name} />
           </div>
 
-          {/* Name */}
+          {/* Instructions — with scaffolding */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>Name <span style={{ color: RED }}>*</span></label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Inbox Manager, Lead Qualifier" required style={inputStyle} />
-          </div>
-
-          {/* Role */}
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>Role / title <span style={{ color: RED }}>*</span></label>
-            <input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. AI SDR, AI Support Agent" required style={inputStyle} />
-          </div>
-
-          {/* Instructions */}
-          <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>Instructions <span style={{ color: RED }}>*</span></label>
-            <p style={{ fontSize: 12, color: '#3f3f46', margin: '0 0 8px' }}>Tell the AI what to do each time it runs. Be specific about the task, tone, and output format.</p>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>What should they do?</label>
+            <p style={{ fontSize: 12, color: '#52525b', margin: '0 0 10px', lineHeight: 1.5 }}>Describe their responsibilities like you would in a job description. The more specific, the better they perform.</p>
+            {!instructions && (
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                {[
+                  'Check my emails daily and draft replies to urgent ones',
+                  'Monitor our social media mentions and summarize sentiment',
+                  'Track overdue invoices and send payment reminders',
+                  'Review new job applications and rank top candidates',
+                ].map(s => (
+                  <button key={s} type="button" onClick={() => setInstructions(s)} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, background: '#111115', border: '1px solid #2a2a35', color: '#71717a', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>{s}</button>
+                ))}
+              </div>
+            )}
             <textarea
               value={instructions}
               onChange={e => setInstructions(e.target.value)}
-              placeholder="e.g. Check my Gmail inbox for new leads who mention 'pricing' or 'demo'. Draft a personalized reply to each, then log their name and email to the HubSpot CRM under the tag 'inbound-lead'."
-              required
-              rows={6}
+              placeholder="Describe what this employee should do..."
+              required rows={4}
               style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             />
+            <div style={{ fontSize: 11, color: '#3f3f46', marginTop: 4 }}>{instructions.length} characters</div>
           </div>
 
-          {/* Tools */}
+          {/* Tools — friendly names with descriptions */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 10 }}>Connected tools</label>
-            <p style={{ fontSize: 12, color: '#3f3f46', margin: '0 0 12px' }}>Select the tools this employee can use. You must connect them in <Link href="/settings" style={{ color: SKY }}>Settings → Integrations</Link>.</p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {AVAILABLE_TOOLS.map(t => (
-                <button key={t} type="button" onClick={() => toggleTool(t)} style={{ fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 6, border: `1px solid ${tools.includes(t) ? SKY : '#2a2a35'}`, background: tools.includes(t) ? 'rgba(14,165,233,0.1)' : '#111115', color: tools.includes(t) ? SKY : '#52525b', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t}</button>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>Which tools should they use?</label>
+            <p style={{ fontSize: 12, color: '#52525b', margin: '0 0 10px' }}>Select the apps this employee will connect to. You can <Link href="/settings?tab=integrations" style={{ color: SKY }}>connect them in Settings</Link> later.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+              {[
+                { id: 'GMAIL', label: 'Gmail', icon: '📧' },
+                { id: 'SLACK', label: 'Slack', icon: '💬' },
+                { id: 'NOTION', label: 'Notion', icon: '📝' },
+                { id: 'HUBSPOT', label: 'HubSpot', icon: '🎯' },
+                { id: 'GOOGLECALENDAR', label: 'Calendar', icon: '📅' },
+                { id: 'GOOGLEDOCS', label: 'Google Docs', icon: '📄' },
+                { id: 'GOOGLESHEETS', label: 'Google Sheets', icon: '📊' },
+                { id: 'LINKEDIN', label: 'LinkedIn', icon: '💼' },
+                { id: 'AIRTABLE', label: 'Airtable', icon: '🗂️' },
+                { id: 'GITHUB', label: 'GitHub', icon: '⌥' },
+                { id: 'LINEAR', label: 'Linear', icon: '🔷' },
+                { id: 'STRIPE', label: 'Stripe', icon: '💳' },
+              ].map(t => (
+                <button key={t.id} type="button" onClick={() => toggleTool(t.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 8, border: `1px solid ${tools.includes(t.id) ? SKY : '#2a2a35'}`, background: tools.includes(t.id) ? 'rgba(14,165,233,0.08)' : '#111115', color: tools.includes(t.id) ? '#e4e4e7' : '#52525b', cursor: 'pointer', fontSize: 12, fontWeight: 500, fontFamily: 'inherit', textAlign: 'left' }}>
+                  <span style={{ fontSize: 16 }}>{t.icon}</span>
+                  {t.label}
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Schedule */}
+          {/* Schedule — simplified */}
           <div>
-            <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 10 }}>Schedule</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 700, color: '#e4e4e7', marginBottom: 6 }}>How often should they work?</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
               {SCHEDULE_OPTIONS.map(opt => (
-                <label key={opt.value} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 10, border: `1px solid ${scheduleType === opt.value ? SKY : '#2a2a35'}`, background: scheduleType === opt.value ? 'rgba(14,165,233,0.06)' : '#111115', cursor: 'pointer' }}>
-                  <input type="radio" name="schedule" value={opt.value} checked={scheduleType === opt.value} onChange={() => setScheduleType(opt.value)} style={{ marginTop: 2, accentColor: SKY }} />
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{opt.label}</div>
-                    <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>{opt.desc}</div>
-                  </div>
-                </label>
+                <button key={opt.value} type="button" onClick={() => setScheduleType(opt.value)} style={{ padding: '12px', borderRadius: 10, border: `1px solid ${scheduleType === opt.value ? SKY : '#2a2a35'}`, background: scheduleType === opt.value ? 'rgba(14,165,233,0.08)' : '#111115', color: scheduleType === opt.value ? '#e4e4e7' : '#52525b', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', textAlign: 'center' }}>
+                  {opt.label}
+                </button>
               ))}
             </div>
-
             {(scheduleType === 'daily' || scheduleType === 'weekly') && (
-              <div style={{ display: 'flex', gap: 12, marginTop: 14, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                 {scheduleType === 'weekly' && (
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, color: '#52525b', marginBottom: 6 }}>Day of week</label>
-                    <select value={scheduleDay} onChange={e => setScheduleDay(Number(e.target.value))} style={{ ...inputStyle, padding: '8px 12px', fontSize: 13 }}>
-                      {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
-                    </select>
-                  </div>
-                )}
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, color: '#52525b', marginBottom: 6 }}>Hour (UTC)</label>
-                  <select value={scheduleHour} onChange={e => setScheduleHour(Number(e.target.value))} style={{ ...inputStyle, padding: '8px 12px', fontSize: 13 }}>
-                    {HOURS.map(h => <option key={h} value={h}>{h.toString().padStart(2, '0')}:00</option>)}
+                  <select value={scheduleDay} onChange={e => setScheduleDay(Number(e.target.value))} style={{ ...inputStyle, padding: '8px 12px', fontSize: 13, width: 'auto' }}>
+                    {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
                   </select>
-                </div>
+                )}
+                <span style={{ fontSize: 12, color: '#52525b' }}>at</span>
+                <select value={scheduleHour} onChange={e => setScheduleHour(Number(e.target.value))} style={{ ...inputStyle, padding: '8px 12px', fontSize: 13, width: 'auto' }}>
+                  {HOURS.map(h => <option key={h} value={h}>{h.toString().padStart(2, '0')}:00 UTC</option>)}
+                </select>
               </div>
             )}
           </div>
