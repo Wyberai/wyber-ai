@@ -285,10 +285,48 @@ export default function AIEmployeesPage() {
             </div>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-            {employees.map(emp => (
-              <EmployeeCard key={emp.id} emp={emp} onRun={handleRun} onToggle={handleToggle} onDelete={handleDelete} running={runningIds.has(emp.id)} />
-            ))}
+          <div>
+            {/* Your employees */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Your employees ({employees.length})</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Link href="/ai-employees/new" style={{ fontSize: 12, fontWeight: 600, color: '#fff', textDecoration: 'none', padding: '6px 14px', borderRadius: 8, background: SKY }}>+ Hire new</Link>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16, marginBottom: 40 }}>
+              {employees.map(emp => (
+                <EmployeeCard key={emp.id} emp={emp} onRun={handleRun} onToggle={handleToggle} onDelete={handleDelete} running={runningIds.has(emp.id)} />
+              ))}
+            </div>
+
+            {/* Browse more roles */}
+            <div style={{ borderTop: '1px solid #1e1e26', paddingTop: 32 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Hire more</div>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: '#fff' }}>Browse {EMPLOYEE_ROLES.length} ready-made roles</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px,100%), 1fr))', gap: 10 }}>
+                <Link href="/ai-employees/new" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', background: 'rgba(14,165,233,0.04)', border: '2px dashed rgba(14,165,233,0.2)', borderRadius: 12, transition: 'all 0.15s', minHeight: 100 }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.5)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.2)'}>
+                  <div style={{ fontSize: 20, color: SKY, marginBottom: 6 }}>+</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Custom role</div>
+                </Link>
+                {EMPLOYEE_ROLES.slice(0, 7).map(r => (
+                  <Link key={r.slug} href={`/ai-employees/roles/${r.slug}`} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '14px', background: '#111113', border: '1px solid #1e1e26', borderRadius: 12, transition: 'border-color 0.15s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = r.color + '40'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#1e1e26'}>
+                    <span style={{ fontSize: 22 }}>{r.emoji}</span>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: '#fafafa' }}>{r.title}</div>
+                      <div style={{ fontSize: 10, color: r.color }}>{r.department}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
