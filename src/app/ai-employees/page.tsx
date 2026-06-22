@@ -80,15 +80,19 @@ function EmployeeCard({ emp, onRun, onToggle, onDelete, running }: {
   )
 }
 
-// ── Legacy waitlist role cards data (kept for empty-state inspiration) ────────
+// ── Department Head roles — the new unified AI Employees ────────────────────
+const DEPARTMENT_HEADS = [
+  { title: 'Marketing Manager', tagline: 'Runs outbound, inbound, content, SEO, nurture campaigns, and market research. Your full marketing department in one employee.', tools: ['Gmail', 'HubSpot', 'LinkedIn', 'Google Docs', 'Slack'], department: 'Marketing', emoji: '📣', color: '#e879f9' },
+  { title: 'Sales Manager', tagline: 'Qualifies leads, follows up on deals, drafts outreach, manages your CRM pipeline, and sends you a daily sales digest.', tools: ['Gmail', 'HubSpot', 'LinkedIn', 'Slack'], department: 'Sales', emoji: '🎯', color: '#0EA5E9' },
+  { title: 'Operations Manager', tagline: 'Automates repetitive processes, moves data between tools, manages inventory, tracks KPIs, and keeps your ops running.', tools: ['Google Sheets', 'Slack', 'Notion', 'Airtable'], department: 'Operations', emoji: '⚙️', color: '#f59e0b' },
+  { title: 'Finance Manager', tagline: 'Tracks invoices, chases payments, reconciles accounts, generates financial reports, and alerts on anomalies.', tools: ['Google Sheets', 'Gmail', 'Slack', 'Stripe'], department: 'Finance', emoji: '💰', color: '#22c55e' },
+  { title: 'Customer Success Manager', tagline: 'Monitors customer health, handles support tickets, sends NPS surveys, drafts responses, and escalates issues.', tools: ['Gmail', 'Slack', 'Notion', 'HubSpot'], department: 'Support', emoji: '🎧', color: '#06b6d4' },
+  { title: 'HR Manager', tagline: 'Posts job listings, screens resumes, schedules interviews, manages onboarding docs, and tracks employee satisfaction.', tools: ['Gmail', 'Google Docs', 'Notion', 'Google Calendar'], department: 'HR', emoji: '👥', color: '#8b5cf6' },
+  { title: 'Engineering Manager', tagline: 'Reviews PRs, triages bugs, writes release notes, monitors alerts, and keeps your dev team unblocked.', tools: ['GitHub', 'Slack', 'Linear', 'Notion'], department: 'Engineering', emoji: '🔧', color: '#ef4444' },
+  { title: 'Product Manager', tagline: 'Gathers user feedback, prioritizes features, writes specs, tracks roadmap progress, and reports to stakeholders.', tools: ['Notion', 'Slack', 'Linear', 'Gmail'], department: 'Product', emoji: '📋', color: '#f97316' },
+]
+
 const EMPLOYEES_LEGACY = [
-  { title: 'AI SDR', tagline: 'Qualifies inbound leads, drafts personalized outreach, logs every touch to your CRM.', tools: ['Gmail', 'HubSpot', 'LinkedIn'], department: 'Sales', mode: 'Checks email ~15 min' },
-  { title: 'AI Follow-up Rep', tagline: 'Chases stale deals and sends timely nudges so nothing slips through.', tools: ['Gmail', 'HubSpot', 'Slack'], department: 'Sales', mode: 'Runs on schedule' },
-  { title: 'AI Support Agent', tagline: 'Triages tickets, answers the routine ones, escalates what needs a human.', tools: ['Gmail', 'Notion', 'Slack'], department: 'Support', mode: 'Checks email ~15 min' },
-  { title: 'AI Inbox Manager', tagline: 'Sorts and drafts replies to your email so you start the day at zero.', tools: ['Gmail'], department: 'Support', mode: 'Checks email ~15 min' },
-  { title: 'AI Ops Assistant', tagline: 'Connects your tools and runs the repetitive workflows that eat your day.', tools: ['Slack', 'Notion', 'Google Sheets'], department: 'Operations', mode: 'Runs on schedule' },
-  { title: 'AI Data Entry Clerk', tagline: 'Moves data between your apps so you never copy-paste again.', tools: ['Google Sheets', 'Airtable', 'Notion'], department: 'Operations', mode: 'Runs on schedule' },
-  { title: 'AI Content Assistant', tagline: 'Drafts posts, repurposes content, and queues it for your approval.', tools: ['Notion', 'Google Docs', 'Slack'], department: 'Marketing', mode: 'Runs on schedule' },
   { title: 'AI Research Analyst', tagline: 'Monitors topics and delivers briefs on the schedule you choose.', tools: ['Notion', 'Slack', 'Google Docs'], department: 'Research', mode: 'Runs on schedule' },
   { title: 'AI Scheduler', tagline: 'Reads requests, checks your calendar, and books meetings without you.', tools: ['Gmail', 'Google Calendar'], department: 'Admin', mode: 'Checks email ~15 min' },
   { title: 'AI Briefing Agent', tagline: 'Compiles your morning rundown and delivers it when you want it.', tools: ['Gmail', 'Notion', 'Slack'], department: 'Admin', mode: 'Runs on schedule' },
@@ -178,7 +182,7 @@ export default function AIEmployeesPage() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px' }}>
         <div style={{ marginBottom: 36 }}>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>AI Employees</h1>
-          <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Autonomous AI workers that connect to your tools, run on a schedule, and email you what they did.</p>
+          <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Hire AI department heads that connect your tools, run tasks, and report back. Chat with them like colleagues.</p>
         </div>
 
         {loadError && (
@@ -196,10 +200,10 @@ export default function AIEmployeesPage() {
             <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 20 }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: SKY }} />
-                100 roles · connects to your tools · runs on schedule
+                8 departments · connects to your tools · chat like a colleague
               </div>
               <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>
-                Your first AI employee is 3 steps away
+                Hire your first AI department head
               </h2>
               <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 28px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>
                 Pick a role, connect your tools, set a schedule. It works automatically and emails you a digest after every run.
@@ -218,9 +222,9 @@ export default function AIEmployeesPage() {
             {/* How it works */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px,100%), 1fr))', gap: 12, marginBottom: 48 }}>
               {[
-                { icon: '🎯', step: '01', title: 'Pick a role', body: 'Choose from 100 pre-built roles across sales, marketing, ops, support, and more.' },
-                { icon: '🔗', step: '02', title: 'Connect tools', body: 'Link Gmail, Slack, HubSpot, Notion in one click. Real integrations, not simulations.' },
-                { icon: '⏰', step: '03', title: 'Set a schedule', body: 'Daily, hourly, or event-triggered. It runs while you sleep and reports back.' },
+                { icon: '🤖', step: '01', title: 'Pick a department', body: 'Choose a department head — Marketing, Sales, Ops, Finance, HR, Engineering, or Product.' },
+                { icon: '🔗', step: '02', title: 'Connect tools', body: 'Link Gmail, Slack, HubSpot, Notion in one click. Your employee gets access to do real work.' },
+                { icon: '💬', step: '03', title: 'Chat & instruct', body: 'Talk to your employee like a colleague. Give instructions, ask questions, review their work.' },
               ].map(s => (
                 <div key={s.step} style={{ padding: '18px 20px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
                   <div style={{ fontSize: 26, flexShrink: 0 }}>{s.icon}</div>
@@ -233,27 +237,27 @@ export default function AIEmployeesPage() {
               ))}
             </div>
 
-            {/* Popular roles preview */}
-            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Popular roles</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Browse what others are hiring</div>
-              </div>
-              <Link href="/employees" style={{ fontSize: 13, color: SKY, textDecoration: 'none', fontWeight: 600, flexShrink: 0, marginLeft: 16 }}>See all 100 →</Link>
+            {/* Department heads */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Department heads</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Hire a manager for any department</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px,100%), 1fr))', gap: 12, marginBottom: 48 }}>
-              {EMPLOYEES_LEGACY.slice(0, 6).map(role => (
-                <Link key={role.title} href="/ai-employees/new" style={{ textDecoration: 'none', display: 'block', padding: '16px 18px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, transition: 'border-color 0.15s' }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.25)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{role.title}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: `${DEPT_COLORS[role.department]}18`, color: DEPT_COLORS[role.department], border: `1px solid ${DEPT_COLORS[role.department]}30` }}>{role.department}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px,100%), 1fr))', gap: 14, marginBottom: 48 }}>
+              {DEPARTMENT_HEADS.map(role => (
+                <Link key={role.title} href={`/ai-employees/new?role=${encodeURIComponent(role.title)}&dept=${encodeURIComponent(role.department)}&tools=${encodeURIComponent(role.tools.join(','))}&instructions=${encodeURIComponent(role.tagline)}`} style={{ textDecoration: 'none', display: 'block', padding: '20px', background: '#111113', border: `1px solid ${role.color}15`, borderRadius: 14, transition: 'all 0.2s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '40'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '15'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: role.color + '15', border: `1px solid ${role.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>{role.emoji}</div>
+                    <div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#fafafa' }}>{role.title}</div>
+                      <div style={{ fontSize: 11, color: role.color, fontWeight: 600 }}>{role.department}</div>
+                    </div>
                   </div>
-                  <p style={{ margin: '0 0 10px', fontSize: 12, color: '#71717a', lineHeight: 1.5 }}>{role.tagline}</p>
+                  <p style={{ margin: '0 0 12px', fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>{role.tagline}</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                    {role.tools.slice(0, 3).map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
-                      <span key={t} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    {role.tools.map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
+                      <span key={t} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         {domain && <BrandLogo domain={domain} name={t} size={12} />}
                         {t}
                       </span>
@@ -265,8 +269,9 @@ export default function AIEmployeesPage() {
 
             <div style={{ textAlign: 'center', paddingBottom: 24 }}>
               <Link href="/ai-employees/new" style={{ display: 'inline-block', background: SKY, color: '#fff', textDecoration: 'none', padding: '13px 32px', borderRadius: 10, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
-                Hire your first employee →
+                Hire a custom employee →
               </Link>
+              <p style={{ fontSize: 12, color: '#3f3f46', marginTop: 8 }}>Or pick a department head above to get started faster</p>
             </div>
           </div>
         ) : (

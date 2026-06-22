@@ -211,16 +211,16 @@ const PILLARS = [
     mockup: <MobileMockup />,
   },
   {
-    key: 'agents',
-    label: '⚡ AI Agents',
-    eyebrow: 'AI Agents',
+    key: 'employees',
+    label: '🤖 AI Employees',
+    eyebrow: 'AI Employees',
     accent: '#a855f7',
-    heading: 'Pick one.\nIt executes.',
-    body: '5,000+ agents across 18 industries. Connect tools — Slack, HubSpot, Gmail. Click Run. Full audit log included.',
-    bullets: ['5,000+ agents with persistent memory', 'Browser control · voice calls · 250+ tools', 'Real-time trace logs · multi-agent coordination'],
-    cta: 'Deploy an agent →',
-    href: '/agents',
-    mockup: <AgentMockup />,
+    heading: 'Hire one.\nChat with it.',
+    body: 'Hire AI department heads — Marketing Manager, Sales Lead, Ops Director. They connect your tools, run tasks on schedule, and you chat with them like colleagues. Each one has persistent memory and learns your business.',
+    bullets: ['Department heads: Marketing, Sales, Finance, Ops, Engineering, HR', 'Chat interface — instruct them in plain English', 'Connects 30+ tools · runs on schedule · emails you results'],
+    cta: 'Hire an AI employee →',
+    href: '/ai-employees',
+    mockup: <EmployeeMockup />,
   },
   {
     key: 'workflows',
@@ -233,18 +233,6 @@ const PILLARS = [
     cta: 'Build a workflow →',
     href: '/workflows',
     mockup: <WorkflowMockup />,
-  },
-  {
-    key: 'employees',
-    label: '🤖 AI Employees',
-    eyebrow: 'AI Employees',
-    accent: '#38bdf8',
-    heading: 'Hire one.\nIt runs on autopilot.',
-    body: 'The equivalent of hiring a senior specialist in Marketing, Sales, Finance, Ops, or Engineering. Each employee runs on a schedule, connects to your tools, and emails you what it did.',
-    bullets: ['Choose from 100 roles or create your own', 'Slack notifications · browser control · voice output', 'Human-in-the-loop escalation · daily email digests'],
-    cta: 'Hire an AI employee →',
-    href: '/employees',
-    mockup: <EmployeeMockup />,
   },
   {
     key: 'gtm',
@@ -283,7 +271,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['AI Employees', '/ai-employees'], ['Workflows', '/workflows'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -310,7 +298,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/gallery'], ['AI Agents', '/agents'], ['Workflows', '/workflows'], ['AI Employees', '/employees'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/gallery'], ['AI Employees', '/ai-employees'], ['Workflows', '/workflows'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -389,9 +377,8 @@ export default function HomePage() {
             {[
               { emoji: '🌐', title: 'Web Apps', desc: 'Describe any app in plain English. AI generates production-ready React code, previews live, deploys to Vercel.', color: BRAND, href: '/gallery' },
               { emoji: '📱', title: 'Mobile Apps', desc: 'Generate React Native + Expo apps for iOS and Android. Preview on your phone via QR code.', color: '#f97316', href: '/signup' },
-              { emoji: '⚡', title: 'AI Agents', desc: '5,000+ agents across 18 industries. Connect your tools, click Run. Full audit trail.', color: '#a855f7', href: '/agents' },
+              { emoji: '🤖', title: 'AI Employees', desc: 'Hire AI department heads — Marketing, Sales, Ops, Finance. They connect your tools, run tasks, and report back. Chat with them like colleagues.', color: '#a855f7', href: '/ai-employees' },
               { emoji: '🔀', title: 'Workflows', desc: 'Visual drag-and-drop automations. Wire triggers, AI steps, and actions. Schedule and forget.', color: '#22c55e', href: '/workflows' },
-              { emoji: '🤖', title: 'AI Employees', desc: 'Hire AI that runs daily, connects your tools, and emails you results. 100 roles available.', color: '#38bdf8', href: '/employees' },
               { emoji: '🎯', title: 'GTM Engine', desc: 'Define your ICP, find leads, launch multi-step outreach across email, call, and LinkedIn.', color: '#10b981', href: '/gtm' },
             ].map(p => (
               <Link key={p.title} href={p.href} style={{ display: 'block', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textDecoration: 'none', transition: 'all 0.2s' }}
@@ -400,7 +387,7 @@ export default function HomePage() {
                 <div style={{ fontSize: 32, marginBottom: 12 }}>{p.emoji}</div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#fafafa', marginBottom: 6, fontFamily: "'Sora', sans-serif" }}>{p.title}</div>
                 <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: '0 0 16px' }}>{p.desc}</p>
-                <span style={{ fontSize: 12, fontWeight: 700, color: p.color }}>{p.title === 'Web Apps' ? 'Start building' : p.title === 'AI Agents' ? 'Browse agents' : p.title === 'AI Employees' ? 'Hire one' : 'Get started'} →</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: p.color }}>{p.title === 'Web Apps' ? 'Start building' : p.title === 'AI Employees' ? 'Hire an employee' : 'Get started'} →</span>
               </Link>
             ))}
           </div>

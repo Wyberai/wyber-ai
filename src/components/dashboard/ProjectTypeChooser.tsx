@@ -31,11 +31,12 @@ const CARDS: {
     color: '#f97316',
   },
   {
-    type: 'agent',
-    title: 'AI Agent',
-    desc: 'Autonomous agents that run tasks, call tools, and work on your behalf.',
-    emoji: '⚡',
+    type: 'employee',
+    title: 'AI Employee',
+    desc: 'Hire an AI department head — Marketing, Sales, Ops, Finance. Chat with them like a colleague.',
+    emoji: '🤖',
     color: '#a855f7',
+    redirect: '/ai-employees/new',
   },
   {
     type: 'workflow',
@@ -43,14 +44,6 @@ const CARDS: {
     desc: 'Visual automations that connect apps and run on schedule — no code.',
     emoji: '🔀',
     color: '#22c55e',
-  },
-  {
-    type: 'employee',
-    title: 'AI Employee',
-    desc: 'Hire an AI that runs daily, connects your tools, and emails you results.',
-    emoji: '🤖',
-    color: '#38bdf8',
-    redirect: '/ai-employees/new',
   },
   {
     type: 'gtm',
