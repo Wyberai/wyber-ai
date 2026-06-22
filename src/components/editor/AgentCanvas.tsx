@@ -69,10 +69,19 @@ const IcoSpinner = () =>
 // ─── Brand logos via Logo.dev ────────────────────────────────────────────────
 
 const TOOL_DOMAINS: Record<string, string> = {
-  slack: 'slack.com', gmail: 'gmail.google.com', hubspot: 'hubspot.com',
+  slack: 'slack.com', gmail: 'gmail.com', hubspot: 'hubspot.com',
   notion: 'notion.so', github: 'github.com', stripe: 'stripe.com',
   airtable: 'airtable.com', linear: 'linear.app', openai: 'openai.com',
-  supabase: 'supabase.com', sendgrid: 'sendgrid.com',
+  supabase: 'supabase.com', sendgrid: 'sendgrid.com', linkedin: 'linkedin.com',
+  twitter: 'twitter.com', calendly: 'calendly.com', zoom: 'zoom.us',
+  jira: 'atlassian.com', asana: 'asana.com', trello: 'trello.com',
+  discord: 'discord.com', intercom: 'intercom.com', zendesk: 'zendesk.com',
+  mailchimp: 'mailchimp.com', twilio: 'twilio.com', shopify: 'shopify.com',
+  figma: 'figma.com', dropbox: 'dropbox.com', salesforce: 'salesforce.com',
+  monday: 'monday.com', clickup: 'clickup.com', freshdesk: 'freshdesk.com',
+  pipedrive: 'pipedrive.com', googlesheets: 'sheets.google.com',
+  googledocs: 'docs.google.com', googlecalendar: 'calendar.google.com',
+  googledrive: 'drive.google.com',
 }
 
 function ToolIcon({ toolId, logoUrl, size = 24 }: { toolId?: string; logoUrl?: string; size?: number }) {

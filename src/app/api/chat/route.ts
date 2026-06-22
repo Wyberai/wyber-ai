@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
     const { allowed } = rateLimit(`chat:${user.id}`, 20, 60000)
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please wait a minute.' }, { status: 429 })
 
-    const { messages } = await req.json()
+    const { messages, systemOverride } = await req.json()
     if (!messages?.length) {
       return new Response('Messages required', { status: 400 })
     }
@@ -113,9 +113,9 @@ export async function POST(req: NextRequest) {
     const recentMessages = messages.slice(-10)
 
     const stream = await anthropic.messages.stream({
-      model: 'claude-haiku-4-5-20251001', // Fast + cheap for chatbot
-      max_tokens: 400,
-      system: SYSTEM,
+      model: systemOverride ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
+      max_tokens: systemOverride ? 1000 : 400,
+      system: systemOverride || SYSTEM,
       messages: recentMessages,
     })
 

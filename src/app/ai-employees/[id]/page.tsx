@@ -78,7 +78,10 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   const [running, setRunning] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'runs' | 'kpis' | 'context' | 'voice'>('runs')
+  const [activeTab, setActiveTab] = useState<'chat' | 'runs' | 'kpis' | 'context' | 'voice'>('chat')
+  const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([])
+  const [chatInput, setChatInput] = useState('')
+  const [chatLoading, setChatLoading] = useState(false)
   const [escalations, setEscalations] = useState<Array<{ id: string; question: string; context: string; created_at: string }>>([])
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [voiceClips, setVoiceClips] = useState<Array<{ id: string; label: string; text: string; audio_url: string | null; provider: string; created_at: string }>>([])
@@ -272,12 +275,127 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Tabs */}
         <div style={{ display:'flex', gap:6, marginBottom:20 }}>
-          {(['runs','kpis','context','voice'] as const).map(t => (
+          {(['chat','runs','kpis','context','voice'] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)} style={{ ...TAB, background: activeTab === t ? '#1e1e26' : 'transparent', color: activeTab === t ? '#e4e4e7' : '#52525b' }}>
               {t === 'runs' ? `Runs (${runs.length})` : t === 'kpis' ? `KPIs (${kpis.length})` : t === 'voice' ? `Voice (${voiceClips.length})` : 'Context'}
             </button>
           ))}
         </div>
+
+        {/* ── Chat tab ─────────────────────────────────────────────────────────── */}
+        {activeTab === 'chat' && employee && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: 400 }}>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 0' }}>
+              {chatMessages.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#52525b' }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>{employee.emoji}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#a1a1aa', marginBottom: 4 }}>Chat with {employee.name}</div>
+                  <div style={{ fontSize: 12, color: '#52525b', maxWidth: 300, margin: '0 auto', lineHeight: 1.5 }}>
+                    Ask me anything about my role as {employee.role}. I can check emails, draft responses, analyze data, and execute tasks using my connected tools.
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginTop: 16 }}>
+                    {['Check my latest emails', 'Summarize today\'s tasks', 'Draft a follow-up email', 'What did you do last run?'].map(s => (
+                      <button key={s} onClick={() => { setChatInput(s) }} style={{ fontSize: 11, padding: '6px 12px', borderRadius: 8, background: '#111115', border: '1px solid #1e1e26', color: '#a1a1aa', cursor: 'pointer', fontFamily: 'inherit' }}>{s}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {chatMessages.map((m, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                  <div style={{
+                    maxWidth: '80%', padding: '10px 14px', borderRadius: 12, fontSize: 13, lineHeight: 1.5,
+                    background: m.role === 'user' ? 'rgba(14,165,233,0.12)' : '#111115',
+                    border: `1px solid ${m.role === 'user' ? 'rgba(14,165,233,0.2)' : '#1e1e26'}`,
+                    color: '#e4e4e7',
+                  }}>
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ padding: '10px 14px', borderRadius: 12, background: '#111115', border: '1px solid #1e1e26', color: '#52525b', fontSize: 13 }}>
+                    {employee.emoji} Thinking...
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, padding: '8px 0', borderTop: '1px solid #1e1e26' }}>
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={async e => {
+                  if (e.key === 'Enter' && chatInput.trim() && !chatLoading) {
+                    const msg = chatInput.trim()
+                    setChatInput('')
+                    setChatMessages(prev => [...prev, { role: 'user', content: msg }])
+                    setChatLoading(true)
+                    try {
+                      const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          messages: [
+                            ...chatMessages.map(m => ({ role: m.role, content: m.content })),
+                            { role: 'user', content: msg },
+                          ],
+                          systemOverride: `You are ${employee.name}, an AI employee with the role: ${employee.role}. Your instructions: ${employee.instructions}. You have access to these tools: ${employee.tools.join(', ')}. Answer as this specific employee — use first person, be concise and helpful. If the user asks you to do something, explain what you would do and offer to run it.`,
+                        }),
+                      })
+                      if (res.ok) {
+                        const reader = res.body!.getReader()
+                        const decoder = new TextDecoder()
+                        let full = ''
+                        while (true) {
+                          const { done, value } = await reader.read()
+                          if (done) break
+                          full += decoder.decode(value, { stream: true })
+                        }
+                        setChatMessages(prev => [...prev, { role: 'assistant', content: full.trim() || 'Done.' }])
+                      } else {
+                        setChatMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }])
+                      }
+                    } catch {
+                      setChatMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Please check your network.' }])
+                    }
+                    setChatLoading(false)
+                  }
+                }}
+                placeholder={`Ask ${employee.name} anything...`}
+                style={{ flex: 1, padding: '10px 14px', borderRadius: 10, background: '#111115', border: '1px solid #1e1e26', color: '#e4e4e7', fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+              />
+              <button
+                onClick={async () => {
+                  if (!chatInput.trim() || chatLoading) return
+                  const msg = chatInput.trim()
+                  setChatInput('')
+                  setChatMessages(prev => [...prev, { role: 'user', content: msg }])
+                  setChatLoading(true)
+                  try {
+                    const res = await fetch('/api/chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        messages: [...chatMessages, { role: 'user', content: msg }],
+                        systemOverride: `You are ${employee.name}, an AI employee with the role: ${employee.role}. Your instructions: ${employee.instructions}. Connected tools: ${employee.tools.join(', ')}. Answer as this employee — concise, helpful, first person.`,
+                      }),
+                    })
+                    if (res.ok) {
+                      const reader = res.body!.getReader()
+                      const decoder = new TextDecoder()
+                      let full = ''
+                      while (true) { const { done, value } = await reader.read(); if (done) break; full += decoder.decode(value, { stream: true }) }
+                      setChatMessages(prev => [...prev, { role: 'assistant', content: full.trim() || 'Done.' }])
+                    }
+                  } catch {}
+                  setChatLoading(false)
+                }}
+                disabled={chatLoading || !chatInput.trim()}
+                style={{ padding: '10px 18px', borderRadius: 10, background: SKY, color: '#fff', border: 'none', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              >Send</button>
+            </div>
+          </div>
+        )}
 
         {/* ── Runs tab ─────────────────────────────────────────────────────────── */}
         {activeTab === 'runs' && (
