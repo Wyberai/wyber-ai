@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect, useCallback } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { BrandLogo, getBrandDomain } from '@/components/shared/BrandLogo'
+import { EMPLOYEE_ROLES, DEPARTMENTS } from '@/lib/employee-roles'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface Employee {
@@ -200,7 +201,7 @@ export default function AIEmployeesPage() {
             <div style={{ textAlign: 'center', padding: '52px 0 40px' }}>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 20 }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: SKY }} />
-                8 departments · connects to your tools · chat like a colleague
+                {EMPLOYEE_ROLES.length} roles · 8 departments · chat like a colleague
               </div>
               <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>
                 Hire your first AI department head
@@ -243,8 +244,8 @@ export default function AIEmployeesPage() {
               <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', letterSpacing: '-0.02em' }}>Hire a manager for any department</div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px,100%), 1fr))', gap: 14, marginBottom: 48 }}>
-              {DEPARTMENT_HEADS.map(role => (
-                <Link key={role.title} href={`/ai-employees/new?role=${encodeURIComponent(role.title)}&dept=${encodeURIComponent(role.department)}&tools=${encodeURIComponent(role.tools.join(','))}&instructions=${encodeURIComponent(role.tagline)}`} style={{ textDecoration: 'none', display: 'block', padding: '20px', background: '#111113', border: `1px solid ${role.color}15`, borderRadius: 14, transition: 'all 0.2s' }}
+              {EMPLOYEE_ROLES.map(role => (
+                <Link key={role.slug} href={`/ai-employees/roles/${role.slug}`} style={{ textDecoration: 'none', display: 'block', padding: '20px', background: '#111113', border: `1px solid ${role.color}15`, borderRadius: 14, transition: 'all 0.2s' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '40'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = role.color + '15'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
@@ -256,12 +257,13 @@ export default function AIEmployeesPage() {
                   </div>
                   <p style={{ margin: '0 0 12px', fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>{role.tagline}</p>
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                    {role.tools.map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
+                    {role.tools.slice(0, 4).map(t => { const domain = getBrandDomain(t.toLowerCase()); return (
                       <span key={t} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', color: '#71717a', border: '1px solid rgba(255,255,255,0.07)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         {domain && <BrandLogo domain={domain} name={t} size={12} />}
                         {t}
                       </span>
                     ) })}
+                    {role.tools.length > 4 && <span style={{ fontSize: 10, color: '#52525b' }}>+{role.tools.length - 4}</span>}
                   </div>
                 </Link>
               ))}
