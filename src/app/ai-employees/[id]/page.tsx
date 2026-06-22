@@ -339,7 +339,14 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
                             ...chatMessages.map(m => ({ role: m.role, content: m.content })),
                             { role: 'user', content: msg },
                           ],
-                          systemOverride: `You are ${employee.name}, an AI employee with the role: ${employee.role}. Your instructions: ${employee.instructions}. You have access to these tools: ${employee.tools.join(', ')}. Answer as this specific employee — use first person, be concise and helpful. If the user asks you to do something, explain what you would do and offer to run it.`,
+                          systemOverride: `You are ${employee.name} (${employee.role}). Tools: ${employee.tools.join(', ')}. Instructions: ${employee.instructions}
+
+RESPONSE RULES — MANDATORY:
+- Talk like a real colleague in Slack, NOT a chatbot
+- MAX 3 sentences per response. No bullet lists. No headers. No markdown formatting.
+- Never list your capabilities. Never say "Here's what I can do". Just answer the question.
+- If asked "what do you do?" say ONE sentence like "I handle engineering ops — PRs, bugs, releases. What do you need?"
+- Use first person. Be direct. Sound human.`,
                         }),
                       })
                       if (res.ok) {
