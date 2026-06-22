@@ -86,7 +86,7 @@ const MODEL_LABELS: Record<ModelTier, { label: string; credits: string; descript
 export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
     messages, isGenerating, addMessage, updateMessage, setMessages,
-    setIsGenerating, setStreamingContent, clearStreamingContent,
+    setIsGenerating, streamingContent, setStreamingContent, clearStreamingContent,
     setFiles, files, framework, consumeCredit, credits, hasGeneratedFiles, setHasGeneratedFiles,
     project, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints,
   } = useEditorStore();
