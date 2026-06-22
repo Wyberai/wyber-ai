@@ -1479,12 +1479,29 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             />
             {nodes.length <= 1 && (
               <Panel position="top-center">
-                <div style={{ marginTop: 80, textAlign: 'center', color: '#3f3f46', pointerEvents: 'none', fontFamily: "'Space Grotesk', sans-serif" }}>
-                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10, opacity: 0.4 }}>
+                <div style={{ marginTop: 60, textAlign: 'center', color: '#a1a1aa', pointerEvents: 'auto', fontFamily: "'Space Grotesk', sans-serif", maxWidth: 400 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, opacity: 0.6 }}>
                     {isAgent ? <IcoCpu size={36} color="#8b5cf6" /> : <IcoZap size={36} color="#0EA5E9" />}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Add nodes or describe your use case in the chat →</div>
-                  <div style={{ fontSize: 11 }}>WyberAi will match and load the right {isAgent ? 'agent' : 'workflow'} automatically</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: '#e4e4e7' }}>
+                    {isAgent ? 'Build your agent' : 'Build your workflow'}
+                  </div>
+                  <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.5, marginBottom: 16 }}>
+                    {isAgent
+                      ? 'Add a trigger, connect an AI step, and wire it to your tools. Or describe what you want in the chat and we\'ll build it for you.'
+                      : 'Start by adding a trigger (webhook, schedule, or email), then add AI steps and tool actions.'}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#52525b', marginBottom: 12 }}>Quick start — click to add:</div>
+                  <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    {[
+                      { label: '⚡ Trigger', type: 'trigger' as const },
+                      { label: '🤖 AI Step', type: 'aiagent' as const },
+                      { label: '🔧 Tool', type: 'tool' as const },
+                      { label: '❓ Condition', type: 'condition' as const },
+                    ].map(n => (
+                      <button key={n.type} onClick={() => addNode(n.type)} style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', color: '#0EA5E9', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{n.label}</button>
+                    ))}
+                  </div>
                 </div>
               </Panel>
             )}

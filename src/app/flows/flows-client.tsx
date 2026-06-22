@@ -370,11 +370,12 @@ export default function FlowsPage() {
         {tab === 'my-flows' && (
           loading ? <div style={{ color: MUTED }}>Loading...</div> : flows.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🔀</div>
               <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Build your first automation</div>
-              <div style={{ fontSize: 14, color: MUTED, marginBottom: 24 }}>Start from a template or build from scratch</div>
+              <div style={{ fontSize: 14, color: MUTED, marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>Pick a template to get started in seconds, or build from scratch if you know what you need.</div>
               <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-                <button onClick={createFlow} style={{ padding: '11px 24px', borderRadius: 8, border: 'none', background: SKY, color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Blank flow</button>
-                <button onClick={() => setTab('templates')} style={{ padding: '11px 24px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: '#e4e4e7', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Browse templates →</button>
+                <button onClick={() => setTab('templates')} style={{ padding: '11px 24px', borderRadius: 8, border: 'none', background: SKY, color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Browse templates →</button>
+                <button onClick={createFlow} style={{ padding: '11px 24px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: '#71717a', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>Blank flow</button>
               </div>
             </div>
           ) : (

@@ -81,10 +81,10 @@ export default function GTMSetupPage() {
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Step {step + 1} of {steps.length}</div>
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>
-            {step === 0 ? 'Tell us about your company' : step === 1 ? 'Define your ideal customer' : 'Your messaging'}
+            {step === 0 ? 'Tell us about your company' : step === 1 ? 'Who is your ideal customer?' : 'Your messaging'}
           </h1>
           <p style={{ fontSize: 14, color: s.muted }}>
-            {step === 0 ? 'Paste your URL and we\'ll extract the rest automatically.' : step === 1 ? 'Who exactly are you selling to?' : 'What problem do you solve and why you?'}
+            {step === 0 ? 'Paste your URL and we\'ll extract the rest automatically.' : step === 1 ? 'Define your Ideal Customer Profile (ICP) — the exact type of company and person you want to sell to.' : 'What problem do you solve and why should they choose you?'}
           </p>
         </div>
 
