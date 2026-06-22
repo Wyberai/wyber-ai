@@ -143,7 +143,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // Ref so event handlers always get the latest executeGeneration without stale closure
   const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => Promise<void>) | null>(null);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
 
   useEffect(() => {
     const ta = textareaRef.current; if (!ta) return;
@@ -1076,13 +1076,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
           {/* Smart prompt suggestions — show contextual chips when input is empty */}
           {!input && !isGenerating && !pendingGenArgs && !pendingPlan && credits > 0 && messages.length > 0 && (
             <div style={{ display: 'flex', gap: 4, padding: '6px 10px 0', flexWrap: 'wrap' }}>
-              {(hasGeneratedFiles
+              {(Object.keys(files).length > 2 || hasGeneratedFiles
                 ? [
                     { label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with persistent theme. Use CSS variables for all colors.' },
                     { label: 'Connect Supabase', prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' },
                     { label: 'Add settings page', prompt: 'Add a Settings page with profile info, notification preferences, and theme toggle.' },
                     { label: 'Make responsive', prompt: 'Make the entire app fully responsive. Mobile-first layout, collapsible sidebar, stacked cards on small screens.' },
-                    { label: 'Add animations', prompt: 'Add subtle micro-animations: fade-in on mount, hover lift on cards, smooth transitions on navigation.' },
                   ]
                 : [
                     { label: 'CRM dashboard', prompt: 'Build a CRM dashboard with leads table, pipeline columns, and KPI cards.' },

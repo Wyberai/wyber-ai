@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect, useCallback, use } from 'react'
+import { useState, useEffect, useCallback, useRef, use } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const SKY = '#0EA5E9'; const GREEN = '#22c55e'; const RED = '#ef4444'; const AMBER = '#f59e0b'
@@ -82,6 +82,8 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatMessages, chatLoading])
   const [escalations, setEscalations] = useState<Array<{ id: string; question: string; context: string; created_at: string }>>([])
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [voiceClips, setVoiceClips] = useState<Array<{ id: string; label: string; text: string; audio_url: string | null; provider: string; created_at: string }>>([])
@@ -319,6 +321,7 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                 </div>
               )}
+              <div ref={chatEndRef} />
             </div>
             <div style={{ display: 'flex', gap: 8, padding: '8px 0', borderTop: '1px solid #1e1e26' }}>
               <input
