@@ -195,7 +195,7 @@ const PILLARS = [
     body: 'Type what you want. Wyber generates production-ready React code from scratch, provisions Supabase, and deploys to Vercel — in a few minutes.',
     bullets: ['Always fresh code — never stale templates', 'Self-healing preview — errors fix themselves', 'Team collaboration · Figma import · Cmd+K'],
     cta: 'Build a web app →',
-    href: '/gallery',
+    href: '/signup',
     mockup: <WebAppMockup />,
   },
   {

@@ -20,13 +20,14 @@ Pricing (all features unlocked on every plan — no employee caps, no feature ga
 - Scale: $799/month — 10,000 credits/month
 - Top-up credits never expire, available on all plans
 
-Credit costs: Web/mobile build = 10cr · Edit = 3cr · Agent run = 5cr · AI Employee run = 5cr · Workflow run = 2cr · GTM action = 3cr · Lead enrich = 1cr · Image = 3cr · Templates/export/deploy/GitHub push = always free
+Credit costs: Web/mobile build = 10cr · Edit = 3cr · Image = 3cr · Deploy/export/GitHub push = always free
 
 Key facts:
-- 500+ templates across 30+ industries, all instant load
+- AI generates fresh code every time — no stale templates
 - Deploy to Vercel with one click
 - Export full source code as ZIP
 - GitHub sync available
+- AI Employees, Workflows, GTM Engine coming soon
 - Powered by Claude AI (Anthropic)
 
 Be concise, friendly, and direct. If you don't know something, say so honestly. Never make up features that don't exist.`

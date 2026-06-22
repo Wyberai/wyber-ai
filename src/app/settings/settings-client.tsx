@@ -22,11 +22,9 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 
 const PLANS = [
   { id: 'free',     name: 'Free',     price: '$0',    credits: 50,   color: '#52525b', features: ['50 credits/month', '3 projects', 'Community support'] },
-  { id: 'starter',  name: 'Starter',  price: '$29',   credits: 150,  color: '#22c55e', features: ['150 credits/month', 'All 6 products', 'Unlimited projects', 'Email support'] },
-  { id: 'builder',  name: 'Builder',  price: '$79',   credits: 500,  color: '#0EA5E9', features: ['500 credits/month', 'All 6 products', 'Unlimited projects', 'Email support'] },
-  { id: 'pro',      name: 'Pro',      price: '$199',  credits: 1500, color: '#8b5cf6', features: ['1,500 credits/month', 'All 6 products', 'Priority support'] },
-  { id: 'growth',   name: 'Growth',   price: '$399',  credits: 4000, color: '#10b981', features: ['4,000 credits/month', 'All 6 products', 'Priority support'] },
-  { id: 'scale',    name: 'Scale',    price: '$799',  credits: 10000, color: '#f97316', features: ['10,000 credits/month', 'All 6 products', 'Dedicated support'] },
+  { id: 'starter',  name: 'Starter',  price: '$29',   credits: 150,  color: '#22c55e', features: ['150 credits/month', 'Unlimited projects', 'Community support'] },
+  { id: 'builder',  name: 'Builder',  price: '$79',   credits: 500,  color: '#0EA5E9', features: ['500 credits/month', 'Supabase + custom domains', 'Priority support'] },
+  { id: 'pro',      name: 'Pro',      price: '$199',  credits: 1500, color: '#8b5cf6', features: ['1,500 credits/month', 'Multi-user orgs', 'Priority support + Slack'] },
 ];
 
 interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }
