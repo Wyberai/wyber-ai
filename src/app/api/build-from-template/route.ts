@@ -53,6 +53,7 @@ function buildScaffold(appEntry: string, hasCss: boolean, name: string) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${name || 'Wyber App'}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
     <div id="root"></div>

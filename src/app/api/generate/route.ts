@@ -1173,7 +1173,7 @@ ${code}
 
 === WYBER HOUSE STYLE — MANDATORY for every generated app ===
 
-PHILOSOPHY: Premium SaaS dashboard aesthetic using CSS custom properties. No Tailwind, no daisyUI, no external CSS frameworks. The variables below ARE the design system.
+PHILOSOPHY: Premium, modern SaaS aesthetic. Use Tailwind CSS via CDN for styling — className="..." not style={{}}. The index.html MUST include <script src="https://cdn.tailwindcss.com"></script> in the <head>. This makes Tailwind available instantly with zero config. The app must look like it belongs on Dribbble or Product Hunt — shadcn/ui-level polish.
 
 ── TYPOGRAPHY (both fonts are preloaded — just reference them) ──
 :root { font-family: 'Inter', -apple-system, sans-serif; }
