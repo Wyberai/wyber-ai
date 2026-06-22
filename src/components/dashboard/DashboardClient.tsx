@@ -186,9 +186,9 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     { label: 'Home',         href: '/dashboard',        icon: <IconHome /> },
     { label: 'Web Apps',     href: '/dashboard?new=app', icon: <IconTemplates /> },
     { label: 'Mobile Apps',  href: '/dashboard?new=mobile', icon: <IconPhone /> },
-    { label: 'AI Employees', href: '/ai-employees',     icon: <IconPeople /> },
-    { label: 'Workflows',    href: '/flows',            icon: <IconZap /> },
-    { label: 'GTM Engine',   href: '/gtm',              icon: <IconAgents /> },
+    { label: 'AI Employees', href: '/ai-employees',     icon: <IconPeople />, soon: true },
+    { label: 'Workflows',    href: '/flows',            icon: <IconZap />, soon: true },
+    { label: 'GTM Engine',   href: '/gtm',              icon: <IconAgents />, soon: true },
     { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
   ];
 
@@ -282,12 +282,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
         {/* Nav */}
         <nav style={{ padding: '8px', flex: 1, overflow: 'auto' }}>
-          {NAV.map(n => (
-            <Link key={n.label} href={n.href}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s' }}
+          {NAV.map((n: any) => (
+            <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
+              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s', opacity: n.soon ? 0.6 : 1 }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `rgba(255,255,255,0.05)`; (e.currentTarget as HTMLElement).style.color = TEXT }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = MUTED }}>
               {n.icon}{n.label}
+              {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>SOON</span>}
             </Link>
           ))}
 

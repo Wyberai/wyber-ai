@@ -271,7 +271,7 @@ export default function HomePage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/gallery'], ['AI Employees', '/ai-employees'], ['Workflows', '/workflows'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/signup'], ['Mobile Apps', '/signup'], ['AI Employees', '/coming-soon?product=AI+Employees'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -298,7 +298,7 @@ export default function HomePage() {
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/gallery'], ['AI Employees', '/ai-employees'], ['Workflows', '/workflows'], ['GTM', '/gtm'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/signup'], ['Mobile Apps', '/signup'], ['AI Employees', '/coming-soon?product=AI+Employees'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -375,11 +375,11 @@ export default function HomePage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px,100%), 1fr))', gap: 14 }}>
             {[
-              { emoji: '🌐', title: 'Web Apps', desc: 'Describe any app in plain English. AI generates production-ready React code, previews live, deploys to Vercel.', color: BRAND, href: '/gallery' },
+              { emoji: '🌐', title: 'Web Apps', desc: 'Describe any app in plain English. AI generates production-ready React code, previews live, deploys to Vercel.', color: BRAND, href: '/signup' },
               { emoji: '📱', title: 'Mobile Apps', desc: 'Generate React Native + Expo apps for iOS and Android. Preview on your phone via QR code.', color: '#f97316', href: '/signup' },
-              { emoji: '🤖', title: 'AI Employees', desc: 'Hire AI department heads — Marketing, Sales, Ops, Finance. They connect your tools, run tasks, and report back. Chat with them like colleagues.', color: '#a855f7', href: '/ai-employees' },
-              { emoji: '🔀', title: 'Workflows', desc: 'Visual drag-and-drop automations. Wire triggers, AI steps, and actions. Schedule and forget.', color: '#22c55e', href: '/workflows' },
-              { emoji: '🎯', title: 'GTM Engine', desc: 'Define your ICP, find leads, launch multi-step outreach across email, call, and LinkedIn.', color: '#10b981', href: '/gtm' },
+              { emoji: '🤖', title: 'AI Employees', desc: 'AI department heads that think like 10-year veterans. Memory, reasoning, and human-in-the-loop approval. Not chatbots.', color: '#a855f7', href: '/coming-soon?product=AI+Employees', soon: true },
+              { emoji: '🔀', title: 'Workflows', desc: 'Visual automations with AI reasoning at every step. Connect tools, schedule runs, let AI handle the logic.', color: '#22c55e', href: '/coming-soon?product=Workflows', soon: true },
+              { emoji: '🎯', title: 'GTM Engine', desc: 'Define your ICP, find leads, launch multi-channel outreach — all AI-personalized. Your pipeline on autopilot.', color: '#10b981', href: '/coming-soon?product=GTM+Engine', soon: true },
             ].map(p => (
               <Link key={p.title} href={p.href} style={{ display: 'block', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '24px', textDecoration: 'none', transition: 'all 0.2s' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = p.color + '44'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 40px ${p.color}15` }}
@@ -387,7 +387,10 @@ export default function HomePage() {
                 <div style={{ fontSize: 32, marginBottom: 12 }}>{p.emoji}</div>
                 <div style={{ fontSize: 17, fontWeight: 800, color: '#fafafa', marginBottom: 6, fontFamily: "'Sora', sans-serif" }}>{p.title}</div>
                 <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: '0 0 16px' }}>{p.desc}</p>
-                <span style={{ fontSize: 12, fontWeight: 700, color: p.color }}>{p.title === 'Web Apps' ? 'Start building' : p.title === 'AI Employees' ? 'Hire an employee' : 'Get started'} →</span>
+                {(p as any).soon
+                  ? <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 6, background: p.color + '15', color: p.color, border: `1px solid ${p.color}25` }}>Coming soon — join waitlist</span>
+                  : <span style={{ fontSize: 12, fontWeight: 700, color: p.color }}>Start building →</span>
+                }
               </Link>
             ))}
           </div>
@@ -401,9 +404,9 @@ export default function HomePage() {
         <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pricing</div>
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14 }}>
-            One subscription. Six products.
+            Simple, transparent pricing.
           </h2>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Credits work across every product — build an app, run an agent, hire an AI employee, or launch a GTM campaign from the same balance.</p>
+          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Build web apps and mobile apps today. AI Employees, Workflows, and GTM Engine coming soon — same credits, same subscription.</p>
 
           {/* Plans — forced 4-column row */}
           <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 48 }}>
