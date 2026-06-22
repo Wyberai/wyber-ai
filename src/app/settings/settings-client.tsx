@@ -689,7 +689,7 @@ export default function SettingsPage() {
         {/* SECRETS VAULT */}
         {tab === 'secrets' && <>
           <h1 style={S.h2}>Secrets Vault</h1>
-          <p style={S.sub}>Store API keys and OAuth tokens your agents and workflows use at runtime. Values are AES-256-GCM encrypted at rest and never sent to the client in plaintext.</p>
+          <p style={S.sub}>Store API keys and secrets securely. Values are AES-256-GCM encrypted at rest and never sent to the client in plaintext.</p>
 
           {/* Add secret form */}
           <div style={S.card}>

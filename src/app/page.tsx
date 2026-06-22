@@ -408,14 +408,12 @@ export default function HomePage() {
           </h2>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Build web apps and mobile apps today. AI Employees, Workflows, and GTM Engine coming soon — same credits, same subscription.</p>
 
-          {/* Plans — forced 4-column row */}
-          <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: 48 }}>
+          {/* Plans — 3 tiers */}
+          <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 48 }}>
             {[
               { name: 'Starter',  price: '$29',  credits: '150',    color: '#22c55e', highlight: false },
-              { name: 'Builder',  price: '$79',  credits: '500',    color: BRAND,     highlight: false, badge: 'MOST POPULAR' },
-              { name: 'Pro',      price: '$199', credits: '1,500',  color: '#8b5cf6', highlight: true,  badge: 'BEST VALUE' },
-              { name: 'Growth',   price: '$399', credits: '4,000',  color: '#f59e0b', highlight: false },
-              { name: 'Scale',    price: '$799', credits: '10,000', color: '#f97316', highlight: false },
+              { name: 'Builder',  price: '$79',  credits: '500',    color: BRAND,     highlight: true, badge: 'MOST POPULAR' },
+              { name: 'Pro',      price: '$199', credits: '1,500',  color: '#8b5cf6', highlight: false, badge: 'BEST VALUE' },
             ].map(p => (
               <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(160deg,#0d1a26,#0d1218)' : '#111113', border: `1px solid ${p.highlight ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '24px 20px', position: 'relative' }}>
                 {(p as any).badge && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: p.highlight ? BRAND : '#8b5cf6', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{(p as any).badge}</div>}

@@ -529,11 +529,10 @@ export default function PricingPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px,100%), 1fr))', gap: 14 }}>
             {[
-              { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get 50% extra credits on your next top-up.', color: '#ef4444', reward: '50% extra credits' },
+              { emoji: '🎓', title: 'Student Discount', desc: 'Enrolled in a university or bootcamp? Get 60% off any plan and double credits on every purchase with a valid .edu email.', color: '#3b82f6', reward: '60% off + 2x credits' },
+              { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get double credits on your next purchase. Because saving lives should be rewarded.', color: '#ef4444', reward: '2x credits on purchase' },
               { emoji: '📣', title: 'Build in Public', desc: 'Share what you built with WyberAI on Twitter/LinkedIn and get 50 free credits instantly.', color: BRAND, reward: '50 free credits' },
-              { emoji: '🎓', title: 'Student Discount', desc: 'Enrolled in a university or bootcamp? Get 60% off any plan with a valid .edu email or student ID.', color: '#3b82f6', reward: '60% off any plan' },
               { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan. Verified through ID.me — we never see your medical records.', color: '#a855f7', reward: '50% off any plan' },
-              { emoji: '🌟', title: 'Open Source Builder', desc: 'Maintain a repo with 50+ stars? Get 30% off your plan.', color: '#f59e0b', reward: '30% off any plan' },
             ].map(p => (
               <Link key={p.title} href="/community-programs" style={{ textDecoration: 'none', background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 28 }}>{p.emoji}</div>
