@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { nextRunAt } from '@/app/api/cron/agent-scheduler/route'
+import { buildEmailIdentity } from '@/lib/ai-employees/email-identity'
 
 function buildCron(scheduleType: string, scheduleHour: number, scheduleDay: number): string | null {
   if (scheduleType === 'manual') return null
@@ -67,27 +68,41 @@ export async function POST(req: NextRequest) {
     if (tpl) templateKpis = tpl.kpis
   }
 
-  const { data, error } = await db
-    .from('ai_employees')
-    .insert({
-      user_id: user.id,
-      name: name.trim(),
-      role: role.trim(),
-      emoji,
-      instructions: instructions.trim(),
-      tools,
-      schedule_type,
-      schedule_hour,
-      schedule_day,
-      cron_expression: cronExpr,
-      next_run_at: nextRun?.toISOString() ?? null,
-      template_id: body.template_id ?? null,
-      org_id: body.org_id ?? null,
-      kpis: templateKpis ?? body.kpis ?? [],
-    })
-    .select()
-    .single()
+  // Provision a real email identity at hire time. Retry on the (rare) unique
+  // collision since the short id is random. The email is the credential anchor:
+  // customers assign tool accounts to it and inbound requests route by it.
+  let inserted: { data: Record<string, unknown> | null; error: { message: string; code?: string } | null } = { data: null, error: null }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const identity = buildEmailIdentity(name.trim())
+    const res = await db
+      .from('ai_employees')
+      .insert({
+        user_id: user.id,
+        name: name.trim(),
+        role: role.trim(),
+        emoji,
+        instructions: instructions.trim(),
+        tools,
+        schedule_type,
+        schedule_hour,
+        schedule_day,
+        cron_expression: cronExpr,
+        next_run_at: nextRun?.toISOString() ?? null,
+        template_id: body.template_id ?? null,
+        org_id: body.org_id ?? null,
+        kpis: templateKpis ?? body.kpis ?? [],
+        email_local: identity.email_local,
+        email_domain: identity.email_domain,
+        email_address: identity.email_address,
+        handle: identity.handle,
+      })
+      .select()
+      .single()
+    inserted = res
+    // 23505 = unique_violation (email_address/handle collision) → regenerate and retry.
+    if (!res.error || res.error.code !== '23505') break
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ employee: data }, { status: 201 })
+  if (inserted.error) return NextResponse.json({ error: inserted.error.message }, { status: 500 })
+  return NextResponse.json({ employee: inserted.data }, { status: 201 })
 }

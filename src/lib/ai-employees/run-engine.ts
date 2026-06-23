@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { Composio } from '@composio/core'
 import { createServiceClient } from '@/lib/supabase/server'
 import { creditCost } from '@/lib/credits'
+import { sendAsEmployee } from '@/lib/ai-employees/email-identity'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MAX_TOOL_ITERATIONS = 15
@@ -38,6 +39,7 @@ export interface AiEmployee {
   tools: string[]
   company_context?: string | null
   kpis?: { name: string; description: string; unit: string; target: number }[]
+  email_address?: string | null
 }
 
 // ── WyberAi cross-product tool definitions ───────────────────────────────────
@@ -114,6 +116,20 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
         unit: { type: 'string', description: 'The unit (e.g. leads, %, emails, $)' },
       },
       required: ['kpi_name', 'value', 'unit'],
+    },
+  },
+  {
+    name: 'WYBERAI_send_email',
+    description: "Send an email FROM your own work email address (you have a real mailbox). Use this to reply to people who emailed you, send updates, or reach out. To reply in-thread to an email you received, pass the in_reply_to Message-ID. This is YOUR email — use it like a real employee would.",
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to:          { type: 'string', description: 'Recipient email address (comma-separate multiple)' },
+        subject:     { type: 'string', description: 'Email subject line' },
+        body:        { type: 'string', description: 'Email body. Plain text or simple HTML.' },
+        in_reply_to: { type: 'string', description: 'Optional: the Message-ID of an email you are replying to, for proper threading.' },
+      },
+      required: ['to', 'subject', 'body'],
     },
   },
   {
@@ -315,6 +331,45 @@ async function handleWyberTool(
     }
   }
 
+  if (toolName === 'WYBERAI_send_email' && db && employeeId) {
+    try {
+      const { data: emp } = await db
+        .from('ai_employees')
+        .select('name, email_address')
+        .eq('id', employeeId)
+        .single()
+      if (!emp?.email_address) {
+        return { result: 'You do not have an email address provisioned yet, so you cannot send mail. Ask the user to set up your mailbox.' }
+      }
+      const to = String(input.to).split(',').map(s => s.trim()).filter(Boolean)
+      const sent = await sendAsEmployee({
+        fromName: emp.name,
+        fromAddress: emp.email_address,
+        to,
+        subject: input.subject as string,
+        text: input.body as string,
+        inReplyTo: input.in_reply_to as string | undefined,
+      })
+      // Log the outbound mail so it shows in the employee's email history.
+      await db.from('employee_emails').insert({
+        employee_id: employeeId,
+        user_id: userId,
+        direction: 'outbound',
+        from_address: emp.email_address,
+        to_address: to.join(', '),
+        subject: input.subject as string,
+        body_text: input.body as string,
+        message_id: (sent as { data?: { id?: string } })?.data?.id ?? null,
+        in_reply_to: (input.in_reply_to as string) ?? null,
+        status: 'sent',
+        run_id: (input.__runId as string) ?? null,
+      }).then(() => {}, () => {})
+      return { result: `Email sent from ${emp.email_address} to ${to.join(', ')} — subject: "${input.subject}"` }
+    } catch (e) {
+      return { result: `Failed to send email: ${String(e)}` }
+    }
+  }
+
   if (toolName === 'WYBERAI_notify_slack') {
     try {
       const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
@@ -455,7 +510,8 @@ async function handleWyberTool(
 
 export async function runEmployee(
   employee: AiEmployee,
-  triggeredBy: 'manual' | 'schedule' = 'manual',
+  triggeredBy: 'manual' | 'schedule' | 'email' = 'manual',
+  taskOverride?: string,
 ): Promise<EmployeeRunResult> {
   const db = createServiceClient()
   const userId = employee.user_id
@@ -551,7 +607,10 @@ After completing ALL tasks and logging KPIs, respond with ONLY this JSON:
 No text outside the JSON.`
 
     type MsgParam = Anthropic.MessageParam
-    const messages: MsgParam[] = [{ role: 'user', content: 'Please complete your assigned task now. Work through it step by step using the tools available.' }]
+    const kickoff = taskOverride
+      ? taskOverride
+      : 'Please complete your assigned task now. Work through it step by step using the tools available.'
+    const messages: MsgParam[] = [{ role: 'user', content: kickoff }]
     let finalText = ''
 
     // ── Agentic loop ────────────────────────────────────────────────────────────
