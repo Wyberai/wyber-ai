@@ -477,15 +477,28 @@ async function handleWyberTool(
       // Sanitize the optional keyword before it goes into a PostgREST filter string.
       const kw = typeof input.query === 'string' ? input.query.replace(/[^a-zA-Z0-9 ]/g, '').trim() : ''
 
-      let q = db.from('agent_workflows').select('agent_id, name, description, category, required_tools').limit(30)
+      // Total department fleet size (so the manager knows his real breadth).
+      let countQ = db.from('agent_workflows').select('id', { count: 'exact', head: true })
+      if (deptTerm) countQ = countQ.ilike('category', `%${deptTerm}%`)
+      const { count: fleetSize } = await countQ
+
+      let q = db.from('agent_workflows').select('agent_id, name, description, category, required_tools')
       if (deptTerm) q = q.ilike('category', `%${deptTerm}%`)
-      if (kw) q = q.or(`name.ilike.%${kw}%,description.ilike.%${kw}%`)
+      if (kw) {
+        // Searching by capability across the WHOLE department fleet.
+        q = q.or(`name.ilike.%${kw}%,description.ilike.%${kw}%`).limit(40)
+      } else {
+        // No query → surface the core specialists first (lower agent_ids are the
+        // canonical functions; high ids are niche industry/segment variants).
+        q = q.order('agent_id', { ascending: true }).limit(60)
+      }
       const { data: agents } = await q
 
       if (!agents || agents.length === 0) {
-        return { result: `No deployable agents found${deptTerm ? ` in the ${deptTerm} department` : ''}${kw ? ` matching "${kw}"` : ''}. You'll need to do this task yourself with your own tools.` }
+        return { result: `No deployable agents found${deptTerm ? ` in the ${deptTerm} department` : ''}${kw ? ` matching "${kw}"` : ''}. ${kw ? 'Try a different capability keyword, or' : 'You can'} do this task yourself with your own tools.` }
       }
-      return { result: `Your team — agents you can deploy with WYBERAI_command_agent (use the agent_id). "needs" = tools each one requires (pre-flight with WYBERAI_check_tools):\n${agents.map((a: { agent_id: string; name: string; description?: string; required_tools?: string[] }) => `• ${a.agent_id} — ${a.name}: ${(a.description ?? '').slice(0, 110)}${a.required_tools?.length ? ` [needs: ${a.required_tools.join(', ')}]` : ''}`).join('\n')}` }
+      const header = `You command ${fleetSize ?? agents.length} specialist agents in your department. ${kw ? `Top matches for "${kw}"` : `Core specialists (search WYBERAI_list_team with a capability keyword — e.g. "SEO", "ads", "email" — to reach the other ${Math.max(0, (fleetSize ?? 0) - agents.length)})`}:`
+      return { result: `${header}\nDeploy with WYBERAI_command_agent (use the agent_id). "needs" = tools each requires (pre-flight with WYBERAI_check_tools):\n${agents.map((a: { agent_id: string; name: string; description?: string; required_tools?: string[] }) => `• ${a.agent_id} — ${a.name}: ${(a.description ?? '').slice(0, 110)}${a.required_tools?.length ? ` [needs: ${a.required_tools.join(', ')}]` : ''}`).join('\n')}` }
     } catch (e) {
       return { result: `Couldn't list your team: ${String(e)}` }
     }

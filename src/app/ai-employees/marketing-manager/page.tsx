@@ -62,7 +62,7 @@ export default function MarketingManagerPage() {
             <Stat value={`${M.years} yrs`} label="Experience" />
             <Stat value={`${M.tools.reduce((n, g) => n + g.tools.length, 0)}+`} label="Tools he works with" />
             <Stat value={`${MM_SCENARIO_COUNT}+`} label="Things he does" />
-            <Stat value="∞" label="Agents he can deploy" />
+            <Stat value="208" label="Marketing agents he commands" />
           </div>
         </div>
       </div>
