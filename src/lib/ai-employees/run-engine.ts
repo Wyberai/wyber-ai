@@ -3,6 +3,7 @@ import { Composio } from '@composio/core'
 import { createServiceClient } from '@/lib/supabase/server'
 import { creditCost } from '@/lib/credits'
 import { sendAsEmployee } from '@/lib/ai-employees/email-identity'
+import { embed } from '@/lib/ai-employees/embeddings'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MAX_TOOL_ITERATIONS = 15
@@ -40,6 +41,8 @@ export interface AiEmployee {
   company_context?: string | null
   kpis?: { name: string; description: string; unit: string; target: number }[]
   email_address?: string | null
+  memory_summary?: string | null
+  self_model?: Record<string, unknown> | null
 }
 
 // ── WyberAi cross-product tool definitions ───────────────────────────────────
@@ -564,15 +567,85 @@ export async function runEmployee(
     // Combine composio + wyber tools
     const allTools = [...composioToolDefs, ...WYBER_TOOLS]
 
-    // ── Load persistent memory ─────────────────────────────────────────────────
+    // ── RECALL: relevance-based memory over the employee's whole tenure ─────────
+    // Semantic retrieval (Voyage embeddings) when available — "what do I know
+    // relevant to THIS situation" — falling back to recency when not yet embedded.
+    // Layers: self-model (structured) + narrative + facts + entities + episodes.
+    type Episode = { trigger?: string; summary: string; learnings?: string; outcome?: string; created_at?: string }
+    type Entity  = { kind: string; name: string; notes?: string; state?: string }
+
+    const queryText = (taskOverride ?? employee.instructions ?? '').slice(0, 4000)
+    const queryVec = await embed(queryText, 'query')
+
     const { data: memoryRows } = await db
-      .from('employee_memory')
-      .select('key, value')
-      .eq('employee_id', employee.id)
-      .limit(50)
-    const memoryBlock = memoryRows && memoryRows.length > 0
-      ? `\n\nPERSISTENT MEMORY (facts you've learned from previous runs):\n${memoryRows.map(r => `• ${r.key}: ${r.value}`).join('\n')}\n\nYou can update this memory by calling WYBERAI_remember at the end of this run.`
-      : '\n\nPERSISTENT MEMORY: Empty — this is your first run or no facts saved yet. Call WYBERAI_remember to save important facts for future runs.'
+      .from('employee_memory').select('key, value').eq('employee_id', employee.id).limit(50)
+
+    let episodes: Episode[] = []
+    let entities: Entity[] = []
+    if (queryVec) {
+      const [epRes, enRes] = await Promise.all([
+        db.rpc('match_employee_episodes', { p_employee_id: employee.id, p_query: queryVec, p_k: 8 }),
+        db.rpc('match_employee_entities', { p_employee_id: employee.id, p_query: queryVec, p_k: 6 }),
+      ])
+      episodes = (epRes.data as Episode[]) ?? []
+      entities = (enRes.data as Entity[]) ?? []
+    }
+    if (episodes.length === 0) {
+      const { data } = await db.from('employee_episodes')
+        .select('trigger, summary, learnings, outcome, created_at')
+        .eq('employee_id', employee.id)
+        .order('created_at', { ascending: false }).order('importance', { ascending: false })
+        .limit(8)
+      episodes = (data as Episode[]) ?? []
+    }
+    if (entities.length === 0) {
+      const { data } = await db.from('employee_entities')
+        .select('kind, name, notes, state')
+        .eq('employee_id', employee.id)
+        .order('last_seen_at', { ascending: false }).limit(6)
+      entities = (data as Entity[]) ?? []
+    }
+
+    // Structured self-model → readable lines.
+    const sm = (employee.self_model ?? {}) as Record<string, unknown>
+    const smSection = (label: string, key: string) => {
+      const arr = sm[key]
+      if (!Array.isArray(arr) || arr.length === 0) return ''
+      return `\n${label}:\n${arr.slice(0, 8).map(v => `  • ${typeof v === 'string' ? v : JSON.stringify(v)}`).join('\n')}`
+    }
+    const selfModelBlock = (() => {
+      const s = `${smSection('Goals I own', 'goals')}${smSection('Skills/playbooks I\'ve developed', 'skills')}${smSection('Open threads I\'m tracking', 'open_threads')}`
+      return s ? `\n\nMY CURRENT STATE OF MIND:${s}` : ''
+    })()
+
+    const summaryBlock = employee.memory_summary && employee.memory_summary.trim()
+      ? `\n\nWHO YOU ARE (built up over your time here):\n${employee.memory_summary.trim()}`
+      : ''
+
+    const factsBlock = memoryRows && memoryRows.length > 0
+      ? `\n\nKNOWN FACTS:\n${memoryRows.map(r => `• ${r.key}: ${r.value}`).join('\n')}`
+      : ''
+
+    const entityBlock = entities.length > 0
+      ? `\n\nPEOPLE & THINGS YOU KNOW (relevant to this work):\n${entities.map(e => `• [${e.kind}] ${e.name}${e.state ? ` (${e.state})` : ''}${e.notes ? ` — ${e.notes}` : ''}`).join('\n')}`
+      : ''
+
+    // Episodes oldest→newest so the freshest experience reads last.
+    const episodeBlock = episodes.length > 0
+      ? `\n\nWHAT YOU LEARNED FROM RELEVANT PAST WORK (build on this, don't repeat mistakes):\n${
+          [...episodes].reverse().map(e => {
+            const when = e.created_at ? new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+            const parts = [`▸ ${when ? `[${when}] ` : ''}${e.summary}`]
+            if (e.outcome) parts.push(`  outcome: ${e.outcome}`)
+            if (e.learnings) parts.push(`  learned: ${e.learnings}`)
+            return parts.join('\n')
+          }).join('\n')
+        }`
+      : ''
+
+    const memoryBlock = (selfModelBlock || summaryBlock || factsBlock || entityBlock || episodeBlock)
+      ? `${selfModelBlock}${summaryBlock}${factsBlock}${entityBlock}${episodeBlock}\n\nUse this experience to work smarter than last time. Note new facts with WYBERAI_remember.`
+      : '\n\nMEMORY: This is your first run — you have no past experience yet. Work carefully; you will remember what you learn for next time.'
 
     // ── Build KPI targets string ───────────────────────────────────────────────
     const kpis = employee.kpis ?? []
@@ -688,6 +761,93 @@ No text outside the JSON.`
         if (Array.isArray(parsed.actions)) parsedActions = [...actionsTaken, ...parsed.actions]
       }
     } catch { /* use defaults */ }
+
+    // ── REFLECT: the employee learns from this run (free — it's how it grows) ────
+    // A cheap Haiku pass distills durable learnings + a refreshed self-narrative,
+    // stored as an episode and rolled into memory_summary so the NEXT run is wiser.
+    // Not charged: learning is part of being an employee, not a billable action.
+    try {
+      const kpiLine = kpiResults.length
+        ? kpiResults.map(k => `${k.name}=${k.value}${k.unit}`).join(', ')
+        : 'no KPIs logged'
+      const actionLine = parsedActions.slice(0, 12).map(a => `${a.action}: ${a.result_summary}`).join('\n') || 'no tool actions'
+      const currentSelf = JSON.stringify(employee.self_model ?? {}).slice(0, 2000)
+      const reflectPrompt = `You are ${employee.name}, ${employee.role}. You just finished a piece of work. Reflect on it like a thoughtful senior professional updating your private working memory.
+
+WHAT YOU WERE ASKED: ${(taskOverride ?? employee.instructions).slice(0, 1500)}
+WHAT YOU DID: ${summary}
+ACTIONS:\n${actionLine}
+KPIs: ${kpiLine}
+${employee.memory_summary ? `\nYOUR CURRENT SELF-NOTES:\n${employee.memory_summary.slice(0, 2000)}` : ''}
+YOUR CURRENT STRUCTURED SELF-MODEL (JSON): ${currentSelf}
+
+Return ONLY JSON:
+{
+  "learnings": "1-2 sentences: what worked, what didn't, what you'd do differently. Tactical. Empty string if nothing notable.",
+  "outcome": "success | partial | failed (+ short reason)",
+  "importance": 1-5 (routine=2, notable=3, important lesson=4-5),
+  "updated_summary": "Refreshed first-person self-notes (<=1200 chars): who you are here, durable company/role facts, hardest-won lessons. Merge new learning, drop stale trivia.",
+  "entities": [ { "kind": "person|account|campaign|tool", "name": "...", "identifier": "email/domain if known", "notes": "what you now know about them", "state": "warm|stalled|active|...", "importance": 1-5 } ],
+  "self_model": { "goals": ["..."], "skills": ["playbooks/skills you've developed"], "open_threads": ["things you're mid-way through, to pick up next time"] }
+}
+For "entities", only include people/accounts/campaigns genuinely worth remembering from THIS work (max 5; empty array if none). For "self_model", return the MERGED model (existing + updates), not just deltas.`
+      const reflectRes = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1100,
+        messages: [{ role: 'user', content: reflectPrompt }],
+      })
+      const reflectText = reflectRes.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+      const rj = reflectText.match(/\{[\s\S]*\}/)
+      if (rj) {
+        const r = JSON.parse(rj[0]) as {
+          learnings?: string; outcome?: string; importance?: number; updated_summary?: string
+          entities?: { kind?: string; name?: string; identifier?: string; notes?: string; state?: string; importance?: number }[]
+          self_model?: Record<string, unknown>
+        }
+
+        // Episode — embedded for semantic recall (best-effort; recency still works if null).
+        const episodeText = `${summary}\n${r.learnings ?? ''}`.trim()
+        const episodeVec = await embed(episodeText, 'document')
+        await db.from('employee_episodes').insert({
+          employee_id: employee.id,
+          user_id: userId,
+          run_id: runId,
+          trigger: (taskOverride ?? `${triggeredBy} run: ${employee.instructions}`).slice(0, 500),
+          summary,
+          learnings: r.learnings || null,
+          outcome: r.outcome || null,
+          importance: Math.min(5, Math.max(1, Math.round(r.importance ?? 3))),
+          embedding: episodeVec,
+        }).then(() => {}, () => {})
+
+        // Self-model (structured) + human-readable narrative.
+        const patch: Record<string, unknown> = {}
+        if (r.self_model && typeof r.self_model === 'object') patch.self_model = r.self_model
+        if (r.updated_summary && r.updated_summary.trim()) patch.memory_summary = r.updated_summary.slice(0, 1500)
+        if (Object.keys(patch).length) {
+          await db.from('ai_employees').update(patch).eq('id', employee.id).then(() => {}, () => {})
+        }
+
+        // Entity graph — upsert each remembered person/account/campaign, embedded.
+        for (const ent of (r.entities ?? []).slice(0, 5)) {
+          if (!ent?.name || !ent?.kind) continue
+          const entVec = await embed(`${ent.name} ${ent.notes ?? ''} ${ent.state ?? ''}`, 'document')
+          await db.from('employee_entities').upsert({
+            employee_id: employee.id,
+            user_id: userId,
+            kind: ent.kind,
+            name: ent.name,
+            identifier: ent.identifier || null,
+            notes: ent.notes || null,
+            state: ent.state || null,
+            importance: Math.min(5, Math.max(1, Math.round(ent.importance ?? 3))),
+            embedding: entVec,
+            last_seen_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'employee_id,kind,name' }).then(() => {}, () => {})
+        }
+      }
+    } catch { /* reflection is best-effort; never fail a run over it */ }
 
     // ── Deduct credits ─────────────────────────────────────────────────────────
     if (creditsUsed > 0) {
