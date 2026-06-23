@@ -183,6 +183,20 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'WYBERAI_check_tools',
+    description: "Check which tools/integrations are actually CONNECTED to your account right now, and which are missing. ALWAYS use this during pre-flight before promising you can run a campaign — you must know what you can actually access. Pass the list of toolkits a plan needs (e.g. ['HUBSPOT','MAILCHIMP','LINKEDIN']) and it tells you what's connected vs missing.",
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        toolkits: {
+          type: 'array',
+          items: { type: 'string' },
+          description: "Toolkit names to check, e.g. ['GMAIL','HUBSPOT','LINKEDIN']. Omit to just list everything currently connected.",
+        },
+      },
+    },
+  },
+  {
     name: 'WYBERAI_search_knowledge',
     description: 'Search the role-specific knowledge base for relevant information. Returns matching documents, SOPs, or company guidelines uploaded by the user for this role.',
     input_schema: {
@@ -249,6 +263,25 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
 ]
+
+// Which Composio toolkits does this user actually have connected (ACTIVE)?
+// The keystone of pre-flight: the manager must KNOW what's available before it
+// promises a CEO it can run a campaign.
+async function getConnectedToolkits(userId: string): Promise<Set<string>> {
+  try {
+    const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
+    const accounts = await composio.connectedAccounts.list({ userIds: [userId] })
+    return new Set(
+      (accounts.items ?? [])
+        .filter((a: { status?: string }) => a.status === 'ACTIVE')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((a: any) => String(a.toolkit?.slug ?? '').toUpperCase())
+        .filter(Boolean),
+    )
+  } catch {
+    return new Set()
+  }
+}
 
 async function handleWyberTool(
   toolName: string,
@@ -444,7 +477,7 @@ async function handleWyberTool(
       // Sanitize the optional keyword before it goes into a PostgREST filter string.
       const kw = typeof input.query === 'string' ? input.query.replace(/[^a-zA-Z0-9 ]/g, '').trim() : ''
 
-      let q = db.from('agent_workflows').select('agent_id, name, description, category').limit(30)
+      let q = db.from('agent_workflows').select('agent_id, name, description, category, required_tools').limit(30)
       if (deptTerm) q = q.ilike('category', `%${deptTerm}%`)
       if (kw) q = q.or(`name.ilike.%${kw}%,description.ilike.%${kw}%`)
       const { data: agents } = await q
@@ -452,9 +485,28 @@ async function handleWyberTool(
       if (!agents || agents.length === 0) {
         return { result: `No deployable agents found${deptTerm ? ` in the ${deptTerm} department` : ''}${kw ? ` matching "${kw}"` : ''}. You'll need to do this task yourself with your own tools.` }
       }
-      return { result: `Your team — agents you can deploy with WYBERAI_command_agent (use the agent_id):\n${agents.map((a: { agent_id: string; name: string; description?: string }) => `• ${a.agent_id} — ${a.name}: ${(a.description ?? '').slice(0, 120)}`).join('\n')}` }
+      return { result: `Your team — agents you can deploy with WYBERAI_command_agent (use the agent_id). "needs" = tools each one requires (pre-flight with WYBERAI_check_tools):\n${agents.map((a: { agent_id: string; name: string; description?: string; required_tools?: string[] }) => `• ${a.agent_id} — ${a.name}: ${(a.description ?? '').slice(0, 110)}${a.required_tools?.length ? ` [needs: ${a.required_tools.join(', ')}]` : ''}`).join('\n')}` }
     } catch (e) {
       return { result: `Couldn't list your team: ${String(e)}` }
+    }
+  }
+
+  if (toolName === 'WYBERAI_check_tools') {
+    try {
+      const connected = await getConnectedToolkits(userId)
+      const requested = Array.isArray(input.toolkits)
+        ? (input.toolkits as string[]).map(t => String(t).toUpperCase())
+        : []
+      if (requested.length === 0) {
+        return { result: connected.size > 0
+          ? `Currently connected tools: ${[...connected].join(', ')}.`
+          : `No tools are connected to your account yet. Nothing can be executed until tools are connected in Settings → Integrations (or accounts assigned to your work email).` }
+      }
+      const have = requested.filter(t => connected.has(t))
+      const missing = requested.filter(t => !connected.has(t))
+      return { result: `Tool check:\n✅ Connected: ${have.length ? have.join(', ') : 'none'}\n❌ Missing: ${missing.length ? missing.join(', ') : 'none — you have everything you need'}${missing.length ? `\n\nYou cannot fully run this until the missing tools are connected. Report these to the user and ask them to connect them (or assign accounts to your work email) before proceeding.` : ''}` }
+    } catch (e) {
+      return { result: `Couldn't check tool connections: ${String(e)}` }
     }
   }
 
@@ -806,11 +858,15 @@ WYBERAI CAPABILITIES:
 You have access to WyberAi tools (WYBERAI_*) for workflows, AI agents, generation, email, and more.
 
 HOW A SENIOR MANAGER WORKS — you don't do everything yourself, you direct a team:
-1. PLAN. For any non-trivial goal, first think through the pieces it breaks into.
-2. DEPLOY YOUR TEAM. You command a department of specialist AI agents. Call WYBERAI_list_team to see who you can deploy, then WYBERAI_command_agent to dispatch the right agent for each piece — in parallel where the pieces are independent (you can issue several commands before reviewing). Do the small/judgment parts yourself.
-3. VERIFY. Review what each agent reports back. If it's weak, re-command with sharper direction — don't accept mediocre work.
-4. SYNTHESIZE. Pull the results together into one coherent outcome and report it.
-Use your own tools directly for quick or high-judgment work; deploy agents for volume and specialist execution.
+1. PLAN. For any non-trivial goal, think through the pieces it breaks into and which specialist agents each needs.
+2. PRE-FLIGHT (MANDATORY for any campaign or large multi-step initiative — never skip):
+   a. WYBERAI_list_team to see your agents and the tools each one "needs".
+   b. Collect every tool/API the plan requires, then WYBERAI_check_tools to see what's actually connected.
+   c. If anything critical is MISSING, STOP and WYBERAI_escalate with a clear manifest: exactly which tools/APIs/accounts the user must connect (or assign to your work email) before you can run. Do NOT half-run a campaign with missing tools — that wastes money and produces garbage. Report what's needed, then proceed only once it's ready.
+3. DEPLOY YOUR TEAM. WYBERAI_command_agent to dispatch the right agent for each piece — issue several before reviewing where pieces are independent. Do small/high-judgment parts yourself.
+4. VERIFY. Review what each agent reports. If it's weak, re-command with sharper direction — don't accept mediocre work.
+5. SYNTHESIZE. Pull results into one coherent outcome and report it. If the work exceeds what one run can finish, say what's done and what remains for the next run.
+Use your own tools for quick/high-judgment work; deploy agents for volume and specialist execution.
 
 After completing ALL tasks and logging KPIs, respond with ONLY this JSON:
 {
@@ -830,7 +886,8 @@ No text outside the JSON.`
 
     // Bound fleet orchestration cost: a manager can deploy at most this many
     // sub-agents per run (each sub-agent's model calls are metered into creditsUsed).
-    const MAX_DEPLOYMENTS = 8
+    // Sized for a real campaign; if a run hits the cap it reports what remains.
+    const MAX_DEPLOYMENTS = 12
     let deploymentCount = 0
 
     // ── Agentic loop ────────────────────────────────────────────────────────────
