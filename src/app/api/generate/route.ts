@@ -941,7 +941,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -962,8 +962,10 @@ export async function POST(req: NextRequest) {
       : 'small-edit'
     const cost = creditCost(actionType, tier)
 
-    // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens)
-    if (stage !== 'plan') {
+    // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
+    // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
+    // skip deduction entirely — honoring the "self-healing is always free" promise.
+    if (stage !== 'plan' && !selfHeal) {
       const admin = await createAdminClient()
       const { data: profile } = await admin
         .from('profiles')
@@ -1335,7 +1337,7 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'X-Model-Used': usedModel,
-        'X-Credits-Used': String(cost),
+        'X-Credits-Used': String(selfHeal ? 0 : cost),
         'X-Credits-Tier': resolvedTier,
         'X-Supabase-Status': supabaseStatus,
       },

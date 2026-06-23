@@ -436,7 +436,11 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // Snapshot current files for undo BEFORE generation
     if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
 
-    consumeCredit();
+    // Self-heal/autofix runs (silent) are FREE — they repair work the user
+    // already paid for. Skip the optimistic client decrement; the server is
+    // told `selfHeal: true` below and skips the deduction entirely.
+    const isSelfHeal = !!opts?.silent;
+    if (!isSelfHeal) consumeCredit();
     const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
     // echoedUser: the conversational lane already added the user's bubble before
     // it decided this was actually a build — don't duplicate it.
@@ -522,7 +526,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           prompt: userMsg || 'Build a UI matching this screenshot exactly.',
           framework, fileContext, history, knowledge: knowledgeStr, modelTier,
           userId: resolvedUserId, projectId: resolvedProjectId,
-          projectType,
+          projectType, selfHeal: isSelfHeal,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
         }),
       });
