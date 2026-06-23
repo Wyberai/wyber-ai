@@ -21,7 +21,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 export default function MarketingManagerPage() {
-  const [price, setPrice] = useState<{ priceLabel: string; label: string; hot: boolean } | null>(null)
+  const [price, setPrice] = useState<{ priceLabel: string } | null>(null)
   useEffect(() => {
     fetch(`/api/ai-employees/pricing?role=${M.slug}`).then(r => r.ok ? r.json() : null).then(d => d && setPrice(d)).catch(() => {})
   }, [])
@@ -54,9 +54,8 @@ export default function MarketingManagerPage() {
           </div>
           {price && (
             <div style={{ marginTop: 18, fontSize: 14, color: MUTED }}>
-              from <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{price.priceLabel}</span>
-              {price.hot && <span style={{ marginLeft: 10, color: '#fbbf24', fontSize: 12, fontWeight: 600 }}>🔥 in demand</span>}
-              <span style={{ display: 'block', fontSize: 12, color: DIM, marginTop: 4 }}>{price.label}</span>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{price.priceLabel}</span>
+              <span style={{ display: 'block', fontSize: 12, color: DIM, marginTop: 4 }}>Interview him free · pay only once you hire</span>
             </div>
           )}
           <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginTop: 40, flexWrap: 'wrap' }}>

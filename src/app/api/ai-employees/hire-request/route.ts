@@ -2,21 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getRoleBySlug } from '@/lib/employee-roles'
-import { computeDynamicPrice, formatPrice } from '@/lib/ai-employees/pricing'
+import { getRolePrice, formatPrice } from '@/lib/ai-employees/pricing'
 import { buildEmailIdentity } from '@/lib/ai-employees/email-identity'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
-const OWNER_EMAIL = process.env.OWNER_EMAIL ?? 'admin@reconsignal.com'
+const OWNER_EMAIL = process.env.OWNER_EMAIL ?? 'hello@wyberai.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
-
-async function priceFor(db: ReturnType<typeof createServiceClient>, slug: string, title: string) {
-  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-  const [{ count: active }, { count: recent }] = await Promise.all([
-    db.from('ai_employees').select('id', { count: 'exact', head: true }).ilike('role', title).eq('is_active', true),
-    db.from('ai_employees').select('id', { count: 'exact', head: true }).ilike('role', title).gte('created_at', since),
-  ])
-  return computeDynamicPrice(slug, { activeHires: active ?? 0, recentHires: recent ?? 0 })
-}
 
 // ── Create a hire request (any authenticated user) ────────────────────────────
 export async function POST(req: NextRequest) {
@@ -30,7 +21,7 @@ export async function POST(req: NextRequest) {
   if (!employeeName?.trim()) return NextResponse.json({ error: 'Please name your employee' }, { status: 400 })
 
   const db = createServiceClient()
-  const price = await priceFor(db, roleSlug, role.title)
+  const price = getRolePrice(roleSlug)
 
   const { data: request, error } = await db.from('employee_hire_requests').insert({
     user_id: user.id,
@@ -123,11 +114,17 @@ export async function PATCH(req: NextRequest) {
     final_price_cents: finalPriceCents ?? hr.quoted_price_cents, employee_id: employeeId,
   }).eq('id', id)
 
+  const price = getRolePrice(hr.role_slug)
+  const payCents = finalPriceCents ?? hr.quoted_price_cents
+  const payLine = price.checkoutUrl
+    ? `\n\nTo activate ${hr.employee_name}, complete payment of ${formatPrice(payCents)}/mo here:\n${price.checkoutUrl}`
+    : `\n\nWe'll send your payment link (${formatPrice(payCents)}/mo) separately to get started.`
+
   resend.emails.send({
     from: 'WyberAi <hello@wyberai.com>', to: hr.requester_email,
-    subject: `${hr.employee_name} is hired! 🎉`,
-    text: `Great news — ${hr.employee_name}, your ${hr.role_title}, is approved and ready.\n\nSet them up here: ${APP_URL}/ai-employees/${employeeId}/onboard`,
+    subject: `${hr.employee_name} is approved! 🎉`,
+    text: `Great news — ${hr.employee_name}, your ${hr.role_title}, is approved.${payLine}\n\nOnce payment's done, set them up here: ${APP_URL}/ai-employees/${employeeId}/onboard`,
   }).then(() => {}, () => {})
 
-  return NextResponse.json({ ok: true, status: 'approved', employeeId })
+  return NextResponse.json({ ok: true, status: 'approved', employeeId, checkoutUrl: price.checkoutUrl })
 }

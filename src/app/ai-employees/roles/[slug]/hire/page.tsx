@@ -11,7 +11,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
   const { slug } = use(params)
   const role = getRoleBySlug(slug)
 
-  const [price, setPrice] = useState<{ priceLabel: string; label: string; hot: boolean } | null>(null)
+  const [price, setPrice] = useState<{ priceLabel: string } | null>(null)
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
   const [note, setNote] = useState('')
@@ -74,7 +74,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
                 <span style={{ fontSize: 13, color: s.muted }}>Current price</span>
                 <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color: '#fff' }}>{price?.priceLabel ?? '…'}</span>
               </div>
-              {price && <p style={{ fontSize: 12, color: price.hot ? '#fbbf24' : s.muted, margin: '8px 0 0', lineHeight: 1.5 }}>{price.label}</p>}
+              <p style={{ fontSize: 12, color: s.muted, margin: '8px 0 0', lineHeight: 1.5 }}>Billed monthly. You&apos;re only charged once your hire is approved and you complete payment.</p>
             </div>
 
             <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
