@@ -79,7 +79,13 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   const [running, setRunning] = useState(false)
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const [expanded, setExpanded] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'chat' | 'runs' | 'kpis' | 'context' | 'voice'>('chat')
+  const [activeTab, setActiveTab] = useState<'chat' | 'runs' | 'kpis' | 'context' | 'voice' | 'brain'>('chat')
+  const [memory, setMemory] = useState<{
+    memory_summary: string
+    self_model: Record<string, unknown>
+    episodes: { summary: string; learnings?: string; outcome?: string; importance?: number; created_at?: string }[]
+    entities: { kind: string; name: string; notes?: string; state?: string; importance?: number }[]
+  } | null>(null)
   const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
@@ -116,14 +122,16 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const load = useCallback(async () => {
-    const [empRes, kpiRes, voiceRes] = await Promise.all([
+    const [empRes, kpiRes, voiceRes, memRes] = await Promise.all([
       fetch(`/api/ai-employees/${id}`),
       fetch(`/api/ai-employees/${id}/kpis`),
       fetch(`/api/ai-employees/voice?employee_id=${id}&limit=20`),
+      fetch(`/api/ai-employees/${id}/memory`),
     ])
     if (empRes.ok) { const d = await empRes.json(); setEmployee(d.employee) }
     if (kpiRes.ok) { const d = await kpiRes.json(); setKpiLogs(d.logs ?? []) }
     if (voiceRes.ok) { const d = await voiceRes.json(); setVoiceClips(d.clips ?? []) }
+    if (memRes.ok) { setMemory(await memRes.json()) }
     setLoading(false)
     loadEscalations()
   }, [id, loadEscalations])
@@ -287,12 +295,98 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
 
         {/* Tabs */}
         <div style={{ display:'flex', gap:6, marginBottom:20 }}>
-          {(['chat','runs','kpis','context','voice'] as const).map(t => (
+          {(['chat','brain','runs','kpis','context','voice'] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)} style={{ ...TAB, background: activeTab === t ? '#1e1e26' : 'transparent', color: activeTab === t ? '#e4e4e7' : '#52525b' }}>
-              {t === 'runs' ? `Runs (${runs.length})` : t === 'kpis' ? `KPIs (${kpis.length})` : t === 'voice' ? `Voice (${voiceClips.length})` : 'Context'}
+              {t === 'runs' ? `Runs (${runs.length})` : t === 'kpis' ? `KPIs (${kpis.length})` : t === 'voice' ? `Voice (${voiceClips.length})` : t === 'brain' ? `🧠 Brain` : t === 'context' ? 'Context' : 'Chat'}
             </button>
           ))}
         </div>
+
+        {/* ── Brain tab — the window into the employee's mind ──────────────────── */}
+        {activeTab === 'brain' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {!memory || (!memory.memory_summary && (memory.episodes?.length ?? 0) === 0 && (memory.entities?.length ?? 0) === 0) ? (
+              <div style={{ textAlign: 'center', padding: '48px 20px', color: '#52525b' }}>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>🧠</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#a1a1aa', marginBottom: 4 }}>No memories yet</div>
+                <div style={{ fontSize: 12, maxWidth: 340, margin: '0 auto', lineHeight: 1.6 }}>
+                  After {employee?.name} runs, they reflect on what happened and build up memory here — what they learned, the people & accounts they know, and their evolving sense of the job. Run them to start.
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Self-narrative */}
+                {memory.memory_summary && (
+                  <div style={{ background:'#0a1a24', border:'1px solid #0c3a52', borderRadius:12, padding:18 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:SKY, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:8 }}>Who they are now</div>
+                    <p style={{ fontSize:13, color:'#cbd5e1', lineHeight:1.65, margin:0, whiteSpace:'pre-wrap' }}>{memory.memory_summary}</p>
+                  </div>
+                )}
+
+                {/* Structured self-model */}
+                {(() => {
+                  const sm = memory.self_model || {}
+                  const sections: [string, string][] = [['Goals', 'goals'], ['Skills & playbooks', 'skills'], ['Open threads', 'open_threads']]
+                  const present = sections.filter(([, k]) => Array.isArray((sm as Record<string, unknown>)[k]) && ((sm as Record<string, unknown>)[k] as unknown[]).length > 0)
+                  if (present.length === 0) return null
+                  return (
+                    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:10 }}>
+                      {present.map(([label, k]) => (
+                        <div key={k} style={{ background:'#111115', border:'1px solid #1e1e26', borderRadius:12, padding:16 }}>
+                          <div style={{ fontSize:11, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:10 }}>{label}</div>
+                          <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+                            {((sm as Record<string, unknown>)[k] as unknown[]).slice(0, 8).map((v, i) => (
+                              <div key={i} style={{ fontSize:12.5, color:'#a1a1aa', lineHeight:1.45, display:'flex', gap:7 }}>
+                                <span style={{ color:SKY, flexShrink:0 }}>›</span>{typeof v === 'string' ? v : JSON.stringify(v)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                })()}
+
+                {/* Entity graph */}
+                {memory.entities.length > 0 && (
+                  <div style={{ background:'#111115', border:'1px solid #1e1e26', borderRadius:12, padding:16 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:12 }}>People & things they know ({memory.entities.length})</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                      {memory.entities.map((e, i) => (
+                        <div key={i} style={{ display:'flex', alignItems:'flex-start', gap:10, fontSize:12.5, lineHeight:1.45 }}>
+                          <span style={{ fontSize:10, fontWeight:700, color:'#71717a', background:'#1a1a22', padding:'2px 7px', borderRadius:6, textTransform:'uppercase', flexShrink:0, marginTop:1 }}>{e.kind}</span>
+                          <div>
+                            <span style={{ color:'#e4e4e7', fontWeight:600 }}>{e.name}</span>
+                            {e.state && <span style={{ color:SKY, marginLeft:8, fontSize:11 }}>{e.state}</span>}
+                            {e.notes && <div style={{ color:'#71717a', marginTop:2 }}>{e.notes}</div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Episodic memory */}
+                {memory.episodes.length > 0 && (
+                  <div style={{ background:'#111115', border:'1px solid #1e1e26', borderRadius:12, padding:16 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:'#71717a', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:12 }}>What they&apos;ve learned ({memory.episodes.length})</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                      {memory.episodes.map((ep, i) => (
+                        <div key={i} style={{ borderLeft:`2px solid ${ep.outcome?.startsWith('fail') ? RED : ep.outcome?.startsWith('partial') ? AMBER : GREEN}`, paddingLeft:12 }}>
+                          <div style={{ display:'flex', justifyContent:'space-between', gap:8 }}>
+                            <span style={{ fontSize:13, color:'#cbd5e1', lineHeight:1.5 }}>{ep.summary}</span>
+                            {ep.created_at && <span style={{ fontSize:10, color:'#3f3f46', flexShrink:0 }}>{new Date(ep.created_at).toLocaleDateString()}</span>}
+                          </div>
+                          {ep.learnings && <div style={{ fontSize:12, color:'#71717a', marginTop:4, fontStyle:'italic' }}>💡 {ep.learnings}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         {/* ── Chat tab ─────────────────────────────────────────────────────────── */}
         {activeTab === 'chat' && employee && (
