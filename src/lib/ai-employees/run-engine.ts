@@ -161,6 +161,28 @@ const WYBER_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'WYBERAI_list_team',
+    description: "List the AI agents in YOUR department that you can deploy — your team. These are specialist agents (e.g. for a Marketing Manager: SEO, content, social, ad agents) you command to do work at scale. Call this FIRST when a task is big enough to delegate, so you know who you can deploy. Optionally filter by a capability keyword.",
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Optional capability keyword to narrow the list, e.g. "SEO", "email", "social".' },
+      },
+    },
+  },
+  {
+    name: 'WYBERAI_command_agent',
+    description: "Deploy one of your department's specialist agents to do a task, using your connected tools. The agent runs on its own and reports back its result. Use this to direct your team like a real manager — break a goal into pieces and dispatch the right agent for each. ALWAYS review what comes back; if it's not good enough, command again with clearer direction. Get the agent_id from WYBERAI_list_team.",
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        agent_id: { type: 'string', description: 'The agent_id from WYBERAI_list_team (e.g. "lead-researcher").' },
+        task:     { type: 'string', description: 'Clear, specific instructions for what this agent should do, with all the context it needs.' },
+      },
+      required: ['agent_id', 'task'],
+    },
+  },
+  {
     name: 'WYBERAI_search_knowledge',
     description: 'Search the role-specific knowledge base for relevant information. Returns matching documents, SOPs, or company guidelines uploaded by the user for this role.',
     input_schema: {
@@ -413,6 +435,50 @@ async function handleWyberTool(
     }
   }
 
+  if (toolName === 'WYBERAI_list_team' && db && employeeId) {
+    try {
+      const { data: emp } = await db.from('ai_employees').select('role').eq('id', employeeId).single()
+      const role = (emp?.role ?? '').toLowerCase()
+      const DEPT_WORDS = ['marketing', 'sales', 'operations', 'finance', 'support', 'customer', 'hr', 'people', 'engineering', 'product', 'research', 'design']
+      const deptTerm = DEPT_WORDS.find(w => role.includes(w)) ?? ''
+      // Sanitize the optional keyword before it goes into a PostgREST filter string.
+      const kw = typeof input.query === 'string' ? input.query.replace(/[^a-zA-Z0-9 ]/g, '').trim() : ''
+
+      let q = db.from('agent_workflows').select('agent_id, name, description, category').limit(30)
+      if (deptTerm) q = q.ilike('category', `%${deptTerm}%`)
+      if (kw) q = q.or(`name.ilike.%${kw}%,description.ilike.%${kw}%`)
+      const { data: agents } = await q
+
+      if (!agents || agents.length === 0) {
+        return { result: `No deployable agents found${deptTerm ? ` in the ${deptTerm} department` : ''}${kw ? ` matching "${kw}"` : ''}. You'll need to do this task yourself with your own tools.` }
+      }
+      return { result: `Your team — agents you can deploy with WYBERAI_command_agent (use the agent_id):\n${agents.map((a: { agent_id: string; name: string; description?: string }) => `• ${a.agent_id} — ${a.name}: ${(a.description ?? '').slice(0, 120)}`).join('\n')}` }
+    } catch (e) {
+      return { result: `Couldn't list your team: ${String(e)}` }
+    }
+  }
+
+  if (toolName === 'WYBERAI_command_agent' && db) {
+    try {
+      const { data: agent } = await db
+        .from('agent_workflows')
+        .select('name, system_prompt, required_tools')
+        .eq('agent_id', input.agent_id as string)
+        .single()
+      if (!agent) return { result: `No agent with id "${input.agent_id}". Call WYBERAI_list_team to see valid agent_ids.` }
+      const result = await runSubAgent({
+        userId,
+        agentName: agent.name,
+        systemPrompt: agent.system_prompt || `You are ${agent.name}, a specialist agent.`,
+        task: input.task as string,
+        toolkits: (agent.required_tools as string[]) ?? [],
+      })
+      return { result: `[${agent.name}] deployed. It reported back:\n\n${result}\n\n(Review this. If it's not good enough, command it again with clearer direction.)` }
+    } catch (e) {
+      return { result: `Failed to deploy agent: ${String(e)}` }
+    }
+  }
+
   if (toolName === 'WYBERAI_search_knowledge' && db && employeeId) {
     try {
       const { data: docs } = await db
@@ -509,6 +575,69 @@ async function handleWyberTool(
   }
 
   return { result: 'Unknown WyberAi tool' }
+}
+
+// ── Sub-agent runner ──────────────────────────────────────────────────────────
+// A manager "deploys" a fleet agent by running it as a bounded sub-agent: the
+// agent's own system prompt + the user's connected tools, a short tool loop, a
+// synthesized result handed back to the manager. This is how a department head
+// commands their team — they don't do every task themselves, they direct agents
+// and review the output.
+async function runSubAgent(opts: {
+  userId: string
+  agentName: string
+  systemPrompt: string
+  task: string
+  toolkits: string[]
+  maxIters?: number
+}): Promise<string> {
+  const { userId, agentName, systemPrompt, task, toolkits, maxIters = 6 } = opts
+  const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let composioTools: any[] = []
+  if (toolkits.length > 0) {
+    try {
+      composioTools = await composio.tools.get(userId, { toolkits: toolkits.map(t => t.toUpperCase()), limit: 30 })
+      if (!Array.isArray(composioTools)) composioTools = []
+    } catch { composioTools = [] }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const toolDefs: Anthropic.Tool[] = composioTools.map((t: any) => ({
+    name: t.function?.name ?? t.name ?? 'unknown',
+    description: t.function?.description ?? t.description ?? '',
+    input_schema: (t.function?.parameters ?? { type: 'object', properties: {} }) as Anthropic.Tool['input_schema'],
+  }))
+
+  const messages: Anthropic.MessageParam[] = [{ role: 'user', content: task }]
+  let finalText = ''
+  for (let iter = 0; iter < maxIters; iter++) {
+    const res = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      system: `${systemPrompt}\n\nYou are operating as a sub-agent deployed by a manager. Do the task focused and well, then report back a concise result (what you did + key outputs). Use tools where they help.`,
+      tools: toolDefs,
+      messages,
+    })
+    messages.push({ role: 'assistant', content: res.content })
+    if (res.stop_reason === 'end_turn') {
+      finalText = res.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('\n')
+      break
+    }
+    if (res.stop_reason !== 'tool_use') break
+    const toolUses = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+    const results: Anthropic.ToolResultBlockParam[] = []
+    for (const tu of toolUses) {
+      try {
+        const r = await composio.tools.execute(tu.name, { userId, arguments: tu.input as Record<string, unknown>, dangerouslySkipVersionCheck: true })
+        results.push({ type: 'tool_result', tool_use_id: tu.id, content: JSON.stringify(r ?? null).slice(0, 2000) })
+      } catch (e) {
+        results.push({ type: 'tool_result', tool_use_id: tu.id, content: `Error: ${String(e)}` })
+      }
+    }
+    messages.push({ role: 'user', content: results })
+  }
+  return finalText || `${agentName} ran but returned no summary.`
 }
 
 export async function runEmployee(
@@ -668,7 +797,14 @@ Today is ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'lon
 ${kpiBlock}
 
 WYBERAI CAPABILITIES:
-You have access to WyberAi tools (WYBERAI_*) that let you trigger workflows, chat with AI agents, and generate apps as part of your work. Use them when relevant.
+You have access to WyberAi tools (WYBERAI_*) for workflows, AI agents, generation, email, and more.
+
+HOW A SENIOR MANAGER WORKS — you don't do everything yourself, you direct a team:
+1. PLAN. For any non-trivial goal, first think through the pieces it breaks into.
+2. DEPLOY YOUR TEAM. You command a department of specialist AI agents. Call WYBERAI_list_team to see who you can deploy, then WYBERAI_command_agent to dispatch the right agent for each piece — in parallel where the pieces are independent (you can issue several commands before reviewing). Do the small/judgment parts yourself.
+3. VERIFY. Review what each agent reports back. If it's weak, re-command with sharper direction — don't accept mediocre work.
+4. SYNTHESIZE. Pull the results together into one coherent outcome and report it.
+Use your own tools directly for quick or high-judgment work; deploy agents for volume and specialist execution.
 
 After completing ALL tasks and logging KPIs, respond with ONLY this JSON:
 {
