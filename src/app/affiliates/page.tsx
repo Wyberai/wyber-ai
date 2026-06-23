@@ -18,7 +18,7 @@ export default function AffiliatesPage() {
         <div style={{ display:'flex', gap:40, marginBottom:56, flexWrap:'wrap' }}>
           {[['30%','recurring commission'],['Forever','not just month one'],['Monthly','payouts via Dodo']].map(([n,l])=>(
             <div key={l}>
-              <div style={{ fontFamily:'var(--font-serif)', fontSize:36, fontWeight:400, color:'var(--sky)', letterSpacing:'-0.04em', lineHeight:1 }}>{n}</div>
+              <div style={{ fontFamily:'var(--font-display)', fontSize:36, fontWeight: 700, color:'var(--sky)', letterSpacing:'-0.04em', lineHeight:1 }}>{n}</div>
               <div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{l}</div>
             </div>
           ))}
@@ -27,7 +27,7 @@ export default function AffiliatesPage() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:12, marginTop:24, marginBottom:52 }}>
           {STEPS.map(s=>(
             <div key={s.n} className="wy-card" style={{ padding:'26px' }}>
-              <div style={{ fontFamily:'var(--font-serif)', fontSize:30, color:'var(--sky)', opacity:0.5, marginBottom:14, lineHeight:1 }}>{s.n}</div>
+              <div style={{ fontFamily:'var(--font-display)', fontSize:30, color:'var(--sky)', opacity:0.5, marginBottom:14, lineHeight:1 }}>{s.n}</div>
               <div style={{ fontSize:14, fontWeight:700, color:'var(--text)', marginBottom:6, letterSpacing:'-0.02em' }}>{s.title}</div>
               <div style={{ fontSize:13, color:'var(--text2)', lineHeight:1.65 }}>{s.desc}</div>
             </div>

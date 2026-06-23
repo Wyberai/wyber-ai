@@ -54,7 +54,7 @@ export default function CookiePolicyPage() {
     page: { minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans)' },
     content: { maxWidth: 720, margin: '0 auto', padding: 'clamp(48px,8vw,80px) clamp(16px,4vw,40px)' },
     tag: { fontSize: 11, fontWeight: 700, color: 'var(--sky)', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: 12 },
-    h1: { fontFamily: 'var(--font-serif)', fontSize: 'clamp(32px,5vw,48px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 8px' },
+    h1: { fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,5vw,48px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 8px' },
     meta: { fontSize: 14, color: 'var(--text3)', marginBottom: 56 },
     section: { marginBottom: 36, paddingBottom: 36, borderBottom: '1px solid var(--border)' },
     h2: { fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', margin: '0 0 10px' },

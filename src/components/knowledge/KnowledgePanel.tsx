@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 const DEFAULTS = [
   { key: 'brand', label: 'Brand name', placeholder: 'e.g. WyberAi' },
   { key: 'colors', label: 'Brand colors', placeholder: 'e.g. Primary: #7C3AED, Background: #0D0D0F' },
-  { key: 'font', label: 'Preferred font', placeholder: 'e.g. DM Sans' },
+  { key: 'font', label: 'Preferred font', placeholder: 'e.g. Inter' },
   { key: 'stack', label: 'Tech preferences', placeholder: 'e.g. Always use Tailwind, prefer TypeScript, use Zod for validation' },
   { key: 'style', label: 'Code style', placeholder: 'e.g. Functional components only, no class components, small focused files' },
   { key: 'rules', label: 'Custom rules', placeholder: 'e.g. Always add loading states, never hardcode IDs, add error boundaries' },

@@ -33,7 +33,7 @@ export default function Post() {
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(124,58,237,0.1)', color: '#7C3AED', fontWeight: 700, border: '1px solid rgba(124,58,237,0.2)' }}>Comparison</span>
           <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 27, 2026 &middot; 8 min read</span>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
           WyberAi vs Lovable: Which AI app builder is right for you?
         </h1>
         <div className="wy-prose">

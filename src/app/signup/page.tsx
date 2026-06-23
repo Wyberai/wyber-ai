@@ -37,7 +37,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#F6F8FB', fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#F6F8FB', fontFamily: "'Inter', system-ui, sans-serif" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', minHeight: '100vh' }}>
@@ -76,7 +76,7 @@ export default function SignupPage() {
               {/* OAuth buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
                 <button onClick={() => handleOAuth('google')} disabled={!!oauthLoading || !agreed}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: agreed ? '#fff' : '#F6F8FB', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5, transition: 'all 0.15s', fontFamily: "'DM Sans', sans-serif" }}>
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: agreed ? '#fff' : '#F6F8FB', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5, transition: 'all 0.15s', fontFamily: "'Inter', sans-serif" }}>
                   {oauthLoading === 'google' ? '...' : (
                     <svg width="18" height="18" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -89,7 +89,7 @@ export default function SignupPage() {
                 </button>
 
                 <button onClick={() => handleOAuth('github')} disabled={!!oauthLoading || !agreed}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: agreed ? '#fff' : '#F6F8FB', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5, transition: 'all 0.15s', fontFamily: "'DM Sans', sans-serif" }}>
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: agreed ? '#fff' : '#F6F8FB', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5, transition: 'all 0.15s', fontFamily: "'Inter', sans-serif" }}>
                   {oauthLoading === 'github' ? '...' : (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="#0B1627">
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
@@ -108,13 +108,13 @@ export default function SignupPage() {
               <form onSubmit={handleMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com" required
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: 9, border: '1.5px solid #DCE4F0', background: '#F6F8FB', color: '#0B1627', fontSize: 14, outline: 'none', fontFamily: "'DM Sans', sans-serif", transition: 'border-color 0.15s' }}
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 9, border: '1.5px solid #DCE4F0', background: '#F6F8FB', color: '#0B1627', fontSize: 14, outline: 'none', fontFamily: "'Inter', sans-serif", transition: 'border-color 0.15s' }}
                   onFocus={e => e.target.style.borderColor = '#0EA5E9'}
                   onBlur={e => e.target.style.borderColor = '#DCE4F0'}
                 />
                 {error && <p style={{ color: '#EF4444', fontSize: 12, margin: 0 }}>{error}</p>}
                 <button type="submit" disabled={loading || !agreed}
-                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: agreed ? '#0EA5E9' : '#B0D4F0', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: agreed && !loading ? 'pointer' : 'not-allowed', fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.01em', transition: 'all 0.15s' }}>
+                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: agreed ? '#0EA5E9' : '#B0D4F0', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: agreed && !loading ? 'pointer' : 'not-allowed', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em', transition: 'all 0.15s' }}>
                   {loading ? 'Creating account...' : 'Create account →'}
                 </button>
               </form>

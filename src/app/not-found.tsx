@@ -23,8 +23,8 @@ export default function NotFound() {
       </nav>
 
       <div style={{ flex: 1, maxWidth: 560, margin: '0 auto', padding: 'clamp(80px,14vw,140px) clamp(16px,4vw,40px)', textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(72px,16vw,120px)', fontWeight: 400, color: 'var(--sky)', lineHeight: 1, marginBottom: 16, opacity: 0.3 }}>404</div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,4vw,40px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 14px', lineHeight: 1.2 }}>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(72px,16vw,120px)', fontWeight: 700, color: 'var(--sky)', lineHeight: 1, marginBottom: 16, opacity: 0.3 }}>404</div>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,40px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 14px', lineHeight: 1.2 }}>
           This page went rogue.
         </h1>
         <p style={{ fontSize: 16, color: 'var(--text2)', lineHeight: 1.65, margin: '0 0 40px' }}>

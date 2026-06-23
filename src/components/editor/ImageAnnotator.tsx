@@ -61,7 +61,7 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
       ctx.fillRect(a.x!, a.y!, a.width, a.height);
       if ((a as Annotation).text) {
         ctx.fillStyle = a.color || '#EF4444';
-        ctx.font = 'bold 12px DM Sans, system-ui';
+        ctx.font = 'bold 12px Inter, system-ui';
         ctx.fillRect(a.x!, a.y! - 18, ctx.measureText((a as Annotation).text).width + 8, 18);
         ctx.fillStyle = '#fff';
         ctx.fillText((a as Annotation).text, a.x! + 4, a.y! - 4);

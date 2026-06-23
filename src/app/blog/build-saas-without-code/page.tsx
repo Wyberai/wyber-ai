@@ -20,7 +20,7 @@ export default function Post() {
           <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: 'var(--sky)', fontWeight: 700, border: '1px solid rgba(14,165,233,0.2)' }}>Guide</span>
           <span style={{ fontSize: 12, color: 'var(--text3)' }}>May 28, 2026 &middot; 6 min read</span>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 400, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,44px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', lineHeight: 1.15, marginBottom: 32 }}>
           How to build a SaaS app without writing code in 2026
         </h1>
         <div className="wy-prose">

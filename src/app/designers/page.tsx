@@ -35,7 +35,7 @@ export default function DesignersPage() {
           ))}
         </div>
         <div style={{ padding:'48px', borderRadius:20, background:'linear-gradient(135deg, var(--sky3), var(--bg2))', border:'1px solid var(--border)', textAlign:'center' }}>
-          <h2 style={{ fontFamily:'var(--font-serif)', fontSize:'clamp(24px,3.5vw,40px)', fontWeight:400, color:'var(--text)', letterSpacing:'-0.025em', marginBottom:12 }}>Design it. Build it. Ship it.</h2>
+          <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(24px,3.5vw,40px)', fontWeight: 700, color:'var(--text)', letterSpacing:'-0.025em', marginBottom:12 }}>Design it. Build it. Ship it.</h2>
           <p style={{ fontSize:15, color:'var(--text2)', marginBottom:28 }}>50 free credits/month. No card required.</p>
           <Link href="/signup" className="wy-btn-primary">Start for free →</Link>
         </div>

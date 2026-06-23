@@ -16,7 +16,7 @@ function wrap(content: string, preheader = ''): string {
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>WyberAi</title>
 </head>
-<body style="margin:0;padding:0;background:#0d0d0f;font-family:'DM Sans',system-ui,sans-serif;color:#f0f0f4">
+<body style="margin:0;padding:0;background:#0d0d0f;font-family:'Inter',system-ui,sans-serif;color:#f0f0f4">
 ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${preheader}</div>` : ''}
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0f;padding:40px 20px">
   <tr><td align="center">

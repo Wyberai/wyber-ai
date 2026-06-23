@@ -55,7 +55,7 @@ export default function OnboardingPage() {
   const S = {
     page: { minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'var(--font-sans)' } as const,
     box: { width: '100%', maxWidth: 620, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 'clamp(32px,5vw,48px)', boxShadow: 'var(--shadow-lg)' } as const,
-    h1: { fontSize: 'clamp(24px,4vw,32px)', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text)', marginBottom: 8, lineHeight: 1.2, fontFamily: 'var(--font-serif)' } as const,
+    h1: { fontSize: 'clamp(24px,4vw,32px)', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text)', marginBottom: 8, lineHeight: 1.2, fontFamily: 'var(--font-display)' } as const,
     sub: { fontSize: 15, color: 'var(--text2)', marginBottom: 28, lineHeight: 1.6 } as const,
     input: { width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 15, outline: 'none', fontFamily: 'var(--font-sans)', marginBottom: 16, transition: 'border-color 0.15s' } as const,
     btn: { width: '100%', padding: '14px', borderRadius: 10, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', letterSpacing: '-0.01em', transition: 'all 0.2s', fontFamily: 'var(--font-sans)' } as const,
