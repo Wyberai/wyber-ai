@@ -33,6 +33,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link href="/ai-employees" style={{ fontSize: 12, color: s.muted, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: `1px solid ${s.border}` }}>← All employees</Link>
+          <Link href={`/ai-employees/roles/${slug}/interview`} style={{ fontSize: 13, fontWeight: 600, color: role.color, textDecoration: 'none', padding: '8px 16px', borderRadius: 8, border: `1px solid ${role.color}40`, background: role.color + '12' }}>Interview first</Link>
           <Link href={hireUrl} style={{ fontSize: 13, fontWeight: 700, color: '#fff', textDecoration: 'none', padding: '8px 20px', borderRadius: 8, background: '#0EA5E9' }}>Hire {role.title} →</Link>
         </div>
       </nav>
