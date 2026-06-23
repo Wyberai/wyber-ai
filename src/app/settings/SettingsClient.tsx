@@ -22,7 +22,7 @@ export function SettingsClient({ profile }: { profile: any }) {
   const S = {
     page: { minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans)' },
     content: { maxWidth: 720, margin: '0 auto', padding: 'clamp(32px,5vw,48px) clamp(16px,4vw,40px)' },
-    h1: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text)', marginBottom: 4, fontFamily: 'var(--font-serif)' },
+    h1: { fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text)', marginBottom: 4, fontFamily: 'var(--font-display)' },
     sub: { fontSize: 14, color: 'var(--text3)', marginBottom: 40 },
     section: { background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, marginBottom: 16, boxShadow: 'var(--shadow)' },
     sectionTitle: { fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text)', marginBottom: 20 },
@@ -63,7 +63,7 @@ export function SettingsClient({ profile }: { profile: any }) {
               <span style={S.planBadge}>{(profile?.plan ?? 'free').toUpperCase()}</span>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--sky)', letterSpacing: '-0.04em', fontFamily: 'var(--font-serif)' }}>{profile?.credits ?? 50}</div>
+              <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--sky)', letterSpacing: '-0.04em', fontFamily: 'var(--font-display)' }}>{profile?.credits ?? 50}</div>
               <div style={{ fontSize: 12, color: 'var(--text3)' }}>credits remaining</div>
             </div>
           </div>
