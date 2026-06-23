@@ -7,6 +7,7 @@ import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
+import { classifyIntent } from '@/lib/intent';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
 
@@ -124,6 +125,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
   const [lastModel, setLastModel] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  // Intent router: when a message is conversational (a question/confirmation),
+  // we show a lightweight "Thinking…" indicator instead of the build loader and
+  // route to /api/assist — no credits, no file parsing.
+  const [chatThinking, setChatThinking] = useState(false);
 
   // ── Pre-gen dep gate state ──────────────────────────────────────────────
   // When deps are detected, we pause before generation and show a connect UI.
@@ -366,7 +371,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   }, [files, modelTier, resolvedUserId, resolvedProjectId, setFiles, setHasGeneratedFiles, saveProject, addMessage, persistMessage, setStreamingContent])
 
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; echoedUser?: boolean }) => {
     // Clear any stale progress steps from a previous generation before starting
     setProgressSteps([]);
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
@@ -377,7 +382,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
     consumeCredit();
     const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
-    if (!opts?.silent) {
+    // echoedUser: the conversational lane already added the user's bubble before
+    // it decided this was actually a build — don't duplicate it.
+    if (!opts?.silent && !opts?.echoedUser) {
       addMessage({ id: uid(), role:'user', content: userContent, timestamp:Date.now(), status:'done' });
       persistMessage('user', userContent);
     }
@@ -663,6 +670,76 @@ const storeProjectId = useEditorStore.getState().project?.id;
     await executeGeneration(prompt, img);
   }, [pendingGenArgs, inlineSecrets, executeGeneration]);
 
+  /**
+   * Conversational lane: questions, confirmations, greetings. Hits /api/assist,
+   * which deducts no credits and parses no files. If `forceChat` is false the
+   * server may decide the message is actually a build/edit — in that case it
+   * returns X-Assist-Intent: action and we route to executeGeneration instead.
+   */
+  const handleConversational = useCallback(async (userMsg: string, img: AttachedImage | null, forceChat: boolean) => {
+    const hasFiles = Object.keys(files ?? {}).length > 0;
+    // Echo the user's message immediately (always correct to show their own text).
+    addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+    persistMessage('user', userMsg);
+
+    // Lightweight context: full file manifest so replies are accurate.
+    const allPaths = Object.keys(files ?? {});
+    const manifest = allPaths.length
+      ? `EXISTING FILES:\n${allPaths.map(p => `- ${p}`).join('\n')}`
+      : '';
+    const history = messages.filter(m => m.status === 'done').slice(-6).map(m => ({ role: m.role, content: m.content }));
+
+    setChatThinking(true);
+    try {
+      const res = await fetch('/api/assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userMsg, fileContext: manifest, history, hasFiles, forceChat }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      // The server reclassified this as a real build/edit → hand to the build lane.
+      if (res.headers.get('X-Assist-Intent') === 'action') {
+        setChatThinking(false);
+        await executeGeneration(userMsg, img, { echoedUser: true });
+        return;
+      }
+
+      // Stream the conversational reply into a fresh assistant bubble.
+      const assistantId = uid();
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let full = '';
+      let created = false;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        if (!created && full.trim()) {
+          setChatThinking(false);
+          addMessage({ id: assistantId, role: 'assistant', content: full, timestamp: Date.now(), status: 'done' });
+          created = true;
+        } else if (created) {
+          updateMessage(assistantId, { content: full });
+        }
+      }
+      if (!created) {
+        // Empty reply — degrade gracefully, still no charge.
+        setChatThinking(false);
+        addMessage({ id: assistantId, role: 'assistant', content: 'Sorry, I didn’t catch that — could you rephrase?', timestamp: Date.now(), status: 'done' });
+        full = 'Sorry, I didn’t catch that — could you rephrase?';
+      }
+      persistMessage('assistant', full);
+    } catch (err) {
+      setChatThinking(false);
+      const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Could not reach the assistant'}`;
+      addMessage({ id: uid(), role: 'assistant', content: errMsg, timestamp: Date.now(), status: 'error' });
+    } finally {
+      setChatThinking(false);
+    }
+  }, [files, messages, addMessage, updateMessage, persistMessage, executeGeneration]);
+
   const handleSend = useCallback(async () => {
     if ((!input.trim() && !attachedImage) || isGenerating || credits <= 0) return;
     const userMsg = input.trim();
@@ -725,8 +802,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
     // ───────────────────────────────────────────────────────────────────
 
+    // ── Intent router ───────────────────────────────────────────────────
+    // Images always build (screenshot-to-app). Otherwise classify: CHAT and
+    // AMBIGUOUS go to the conversational lane (no credits, no build loader);
+    // EDIT/BUILD go straight to generation.
+    if (!img) {
+      const intent = classifyIntent(userMsg, !isNewBuild);
+      if (intent === 'CHAT' || intent === 'AMBIGUOUS') {
+        await handleConversational(userMsg, img, intent === 'CHAT');
+        return;
+      }
+    }
+
     await executeGeneration(userMsg, img);
-  }, [input, attachedImage, isGenerating, credits, planMode, files, executeGeneration]);
+  }, [input, attachedImage, isGenerating, credits, planMode, files, executeGeneration, handleConversational]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -1058,6 +1147,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
                 {buildMsg} {elapsed > 0 && `(${elapsed}s)`}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {chatThinking && (
+          <div style={{ padding:'4px 12px' }}>
+            <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+              <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
+                <svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
+                <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
+                Thinking…
               </div>
             </div>
           </div>

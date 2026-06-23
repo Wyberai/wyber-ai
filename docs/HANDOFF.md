@@ -45,7 +45,26 @@ branch are the shared brain.** Read both before starting.
       canvas/run refund; no separate deduct to fix.
   - **Still TODO in Phase 2:** none of the high-risk routes remain; if more deduct-without-refund
     paths surface (gtm/*, deploy, export currently don't deduct), apply the same pattern.
-- **Not started:** Phases 1, 3, 4, 5, 6 (see the plan).
+- **Phase 1 (intent router) — DONE (needs Phase 5 live verification):**
+  - New `src/lib/intent.ts` — dependency-free `classifyIntent(msg, hasFiles)` → `CHAT | EDIT | BUILD |
+    AMBIGUOUS`. Heuristic: confirmations/greetings→CHAT; leading/polite imperative→EDIT/BUILD;
+    questions→CHAT; no-files non-question→BUILD; ambiguous-with-files→AMBIGUOUS.
+  - New `src/app/api/assist/route.ts` — conversational lane. Auths but **deducts no credits** and
+    **parses no files**. Uses Haiku (`claude-haiku-4-5-20251001`). For AMBIGUOUS (`forceChat:false`)
+    it first runs a 1-token Haiku classify; if it's really an action it returns header
+    `X-Assist-Intent: action` (empty body) so the client routes to /api/generate; otherwise streams a
+    short chat reply with `X-Assist-Intent: chat`.
+  - `ChatPanel.tsx` — `handleSend` now classifies before building: CHAT/AMBIGUOUS → new
+    `handleConversational()` (echoes user msg, shows **"Thinking…"** loader, streams /api/assist, no
+    credits). On `X-Assist-Intent: action` it calls `executeGeneration(…, { echoedUser:true })` (new
+    opt so the build lane doesn't double-echo the user bubble). Images always build.
+  - Verified locally: app boots, `/api/assist` returns 401 without a session (compiles + runs). Full
+    flow (charge=0 for "done?", "Thinking…", build still works) needs an authed editor session →
+    Phase 5 on a preview.
+  - **Known follow-up:** `handleSend` still early-returns when `credits <= 0`, which blocks free chat
+    when out of credits. Consider allowing the CHAT lane at 0 credits (invariant already holds since
+    chat never charges). Left as-is to avoid touching the disabled-input UX.
+- **Not started:** Phases 3, 4, 5, 6 (see the plan).
 
 ## The bug that triggered all this (context)
 A real test: user built a QA app, then asked "Connect Supabase". The agent looped forever re-creating
