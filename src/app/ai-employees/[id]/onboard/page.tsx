@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, use } from 'react'
+import { useState, use, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
@@ -31,6 +31,23 @@ export default function OnboardingPage({ params }: { params: Promise<{ id: strin
 
   // Step 2: tools already set from template, just confirmation
   const [toolsConfirmed, setToolsConfirmed] = useState(false)
+
+  // Pre-load what was already configured at hire (role/template KPIs + any context)
+  // so onboarding refines instead of starting blank and overwriting.
+  useEffect(() => {
+    fetch(`/api/ai-employees/${id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const emp = d?.employee
+        if (!emp) return
+        if (Array.isArray(emp.kpis) && emp.kpis.length > 0) {
+          setKpis(emp.kpis.map((k: Partial<Kpi>) => ({ name: k.name ?? '', description: k.description ?? '', unit: k.unit ?? '', target: k.target ?? 0 })))
+        }
+        if (emp.company_context && !companyContext) setCompanyContext(emp.company_context)
+      })
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id])
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? [])

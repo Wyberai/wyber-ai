@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { getRoleBySlug } from '@/lib/employee-roles'
 
 const SKY = '#0EA5E9'
 
@@ -35,6 +36,7 @@ function NewEmployeePage() {
   const [emoji, setEmoji] = useState('🤖')
   const [instructions, setInstructions] = useState('')
   const [tools, setTools] = useState<string[]>([])
+  const [kpis, setKpis] = useState<{ name: string; description: string; unit: string; target: number }[]>([])
   const [scheduleType, setScheduleType] = useState('daily')
   const [scheduleHour, setScheduleHour] = useState(9)
   const [scheduleDay, setScheduleDay] = useState(1)
@@ -42,6 +44,23 @@ function NewEmployeePage() {
   // Pre-fill from URL params (role page passes these) or legacy template slug
   useEffect(() => {
     if (templateLoaded) return
+
+    // Preferred path: full role loaded by slug → carries KPIs + expertise, not just basics.
+    const roleSlug = searchParams.get('roleSlug')
+    if (roleSlug) {
+      const r = getRoleBySlug(roleSlug)
+      if (r) {
+        setName(r.title)
+        setRole(r.title)
+        setEmoji(r.emoji)
+        setInstructions(`${r.description}\n\n${r.systemPromptExtra}`)
+        setTools(r.tools.map(t => t.trim().toUpperCase()))
+        setKpis(r.kpiDefaults.map(k => ({ name: k.name, description: '', unit: k.unit, target: k.target })))
+        setTemplateLoaded(true)
+        return
+      }
+    }
+
     const urlRole = searchParams.get('role')
     const urlDept = searchParams.get('dept')
     const urlTools = searchParams.get('tools')
@@ -90,7 +109,7 @@ function NewEmployeePage() {
       const res = await resilientFetch('/api/ai-employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), role: role.trim(), emoji, instructions: instructions.trim(), tools, schedule_type: scheduleType, schedule_hour: scheduleHour, schedule_day: scheduleDay, template_id: templateId }),
+        body: JSON.stringify({ name: name.trim(), role: role.trim(), emoji, instructions: instructions.trim(), tools, kpis, schedule_type: scheduleType, schedule_hour: scheduleHour, schedule_day: scheduleDay, template_id: templateId }),
       }, { maxRetries: 1, onRetry: () => setError('Retrying...') })
       const d = await res.json()
       if (!res.ok) { setError(d.error ?? 'Failed to create employee'); setSaving(false); return }

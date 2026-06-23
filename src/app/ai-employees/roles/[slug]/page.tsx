@@ -23,7 +23,9 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
     )
   }
 
-  const hireUrl = `/ai-employees/new?role=${encodeURIComponent(role.title)}&dept=${encodeURIComponent(role.department)}&tools=${encodeURIComponent(role.tools.join(','))}&instructions=${encodeURIComponent(role.description + '\n\n' + role.systemPromptExtra)}`
+  // Pass the role slug so the hire form can load the FULL role (KPIs, expertise),
+  // not just the URL-encoded basics. Keeps backward-compatible params too.
+  const hireUrl = `/ai-employees/new?roleSlug=${encodeURIComponent(role.slug)}&role=${encodeURIComponent(role.title)}&dept=${encodeURIComponent(role.department)}&tools=${encodeURIComponent(role.tools.join(','))}&instructions=${encodeURIComponent(role.description + '\n\n' + role.systemPromptExtra)}`
 
   return (
     <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>

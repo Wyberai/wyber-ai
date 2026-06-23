@@ -1,6 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'node:crypto'
 import { createServiceClient } from '@/lib/supabase/server'
 import { runEmployee, type AiEmployee } from '@/lib/ai-employees/run-engine'
+
+// Verify a Resend (Svix) webhook signature over the raw body. Returns true when
+// valid. Resend signs with a `whsec_<base64>` secret and sends svix-id /
+// svix-timestamp / svix-signature headers.
+function verifySvixSignature(raw: string, headers: Headers, secret: string): boolean {
+  try {
+    const id = headers.get('svix-id')
+    const ts = headers.get('svix-timestamp')
+    const sigHeader = headers.get('svix-signature')
+    if (!id || !ts || !sigHeader) return false
+    // Reject stale timestamps (>5 min) to blunt replay attacks.
+    if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false
+    const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64')
+    const expected = crypto.createHmac('sha256', key).update(`${id}.${ts}.${raw}`).digest('base64')
+    // Header is space-separated "v1,<sig>" entries; match any in constant time.
+    return sigHeader.split(' ').some(part => {
+      const sig = part.split(',')[1]
+      if (!sig || sig.length !== expected.length) return false
+      return crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))
+    })
+  } catch {
+    return false
+  }
+}
 
 // Inbound email webhook. Resend fires `email.received` with METADATA ONLY
 // (email_id, from, to, subject) — the body and headers are NOT in the payload.
@@ -53,15 +78,25 @@ function bareAddress(raw: string): string {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.EMPLOYEE_INBOUND_SECRET
-  if (secret) {
+  // Read the raw body once — Svix verification must run over the exact bytes.
+  const raw = await req.text()
+
+  // Preferred: verify Resend's Svix signature. Fallback: shared-secret query/header
+  // (for setups without the webhook signing secret configured yet).
+  const svixSecret = process.env.RESEND_WEBHOOK_SECRET
+  const sharedSecret = process.env.EMPLOYEE_INBOUND_SECRET
+  if (svixSecret) {
+    if (!verifySvixSignature(raw, req.headers, svixSecret)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+  } else if (sharedSecret) {
     const provided = req.headers.get('x-webhook-secret') ?? new URL(req.url).searchParams.get('secret')
-    if (provided !== secret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (provided !== sharedSecret) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   let payload: Record<string, unknown>
   try {
-    payload = await req.json()
+    payload = JSON.parse(raw)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
