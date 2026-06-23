@@ -92,6 +92,10 @@ branch are the shared brain.** Read both before starting.
     errors) → renamed newer OG image to `route.tsx`, removed stale duplicate.
 - **Remaining before merge to `main`:** run Phase 5 live scenarios (A/B/C), add Preview env var, fill the
   status log, then merge.
+- **Known follow-up (low priority, intentionally deferred):** `handleSend` early-returns when
+  `credits <= 0`, so the free CHAT lane is unreachable at exactly 0 credits (input/send are also disabled
+  then). Safe to enable since chat never charges, but doing it right means accepting chat-shaped input
+  while still hard-blocking builds — bundle it with the next empty-credits/upgrade-flow pass.
 
 ## The bug that triggered all this (context)
 A real test: user built a QA app, then asked "Connect Supabase". The agent looped forever re-creating
