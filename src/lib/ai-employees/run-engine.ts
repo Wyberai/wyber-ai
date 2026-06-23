@@ -257,7 +257,7 @@ async function handleWyberTool(
   employeeId?: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db?: any,
-): Promise<{ result: string; kpiResult?: KpiResult }> {
+): Promise<{ result: string; kpiResult?: KpiResult; creditsUsed?: number }> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   if (toolName === 'WYBERAI_escalate' && db && employeeId) {
@@ -466,14 +466,18 @@ async function handleWyberTool(
         .eq('agent_id', input.agent_id as string)
         .single()
       if (!agent) return { result: `No agent with id "${input.agent_id}". Call WYBERAI_list_team to see valid agent_ids.` }
-      const result = await runSubAgent({
+      const { text, iterations } = await runSubAgent({
         userId,
         agentName: agent.name,
         systemPrompt: agent.system_prompt || `You are ${agent.name}, a specialist agent.`,
         task: input.task as string,
         toolkits: (agent.required_tools as string[]) ?? [],
       })
-      return { result: `[${agent.name}] deployed. It reported back:\n\n${result}\n\n(Review this. If it's not good enough, command it again with clearer direction.)` }
+      // Meter: each sub-agent model call costs the same as a main iteration.
+      return {
+        result: `[${agent.name}] deployed. It reported back:\n\n${text}\n\n(Review this. If it's not good enough, command it again with clearer direction.)`,
+        creditsUsed: iterations * ITER_COST,
+      }
     } catch (e) {
       return { result: `Failed to deploy agent: ${String(e)}` }
     }
@@ -590,8 +594,8 @@ async function runSubAgent(opts: {
   task: string
   toolkits: string[]
   maxIters?: number
-}): Promise<string> {
-  const { userId, agentName, systemPrompt, task, toolkits, maxIters = 6 } = opts
+}): Promise<{ text: string; iterations: number }> {
+  const { userId, agentName, systemPrompt, task, toolkits, maxIters = 5 } = opts
   const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -611,7 +615,9 @@ async function runSubAgent(opts: {
 
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: task }]
   let finalText = ''
+  let iterations = 0
   for (let iter = 0; iter < maxIters; iter++) {
+    iterations++
     const res = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
@@ -637,7 +643,7 @@ async function runSubAgent(opts: {
     }
     messages.push({ role: 'user', content: results })
   }
-  return finalText || `${agentName} ran but returned no summary.`
+  return { text: finalText || `${agentName} ran but returned no summary.`, iterations }
 }
 
 export async function runEmployee(
@@ -822,6 +828,11 @@ No text outside the JSON.`
     const messages: MsgParam[] = [{ role: 'user', content: kickoff }]
     let finalText = ''
 
+    // Bound fleet orchestration cost: a manager can deploy at most this many
+    // sub-agents per run (each sub-agent's model calls are metered into creditsUsed).
+    const MAX_DEPLOYMENTS = 8
+    let deploymentCount = 0
+
     // ── Agentic loop ────────────────────────────────────────────────────────────
     for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
       const response = await anthropic.messages.create({
@@ -857,10 +868,21 @@ No text outside the JSON.`
           let resultStr: string
 
           if (isWyberTool) {
+            // Cap runaway fleet deployments per run before paying for a sub-agent.
+            if (tu.name === 'WYBERAI_command_agent') {
+              if (deploymentCount >= MAX_DEPLOYMENTS) {
+                resultStr = `Deployment limit reached (${MAX_DEPLOYMENTS} agents this run). Do any remaining work yourself, or synthesize what you have and finish.`
+                actionsTaken.push({ tool: 'WYBERAI', action: tu.name, result_summary: resultStr.slice(0, 300) })
+                toolResultContents.push({ type: 'tool_result', tool_use_id: tu.id, content: resultStr })
+                continue
+              }
+              deploymentCount++
+            }
             const toolInput = { ...(tu.input as Record<string, unknown>), __runId: runId }
-            const { result, kpiResult } = await handleWyberTool(tu.name, toolInput, userId, employee.id, db)
+            const { result, kpiResult, creditsUsed: subCost } = await handleWyberTool(tu.name, toolInput, userId, employee.id, db)
             resultStr = result
             if (kpiResult) kpiResults.push(kpiResult)
+            if (subCost) creditsUsed += subCost  // meter sub-agent model calls
           } else {
             const result = await composio.tools.execute(tu.name, {
               userId,
