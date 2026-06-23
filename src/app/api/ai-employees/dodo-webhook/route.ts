@@ -72,7 +72,10 @@ async function provision(db: ReturnType<typeof createServiceClient>, hr: {
 export async function POST(req: NextRequest) {
   const raw = await req.text()
 
-  const secret = process.env.DODO_PAYMENTS_WEBHOOK_KEY
+  // Reuse the existing DODO_WEBHOOK_SECRET. If you give the employee app its own
+  // Dodo webhook endpoint (which gets its own signing secret), set
+  // DODO_EMPLOYEES_WEBHOOK_SECRET and it takes precedence.
+  const secret = process.env.DODO_EMPLOYEES_WEBHOOK_SECRET ?? process.env.DODO_WEBHOOK_SECRET
   if (secret && !verifyStandardWebhook(raw, req.headers, secret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
