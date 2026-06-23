@@ -1,3 +1,5 @@
+import { MARKETING_MANAGER } from '@/lib/ai-employees/marketing-manager-profile'
+
 export interface EmployeeRole {
   slug: string
   title: string
@@ -37,9 +39,10 @@ export const EMPLOYEE_ROLES: EmployeeRole[] = [
     expertise: ['Content marketing', 'Email campaigns', 'SEO & SEM', 'Social media management', 'Lead nurturing', 'Brand strategy', 'Marketing analytics', 'Competitive analysis'],
     dailyTasks: ['Draft and schedule social media posts', 'Write blog post outlines and first drafts', 'Monitor competitor activity and report changes', 'Send email nurture sequences to leads', 'Track marketing KPIs and flag anomalies', 'Research trending topics in your industry'],
     tools: ['Gmail', 'HubSpot', 'LinkedIn', 'Google Docs', 'Slack', 'Notion'],
-    kpiDefaults: [{ name: 'Leads generated', unit: 'leads/week', target: 20 }, { name: 'Email open rate', unit: '%', target: 35 }, { name: 'Content pieces published', unit: 'articles/week', target: 3 }],
-    examplePrompts: ['Write a LinkedIn post about our new feature launch', 'Draft a cold email sequence for CFOs at mid-market SaaS companies', 'Analyze our top 3 competitors and summarize what they launched this month', 'Create a content calendar for next week'],
-    systemPromptExtra: 'You are a senior marketing professional with 10+ years experience in B2B SaaS marketing. You think in terms of funnels, conversion rates, and CAC/LTV ratios. You write copy that converts. You are data-driven but creative.',
+    kpiDefaults: MARKETING_MANAGER.kpis.map(k => ({ name: k.name, unit: k.unit, target: k.target })),
+    examplePrompts: ['Plan and run a launch campaign for our new feature', 'Draft a cold email sequence for CFOs at mid-market SaaS companies', 'Analyze our top 3 competitors and summarize what they launched this month', 'Build a content calendar for next month and start producing it'],
+    // Full operating-system prompt — see marketing-manager-profile.ts (also powers the showcase page).
+    systemPromptExtra: MARKETING_MANAGER.systemPrompt,
   },
   {
     slug: 'content-writer',
