@@ -78,7 +78,42 @@ Preview: `wyber-ai-git-builder-robustness-sumeet-sutar-s-projects.vercel.app`
     Production-only. Re-scoped to all Preview branches + added service-role to Preview.
   - ✅ Startup log now: `✓ [env] All required environment variables present (preview)`.
   - ✅ `/api/assist` now returns **401** (clean auth gate), not 500. Backend is healthy on Preview.
-- [ ] A1–A7 lifecycle — _ready to run; needs a logged-in account on the preview_
-- [ ] B1–B8 failure injection — _ready to run (env unblocked)_
-- [x] B9 env startup check — ✅ verified live 2026-06-23
-- [x] C env parity — ✅ fixed + verified live 2026-06-23
+### How to run the live scenarios (IMPORTANT — environment notes)
+- **The Vercel preview canNOT hold an auth session**: signing in redirects to `wyberai.com`
+  (production canonical URL), so a logged-in user always bounces off the preview. Do NOT test the
+  builder UI on the preview.
+- **Run locally instead**: `npm run dev` (port 3000). `.env.local` has `NEXT_PUBLIC_APP_URL=
+  http://localhost:3000`, so local login stays on localhost. The working tree on `builder/robustness`
+  IS the code under test.
+- The Claude-in-Chrome extension **cannot drive `localhost`** (blocked domain). So the run mode is:
+  **user drives in their own browser; assistant watches.** Assistant signals: credit-balance deltas
+  (primary truth), `preview_logs` server output, and UI observations reported by the user.
+- The app's own Supabase is project `dayhoozhjcbppyxdhyua` — NOT in the assistant's Supabase MCP access,
+  so `credit_usage` rows can't be queried directly; use balance deltas instead.
+- **Browser cache caveat**: Next dev can serve stale client chunks; a plain Ctrl+Shift+R may 304.
+  Use an **Incognito window** to guarantee a fresh client bundle when verifying client-side changes.
+
+### Live run log (2026-06-23, localhost, test account started at 29 credits)
+- ✅ **A1 (net-new build)** — "build a QA bug tracker": build lane, real build-step loader, preview
+  rendered, charged once (3) and matched the up-front estimate. 29→26.
+- ⚠️→🔧 **A2 (edit)** — "add a settings page": worked + good recap, BUT charged **6** (26→20) for one
+  edit. Root cause: a failed-patch **self-heal autofix re-ran a fully-billed generation**, violating
+  the "self-healing is always free" promise. **FIXED** (commit: self-heal free flag): silent autofix
+  runs now skip `consumeCredit()` and send `selfHeal:true`; `/api/generate` skips deduction + reports
+  `X-Credits-Used:0`. **NOT yet re-verified live.**
+- ❌ pending **A4 (chat must cost 0)** — "is it done?": still showed "Applying your changes" + charged 3
+  (20→17, then 17→14 on retry) instead of the free "Thinking…" chat lane. BUT: `/api/assist` returns
+  401 locally (route present), only ONE current dev server is running, and `classifyIntent("is it
+  done?", true)==='CHAT'` is unit-tested green — so handleSend SHOULD route to the free lane. Strong
+  suspicion: **stale cached client bundle in the browser** (Ctrl+Shift+R didn't bust it).
+  **DECISIVE TEST PENDING (run on other account):** open localhost:3000 in **Incognito**, log in, send
+  "is it done?". If it shows "Thinking…" and balance is unchanged → it was cache, A4 PASS, continue.
+  If it STILL charges + shows build loader → real bug in the Phase 1 client wiring; instrument
+  `handleSend`/`classifyIntent` (add a console probe) and check DevTools Network for whether the call
+  hits `/api/assist` (correct) or `/api/generate` (bug).
+- [x] B9 env startup check — ✅ verified live
+- [x] C env parity — ✅ fixed + verified live
+- [ ] A2 self-heal-free — 🔧 fixed, needs live re-verify (one edit with a failed patch → balance drops
+  by ONE charge, not two)
+- [ ] A4 chat-free — ⏳ decisive incognito test pending
+- [ ] A3 (Connect Supabase), A5 (two edits/same-length rebuild), A6/A7 (chat free), B1–B8 — not yet run

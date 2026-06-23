@@ -6,6 +6,19 @@ branch are the shared brain.** Read both before starting.
 
 ---
 
+## 🔵 NEXT SESSION START HERE (live Phase 5 run in progress)
+> Read `docs/phase5-test-scenarios.md` → "Live run log". Status: env parity is fixed + verified live
+> (C, B9 green). Live builder run is underway **locally** (`npm run dev`, localhost:3000 — the preview
+> can't hold auth, see notes in that doc). A1 passed. A2 exposed a self-heal double-charge → **fixed**
+> (self-heal-free flag, committed) but not re-verified. **A4 is the open item:** "is it done?" still
+> charged + showed the build loader instead of the free "Thinking…" chat lane — almost certainly a
+> stale browser bundle. **FIRST ACTION:** in an **Incognito** window, log into localhost:3000, send
+> "is it done?" — if it shows "Thinking…" with NO credit change, A4 passes (it was cache); continue
+> A2-reverify, A3, A5, A6/A7, B1–B8. If it STILL charges, it's a real Phase 1 wiring bug — instrument
+> `handleSend`/`classifyIntent` and check DevTools Network (`/api/assist` good vs `/api/generate` bug).
+> The user will paste the incognito/network result. Run mode: user drives the browser, you watch credit
+> deltas + `preview_logs`.
+
 ## ✅ All phases 1–6 implemented (code-complete). What's left is the LIVE merge gate.
 > Read `docs/HANDOFF.md`, `docs/builder-robustness-plan.md`, and `docs/phase5-test-scenarios.md`. The
 > builder-robustness work (Phases 1–6) is all committed on `builder/robustness`. The remaining task is
