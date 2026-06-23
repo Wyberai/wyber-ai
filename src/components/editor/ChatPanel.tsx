@@ -13,6 +13,62 @@ import { FileMentionDropdown } from './FileMentionDropdown';
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
+// Resolve a local import specifier (relative, `@/`, or `src/`) to an existing
+// file path. Bare module specifiers (node_modules) return null.
+function resolveSpecifier(spec: string, fromPath: string, pathSet: Set<string>): string | null {
+  let base: string;
+  if (spec.startsWith('.')) {
+    const dir = fromPath.split('/').slice(0, -1);
+    for (const p of spec.split('/')) {
+      if (p === '.' || p === '') continue;
+      else if (p === '..') dir.pop();
+      else dir.push(p);
+    }
+    base = dir.join('/');
+  } else if (spec.startsWith('@/')) {
+    base = 'src/' + spec.slice(2);
+  } else if (spec.startsWith('src/')) {
+    base = spec;
+  } else {
+    return null;
+  }
+  for (const e of ['', '.tsx', '.ts', '.jsx', '.js', '.vue', '.css']) {
+    if (pathSet.has(base + e)) return base + e;
+  }
+  for (const e of ['/index.tsx', '/index.ts', '/index.jsx', '/index.js']) {
+    if (pathSet.has(base + e)) return base + e;
+  }
+  return null;
+}
+
+// Shallow-transitively collect files imported by the seed files. This lets the
+// model SEE helper files (lib/api, Auth, hooks) that the relevant files import,
+// instead of being blind to them and recreating them every edit (the loop bug).
+function collectImportedPaths(seeds: string[], allPaths: string[], getContent: (p: string) => string, maxExtra = 8): string[] {
+  const pathSet = new Set(allPaths);
+  const found = new Set<string>();
+  const seen = new Set(seeds);
+  const queue = [...seeds];
+  const importRe = /(?:from\s+|import\s+)['"]([^'"]+)['"]/g;
+  while (queue.length && found.size < maxExtra) {
+    const cur = queue.shift()!;
+    const content = getContent(cur);
+    if (!content) continue;
+    let m: RegExpExecArray | null;
+    importRe.lastIndex = 0;
+    while ((m = importRe.exec(content)) !== null) {
+      const resolved = resolveSpecifier(m[1], cur, pathSet);
+      if (resolved && !seen.has(resolved)) {
+        seen.add(resolved);
+        found.add(resolved);
+        queue.push(resolved);
+        if (found.size >= maxExtra) break;
+      }
+    }
+  }
+  return [...found];
+}
+
 function cleanMessage(text: string): string {
   let t = text;
   t = t.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
@@ -420,6 +476,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       return { path, content: (f as any).content, score };
     });
     const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
+    // Pull in helper files imported by the top files (lib/api, Auth, hooks…) so
+    // the model can edit them instead of recreating them. Capped to keep the
+    // context bounded.
+    const fileMap: Record<string, string> = {};
+    for (const [p, f] of allFileEntries) fileMap[p] = (f as any).content ?? '';
+    const seedPaths = topFiles.map(f => f.path);
+    const importedPaths = collectImportedPaths(seedPaths, allFileEntries.map(([p]) => p), p => fileMap[p] ?? '', 8);
+    const contextPaths = [...new Set([...seedPaths, ...importedPaths])].slice(0, 14);
+    const contextFiles = contextPaths.map(p => ({ path: p, content: fileMap[p] ?? '' }));
     // Full manifest of EVERY existing file path. Without this the model only sees the
     // top-6 scored files, so on follow-up edits it can't see helper files (lib/api,
     // Auth, etc.) that App.tsx imports — and recreates them every turn in an infinite
@@ -430,11 +495,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       : '';
     // Send FULL content of the most relevant files so the model can produce exact-match
     // SEARCH/REPLACE diffs. Truncating breaks diff editing (model can't match what it can't see).
-    const fileContext = manifest + topFiles.map(({path, content}) => {
+    const fileContext = manifest + contextFiles.map(({path, content}) => {
       const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
       return `<file path="${path}">\n${body}\n</file>`;
     }).join('\n\n');
-    const history = messages.filter(m => m.status==='done').slice(-6).map(m => ({ role:m.role, content:m.content }));
+    const history = messages.filter(m => m.status==='done').slice(-10).map(m => ({ role:m.role, content:m.content }));
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
     let knowledgeStr = knowledge || '';

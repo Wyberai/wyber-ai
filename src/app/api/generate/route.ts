@@ -1130,10 +1130,10 @@ ${code}
 
     const trimmedHistory = (history || [])
       .filter((m: { content: string }) => m.content && !m.content.startsWith('[Image:'))
-      .slice(-6)
+      .slice(-10)
       .map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
-        content: m.content.slice(0, 2000)
+        content: m.content.slice(0, 4000)
       }))
 
     type MessageContent = string | Array<{
