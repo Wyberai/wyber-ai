@@ -402,9 +402,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
       return { path, content: (f as any).content, score };
     });
     const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
+    // Full manifest of EVERY existing file path. Without this the model only sees the
+    // top-6 scored files, so on follow-up edits it can't see helper files (lib/api,
+    // Auth, etc.) that App.tsx imports — and recreates them every turn in an infinite
+    // loop. Listing all paths tells it what already exists so it edits instead.
+    const allPaths = allFileEntries.map(([p]) => p);
+    const manifest = allPaths.length
+      ? `EXISTING FILES (already created — DO NOT recreate these; edit them if a change is needed):\n${allPaths.map(p => `- ${p}`).join('\n')}\n\n`
+      : '';
     // Send FULL content of the most relevant files so the model can produce exact-match
     // SEARCH/REPLACE diffs. Truncating breaks diff editing (model can't match what it can't see).
-    const fileContext = topFiles.map(({path, content}) => {
+    const fileContext = manifest + topFiles.map(({path, content}) => {
       const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
       return `<file path="${path}">\n${body}\n</file>`;
     }).join('\n\n');
