@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
   // Match the employee by its provisioned address.
   const { data: employee } = await db
     .from('ai_employees')
-    .select('id, user_id, name, role, emoji, instructions, tools, company_context, kpis, email_address, is_active')
+    .select('id, user_id, name, role, emoji, instructions, tools, company_context, kpis, email_address, memory_summary, is_active')
     .ilike('email_address', toAddr)
     .single()
 

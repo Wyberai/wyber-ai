@@ -40,6 +40,7 @@ export interface AiEmployee {
   company_context?: string | null
   kpis?: { name: string; description: string; unit: string; target: number }[]
   email_address?: string | null
+  memory_summary?: string | null
 }
 
 // ── WyberAi cross-product tool definitions ───────────────────────────────────
@@ -564,15 +565,45 @@ export async function runEmployee(
     // Combine composio + wyber tools
     const allTools = [...composioToolDefs, ...WYBER_TOOLS]
 
-    // ── Load persistent memory ─────────────────────────────────────────────────
-    const { data: memoryRows } = await db
-      .from('employee_memory')
-      .select('key, value')
-      .eq('employee_id', employee.id)
-      .limit(50)
-    const memoryBlock = memoryRows && memoryRows.length > 0
-      ? `\n\nPERSISTENT MEMORY (facts you've learned from previous runs):\n${memoryRows.map(r => `• ${r.key}: ${r.value}`).join('\n')}\n\nYou can update this memory by calling WYBERAI_remember at the end of this run.`
-      : '\n\nPERSISTENT MEMORY: Empty — this is your first run or no facts saved yet. Call WYBERAI_remember to save important facts for future runs.'
+    // ── RECALL: load the employee's memory (the "10 years of experience") ───────
+    // Three layers, oldest-to-freshest in the prompt so recent experience dominates:
+    //   1. memory_summary  — rolling narrative of who I am + what I've learned
+    //   2. employee_memory — explicit key→value facts
+    //   3. employee_episodes — reflections on recent runs (what worked/didn't)
+    const [{ data: memoryRows }, { data: episodes }] = await Promise.all([
+      db.from('employee_memory').select('key, value').eq('employee_id', employee.id).limit(50),
+      db.from('employee_episodes')
+        .select('trigger, summary, learnings, outcome, created_at')
+        .eq('employee_id', employee.id)
+        .order('created_at', { ascending: false })
+        .order('importance', { ascending: false })
+        .limit(8),
+    ])
+
+    const summaryBlock = employee.memory_summary && employee.memory_summary.trim()
+      ? `\n\nWHO YOU ARE (built up over your time here):\n${employee.memory_summary.trim()}`
+      : ''
+
+    const factsBlock = memoryRows && memoryRows.length > 0
+      ? `\n\nKNOWN FACTS (things you've explicitly noted):\n${memoryRows.map(r => `• ${r.key}: ${r.value}`).join('\n')}`
+      : ''
+
+    // Episodes recalled oldest→newest so the most recent run reads last (freshest).
+    const episodeBlock = episodes && episodes.length > 0
+      ? `\n\nWHAT YOU LEARNED FROM RECENT RUNS (most recent last — build on this, don't repeat mistakes):\n${
+          [...episodes].reverse().map(e => {
+            const when = e.created_at ? new Date(e.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+            const parts = [`▸ [${when}] ${e.summary}`]
+            if (e.outcome) parts.push(`  outcome: ${e.outcome}`)
+            if (e.learnings) parts.push(`  learned: ${e.learnings}`)
+            return parts.join('\n')
+          }).join('\n')
+        }`
+      : ''
+
+    const memoryBlock = (summaryBlock || factsBlock || episodeBlock)
+      ? `${summaryBlock}${factsBlock}${episodeBlock}\n\nUse this experience to work smarter than last time. You can note new facts with WYBERAI_remember.`
+      : '\n\nMEMORY: This is your first run — you have no past experience yet. Work carefully; you will remember what you learn for next time.'
 
     // ── Build KPI targets string ───────────────────────────────────────────────
     const kpis = employee.kpis ?? []
@@ -688,6 +719,58 @@ No text outside the JSON.`
         if (Array.isArray(parsed.actions)) parsedActions = [...actionsTaken, ...parsed.actions]
       }
     } catch { /* use defaults */ }
+
+    // ── REFLECT: the employee learns from this run (free — it's how it grows) ────
+    // A cheap Haiku pass distills durable learnings + a refreshed self-narrative,
+    // stored as an episode and rolled into memory_summary so the NEXT run is wiser.
+    // Not charged: learning is part of being an employee, not a billable action.
+    try {
+      const kpiLine = kpiResults.length
+        ? kpiResults.map(k => `${k.name}=${k.value}${k.unit}`).join(', ')
+        : 'no KPIs logged'
+      const actionLine = parsedActions.slice(0, 12).map(a => `${a.action}: ${a.result_summary}`).join('\n') || 'no tool actions'
+      const reflectPrompt = `You are ${employee.name}, ${employee.role}. You just finished a piece of work. Reflect on it like a thoughtful senior professional writing a quick private note to your future self.
+
+WHAT YOU WERE ASKED: ${(taskOverride ?? employee.instructions).slice(0, 1500)}
+WHAT YOU DID: ${summary}
+ACTIONS:\n${actionLine}
+KPIs: ${kpiLine}
+${employee.memory_summary ? `\nYOUR CURRENT SELF-NOTES:\n${employee.memory_summary.slice(0, 2000)}` : ''}
+
+Return ONLY JSON:
+{
+  "learnings": "1-2 sentences: what worked, what didn't, what you'd do differently. Concrete and tactical. Empty string if nothing notable.",
+  "outcome": "one of: success | partial | failed, optionally with a short reason",
+  "importance": 1-5 (how much should this weigh in future decisions; routine=2, notable=3, important lesson=4-5),
+  "updated_summary": "Your refreshed self-notes (<= 1200 chars): a tight running narrative of who you are here, durable facts about this company/role, and your hardest-won lessons. Merge the new learning into your current notes; drop stale trivia. Write in first person."
+}`
+      const reflectRes = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 700,
+        messages: [{ role: 'user', content: reflectPrompt }],
+      })
+      const reflectText = reflectRes.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+      const rj = reflectText.match(/\{[\s\S]*\}/)
+      if (rj) {
+        const r = JSON.parse(rj[0]) as { learnings?: string; outcome?: string; importance?: number; updated_summary?: string }
+        await db.from('employee_episodes').insert({
+          employee_id: employee.id,
+          user_id: userId,
+          run_id: runId,
+          trigger: (taskOverride ?? `${triggeredBy} run: ${employee.instructions}`).slice(0, 500),
+          summary,
+          learnings: r.learnings || null,
+          outcome: r.outcome || null,
+          importance: Math.min(5, Math.max(1, Math.round(r.importance ?? 3))),
+        }).then(() => {}, () => {})
+        if (r.updated_summary && r.updated_summary.trim()) {
+          await db.from('ai_employees')
+            .update({ memory_summary: r.updated_summary.slice(0, 1500) })
+            .eq('id', employee.id)
+            .then(() => {}, () => {})
+        }
+      }
+    } catch { /* reflection is best-effort; never fail a run over it */ }
 
     // ── Deduct credits ─────────────────────────────────────────────────────────
     if (creditsUsed > 0) {
