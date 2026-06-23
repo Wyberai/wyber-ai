@@ -37,6 +37,10 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
       })
       const d = await res.json()
       if (!res.ok) { setError(d.error ?? 'Something went wrong'); setSubmitting(false); return }
+      // Payment is the gate: send them straight to Dodo checkout. On success the
+      // webhook provisions the employee. If no checkout link is configured yet,
+      // fall back to the "we'll email you" confirmation.
+      if (d.checkoutUrl) { window.location.href = d.checkoutUrl; return }
       setDone({ priceLabel: d.priceLabel })
     } catch { setError('Network error — please try again.'); setSubmitting(false) }
   }
@@ -52,9 +56,9 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
         {done ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, margin: '0 0 10px' }}>Request submitted</h1>
+            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, margin: '0 0 10px' }}>Almost there</h1>
             <p style={{ fontSize: 15, color: s.muted, lineHeight: 1.65, maxWidth: 380, margin: '0 auto' }}>
-              Your request to hire <strong style={{ color: s.text }}>{name}</strong> at <strong style={{ color: accent }}>{done.priceLabel}</strong> is in. We review every hire personally — you&apos;ll get an email once it&apos;s approved, then you can set them up.
+              <strong style={{ color: s.text }}>{name}</strong> is reserved at <strong style={{ color: accent }}>{done.priceLabel}</strong>. We&apos;ll email you a secure payment link — once you pay, {name} is hired and ready to set up.
             </p>
             <Link href="/ai-employees" style={{ display: 'inline-block', marginTop: 28, padding: '12px 28px', borderRadius: 10, background: s.card, border: `1px solid ${s.border}`, color: s.text, textDecoration: 'none', fontSize: 14 }}>Back to employees</Link>
           </div>
@@ -93,9 +97,9 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
               </div>
               {error && <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>}
               <button type="submit" disabled={submitting} style={{ padding: '14px', borderRadius: 11, background: submitting ? '#1a1a22' : SKY, border: 'none', color: submitting ? s.dim : '#fff', fontSize: 15, fontWeight: 700, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
-                {submitting ? 'Submitting…' : `Request to hire — ${price?.priceLabel ?? ''}`}
+                {submitting ? 'Taking you to checkout…' : `Continue to payment — ${price?.priceLabel ?? ''}`}
               </button>
-              <p style={{ fontSize: 11, color: s.dim, textAlign: 'center' }}>Every hire is personally reviewed. You&apos;re not charged until it&apos;s approved.</p>
+              <p style={{ fontSize: 11, color: s.dim, textAlign: 'center' }}>Secure monthly payment via Dodo. Your employee activates the moment payment succeeds.</p>
             </form>
           </>
         )}

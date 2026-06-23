@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getRoleBySlug } from '@/lib/employee-roles'
-import { getRolePrice, formatPrice } from '@/lib/ai-employees/pricing'
-import { buildEmailIdentity } from '@/lib/ai-employees/email-identity'
+import { getRolePrice } from '@/lib/ai-employees/pricing'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
 const OWNER_EMAIL = process.env.OWNER_EMAIL ?? 'hello@wyberai.com'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
 
-// ── Create a hire request (any authenticated user) ────────────────────────────
+// Append query params to a checkout URL (handles existing query string).
+function withParams(url: string, params: Record<string, string>): string {
+  const u = new URL(url)
+  for (const [k, v] of Object.entries(params)) if (v) u.searchParams.set(k, v)
+  return u.toString()
+}
+
+// ── Create a hire request → return the Dodo checkout link ──────────────────────
+// Payment is the gate (no manual approval). We persist the chosen instance name
+// as a pending_payment request; the Dodo webhook provisions the employee on
+// successful payment, correlating by metadata id (and email/role as fallback).
 export async function POST(req: NextRequest) {
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
@@ -32,22 +38,23 @@ export async function POST(req: NextRequest) {
     company: company ?? null,
     note: note ?? null,
     quoted_price_cents: price.priceCents,
-    status: 'pending',
+    status: 'pending_payment',
   }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Notify the owner that there's a hire to approve.
-  resend.emails.send({
-    from: 'WyberAi <hello@wyberai.com>',
-    to: OWNER_EMAIL,
-    subject: `New hire request: ${role.title} ("${employeeName.trim()}") — ${formatPrice(price.priceCents)}/mo`,
-    text: `${user.email}${company ? ` (${company})` : ''} wants to hire a ${role.title}, named "${employeeName.trim()}", at ${formatPrice(price.priceCents)}/mo.\n\n${note ? `Note: ${note}\n\n` : ''}Approve or reject: ${APP_URL}/ai-employees/admin/requests`,
-  }).then(() => {}, () => {})
+  // Hand back the Dodo checkout link with our reference + customer email attached
+  // so the webhook can tie the payment back to this exact request.
+  const checkoutUrl = price.checkoutUrl
+    ? withParams(price.checkoutUrl, {
+        metadata_hire_request_id: request.id,
+        email: user.email ?? '',
+      })
+    : null
 
-  return NextResponse.json({ request, priceLabel: `${formatPrice(price.priceCents)}/mo` }, { status: 201 })
+  return NextResponse.json({ request, checkoutUrl, priceLabel: price.priceLabel }, { status: 201 })
 }
 
-// ── List requests (owner only) ────────────────────────────────────────────────
+// ── Owner visibility into hires (read-only) ───────────────────────────────────
 export async function GET() {
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
@@ -56,75 +63,4 @@ export async function GET() {
   const db = createServiceClient()
   const { data } = await db.from('employee_hire_requests').select('*').order('created_at', { ascending: false }).limit(100)
   return NextResponse.json({ requests: data ?? [] })
-}
-
-// ── Approve / reject (owner only) ─────────────────────────────────────────────
-export async function PATCH(req: NextRequest) {
-  const auth = await createClient()
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user || user.email !== OWNER_EMAIL) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-  const { id, action, finalPriceCents } = await req.json()
-  if (!id || !['approve', 'reject'].includes(action)) return NextResponse.json({ error: 'Bad request' }, { status: 400 })
-
-  const db = createServiceClient()
-  const { data: hr } = await db.from('employee_hire_requests').select('*').eq('id', id).single()
-  if (!hr) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  if (hr.status !== 'pending') return NextResponse.json({ error: `Already ${hr.status}` }, { status: 409 })
-
-  if (action === 'reject') {
-    await db.from('employee_hire_requests').update({ status: 'rejected', decided_by: user.id, decided_at: new Date().toISOString() }).eq('id', id)
-    resend.emails.send({
-      from: 'WyberAi <hello@wyberai.com>', to: hr.requester_email,
-      subject: `Update on your ${hr.role_title} hire request`,
-      text: `Thanks for your interest. We're not able to approve this hire right now. Reach out if you'd like to discuss.`,
-    }).then(() => {}, () => {})
-    return NextResponse.json({ ok: true, status: 'rejected' })
-  }
-
-  // Approve → provision the actual employee for the requester.
-  const role = getRoleBySlug(hr.role_slug)
-  if (!role) return NextResponse.json({ error: 'Role no longer exists' }, { status: 400 })
-
-  let employeeId: string | null = null
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const identity = buildEmailIdentity(hr.employee_name)
-    const { data: emp, error } = await db.from('ai_employees').insert({
-      user_id: hr.user_id,
-      name: hr.employee_name,
-      role: role.title,
-      emoji: role.emoji,
-      instructions: `${role.description}\n\n${role.systemPromptExtra}`,
-      tools: role.tools.map(t => t.toUpperCase()),
-      kpis: role.kpiDefaults,
-      schedule_type: 'manual',
-      email_local: identity.email_local,
-      email_domain: identity.email_domain,
-      email_address: identity.email_address,
-      handle: identity.handle,
-    }).select('id').single()
-    if (!error && emp) { employeeId = emp.id; break }
-    if (error && (error as { code?: string }).code !== '23505') {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-  }
-
-  await db.from('employee_hire_requests').update({
-    status: 'approved', decided_by: user.id, decided_at: new Date().toISOString(),
-    final_price_cents: finalPriceCents ?? hr.quoted_price_cents, employee_id: employeeId,
-  }).eq('id', id)
-
-  const price = getRolePrice(hr.role_slug)
-  const payCents = finalPriceCents ?? hr.quoted_price_cents
-  const payLine = price.checkoutUrl
-    ? `\n\nTo activate ${hr.employee_name}, complete payment of ${formatPrice(payCents)}/mo here:\n${price.checkoutUrl}`
-    : `\n\nWe'll send your payment link (${formatPrice(payCents)}/mo) separately to get started.`
-
-  resend.emails.send({
-    from: 'WyberAi <hello@wyberai.com>', to: hr.requester_email,
-    subject: `${hr.employee_name} is approved! 🎉`,
-    text: `Great news — ${hr.employee_name}, your ${hr.role_title}, is approved.${payLine}\n\nOnce payment's done, set them up here: ${APP_URL}/ai-employees/${employeeId}/onboard`,
-  }).then(() => {}, () => {})
-
-  return NextResponse.json({ ok: true, status: 'approved', employeeId, checkoutUrl: price.checkoutUrl })
 }
