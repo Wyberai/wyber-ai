@@ -72,7 +72,13 @@ Preview: `wyber-ai-git-builder-robustness-sumeet-sutar-s-projects.vercel.app`
     "All Preview branches"):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
     `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY` (+ recommended `SECRETS_ENCRYPTION_KEY`,
     `NEXT_PUBLIC_APP_URL`, `CRON_SECRET`). Then redeploy this branch.
-- [ ] A1–A7 lifecycle — _blocked on env parity above_
-- [ ] B1–B8 failure injection — _blocked on env parity above_
+- **2026-06-23 — env parity fixed + re-probed (deploy dpl_3YXMbmttP… / commit 0459fb4):**
+  - Root cause was the Preview entries for `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` being branch-pinned to
+    `design/wyberai-brand-tokens` (not all preview branches), and `SUPABASE_SERVICE_ROLE_KEY` being
+    Production-only. Re-scoped to all Preview branches + added service-role to Preview.
+  - ✅ Startup log now: `✓ [env] All required environment variables present (preview)`.
+  - ✅ `/api/assist` now returns **401** (clean auth gate), not 500. Backend is healthy on Preview.
+- [ ] A1–A7 lifecycle — _ready to run; needs a logged-in account on the preview_
+- [ ] B1–B8 failure injection — _ready to run (env unblocked)_
 - [x] B9 env startup check — ✅ verified live 2026-06-23
-- [ ] C env parity — _action required: set Preview env vars (above)_
+- [x] C env parity — ✅ fixed + verified live 2026-06-23
