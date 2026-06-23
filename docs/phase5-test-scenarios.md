@@ -60,6 +60,19 @@ Each row corresponds to a hard invariant. Inject the failure, observe, assert.
 ## Status log
 _(fill in per run, with preview URL + date)_
 
-- [ ] A1–A7 lifecycle — _pending first preview run_
-- [ ] B1–B9 failure injection — _pending_
-- [ ] C env parity — _pending (service-role key on Preview)_
+Preview: `wyber-ai-git-builder-robustness-sumeet-sutar-s-projects.vercel.app`
+
+- **2026-06-23 — first preview probe (admin@reconsignal.com session):**
+  - ✅ **B9 (env)** — startup check fired on the live preview: `🛑 [env] MISSING CRITICAL ENV VARS`
+    logged on first serverless boot. Phase 6 verified in production.
+  - ❌ **BLOCKED: C (env parity)** — Preview is missing critical Supabase env vars, so `/api/assist`
+    and every authed route return 500 (the Supabase client throws without URL/ANON_KEY). The builder
+    can't authenticate on Preview until these are set. **This blocks A1–A7 and B1–B8.**
+  - **Unblock (Vercel dashboard → wyber-ai → Settings → Environment Variables → scope: Preview /
+    "All Preview branches"):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+    `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY` (+ recommended `SECRETS_ENCRYPTION_KEY`,
+    `NEXT_PUBLIC_APP_URL`, `CRON_SECRET`). Then redeploy this branch.
+- [ ] A1–A7 lifecycle — _blocked on env parity above_
+- [ ] B1–B8 failure injection — _blocked on env parity above_
+- [x] B9 env startup check — ✅ verified live 2026-06-23
+- [ ] C env parity — _action required: set Preview env vars (above)_
