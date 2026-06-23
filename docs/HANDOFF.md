@@ -6,12 +6,13 @@ branch are the shared brain.** Read both before starting.
 
 ---
 
-## ⏩ Kickoff prompt for the next session (paste this)
-> Read `docs/HANDOFF.md` and `docs/builder-robustness-plan.md`. We're making the WyberAi builder robust
-> (it currently treats every chat message as a build — charges credits, shows a build loader, and loops
-> on recreating files). The branch is `builder/robustness`. Start with **Phase 2 (credit safety)**, then
-> **Phase 1 (intent router)**. Don't merge to main until the Phase 5 test scenarios pass against a Vercel
-> preview with real data + real Supabase.
+## ✅ All phases 1–6 implemented (code-complete). What's left is the LIVE merge gate.
+> Read `docs/HANDOFF.md`, `docs/builder-robustness-plan.md`, and `docs/phase5-test-scenarios.md`. The
+> builder-robustness work (Phases 1–6) is all committed on `builder/robustness`. The remaining task is
+> to **run the Phase 5 live scenario suite** (lifecycle E2E + failure injection, scenarios A/B/C in
+> `docs/phase5-test-scenarios.md`) against a **Vercel preview with a real test account + real connected
+> Supabase**, fill in the status log, and only then merge to `main`. Also add `SUPABASE_SERVICE_ROLE_KEY`
+> to the Preview env (still Production-only — blocks the admin/credit path on previews).
 
 ---
 
@@ -64,7 +65,33 @@ branch are the shared brain.** Read both before starting.
   - **Known follow-up:** `handleSend` still early-returns when `credits <= 0`, which blocks free chat
     when out of credits. Consider allowing the CHAT lane at 0 credits (invariant already holds since
     chat never charges). Left as-is to avoid touching the disabled-input UX.
-- **Not started:** Phases 3, 4, 5, 6 (see the plan).
+- **Phase 3 (context & memory) — DONE:**
+  - `ChatPanel.tsx` — `collectImportedPaths`/`resolveSpecifier` follow imports (relative, `@/`, `src/`)
+    from the top-scored files so the model SEES helper files (lib/api, Auth, hooks) it used to be blind
+    to and recreate. Context = top-6 by keyword + imported files, capped at 14.
+  - History window 6→10 messages; server per-message cap 2000→4000 chars. (History carries cleaned chat
+    recaps, not file blocks, so the cap was never truncating code.)
+- **Phase 4 (honest state) — DONE:**
+  - `getSupabaseContext` returns `{ context, status }` (`none|ok|error`); surfaced via
+    `X-Supabase-Status` header. `ChatPanel` shows a "couldn't reach your connected Supabase" warning on
+    `error` instead of silently building with no DB.
+  - `PreviewPanel` rebuild key now hashes file content (djb2) instead of keying on length, so
+    same-length edits still rebuild.
+- **Phase 6 (env hardening) — DONE (code):**
+  - `src/lib/env.ts` (`checkEnv`/`reportEnv`) + `src/instrumentation.ts` `register()` — logs missing
+    env vars loudly at server boot (critical vs recommended). Verified locally (prints the verdict).
+    Does NOT throw (won't take down healthy routes). **Still manual:** add `SUPABASE_SERVICE_ROLE_KEY`
+    to Preview in the Vercel dashboard + set shared vars to "All Preview branches."
+- **Phase 5 (testing) — partially DONE:**
+  - Unit suite (Vitest): `src/lib/intent.test.ts` (32) + `src/lib/env.test.ts` (3) = **35 passing**.
+    `npm test`; CI in `.github/workflows/test.yml`. No `tsc` gate (project has
+    `ignoreBuildErrors:true` + many pre-existing type errors).
+  - **Live scenario suite NOT yet run** — `docs/phase5-test-scenarios.md` has the A/B/C matrix. This is
+    the merge gate; needs a preview with real account + Supabase.
+  - Side fix: `og/route.ts` held JSX under a `.ts` extension (fatal parse error masking all other type
+    errors) → renamed newer OG image to `route.tsx`, removed stale duplicate.
+- **Remaining before merge to `main`:** run Phase 5 live scenarios (A/B/C), add Preview env var, fill the
+  status log, then merge.
 
 ## The bug that triggered all this (context)
 A real test: user built a QA app, then asked "Connect Supabase". The agent looped forever re-creating
