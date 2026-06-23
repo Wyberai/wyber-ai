@@ -477,6 +477,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const xSource = res.headers.get('X-Source');
       const creditsUsed = res.headers.get('X-Credits-Used');
       const modelUsed = res.headers.get('X-Model-Used');
+      // Honest DB state: the server connected (or tried to) the user's Supabase.
+      // 'error' = a connector exists but we couldn't reach/use it — warn instead
+      // of letting the app silently build with no working database.
+      const supabaseStatus = res.headers.get('X-Supabase-Status');
       if (creditsUsed) setLastCreditCost(parseInt(creditsUsed));
       if (modelUsed) setLastModel(modelUsed);
 
@@ -620,6 +624,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
           filesChanged: newFiles.map(f => f.path),
         });
         persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+      }
+
+      // Honest DB warning — connector exists but the server couldn't use it.
+      if (supabaseStatus === 'error' && !opts?.silent) {
+        setTimeout(() => {
+          addMessage({
+            id: uid(), role: 'assistant',
+            content: "⚠ I couldn't reach your connected Supabase project, so this build doesn't have a working database. Check your keys in the Connectors tab, then ask me to rebuild the data layer.",
+            timestamp: Date.now(), status: 'done',
+          });
+        }, 300);
       }
 
     } catch (err: unknown) {

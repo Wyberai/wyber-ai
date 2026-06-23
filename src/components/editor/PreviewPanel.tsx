@@ -22,6 +22,15 @@ interface SelectedEl {
   classes: string
 }
 
+// Cheap, stable content hash (djb2). Used to detect when a file actually changed
+// — keying the rebuild on content LENGTH alone misses same-length edits (e.g.
+// swapping one word for another of equal length), leaving a stale preview.
+function hashStr(s: string): number {
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
+  return h
+}
+
 export function PreviewPanel() {
   const { files, isGenerating, project, hydrated } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
@@ -48,7 +57,7 @@ export function PreviewPanel() {
 
   const build = useCallback(async () => {
     if (!hasApp || building) return
-    const key = Object.keys(files).sort().map(p => `${p}:${(files[p] as any)?.content?.length ?? 0}`).join('|')
+    const key = Object.keys(files).sort().map(p => `${p}:${hashStr((files[p] as any)?.content ?? '')}`).join('|')
     if (key === lastBuiltKey.current && html) return
     lastBuiltKey.current = key
 
@@ -105,7 +114,7 @@ export function PreviewPanel() {
 
   useEffect(() => {
     if (!hydrated || !hasApp || isGenerating) return
-    const key = Object.keys(files).sort().map(p => `${p}:${(files[p] as any)?.content?.length ?? 0}`).join('|')
+    const key = Object.keys(files).sort().map(p => `${p}:${hashStr((files[p] as any)?.content ?? '')}`).join('|')
     if (key === lastBuiltKey.current) return
     if (autoBuildTimer.current) clearTimeout(autoBuildTimer.current)
     autoBuildTimer.current = setTimeout(() => {

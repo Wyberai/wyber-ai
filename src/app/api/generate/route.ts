@@ -724,8 +724,9 @@ function isValidMime(m: string): m is ValidMime {
   return ['image/jpeg','image/png','image/gif','image/webp'].includes(m)
 }
 
-async function getSupabaseContext(projectId: string, projectType?: string): Promise<string> {
-  if (!projectId) return ''
+type SupabaseStatus = 'none' | 'ok' | 'error'
+async function getSupabaseContext(projectId: string, projectType?: string): Promise<{ context: string; status: SupabaseStatus }> {
+  if (!projectId) return { context: '', status: 'none' }
   try {
     // Use service-role client so RLS doesn't block this server-side lookup
     const { createServiceClient } = await import('@/lib/supabase/server')
@@ -738,10 +739,12 @@ async function getSupabaseContext(projectId: string, projectType?: string): Prom
       .eq('project_id', projectId)
       .eq('service', 'supabase')
       .single()
-    if (!data) return ''
+    if (!data) return { context: '', status: 'none' }
     const url = data.config?.url || ''
     let anonKey = data.api_key || ''
-    if (!url || !anonKey) return ''
+    // A connector row exists but the creds are missing/unreadable → the user
+    // tried to connect Supabase but it's broken. Report 'error', don't pretend.
+    if (!url || !anonKey) return { context: '', status: 'error' }
 
     // Decrypt if stored encrypted (iv:authTag:ciphertext format)
     if (anonKey.split(':').length === 3) {
@@ -750,7 +753,7 @@ async function getSupabaseContext(projectId: string, projectType?: string): Prom
 
     // ── React Native / Expo mobile context ──────────────────────────────────
     if (projectType === 'mobile') {
-      return `
+      return { status: 'ok', context: `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SUPABASE IS CONNECTED — USE IT FOR EVERYTHING (REACT NATIVE)
@@ -825,11 +828,11 @@ create policy "Users manage own items" on items for all
 [x] Sign out accessible when logged in
 [x] All data fetches inside useEffect scoped to logged-in user
 [x] SQL block at the end
-`
+` }
     }
 
     // ── Web (React / Next.js) context — unchanged ────────────────────────────
-    return `
+    return { status: 'ok', context: `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SUPABASE IS CONNECTED — USE IT FOR EVERYTHING
@@ -903,8 +906,8 @@ Before finishing, confirm your generated app has:
 [x] Sign out button when user is logged in
 [x] All data fetches scoped to the logged-in user
 [x] SQL block at the end
-`
-  } catch { return '' }
+` }
+  } catch { return { context: '', status: 'error' } }
 }
 
 // Refund credits when a generation fails or produces nothing.
@@ -1151,7 +1154,9 @@ ${code}
     const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
-    const supabaseContext = projectId ? await getSupabaseContext(projectId, projectType) : ''
+    const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
+    const supabaseContext = supabaseResult.context
+    const supabaseStatus = supabaseResult.status
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
@@ -1332,6 +1337,7 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
         'X-Model-Used': usedModel,
         'X-Credits-Used': String(cost),
         'X-Credits-Tier': resolvedTier,
+        'X-Supabase-Status': supabaseStatus,
       },
     })
   } catch (err) {
