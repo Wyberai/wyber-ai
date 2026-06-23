@@ -12,6 +12,7 @@ interface Employee {
   tools: string[]; schedule_type: string; schedule_hour: number; schedule_day: number
   is_active: boolean; last_run_at: string | null; next_run_at: string | null
   created_at: string; company_context?: string; kpis?: Kpi[]; kpi_values?: Record<string, number>
+  email_address?: string | null
   onboarding_completed: boolean; ai_employee_runs?: Run[]
 }
 interface Run {
@@ -250,6 +251,15 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
                 )}
               </div>
               <p style={{ fontSize:13, color:'#52525b', margin:0 }}>{employee.role} · {scheduleLabel(employee)}</p>
+              {employee.email_address && (
+                <button
+                  type="button"
+                  title="Copy email — assign tool accounts (Gong, HubSpot, Zoom…) to this address, or email it directly to give your employee work."
+                  onClick={() => { navigator.clipboard?.writeText(employee.email_address!); showToast('Email copied') }}
+                  style={{ display:'inline-flex', alignItems:'center', gap:6, marginTop:6, padding:'3px 9px', borderRadius:8, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.25)', color:'#0EA5E9', fontSize:12, fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}>
+                  <span style={{ fontSize:12 }}>✉</span>{employee.email_address}<span style={{ fontSize:10, opacity:0.7 }}>copy</span>
+                </button>
+              )}
             </div>
           </div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
