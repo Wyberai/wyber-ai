@@ -591,6 +591,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
 
+      // Honest-error: a truly empty stream (no text at all) means the model produced
+      // nothing. The server refunds this case (`!emittedAny` → settleRefund), so tell
+      // the user the truth instead of a misleading "Done." and reassure on billing.
+      const emittedNothing = full.trim().length === 0;
+      if (emittedNothing && newFiles.length === 0 && editBlocks.length === 0) {
+        if (!opts?.silent) {
+          const errMsg = "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again.";
+          updateMessage(assistantId, { content: errMsg, status: 'error' });
+          persistMessage('assistant', errMsg);
+        }
+        return;
+      }
+
       // Always run through cleanMessage so stored content is already scrubbed
       const finalContent = cleanMessage(chatText) || 'Done.';
       if (!opts?.silent) {

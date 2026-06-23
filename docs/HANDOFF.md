@@ -29,10 +29,22 @@ branch are the shared brain.** Read both before starting.
   - `ChatPanel.tsx` — self-heal (autofix) runs are capped at `MAX_AUTOFIX = 2` per user turn
     (`autofixCountRef`), reset at the start of each non-silent generation, so a broken build can't loop
     and drain credits.
-  - **Still TODO in Phase 2:** client honest-error when a result is empty (don't show "Done." —
-    say "something went wrong, you weren't charged"); audit the ~15 other credit-deducting routes
-    (`build-from-template`, `agents/run`, `ai-employees/[id]/run`, `flows`, `gtm/*`, `deploy`, `export`)
-    for the same deduct-without-refund pattern.
+  - **Client honest-error (DONE):** `ChatPanel.tsx` `executeGeneration` now detects a truly-empty
+    stream (`full.trim()===''` and no files/edits) and shows an error bubble — "Something went wrong …
+    you weren't charged" — instead of the misleading "Done." This aligns with the server's
+    `!emittedAny → settleRefund` refund.
+  - **Other credit-route audit (DONE):**
+    - `build-from-template` — confirmed free (0 credits); no refund needed.
+    - `canvas/run` (flows) — deducted `perNode × aiNodeCount` up front but never refunded failed
+      nodes. Added a post-run refund for every `aiagent` node with `status==='error'`
+      (`credit_usage` reason `canvas-execution-refund`).
+    - `agents/run` — deducts `ITER_COST` before each Anthropic call. Added a `refundCredits` helper +
+      wrapped both calls (initial + loop) in try/catch that refunds the just-paid iteration and
+      rethrows if the call fails (reason `agent-execution-refund`).
+    - `ai-employees/[id]/run` — delegates to the canvas/flow runner for spend, so it inherits the
+      canvas/run refund; no separate deduct to fix.
+  - **Still TODO in Phase 2:** none of the high-risk routes remain; if more deduct-without-refund
+    paths surface (gtm/*, deploy, export currently don't deduct), apply the same pattern.
 - **Not started:** Phases 1, 3, 4, 5, 6 (see the plan).
 
 ## The bug that triggered all this (context)
