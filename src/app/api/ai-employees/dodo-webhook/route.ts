@@ -84,8 +84,9 @@ export async function POST(req: NextRequest) {
   try { evt = JSON.parse(raw) } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }) }
 
   const type = String(evt.type ?? '')
-  // Only act on a successful payment / activated subscription.
-  if (type !== 'payment.succeeded' && type !== 'subscription.active') {
+  const ACTIVATE = ['payment.succeeded', 'subscription.active']
+  const DEACTIVATE = ['subscription.cancelled', 'subscription.canceled', 'subscription.on_hold', 'subscription.expired']
+  if (!ACTIVATE.includes(type) && !DEACTIVATE.includes(type)) {
     return NextResponse.json({ ok: true, ignored: type })
   }
 
@@ -95,6 +96,26 @@ export async function POST(req: NextRequest) {
   const email = String(data.customer_email ?? (data.customer as { email?: string })?.email ?? '')
 
   const db = createServiceClient()
+
+  // ── Cancellation / non-payment: pause the employee ─────────────────────────
+  if (DEACTIVATE.includes(type)) {
+    let target: { id: string; employee_id?: string } | null = null
+    if (refId) {
+      const { data: r } = await db.from('employee_hire_requests').select('id, employee_id').eq('id', refId).maybeSingle()
+      target = r
+    }
+    if (!target && email) {
+      const { data: r } = await db.from('employee_hire_requests')
+        .select('id, employee_id').ilike('requester_email', email).eq('status', 'active')
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      target = r
+    }
+    if (target?.employee_id) {
+      await db.from('ai_employees').update({ is_active: false }).eq('id', target.employee_id)
+      await db.from('employee_hire_requests').update({ status: 'cancelled' }).eq('id', target.id)
+    }
+    return NextResponse.json({ ok: true, deactivated: !!target?.employee_id })
+  }
 
   // Find the pending request: by our reference id first, else most-recent
   // pending_payment for this customer email.

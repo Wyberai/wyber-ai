@@ -186,6 +186,20 @@ export default function AIEmployeesPage() {
           <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Hire AI department heads that connect your tools, run tasks, and report back. Chat with them like colleagues.</p>
         </div>
 
+        {/* Featured employee of the week */}
+        <Link href="/ai-employees/marketing-manager" style={{ display: 'block', textDecoration: 'none', marginBottom: 32 }}>
+          <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, border: '1px solid #2a2030', background: 'linear-gradient(110deg, #16101c, #111115 60%)', padding: '26px 28px', display: 'flex', alignItems: 'center', gap: 22 }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(420px 200px at 12% 0%, rgba(232,121,249,0.18), transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(232,121,249,0.14)', border: '2px solid rgba(232,121,249,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0, position: 'relative' }}>📣</div>
+            <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#e879f9', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>★ Featured · New this week</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: "'Sora', sans-serif", letterSpacing: '-0.02em' }}>Meet Marcus — your AI Marketing Manager</div>
+              <div style={{ fontSize: 13, color: '#a1a1aa', marginTop: 4 }}>12 years experience · runs campaigns, commands a fleet of marketing agents, reports like a VP.</div>
+            </div>
+            <div style={{ position: 'relative', fontSize: 13, fontWeight: 700, color: '#fff', background: SKY, padding: '10px 20px', borderRadius: 10, whiteSpace: 'nowrap', flexShrink: 0 }}>Meet him →</div>
+          </div>
+        </Link>
+
         {loadError && (
           <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 10, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', fontSize: 13, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>{loadError}</span>
