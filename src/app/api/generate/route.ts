@@ -907,7 +907,35 @@ Before finishing, confirm your generated app has:
   } catch { return '' }
 }
 
+// Refund credits when a generation fails or produces nothing.
+// The money invariant: never charge a customer for an empty/failed build.
+// Idempotent-ish via the caller's `settled` guard — only ever called once per request.
+async function refundCredits(userId: string, amount: number, reason: string): Promise<void> {
+  if (!userId || amount <= 0) return
+  try {
+    const admin = await createAdminClient()
+    const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
+    const current = prof?.credits ?? 0
+    await admin.from('profiles')
+      .update({ credits: current + amount, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+    admin.from('credit_usage').insert({
+      user_id: userId, amount: -amount, reason: `refund:${reason}`,
+      credits_before: current, credits_after: current + amount,
+    }).then(() => {}).catch(() => {})
+  } catch (e) { console.error('[refund] failed', e) }
+}
+
 export async function POST(req: NextRequest) {
+  // Tracks credits actually deducted so any failure path can refund exactly once.
+  let deductedCost = 0
+  let creditsSettled = false
+  let refundUserId = ''
+  const settleRefund = async (reason: string) => {
+    if (creditsSettled || deductedCost <= 0) return
+    creditsSettled = true
+    await refundCredits(refundUserId, deductedCost, reason)
+  }
   try {
     const body = await req.json()
     const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType } = body
@@ -971,6 +999,10 @@ export async function POST(req: NextRequest) {
       if (deductErr || !updated) {
         return new Response(JSON.stringify({ error: 'Insufficient credits' }), { status: 402 })
       }
+
+      // Record what we took so any failure/empty path can refund it.
+      deductedCost = cost
+      refundUserId = user.id
 
       // Log usage (fire-and-forget)
       admin.from('credit_usage').insert({
@@ -1194,6 +1226,8 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
     // Try Anthropic primary, fallback to Vertex AI Gemini on failure
     let usedModel = model
     let readable: ReadableStream<Uint8Array>
+    // If the stream produces no text at all, the build failed — refund.
+    let emittedAny = false
 
     const encoder = new TextEncoder()
     const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
@@ -1217,11 +1251,16 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
           try {
             for await (const event of stream) {
               if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                emittedAny = true
                 controller.enqueue(encoder.encode(event.delta.text))
               }
             }
           } catch (err) { console.error('Stream error:', err) }
-          finally { controller.close() }
+          finally {
+            controller.close()
+            // No text emitted → generation failed; give the credits back.
+            if (!emittedAny) await settleRefund('empty-generation')
+          }
         },
       })
     } catch (anthropicErr) {
@@ -1273,12 +1312,15 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
                 try {
                   const parsed = JSON.parse(json) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
                   const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                  if (text) controller.enqueue(encoder.encode(text))
+                  if (text) { emittedAny = true; controller.enqueue(encoder.encode(text)) }
                 } catch { /* skip malformed SSE */ }
               }
             }
           } catch (err) { console.error('Gemini stream error:', err) }
-          finally { controller.close() }
+          finally {
+            controller.close()
+            if (!emittedAny) await settleRefund('empty-generation')
+          }
         },
       })
     }
@@ -1293,6 +1335,8 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
       },
     })
   } catch (err) {
+    // Hard failure before/at stream setup → refund whatever we deducted.
+    await settleRefund('generation-error')
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
   }
 }

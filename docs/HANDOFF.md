@@ -22,7 +22,18 @@ branch are the shared brain.** Read both before starting.
     stops recreating files it can't see (kills the recreate loop).
   - `src/app/api/generate/route.ts` — **prompt rules 7–9** in `outputRule`: don't recreate existing
     files, answer questions conversationally, always recap + suggest a next step.
-- **Not started:** Phases 1–6 (see the plan).
+- **Phase 2 (credit safety) — STARTED:**
+  - `generate/route.ts` — `refundCredits()` helper + `settleRefund()` guard. Credits are now refunded
+    on (a) hard error before/at stream setup, (b) empty stream (no text emitted) on both the Anthropic
+    and Gemini paths. Tracked via `deductedCost`/`creditsSettled`, refunded exactly once.
+  - `ChatPanel.tsx` — self-heal (autofix) runs are capped at `MAX_AUTOFIX = 2` per user turn
+    (`autofixCountRef`), reset at the start of each non-silent generation, so a broken build can't loop
+    and drain credits.
+  - **Still TODO in Phase 2:** client honest-error when a result is empty (don't show "Done." —
+    say "something went wrong, you weren't charged"); audit the ~15 other credit-deducting routes
+    (`build-from-template`, `agents/run`, `ai-employees/[id]/run`, `flows`, `gtm/*`, `deploy`, `export`)
+    for the same deduct-without-refund pattern.
+- **Not started:** Phases 1, 3, 4, 5, 6 (see the plan).
 
 ## The bug that triggered all this (context)
 A real test: user built a QA app, then asked "Connect Supabase". The agent looped forever re-creating

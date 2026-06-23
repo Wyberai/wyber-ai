@@ -145,6 +145,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
   const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => Promise<void>) | null>(null);
+  // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
+  const autofixCountRef = useRef(0);
+  const MAX_AUTOFIX = 2;
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
 
@@ -233,6 +236,12 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     const autofixHandler = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (!detail?.prompt) return
+      // Stop runaway self-heal: cap consecutive autofix passes per user turn.
+      if (autofixCountRef.current >= MAX_AUTOFIX) {
+        console.warn('[wyber] self-heal retry cap reached — stopping to protect credits')
+        return
+      }
+      autofixCountRef.current += 1
       executeGenerationRef.current?.(detail.prompt, null, { silent: true })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
@@ -360,6 +369,8 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => {
     // Clear any stale progress steps from a previous generation before starting
     setProgressSteps([]);
+    // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
+    if (!opts?.silent) autofixCountRef.current = 0;
 
     // Snapshot current files for undo BEFORE generation
     if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
