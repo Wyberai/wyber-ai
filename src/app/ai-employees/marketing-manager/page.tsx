@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { MARKETING_MANAGER as M, MM_SCENARIO_COUNT } from '@/lib/ai-employees/marketing-manager-profile'
 
@@ -7,7 +8,7 @@ const BG = '#0b0d12', CARD = '#111115', BORDER = '#1e1e26', TEXT = '#e4e4e7', MU
 const ACCENT = M.color // magenta
 const SKY = '#0EA5E9'
 
-const hireUrl = `/ai-employees/new?roleSlug=${M.slug}`
+const hireUrl = `/ai-employees/roles/${M.slug}/hire`
 const interviewUrl = `/ai-employees/roles/${M.slug}/interview`
 
 function Stat({ value, label }: { value: string; label: string }) {
@@ -20,6 +21,10 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 export default function MarketingManagerPage() {
+  const [price, setPrice] = useState<{ priceLabel: string; label: string; hot: boolean } | null>(null)
+  useEffect(() => {
+    fetch(`/api/ai-employees/pricing?role=${M.slug}`).then(r => r.ok ? r.json() : null).then(d => d && setPrice(d)).catch(() => {})
+  }, [])
   return (
     <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: "'Space Grotesk', sans-serif" }}>
       {/* Nav */}
@@ -47,7 +52,14 @@ export default function MarketingManagerPage() {
             <Link href={hireUrl} style={{ padding: '15px 36px', borderRadius: 12, background: SKY, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: `0 8px 30px ${SKY}40` }}>Hire {M.name} →</Link>
             <Link href={interviewUrl} style={{ padding: '15px 28px', borderRadius: 12, background: 'transparent', color: TEXT, fontSize: 16, fontWeight: 600, textDecoration: 'none', border: `1px solid ${BORDER}` }}>Interview him first</Link>
           </div>
-          <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginTop: 48, flexWrap: 'wrap' }}>
+          {price && (
+            <div style={{ marginTop: 18, fontSize: 14, color: MUTED }}>
+              from <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{price.priceLabel}</span>
+              {price.hot && <span style={{ marginLeft: 10, color: '#fbbf24', fontSize: 12, fontWeight: 600 }}>🔥 in demand</span>}
+              <span style={{ display: 'block', fontSize: 12, color: DIM, marginTop: 4 }}>{price.label}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginTop: 40, flexWrap: 'wrap' }}>
             <Stat value={`${M.years} yrs`} label="Experience" />
             <Stat value={`${M.tools.reduce((n, g) => n + g.tools.length, 0)}+`} label="Tools he works with" />
             <Stat value={`${MM_SCENARIO_COUNT}+`} label="Things he does" />

@@ -50,7 +50,8 @@ function NewEmployeePage() {
     if (roleSlug) {
       const r = getRoleBySlug(roleSlug)
       if (r) {
-        setName(r.title)
+        // Leave the NAME blank — the user names their own instance (avoids 10
+        // identical "Marcus" hires). Role is the position; name is the person.
         setRole(r.title)
         setEmoji(r.emoji)
         setInstructions(`${r.description}\n\n${r.systemPromptExtra}`)
