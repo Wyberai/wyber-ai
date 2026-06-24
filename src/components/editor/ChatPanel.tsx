@@ -433,6 +433,14 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
     if (!opts?.silent) autofixCountRef.current = 0;
 
+    // Out of credits → block builds/edits (self-heal is free, so let it through).
+    // Conversational messages never reach here; they go through handleConversational.
+    if (!opts?.silent && credits <= 0) {
+      addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+      addMessage({ id: uid(), role: 'assistant', content: "You're out of credits, so I can't build or edit right now — but questions are still free. Top up to keep building.", timestamp: Date.now(), status: 'done' });
+      return;
+    }
+
     // Snapshot current files for undo BEFORE generation
     if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
 
@@ -828,7 +836,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
   }, [files, messages, addMessage, updateMessage, persistMessage, executeGeneration]);
 
   const handleSend = useCallback(async () => {
-    if ((!input.trim() && !attachedImage) || isGenerating || credits <= 0) return;
+    // No credits<=0 gate here — conversational messages are FREE, so the box
+    // stays usable at 0 credits. The build/edit path is blocked separately in
+    // executeGeneration with a clear "out of credits" message.
+    if ((!input.trim() && !attachedImage) || isGenerating) return;
     const userMsg = input.trim();
     const img = attachedImage;
     setInput('');
@@ -1333,8 +1344,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={credits <= 0 ? 'No credits — upgrade to continue' : planMode ? 'Plan mode active — describe what to build...' : pendingGenArgs ? 'Add your keys above, or click "Build without backend"' : 'Ask anything or describe what you want to build...'}
-            disabled={isGenerating || credits <= 0 || !!pendingPlan || !!pendingGenArgs}
+            placeholder={credits <= 0 ? 'No credits — questions are free; top up to build' : planMode ? 'Plan mode active — describe what to build...' : pendingGenArgs ? 'Add your keys above, or click "Build without backend"' : 'Ask anything or describe what you want to build...'}
+            disabled={isGenerating || !!pendingPlan || !!pendingGenArgs}
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:12, color:'var(--ide-text)', lineHeight:1.55, minHeight:40, maxHeight:140, overflowY:'auto', letterSpacing:'-0.01em' }}
           />
@@ -1363,12 +1374,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <button
               onClick={handleSend}
               data-send-button="true"
-              disabled={(!input.trim() && !attachedImage) || isGenerating || credits <= 0 || !!pendingPlan || !!pendingGenArgs}
+              disabled={(!input.trim() && !attachedImage) || isGenerating || !!pendingPlan || !!pendingGenArgs}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
-                background: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--bg-overlay)' : 'var(--accent)',
-                color: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'var(--ide-text3)' : 'white',
-                cursor: (!input.trim() && !attachedImage) || isGenerating || credits <= 0 ? 'not-allowed' : 'pointer',
+                background: (!input.trim() && !attachedImage) || isGenerating ? 'var(--bg-overlay)' : 'var(--accent)',
+                color: (!input.trim() && !attachedImage) || isGenerating ? 'var(--ide-text3)' : 'white',
+                cursor: (!input.trim() && !attachedImage) || isGenerating ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s',
               }}
             >
