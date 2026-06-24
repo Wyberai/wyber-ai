@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client';
 import { Profile, Project } from '@/lib/supabase/types';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
-import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
 import { ImportModal } from '@/components/dashboard/ImportModal';
 import { WyberLogo } from '@/components/shared/WyberLogo'
@@ -453,12 +452,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                   </Link>
                 ))}
               </div>
-
-              {view === 'all' && (
-                <div style={{ marginTop: 36 }}>
-                  <TemplatesShowcase userId={profile?.id} />
-                </div>
-              )}
             </>
           ) : view !== 'all' ? (
             /* Filtered view (Web/Mobile) with no matching projects — no templates, just a build CTA */
@@ -480,15 +473,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><IconEmpty /></div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No projects yet</div>
-                <div style={{ fontSize: 14, marginBottom: 16 }}>Describe your first app above, or start from a template below</div>
+                <div style={{ fontSize: 14, marginBottom: 16 }}>Describe your first app in the box above and watch it build.</div>
                 <button onClick={() => setShowImport(true)}
                   style={{ padding: '8px 18px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   Import existing project
                 </button>
-              </div>
-              <div style={{ marginTop: 24 }}>
-                <TemplatesShowcase userId={profile?.id} />
               </div>
             </>
           )}
