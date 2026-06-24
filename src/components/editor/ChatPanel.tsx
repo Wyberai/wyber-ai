@@ -627,8 +627,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const c = typeof file === 'string' ? file : (file as any)?.content
         if (c && (c.includes('<<<<<<<') || c.includes('=======') || c.includes('>>>>>>>'))) {
           const cleaned = c.replace(/^<<<<<<<.*$/gm, '').replace(/^=======\s*$/gm, '').replace(/^>>>>>>>.*$/gm, '')
+          // Write a NEW object — store file objects are frozen (Immer), so
+          // mutating `file.content` in place throws "Cannot assign to read only
+          // property 'content'". Replace the entry instead.
           if (typeof file === 'string') updatedFiles[path] = cleaned
-          else (file as any).content = cleaned
+          else updatedFiles[path] = { ...(file as any), content: cleaned }
         }
       }
       // 4. Persist if anything changed
