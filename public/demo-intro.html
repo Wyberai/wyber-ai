@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WyberAi — Demo Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --brand:#0EA5E9; --purple:#a855f7; --green:#22c55e; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#09090b; overflow:hidden; font-family:'Space Grotesk',sans-serif; color:#fafafa; }
+  .stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  .frame { width:min(100vw,177.78vh); height:min(56.25vw,100vh); position:relative; overflow:hidden;
+           background:radial-gradient(ellipse 80% 55% at 50% 45%, rgba(14,165,233,0.10) 0%, transparent 62%); }
+  .scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+           opacity:0; transform:scale(0.985); transition:opacity 0.6s ease, transform 0.6s ease; text-align:center; padding:0 6%; }
+  .scene.active { opacity:1; transform:none; }
+  h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; line-height:1.05; }
+  .grad { background:linear-gradient(135deg,var(--brand),var(--purple)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { color:#a1a1aa; margin-top:2.4vh; font-size:2.2vh; }
+
+  #s1 h1 { font-size:8vh; }
+  #s1 .logo { display:flex; align-items:center; gap:1.4vh; margin-bottom:3vh; }
+  #s1 .mark { width:7vh; height:7vh; border-radius:1.6vh; background:var(--brand); display:flex; align-items:center; justify-content:center; }
+  #s1 .mark svg { width:4.6vh; height:4.6vh; }
+
+  .prompt-box { width:min(72%,820px); background:rgba(16,18,26,0.92); border:1px solid rgba(255,255,255,0.08);
+                border-radius:1.6vh; padding:3vh 3vh 2.4vh; text-align:left; box-shadow:0 1.5vh 6vh rgba(0,0,0,0.55); }
+  .prompt-label { font-size:1.6vh; color:#52525b; margin-bottom:1.4vh; }
+  .typed { font-size:3vh; font-weight:500; min-height:4vh; }
+  .caret { display:inline-block; width:2px; height:3vh; background:var(--brand); vertical-align:-0.4vh; animation:blink 1s steps(1) infinite; }
+  .send { margin-top:2.6vh; display:inline-flex; align-items:center; gap:1vh; background:var(--brand); color:#fff;
+          font-weight:700; font-size:1.8vh; padding:1.3vh 2.4vh; border-radius:1.1vh; }
+
+  .build { width:min(68%,720px); text-align:left; }
+  .step { display:flex; align-items:center; gap:1.6vh; padding:1.5vh 2vh; margin-bottom:1.4vh; border-radius:1.2vh;
+          background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+          opacity:0; transform:translateY(1.6vh); transition:opacity 0.45s ease, transform 0.45s ease; }
+  .active .step { opacity:1; transform:none; }
+  .active #b2 { transition-delay:0.5s; } .active #b3 { transition-delay:1.0s; } .active #b4 { transition-delay:1.5s; }
+  .step .dot { width:3vh; height:3vh; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+               background:rgba(34,197,94,0.15); border:1px solid var(--green); color:var(--green); font-size:1.8vh; }
+  .step .txt { font-size:2vh; font-weight:500; }
+  .step .meta { font-size:1.5vh; color:#52525b; }
+
+  .url { display:inline-flex; align-items:center; gap:1.4vh; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3);
+         color:var(--green); font-size:2.4vh; font-weight:600; padding:1.6vh 2.8vh; border-radius:1.2vh; margin-top:3vh; }
+  .pulse { width:1.4vh; height:1.4vh; border-radius:50%; background:var(--green); animation:pulse 1.4s infinite; }
+
+  #s5 h1 { font-size:7vh; }
+  #s5 .cta { margin-top:3.4vh; font-size:2.2vh; color:#71717a; }
+  #s5 .badge { margin-top:2.4vh; display:inline-block; font-size:1.7vh; color:var(--purple); border:1px solid rgba(168,85,247,0.35);
+               padding:1vh 2vh; border-radius:2vh; }
+
+  @keyframes blink { 50%{opacity:0} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+  <div class="stage"><div class="frame">
+
+    <div class="scene" id="s1">
+      <div class="logo">
+        <div class="mark"><svg viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg></div>
+        <span style="font-family:'Sora';font-weight:800;font-size:5vh;">WyberAi</span>
+      </div>
+      <h1>Vibe code with <span class="grad">AI</span></h1>
+      <div class="sub">From idea to live app — no code, one prompt.</div>
+    </div>
+
+    <div class="scene" id="s2">
+      <div class="prompt-box">
+        <div class="prompt-label">Describe the app you want to build…</div>
+        <div class="typed"><span id="type"></span><span class="caret"></span></div>
+        <div class="send">Build it — it's free →</div>
+      </div>
+    </div>
+
+    <div class="scene" id="s3">
+      <div class="build">
+        <div class="step" id="b1"><div class="dot">✓</div><div><div class="txt">Generating React code</div><div class="meta">14 files · Tailwind CSS</div></div></div>
+        <div class="step" id="b2"><div class="dot">✓</div><div><div class="txt">Provisioning database</div><div class="meta">Supabase schema · auth wired</div></div></div>
+        <div class="step" id="b3"><div class="dot">✓</div><div><div class="txt">Self-healing build</div><div class="meta">errors fixed automatically</div></div></div>
+        <div class="step" id="b4"><div class="dot">✓</div><div><div class="txt">Deploying to a live URL</div><div class="meta">one click · Vercel</div></div></div>
+      </div>
+    </div>
+
+    <div class="scene" id="s4">
+      <h1>Shipped in <span class="grad">minutes</span>.</h1>
+      <div class="url"><span class="pulse"></span>your-app.wyberai.app · LIVE</div>
+    </div>
+
+    <div class="scene" id="s5">
+      <h1>Your next app is<br><span class="grad">one prompt away.</span></h1>
+      <div class="cta">wyberai.com · 50 free credits · no card</div>
+      <div class="badge">New AI employee every Monday →</div>
+    </div>
+
+  </div></div>
+
+  <script>
+    var phrase = "A CRM with a pipeline board and a dashboard";
+    var typeEl = document.getElementById('type');
+    var typeTimer;
+    function typeIt(){
+      clearTimeout(typeTimer); typeEl.textContent=''; var i=0;
+      (function tick(){ if(i<=phrase.length){ typeEl.textContent = phrase.slice(0,i); i++; typeTimer=setTimeout(tick,65);} })();
+    }
+    var scenes = ['s1','s2','s3','s4','s5'];
+    var holds  = [3000, 4200, 5200, 3600, 3800]; // ms each scene stays
+    function show(idx){
+      scenes.forEach(function(id){ document.getElementById(id).classList.toggle('active', id===scenes[idx]); });
+      if(scenes[idx]==='s2') typeIt();
+    }
+    function run(){
+      var t=0;
+      scenes.forEach(function(_,idx){ setTimeout(function(){ show(idx); }, t); t+=holds[idx]; });
+      setTimeout(run, t); // loop seamlessly
+    }
+    run();
+  </script>
+</body>
+</html>
