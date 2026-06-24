@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { sanitizeFiles } from '@/lib/sanitize-files'
 
 function slugify(name: string): string {
   return name
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
     const buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: project.files, projectId }),
+      body: JSON.stringify({ files: sanitizeFiles(project.files || {}), projectId }),
     })
 
     const buildData = await buildRes.json()

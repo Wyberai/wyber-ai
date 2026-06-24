@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
+import { sanitizeFiles } from '@/lib/sanitize-files'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -79,7 +80,7 @@ export function PreviewPanel() {
       const res = await fetch(`${BUILDER_URL}/build`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files, projectId: project?.id }),
+        body: JSON.stringify({ files: sanitizeFiles(files as Record<string, { content?: string; language?: string }>), projectId: project?.id }),
       })
 
       const data = await res.json()
