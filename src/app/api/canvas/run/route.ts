@@ -622,8 +622,9 @@ export async function POST(req: NextRequest) {
 
     // ── Credit pre-flight for AI nodes ───────────────────────────────
     const aiNodeCount = nodes.filter(n => n.type === 'aiagent').length
+    const perNodeCost = creditCost('execution', 'default')
     if (aiNodeCount > 0) {
-      const runCost = creditCost('execution', 'default') * aiNodeCount
+      const runCost = perNodeCost * aiNodeCount
       const admin = await createAdminClient()
       const { data: profile } = await admin.from('profiles').select('credits').eq('id', user.id).single()
       const balance = profile?.credits ?? 0
@@ -731,6 +732,27 @@ export async function POST(req: NextRequest) {
       const { data: flowMeta } = await db.from('flows').select('name').eq('id', sourceId).single()
       flowName = flowMeta?.name ?? 'Workflow'
       db.rpc('increment_flow_run_count', { flow_id: sourceId }).catch(() => {})
+    }
+
+    // ── Refund AI nodes that errored ─────────────────────────────────
+    // We charge perNodeCost for every aiagent node up front. Any AI node that
+    // failed produced no value, so give those credits back (credit invariant:
+    // never charge for nothing).
+    if (aiNodeCount > 0) {
+      const failedAiNodes = steps.filter(s => s.nodeType === 'aiagent' && s.status === 'error').length
+      const refund = failedAiNodes * perNodeCost
+      if (refund > 0) {
+        try {
+          const refundAdmin = await createAdminClient()
+          const { data: cur } = await refundAdmin.from('profiles').select('credits').eq('id', user.id).single()
+          const curBal = cur?.credits ?? 0
+          await refundAdmin.from('profiles').update({ credits: curBal + refund, updated_at: new Date().toISOString() }).eq('id', user.id)
+          refundAdmin.from('credit_usage').insert({
+            user_id: user.id, amount: -refund, reason: 'canvas-execution-refund',
+            credits_before: curBal, credits_after: curBal + refund,
+          }).then(() => {}).catch(() => {})
+        } catch (e) { console.error('[canvas/run] refund failed', e) }
+      }
     }
 
     const hasError = steps.some(s => s.status === 'error')

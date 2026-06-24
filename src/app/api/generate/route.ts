@@ -724,8 +724,9 @@ function isValidMime(m: string): m is ValidMime {
   return ['image/jpeg','image/png','image/gif','image/webp'].includes(m)
 }
 
-async function getSupabaseContext(projectId: string, projectType?: string): Promise<string> {
-  if (!projectId) return ''
+type SupabaseStatus = 'none' | 'ok' | 'error'
+async function getSupabaseContext(projectId: string, projectType?: string): Promise<{ context: string; status: SupabaseStatus }> {
+  if (!projectId) return { context: '', status: 'none' }
   try {
     // Use service-role client so RLS doesn't block this server-side lookup
     const { createServiceClient } = await import('@/lib/supabase/server')
@@ -738,10 +739,12 @@ async function getSupabaseContext(projectId: string, projectType?: string): Prom
       .eq('project_id', projectId)
       .eq('service', 'supabase')
       .single()
-    if (!data) return ''
+    if (!data) return { context: '', status: 'none' }
     const url = data.config?.url || ''
     let anonKey = data.api_key || ''
-    if (!url || !anonKey) return ''
+    // A connector row exists but the creds are missing/unreadable → the user
+    // tried to connect Supabase but it's broken. Report 'error', don't pretend.
+    if (!url || !anonKey) return { context: '', status: 'error' }
 
     // Decrypt if stored encrypted (iv:authTag:ciphertext format)
     if (anonKey.split(':').length === 3) {
@@ -750,7 +753,7 @@ async function getSupabaseContext(projectId: string, projectType?: string): Prom
 
     // ── React Native / Expo mobile context ──────────────────────────────────
     if (projectType === 'mobile') {
-      return `
+      return { status: 'ok', context: `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SUPABASE IS CONNECTED — USE IT FOR EVERYTHING (REACT NATIVE)
@@ -825,11 +828,11 @@ create policy "Users manage own items" on items for all
 [x] Sign out accessible when logged in
 [x] All data fetches inside useEffect scoped to logged-in user
 [x] SQL block at the end
-`
+` }
     }
 
     // ── Web (React / Next.js) context — unchanged ────────────────────────────
-    return `
+    return { status: 'ok', context: `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SUPABASE IS CONNECTED — USE IT FOR EVERYTHING
@@ -903,14 +906,42 @@ Before finishing, confirm your generated app has:
 [x] Sign out button when user is logged in
 [x] All data fetches scoped to the logged-in user
 [x] SQL block at the end
-`
-  } catch { return '' }
+` }
+  } catch { return { context: '', status: 'error' } }
+}
+
+// Refund credits when a generation fails or produces nothing.
+// The money invariant: never charge a customer for an empty/failed build.
+// Idempotent-ish via the caller's `settled` guard — only ever called once per request.
+async function refundCredits(userId: string, amount: number, reason: string): Promise<void> {
+  if (!userId || amount <= 0) return
+  try {
+    const admin = await createAdminClient()
+    const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
+    const current = prof?.credits ?? 0
+    await admin.from('profiles')
+      .update({ credits: current + amount, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+    admin.from('credit_usage').insert({
+      user_id: userId, amount: -amount, reason: `refund:${reason}`,
+      credits_before: current, credits_after: current + amount,
+    }).then(() => {}).catch(() => {})
+  } catch (e) { console.error('[refund] failed', e) }
 }
 
 export async function POST(req: NextRequest) {
+  // Tracks credits actually deducted so any failure path can refund exactly once.
+  let deductedCost = 0
+  let creditsSettled = false
+  let refundUserId = ''
+  const settleRefund = async (reason: string) => {
+    if (creditsSettled || deductedCost <= 0) return
+    creditsSettled = true
+    await refundCredits(refundUserId, deductedCost, reason)
+  }
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -931,8 +962,10 @@ export async function POST(req: NextRequest) {
       : 'small-edit'
     const cost = creditCost(actionType, tier)
 
-    // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens)
-    if (stage !== 'plan') {
+    // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
+    // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
+    // skip deduction entirely — honoring the "self-healing is always free" promise.
+    if (stage !== 'plan' && !selfHeal) {
       const admin = await createAdminClient()
       const { data: profile } = await admin
         .from('profiles')
@@ -971,6 +1004,10 @@ export async function POST(req: NextRequest) {
       if (deductErr || !updated) {
         return new Response(JSON.stringify({ error: 'Insufficient credits' }), { status: 402 })
       }
+
+      // Record what we took so any failure/empty path can refund it.
+      deductedCost = cost
+      refundUserId = user.id
 
       // Log usage (fire-and-forget)
       admin.from('credit_usage').insert({
@@ -1095,10 +1132,10 @@ ${code}
 
     const trimmedHistory = (history || [])
       .filter((m: { content: string }) => m.content && !m.content.startsWith('[Image:'))
-      .slice(-6)
+      .slice(-10)
       .map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
-        content: m.content.slice(0, 2000)
+        content: m.content.slice(0, 4000)
       }))
 
     type MessageContent = string | Array<{
@@ -1119,10 +1156,12 @@ ${code}
     const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
-    const supabaseContext = projectId ? await getSupabaseContext(projectId, projectType) : ''
+    const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
+    const supabaseContext = supabaseResult.context
+    const supabaseStatus = supabaseResult.status
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
-    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.'
+    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
     
     const wyberDNA = '' // merged into system prompt
     // ── Staged generation modes ──
@@ -1194,6 +1233,8 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
     // Try Anthropic primary, fallback to Vertex AI Gemini on failure
     let usedModel = model
     let readable: ReadableStream<Uint8Array>
+    // If the stream produces no text at all, the build failed — refund.
+    let emittedAny = false
 
     const encoder = new TextEncoder()
     const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
@@ -1217,11 +1258,16 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
           try {
             for await (const event of stream) {
               if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                emittedAny = true
                 controller.enqueue(encoder.encode(event.delta.text))
               }
             }
           } catch (err) { console.error('Stream error:', err) }
-          finally { controller.close() }
+          finally {
+            controller.close()
+            // No text emitted → generation failed; give the credits back.
+            if (!emittedAny) await settleRefund('empty-generation')
+          }
         },
       })
     } catch (anthropicErr) {
@@ -1273,12 +1319,15 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
                 try {
                   const parsed = JSON.parse(json) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
                   const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                  if (text) controller.enqueue(encoder.encode(text))
+                  if (text) { emittedAny = true; controller.enqueue(encoder.encode(text)) }
                 } catch { /* skip malformed SSE */ }
               }
             }
           } catch (err) { console.error('Gemini stream error:', err) }
-          finally { controller.close() }
+          finally {
+            controller.close()
+            if (!emittedAny) await settleRefund('empty-generation')
+          }
         },
       })
     }
@@ -1288,11 +1337,14 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'X-Model-Used': usedModel,
-        'X-Credits-Used': String(cost),
+        'X-Credits-Used': String(selfHeal ? 0 : cost),
         'X-Credits-Tier': resolvedTier,
+        'X-Supabase-Status': supabaseStatus,
       },
     })
   } catch (err) {
+    // Hard failure before/at stream setup → refund whatever we deducted.
+    await settleRefund('generation-error')
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
   }
 }

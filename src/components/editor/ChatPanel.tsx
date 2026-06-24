@@ -7,10 +7,67 @@ import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
+import { classifyIntent } from '@/lib/intent';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
+
+// Resolve a local import specifier (relative, `@/`, or `src/`) to an existing
+// file path. Bare module specifiers (node_modules) return null.
+function resolveSpecifier(spec: string, fromPath: string, pathSet: Set<string>): string | null {
+  let base: string;
+  if (spec.startsWith('.')) {
+    const dir = fromPath.split('/').slice(0, -1);
+    for (const p of spec.split('/')) {
+      if (p === '.' || p === '') continue;
+      else if (p === '..') dir.pop();
+      else dir.push(p);
+    }
+    base = dir.join('/');
+  } else if (spec.startsWith('@/')) {
+    base = 'src/' + spec.slice(2);
+  } else if (spec.startsWith('src/')) {
+    base = spec;
+  } else {
+    return null;
+  }
+  for (const e of ['', '.tsx', '.ts', '.jsx', '.js', '.vue', '.css']) {
+    if (pathSet.has(base + e)) return base + e;
+  }
+  for (const e of ['/index.tsx', '/index.ts', '/index.jsx', '/index.js']) {
+    if (pathSet.has(base + e)) return base + e;
+  }
+  return null;
+}
+
+// Shallow-transitively collect files imported by the seed files. This lets the
+// model SEE helper files (lib/api, Auth, hooks) that the relevant files import,
+// instead of being blind to them and recreating them every edit (the loop bug).
+function collectImportedPaths(seeds: string[], allPaths: string[], getContent: (p: string) => string, maxExtra = 8): string[] {
+  const pathSet = new Set(allPaths);
+  const found = new Set<string>();
+  const seen = new Set(seeds);
+  const queue = [...seeds];
+  const importRe = /(?:from\s+|import\s+)['"]([^'"]+)['"]/g;
+  while (queue.length && found.size < maxExtra) {
+    const cur = queue.shift()!;
+    const content = getContent(cur);
+    if (!content) continue;
+    let m: RegExpExecArray | null;
+    importRe.lastIndex = 0;
+    while ((m = importRe.exec(content)) !== null) {
+      const resolved = resolveSpecifier(m[1], cur, pathSet);
+      if (resolved && !seen.has(resolved)) {
+        seen.add(resolved);
+        found.add(resolved);
+        queue.push(resolved);
+        if (found.size >= maxExtra) break;
+      }
+    }
+  }
+  return [...found];
+}
 
 function cleanMessage(text: string): string {
   let t = text;
@@ -124,6 +181,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
   const [lastModel, setLastModel] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  // Intent router: when a message is conversational (a question/confirmation),
+  // we show a lightweight "Thinking…" indicator instead of the build loader and
+  // route to /api/assist — no credits, no file parsing.
+  const [chatThinking, setChatThinking] = useState(false);
 
   // ── Pre-gen dep gate state ──────────────────────────────────────────────
   // When deps are detected, we pause before generation and show a connect UI.
@@ -145,6 +206,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
   const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => Promise<void>) | null>(null);
+  // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
+  const autofixCountRef = useRef(0);
+  const MAX_AUTOFIX = 2;
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
 
@@ -233,6 +297,12 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     const autofixHandler = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (!detail?.prompt) return
+      // Stop runaway self-heal: cap consecutive autofix passes per user turn.
+      if (autofixCountRef.current >= MAX_AUTOFIX) {
+        console.warn('[wyber] self-heal retry cap reached — stopping to protect credits')
+        return
+      }
+      autofixCountRef.current += 1
       executeGenerationRef.current?.(detail.prompt, null, { silent: true })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
@@ -357,16 +427,24 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   }, [files, modelTier, resolvedUserId, resolvedProjectId, setFiles, setHasGeneratedFiles, saveProject, addMessage, persistMessage, setStreamingContent])
 
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; echoedUser?: boolean }) => {
     // Clear any stale progress steps from a previous generation before starting
     setProgressSteps([]);
+    // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
+    if (!opts?.silent) autofixCountRef.current = 0;
 
     // Snapshot current files for undo BEFORE generation
     if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
 
-    consumeCredit();
+    // Self-heal/autofix runs (silent) are FREE — they repair work the user
+    // already paid for. Skip the optimistic client decrement; the server is
+    // told `selfHeal: true` below and skips the deduction entirely.
+    const isSelfHeal = !!opts?.silent;
+    if (!isSelfHeal) consumeCredit();
     const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
-    if (!opts?.silent) {
+    // echoedUser: the conversational lane already added the user's bubble before
+    // it decided this was actually a build — don't duplicate it.
+    if (!opts?.silent && !opts?.echoedUser) {
       addMessage({ id: uid(), role:'user', content: userContent, timestamp:Date.now(), status:'done' });
       persistMessage('user', userContent);
     }
@@ -402,13 +480,30 @@ const storeProjectId = useEditorStore.getState().project?.id;
       return { path, content: (f as any).content, score };
     });
     const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
+    // Pull in helper files imported by the top files (lib/api, Auth, hooks…) so
+    // the model can edit them instead of recreating them. Capped to keep the
+    // context bounded.
+    const fileMap: Record<string, string> = {};
+    for (const [p, f] of allFileEntries) fileMap[p] = (f as any).content ?? '';
+    const seedPaths = topFiles.map(f => f.path);
+    const importedPaths = collectImportedPaths(seedPaths, allFileEntries.map(([p]) => p), p => fileMap[p] ?? '', 8);
+    const contextPaths = [...new Set([...seedPaths, ...importedPaths])].slice(0, 14);
+    const contextFiles = contextPaths.map(p => ({ path: p, content: fileMap[p] ?? '' }));
+    // Full manifest of EVERY existing file path. Without this the model only sees the
+    // top-6 scored files, so on follow-up edits it can't see helper files (lib/api,
+    // Auth, etc.) that App.tsx imports — and recreates them every turn in an infinite
+    // loop. Listing all paths tells it what already exists so it edits instead.
+    const allPaths = allFileEntries.map(([p]) => p);
+    const manifest = allPaths.length
+      ? `EXISTING FILES (already created — DO NOT recreate these; edit them if a change is needed):\n${allPaths.map(p => `- ${p}`).join('\n')}\n\n`
+      : '';
     // Send FULL content of the most relevant files so the model can produce exact-match
     // SEARCH/REPLACE diffs. Truncating breaks diff editing (model can't match what it can't see).
-    const fileContext = topFiles.map(({path, content}) => {
+    const fileContext = manifest + contextFiles.map(({path, content}) => {
       const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
       return `<file path="${path}">\n${body}\n</file>`;
     }).join('\n\n');
-    const history = messages.filter(m => m.status==='done').slice(-6).map(m => ({ role:m.role, content:m.content }));
+    const history = messages.filter(m => m.status==='done').slice(-10).map(m => ({ role:m.role, content:m.content }));
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
     let knowledgeStr = knowledge || '';
@@ -431,7 +526,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           prompt: userMsg || 'Build a UI matching this screenshot exactly.',
           framework, fileContext, history, knowledge: knowledgeStr, modelTier,
           userId: resolvedUserId, projectId: resolvedProjectId,
-          projectType,
+          projectType, selfHeal: isSelfHeal,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
         }),
       });
@@ -451,6 +546,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const xSource = res.headers.get('X-Source');
       const creditsUsed = res.headers.get('X-Credits-Used');
       const modelUsed = res.headers.get('X-Model-Used');
+      // Honest DB state: the server connected (or tried to) the user's Supabase.
+      // 'error' = a connector exists but we couldn't reach/use it — warn instead
+      // of letting the app silently build with no working database.
+      const supabaseStatus = res.headers.get('X-Supabase-Status');
       if (creditsUsed) setLastCreditCost(parseInt(creditsUsed));
       if (modelUsed) setLastModel(modelUsed);
 
@@ -528,8 +627,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const c = typeof file === 'string' ? file : (file as any)?.content
         if (c && (c.includes('<<<<<<<') || c.includes('=======') || c.includes('>>>>>>>'))) {
           const cleaned = c.replace(/^<<<<<<<.*$/gm, '').replace(/^=======\s*$/gm, '').replace(/^>>>>>>>.*$/gm, '')
+          // Write a NEW object — store file objects are frozen (Immer), so
+          // mutating `file.content` in place throws "Cannot assign to read only
+          // property 'content'". Replace the entry instead.
           if (typeof file === 'string') updatedFiles[path] = cleaned
-          else (file as any).content = cleaned
+          else updatedFiles[path] = { ...(file as any), content: cleaned }
         }
       }
       // 4. Persist if anything changed
@@ -572,6 +674,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
 
+      // Honest-error: a truly empty stream (no text at all) means the model produced
+      // nothing. The server refunds this case (`!emittedAny` → settleRefund), so tell
+      // the user the truth instead of a misleading "Done." and reassure on billing.
+      const emittedNothing = full.trim().length === 0;
+      if (emittedNothing && newFiles.length === 0 && editBlocks.length === 0) {
+        if (!opts?.silent) {
+          const errMsg = "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again.";
+          updateMessage(assistantId, { content: errMsg, status: 'error' });
+          persistMessage('assistant', errMsg);
+        }
+        return;
+      }
+
       // Always run through cleanMessage so stored content is already scrubbed
       const finalContent = cleanMessage(chatText) || 'Done.';
       if (!opts?.silent) {
@@ -581,6 +696,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
           filesChanged: newFiles.map(f => f.path),
         });
         persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+      }
+
+      // Honest DB warning — connector exists but the server couldn't use it.
+      if (supabaseStatus === 'error' && !opts?.silent) {
+        setTimeout(() => {
+          addMessage({
+            id: uid(), role: 'assistant',
+            content: "⚠ I couldn't reach your connected Supabase project, so this build doesn't have a working database. Check your keys in the Connectors tab, then ask me to rebuild the data layer.",
+            timestamp: Date.now(), status: 'done',
+          });
+        }, 300);
       }
 
     } catch (err: unknown) {
@@ -630,6 +756,76 @@ const storeProjectId = useEditorStore.getState().project?.id;
     setPendingGenArgs(null);
     await executeGeneration(prompt, img);
   }, [pendingGenArgs, inlineSecrets, executeGeneration]);
+
+  /**
+   * Conversational lane: questions, confirmations, greetings. Hits /api/assist,
+   * which deducts no credits and parses no files. If `forceChat` is false the
+   * server may decide the message is actually a build/edit — in that case it
+   * returns X-Assist-Intent: action and we route to executeGeneration instead.
+   */
+  const handleConversational = useCallback(async (userMsg: string, img: AttachedImage | null, forceChat: boolean) => {
+    const hasFiles = Object.keys(files ?? {}).length > 0;
+    // Echo the user's message immediately (always correct to show their own text).
+    addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+    persistMessage('user', userMsg);
+
+    // Lightweight context: full file manifest so replies are accurate.
+    const allPaths = Object.keys(files ?? {});
+    const manifest = allPaths.length
+      ? `EXISTING FILES:\n${allPaths.map(p => `- ${p}`).join('\n')}`
+      : '';
+    const history = messages.filter(m => m.status === 'done').slice(-6).map(m => ({ role: m.role, content: m.content }));
+
+    setChatThinking(true);
+    try {
+      const res = await fetch('/api/assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userMsg, fileContext: manifest, history, hasFiles, forceChat }),
+      });
+
+      if (!res.ok) throw new Error(await res.text());
+
+      // The server reclassified this as a real build/edit → hand to the build lane.
+      if (res.headers.get('X-Assist-Intent') === 'action') {
+        setChatThinking(false);
+        await executeGeneration(userMsg, img, { echoedUser: true });
+        return;
+      }
+
+      // Stream the conversational reply into a fresh assistant bubble.
+      const assistantId = uid();
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let full = '';
+      let created = false;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        full += decoder.decode(value, { stream: true });
+        if (!created && full.trim()) {
+          setChatThinking(false);
+          addMessage({ id: assistantId, role: 'assistant', content: full, timestamp: Date.now(), status: 'done' });
+          created = true;
+        } else if (created) {
+          updateMessage(assistantId, { content: full });
+        }
+      }
+      if (!created) {
+        // Empty reply — degrade gracefully, still no charge.
+        setChatThinking(false);
+        addMessage({ id: assistantId, role: 'assistant', content: 'Sorry, I didn’t catch that — could you rephrase?', timestamp: Date.now(), status: 'done' });
+        full = 'Sorry, I didn’t catch that — could you rephrase?';
+      }
+      persistMessage('assistant', full);
+    } catch (err) {
+      setChatThinking(false);
+      const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Could not reach the assistant'}`;
+      addMessage({ id: uid(), role: 'assistant', content: errMsg, timestamp: Date.now(), status: 'error' });
+    } finally {
+      setChatThinking(false);
+    }
+  }, [files, messages, addMessage, updateMessage, persistMessage, executeGeneration]);
 
   const handleSend = useCallback(async () => {
     if ((!input.trim() && !attachedImage) || isGenerating || credits <= 0) return;
@@ -693,8 +889,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
     // ───────────────────────────────────────────────────────────────────
 
+    // ── Intent router ───────────────────────────────────────────────────
+    // Images always build (screenshot-to-app). Otherwise classify: CHAT and
+    // AMBIGUOUS go to the conversational lane (no credits, no build loader);
+    // EDIT/BUILD go straight to generation.
+    if (!img) {
+      const intent = classifyIntent(userMsg, !isNewBuild);
+      if (intent === 'CHAT' || intent === 'AMBIGUOUS') {
+        await handleConversational(userMsg, img, intent === 'CHAT');
+        return;
+      }
+    }
+
     await executeGeneration(userMsg, img);
-  }, [input, attachedImage, isGenerating, credits, planMode, files, executeGeneration]);
+  }, [input, attachedImage, isGenerating, credits, planMode, files, executeGeneration, handleConversational]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -1026,6 +1234,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
                 {buildMsg} {elapsed > 0 && `(${elapsed}s)`}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {chatThinking && (
+          <div style={{ padding:'4px 12px' }}>
+            <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
+              <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
+                <svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
+                <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
+                Thinking…
               </div>
             </div>
           </div>

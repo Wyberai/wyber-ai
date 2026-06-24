@@ -5,32 +5,80 @@ export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const title = searchParams.get('title') || 'Web, Mobile, Agents, Workflows'
-  const sub = searchParams.get('sub') || 'From idea to running product, in plain English'
+  const title = searchParams.get('title') || 'Build. Think. Act.'
+  const desc = searchParams.get('desc') || 'Apps. Agents. Automations. One platform.'
 
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: '#09090b', padding: '60px 72px', fontFamily: 'sans-serif', justifyContent: 'space-between' }}>
-        {/* Gradient */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, #0EA5E9, #8b5cf6)' }} />
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          justifyContent: 'flex-end',
+          background: '#09090b',
+          padding: '64px 72px',
+          fontFamily: 'sans-serif',
+        }}
+      >
+        {/* Grid pattern */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
+          display: 'flex',
+        }} />
+        {/* Glow */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, width: '60%', height: '60%',
+          background: 'radial-gradient(ellipse at 0% 0%, rgba(14,165,233,0.25) 0%, transparent 70%)',
+          display: 'flex',
+        }} />
+
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 14,
+            background: '#0EA5E9',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+              <path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
+            </svg>
           </div>
-          <span style={{ fontSize: 24, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
+          <span style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em' }}>
+            WyberAi
+          </span>
         </div>
-        {/* Content */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ fontSize: 56, fontWeight: 800, color: '#fafafa', lineHeight: 1.1, letterSpacing: '-0.04em', maxWidth: 900 }}>{title}</div>
-          <div style={{ fontSize: 24, color: '#71717a' }}>{sub}</div>
+
+        {/* Title */}
+        <div style={{ fontSize: 56, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 20, maxWidth: 800 }}>
+          {title}
         </div>
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 16, color: '#52525b' }}>wyberai.com</span>
-          <div style={{ padding: '8px 20px', borderRadius: 20, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', fontSize: 16, fontWeight: 700, color: '#0EA5E9' }}>
-            Start free → 50 credits/month
-          </div>
+
+        {/* Desc */}
+        <div style={{ fontSize: 24, color: '#71717a', marginBottom: 48, maxWidth: 700 }}>
+          {desc}
+        </div>
+
+        {/* Pills */}
+        <div style={{ display: 'flex', gap: 12 }}>
+          {['Apps', 'Agents', 'Automations'].map(p => (
+            <div key={p} style={{
+              padding: '8px 20px', borderRadius: 999,
+              background: 'rgba(14,165,233,0.12)',
+              border: '1px solid rgba(14,165,233,0.3)',
+              fontSize: 16, fontWeight: 700, color: '#0EA5E9',
+            }}>{p}</div>
+          ))}
+        </div>
+
+        {/* URL */}
+        <div style={{ position: 'absolute', top: 48, right: 72, fontSize: 18, color: '#3f3f46', fontWeight: 500 }}>
+          wyberai.com
         </div>
       </div>
     ),

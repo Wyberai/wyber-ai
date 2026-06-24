@@ -1,0 +1,22 @@
+name: test
+
+on:
+  push:
+    branches: [main, 'builder/**']
+  pull_request:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # NB: the project ships with `typescript.ignoreBuildErrors: true` and has
+      # pre-existing type errors, so a `tsc --noEmit` gate would be a false red.
+      # We gate on the unit suite (intent router + env invariants) instead.
+      - name: Unit tests
+        run: npm test

@@ -86,6 +86,24 @@ export async function POST(req: NextRequest) {
       return true
     }
 
+    // Helper: give credits back when a deducted Anthropic call never produced a
+    // result (it threw). Credit invariant: never charge for nothing.
+    async function refundCredits(amount: number, reason: string): Promise<void> {
+      if (amount <= 0) return
+      const before = creditBalance
+      const { data: updated } = await admin
+        .from('profiles')
+        .update({ credits: creditBalance + amount, updated_at: new Date().toISOString() })
+        .eq('id', user.id)
+        .select('credits')
+        .single()
+      if (updated) creditBalance = updated.credits
+      admin.from('credit_usage').insert({
+        user_id: user.id, amount: -amount, reason,
+        credits_before: before, credits_after: creditBalance,
+      }).then(() => {}).catch(() => {})
+    }
+
     // Get agent definition
     const { data: agent, error: agentErr } = await admin
       .from('agent_workflows')
@@ -204,13 +222,20 @@ Execute now. Return a structured summary of what you did and what you found.`
     // ── Initial Anthropic call — deduct before calling ────────────────────────
     await deductCredits(ITER_COST)
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      system: systemPrompt,
-      tools: claudeTools,
-      messages: [{ role: 'user', content: input || 'Execute the agent workflow now.' }],
-    })
+    let response: Anthropic.Message
+    try {
+      response = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        system: systemPrompt,
+        tools: claudeTools,
+        messages: [{ role: 'user', content: input || 'Execute the agent workflow now.' }],
+      })
+    } catch (callErr) {
+      // The call we just paid for never produced a result → refund it.
+      await refundCredits(ITER_COST, 'agent-execution-refund')
+      throw callErr
+    }
 
     // Process tool-use loop
     let messages: Anthropic.MessageParam[] = [
@@ -278,13 +303,19 @@ Execute now. Return a structured summary of what you did and what you found.`
         { role: 'user', content: toolResults },
       ]
 
-      currentResponse = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: systemPrompt,
-        tools: claudeTools,
-        messages,
-      })
+      try {
+        currentResponse = await anthropic.messages.create({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          system: systemPrompt,
+          tools: claudeTools,
+          messages,
+        })
+      } catch (callErr) {
+        // Refund the iteration we just paid for but couldn't complete.
+        await refundCredits(ITER_COST, 'agent-execution-refund')
+        throw callErr
+      }
     }
 
     // Extract final text response (may be partial if credits were exhausted)
