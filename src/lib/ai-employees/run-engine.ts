@@ -362,28 +362,33 @@ async function handleWyberTool(
   }
 
   if (toolName === 'WYBERAI_chat_agent') {
+    // Direct, self-contained: a quick reasoning/research assistant. (Previously
+    // routed to /api/canvas-chat, which expected a different shape → crashed.)
     try {
-      const res = await fetch(`${baseUrl}/api/canvas-chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Internal-User-Id': userId },
-        body: JSON.stringify({ message: input.message, context: input.context }),
+      const res = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: `${input.context ? `Context:\n${input.context}\n\n` : ''}${input.message as string}` }],
       })
-      const d = await res.json()
-      return { result: d.response ?? d.message ?? JSON.stringify(d).slice(0, 400) }
+      const text = res.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('\n')
+      return { result: text || 'No response produced.' }
     } catch (e) {
       return { result: `Agent chat failed: ${String(e)}` }
     }
   }
 
   if (toolName === 'WYBERAI_generate_content') {
+    // Produce the deliverable directly. (Previously hit /api/generate, which
+    // requires a browser session → 401 for an internal call.)
     try {
-      const res = await fetch(`${baseUrl}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Internal-User-Id': userId },
-        body: JSON.stringify({ prompt: input.prompt, type: input.type }),
+      const type = (input.type as string) || 'document'
+      const res = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: `Produce a polished, finished ${type} from this brief. Output only the deliverable itself (no preamble).\n\nBRIEF:\n${input.prompt as string}` }],
       })
-      const d = await res.json()
-      return { result: `Generated ${input.type}. ${d.url ? `URL: ${d.url}` : JSON.stringify(d).slice(0, 200)}` }
+      const text = res.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('\n')
+      return { result: `Generated ${type}:\n\n${text.slice(0, 5000)}` }
     } catch (e) {
       return { result: `Generation failed: ${String(e)}` }
     }
@@ -432,7 +437,20 @@ async function handleWyberTool(
     try {
       const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
       const channel = (input.channel as string) || 'general'
-      const result = await composio.tools.execute('SLACK_SENDS_A_MESSAGE_TO_A_SLACK_CHANNEL', {
+      // Resolve the correct Slack send-message slug dynamically — hardcoded slugs
+      // drift and break. Find the user's actual Slack "send/post message" tool.
+      let slug = 'SLACK_SEND_MESSAGE'
+      try {
+        const tools = await composio.tools.get(userId, { toolkits: ['SLACK'], limit: 50 })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const arr: any[] = Array.isArray(tools) ? tools : []
+        const found = arr.find(t => {
+          const n = String(t.function?.name ?? t.name ?? '').toUpperCase()
+          return n.includes('MESSAGE') && (n.includes('SEND') || n.includes('POST'))
+        })
+        if (found) slug = found.function?.name ?? found.name ?? slug
+      } catch { /* fall back to default slug */ }
+      await composio.tools.execute(slug, {
         userId,
         arguments: { channel, text: input.message as string },
         dangerouslySkipVersionCheck: true,
@@ -1117,7 +1135,7 @@ For "entities", only include people/accounts/campaigns genuinely worth rememberi
         reason: 'ai-employee-run',
         credits_before: profile.credits,
         credits_after: updated?.credits ?? profile.credits - creditsUsed,
-      }).then(() => {}).catch(() => {})
+      }).then(() => {}, () => {})
     }
 
     // ── Log KPIs ───────────────────────────────────────────────────────────────
@@ -1130,7 +1148,7 @@ For "entities", only include people/accounts/campaigns genuinely worth rememberi
           kpi_name: k.name,
           value: k.value,
         }))
-      ).then(() => {}).catch(() => {})
+      ).then(() => {}, () => {})
 
       // Update live kpi_values on the employee record
       const kpiValues: Record<string, number> = {}

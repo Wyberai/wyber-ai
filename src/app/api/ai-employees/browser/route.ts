@@ -9,24 +9,26 @@ function getInternalUserId(req: NextRequest): string | null {
   return req.headers.get('X-Internal-User-Id')
 }
 
+// Jina now requires an API key on s.jina.ai (search) and increasingly on
+// r.jina.ai (read). Attach it when present so search/read stop 401-ing.
+function jinaHeaders(): Record<string, string> {
+  const h: Record<string, string> = { Accept: 'text/plain' }
+  if (process.env.JINA_API_KEY) h.Authorization = `Bearer ${process.env.JINA_API_KEY}`
+  return h
+}
+
 async function jinaFetch(url: string): Promise<string> {
   const jinaUrl = `https://r.jina.ai/${url}`
-  const res = await fetch(jinaUrl, {
-    headers: { Accept: 'text/plain' },
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`)
+  const res = await fetch(jinaUrl, { headers: jinaHeaders(), signal: AbortSignal.timeout(15000) })
+  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}${res.status === 401 ? ' (set JINA_API_KEY)' : ''}`)
   const text = await res.text()
   return text.slice(0, 8000)
 }
 
 async function jinaSearch(query: string): Promise<string> {
   const searchUrl = `https://s.jina.ai/${encodeURIComponent(query)}`
-  const res = await fetch(searchUrl, {
-    headers: { Accept: 'text/plain' },
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!res.ok) throw new Error(`Search failed: ${res.status}`)
+  const res = await fetch(searchUrl, { headers: jinaHeaders(), signal: AbortSignal.timeout(15000) })
+  if (!res.ok) throw new Error(`Search failed: ${res.status}${res.status === 401 ? ' (set JINA_API_KEY)' : ''}`)
   const text = await res.text()
   return text.slice(0, 6000)
 }
