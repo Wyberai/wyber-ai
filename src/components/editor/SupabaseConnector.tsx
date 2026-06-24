@@ -167,8 +167,11 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
           </div>
         ) : picker ? (
           <div>
-            <div style={{ fontSize: 13, color: '#8b8b9a', marginBottom: 12 }}>
+            <div style={{ fontSize: 13, color: '#8b8b9a', marginBottom: 8 }}>
               Pick a Supabase project to link, or create a new one. We&apos;ll wire its URL + anon key into your app automatically.
+            </div>
+            <div style={{ fontSize: 11, color: '#a78bfa', background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.18)', borderRadius: 8, padding: '8px 10px', marginBottom: 12 }}>
+              These are the projects in the <strong>Supabase account you just authorized</strong> — make sure it&apos;s the account you want this app&apos;s data to live in. To use a different one, sign into that Supabase account first, then reconnect.
             </div>
             {pickerBusy && <div style={{ fontSize: 12, color: '#52526a', marginBottom: 10 }}>Working…</div>}
             {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{error}</div>}
