@@ -279,7 +279,7 @@ export default function PricingPage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/employees" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none', padding: '6px 12px', borderRadius: 7 }}>Browse employees</Link>
+          <Link href="/coming-soon?product=AI+Employees" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none', padding: '6px 12px', borderRadius: 7 }}>AI Employees</Link>
           {user
             ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
             : <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started →</Link>
@@ -318,7 +318,7 @@ export default function PricingPage() {
 
       {/* Plans grid */}
       <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
-        <div className="wyb-pricing-grid" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
+        <div className="wyb-pricing-grid" style={{ maxWidth: 960, margin: '0 auto', display: 'grid', gridTemplateColumns: `repeat(${PLANS.length}, 1fr)`, gap: 16 }}>
           {PLANS.map(plan => (
             <PlanCard key={plan.id} plan={plan} annual={annual} loading={loading} onCheckout={handleCheckout} />
           ))}
@@ -504,10 +504,12 @@ export default function PricingPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px,100%), 1fr))', gap: 14 }}>
             {[
-              { emoji: '🎓', title: 'Student Discount', desc: 'Enrolled in a university or bootcamp? Get 60% off any plan and double credits on every purchase with a valid .edu email.', color: '#3b82f6', reward: '60% off + 2x credits' },
-              { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get double credits on your next purchase. Because saving lives should be rewarded.', color: '#ef4444', reward: '2x credits on purchase' },
               { emoji: '📣', title: 'Build in Public', desc: 'Share what you built with WyberAI on Twitter/LinkedIn and get 50 free credits instantly.', color: BRAND, reward: '50 free credits' },
-              { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan. Verified through ID.me — we never see your medical records.', color: '#a855f7', reward: '50% off any plan' },
+              { emoji: '💼', title: 'Follow on LinkedIn', desc: 'Follow WyberAI on LinkedIn and get 25 bonus credits added to your account instantly.', color: '#0a66c2', reward: '25 free credits' },
+              { emoji: '👽', title: 'Follow on Reddit', desc: 'Join r/WyberAI and get 25 bonus credits instantly. Share builds, get feedback, grow with us.', color: '#ff4500', reward: '25 free credits' },
+              { emoji: '⭐', title: 'Review on TAAFT', desc: 'Leave an honest review on There’s An AI For That and get 50 bonus credits instantly.', color: '#22c55e', reward: '50 free credits' },
+              { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get double credits on your next purchase. Because saving lives should be rewarded.', color: '#ef4444', reward: '2x credits on purchase' },
+              { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan for people with disabilities. Reviewed manually — we never ask for medical records.', color: '#a855f7', reward: '50% off any plan' },
             ].map(p => (
               <Link key={p.title} href="/community-programs" style={{ textDecoration: 'none', background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 28 }}>{p.emoji}</div>

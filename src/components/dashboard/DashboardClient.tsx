@@ -23,6 +23,8 @@ const IconBolt = () => <svg width="14" height="14" viewBox="0 0 32 32" fill="non
 const IconPhone = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>;
 const IconZap = () => <svg width="15" height="15" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>;
 const IconArrowUp = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>;
+// Workflow / flow-diagram icon (nodes + connectors) — matches the Workflows concept on the marketing site.
+const IconWorkflow = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="9" width="6" height="6" rx="1.5"/><rect x="3" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h3a3 3 0 0 1 3 3M9 18h3a3 3 0 0 0 3-3"/></svg>;
 const IconChevronDown = ({ rotated }: { rotated?: boolean }) => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" style={{ transform: rotated ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}><path d="M6 9l6 6 6-6"/></svg>;
 const IconDot = () => <div style={{ width: 6, height: 6, borderRadius: 2, background: '#0EA5E9', flexShrink: 0 }} />;
 const IconTrash = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>;
@@ -86,6 +88,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [view, setView] = useState<'all' | 'web' | 'mobile'>('all');
   const searchParams = useSearchParams();
 
   // Deep-link: /dashboard?new=app|mobile|agent|workflow → open chooser
@@ -183,14 +186,21 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   };
 
   const NAV = [
-    { label: 'Home',         href: '/dashboard',        icon: <IconHome /> },
-    { label: 'Web Apps',     href: '/dashboard?new=app', icon: <IconTemplates /> },
-    { label: 'Mobile Apps',  href: '/dashboard?new=mobile', icon: <IconPhone /> },
+    { label: 'Home',         href: '/dashboard',        icon: <IconHome />,      view: 'all' as const },
+    { label: 'Web Apps',     href: '/dashboard',        icon: <IconTemplates />, view: 'web' as const },
+    { label: 'Mobile Apps',  href: '/dashboard',        icon: <IconPhone />,     view: 'mobile' as const },
     { label: 'AI Employees', href: '/ai-employees',     icon: <IconPeople />, soon: true },
-    { label: 'Workflows',    href: '/flows',            icon: <IconZap />, soon: true },
+    { label: 'Workflows',    href: '/flows',            icon: <IconWorkflow />, soon: true },
     { label: 'GTM Engine',   href: '/gtm',              icon: <IconAgents />, soon: true },
     { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
   ];
+
+  // Web Apps / Mobile Apps filter the project grid (web = anything not mobile).
+  const visibleProjects = view === 'all'
+    ? projects
+    : projects.filter(p => view === 'mobile'
+        ? (p as any).project_type === 'mobile'
+        : (p as any).project_type !== 'mobile');
 
   const ACCENT_PALETTE = ['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'];
   const accentFor = (n?: string) => ACCENT_PALETTE[Math.abs((n?.charCodeAt(0) ?? 0) % ACCENT_PALETTE.length)];
@@ -282,15 +292,28 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
         {/* Nav */}
         <nav style={{ padding: '8px', flex: 1, overflow: 'auto' }}>
-          {NAV.map((n: any) => (
-            <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
-              style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: MUTED, fontSize: 13, fontWeight: 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s', opacity: n.soon ? 0.6 : 1 }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = `rgba(255,255,255,0.05)`; (e.currentTarget as HTMLElement).style.color = TEXT }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = MUTED }}>
-              {n.icon}{n.label}
-              {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>SOON</span>}
-            </Link>
-          ))}
+          {NAV.map((n: any) => {
+            const isActive = n.view !== undefined && n.view === view;
+            const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: isActive ? TEXT : MUTED, fontSize: 13, fontWeight: isActive ? 600 : 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s', opacity: n.soon ? 0.6 : 1, background: isActive ? 'rgba(14,165,233,0.12)' : 'transparent', width: '100%', border: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' };
+            const hoverIn = (e: any) => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = TEXT } };
+            const hoverOut = (e: any) => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = MUTED } };
+            // View-switcher items (Home / Web Apps / Mobile Apps) filter the grid in-place.
+            if (n.view !== undefined) {
+              return (
+                <button key={n.label} style={rowStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}
+                  onClick={() => { setView(n.view); if (isMobile) setSidebarOpen(false); }}>
+                  {n.icon}{n.label}
+                </button>
+              );
+            }
+            return (
+              <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
+                style={rowStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+                {n.icon}{n.label}
+                {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>SOON</span>}
+              </Link>
+            );
+          })}
 
           {projects.length > 0 && <>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>Recent</div>
@@ -336,7 +359,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             What are we building, {name.split(' ')[0]}?
           </h1>
 
-          <div style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
+          <div data-tour="build" style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
             <div style={{ background: 'rgba(16,18,26,0.9)', backdropFilter: 'blur(20px)', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
               <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder="Describe the app you want to build..." rows={3}
@@ -368,25 +391,25 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
 
         {/* Projects + Templates */}
         <div style={{ flex: 1, padding: isMobile ? '16px 14px' : '24px 28px', overflowY: 'auto' }}>
-          {projects.length > 0 ? (
+          {visibleProjects.length > 0 ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>My Projects</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>{view === 'web' ? 'Web Apps' : view === 'mobile' ? 'Mobile Apps' : 'My Projects'}</h2>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => setShowImport(true)}
                     style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     Import
                   </button>
-                  <button onClick={() => openChooser()} disabled={creating}
+                  <button onClick={() => view === 'all' ? openChooser() : startProject(undefined, view === 'web' ? 'app' : 'mobile')} disabled={creating}
                     style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    + New Project
+                    {view === 'web' ? '+ New Web App' : view === 'mobile' ? '+ New Mobile App' : '+ New Project'}
                   </button>
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-                {projects.slice(0, 11).map(p => (
+                {visibleProjects.slice(0, 11).map(p => (
                   <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
                     <div style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.35)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.5)' }}
@@ -431,10 +454,27 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 ))}
               </div>
 
-              <div style={{ marginTop: 36 }}>
-                <TemplatesShowcase userId={profile?.id} />
-              </div>
+              {view === 'all' && (
+                <div style={{ marginTop: 36 }}>
+                  <TemplatesShowcase userId={profile?.id} />
+                </div>
+              )}
             </>
+          ) : view !== 'all' ? (
+            /* Filtered view (Web/Mobile) with no matching projects — no templates, just a build CTA */
+            <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>{view === 'mobile' ? <IconPhone /> : <IconTemplates />}</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No {view === 'mobile' ? 'mobile' : 'web'} apps yet</div>
+              <div style={{ fontSize: 14, marginBottom: 16 }}>
+                {view === 'mobile'
+                  ? 'Build a real React Native app — preview on your phone via QR, export for the App Store.'
+                  : 'Describe a web app and Wyber generates fresh React code, a database, and a live URL.'}
+              </div>
+              <button onClick={() => startProject(undefined, view === 'web' ? 'app' : 'mobile')} disabled={creating}
+                style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                {view === 'mobile' ? '+ Build a mobile app' : '+ Build a web app'}
+              </button>
+            </div>
           ) : (
             <>
               <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>

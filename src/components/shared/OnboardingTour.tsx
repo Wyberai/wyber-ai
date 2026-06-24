@@ -4,27 +4,27 @@ import { useState, useEffect, useRef } from 'react'
 const STEPS = [
   {
     title: 'Welcome to WyberAi 👋',
-    desc: 'Build apps, deploy AI agents, and create workflows — all with AI. Let us show you around.',
+    desc: 'Build production-ready web and mobile apps with AI — and soon, hire AI employees too. Here’s the 30-second tour.',
     target: null,
   },
   {
-    title: 'Start from a Template',
-    desc: 'Browse 100+ pre-built apps — CRM, dashboards, e-commerce. Click any to start building instantly.',
-    target: '[data-tour="templates"]',
+    title: 'Build a web app',
+    desc: 'Describe any web app in plain English. WyberAi writes fresh React code, wires up a database, and gives you a live URL — no templates, no boilerplate.',
+    target: '[data-tour="build"]',
   },
   {
-    title: '5,000 AI Agents',
-    desc: 'Pick from 5,000 pre-built AI agents. Click any agent to configure and run it automatically.',
-    target: '[data-tour="agents"]',
+    title: 'Build a mobile app',
+    desc: 'Same prompt box, real React Native apps. Preview on your phone via QR code, then export a ready-to-publish project for the App Store.',
+    target: '[data-tour="build"]',
   },
   {
-    title: 'Build Your Own App',
-    desc: 'Click "New Project" and describe any app in plain English. AI builds the full code instantly.',
-    target: '[data-tour="new-project"]',
+    title: 'A new AI employee every Monday',
+    desc: 'Starting Monday June 29 with the Marketing Manager, we release a new AI employee each week. It’s not a single agent — each employee commands 200+ agents and runs on its own schedule.',
+    target: null,
   },
   {
-    title: "You're Ready!",
-    desc: 'Start with a template or describe your own idea. Your app will be live in minutes.',
+    title: "You're ready!",
+    desc: 'Describe your first app in the box above and watch it build. It’ll be live in minutes.',
     target: null,
   },
 ]

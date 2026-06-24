@@ -442,10 +442,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>Add this DNS record:</span>
                       <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 11, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <span>Type: <strong style={{ color: 'var(--ide-text)' }}>CNAME</strong></span>
+                        <span>Type: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.type || 'CNAME'}</strong></span>
                         <span>Name: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.name || '@'}</strong></span>
-                        <span>Value: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.value || 'wyberai.com'}</strong></span>
+                        <span>Value: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.value || 'cname.vercel-dns.com'}</strong></span>
                       </div>
+                      {dnsInstructions?.record?.type === 'A' && (
+                        <span style={{ fontSize: 10, color: 'var(--ide-text2)' }}>Root domain — replace any existing A record. Keep MX (email) records as-is.</span>
+                      )}
                       <button
                         onClick={() => handleCustomDomain('verify')}
                         disabled={customDomainStatus === 'verifying'}

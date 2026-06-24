@@ -1,35 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
-// The CNAME target users need to point their domain to
-const WYBER_CNAME = 'wyberai.com'
+// Where users point their domain. Apex (root) domains cannot use a CNAME —
+// they must use an A record to Vercel's anycast IP. Subdomains (e.g. www) use a CNAME.
+const VERCEL_A_IP = '76.76.21.21'
+const VERCEL_CNAME = 'cname.vercel-dns.com'
+// Accepted CNAME targets (back-compat with older "point at wyberai.com" guidance)
+const ACCEPTED_CNAME = ['cname.vercel-dns.com', 'vercel-dns.com', 'wyberai.com', 'vercel.app']
 
-async function verifyDNS(domain: string, projectId: string): Promise<{ verified: boolean; error?: string }> {
+const isApex = (domain: string) => domain.replace(/\.$/, '').split('.').length <= 2
+
+// Returns the correct DNS record a given domain should add.
+function recordFor(domain: string) {
+  return isApex(domain)
+    ? { type: 'A', name: '@', value: VERCEL_A_IP, ttl: '300' as string }
+    : { type: 'CNAME', name: domain.split('.')[0], value: VERCEL_CNAME, ttl: '300' as string }
+}
+
+async function verifyDNS(domain: string, _projectId: string): Promise<{ verified: boolean; error?: string }> {
   try {
-    // Check DNS via Cloudflare's public DNS API
+    // 1. CNAME pointing at Vercel / WyberAI (used for subdomains like www)
     const res = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=CNAME`, {
       headers: { Accept: 'application/dns-json' }
     })
     const data = await res.json()
-    
     if (data.Answer) {
       const cnames = data.Answer.filter((r: any) => r.type === 5) // CNAME = type 5
-      const pointsToWyber = cnames.some((r: any) => 
-        r.data?.includes('wyberai.com') || r.data?.includes('vercel.app')
-      )
-      if (pointsToWyber) return { verified: true }
+      if (cnames.some((r: any) => ACCEPTED_CNAME.some(t => r.data?.includes(t)))) {
+        return { verified: true }
+      }
     }
-    
-    // Also check A records pointing to Vercel
+
+    // 2. A record pointing specifically at Vercel's IP (used for apex domains).
+    //    We must NOT accept *any* A record — a registrar parking IP would falsely verify.
     const aRes = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=A`, {
       headers: { Accept: 'application/dns-json' }
     })
     const aData = await aRes.json()
-    if (aData.Answer?.length > 0) {
-      return { verified: true } // Has some DNS — assume configured
+    const aRecords = (aData.Answer ?? []).filter((r: any) => r.type === 1) // A = type 1
+    if (aRecords.some((r: any) => r.data === VERCEL_A_IP)) {
+      return { verified: true }
+    }
+    if (aRecords.length > 0) {
+      return { verified: false, error: `Domain points to ${aRecords[0].data}, not Vercel (${VERCEL_A_IP}). Update your A record.` }
     }
 
-    return { verified: false, error: 'DNS not configured yet' }
+    return { verified: false, error: 'DNS not configured yet — add the record below, then verify again (can take up to 24h to propagate).' }
   } catch {
     return { verified: false, error: 'Could not verify DNS' }
   }
@@ -103,14 +119,13 @@ export async function POST(req: NextRequest) {
         })
       }
 
-      return NextResponse.json({ 
-        verified: false, 
+      const rec = recordFor(cleanDomain)
+      return NextResponse.json({
+        verified: false,
         error,
         instructions: {
-          type: 'CNAME',
-          name: cleanDomain.startsWith('www.') ? 'www' : '@',
-          value: WYBER_CNAME,
-          message: `Add a CNAME record pointing ${cleanDomain} → ${WYBER_CNAME}`
+          ...rec,
+          message: `Add ${rec.type === 'A' ? 'an' : 'a'} ${rec.type} record: ${rec.name} → ${rec.value}. If your domain uses email (e.g. Zoho/Google), leave existing MX records untouched.`
         }
       })
     }
@@ -122,19 +137,18 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     }).eq('id', projectId)
 
+    const rec = recordFor(cleanDomain)
     return NextResponse.json({
       domain: cleanDomain,
       verified: false,
       instructions: {
-        step1: `Go to your domain registrar (e.g. Namecheap, GoDaddy, Cloudflare)`,
-        step2: `Add a CNAME record:`,
-        record: {
-          type: 'CNAME',
-          name: cleanDomain.startsWith('www.') ? 'www' : '@',
-          value: WYBER_CNAME,
-          ttl: '300',
-        },
-        step3: `Click "Verify DNS" below. DNS changes can take up to 24 hours.`,
+        step1: `Go to your DNS provider / domain registrar (e.g. Namecheap, GoDaddy, Cloudflare, Zoho).`,
+        step2: rec.type === 'A'
+          ? `This is a root domain, so add an A record (root domains can't use CNAME):`
+          : `Add a CNAME record:`,
+        record: rec,
+        step3: `Leave any existing MX records (email) untouched — only add/replace the website record above.`,
+        step4: `Click "Verify DNS" below. DNS changes can take up to 24 hours to propagate.`,
       }
     })
   } catch (err: any) {

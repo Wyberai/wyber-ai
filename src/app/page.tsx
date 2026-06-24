@@ -222,6 +222,87 @@ const PRODUCTS = [
   },
 ] as const;
 
+// ── AI Employee launch spotlight — carousel hyping the Marketing Manager ──────
+const MM_SLIDES = [
+  {
+    tag: 'Launching Mon · June 29',
+    title: 'Meet your new AI employee',
+    sub: 'The Marketing Manager — the first of a new AI employee every Monday.',
+    bullets: ['Onboards in minutes, then runs on its own schedule', 'Reports back to you after every shift', 'Works while you sleep'],
+    accent: '#a855f7',
+  },
+  {
+    tag: 'Not an agent',
+    title: 'An employee commands an army of agents',
+    sub: 'Don\'t mistake it for a single agent. Each WyberAI employee orchestrates 200+ specialized agents to get real work done.',
+    bullets: ['1 employee → 200+ agents on tap', 'Delegates the right agent to each task', 'You manage one colleague, not 200 tools'],
+    accent: BRAND,
+  },
+  {
+    tag: 'What it does',
+    title: 'A full marketing department in one hire',
+    sub: 'The Marketing Manager plans and ships across your whole funnel.',
+    bullets: ['Content engine — blogs, social, email, landing copy', 'Competitor & market intel on a schedule', 'Campaign planning + multi-channel publishing', 'Weekly performance digest in your inbox'],
+    accent: '#22c55e',
+  },
+  {
+    tag: 'How it thinks',
+    title: 'Plan → delegate → execute → report',
+    sub: 'It breaks a goal into a plan, assigns each step to the best agent, runs the tools, reviews the output, and sends you the result.',
+    bullets: ['Connects 30+ tools (Gmail, Slack, LinkedIn, HubSpot…)', 'Self-checks its own work before it ships', 'Escalates to you only when it matters'],
+    accent: '#f59e0b',
+  },
+] as const;
+
+function AIEmployeeSpotlight() {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setI(p => (p + 1) % MM_SLIDES.length), 5000);
+    return () => clearInterval(t);
+  }, []);
+  const s = MM_SLIDES[i];
+  return (
+    <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 50% 0%, ${s.accent}14 0%, transparent 65%)`, pointerEvents: 'none', transition: 'background 0.5s' }} />
+      <div style={{ maxWidth: 920, margin: '0 auto', position: 'relative' }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)', fontSize: 12, fontWeight: 700, color: '#c4b5fd', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#a855f7', animation: 'pulse 2s infinite' }} />
+            New every Monday
+          </div>
+        </div>
+
+        <div style={{ background: '#111113', border: `1px solid ${s.accent}30`, borderRadius: 20, padding: 'clamp(28px,4vw,48px)', minHeight: 280, display: 'grid', gridTemplateColumns: '1fr', gap: 8, transition: 'border-color 0.5s' }}>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: s.accent, marginBottom: 4, transition: 'color 0.5s' }}>{s.tag}</div>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>{s.title}</h2>
+          <p style={{ fontSize: 'clamp(14px,1.6vw,17px)', color: '#a1a1aa', lineHeight: 1.6, maxWidth: 620, marginBottom: 12 }}>{s.sub}</p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px,100%), 1fr))', gap: 10 }}>
+            {s.bullets.map(b => (
+              <li key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 14, color: '#d4d4d8' }}>
+                <IcoCheck color={s.accent} /><span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Dots */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
+          {MM_SLIDES.map((sl, idx) => (
+            <button key={idx} onClick={() => setI(idx)} aria-label={`Slide ${idx + 1}`}
+              style={{ width: idx === i ? 28 : 8, height: 8, borderRadius: 8, border: 'none', background: idx === i ? sl.accent : 'rgba(255,255,255,0.15)', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
+          ))}
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 28 }}>
+          <Link href="/coming-soon?product=AI+Employees" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', borderRadius: 11, background: '#a855f7', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(168,85,247,0.35)' }}>
+            Get notified when it drops →
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -299,7 +380,7 @@ export default function HomePage() {
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
             Vibe code with<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Wyber Ai
+              WyberAi
             </span>
           </h1>
 
@@ -313,10 +394,10 @@ export default function HomePage() {
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
               Start building — it's free →
             </Link>
-            <Link href="/gallery" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', color: '#a1a1aa', fontSize: 16, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.25)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLElement).style.color = '#a1a1aa' }}>
-              Browse templates
+            <Link href="/coming-soon?product=AI+Employees" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(168,85,247,0.3)', color: '#c4b5fd', fontSize: 16, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,85,247,0.6)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,85,247,0.3)'; (e.currentTarget as HTMLElement).style.color = '#c4b5fd' }}>
+              Meet the AI employees →
             </Link>
           </div>
 
@@ -340,6 +421,9 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* ── AI EMPLOYEE LAUNCH SPOTLIGHT ─────────────────────────────── */}
+      <AIEmployeeSpotlight />
 
       {/* ── HOW IT WORKS — 3 steps ──────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: '#0b0b0e' }}>
@@ -416,7 +500,7 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: '#0b0b0e', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why Wyber Ai</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why WyberAi</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
               Not another template marketplace
             </h2>
@@ -528,6 +612,14 @@ export default function HomePage() {
           </div>
           <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>No credit card required · 50 free credits on signup · Cancel anytime</div>
         </div>
+      </section>
+
+      {/* Featured on TAAFT */}
+      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'center' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <a href="https://theresanaiforthat.com/ai/wyberai/?ref=featured&v=11040803" target="_blank" rel="nofollow noopener" style={{ display: 'inline-block', lineHeight: 0 }}>
+          <img width="280" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600" alt="Featured on There's An AI For That" />
+        </a>
       </section>
 
       {/* Footer */}

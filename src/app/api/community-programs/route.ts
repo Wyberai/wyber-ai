@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json() as {
-    program: 'blood_donor' | 'build_in_public' | 'accessibility' | 'open_source'
+    program: 'blood_donor' | 'build_in_public' | 'accessibility' | 'open_source' | 'follow_linkedin' | 'follow_reddit' | 'review_taaft'
     proof_url?: string
     proof_text?: string
   }
@@ -42,10 +42,18 @@ export async function POST(req: NextRequest) {
     build_in_public: { bonus_credits: 50, bonus_type: '50 bonus credits' },
     accessibility: { bonus_credits: 0, bonus_type: '50% discount on plan' },
     open_source: { bonus_credits: 0, bonus_type: '30% discount on plan' },
+    follow_linkedin: { bonus_credits: 25, bonus_type: '25 bonus credits' },
+    follow_reddit: { bonus_credits: 25, bonus_type: '25 bonus credits' },
+    review_taaft: { bonus_credits: 50, bonus_type: '50 bonus credits' },
   }
+
+  // Programs that grant credits automatically once a proof URL is supplied.
+  const AUTO_APPROVE = new Set(['build_in_public', 'follow_linkedin', 'follow_reddit', 'review_taaft'])
 
   const program = PROGRAMS[body.program]
   if (!program) return NextResponse.json({ error: 'Unknown program' }, { status: 400 })
+
+  const autoApprove = AUTO_APPROVE.has(body.program) && !!body.proof_url
 
   const { error } = await db.from('community_program_submissions').insert({
     user_id: user.id,
@@ -53,18 +61,18 @@ export async function POST(req: NextRequest) {
     proof_url: body.proof_url ?? null,
     proof_text: body.proof_text ?? null,
     bonus_type: program.bonus_type,
-    status: body.program === 'build_in_public' && body.proof_url ? 'approved' : 'pending',
+    status: autoApprove ? 'approved' : 'pending',
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Auto-approve Build in Public (just needs a valid URL)
-  if (body.program === 'build_in_public' && body.proof_url) {
+  // Auto-approve credit-granting programs (just needs a valid proof URL)
+  if (autoApprove && program.bonus_credits > 0) {
     const { data: profile } = await db.from('profiles').select('credits').eq('id', user.id).single()
     if (profile) {
-      await db.from('profiles').update({ credits: (profile.credits ?? 0) + 50 }).eq('id', user.id)
+      await db.from('profiles').update({ credits: (profile.credits ?? 0) + program.bonus_credits }).eq('id', user.id)
     }
-    return NextResponse.json({ ok: true, auto_approved: true, bonus: '50 credits added', message: 'Thanks for building in public! 50 bonus credits added to your account.' })
+    return NextResponse.json({ ok: true, auto_approved: true, bonus: `${program.bonus_credits} credits added`, message: `Thanks! ${program.bonus_credits} bonus credits added to your account.` })
   }
 
   return NextResponse.json({ ok: true, status: 'pending', message: 'Submitted! We review submissions within 24 hours.' })
