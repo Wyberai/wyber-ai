@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WyberAi — Demo Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --brand:#0EA5E9; --purple:#a855f7; --green:#22c55e; --orange:#f97316; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; background:#09090b; overflow:hidden; font-family:'Space Grotesk',sans-serif; color:#fafafa; }
+  .stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+  .frame { width:min(100vw,56.25vh); height:min(177.78vw,100vh); position:relative; overflow:hidden;
+           background:radial-gradient(ellipse 90% 45% at 50% 42%, rgba(14,165,233,0.10) 0%, transparent 62%); }
+  .scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+           opacity:0; transform:scale(0.985); transition:opacity 0.6s ease, transform 0.6s ease; text-align:center; padding:0 6%; }
+  .scene.active { opacity:1; transform:none; }
+  h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; line-height:1.05; }
+  .grad { background:linear-gradient(135deg,var(--brand),var(--purple)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { color:#a1a1aa; margin-top:2.4vmin; font-size:2.1vmin; }
+  .eyebrow { font-size:1.5vmin; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:2vmin; }
+
+  /* Official WyberAi logo */
+  .logo { display:inline-flex; align-items:center; gap:1.3vmin; }
+  .logo svg { display:block; }
+  .logo .word { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.03em; line-height:1; }
+  .logo .word .w { color:#f4f4f5; } .logo .word .a { color:#0EA5E9; }
+  #s1 .logo { margin-bottom:3.4vmin; } #s1 .logo svg { width:7vmin; height:7vmin; } #s1 .logo .word { font-size:5vmin; }
+  #s1 h1 { font-size:8vmin; }
+
+  /* Prompt */
+  .prompt-box { width:min(72%,820px); background:rgba(16,18,26,0.92); border:1px solid rgba(255,255,255,0.08);
+                border-radius:1.6vmin; padding:3vmin 3vmin 2.4vmin; text-align:left; box-shadow:0 1.5vmin 6vmin rgba(0,0,0,0.55); }
+  .prompt-label { font-size:1.6vmin; color:#52525b; margin-bottom:1.4vmin; }
+  .typed { font-size:3vmin; font-weight:500; min-height:4vmin; }
+  .caret { display:inline-block; width:2px; height:3vmin; background:var(--brand); vertical-align:-0.4vmin; animation:blink 1s steps(1) infinite; }
+  .send { margin-top:2.6vmin; display:inline-flex; align-items:center; gap:1vmin; background:var(--brand); color:#fff; font-weight:700; font-size:1.8vmin; padding:1.3vmin 2.4vmin; border-radius:1.1vmin; }
+  .inputs { margin-top:2.2vmin; display:flex; gap:1vmin; flex-wrap:wrap; justify-content:center; }
+  .inputs span { font-size:1.6vmin; color:#a1a1aa; border:1px solid rgba(255,255,255,0.1); border-radius:2vmin; padding:0.7vmin 1.6vmin; }
+
+  /* Build steps */
+  .build { width:min(68%,720px); text-align:left; }
+  .step { display:flex; align-items:center; gap:1.6vmin; padding:1.5vmin 2vmin; margin-bottom:1.4vmin; border-radius:1.2vmin;
+          background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
+          opacity:0; transform:translateY(1.6vmin); transition:opacity 0.45s ease, transform 0.45s ease; }
+  .active .step { opacity:1; transform:none; }
+  .active #b2 { transition-delay:0.5s; } .active #b3 { transition-delay:1.0s; } .active #b4 { transition-delay:1.5s; }
+  .step .dot { width:3vmin; height:3vmin; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(34,197,94,0.15); border:1px solid var(--green); color:var(--green); font-size:1.8vmin; }
+  .step .txt { font-size:2vmin; font-weight:500; } .step .meta { font-size:1.5vmin; color:#52525b; }
+
+  /* Hosting choice */
+  .host-row { display:flex; gap:2.4vmin; margin-top:4vmin; }
+  .host-card { width:34vmin; background:#111113; border:1px solid rgba(255,255,255,0.08); border-radius:1.8vmin; padding:3vmin 2.6vmin; text-align:left; }
+  .host-card.brand { border-color:rgba(14,165,233,0.4); }
+  .host-card.green { border-color:rgba(34,197,94,0.4); }
+  .host-kicker { font-size:1.4vmin; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1.4vmin; }
+  .host-card.green .host-kicker { color:var(--green); } .host-card.brand .host-kicker { color:var(--brand); }
+  .host-url { font-family:'Sora',sans-serif; font-weight:800; font-size:2.6vmin; margin-bottom:1vmin; }
+  .host-meta { font-size:1.6vmin; color:#71717a; }
+
+  /* Feature chips */
+  .feat-wrap { display:flex; gap:1.4vmin; flex-wrap:wrap; justify-content:center; max-width:84%; margin-top:3.6vmin; }
+  .feat { font-size:1.9vmin; font-weight:500; color:#e4e4e7; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:2.4vmin; padding:1.1vmin 2vmin; }
+  .feat b { color:var(--brand); font-weight:700; }
+
+  /* Mobile */
+  .mob-row { display:flex; align-items:center; gap:4vmin; margin-top:3.6vmin; text-align:left; }
+  .phone { width:16vmin; height:30vmin; border-radius:3vmin; border:2px solid rgba(255,255,255,0.14); background:linear-gradient(160deg,#0d1a26,#0d1218); flex-shrink:0; position:relative; }
+  .phone .notch { width:5vmin; height:1.2vmin; border-radius:1vmin; background:rgba(255,255,255,0.18); position:absolute; top:1.4vmin; left:50%; transform:translateX(-50%); }
+  .phone .qr { width:9vmin; height:9vmin; border-radius:1.2vmin; background:#fff; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+               background-image:linear-gradient(#000 25%,transparent 0),linear-gradient(90deg,#000 25%,transparent 0); background-size:2vmin 2vmin; }
+  .mob-list { list-style:none; display:flex; flex-direction:column; gap:1.6vmin; }
+  .mob-list li { font-size:2vmin; color:#d4d4d8; display:flex; gap:1.2vmin; align-items:flex-start; }
+  .mob-list .chk { color:var(--orange); flex-shrink:0; }
+
+  /* Marketing Manager super-agent teaser */
+  .mm-tag { display:inline-flex; align-items:center; gap:1vmin; font-size:1.6vmin; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); background:rgba(168,85,247,0.1); padding:0.9vmin 1.8vmin; border-radius:3vmin; margin-bottom:2.6vmin; }
+  .mm-tag .pulse { background:var(--purple); }
+  .mm-card { width:min(76%,880px); background:#111113; border:1px solid rgba(168,85,247,0.3); border-radius:2vmin; padding:4vmin; text-align:left; }
+  .mm-eyebrow { font-size:1.5vmin; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); margin-bottom:1.4vmin; }
+  .mm-card h2 { font-family:'Sora',sans-serif; font-weight:800; font-size:4.2vmin; letter-spacing:-0.03em; line-height:1.1; margin-bottom:1.2vmin; }
+  .mm-card .mm-sub { color:#a1a1aa; font-size:2vmin; margin-bottom:2.6vmin; }
+  .mm-bullets { list-style:none; display:flex; flex-direction:column; gap:1.4vmin; }
+  .mm-bullets li { display:flex; align-items:flex-start; gap:1.2vmin; font-size:1.9vmin; color:#d4d4d8; opacity:0; transform:translateY(1.2vmin); transition:opacity 0.45s ease, transform 0.45s ease; }
+  .active .mm-bullets li { opacity:1; transform:none; }
+  .active .mm-bullets li:nth-child(2){ transition-delay:0.35s; } .active .mm-bullets li:nth-child(3){ transition-delay:0.7s; }
+  .active .mm-bullets li:nth-child(4){ transition-delay:1.05s; } .active .mm-bullets li:nth-child(5){ transition-delay:1.4s; }
+  .mm-bullets .chk { color:var(--purple); flex-shrink:0; }
+
+  /* Coming soon (workflows + gtm) */
+  .soon-row { display:flex; gap:2.4vmin; margin-top:4vmin; }
+  .soon-card { width:36vmin; background:#111113; border:1px solid rgba(255,255,255,0.08); border-radius:1.8vmin; padding:3vmin 2.6vmin; text-align:left; }
+  .soon-badge { font-size:1.3vmin; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:#71717a; border:1px solid rgba(255,255,255,0.12); border-radius:2vmin; padding:0.5vmin 1.4vmin; display:inline-block; margin-bottom:1.6vmin; }
+  .soon-title { font-family:'Sora',sans-serif; font-weight:800; font-size:2.8vmin; margin-bottom:1vmin; }
+  .soon-title.green { color:var(--green); } .soon-title.teal { color:#10b981; }
+  .soon-desc { font-size:1.7vmin; color:#a1a1aa; margin-bottom:1.8vmin; }
+  .soon-list { list-style:none; display:flex; flex-direction:column; gap:1vmin; }
+  .soon-list li { font-size:1.6vmin; color:#d4d4d8; display:flex; gap:1vmin; align-items:flex-start; }
+  .soon-list .d { color:#52525b; flex-shrink:0; }
+
+  #s9 .logo { margin-bottom:3vmin; } #s9 .logo svg { width:5.4vmin; height:5.4vmin; } #s9 .logo .word { font-size:3.8vmin; }
+  #s9 h1 { font-size:6.4vmin; } #s9 .cta { margin-top:3.2vmin; font-size:2.2vmin; color:#a1a1aa; }
+  #s9 .signoff { margin-top:5vmin; padding-top:2.6vmin; border-top:1px solid rgba(255,255,255,0.1); }
+  #s9 .signoff .co { font-size:1.8vmin; color:#d4d4d8; font-weight:500; }
+  #s9 .signoff .contact { font-size:1.7vmin; color:#0EA5E9; margin-top:0.8vmin; }
+
+  @keyframes blink { 50%{opacity:0} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .pulse { width:1.4vmin; height:1.4vmin; border-radius:50%; background:var(--green); animation:pulse 1.4s infinite; display:inline-block; }
+</style>
+</head>
+<body>
+  <div class="stage"><div class="frame">
+
+    <div class="scene" id="s1">
+      <div class="eyebrow" style="color:#71717a">Introducing</div>
+      <div class="logo">
+        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+        <span class="word"><span class="w">Wyber</span><span class="a">Ai</span></span>
+      </div>
+      <h1>Vibe code with <span class="grad">AI</span></h1>
+      <div class="sub">From idea to live app — no code, one prompt.</div>
+    </div>
+
+    <div class="scene" id="s2">
+      <div class="prompt-box">
+        <div class="prompt-label">Describe the app you want to build…</div>
+        <div class="typed"><span id="type"></span><span class="caret"></span></div>
+        <div class="send">Build it — it's free →</div>
+      </div>
+      <div class="inputs"><span>Plain English</span><span>Screenshot</span><span>Figma file</span><span>Docs</span></div>
+    </div>
+
+    <div class="scene" id="s3">
+      <div class="build">
+        <div class="step" id="b1"><div class="dot">✓</div><div><div class="txt">Generating fresh React code</div><div class="meta">no templates · Tailwind CSS</div></div></div>
+        <div class="step" id="b2"><div class="dot">✓</div><div><div class="txt">Wiring auth, database &amp; APIs</div><div class="meta">Supabase · full-stack out of the box</div></div></div>
+        <div class="step" id="b3"><div class="dot">✓</div><div><div class="txt">Self-healing build</div><div class="meta">errors detected &amp; fixed automatically</div></div></div>
+        <div class="step" id="b4"><div class="dot">✓</div><div><div class="txt">Deployed to a live URL</div><div class="meta">one click</div></div></div>
+      </div>
+    </div>
+
+    <div class="scene" id="s4">
+      <h1>Go live, <span class="grad">your way</span>.</h1>
+      <div class="host-row">
+        <div class="host-card green">
+          <div class="host-kicker">Hosted free</div>
+          <div class="host-url">yourapp.wyberai.app</div>
+          <div class="host-meta">Instant — nothing to set up</div>
+        </div>
+        <div class="host-card brand">
+          <div class="host-kicker">Your custom domain</div>
+          <div class="host-url">yourbrand.com</div>
+          <div class="host-meta">Add one DNS record — we handle SSL</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene" id="s5">
+      <div class="eyebrow" style="color:var(--brand)">Everything's included</div>
+      <h1>No feature gates.<br><span class="grad">Own your code.</span></h1>
+      <div class="feat-wrap">
+        <span class="feat">Fresh code <b>every build</b></span>
+        <span class="feat">Self-healing builds</span>
+        <span class="feat">Supabase auth + database</span>
+        <span class="feat">GitHub push</span>
+        <span class="feat">Export as ZIP</span>
+        <span class="feat">Custom domains</span>
+        <span class="feat">Image generation</span>
+        <span class="feat">Iterate in plain English</span>
+        <span class="feat">One-click deploy</span>
+      </div>
+    </div>
+
+    <div class="scene" id="s6">
+      <h1>And <span class="grad">mobile</span>, too.</h1>
+      <div class="mob-row">
+        <div class="phone"><div class="notch"></div><div class="qr"></div></div>
+        <ul class="mob-list">
+          <li><span class="chk">✓</span><span>Real React Native apps with Expo</span></li>
+          <li><span class="chk">✓</span><span>Preview on your phone — scan the QR</span></li>
+          <li><span class="chk">✓</span><span>Camera, GPS, push notifications</span></li>
+          <li><span class="chk">✓</span><span>Export for the App Store</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="scene" id="s7">
+      <div class="mm-tag"><span class="pulse"></span>First AI employee · Monday June 29</div>
+      <div class="mm-card">
+        <div class="mm-eyebrow">A super AI agent</div>
+        <h2>Meet the <span class="grad">Marketing Manager</span></h2>
+        <div class="mm-sub">Not just an agent — a super AI agent that commands a whole team.</div>
+        <ul class="mm-bullets">
+          <li><span class="chk">✓</span><span>One employee orchestrates 200+ specialized agents</span></li>
+          <li><span class="chk">✓</span><span>Content engine — blogs, social, email &amp; landing copy</span></li>
+          <li><span class="chk">✓</span><span>Competitor &amp; market research, refreshed on a schedule</span></li>
+          <li><span class="chk">✓</span><span>Plans and runs multi-channel campaigns end to end</span></li>
+          <li><span class="chk">✓</span><span>Emails you a performance digest after every run</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="scene" id="s8">
+      <div class="eyebrow" style="color:var(--purple)">More on the way</div>
+      <h1>This is just the <span class="grad">start</span>.</h1>
+      <div class="soon-row">
+        <div class="soon-card">
+          <div class="soon-badge">Coming soon</div>
+          <div class="soon-title green">Workflows</div>
+          <div class="soon-desc">Draw it, it runs — AI reasoning at every step.</div>
+          <ul class="soon-list">
+            <li><span class="d">›</span><span>Drag-and-drop canvas, no code</span></li>
+            <li><span class="d">›</span><span>Triggers, branches &amp; parallel runs</span></li>
+            <li><span class="d">›</span><span>Webhooks, schedules &amp; 30+ integrations</span></li>
+          </ul>
+        </div>
+        <div class="soon-card">
+          <div class="soon-badge">Coming soon</div>
+          <div class="soon-title teal">GTM Engine</div>
+          <div class="soon-desc">Define your ICP, fill your pipeline.</div>
+          <ul class="soon-list">
+            <li><span class="d">›</span><span>Finds &amp; enriches matching leads</span></li>
+            <li><span class="d">›</span><span>AI-personalized email, call &amp; LinkedIn</span></li>
+            <li><span class="d">›</span><span>Meeting booking + CRM sync</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="scene" id="s9">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+        <span class="word"><span class="w">Wyber</span><span class="a">Ai</span></span>
+      </div>
+      <h1>Your next app is<br><span class="grad">one prompt away.</span></h1>
+      <div class="cta">wyberai.com · 50 free credits · no card</div>
+      <div class="signoff">
+        <div class="co">A product from SignalPulse Technologies, USA</div>
+        <div class="contact">Hello@wyberai.com</div>
+      </div>
+    </div>
+
+  </div></div>
+
+  <script>
+    var phrase = "A CRM with a pipeline board and a dashboard";
+    var typeEl = document.getElementById('type');
+    var typeTimer;
+    function typeIt(){
+      clearTimeout(typeTimer); typeEl.textContent=''; var i=0;
+      (function tick(){ if(i<=phrase.length){ typeEl.textContent = phrase.slice(0,i); i++; typeTimer=setTimeout(tick,65);} })();
+    }
+    var scenes = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
+    var holds  = [3000, 4400, 5200, 3800, 4400, 4400, 6400, 5200, 5200];
+    function show(idx){
+      scenes.forEach(function(id){ document.getElementById(id).classList.toggle('active', id===scenes[idx]); });
+      if(scenes[idx]==='s2') typeIt();
+    }
+    function run(){
+      var t=0;
+      scenes.forEach(function(_,idx){ setTimeout(function(){ show(idx); }, t); t+=holds[idx]; });
+      setTimeout(run, t);
+    }
+    run();
+  </script>
+</body>
+</html>
