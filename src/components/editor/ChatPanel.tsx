@@ -130,6 +130,11 @@ function renderMessage(text: string) {
 }
 
 interface AttachedImage { dataUrl: string; base64: string; mimeType: string; name: string; }
+type AttachedKind = 'image' | 'text' | 'file';
+interface AttachedFile { localId: string; name: string; mimeType: string; kind: AttachedKind; size: number; url?: string; text?: string; uploading: boolean; }
+const TEXT_FILE_RE = /\.(txt|md|markdown|csv|tsv|json|ya?ml|html?|xml|css|scss|js|jsx|ts|tsx|py|rb|go|rs|java|php|sql|sh|env|toml|ini|log)$/i;
+const isTextFile = (f: File) => f.type.startsWith('text/') || f.type === 'application/json' || TEXT_FILE_RE.test(f.name);
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium' | 'fable';
@@ -173,6 +178,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const [hasInit, setHasInit] = useState(false);
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const attachedFilesRef = useRef<AttachedFile[]>([]);
+  const uploadPromisesRef = useRef<Record<string, Promise<unknown>>>({});
+  useEffect(() => { attachedFilesRef.current = attachedFiles; }, [attachedFiles]);
   const [dragOver, setDragOver] = useState(false);
   const [modelTier, setModelTier] = useState<ModelTier>('default');
   const [showModelPicker, setShowModelPicker] = useState(false);
@@ -312,26 +321,83 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     }
   }, []);
 
-  const handleImageFile = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setAttachedImage({ dataUrl, base64: dataUrl.split(',')[1], mimeType: file.type, name: file.name });
-    };
-    reader.readAsDataURL(file);
+  // Upload an attachment to the project-assets bucket so generated code can use it
+  // (logos/photos via URL, docs for download). Returns a promise tracked for send-gating.
+  const uploadAsset = useCallback((file: File, localId: string) => {
+    const p = (async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client');
+        const supabase = createClient();
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const path = `${resolvedProjectId || 'anon'}/${Date.now()}-${safe}`;
+        const { error } = await supabase.storage.from('project-assets').upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false });
+        if (error) { setAttachedFiles(prev => prev.map(f => f.localId === localId ? { ...f, uploading: false } : f)); return null; }
+        const { data } = supabase.storage.from('project-assets').getPublicUrl(path);
+        setAttachedFiles(prev => prev.map(f => f.localId === localId ? { ...f, url: data.publicUrl, uploading: false } : f));
+        return data.publicUrl;
+      } catch {
+        setAttachedFiles(prev => prev.map(f => f.localId === localId ? { ...f, uploading: false } : f));
+        return null;
+      }
+    })();
+    uploadPromisesRef.current[localId] = p;
+    return p;
+  }, [resolvedProjectId]);
+
+  // Accept any file: images become vision input + a usable asset; text/docs are
+  // read for context; everything is uploaded so the build can reference it.
+  const handleFile = useCallback((file: File) => {
+    if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      addMessage({ id: uid(), role: 'assistant', content: `"${file.name}" is larger than 25 MB — please attach a smaller file.`, timestamp: Date.now(), status: 'done' });
+      return;
+    }
+    const localId = uid();
+    const kind: AttachedKind = file.type.startsWith('image/') ? 'image' : isTextFile(file) ? 'text' : 'file';
+    if (kind === 'image') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setAttachedImage({ dataUrl, base64: dataUrl.split(',')[1], mimeType: file.type, name: file.name });
+      };
+      reader.readAsDataURL(file);
+      setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: file.type, kind, size: file.size, uploading: true }]);
+      uploadAsset(file, localId);
+    } else if (kind === 'text') {
+      const tr = new FileReader();
+      tr.onload = (e) => {
+        const text = (e.target?.result as string || '').slice(0, 20000);
+        setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: file.type || 'text/plain', kind, size: file.size, text, uploading: true }]);
+        uploadAsset(file, localId);
+      };
+      tr.readAsText(file);
+    } else {
+      setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: file.type, kind, size: file.size, uploading: true }]);
+      uploadAsset(file, localId);
+    }
+  }, [uploadAsset, addMessage]);
+
+  // Back-compat alias used by older call sites
+  const handleImageFile = handleFile;
+
+  const removeAttachedFile = useCallback((localId: string) => {
+    setAttachedFiles(prev => {
+      const target = prev.find(f => f.localId === localId);
+      if (target?.kind === 'image') setAttachedImage(null);
+      return prev.filter(f => f.localId !== localId);
+    });
+    delete uploadPromisesRef.current[localId];
   }, []);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const imageItem = Array.from(e.clipboardData.items).find(item => item.type.startsWith('image/'));
-    if (imageItem) { const file = imageItem.getAsFile(); if (file) { e.preventDefault(); handleImageFile(file); } }
-  }, [handleImageFile]);
+    if (imageItem) { const file = imageItem.getAsFile(); if (file) { e.preventDefault(); handleFile(file); } }
+  }, [handleFile]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleImageFile(file);
-  }, [handleImageFile]);
+    Array.from(e.dataTransfer.files || []).forEach(handleFile);
+  }, [handleFile]);
 
   const saveProject = useCallback(async (updatedFiles: typeof files) => {
     if (!resolvedProjectId) return;
@@ -526,16 +592,31 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
     if (knowledgeStr) knowledgeStr = `\n\nCUSTOM PROJECT KNOWLEDGE:\n${knowledgeStr}`;
 
+    // Gather uploaded attachments (assets the model can use + extracted doc text).
+    // Wait for any in-flight uploads so their URLs are included this turn.
+    let assets: { name: string; url: string; kind: string }[] = [];
+    let attachedTextPayload: { name: string; content: string }[] = [];
+    if (!isSelfHeal) {
+      const pending = Object.values(uploadPromisesRef.current);
+      if (pending.length) { try { await Promise.allSettled(pending); } catch {} }
+      const af = attachedFilesRef.current;
+      assets = af.filter(f => f.url).map(f => ({ name: f.name, url: f.url!, kind: f.kind }));
+      attachedTextPayload = af.filter(f => f.kind === 'text' && f.text).map(f => ({ name: f.name, content: f.text! }));
+      if (af.length) { setAttachedFiles([]); uploadPromisesRef.current = {}; }
+    }
+
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          prompt: userMsg || 'Build a UI matching this screenshot exactly.',
+          prompt: userMsg || (img ? 'Build a UI matching this screenshot exactly.' : 'Build this using the attached files.'),
           framework, fileContext, history, knowledge: knowledgeStr, modelTier,
           userId: resolvedUserId, projectId: resolvedProjectId,
           projectType, selfHeal: isSelfHeal,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
+          assets: assets.length ? assets : undefined,
+          attachedText: attachedTextPayload.length ? attachedTextPayload : undefined,
         }),
       });
 
@@ -839,9 +920,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // No credits<=0 gate here — conversational messages are FREE, so the box
     // stays usable at 0 credits. The build/edit path is blocked separately in
     // executeGeneration with a clear "out of credits" message.
-    if ((!input.trim() && !attachedImage) || isGenerating) return;
+    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating) return;
     const userMsg = input.trim();
     const img = attachedImage;
+    const hasAttachments = attachedFiles.length > 0;
     setInput('');
     setAttachedImage(null);
     if (planMode) {
@@ -904,7 +986,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Images always build (screenshot-to-app). Otherwise classify: CHAT and
     // AMBIGUOUS go to the conversational lane (no credits, no build loader);
     // EDIT/BUILD go straight to generation.
-    if (!img) {
+    if (!img && !hasAttachments) {
       const intent = classifyIntent(userMsg, !isNewBuild);
       if (intent === 'CHAT' || intent === 'AMBIGUOUS') {
         await handleConversational(userMsg, img, intent === 'CHAT');
@@ -913,7 +995,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
 
     await executeGeneration(userMsg, img);
-  }, [input, attachedImage, isGenerating, credits, planMode, files, executeGeneration, handleConversational]);
+  }, [input, attachedImage, attachedFiles, isGenerating, credits, planMode, files, executeGeneration, handleConversational]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -1170,7 +1252,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       {dragOver && (
         <div style={{ position:'absolute', inset:0, background:'rgba(124,110,247,0.1)', border:'2px dashed var(--accent)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, pointerEvents:'none' }}>
-          <span style={{ fontSize:14, color:'var(--accent)', fontWeight:500 }}>Drop image to generate UI</span>
+          <span style={{ fontSize:14, color:'var(--accent)', fontWeight:500 }}>Drop files to attach — images, docs, anything</span>
         </div>
       )}
 
@@ -1266,15 +1348,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Attached image */}
-      {attachedImage && (
-        <div style={{ margin:'0 12px', padding:'8px', background:'var(--bg-elevated)', borderRadius:8, border:'1px solid var(--accent-dim)', display:'flex', alignItems:'center', gap:8, flexShrink:0 }}>
-          <img src={attachedImage.dataUrl} alt="attached" style={{ width:48, height:48, objectFit:'cover', borderRadius:5 }} />
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:12, color:'var(--text-primary)', fontWeight:500 }}>🖼 {attachedImage.name}</div>
-            <div style={{ fontSize:11, color:'var(--text-muted)' }}>Image attached — describe changes or just hit Generate</div>
-          </div>
-          <button onClick={() => setAttachedImage(null)} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:18 }}>×</button>
+      {/* Attached files */}
+      {attachedFiles.length > 0 && (
+        <div style={{ margin:'0 12px', display:'flex', flexWrap:'wrap', gap:6, flexShrink:0 }}>
+          {attachedFiles.map(f => (
+            <div key={f.localId} style={{ padding:'6px 8px', background:'var(--bg-elevated)', borderRadius:8, border:'1px solid var(--accent-dim)', display:'flex', alignItems:'center', gap:8, maxWidth:220 }}>
+              {f.kind === 'image' && attachedImage?.name === f.name
+                ? <img src={attachedImage.dataUrl} alt="" style={{ width:32, height:32, objectFit:'cover', borderRadius:5, flexShrink:0 }} />
+                : <span style={{ fontSize:18, flexShrink:0 }}>{f.kind === 'image' ? '🖼' : f.kind === 'text' ? '📄' : '📎'}</span>}
+              <div style={{ minWidth:0 }}>
+                <div style={{ fontSize:12, color:'var(--text-primary)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
+                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? 'Uploading…' : f.kind === 'image' ? 'Image' : f.kind === 'text' ? 'Doc · text read' : 'Attached'}</div>
+              </div>
+              <button onClick={() => removeAttachedFile(f.localId)} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:16, flexShrink:0, lineHeight:1 }}>×</button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -1351,10 +1439,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
           />
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px', gap: 6 }}>
             <div style={{ display:'flex', gap:4, alignItems:'center', flex: 1 }}>
-              <input ref={fileInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFile(f); e.target.value=''; }} />
-              <button onClick={() => fileInputRef.current?.click()} title="Attach image"
+              <input ref={fileInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(handleFile); e.target.value=''; }} />
+              <button onClick={() => fileInputRef.current?.click()} title="Attach files — images, docs, anything"
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1" y="1" width="14" height="14" rx="2"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5"/></svg>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               </button>
               <button onClick={recording ? stopRecording : startRecording} title={recording ? 'Stop recording' : 'Voice input'}
                 style={{ background: recording ? 'rgba(239,68,68,0.1)' : 'none', border:'none', color: recording ? 'var(--ide-red)' : 'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
@@ -1374,12 +1462,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <button
               onClick={handleSend}
               data-send-button="true"
-              disabled={(!input.trim() && !attachedImage) || isGenerating || !!pendingPlan || !!pendingGenArgs}
+              disabled={(!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating || !!pendingPlan || !!pendingGenArgs}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
-                background: (!input.trim() && !attachedImage) || isGenerating ? 'var(--bg-overlay)' : 'var(--accent)',
-                color: (!input.trim() && !attachedImage) || isGenerating ? 'var(--ide-text3)' : 'white',
-                cursor: (!input.trim() && !attachedImage) || isGenerating ? 'not-allowed' : 'pointer',
+                background: (!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating ? 'var(--bg-overlay)' : 'var(--accent)',
+                color: (!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating ? 'var(--ide-text3)' : 'white',
+                cursor: (!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s',
               }}
             >

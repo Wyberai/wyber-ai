@@ -963,7 +963,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false } = body
+    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [] } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -1148,9 +1148,26 @@ ${code}
     }
 
     // ── AI GENERATION ────────────────────────────────────────────
-    const userPrompt = fileContext
+    // User-uploaded attachments: hosted assets to use directly + extracted doc text.
+    let assetContext = ''
+    if (Array.isArray(assets) && assets.length) {
+      const lines = assets
+        .filter((a: { name?: string; url?: string }) => a?.url)
+        .map((a: { name?: string; url?: string; kind?: string }) => `- ${a.name} (${a.kind || 'file'}) → ${a.url}`)
+        .join('\n')
+      if (lines) assetContext += `\n\n=== USER-UPLOADED ASSETS ===\nThe user uploaded these files; they are hosted at the URLs below. USE them directly in the app (e.g. <img src="URL"> for logos/photos, link to documents for download). Do NOT substitute placeholder or stock images when a matching uploaded asset exists.\n${lines}`
+    }
+    if (Array.isArray(attachedText) && attachedText.length) {
+      const docs = attachedText
+        .filter((d: { content?: string }) => d?.content)
+        .map((d: { name?: string; content?: string }) => `--- ${d.name || 'document'} ---\n${String(d.content).slice(0, 8000)}`)
+        .join('\n\n')
+      if (docs) assetContext += `\n\n=== ATTACHED DOCUMENT CONTENT ===\nTreat the following as source content / requirements provided by the user:\n${docs}`
+    }
+
+    const userPrompt = (fileContext
       ? `Current files:\n${fileContext}\n\nUser request: ${prompt}`
-      : prompt
+      : prompt) + assetContext
 
     const trimmedHistory = (history || [])
       .filter((m: { content: string }) => m.content && !m.content.startsWith('[Image:'))
