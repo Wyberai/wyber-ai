@@ -100,12 +100,19 @@ export default async function PublishedAppPage({ params }: Props) {
   const { name, html } = loaded
   // Hoist the app's JSON-LD up to the real document so crawlers + rich results
   // see it (iframe/srcdoc structured data is not attributed to the page).
-  const jsonLd = extractSeo(html).jsonLd
+  // SECURITY: this runs in the wyberai.com origin (not the sandboxed iframe), so
+  // the user-controlled block must be parsed + re-serialized as pure JSON and have
+  // every "<" escaped — otherwise a crafted </script> payload could break out.
+  let safeJsonLd: string | undefined
+  const rawJsonLd = extractSeo(html).jsonLd
+  if (rawJsonLd) {
+    try { safeJsonLd = JSON.stringify(JSON.parse(rawJsonLd)).replace(/</g, '\\u003c') } catch { safeJsonLd = undefined }
+  }
 
   return (
     <>
-      {jsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
+      {safeJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd }} />
       )}
       <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
         <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter, sans-serif' }}>Built with</span>

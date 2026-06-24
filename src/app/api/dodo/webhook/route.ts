@@ -43,24 +43,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Cannot read body' }, { status: 400 })
   }
 
-  // Optional signature verification
+  // ── Signature verification (FAIL CLOSED) ────────────────────────────────
+  // This endpoint grants credits/plans with the service-role key, so an
+  // unverified body must never be trusted. Reject bad/missing signatures and,
+  // in production, refuse to run at all if the secret isn't configured.
   const webhookSecret = process.env.DODO_WEBHOOK_SECRET
+  const headerId  = req.headers.get('webhook-id')        || req.headers.get('svix-id')        || ''
+  const headerTs  = req.headers.get('webhook-timestamp') || req.headers.get('svix-timestamp') || ''
+  const headerSig = req.headers.get('webhook-signature') || req.headers.get('svix-signature') || ''
+
   if (webhookSecret && webhookSecret.length > 10) {
+    if (!headerId || !headerTs || !headerSig) {
+      console.error('Dodo webhook rejected: missing signature headers')
+      return NextResponse.json({ error: 'Missing signature headers' }, { status: 400 })
+    }
     try {
       const { Webhook } = await import('svix')
-      const headerId  = req.headers.get('webhook-id')        || req.headers.get('svix-id')        || ''
-      const headerTs  = req.headers.get('webhook-timestamp') || req.headers.get('svix-timestamp') || ''
-      const headerSig = req.headers.get('webhook-signature') || req.headers.get('svix-signature') || ''
-      if (headerId && headerTs && headerSig) {
-        new Webhook(webhookSecret).verify(body, {
-          'svix-id':        headerId,
-          'svix-timestamp': headerTs,
-          'svix-signature': headerSig,
-        })
-      }
+      new Webhook(webhookSecret).verify(body, {
+        'svix-id':        headerId,
+        'svix-timestamp': headerTs,
+        'svix-signature': headerSig,
+      })
     } catch (sigErr) {
-      console.error('Signature error (ignoring):', String(sigErr))
+      console.error('Dodo webhook rejected: signature verification failed:', String(sigErr))
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
+  } else if (process.env.NODE_ENV === 'production') {
+    console.error('Dodo webhook rejected: DODO_WEBHOOK_SECRET not configured in production')
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
   }
 
   let event: Record<string, unknown>
@@ -77,6 +87,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const admin = getAdmin()
+
+    // ── Idempotency: webhooks are retried; never apply the same event twice ──
+    const dedupeId = headerId || String((event.data as Record<string, unknown> | undefined)?.payment_id || (event as Record<string, unknown>).id || '')
+    if (dedupeId) {
+      const { error: dupeErr } = await admin
+        .from('processed_webhooks')
+        .insert({ id: dedupeId, source: 'dodo' })
+      if (dupeErr?.code === '23505') {
+        // Primary-key conflict → already processed this delivery
+        console.log('Dodo webhook duplicate ignored:', dedupeId)
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+      // Any other insert error: log but still process (don't drop a real payment)
+      if (dupeErr) console.warn('Dodo dedupe insert failed (processing anyway):', String(dupeErr.message || dupeErr))
+    }
 
     const userId =
       (event.data as Record<string, unknown> | undefined)?.metadata?.user_id ||
@@ -116,7 +141,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true })
       }
 
-      const planConfig = PLANS[productId] || { credits: 150, dailyCredits: 6, plan: 'starter', label: 'Starter' }
+      const planConfig = PLANS[productId]
+      if (!planConfig) {
+        console.warn('Dodo webhook: unknown product, no plan change:', productId)
+        return NextResponse.json({ received: true, warning: 'unknown product' })
+      }
       await admin.from('profiles').update({
         plan: planConfig.plan,
         credits: planConfig.credits,
