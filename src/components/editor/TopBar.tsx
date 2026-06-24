@@ -301,6 +301,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         </div>
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
+        {onToggleCode && Object.keys(files).length > 0 && (
+          <button onClick={onToggleCode} title={showCode ? 'Hide code' : 'View code (Dev Mode)'}
+            style={{ ...btn, padding: '5px 8px', background: showCode ? 'var(--accent-glow)' : (btn as any).background, color: showCode ? 'var(--accent)' : (btn as any).color }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </button>
+        )}
         {projectId && (
           <button onClick={openTeam} title="Team & collaborators" style={{ ...btn, padding: '5px 8px' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
