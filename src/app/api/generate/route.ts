@@ -521,6 +521,28 @@ TECH STACK — MANDATORY
 - NEVER use @import in CSS. No Google Fonts @import. Breaks the build.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SEO — MANDATORY (especially for websites / landing pages / marketing / blogs)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Every public-facing site MUST be search-engine-ready. Treat this as required, not optional.
+1. <html lang="en"> and in index.html <head> include, filled with REAL content about THIS site:
+   - <title> — unique, descriptive, ≤60 chars (e.g. "Raj Agro Global — Sona Masuri Rice Exporters")
+   - <meta name="description"> — compelling, 140–160 chars
+   - <link rel="canonical" href="..."> (use the site's intended URL or "/" if unknown)
+   - <meta name="viewport" content="width=device-width, initial-scale=1">
+   - <meta name="theme-color">
+   - Open Graph: og:title, og:description, og:type, og:image, og:url
+   - Twitter: twitter:card="summary_large_image", twitter:title, twitter:description, twitter:image
+2. SEMANTIC HTML: use <header><nav><main><section><article><aside><footer>, NOT div soup.
+   Exactly ONE <h1> per page; logical h2/h3 order. Descriptive alt="" on every <img>. aria-labels on icon buttons.
+3. STRUCTURED DATA: add a <script type="application/ld+json"> JSON-LD block in <head> with the
+   right schema.org type for the site (Organization / LocalBusiness / Product / WebSite / Article).
+4. Always create these two files:
+   - public/robots.txt → "User-agent: *\nAllow: /\nSitemap: /sitemap.xml"
+   - public/sitemap.xml → a valid urlset listing the site's routes/sections.
+5. Images: set width/height (avoid layout shift) and loading="lazy" on below-the-fold images.
+Dashboards/internal tools can keep SEO minimal, but ALWAYS still set a real <title> + description + lang.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DESIGN QUALITY — shadcn/ui LEVEL (CRITICAL)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Every app you build must look like it was designed by a professional. This is the #1 priority.
