@@ -283,6 +283,14 @@ async function getConnectedToolkits(userId: string): Promise<Set<string>> {
   }
 }
 
+// agent_workflows.required_tools is a comma-separated STRING ("Meta Ads, Sheets,
+// LLM"), not an array — normalize it so .join/.map don't blow up.
+function toolList(rt: unknown): string[] {
+  if (Array.isArray(rt)) return rt.map(String)
+  if (typeof rt === 'string') return rt.split(/[,;]/).map(s => s.trim()).filter(Boolean)
+  return []
+}
+
 async function handleWyberTool(
   toolName: string,
   input: Record<string, unknown>,
@@ -500,23 +508,24 @@ async function handleWyberTool(
       if (deptTerm) countQ = countQ.ilike('category', `%${deptTerm}%`)
       const { count: fleetSize } = await countQ
 
-      let q = db.from('agent_workflows').select('agent_id, name, description, category, required_tools')
+      let q = db.from('agent_workflows').select('agent_id, name, category, required_tools, outcome')
       if (deptTerm) q = q.ilike('category', `%${deptTerm}%`)
       if (kw) {
         // Searching by capability across the WHOLE department fleet.
-        q = q.or(`name.ilike.%${kw}%,description.ilike.%${kw}%`).limit(40)
+        q = q.or(`name.ilike.%${kw}%,outcome.ilike.%${kw}%,problem.ilike.%${kw}%`).limit(40)
       } else {
         // No query → surface the core specialists first (lower agent_ids are the
         // canonical functions; high ids are niche industry/segment variants).
         q = q.order('agent_id', { ascending: true }).limit(60)
       }
-      const { data: agents } = await q
+      const { data: agents, error: agentsErr } = await q
+      if (agentsErr || !agents?.length) console.error('[list_team] dept=%s kw=%s fleetSize=%s rows=%s err=%s', deptTerm, kw, fleetSize, agents?.length ?? 'null', agentsErr?.message ?? 'none')
 
       if (!agents || agents.length === 0) {
         return { result: `No deployable agents found${deptTerm ? ` in the ${deptTerm} department` : ''}${kw ? ` matching "${kw}"` : ''}. ${kw ? 'Try a different capability keyword, or' : 'You can'} do this task yourself with your own tools.` }
       }
       const header = `You command ${fleetSize ?? agents.length} specialist agents in your department. ${kw ? `Top matches for "${kw}"` : `Core specialists (search WYBERAI_list_team with a capability keyword — e.g. "SEO", "ads", "email" — to reach the other ${Math.max(0, (fleetSize ?? 0) - agents.length)})`}:`
-      return { result: `${header}\nDeploy with WYBERAI_command_agent (use the agent_id). "needs" = tools each requires (pre-flight with WYBERAI_check_tools):\n${agents.map((a: { agent_id: string; name: string; description?: string; required_tools?: string[] }) => `• ${a.agent_id} — ${a.name}: ${(a.description ?? '').slice(0, 110)}${a.required_tools?.length ? ` [needs: ${a.required_tools.join(', ')}]` : ''}`).join('\n')}` }
+      return { result: `${header}\nDeploy with WYBERAI_command_agent (use the agent_id). "needs" = tools each requires (pre-flight with WYBERAI_check_tools):\n${agents.map((a: { agent_id: string; name: string; outcome?: string; required_tools?: unknown }) => { const t = toolList(a.required_tools); return `• ${a.agent_id} — ${a.name}: ${(a.outcome ?? '').slice(0, 110)}${t.length ? ` [needs: ${t.join(', ')}]` : ''}` }).join('\n')}` }
     } catch (e) {
       return { result: `Couldn't list your team: ${String(e)}` }
     }
@@ -545,16 +554,19 @@ async function handleWyberTool(
     try {
       const { data: agent } = await db
         .from('agent_workflows')
-        .select('name, system_prompt, required_tools')
+        .select('name, problem, outcome, best_icp, required_tools')
         .eq('agent_id', input.agent_id as string)
         .single()
       if (!agent) return { result: `No agent with id "${input.agent_id}". Call WYBERAI_list_team to see valid agent_ids.` }
+      // The library has no system_prompt column — build a focused brief from the
+      // agent's purpose so the sub-agent knows its specialty.
+      const sysPrompt = `You are ${agent.name}, a specialist marketing agent.${agent.problem ? `\nThe problem you solve: ${agent.problem}` : ''}${agent.outcome ? `\nThe outcome you deliver: ${agent.outcome}` : ''}${agent.best_icp ? `\nTypical context: ${agent.best_icp}` : ''}\nDo your specialty well and report a concise, usable result.`
       const { text, iterations } = await runSubAgent({
         userId,
         agentName: agent.name,
-        systemPrompt: agent.system_prompt || `You are ${agent.name}, a specialist agent.`,
+        systemPrompt: sysPrompt,
         task: input.task as string,
-        toolkits: (agent.required_tools as string[]) ?? [],
+        toolkits: toolList(agent.required_tools),
       })
       // Meter: each sub-agent model call costs the same as a main iteration.
       return {
@@ -1057,18 +1069,25 @@ Return ONLY JSON:
 For "entities", only include people/accounts/campaigns genuinely worth remembering from THIS work (max 5; empty array if none). For "self_model", return the MERGED model (existing + updates), not just deltas.`
       const reflectRes = await anthropic.messages.create({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1100,
+        max_tokens: 2000,
         messages: [{ role: 'user', content: reflectPrompt }],
       })
       const reflectText = reflectRes.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
-      const rj = reflectText.match(/\{[\s\S]*\}/)
-      if (rj) {
-        const r = JSON.parse(rj[0]) as {
-          learnings?: string; outcome?: string; importance?: number; updated_summary?: string
-          entities?: { kind?: string; name?: string; identifier?: string; notes?: string; state?: string; importance?: number }[]
-          self_model?: Record<string, unknown>
-        }
-
+      // Parse defensively — the LLM occasionally returns slightly malformed JSON.
+      // We still write the episode (summary is always known) so memory never
+      // silently drops a run just because the enrichment JSON failed to parse.
+      let r: {
+        learnings?: string; outcome?: string; importance?: number; updated_summary?: string
+        entities?: { kind?: string; name?: string; identifier?: string; notes?: string; state?: string; importance?: number }[]
+        self_model?: Record<string, unknown>
+      } = {}
+      try {
+        const rj = reflectText.match(/\{[\s\S]*\}/)
+        if (rj) r = JSON.parse(rj[0])
+      } catch (e) {
+        console.error('[employee-memory] reflection JSON parse failed; writing episode without enrichment:', String(e).slice(0, 120))
+      }
+      {
         // Episode — embedded for semantic recall (best-effort; recency still works if null).
         const episodeText = `${summary}\n${r.learnings ?? ''}`.trim()
         const episodeVec = await embed(episodeText, 'document')
