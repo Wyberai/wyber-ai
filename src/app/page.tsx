@@ -307,6 +307,7 @@ export default function HomePage() {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(0);
+  const [showDemo, setShowDemo] = useState(false);
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
@@ -394,11 +395,14 @@ export default function HomePage() {
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
               Start building — it's free →
             </Link>
-            <Link href="/coming-soon?product=AI+Employees" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(168,85,247,0.3)', color: '#c4b5fd', fontSize: 16, fontWeight: 500, textDecoration: 'none', transition: 'all 0.2s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,85,247,0.6)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(168,85,247,0.3)'; (e.currentTarget as HTMLElement).style.color = '#c4b5fd' }}>
-              Meet the AI employees →
-            </Link>
+            <button onClick={() => setShowDemo(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.03)', color: '#e4e4e7', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.3)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; (e.currentTarget as HTMLElement).style.color = '#e4e4e7' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: BRAND }}>
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="#fff"><path d="M3 2l7 4-7 4z" /></svg>
+              </span>
+              Watch the demo
+            </button>
           </div>
 
           <p style={{ fontSize: 13, color: '#52525b' }}>No credit card required · Starts at $29/mo · Cancel anytime</p>
@@ -613,6 +617,18 @@ export default function HomePage() {
           <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>No credit card required · 50 free credits on signup · Cancel anytime</div>
         </div>
       </section>
+
+      {/* Demo modal */}
+      {showDemo && (
+        <div onClick={() => setShowDemo(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(12px,4vw,48px)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 1100, aspectRatio: '16 / 9', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+            <button onClick={() => setShowDemo(false)} aria-label="Close"
+              style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+            <iframe src="/demo-intro.html" title="WyberAi demo" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
+          </div>
+        </div>
+      )}
 
       {/* Featured on TAAFT */}
       <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'center' }}>

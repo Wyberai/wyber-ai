@@ -84,7 +84,8 @@
   .mm-bullets { list-style:none; display:flex; flex-direction:column; gap:1.4vh; }
   .mm-bullets li { display:flex; align-items:flex-start; gap:1.2vh; font-size:1.9vh; color:#d4d4d8; opacity:0; transform:translateY(1.2vh); transition:opacity 0.45s ease, transform 0.45s ease; }
   .active .mm-bullets li { opacity:1; transform:none; }
-  .active .mm-bullets li:nth-child(2){ transition-delay:0.4s; } .active .mm-bullets li:nth-child(3){ transition-delay:0.8s; }
+  .active .mm-bullets li:nth-child(2){ transition-delay:0.35s; } .active .mm-bullets li:nth-child(3){ transition-delay:0.7s; }
+  .active .mm-bullets li:nth-child(4){ transition-delay:1.05s; } .active .mm-bullets li:nth-child(5){ transition-delay:1.4s; }
   .mm-bullets .chk { color:var(--purple); flex-shrink:0; }
 
   /* Coming soon (workflows + gtm) */
@@ -93,7 +94,10 @@
   .soon-badge { font-size:1.3vh; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:#71717a; border:1px solid rgba(255,255,255,0.12); border-radius:2vh; padding:0.5vh 1.4vh; display:inline-block; margin-bottom:1.6vh; }
   .soon-title { font-family:'Sora',sans-serif; font-weight:800; font-size:2.8vh; margin-bottom:1vh; }
   .soon-title.green { color:var(--green); } .soon-title.teal { color:#10b981; }
-  .soon-desc { font-size:1.7vh; color:#71717a; }
+  .soon-desc { font-size:1.7vh; color:#a1a1aa; margin-bottom:1.8vh; }
+  .soon-list { list-style:none; display:flex; flex-direction:column; gap:1vh; }
+  .soon-list li { font-size:1.6vh; color:#d4d4d8; display:flex; gap:1vh; align-items:flex-start; }
+  .soon-list .d { color:#52525b; flex-shrink:0; }
 
   #s9 .logo { margin-bottom:3vh; } #s9 .logo svg { width:5.4vh; height:5.4vh; } #s9 .logo .word { font-size:3.8vh; }
   #s9 h1 { font-size:6.4vh; } #s9 .cta { margin-top:3.2vh; font-size:2.2vh; color:#71717a; }
@@ -186,8 +190,10 @@
         <div class="mm-sub">Not just an agent — a super AI agent that commands a whole team.</div>
         <ul class="mm-bullets">
           <li><span class="chk">✓</span><span>One employee orchestrates 200+ specialized agents</span></li>
-          <li><span class="chk">✓</span><span>Plans, writes &amp; ships your marketing across channels</span></li>
-          <li><span class="chk">✓</span><span>Runs on its own schedule and reports back to you</span></li>
+          <li><span class="chk">✓</span><span>Content engine — blogs, social, email &amp; landing copy</span></li>
+          <li><span class="chk">✓</span><span>Competitor &amp; market research, refreshed on a schedule</span></li>
+          <li><span class="chk">✓</span><span>Plans and runs multi-channel campaigns end to end</span></li>
+          <li><span class="chk">✓</span><span>Emails you a performance digest after every run</span></li>
         </ul>
       </div>
     </div>
@@ -199,12 +205,22 @@
         <div class="soon-card">
           <div class="soon-badge">Coming soon</div>
           <div class="soon-title green">Workflows</div>
-          <div class="soon-desc">Draw it, it runs. Visual flows with AI reasoning at every step.</div>
+          <div class="soon-desc">Draw it, it runs — AI reasoning at every step.</div>
+          <ul class="soon-list">
+            <li><span class="d">›</span><span>Drag-and-drop canvas, no code</span></li>
+            <li><span class="d">›</span><span>Triggers, branches &amp; parallel runs</span></li>
+            <li><span class="d">›</span><span>Webhooks, schedules &amp; 30+ integrations</span></li>
+          </ul>
         </div>
         <div class="soon-card">
           <div class="soon-badge">Coming soon</div>
           <div class="soon-title teal">GTM Engine</div>
-          <div class="soon-desc">Define your ICP, fill your pipeline. Find, enrich &amp; reach leads.</div>
+          <div class="soon-desc">Define your ICP, fill your pipeline.</div>
+          <ul class="soon-list">
+            <li><span class="d">›</span><span>Finds &amp; enriches matching leads</span></li>
+            <li><span class="d">›</span><span>AI-personalized email, call &amp; LinkedIn</span></li>
+            <li><span class="d">›</span><span>Meeting booking + CRM sync</span></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -229,7 +245,7 @@
       (function tick(){ if(i<=phrase.length){ typeEl.textContent = phrase.slice(0,i); i++; typeTimer=setTimeout(tick,65);} })();
     }
     var scenes = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
-    var holds  = [3000, 4400, 5200, 3800, 4400, 4400, 5200, 4000, 3800];
+    var holds  = [3000, 4400, 5200, 3800, 4400, 4400, 6400, 5200, 3800];
     function show(idx){
       scenes.forEach(function(id){ document.getElementById(id).classList.toggle('active', id===scenes[idx]); });
       if(scenes[idx]==='s2') typeIt();
