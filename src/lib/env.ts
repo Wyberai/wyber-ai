@@ -21,6 +21,8 @@ const RECOMMENDED = [
   'SECRETS_ENCRYPTION_KEY', // connector secret encrypt/decrypt
   'NEXT_PUBLIC_APP_URL',    // absolute links, OG, emails
   'CRON_SECRET',            // protects cron endpoints
+  'SUPABASE_OAUTH_CLIENT_ID',     // Supabase "Connect" OAuth flow
+  'SUPABASE_OAUTH_CLIENT_SECRET', // Supabase "Connect" OAuth flow
 ] as const
 
 export interface EnvReport {
