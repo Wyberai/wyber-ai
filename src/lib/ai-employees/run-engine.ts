@@ -806,6 +806,20 @@ export async function runEmployee(
       entities = (data as Entity[]) ?? []
     }
 
+    // Company knowledge — the customer's own intel, shared across their employees.
+    type Knowledge = { doc_title: string; content: string }
+    let companyKnowledge: Knowledge[] = []
+    if (queryVec) {
+      const { data } = await db.rpc('match_company_knowledge', { p_user_id: userId, p_query: queryVec, p_k: 6 })
+      companyKnowledge = (data as Knowledge[]) ?? []
+    }
+    if (companyKnowledge.length === 0) {
+      const { data } = await db.from('company_knowledge')
+        .select('doc_title, content').eq('user_id', userId)
+        .order('created_at', { ascending: false }).limit(6)
+      companyKnowledge = (data as Knowledge[]) ?? []
+    }
+
     // Structured self-model → readable lines.
     const sm = (employee.self_model ?? {}) as Record<string, unknown>
     const smSection = (label: string, key: string) => {
@@ -843,8 +857,12 @@ export async function runEmployee(
         }`
       : ''
 
-    const memoryBlock = (selfModelBlock || summaryBlock || factsBlock || entityBlock || episodeBlock)
-      ? `${selfModelBlock}${summaryBlock}${factsBlock}${entityBlock}${episodeBlock}\n\nUse this experience to work smarter than last time. Note new facts with WYBERAI_remember.`
+    const companyBlock = companyKnowledge.length > 0
+      ? `\n\nWHAT YOU KNOW ABOUT THIS COMPANY (their own intel — ground your work in this):\n${companyKnowledge.map(c => `▸ [${c.doc_title}] ${c.content.slice(0, 450)}`).join('\n')}`
+      : ''
+
+    const memoryBlock = (companyBlock || selfModelBlock || summaryBlock || factsBlock || entityBlock || episodeBlock)
+      ? `${companyBlock}${selfModelBlock}${summaryBlock}${factsBlock}${entityBlock}${episodeBlock}\n\nUse this experience to work smarter than last time. Note new facts with WYBERAI_remember.`
       : '\n\nMEMORY: This is your first run — you have no past experience yet. Work carefully; you will remember what you learn for next time.'
 
     // ── Build KPI targets string ───────────────────────────────────────────────

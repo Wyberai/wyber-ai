@@ -175,6 +175,7 @@ export default function AIEmployeesPage() {
           <Link href="/dashboard" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>← Dashboard</Link>
           <Link href="/employees" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>Browse 100 templates</Link>
           <Link href="/org" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>Organizations</Link>
+          <Link href="/ai-employees/knowledge" style={{ fontSize:12, color:'#52525b', textDecoration:'none', padding:'5px 12px', borderRadius:7, border:'1px solid #1e1e26' }}>🧠 Company knowledge</Link>
           <Link href="/ai-employees/new" style={{ fontSize:13, fontWeight:600, color:'#fff', textDecoration:'none', padding:'7px 16px', borderRadius:8, background:SKY }}>+ Hire employee</Link>
         </div>
       </nav>
