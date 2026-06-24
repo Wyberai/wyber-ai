@@ -100,7 +100,10 @@
   .soon-list .d { color:#52525b; flex-shrink:0; }
 
   #s9 .logo { margin-bottom:3vh; } #s9 .logo svg { width:5.4vh; height:5.4vh; } #s9 .logo .word { font-size:3.8vh; }
-  #s9 h1 { font-size:6.4vh; } #s9 .cta { margin-top:3.2vh; font-size:2.2vh; color:#71717a; }
+  #s9 h1 { font-size:6.4vh; } #s9 .cta { margin-top:3.2vh; font-size:2.2vh; color:#a1a1aa; }
+  #s9 .signoff { margin-top:5vh; padding-top:2.6vh; border-top:1px solid rgba(255,255,255,0.1); }
+  #s9 .signoff .co { font-size:1.8vh; color:#d4d4d8; font-weight:500; }
+  #s9 .signoff .contact { font-size:1.7vh; color:#0EA5E9; margin-top:0.8vh; }
 
   @keyframes blink { 50%{opacity:0} }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -232,6 +235,10 @@
       </div>
       <h1>Your next app is<br><span class="grad">one prompt away.</span></h1>
       <div class="cta">wyberai.com · 50 free credits · no card</div>
+      <div class="signoff">
+        <div class="co">A product from SignalPulse Technologies, USA</div>
+        <div class="contact">Hello@wyberai.com</div>
+      </div>
     </div>
 
   </div></div>
@@ -245,7 +252,7 @@
       (function tick(){ if(i<=phrase.length){ typeEl.textContent = phrase.slice(0,i); i++; typeTimer=setTimeout(tick,65);} })();
     }
     var scenes = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
-    var holds  = [3000, 4400, 5200, 3800, 4400, 4400, 6400, 5200, 3800];
+    var holds  = [3000, 4400, 5200, 3800, 4400, 4400, 6400, 5200, 5200];
     function show(idx){
       scenes.forEach(function(id){ document.getElementById(id).classList.toggle('active', id===scenes[idx]); });
       if(scenes[idx]==='s2') typeIt();

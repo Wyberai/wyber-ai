@@ -16,8 +16,19 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Public marketing/intro assets — allow embedding in any iframe (video
+      // render services, partner sites). No X-Frame-Options; permissive CSP.
       {
-        source: '/(.*)',
+        source: '/:file(demo-intro|launch-intro).html',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+      // Everything else keeps strict security headers (intro files excluded above).
+      {
+        source: '/((?!demo-intro\\.html|launch-intro\\.html).*)',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

@@ -37,6 +37,9 @@ export function PreviewPanel() {
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // While auto self-heal is still attempting, we hide the raw error behind a
+  // calm "finishing touches" state. Only flip true once all heal attempts fail.
+  const [healFailed, setHealFailed] = useState(false)
   const [elapsed, setElapsed] = useState<number | null>(null)
   const [msgIdx, setMsgIdx] = useState(0)
   const [seconds, setSeconds] = useState(0)
@@ -246,7 +249,8 @@ export function PreviewPanel() {
   useEffect(() => {
     if (error && !building && !isGenerating && !fixing) {
       const attempts = healAttempted.current[error] ?? 0
-      if (attempts >= 3) return
+      if (attempts >= 3) { setHealFailed(true); return }
+      setHealFailed(false)
       healAttempted.current[error] = attempts + 1
       const delay = attempts === 0 ? 1500 : 3000
       const t = setTimeout(() => tryToFix(), delay)
@@ -254,7 +258,8 @@ export function PreviewPanel() {
     }
   }, [error, building, isGenerating, fixing, tryToFix])
 
-  useEffect(() => { healAttempted.current = {} }, [files])
+  useEffect(() => { if (!error) setHealFailed(false) }, [error])
+  useEffect(() => { healAttempted.current = {}; setHealFailed(false) }, [files])
 
   const sendVisualEdit = () => {
     if (!selectedEl || !editInstruction.trim()) return
@@ -356,7 +361,16 @@ Find this element in the code and apply the change.`
           </div>
         )}
 
-        {error && !building && (
+        {/* Calm self-healing state — hides the raw build error while auto-fix runs */}
+        {error && !building && !healFailed && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ fontSize: 13, color: '#e4e4e7', textAlign: 'center', fontWeight: 600 }}>Putting on the finishing touches…</div>
+            <div style={{ fontSize: 11, color: '#71717a', textAlign: 'center', maxWidth: 320 }}>Auto-fixing a small issue — this is free and usually takes a few seconds.</div>
+          </div>
+        )}
+
+        {error && !building && healFailed && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
