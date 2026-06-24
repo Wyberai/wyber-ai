@@ -16,6 +16,14 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
   const [connected, setConnected] = useState<Connector | null>(null)
   const [error, setError] = useState('')
 
+  // ── OAuth "Connect" flow ──────────────────────────────────────────────
+  interface SbProject { id: string; name: string; organization_id: string; region: string }
+  interface SbOrg { id: string; name: string }
+  const [picker, setPicker] = useState(false)
+  const [projects, setProjects] = useState<SbProject[]>([])
+  const [orgs, setOrgs] = useState<SbOrg[]>([])
+  const [pickerBusy, setPickerBusy] = useState(false)
+
   useEffect(() => {
     if (!project?.id) return
     fetch(`/api/connectors?projectId=${project.id}`)
@@ -24,7 +32,62 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
         const sb = d.connectors?.find((c: Connector) => c.service === 'supabase')
         if (sb) setConnected(sb)
       })
+    // Returned from Supabase OAuth consent → open the project picker.
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('supabase') === 'pick') {
+      openPicker()
+    }
   }, [project?.id])
+
+  const oauthConnect = () => {
+    window.location.href = `/api/connectors/supabase/start?projectId=${project?.id}`
+  }
+
+  async function openPicker() {
+    setPicker(true); setPickerBusy(true); setError('')
+    try {
+      const r = await fetch(`/api/connectors/supabase/projects?projectId=${project?.id}`)
+      const d = await r.json()
+      if (!r.ok) { setError(d.error || 'Could not load your Supabase projects'); return }
+      setProjects(d.projects || []); setOrgs(d.orgs || [])
+    } catch { setError('Could not load your Supabase projects') }
+    finally { setPickerBusy(false) }
+  }
+
+  async function linkExisting(ref: string) {
+    setPickerBusy(true); setError('')
+    try {
+      const r = await fetch('/api/connectors/supabase/projects', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project?.id, action: 'link', ref }),
+      })
+      const d = await r.json()
+      if (!r.ok) { setError(d.error || 'Could not link project'); return }
+      setConnected({ service: 'supabase', config: { url: d.url }, connected_at: new Date().toISOString() })
+      setPicker(false)
+    } catch { setError('Could not link project') }
+    finally { setPickerBusy(false) }
+  }
+
+  async function createNew() {
+    const name = window.prompt('Name for the new Supabase project:')
+    if (!name) return
+    const dbPass = window.prompt('Database password (save it somewhere safe):')
+    if (!dbPass) return
+    const orgId = orgs[0]?.id
+    if (!orgId) { setError('No Supabase organization found'); return }
+    setPickerBusy(true); setError('')
+    try {
+      const r = await fetch('/api/connectors/supabase/projects', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project?.id, action: 'create', orgId, name, dbPass }),
+      })
+      const d = await r.json()
+      if (!r.ok) { setError(d.error || 'Could not create project'); return }
+      setConnected({ service: 'supabase', config: { url: d.url }, connected_at: new Date().toISOString() })
+      setPicker(false)
+    } catch { setError('Could not create project') }
+    finally { setPickerBusy(false) }
+  }
 
   const connect = async () => {
     if (!url.trim() || !anonKey.trim()) { setError('Both fields required'); return }
@@ -102,8 +165,40 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           </div>
+        ) : picker ? (
+          <div>
+            <div style={{ fontSize: 13, color: '#8b8b9a', marginBottom: 12 }}>
+              Pick a Supabase project to link, or create a new one. We&apos;ll wire its URL + anon key into your app automatically.
+            </div>
+            {pickerBusy && <div style={{ fontSize: 12, color: '#52526a', marginBottom: 10 }}>Working…</div>}
+            {error && <div style={{ fontSize: 12, color: '#ef4444', marginBottom: 10 }}>{error}</div>}
+            <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              {projects.map(p => (
+                <button key={p.id} onClick={() => linkExisting(p.id)} disabled={pickerBusy}
+                  style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: '#1a1a24', color: '#f0f0f5', fontSize: 13, cursor: pickerBusy ? 'not-allowed' : 'pointer' }}>
+                  <div style={{ fontWeight: 600 }}>{p.name}</div>
+                  <div style={{ fontSize: 10, color: '#52526a', fontFamily: 'monospace' }}>{p.id} · {p.region}</div>
+                </button>
+              ))}
+              {!pickerBusy && projects.length === 0 && <div style={{ fontSize: 12, color: '#52526a' }}>No existing projects — create one below.</div>}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setPicker(false)} disabled={pickerBusy} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#8b8b9a', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Back</button>
+              <button onClick={createNew} disabled={pickerBusy} style={{ flex: 2, padding: '9px 0', borderRadius: 8, border: 'none', background: '#3ecf8e', color: '#06281c', fontSize: 13, fontWeight: 700, cursor: pickerBusy ? 'not-allowed' : 'pointer' }}>+ New project</button>
+            </div>
+          </div>
         ) : (
           <div>
+            {/* One-click OAuth connect */}
+            <button onClick={oauthConnect}
+              style={{ width: '100%', padding: '11px 0', borderRadius: 8, border: 'none', background: '#3ecf8e', color: '#06281c', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>⚡</span> Connect with Supabase
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+              <span style={{ fontSize: 10, color: '#52526a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>or paste keys manually</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+            </div>
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 11, fontWeight: 600, color: '#8b8b9a', display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Project URL</label>
               <input value={url} onChange={e => setUrl(e.target.value)}
