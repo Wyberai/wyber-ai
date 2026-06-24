@@ -77,6 +77,7 @@ export async function GET(req: NextRequest) {
     const [orgs, projects] = await Promise.all([listOrganizations(token), listProjects(token)])
     return NextResponse.json({ orgs, projects })
   } catch (e) {
+    console.error('[supabase/projects GET] failed:', String(e))
     return NextResponse.json({ error: String(e) }, { status: 400 })
   }
 }
