@@ -14,6 +14,14 @@ import {
  * untouched.
  */
 
+// WyberAi's OWN platform Supabase project ref — derived from the app's URL.
+// It must NEVER be linkable to a generated app (that would point a customer app
+// at our production database). We hide it from the picker and reject linking it.
+const PLATFORM_REF = (() => {
+  const m = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(/https:\/\/([a-z0-9]+)\.supabase/i)
+  return m ? m[1] : ''
+})()
+
 // Read the stored OAuth tokens for this project, refreshing if near expiry.
 async function getValidToken(supabase: SupabaseClient, projectId: string, userId: string): Promise<string> {
   const { data } = await supabase
@@ -75,7 +83,9 @@ export async function GET(req: NextRequest) {
   try {
     const token = await getValidToken(supabase, projectId, user.id)
     const [orgs, projects] = await Promise.all([listOrganizations(token), listProjects(token)])
-    return NextResponse.json({ orgs, projects })
+    // Never expose WyberAi's own platform DB as a linkable option.
+    const safe = projects.filter(p => p.id !== PLATFORM_REF)
+    return NextResponse.json({ orgs, projects: safe })
   } catch (e) {
     console.error('[supabase/projects GET] failed:', String(e))
     return NextResponse.json({ error: String(e) }, { status: 400 })
@@ -89,6 +99,11 @@ export async function POST(req: NextRequest) {
 
   const { projectId, action, ref, name, orgId, dbPass, region } = await req.json()
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
+
+  // Hard block: refuse to link WyberAi's own platform database.
+  if (ref && PLATFORM_REF && ref === PLATFORM_REF) {
+    return NextResponse.json({ error: 'That project cannot be linked.' }, { status: 403 })
+  }
 
   try {
     const token = await getValidToken(supabase, projectId, user.id)
