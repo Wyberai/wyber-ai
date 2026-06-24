@@ -1046,14 +1046,18 @@ For "entities", only include people/accounts/campaigns genuinely worth rememberi
           outcome: r.outcome || null,
           importance: Math.min(5, Math.max(1, Math.round(r.importance ?? 3))),
           embedding: episodeVec,
-        }).then(() => {}, () => {})
+        }).then((res: { error?: { message: string } | null }) => {
+          if (res?.error) console.error('[employee-memory] episode insert failed:', res.error.message)
+        }, (e: unknown) => console.error('[employee-memory] episode insert threw:', e))
 
         // Self-model (structured) + human-readable narrative.
         const patch: Record<string, unknown> = {}
         if (r.self_model && typeof r.self_model === 'object') patch.self_model = r.self_model
         if (r.updated_summary && r.updated_summary.trim()) patch.memory_summary = r.updated_summary.slice(0, 1500)
         if (Object.keys(patch).length) {
-          await db.from('ai_employees').update(patch).eq('id', employee.id).then(() => {}, () => {})
+          await db.from('ai_employees').update(patch).eq('id', employee.id).then((res: { error?: { message: string } | null }) => {
+            if (res?.error) console.error('[employee-memory] self_model update failed:', res.error.message)
+          }, (e: unknown) => console.error('[employee-memory] self_model update threw:', e))
         }
 
         // Entity graph — upsert each remembered person/account/campaign, embedded.
@@ -1072,10 +1076,12 @@ For "entities", only include people/accounts/campaigns genuinely worth rememberi
             embedding: entVec,
             last_seen_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-          }, { onConflict: 'employee_id,kind,name' }).then(() => {}, () => {})
+          }, { onConflict: 'employee_id,kind,name' }).then((res: { error?: { message: string } | null }) => {
+            if (res?.error) console.error('[employee-memory] entity upsert failed:', res.error.message)
+          }, (e: unknown) => console.error('[employee-memory] entity upsert threw:', e))
         }
       }
-    } catch { /* reflection is best-effort; never fail a run over it */ }
+    } catch (e) { console.error('[employee-memory] reflection failed:', e) }
 
     // ── Deduct credits ─────────────────────────────────────────────────────────
     if (creditsUsed > 0) {
