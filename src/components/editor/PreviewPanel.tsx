@@ -59,10 +59,12 @@ export function PreviewPanel() {
   const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
   const hasApp = Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 200
 
-  const build = useCallback(async () => {
+  const build = useCallback(async (force = false) => {
     if (!hasApp || building) return
     const key = Object.keys(files).sort().map(p => `${p}:${hashStr((files[p] as any)?.content ?? '')}`).join('|')
-    if (key === lastBuiltKey.current && html) return
+    // Auto-builds skip when nothing changed; the manual Rebuild button passes
+    // force=true so it always re-fetches (e.g. to pick up a new preview shell).
+    if (!force && key === lastBuiltKey.current && html) return
     lastBuiltKey.current = key
 
     setBuilding(true)
@@ -296,11 +298,11 @@ Find this element in the code and apply the change.`
           </button>
         )}
         {html && !building && (
-          <button onClick={build} title="Rebuild preview"
+          <button onClick={() => build(true)} title="Rebuild preview"
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
         )}
         {hasApp && !building && !html && !error && (
-          <button onClick={build}
+          <button onClick={() => build(true)}
             style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
             Build preview
           </button>
@@ -383,7 +385,7 @@ Find this element in the code and apply the change.`
                 style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: fixing ? 'var(--bg-elevated)' : '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 700, cursor: fixing ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 {fixing ? 'Sending to AI...' : '✦ Try to fix'}
               </button>
-              <button onClick={build} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Retry build</button>
+              <button onClick={() => build(true)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>Retry build</button>
             </div>
           </div>
         )}

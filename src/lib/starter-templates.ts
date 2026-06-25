@@ -19,6 +19,10 @@ export const STARTER_TEMPLATES: Record<Framework, FileMap> = {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>App</title>
+    <!-- Apps are styled with Tailwind utility classes; load Tailwind so the
+         preview and published output are styled even if the model never edits
+         index.html. -->
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
     <div id="root"></div>

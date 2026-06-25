@@ -32,5 +32,20 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
     }
   }
 
+  // Guarantee Tailwind: apps are styled entirely with Tailwind utility classes,
+  // but the starter index.html historically shipped without the CDN and the
+  // model doesn't always add it on component-split rebuilds — leaving the app
+  // unstyled. If an index.html exists without Tailwind, inject the CDN script so
+  // both preview and publish render styled.
+  const TW = '<script src="https://cdn.tailwindcss.com"></script>'
+  const idx = out['index.html']
+  if (idx) {
+    const content = typeof idx === 'string' ? idx : (idx.content ?? '')
+    if (content.includes('<head') && !content.includes('cdn.tailwindcss.com')) {
+      const injected = content.replace(/<head([^>]*)>/i, `<head$1>\n    ${TW}`)
+      out['index.html'] = typeof idx === 'string' ? injected : { ...idx, content: injected }
+    }
+  }
+
   return out as T
 }
