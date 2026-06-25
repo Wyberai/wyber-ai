@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createAdminClient } from '@/lib/supabase/server';
+import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -44,6 +46,25 @@ export async function GET(request: Request) {
         onConflict: 'id',
         ignoreDuplicates: true,
       });
+
+      // Send welcome + owner alert exactly once per user. Atomically flip
+      // welcome_sent (admin client bypasses RLS); a returned row = first time.
+      try {
+        const admin = await createAdminClient();
+        const { data: firstTime } = await admin
+          .from('profiles')
+          .update({ welcome_sent: true })
+          .eq('id', user.id)
+          .eq('welcome_sent', false)
+          .select('id')
+          .maybeSingle();
+        if (firstTime?.id && user.email) {
+          const fullName = (user.user_metadata?.full_name as string | undefined);
+          const provider = (user.app_metadata?.provider as string | undefined);
+          sendWelcomeEmail(user.email, fullName).catch(() => {});
+          sendAdminSignupAlert(user.email, provider).catch(() => {});
+        }
+      } catch (e) { console.error('welcome/signup-alert failed:', e); }
 
       return NextResponse.redirect(`${origin}${next}`);
     }
