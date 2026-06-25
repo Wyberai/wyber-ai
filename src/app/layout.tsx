@@ -55,12 +55,8 @@ const jsonLd = {
       url: SITE,
       logo: { '@type': 'ImageObject', url: `${SITE}/icon.svg` },
       description: 'SignalPulse Technologies builds WyberAi — an AI platform that turns plain-English prompts into production-ready web and mobile apps.',
-      // NOTE: verify/replace these with your real profile URLs.
       sameAs: [
-        'https://www.linkedin.com/company/wyberai',
-        'https://x.com/wyberai',
-        'https://www.reddit.com/r/WyberAI',
-        'https://theresanaiforthat.com/ai/wyberai/',
+        'https://www.linkedin.com/company/signalpulse-technologies',
       ],
     },
     {
@@ -80,6 +76,11 @@ const jsonLd = {
       brand: { '@type': 'Brand', name: 'WyberAi' },
       author: { '@id': `${SITE}/#organization` },
       publisher: { '@id': `${SITE}/#organization` },
+      sameAs: [
+        'https://www.linkedin.com/company/wyber-ai',
+        'https://x.com/WyberAi',
+        'https://theresanaiforthat.com/ai/wyberai/',
+      ],
       description: 'Describe your web or mobile app in plain English. WyberAi generates fresh, production-ready React code, provisions a database, and deploys to a live URL in minutes — no engineers needed.',
       featureList: [
         'AI generates production-ready React + Tailwind code',

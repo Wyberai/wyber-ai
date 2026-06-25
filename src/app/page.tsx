@@ -693,6 +693,18 @@ export default function HomePage() {
               {l}
             </Link>
           ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <a href="https://www.linkedin.com/company/wyber-ai" target="_blank" rel="noopener" aria-label="WyberAi on LinkedIn" style={{ color: '#52525b', display: 'flex' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#0EA5E9'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5.001A2.5 2.5 0 014.98 3.5zM3 8.98h4v12.02H3V8.98zM9.5 8.98h3.84v1.64h.05c.53-1 1.84-2.05 3.79-2.05 4.05 0 4.8 2.67 4.8 6.14V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21h-4V8.98z"/></svg>
+            </a>
+            <a href="https://x.com/WyberAi" target="_blank" rel="noopener" aria-label="WyberAi on X" style={{ color: '#52525b', display: 'flex' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
+            </a>
+          </div>
         </div>
       </footer>
 
