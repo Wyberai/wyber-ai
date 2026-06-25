@@ -109,6 +109,27 @@ export async function sendMagicLinkEmail(to: string, link: string) {
   return resend.emails.send({ from: FROM, to, subject: 'Your WyberAi login link', html })
 }
 
+// ── Internal owner alerts (new signup / new payment) ──────────────────────────
+const ADMIN_NOTIFY = process.env.ADMIN_NOTIFY_EMAIL || 'hello@wyberai.com'
+
+export async function sendAdminSignupAlert(userEmail: string, provider?: string) {
+  const html = wrap(`
+    ${h1('New signup 🎉')}
+    ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just created a WyberAi account${provider ? ` via ${provider}` : ''}.`)}
+    ${infoBox([['Email', userEmail], ['Method', provider || 'email'], ['When', new Date().toUTCString()]])}
+  `, `New signup: ${userEmail}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎉 New signup: ${userEmail}`, html })
+}
+
+export async function sendAdminPaymentAlert(userEmail: string, description: string, amount?: string) {
+  const html = wrap(`
+    ${h1('New payment 💰')}
+    ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just paid.`)}
+    ${infoBox([['Customer', userEmail], ['Purchase', description], ...(amount ? [['Amount', amount] as [string, string]] : []), ['When', new Date().toUTCString()]], '#3dd68c44')}
+  `, `Payment from ${userEmail}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `💰 Payment: ${description} — ${userEmail}`, html })
+}
+
 // ── 2b. Auth emails (Supabase Send Email Hook) ────────────────────────────────
 // One branded template for every auth action so login/signup/reset match the
 // rest of WyberAi instead of Supabase's default look.

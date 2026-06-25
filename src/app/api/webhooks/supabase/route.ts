@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendWelcomeEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
 
 // Supabase sends this webhook on auth.users INSERT
 // Set up at: Supabase → Database → Webhooks → on auth.users INSERT
@@ -17,12 +17,15 @@ export async function POST(req: NextRequest) {
   const { type, record } = body;
 
   if (type === 'INSERT' && record?.email) {
+    const provider = record.raw_app_meta_data?.provider as string | undefined;
     try {
       await sendWelcomeEmail(record.email, record.raw_user_meta_data?.full_name);
     } catch (err) {
       console.error('Welcome email failed:', err);
       // Don't throw — email failure shouldn't break signup
     }
+    // Notify the owner of every new signup
+    sendAdminSignupAlert(record.email, provider).catch(err => console.error('Signup alert failed:', err));
   }
 
   return NextResponse.json({ ok: true });

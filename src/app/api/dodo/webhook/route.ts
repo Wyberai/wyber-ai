@@ -7,6 +7,7 @@ import {
   sendTopupEmail,
   sendPaymentFailedEmail,
   sendRefundEmail,
+  sendAdminPaymentAlert,
 } from '@/lib/email'
 
 function getAdmin() {
@@ -151,7 +152,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
         console.log(`Topup +${topupCredits} for ${userId}`)
-        if (userEmail) sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
+        if (userEmail) {
+          sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
+          sendAdminPaymentAlert(userEmail, `Top-up: ${topupCredits} credits`).catch(() => {})
+        }
         return NextResponse.json({ received: true })
       }
 
@@ -168,7 +172,10 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
       console.log(`Plan activated: ${planConfig.plan} for ${userId}`)
-      if (userEmail) sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
+      if (userEmail) {
+        sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
+        sendAdminPaymentAlert(userEmail, `${planConfig.label} plan`).catch(() => {})
+      }
     }
 
     if (eventType === 'subscription.renewed') {
@@ -181,7 +188,10 @@ export async function POST(req: NextRequest) {
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
         console.log(`Renewed for ${userId}, rollover: ${rollover}`)
-        if (userEmail) sendRenewalEmail(userEmail, planConfig.label, planConfig.credits, rollover).catch(() => {})
+        if (userEmail) {
+          sendRenewalEmail(userEmail, planConfig.label, planConfig.credits, rollover).catch(() => {})
+          sendAdminPaymentAlert(userEmail, `${planConfig.label} renewal`).catch(() => {})
+        }
       }
     }
 
