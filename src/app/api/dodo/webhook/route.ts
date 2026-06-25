@@ -5,6 +5,8 @@ import {
   sendRenewalEmail,
   sendCancellationEmail,
   sendTopupEmail,
+  sendPaymentFailedEmail,
+  sendRefundEmail,
 } from '@/lib/email'
 
 function getAdmin() {
@@ -83,8 +85,6 @@ export async function POST(req: NextRequest) {
   const eventType = String(event.type || '')
   console.log('Dodo event:', eventType)
 
-  if (eventType === 'payment.failed') return NextResponse.json({ received: true })
-
   try {
     const admin = getAdmin()
 
@@ -125,6 +125,20 @@ export async function POST(req: NextRequest) {
       .eq('id', userId)
       .single()
     const userEmail = profile?.email as string | undefined
+
+    // Payment failed → dunning email (no plan/credit change; processor will retry)
+    if (eventType === 'payment.failed') {
+      if (userEmail) sendPaymentFailedEmail(userEmail, profile?.plan as string | undefined).catch(() => {})
+      console.log(`Payment failed for ${userId}`)
+      return NextResponse.json({ received: true })
+    }
+
+    // Refund → confirmation email
+    if (eventType === 'refund.succeeded' || eventType === 'payment.refunded' || eventType === 'refund.created') {
+      if (userEmail) sendRefundEmail(userEmail).catch(() => {})
+      console.log(`Refund processed for ${userId}`)
+      return NextResponse.json({ received: true })
+    }
 
     if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
       // Check if it's a top-up first

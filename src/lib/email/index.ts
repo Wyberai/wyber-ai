@@ -76,19 +76,20 @@ export async function sendWelcomeEmail(to: string, name?: string) {
   const html = wrap(`
     ${h1('Welcome to WyberAi ⚡')}
     ${p(`Hey ${displayName}, you're in.`)}
-    ${p('You have <strong style="color:#f0f0f4">15 free credits</strong> to start building — plus 3 more every day. Describe any app and watch it generate in real time.')}
+    ${p('You have <strong style="color:#f0f0f4">50 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
     ${p('A few things to try first:')}
     <ul style="margin:0 0 24px;padding-left:20px;color:#8888a0;font-size:15px;line-height:1.9">
-      <li>Pick a template from the <strong style="color:#f0f0f4">Gallery</strong></li>
-      <li>Paste a screenshot to clone any UI</li>
-      <li>Try an <strong style="color:#f0f0f4">AI Agent</strong> for multi-step automation</li>
+      <li>Build a <strong style="color:#f0f0f4">web app</strong> — just describe it</li>
+      <li>Build a <strong style="color:#f0f0f4">mobile app</strong> — preview on your phone, export for the App Store</li>
+      <li>Paste a screenshot or Figma file to clone any UI</li>
       <li>Connect your own Supabase to add a real database</li>
     </ul>
+    ${p('And there\'s more coming: a new <strong style="color:#f0f0f4">AI employee</strong> every Monday — starting with the Marketing Manager.')}
     <div style="text-align:center;margin:28px 0">
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
-    ${p('Questions? Reply here — hello@wyberai.com goes straight to the team.')}
-  `, 'Your 15 free credits are ready')
+    ${p('Questions? Just reply — hello@wyberai.com goes straight to the team.')}
+  `, 'Your 50 free credits are ready')
 
   return resend.emails.send({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
 }
@@ -115,9 +116,8 @@ export async function sendUpgradeConfirmEmail(to: string, plan: string, credits:
     ${p(`Your upgrade to <strong style="color:#f0f0f4">WyberAi ${plan}</strong> is confirmed and active now.`)}
     ${infoBox([
       ['Monthly credits', credits.toLocaleString()],
-      ['Daily top-up', plan === 'Team' ? '+20 every day' : '+10 every day'],
       ['Credit rollover', '✓ Unused credits carry forward'],
-      ['Models unlocked', plan === 'Team' ? 'Standard + Premium + Fable' : 'Standard + Premium'],
+      ['Features', '✓ Every feature unlocked — web, mobile, deploy & more'],
     ], '#0EA5E944')}
     <div style="text-align:center;margin:0 0 24px">
       ${btn('Open dashboard →', `${APP_URL}/dashboard`)}
@@ -181,17 +181,49 @@ export async function sendTopupEmail(to: string, credits: number, newBalance: nu
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `${credits} credits added to WyberAi ✓`, html })
 }
 
+// ── 6b. Payment failed (dunning) ──────────────────────────────────────────────
+export async function sendPaymentFailedEmail(to: string, plan?: string) {
+  const planLabel = plan ? `WyberAi ${plan}` : 'your WyberAi subscription'
+  const html = wrap(`
+    ${h1('Payment failed — action needed')}
+    ${p(`We couldn't process the latest payment for <strong style="color:#f0f0f4">${planLabel}</strong>.`)}
+    ${p('This usually means your card expired or had insufficient funds. Please update your payment method to keep your plan and credits active — we\'ll retry automatically once it\'s updated.')}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Update payment method →', `${APP_URL}/settings?tab=billing`, '#f0a429')}
+    </div>
+    ${p('If we can\'t collect payment, your account will move to the Free plan, but your projects and history stay safe.')}
+    ${p('Questions about a charge? Just reply — hello@wyberai.com goes straight to the team.')}
+  `, 'Update your payment method to keep building')
+
+  return resend.emails.send({ from: FROM, to, subject: `Payment failed — update your WyberAi billing`, html })
+}
+
+// ── 6c. Refund processed ──────────────────────────────────────────────────────
+export async function sendRefundEmail(to: string, amount?: string) {
+  const html = wrap(`
+    ${h1('Your refund is on the way')}
+    ${p(`We've processed a refund${amount ? ` of <strong style="color:#f0f0f4">${amount}</strong>` : ''} to your original payment method.`)}
+    ${p('Depending on your bank, it can take 5–10 business days to appear on your statement.')}
+    ${p('We\'re sorry to see you go. If there\'s anything we could have done better, hit reply — we read every message.')}
+    <div style="text-align:center;margin:24px 0">
+      ${btn('Back to WyberAi', `${APP_URL}`, '#3d3d4a')}
+    </div>
+  `, 'Your WyberAi refund has been processed')
+
+  return resend.emails.send({ from: FROM, to, subject: 'Your WyberAi refund has been processed', html })
+}
+
 // ── 7. Running low on credits ─────────────────────────────────────────────────
 export async function sendCreditLowEmail(to: string, remaining: number) {
   const html = wrap(`
     ${h1('Running low on credits')}
     ${p(`You have <strong style="color:#f0a429">${remaining} credits</strong> remaining.`)}
-    ${p('Top up instantly — credits never expire and are yours forever.')}
+    ${p('Top up instantly — top-up credits never expire and are yours forever.')}
     <div style="display:grid;gap:10px;margin:0 0 28px">
       ${([
-        ['50 credits', '$9.99', `${APP_URL}/pricing#topup`],
-        ['150 credits', '$24.99', `${APP_URL}/pricing#topup`],
-        ['500 credits', '$69.99', `${APP_URL}/pricing#topup`],
+        ['200 credits', '$19', `${APP_URL}/pricing#topup`],
+        ['600 credits', '$49', `${APP_URL}/pricing#topup`],
+        ['2,000 credits', '$99', `${APP_URL}/pricing#topup`],
       ] as [string, string, string][]).map(([c, price, url]) => `
         <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:14px;color:#f0f0f4;font-weight:500">${c}</span>
@@ -199,7 +231,7 @@ export async function sendCreditLowEmail(to: string, remaining: number) {
         </div>
       `).join('')}
     </div>
-    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> for 300 credits/month at $99.')}
+    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at $79.')}
   `, `${remaining} credits remaining`)
 
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `Low credits: ${remaining} remaining on WyberAi`, html })
