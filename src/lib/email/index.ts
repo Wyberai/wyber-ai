@@ -122,7 +122,10 @@ export async function sendAuthEmail(to: string, action: AuthAction, url: string,
     email_change:    { subject: 'Confirm your new email — WyberAi',    heading: 'Confirm your new email',   body: 'Confirm this address to finish updating the email on your WyberAi account.',                       cta: 'Confirm new email' },
     reauthentication:{ subject: 'Your WyberAi verification code',      heading: 'Verification code',        body: 'Use the code below to continue. It expires shortly.',                                              cta: '' },
   }
-  const c = cfg[action] ?? cfg.magiclink
+  // Safe default for any unrecognized action type: a neutral account email,
+  // never a misleading "login link".
+  const fallback = { subject: 'WyberAi account notification', heading: 'Account notification', body: 'There was an update related to your WyberAi account.', cta: url ? 'Open WyberAi' : '' }
+  const c = cfg[action] ?? fallback
 
   const html = wrap(`
     ${h1(c.heading)}
