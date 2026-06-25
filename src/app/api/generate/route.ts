@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
+import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 
 export const maxDuration = 300
 
@@ -991,7 +992,7 @@ export async function POST(req: NextRequest) {
       const admin = await createAdminClient()
       const { data: profile } = await admin
         .from('profiles')
-        .select('credits, plan')
+        .select('credits, plan, email, full_name, first_build_emailed')
         .eq('id', user.id)
         .single()
 
@@ -1036,6 +1037,24 @@ export async function POST(req: NextRequest) {
         user_id: user.id, amount: cost, reason: actionType,
         credits_before: balance, credits_after: updated!.credits,
       }).then(() => {}).catch(() => {})
+
+      // ── Lifecycle emails (fire-and-forget) ──────────────────────────────
+      const email = profile?.email as string | undefined
+      const after = updated!.credits
+      const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
+      if (email) {
+        // First-build milestone — send once, then flip the flag
+        if (!profile?.first_build_emailed) {
+          admin.from('profiles').update({ first_build_emailed: true }).eq('id', user.id).then(() => {}).catch(() => {})
+          const displayName = (profile?.full_name as string | undefined) || email.split('@')[0]
+          sendFirstBuildEmail(email, displayName, 'your app', `${APP_URL}/project/${projectId}`).catch(() => {})
+        }
+        // Low-credit warning — only at the moment the balance crosses the threshold
+        const LOW = 20
+        if (balance > LOW && after <= LOW && after > 0) {
+          sendCreditLowEmail(email, after).catch(() => {})
+        }
+      }
     }
 
     // ── TEMPLATE MATCHING DISABLED ──────────────────────────────────
