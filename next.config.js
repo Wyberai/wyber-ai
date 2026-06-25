@@ -19,7 +19,7 @@ const nextConfig = {
       // Public marketing/intro assets — allow embedding in any iframe (video
       // render services, partner sites). No X-Frame-Options; permissive CSP.
       {
-        source: '/:file(demo-intro|demo-intro-mobile|launch-intro).html',
+        source: '/:file(demo-intro|demo-intro-mobile|demo-intro-short|launch-intro).html',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
@@ -28,7 +28,7 @@ const nextConfig = {
       },
       // Everything else keeps strict security headers (intro files excluded above).
       {
-        source: '/((?!demo-intro\\.html|demo-intro-mobile\\.html|launch-intro\\.html).*)',
+        source: '/((?!demo-intro\\.html|demo-intro-mobile\\.html|demo-intro-short\\.html|launch-intro\\.html).*)',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },

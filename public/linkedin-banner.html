@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1128px; height:191px; overflow:hidden; background:#09090b; font-family:'Space Grotesk',sans-serif; }
+  .banner { width:1128px; height:191px; position:relative; display:flex; align-items:center; padding:0 64px; overflow:hidden;
+            background:radial-gradient(ellipse 60% 160% at 18% 50%, rgba(14,165,233,0.16) 0%, transparent 60%),
+                       radial-gradient(ellipse 50% 160% at 85% 60%, rgba(168,85,247,0.14) 0%, transparent 60%), #09090b; }
+  .grid { position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px); background-size:22px 22px; }
+  .left { display:flex; align-items:center; gap:16px; position:relative; z-index:1; }
+  .mark { width:56px; height:56px; flex-shrink:0; }
+  .word { font-family:'Sora',sans-serif; font-weight:800; font-size:40px; letter-spacing:-0.03em; line-height:1; }
+  .word .w { color:#f4f4f5; } .word .a { color:#0EA5E9; }
+  .divider { width:1px; height:96px; background:rgba(255,255,255,0.1); margin:0 40px; position:relative; z-index:1; }
+  .right { position:relative; z-index:1; }
+  .h { font-family:'Sora',sans-serif; font-weight:800; font-size:30px; letter-spacing:-0.02em; line-height:1.15; color:#fafafa; }
+  .h .g { background:linear-gradient(135deg,#0EA5E9,#a855f7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .sub { font-size:15px; color:#a1a1aa; margin-top:8px; }
+  .pills { display:flex; gap:8px; margin-top:12px; }
+  .pill { font-size:12px; font-weight:600; color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); background:rgba(168,85,247,0.08); padding:4px 12px; border-radius:20px; }
+  .pill.blue { color:#7dd3fc; border-color:rgba(14,165,233,0.3); background:rgba(14,165,233,0.08); }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <div class="grid"></div>
+    <div class="left">
+      <svg class="mark" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+      <span class="word"><span class="w">Wyber</span><span class="a">Ai</span></span>
+    </div>
+    <div class="divider"></div>
+    <div class="right">
+      <div class="h">Build web &amp; mobile apps with AI — <span class="g">from one prompt.</span></div>
+      <div class="sub">Describe it in plain English. Fresh code, a live URL, deployed in minutes — no templates.</div>
+      <div class="pills"><span class="pill blue">Web &amp; mobile apps</span><span class="pill">AI employees — launching weekly</span></div>
+    </div>
+  </div>
+</body>
+</html>
