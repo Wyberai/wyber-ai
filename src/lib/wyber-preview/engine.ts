@@ -288,6 +288,11 @@ ${js}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wyber Preview</title>
+  <!-- Tailwind Play CDN: the generator styles apps with Tailwind utility classes
+       (see system prompt), so the preview must load Tailwind or every className
+       resolves to nothing and the app renders unstyled. Published apps get this
+       via their index.html; the preview builds its own shell, so add it here too. -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">${importmap}</script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
