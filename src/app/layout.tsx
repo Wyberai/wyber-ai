@@ -41,10 +41,73 @@ export const metadata: Metadata = {
 
 export const viewport = { themeColor: '#0EA5E9' };
 
+// Entity schema — tells search/answer engines exactly who makes WyberAi
+// (SignalPulse Technologies) and what it is, overriding stale Knowledge Graph data.
+const SITE = 'https://wyberai.com'
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE}/#organization`,
+      name: 'SignalPulse Technologies',
+      legalName: 'SignalPulse Technologies',
+      url: SITE,
+      logo: { '@type': 'ImageObject', url: `${SITE}/icon.svg` },
+      description: 'SignalPulse Technologies builds WyberAi — an AI platform that turns plain-English prompts into production-ready web and mobile apps.',
+      // NOTE: verify/replace these with your real profile URLs.
+      sameAs: [
+        'https://www.linkedin.com/company/wyberai',
+        'https://x.com/wyberai',
+        'https://www.reddit.com/r/WyberAI',
+        'https://theresanaiforthat.com/ai/wyberai/',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE}/#website`,
+      url: SITE,
+      name: 'WyberAi',
+      publisher: { '@id': `${SITE}/#organization` },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': `${SITE}/#software`,
+      name: 'WyberAi',
+      url: SITE,
+      applicationCategory: 'DeveloperApplication',
+      operatingSystem: 'Web',
+      brand: { '@type': 'Brand', name: 'WyberAi' },
+      author: { '@id': `${SITE}/#organization` },
+      publisher: { '@id': `${SITE}/#organization` },
+      description: 'Describe your web or mobile app in plain English. WyberAi generates fresh, production-ready React code, provisions a database, and deploys to a live URL in minutes — no engineers needed.',
+      featureList: [
+        'AI generates production-ready React + Tailwind code',
+        'Build web apps and mobile apps from a prompt',
+        'Self-healing builds that fix their own errors',
+        'One-click deploy to a live URL on Vercel',
+        'Supabase database + auth, GitHub push, custom domains',
+        'AI Employees — a new role every Monday',
+      ],
+      offers: {
+        '@type': 'Offer',
+        price: '29.00',
+        priceCurrency: 'USD',
+        priceValidUntil: '2027-12-31',
+        url: `${SITE}/pricing`,
+      },
+    },
+  ],
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
