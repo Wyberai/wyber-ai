@@ -109,6 +109,32 @@ export async function sendMagicLinkEmail(to: string, link: string) {
   return resend.emails.send({ from: FROM, to, subject: 'Your WyberAi login link', html })
 }
 
+// ── 2b. Auth emails (Supabase Send Email Hook) ────────────────────────────────
+// One branded template for every auth action so login/signup/reset match the
+// rest of WyberAi instead of Supabase's default look.
+type AuthAction = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email_change' | 'reauthentication' | string
+export async function sendAuthEmail(to: string, action: AuthAction, url: string, token?: string) {
+  const cfg: Record<string, { subject: string; heading: string; body: string; cta: string }> = {
+    signup:          { subject: 'Confirm your WyberAi account',        heading: 'Confirm your email',      body: 'Welcome to WyberAi! Confirm your email to activate your account and claim your 50 free credits.', cta: 'Confirm email' },
+    magiclink:       { subject: 'Your WyberAi login link',             heading: 'Your login link',          body: 'Click below to sign in to WyberAi. This link expires in 1 hour and can only be used once.',       cta: 'Sign in to WyberAi' },
+    recovery:        { subject: 'Reset your WyberAi password',         heading: 'Reset your password',      body: "Click below to choose a new password. This link expires in 1 hour. If you didn't request this, you can safely ignore this email.", cta: 'Reset password' },
+    invite:          { subject: "You're invited to WyberAi",          heading: "You're invited to WyberAi", body: "You've been invited to WyberAi. Click below to accept and set up your account.",                  cta: 'Accept invite' },
+    email_change:    { subject: 'Confirm your new email — WyberAi',    heading: 'Confirm your new email',   body: 'Confirm this address to finish updating the email on your WyberAi account.',                       cta: 'Confirm new email' },
+    reauthentication:{ subject: 'Your WyberAi verification code',      heading: 'Verification code',        body: 'Use the code below to continue. It expires shortly.',                                              cta: '' },
+  }
+  const c = cfg[action] ?? cfg.magiclink
+
+  const html = wrap(`
+    ${h1(c.heading)}
+    ${p(c.body)}
+    ${c.cta && url ? `<div style="text-align:center;margin:28px 0">${btn(c.cta, url)}</div>` : ''}
+    ${token ? `<div style="text-align:center;margin:0 0 8px"><span style="display:inline-block;font-size:26px;font-weight:700;letter-spacing:0.3em;color:#f0f0f4;background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:14px 24px">${token}</span></div><p style="text-align:center;font-size:12px;color:#555566;margin:8px 0 0">Your verification code</p>` : ''}
+    ${c.cta && url ? `<p style="margin:16px 0 0;font-size:12px;color:#555566">Or copy this link: <a href="${url}" style="color:#0EA5E9;word-break:break-all">${url}</a></p>` : ''}
+  `, c.heading)
+
+  return resend.emails.send({ from: FROM, to, subject: c.subject, html })
+}
+
 // ── 3. Plan upgrade confirmed ─────────────────────────────────────────────────
 export async function sendUpgradeConfirmEmail(to: string, plan: string, credits: number) {
   const html = wrap(`
