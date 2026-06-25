@@ -17,6 +17,20 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   const [nameInput, setNameInput] = useState('')
   const [displayName, setDisplayName] = useState(initialProject?.name || 'Mobile App')
 
+  // Narrow-screen handling: the 3-column layout (chat + preview + store) overflows
+  // a phone, leaving only the chat reachable. Below the breakpoint show one panel
+  // at a time with a bottom tab bar so the preview is always reachable.
+  const [isNarrow, setIsNarrow] = useState(false)
+  const [mobileView, setMobileView] = useState<'preview' | 'chat' | 'store'>('chat')
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 820px)')
+    const apply = () => setIsNarrow(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
+
   const saveRename = async () => {
     const newName = nameInput.trim()
     setEditingName(false)
@@ -87,7 +101,36 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
         </div>
       </div>
 
-      {/* Main 3-panel layout */}
+      {/* Main layout — 3 columns on desktop, one-panel-at-a-time on narrow screens */}
+      {isNarrow ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'chat' ? 'flex' : 'none', flexDirection: 'column' }}>
+            <Suspense fallback={<div style={{ flex: 1 }} />}>
+              <ChatPanel projectId={initialProject?.id} userId={initialProfile?.id} projectType="mobile" />
+            </Suspense>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'block' : 'none' }}>
+            <MobilePreviewPanel />
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'store' ? 'block' : 'none' }}>
+            <MobileRightPanel projectId={initialProject?.id} projectName={initialProject?.name} />
+          </div>
+          <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.06)', background: '#10121a' }}>
+            {([['chat', 'Chat'], ['preview', 'Preview'], ['store', 'Store']] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setMobileView(key)}
+                style={{
+                  flex: 1, padding: '12px 0', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+                  background: mobileView === key ? 'rgba(14,165,233,0.10)' : 'transparent',
+                  color: mobileView === key ? '#0EA5E9' : '#71717a',
+                  borderTop: mobileView === key ? '2px solid #0EA5E9' : '2px solid transparent',
+                }}
+              >{label}</button>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
         {/* Left: Chat */}
         <div style={{ width: 380, flexShrink: 0, borderRight: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -113,6 +156,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
           />
         </div>
       </div>
+      )}
     </div>
   )
 }
