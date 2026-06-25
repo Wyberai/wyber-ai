@@ -1299,26 +1299,53 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
     const systemBlocks = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
 
     try {
-      const stream = await client.messages.stream({
+      // Probe the first stream so any auth/quota error throws here and falls
+      // through to the Gemini fallback below (rather than dying mid-ReadableStream).
+      const firstStream = await client.messages.stream({
         model,
         max_tokens: stageMaxTokens,
         system: systemBlocks,
         messages: finalMessages,
       })
 
-      stream.finalMessage().then(msg => {
-        const u = msg.usage as Record<string, number>
-        console.log(`[generate cache] creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
-      }).catch(() => {})
-
       readable = new ReadableStream({
         async start(controller) {
+          // Auto-continuation: if a pass stops because it hit max_tokens, the
+          // output was cut off mid-file (App.tsx is emitted LAST, so it's the
+          // usual casualty). Re-prompt with the partial text as an assistant
+          // prefill and keep streaming into the SAME response, so the client
+          // sees one seamless, complete output. Without this, truncated files
+          // render broken and every retry truncates the same way ("false hope").
+          const MAX_CONTINUATIONS = 4
+          let assistantSoFar = ''
+          let stream = firstStream
           try {
-            for await (const event of stream) {
-              if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                emittedAny = true
-                controller.enqueue(encoder.encode(event.delta.text))
+            for (let pass = 0; pass <= MAX_CONTINUATIONS; pass++) {
+              for await (const event of stream) {
+                if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+                  emittedAny = true
+                  assistantSoFar += event.delta.text
+                  controller.enqueue(encoder.encode(event.delta.text))
+                }
               }
+
+              const finalMsg = await stream.finalMessage()
+              const u = finalMsg.usage as unknown as Record<string, number>
+              console.log(`[generate cache] pass=${pass} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+
+              // Only continue when the model was cut off by the token ceiling.
+              if (finalMsg.stop_reason !== 'max_tokens' || pass === MAX_CONTINUATIONS) break
+
+              // Anthropic rejects an assistant prefill ending in whitespace.
+              const prefill = assistantSoFar.replace(/\s+$/, '')
+              if (!prefill) break
+              console.log(`[generate] pass ${pass} hit max_tokens — continuing (prefill ${prefill.length} chars)`)
+              stream = await client.messages.stream({
+                model,
+                max_tokens: stageMaxTokens,
+                system: systemBlocks,
+                messages: [...finalMessages, { role: 'assistant' as const, content: prefill }],
+              })
             }
           } catch (err) { console.error('Stream error:', err) }
           finally {
