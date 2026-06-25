@@ -303,6 +303,19 @@ function AIEmployeeSpotlight() {
   );
 }
 
+// Homepage FAQ — visible accordion + matching FAQPage schema (AEO). The
+// "Who makes WyberAi?" answer explicitly names SignalPulse Technologies to
+// correct stale Knowledge Graph data.
+const HOME_FAQS: [string, string][] = [
+  ['What is WyberAi?', 'WyberAi is an AI platform that turns plain-English prompts into production-ready web and mobile apps. Describe what you want and it generates fresh React code, provisions a database, and deploys to a live URL — in minutes, no engineers needed.'],
+  ['Who makes WyberAi?', 'WyberAi is built and operated by SignalPulse Technologies, a US-based software company.'],
+  ['Can WyberAi build mobile apps?', 'Yes. WyberAi generates real React Native (Expo) mobile apps you can preview on your phone via QR code and export for the App Store — from the same prompt-based workflow as web apps.'],
+  ['Do I need to know how to code?', 'No. You describe your app in plain English. WyberAi writes the code, wires up auth, database, and APIs, and deploys it. You can still push to GitHub and own the code if you want.'],
+  ['How is WyberAi different from template builders?', 'WyberAi generates fresh code from scratch every time — never stale templates. Builds self-heal their own errors, ship full-stack (auth, database, APIs), and you own the code via GitHub with zero lock-in.'],
+  ['How much does WyberAi cost?', 'You can start free with 50 credits, no credit card required. Paid plans start at $29/month, and one-time credit top-ups never expire.'],
+  ['What are AI Employees?', 'AI Employees are autonomous AI workers — each a "super agent" that commands 200+ specialized agents to run real work on a schedule. WyberAi launches a new AI employee every Monday, starting with the Marketing Manager.'],
+]
+
 export default function HomePage() {
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -593,6 +606,34 @@ export default function HomePage() {
             See full pricing →
           </Link>
         </div>
+      </section>
+
+      {/* ── FAQ (with FAQPage schema for AEO) ───────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>FAQ</div>
+            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>Questions, answered</h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {HOME_FAQS.map(([q, a], i) => (
+              <details key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '18px 0' }}>
+                <summary style={{ cursor: 'pointer', fontSize: 15, fontWeight: 700, color: '#e4e4e7', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                  {q}<span style={{ color: '#52525b', fontSize: 18, flexShrink: 0 }}>+</span>
+                </summary>
+                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.7, marginTop: 12, marginBottom: 0 }}>{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: HOME_FAQS.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+          }).replace(/</g, '\\u003c') }}
+        />
       </section>
 
       {/* ── FINAL CTA ───────────────────────────────────────────────── */}
