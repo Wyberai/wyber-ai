@@ -681,18 +681,11 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <WyberLogo markSize={20} wordmarkSize={13} />
-          <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Blog', '/blog']] as [string, string][]).map(([l, h]) => (
-            <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
-              {l}
-            </Link>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <WyberLogo markSize={20} wordmarkSize={13} />
+            <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <a href="https://www.linkedin.com/company/wyber-ai" target="_blank" rel="noopener" aria-label="WyberAi on LinkedIn" style={{ color: '#52525b', display: 'flex' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#0EA5E9'}
@@ -705,6 +698,15 @@ export default function HomePage() {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
             </a>
           </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Blog', '/blog']] as [string, string][]).map(([l, h]) => (
+            <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
+              {l}
+            </Link>
+          ))}
         </div>
       </footer>
 
