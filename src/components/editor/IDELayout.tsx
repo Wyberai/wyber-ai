@@ -26,6 +26,21 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   const [showFileTree, setShowFileTree] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
 
+  // Narrow-screen (phone/tablet) handling: the desktop layout puts preview and
+  // chat side-by-side at fixed widths, which overflows a phone so only one panel
+  // is reachable. Below the breakpoint we show ONE panel at a time with a bottom
+  // tab bar so the preview is always reachable.
+  const [isNarrow, setIsNarrow] = useState(false);
+  const [mobileView, setMobileView] = useState<'preview' | 'chat' | 'code'>('chat');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 820px)');
+    const apply = () => setIsNarrow(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
   // Hydrate store from server data + load messages and knowledge
   useEffect(() => {
     if (!initialProject?.id) return;
@@ -78,6 +93,41 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
           onToggleFileTree={() => setShowFileTree(v => !v)}
         />
       </Suspense>
+      {isNarrow ? (
+        // Narrow: one panel at a time + bottom tab bar (preview is always reachable).
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'flex' : 'none', flexDirection: 'column' }}>
+            <PreviewPanel />
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'code' ? 'flex' : 'none', flexDirection: 'column' }}>
+            <TabBar />
+            <div style={{ flex: 1, overflow: 'hidden' }}><CodeEditor /></div>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'chat' ? 'flex' : 'none', flexDirection: 'column' }}>
+            <RightPanel
+              projectId={initialProject?.id}
+              userId={initialProfile?.id}
+              projectName={initialProject?.name}
+              githubRepo={(initialProject as any)?.github_repo}
+              lastCommitSha={(initialProject as any)?.last_commit_sha}
+            />
+          </div>
+          <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid var(--ide-border)', background: 'var(--bg-base)' }}>
+            {([['chat', 'Chat'], ['preview', 'Preview'], ['code', 'Code']] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setMobileView(key)}
+                style={{
+                  flex: 1, padding: '12px 0', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+                  background: mobileView === key ? 'var(--bg-elevated, rgba(255,255,255,0.06))' : 'transparent',
+                  color: mobileView === key ? 'var(--accent, #0EA5E9)' : 'var(--text-muted, #71717a)',
+                  borderTop: mobileView === key ? '2px solid var(--accent, #0EA5E9)' : '2px solid transparent',
+                }}
+              >{label}</button>
+            ))}
+          </div>
+        </div>
+      ) : (
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {showCode && (
@@ -101,6 +151,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
           />
         </div>
       </div>
+      )}
       <AutoFix />
     </div>
   );
