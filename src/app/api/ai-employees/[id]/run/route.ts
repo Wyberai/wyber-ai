@@ -3,6 +3,11 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { runEmployee } from '@/lib/ai-employees/run-engine'
 import { sendAIEmployeeDigestEmail, sendAIEmployeeFailedEmail } from '@/lib/email'
 
+// A full agentic employee run (up to 15 iterations + tools + sub-agents +
+// reflection) easily exceeds the default function timeout. Without this the run
+// is killed mid-execution and the UI sits on "Running…" forever. 300s = Vercel max.
+export const maxDuration = 300
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
