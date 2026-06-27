@@ -763,17 +763,9 @@ export async function runEmployee(
   const runId = runRow.id
 
   try {
-    // ── Check credits ──────────────────────────────────────────────────────────
-    const { data: profile } = await db.from('profiles').select('credits, email').eq('id', userId).single()
-
-    if (!profile || profile.credits < ITER_COST) {
-      await db.from('ai_employee_runs').update({
-        status: 'error',
-        error_message: `Insufficient credits (have ${profile?.credits ?? 0}, need at least ${ITER_COST})`,
-        finished_at: new Date().toISOString(),
-      }).eq('id', runId)
-      return { summary: `${employee.name} couldn't run — you need at least ${ITER_COST} credits.`, actionsTaken: [], kpiResults: [], creditsUsed: 0, error: 'Insufficient credits' }
-    }
+    // AI Employees are SUBSCRIPTION-based (flat monthly via Dodo), NOT credit-based.
+    // Runs are never gated on, nor deducted from, the user's credit balance.
+    // `creditsUsed` below is kept only as an internal compute meter for analytics.
 
     // ── Fetch Composio tools ───────────────────────────────────────────────────
     const composio = new Composio({ apiKey: process.env.COMPOSIO_API_KEY! })
@@ -955,7 +947,7 @@ No text outside the JSON.`
     // Per-run budget ceiling: never bill (or keep working) past the smaller of
     // the global cap and what the user can actually afford. Checked each iteration
     // so sub-agent costs can't blow past the user's balance / the platform cap.
-    const runCeiling = Math.min(MAX_RUN_COST, profile.credits)
+    const runCeiling = MAX_RUN_COST
     let completedCleanly = false
 
     // ── Agentic loop ────────────────────────────────────────────────────────────
@@ -1160,24 +1152,9 @@ For "entities", only include people/accounts/campaigns genuinely worth rememberi
       }
     } catch (e) { console.error('[employee-memory] reflection failed:', e) }
 
-    // ── Deduct credits ─────────────────────────────────────────────────────────
-    if (creditsUsed > 0) {
-      const newBalance = Math.max(0, profile.credits - creditsUsed)
-      const { data: updated } = await db
-        .from('profiles')
-        .update({ credits: newBalance })
-        .eq('id', userId)
-        .select('credits')
-        .single()
-
-      await db.from('credit_usage').insert({
-        user_id: userId,
-        amount: creditsUsed,
-        reason: 'ai-employee-run',
-        credits_before: profile.credits,
-        credits_after: updated?.credits ?? profile.credits - creditsUsed,
-      }).then(() => {}, () => {})
-    }
+    // No credit deduction — AI Employees run on a flat subscription, not credits.
+    // (`creditsUsed` is recorded on the run row below purely as an internal
+    // compute metric; the user's balance and ledger are untouched.)
 
     // ── Log KPIs ───────────────────────────────────────────────────────────────
     if (kpiResults.length > 0) {
