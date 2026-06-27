@@ -5,6 +5,38 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 
 const SKY = '#0EA5E9'; const GREEN = '#22c55e'; const RED = '#ef4444'; const AMBER = '#f59e0b'
 
+// ── Lightweight markdown renderer for employee output (reports, plans, escalations) ──
+// Renders **bold**, ## headers, and -/•/numbered lists with real spacing, so the
+// manager's output reads like a structured report instead of a monospace blob.
+function renderInline(text: string, kp: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
+    p.startsWith('**') && p.endsWith('**')
+      ? <strong key={`${kp}-${i}`} style={{ color: '#e4e4e7', fontWeight: 700 }}>{p.slice(2, -2)}</strong>
+      : <span key={`${kp}-${i}`}>{p}</span>
+  )
+}
+function RichText({ text, color = '#a1a1aa', size = 13 }: { text: string; color?: string; size?: number }) {
+  // Normalize crammed text: put numbered items and bolded headers on their own lines.
+  const normalized = text
+    .replace(/\s+(\d{1,2}\.\s)/g, '\n$1')
+    .replace(/(\*\*(?:TIER|WHAT|STEP|PHASE)[^*]*\*\*)/gi, '\n\n$1\n')
+    .replace(/\n{3,}/g, '\n\n')
+  const lines = normalized.split('\n')
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontSize: size, color, lineHeight: 1.6 }}>
+      {lines.map((line, i) => {
+        const t = line.trim()
+        if (!t) return <div key={i} style={{ height: 2 }} />
+        const h = t.match(/^#{1,3}\s+(.*)/)
+        if (h) return <div key={i} style={{ fontWeight: 700, color: '#e4e4e7', marginTop: 4 }}>{renderInline(h[1], `h${i}`)}</div>
+        const li = t.match(/^(\d{1,2}\.|[-*•])\s+(.*)/)
+        if (li) return <div key={i} style={{ display: 'flex', gap: 7, paddingLeft: 4 }}><span style={{ color: '#52525b', flexShrink: 0 }}>{/^\d/.test(li[1]) ? li[1] : '•'}</span><span>{renderInline(li[2], `li${i}`)}</span></div>
+        return <div key={i}>{renderInline(t, `p${i}`)}</div>
+      })}
+    </div>
+  )
+}
+
 interface Kpi { name: string; description: string; unit: string; target: number }
 interface KpiLog { kpi_name: string; value: number; logged_at: string }
 interface Employee {
@@ -217,7 +249,7 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
                     <div style={{ fontSize: 13, fontWeight: 700, color: AMBER, marginBottom: 3 }}>Waiting for your approval</div>
                     <div style={{ fontSize: 13, color: '#e4e4e7', lineHeight: 1.5, marginBottom: esc.context ? 8 : 12 }}>{esc.question}</div>
                     {esc.context && (
-                      <div style={{ fontSize: 12, color: '#71717a', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '8px 10px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', marginBottom: 12 }}>{esc.context}</div>
+                      <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, padding: '12px 14px', marginBottom: 12 }}><RichText text={esc.context} size={12} color="#a1a1aa" /></div>
                     )}
                     <div style={{ fontSize: 10, color: '#52525b', marginBottom: 10 }}>{new Date(esc.created_at).toLocaleString()}</div>
                     <div style={{ display: 'flex', gap: 8 }}>
@@ -544,7 +576,7 @@ RESPONSE RULES — MANDATORY:
                           {run.summary && (
                             <div style={{ background:'rgba(14,165,233,0.05)', border:'1px solid rgba(14,165,233,0.12)', borderRadius:9, padding:'12px 14px', margin:'14px 0' }}>
                               <div style={{ fontSize:10, fontWeight:700, color:SKY, textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>AI Summary</div>
-                              <p style={{ fontSize:13, color:'#a1a1aa', lineHeight:1.65, margin:0 }}>{run.summary}</p>
+                              <RichText text={run.summary} size={13} color="#a1a1aa" />
                             </div>
                           )}
                           {run.error_message && (
