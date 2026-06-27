@@ -511,8 +511,16 @@ async function handleWyberTool(
       let q = db.from('agent_workflows').select('agent_id, name, category, required_tools, outcome')
       if (deptTerm) q = q.ilike('category', `%${deptTerm}%`)
       if (kw) {
-        // Searching by capability across the WHOLE department fleet.
-        q = q.or(`name.ilike.%${kw}%,outcome.ilike.%${kw}%,problem.ilike.%${kw}%`).limit(40)
+        // Searching by capability across the WHOLE department fleet. Split the
+        // keyword into terms and match ANY of them — a manager often passes a
+        // phrase like "SEO content email ads", and a single ILIKE on the whole
+        // phrase matches nothing. OR each term across name/outcome/problem/category.
+        const terms = kw.split(/\s+/).filter(t => t.length >= 2).slice(0, 6)
+        const ors = terms.flatMap(t => [
+          `name.ilike.%${t}%`, `outcome.ilike.%${t}%`, `problem.ilike.%${t}%`, `category.ilike.%${t}%`,
+        ]).join(',')
+        if (ors) q = q.or(ors)
+        q = q.limit(40)
       } else {
         // No query → surface the core specialists first (lower agent_ids are the
         // canonical functions; high ids are niche industry/segment variants).
