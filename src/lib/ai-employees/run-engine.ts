@@ -716,7 +716,8 @@ async function runSubAgent(opts: {
     const res = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: `${systemPrompt}\n\nYou are operating as a sub-agent deployed by a manager. Do the task focused and well, then report back a concise result (what you did + key outputs). Use tools where they help.`,
+      // Cache the sub-agent's system prompt across its own iteration loop.
+      system: [{ type: 'text', text: `${systemPrompt}\n\nYou are operating as a sub-agent deployed by a manager. Do the task focused and well, then report back a concise result (what you did + key outputs). Use tools where they help.`, cache_control: { type: 'ephemeral' } }],
       tools: toolDefs,
       messages,
     })
@@ -951,20 +952,38 @@ No text outside the JSON.`
     const MAX_DEPLOYMENTS = 12
     let deploymentCount = 0
 
+    // Per-run budget ceiling: never bill (or keep working) past the smaller of
+    // the global cap and what the user can actually afford. Checked each iteration
+    // so sub-agent costs can't blow past the user's balance / the platform cap.
+    const runCeiling = Math.min(MAX_RUN_COST, profile.credits)
+    let completedCleanly = false
+
     // ── Agentic loop ────────────────────────────────────────────────────────────
     for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+      if (creditsUsed >= runCeiling) {
+        finalText = finalText || `Reached this run's credit budget (${runCeiling}). Wrapping up with what I completed so far.`
+        break
+      }
       const response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 8192,
-        system: systemPrompt,
+        // Cache the large, stable system prompt (role profile + company knowledge
+        // + tool context) across the up-to-15 iterations. The cache breakpoint on
+        // the system block covers tools + system → ~90% input-token savings per run.
+        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
         tools: allTools,
         messages,
       })
 
       creditsUsed += ITER_COST
+      {
+        const u = response.usage as unknown as Record<string, number>
+        console.log(`[employee-run ${employee.id}] iter=${iter} cache_write=${u.cache_creation_input_tokens ?? 0} cache_read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens ?? 0}`)
+      }
       messages.push({ role: 'assistant', content: response.content })
 
       if (response.stop_reason === 'end_turn') {
+        completedCleanly = true
         finalText = response.content
           .filter(b => b.type === 'text')
           .map(b => (b as { type: 'text'; text: string }).text)
@@ -1026,7 +1045,10 @@ No text outside the JSON.`
     }
 
     // ── Parse final response ───────────────────────────────────────────────────
-    let summary = `${employee.name} completed the task.`
+    // Be honest if the loop hit a limit (iterations/budget) instead of finishing.
+    let summary = completedCleanly
+      ? `${employee.name} completed the task.`
+      : `${employee.name} made progress but didn't fully finish within this run's limits — see the actions below.`
     let parsedActions: ActionRecord[] = actionsTaken
 
     try {
