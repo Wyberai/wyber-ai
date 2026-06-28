@@ -456,7 +456,7 @@ export default function PricingPage() {
               ['Are features locked behind higher plans?', 'No. Every plan unlocks all features — web apps, mobile apps, Supabase integration, deploy, GitHub sync. The only difference is how many credits you get. When AI Employees and Workflows launch, they\'ll use the same credit system.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
               ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. All integrations are available on every plan.'],
-              ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record. Growth and Scale support multiple orgs, each with their own domain.'],
+              ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record.'],
               ['What happens if I cancel?', 'You keep access until the end of your billing period. Your employees, KPI data, and app builds are retained for 30 days so you can export everything.'],
             ].map(([q, a], i) => (
               <details key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '18px 0' }}>

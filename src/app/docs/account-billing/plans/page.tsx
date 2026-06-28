@@ -37,22 +37,6 @@ export default function Page() {
               credits: '1,500 credits/month',
               items: ['1,500 monthly credits', 'All 6 products', 'Priority support'],
             },
-            {
-              name: 'Growth',
-              price: '$399',
-              sub: '/month',
-              color: '#10b981',
-              credits: '4,000 credits/month',
-              items: ['4,000 monthly credits', 'All 6 products', 'Priority support'],
-            },
-            {
-              name: 'Scale',
-              price: '$799',
-              sub: '/month',
-              color: '#f97316',
-              credits: '10,000 credits/month',
-              items: ['10,000 monthly credits', 'All 6 products', 'Dedicated support'],
-            },
           ].map(plan => (
             <div key={plan.name} style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${plan.color}40`, borderRadius: 14, padding: '20px 18px' }}>
               <div style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: plan.color, marginBottom: 8 }}>{plan.name}</div>

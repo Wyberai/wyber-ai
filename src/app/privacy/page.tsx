@@ -4,11 +4,11 @@ import { Footer } from '@/components/shared/FooterClient';
 
 export default function PrivacyPage() {
   const SECTIONS = [
-    ['What we collect', 'We collect your email address for authentication, project files you create and save, usage data (credit consumption, generation counts), and billing information processed by Stripe. We do not sell your data to third parties.'],
+    ['What we collect', 'We collect your email address for authentication, project files you create and save, usage data (credit consumption, generation counts), and billing information processed by Dodo Payments. We do not sell your data to third parties.'],
     ['How we use it', 'Your project files are stored to enable saving and loading projects. Your email is used for authentication and transactional emails. We never use your projects to train AI models without explicit consent.'],
     ['Data storage', 'Project data is stored in Supabase (PostgreSQL, hosted on AWS). Files are encrypted at rest. We use row-level security so you can only access your own data.'],
     ['Your rights', 'You can export all your project code at any time. You can delete your account and all associated data by emailing hello@wyberai.com. We process deletions within 30 days.'],
-    ['Third-party services', 'We use Anthropic (AI generation), Supabase (database), Stripe (billing), E2B (sandboxes), Vercel (deployment), Resend (email). Each has their own privacy policy.'],
+    ['Third-party services', 'We use Anthropic (AI generation), Supabase (database), Dodo Payments (billing), E2B (sandboxes), Vercel (deployment), Resend (email). Each has their own privacy policy.'],
     ['AI-generated content', 'WyberAi uses Claude Sonnet (Anthropic) for code generation. Your prompts are sent to Anthropic for processing per their privacy policy. We do not share your code with other users.'],
     ['Contact', 'For privacy questions: hello@wyberai.com · wyberai.com · SignalPulse Technologies, Wyoming, USA'],
   ];
