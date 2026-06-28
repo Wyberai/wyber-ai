@@ -18,16 +18,23 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
 
   const publish = async () => {
     setLoading(true); setError('');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90_000);
     try {
       const res = await fetch('/api/publish', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       const data = await res.json();
       if (data.publishedUrl) { setUrl(data.publishedUrl); onPublish?.(data.publishedUrl); }
       else setError(data.error || 'Failed to publish');
-    } catch { setError('Failed to publish'); }
+    } catch (e: any) {
+      clearTimeout(timeout);
+      setError(e?.name === 'AbortError' ? 'Publish timed out — please try again' : 'Failed to publish');
+    }
     setLoading(false);
   };
 

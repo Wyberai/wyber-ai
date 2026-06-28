@@ -364,6 +364,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 placeholder="Describe the app you want to build..." rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
+                <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} credits</span>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
                 <button onClick={() => openChooser(promptInput.trim() || undefined)} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>

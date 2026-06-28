@@ -54,7 +54,7 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
       v == null ? '' : typeof v === 'string' ? v : (v.content ?? '')
 
     // 1. index.css must carry the @tailwind directives (keep any existing reset).
-    const TW_DIRECTIVES = '@tailwind base;\n@tailwind components;\n@tailwind utilities;'
+    const TW_DIRECTIVES = '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n/* tw-build-v2 */'
     const css = fileContent(out['src/index.css'])
     if (!css.includes('@tailwind')) {
       out['src/index.css'] = { content: `${TW_DIRECTIVES}\n${css}`.trim() + '\n', language: 'css' }
