@@ -3,6 +3,9 @@ import { OnboardingTour } from '@/components/shared/OnboardingTour';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
 import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Dashboard' };
 
 export default async function DashboardPage() {
   const supabase = await createClient();
