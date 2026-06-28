@@ -146,7 +146,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const totalCredits = plan === 'scale' ? 10000 : plan === 'growth' ? 4000 : plan === 'pro' ? 1500 : plan === 'builder' ? 500 : plan === 'starter' ? 150 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
-  const openChooser = (prompt?: string) => { setPendingPrompt(prompt); setShowTypePicker(true); };
+  const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;
+  const openChooser = (prompt?: string) => {
+    if (prompt && MOBILE_KEYWORDS.test(prompt)) { startProject(prompt, 'mobile'); return; }
+    if (prompt && prompt.length > 15) { startProject(prompt, 'app'); return; }
+    setPendingPrompt(prompt); setShowTypePicker(true);
+  };
   const startProject = async (prompt?: string, type: ProjectType = 'app') => {
     if (!profile?.id || creating) return;
     setCreating(true);
@@ -188,10 +193,12 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     { label: 'Home',         href: '/dashboard',        icon: <IconHome />,      view: 'all' as const },
     { label: 'Web Apps',     href: '/dashboard',        icon: <IconTemplates />, view: 'web' as const },
     { label: 'Mobile Apps',  href: '/dashboard',        icon: <IconPhone />,     view: 'mobile' as const },
+    { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
+  ];
+  const COMING_SOON = [
     { label: 'AI Employees', href: '/ai-employees',     icon: <IconPeople />, soon: true },
     { label: 'Workflows',    href: '/flows',            icon: <IconWorkflow />, soon: true },
     { label: 'GTM Engine',   href: '/gtm',              icon: <IconAgents />, soon: true },
-    { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
   ];
 
   // Web Apps / Mobile Apps filter the project grid (web = anything not mobile).
@@ -313,6 +320,18 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               </Link>
             );
           })}
+
+          {COMING_SOON.length > 0 && (
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>Coming Soon</div>
+              {COMING_SOON.map((n: any) => (
+                <Link key={n.label} href={'/coming-soon?product=' + encodeURIComponent(n.label)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 10px', borderRadius: 8, color: DIM, fontSize: 12, fontWeight: 400, textDecoration: 'none', marginBottom: 1, opacity: 0.6 }}>
+                  {n.icon}{n.label}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {projects.length > 0 && <>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>Recent</div>

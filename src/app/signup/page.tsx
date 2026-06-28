@@ -14,9 +14,13 @@ export default function SignupPage() {
   const [agreed, setAgreed] = useState(false);
   const supabase = createClient();
 
+  const [termsShake, setTermsShake] = useState(false);
+  const nudgeTerms = () => { setError('Please agree to the Terms of Service first'); setTermsShake(true); setTimeout(() => setTermsShake(false), 600); };
+
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreed) return;
+    if (!agreed) { nudgeTerms(); return; }
+    if (!email.trim()) { setError('Please enter your email address'); return; }
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -28,7 +32,7 @@ export default function SignupPage() {
   };
 
   const handleOAuth = async (provider: 'google' | 'github') => {
-    if (!agreed) { setError('Please agree to the Terms of Service to continue.'); return; }
+    if (!agreed) { nudgeTerms(); return; }
     setOauthLoading(provider);
     await supabase.auth.signInWithOAuth({
       provider,
@@ -38,7 +42,7 @@ export default function SignupPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#F6F8FB', fontFamily: "'Inter', system-ui, sans-serif" }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box}@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}`}</style>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 24px', minHeight: '100vh' }}>
         <div style={{ width: '100%', maxWidth: 400 }}>
@@ -63,7 +67,7 @@ export default function SignupPage() {
             <div style={{ background: '#FFFFFF', border: '1px solid #DCE4F0', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(11,22,39,0.06)' }}>
 
               {/* Terms checkbox — top, before anything */}
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20, padding: '12px 14px', background: '#F6F8FB', borderRadius: 10, border: '1px solid #DCE4F0' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20, padding: '12px 14px', background: termsShake ? '#FEF2F2' : '#F6F8FB', borderRadius: 10, border: `1px solid ${termsShake ? '#FCA5A5' : '#DCE4F0'}`, animation: termsShake ? 'shake 0.4s ease' : 'none', transition: 'background 0.3s, border-color 0.3s' }}>
                 <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 2, flexShrink: 0, accentColor: '#0EA5E9', width: 15, height: 15 }} />
                 <span style={{ fontSize: 12, color: '#7A9BBE', lineHeight: 1.6 }}>
                   I agree to the{' '}
@@ -75,8 +79,8 @@ export default function SignupPage() {
 
               {/* OAuth buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-                <button onClick={() => handleOAuth('google')} disabled={!!oauthLoading || !agreed}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: agreed ? '#fff' : '#F6F8FB', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5, transition: 'all 0.15s', fontFamily: "'Inter', sans-serif" }}>
+                <button onClick={() => handleOAuth('google')} disabled={!!oauthLoading}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: '#fff', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: oauthLoading ? 'not-allowed' : 'pointer', transition: 'all 0.15s', fontFamily: "'Inter', sans-serif" }}>
                   {oauthLoading === 'google' ? '...' : (
                     <svg width="18" height="18" viewBox="0 0 24 24">
                       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -88,8 +92,8 @@ export default function SignupPage() {
                   Continue with Google
                 </button>
 
-                <button onClick={() => handleOAuth('github')} disabled={!!oauthLoading || !agreed}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: agreed ? '#fff' : '#F6F8FB', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: agreed ? 'pointer' : 'not-allowed', opacity: agreed ? 1 : 0.5, transition: 'all 0.15s', fontFamily: "'Inter', sans-serif" }}>
+                <button onClick={() => handleOAuth('github')} disabled={!!oauthLoading}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, width: '100%', padding: '11px 16px', borderRadius: 10, border: '1.5px solid #DCE4F0', background: '#fff', color: '#0B1627', fontSize: 14, fontWeight: 600, cursor: oauthLoading ? 'not-allowed' : 'pointer', transition: 'all 0.15s', fontFamily: "'Inter', sans-serif" }}>
                   {oauthLoading === 'github' ? '...' : (
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="#0B1627">
                       <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
@@ -113,8 +117,8 @@ export default function SignupPage() {
                   onBlur={e => e.target.style.borderColor = '#DCE4F0'}
                 />
                 {error && <p style={{ color: '#EF4444', fontSize: 12, margin: 0 }}>{error}</p>}
-                <button type="submit" disabled={loading || !agreed}
-                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: agreed ? '#0EA5E9' : '#B0D4F0', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: agreed && !loading ? 'pointer' : 'not-allowed', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em', transition: 'all 0.15s' }}>
+                <button type="submit" disabled={loading}
+                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em', transition: 'all 0.15s' }}>
                   {loading ? 'Creating account...' : 'Create account →'}
                 </button>
               </form>
