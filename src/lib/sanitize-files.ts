@@ -37,40 +37,70 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
   // model doesn't always add it on component-split rebuilds — leaving the app
   // unstyled. If an index.html exists without Tailwind, inject the CDN script so
   // both preview and publish render styled.
-  const TW = '<script src="https://cdn.tailwindcss.com"></script>'
-  const idx = out['index.html']
-  if (idx) {
-    const content = typeof idx === 'string' ? idx : (idx.content ?? '')
-    if (content.includes('<head') && !content.includes('cdn.tailwindcss.com')) {
-      const injected = content.replace(/<head([^>]*)>/i, `<head$1>\n    ${TW}`)
-      out['index.html'] = typeof idx === 'string' ? injected : { ...idx, content: injected }
+  // Tailwind: apps are authored entirely with Tailwind utility classes, but the
+  // remote builder runs `vite build`, which (verified against the live builder):
+  //   1. STRIPS any Tailwind Play CDN <script> from index.html during the build,
+  //      so loading Tailwind via CDN does NOT survive — every class goes unstyled.
+  //   2. DOES compile @tailwind directives through PostCSS at build time when the
+  //      project carries the right inputs: an index.css with the directives plus
+  //      a tailwind.config + postcss.config. Given those, it emits fully compiled
+  //      utilities (.flex{display:flex}, etc.); without them the app ships unstyled.
+  // From-scratch generated apps emit only src/* with a minimal reset index.css and
+  // no config, so they render unstyled. Guarantee the compile inputs here — this
+  // runs before every preview build and publish, fixing existing projects too.
+  const appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
+  if (appExt) {
+    const fileContent = (v: FileVal | undefined): string =>
+      v == null ? '' : typeof v === 'string' ? v : (v.content ?? '')
+
+    // 1. index.css must carry the @tailwind directives (keep any existing reset).
+    const TW_DIRECTIVES = '@tailwind base;\n@tailwind components;\n@tailwind utilities;'
+    const css = fileContent(out['src/index.css'])
+    if (!css.includes('@tailwind')) {
+      out['src/index.css'] = { content: `${TW_DIRECTIVES}\n${css}`.trim() + '\n', language: 'css' }
     }
-  } else {
-    // No index.html at all: a from-scratch generated app emits only src/* files
-    // (index.html isn't in the model's output format), so the remote builder
-    // scaffolds its own — and that scaffold ships WITHOUT the Tailwind CDN,
-    // leaving every utility class unstyled. Synthesize a proper Vite entry HTML
-    // (with the CDN) plus a matching main entry so the builder uses ours and the
-    // app renders styled in both preview and publish.
-    const appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
-    if (appExt) {
-      const existingMain = ['src/main.tsx', 'src/main.jsx', 'src/index.tsx', 'src/index.jsx'].find(p => p in out)
-      const mainPath = existingMain ?? `src/main.${appExt}`
-      const hasCss = 'src/index.css' in out
-      if (!existingMain) {
-        const tsBang = appExt === 'tsx' ? '!' : ''
-        out[mainPath] = {
-          content: `import React from 'react';
+
+    // 2. tailwind + postcss config so the builder's PostCSS pass compiles utilities.
+    if (!['tailwind.config.js', 'tailwind.config.ts', 'tailwind.config.cjs'].some(p => p in out)) {
+      out['tailwind.config.js'] = {
+        content: `export default {\n  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],\n  theme: { extend: {} },\n  plugins: [],\n}\n`,
+        language: 'javascript',
+      }
+    }
+    if (!['postcss.config.js', 'postcss.config.cjs'].some(p => p in out)) {
+      out['postcss.config.js'] = {
+        content: `export default {\n  plugins: { tailwindcss: {}, autoprefixer: {} },\n}\n`,
+        language: 'javascript',
+      }
+    }
+
+    // 3. an entry that imports the stylesheet, and an index.html that loads it.
+    const existingMain = ['src/main.tsx', 'src/main.jsx', 'src/index.tsx', 'src/index.jsx'].find(p => p in out)
+    const mainPath = existingMain ?? `src/main.${appExt}`
+    if (existingMain) {
+      // The compiled CSS only ships if the entry imports it — ensure it does.
+      const mc = fileContent(out[existingMain])
+      if (!mc.includes('index.css')) {
+        const mv = out[existingMain]
+        const injected = `import './index.css';\n${mc}`
+        out[existingMain] = typeof mv === 'string' ? injected : { ...(mv as object), content: injected }
+      }
+    } else {
+      const tsBang = appExt === 'tsx' ? '!' : ''
+      out[mainPath] = {
+        content: `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-${hasCss ? "import './index.css';\n" : ''}ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
+import './index.css';
+ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
 );`,
-          language: appExt === 'tsx' ? 'typescript' : 'javascript',
-        }
+        language: appExt === 'tsx' ? 'typescript' : 'javascript',
       }
+    }
+    if (!('index.html' in out)) {
       out['index.html'] = {
         content: `<!DOCTYPE html>
 <html lang="en">
@@ -78,7 +108,6 @@ ${hasCss ? "import './index.css';\n" : ''}ReactDOM.createRoot(document.getElemen
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>App</title>
-    ${TW}
   </head>
   <body>
     <div id="root"></div>

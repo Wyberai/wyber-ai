@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { sendDeploySuccessEmail } from '@/lib/email';
+import { sanitizeFiles } from '@/lib/sanitize-files';
 
 // Build scaffold files needed for Vercel to build the app
 function getBuildScaffold(framework: string, projectName: string): Record<string, string> {
@@ -63,10 +64,6 @@ export default defineConfig({
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${projectName}</title>
-    <!-- Apps are styled entirely with Tailwind utility classes; load Tailwind so
-         the deployed output is styled even when the project has no index.html of
-         its own and this scaffold is used. -->
-    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
     <div id="root"></div>
@@ -171,12 +168,20 @@ export async function POST(req: NextRequest) {
     // Ensure entry points
     const finalFiles = ensureEntryPoints(allFiles, framework);
 
-    // Format for Vercel API
-    const vercelFiles = Object.entries(finalFiles).map(([path, content]) => ({
-      file: path,
-      data: Buffer.from(content).toString('base64'),
-      encoding: 'base64' as const,
-    }));
+    // Guarantee the Tailwind build inputs (index.css directives + tailwind/postcss
+    // config) so `vite build` on Vercel actually compiles utility classes — a CDN
+    // <script> would be stripped by the build, same as the preview/publish path.
+    const sanitized = sanitizeFiles(finalFiles as Record<string, string>);
+
+    // Format for Vercel API (sanitizeFiles may add object-shaped entries)
+    const vercelFiles = Object.entries(sanitized).map(([path, val]) => {
+      const content = typeof val === 'string' ? val : (val?.content ?? '');
+      return {
+        file: path,
+        data: Buffer.from(content).toString('base64'),
+        encoding: 'base64' as const,
+      };
+    });
 
     // Determine framework config
     const frameworkConfig = framework === 'vanilla'
