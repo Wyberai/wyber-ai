@@ -4,6 +4,8 @@
 // causes vite to fail with "EISDIR: illegal operation on a directory, read
 // index.html". This normalizes paths and resolves file-vs-directory collisions.
 
+import { collectMissingStubs } from './stub-missing-imports'
+
 type FileVal = { content?: string; language?: string } | string
 
 const hasExtension = (p: string) => /\.[a-z0-9]+$/i.test(p)
@@ -117,6 +119,16 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
         language: 'html',
       }
     }
+  }
+
+  // Completeness pass: stub any locally-imported file that was never generated
+  // (truncated big-app builds drop trailing files; planned components sometimes
+  // never arrive). Without this the remote build throws "File not found" and the
+  // self-heal loop kicks in. Stubbing makes the build compile and render a clean
+  // placeholder instead. Only add files that don't already exist.
+  const stubs = collectMissingStubs(out)
+  for (const [path, val] of Object.entries(stubs)) {
+    if (!(path in out)) out[path] = val
   }
 
   return out as T
