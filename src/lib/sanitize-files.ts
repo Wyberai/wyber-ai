@@ -45,6 +45,49 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
       const injected = content.replace(/<head([^>]*)>/i, `<head$1>\n    ${TW}`)
       out['index.html'] = typeof idx === 'string' ? injected : { ...idx, content: injected }
     }
+  } else {
+    // No index.html at all: a from-scratch generated app emits only src/* files
+    // (index.html isn't in the model's output format), so the remote builder
+    // scaffolds its own — and that scaffold ships WITHOUT the Tailwind CDN,
+    // leaving every utility class unstyled. Synthesize a proper Vite entry HTML
+    // (with the CDN) plus a matching main entry so the builder uses ours and the
+    // app renders styled in both preview and publish.
+    const appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
+    if (appExt) {
+      const existingMain = ['src/main.tsx', 'src/main.jsx', 'src/index.tsx', 'src/index.jsx'].find(p => p in out)
+      const mainPath = existingMain ?? `src/main.${appExt}`
+      const hasCss = 'src/index.css' in out
+      if (!existingMain) {
+        const tsBang = appExt === 'tsx' ? '!' : ''
+        out[mainPath] = {
+          content: `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+${hasCss ? "import './index.css';\n" : ''}ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`,
+          language: appExt === 'tsx' ? 'typescript' : 'javascript',
+        }
+      }
+      out['index.html'] = {
+        content: `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App</title>
+    ${TW}
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/${mainPath}"></script>
+  </body>
+</html>`,
+        language: 'html',
+      }
+    }
   }
 
   return out as T

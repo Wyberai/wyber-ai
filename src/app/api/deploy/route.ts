@@ -63,6 +63,10 @@ export default defineConfig({
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${projectName}</title>
+    <!-- Apps are styled entirely with Tailwind utility classes; load Tailwind so
+         the deployed output is styled even when the project has no index.html of
+         its own and this scaffold is used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
     <div id="root"></div>
