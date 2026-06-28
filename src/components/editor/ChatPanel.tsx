@@ -69,6 +69,26 @@ function collectImportedPaths(seeds: string[], allPaths: string[], getContent: (
   return [...found];
 }
 
+// Extract a file's "surface" — exported/declared signatures only — so the model
+// is aware of files it isn't shown in full and edits them via their exports
+// instead of recreating them. This is the cheap fix for large apps breaking on
+// edit: every file's API is visible without paying to ship every file's body.
+function extractSignatures(code: string): string {
+  const out: string[] = [];
+  for (const raw of code.split('\n')) {
+    const t = raw.trim();
+    if (
+      /^export\s+(default\s+)?(async\s+)?(function|const|let|class|interface|type|enum)\b/.test(t) ||
+      /^export\s+\{/.test(t) ||
+      /^(export\s+)?function\s+\w+/.test(t)
+    ) {
+      out.push(t.replace(/\s*=>?\s*\{?\s*$/, '').slice(0, 160));
+      if (out.length >= 20) break;
+    }
+  }
+  return out.join('\n') || '(no exports detected)';
+}
+
 function cleanMessage(text: string): string {
   let t = text;
   t = t.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
@@ -138,12 +158,8 @@ const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium' | 'fable';
-const MODEL_LABELS: Record<ModelTier, { label: string; credits: string; description: string }> = {
-  fast:    { label: 'Fast',     credits: '~1 cr',  description: 'Quick edits and simple changes' },
-  default: { label: 'Standard', credits: '~2 cr',  description: 'Best for most tasks' },
-  premium: { label: 'Premium',  credits: '~5 cr',  description: 'Complex apps and detailed UI' },
-  fable:   { label: 'Fable',    credits: '~10 cr', description: 'Most powerful — large apps (Pro+)' },
-};
+// Model selection is fully automatic (server-side): Opus for from-scratch builds,
+// Sonnet for edits, auto-escalating complex edits back to Opus. No user picker.
 
 export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
@@ -183,8 +199,8 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const uploadPromisesRef = useRef<Record<string, Promise<unknown>>>({});
   useEffect(() => { attachedFilesRef.current = attachedFiles; }, [attachedFiles]);
   const [dragOver, setDragOver] = useState(false);
-  const [modelTier, setModelTier] = useState<ModelTier>('default');
-  const [showModelPicker, setShowModelPicker] = useState(false);
+  // Kept for the request body; the server ignores it and picks the model itself.
+  const [modelTier] = useState<ModelTier>('default');
   const [planMode, setPlanMode] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ prompt: string; image: AttachedImage | null } | null>(null);
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
@@ -573,10 +589,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
       : '';
     // Send FULL content of the most relevant files so the model can produce exact-match
     // SEARCH/REPLACE diffs. Truncating breaks diff editing (model can't match what it can't see).
-    const fileContext = manifest + contextFiles.map(({path, content}) => {
+    const fullBlock = contextFiles.map(({path, content}) => {
       const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
       return `<file path="${path}">\n${body}\n</file>`;
     }).join('\n\n');
+    // For every OTHER file (large apps have many), ship signatures only — the model
+    // sees each file's API so it edits via exports instead of recreating blind.
+    const contextSet = new Set(contextPaths);
+    const outlineEntries = allFileEntries.filter(([p]) => !contextSet.has(p));
+    const outlineBlock = outlineEntries.length
+      ? '\n\nFILE OUTLINES (these files exist — signatures only; edit via their exports, never recreate):\n' +
+        outlineEntries.map(([p, f]) => `<outline path="${p}">\n${extractSignatures((f as any).content ?? '')}\n</outline>`).join('\n')
+      : '';
+    const fileContext = manifest + fullBlock + outlineBlock;
     const history = messages.filter(m => m.status==='done').slice(-10).map(m => ({ role:m.role, content:m.content }));
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
@@ -1366,22 +1391,6 @@ const storeProjectId = useEditorStore.getState().project?.id;
         </div>
       )}
 
-      {/* Model picker dropdown */}
-      {showModelPicker && (
-        <div style={{ position:'absolute', bottom:80, right:12, background:'var(--bg-elevated)', border:'1px solid var(--border)', borderRadius:10, padding:8, zIndex:100, minWidth:220, boxShadow:'0 8px 24px rgba(0,0,0,0.4)' }}>
-          {(Object.keys(MODEL_LABELS) as ModelTier[]).map(tier => (
-            <button key={tier} onClick={() => { setModelTier(tier); setShowModelPicker(false); }}
-              style={{ width:'100%', textAlign:'left', padding:'8px 12px', borderRadius:7, border:'none', background: modelTier === tier ? 'var(--accent-glow)' : 'transparent', cursor:'pointer', marginBottom:2 }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                <span style={{ fontSize:13, color: modelTier === tier ? 'var(--accent)' : 'var(--text-primary)', fontWeight:500 }}>{MODEL_LABELS[tier].label}</span>
-                <span style={{ fontSize:11, color:'var(--text-muted)' }}>{MODEL_LABELS[tier].credits}</span>
-              </div>
-              <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:2 }}>{MODEL_LABELS[tier].description}</div>
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Input */}
       <div style={{ padding:'8px 10px', borderTop:'1px solid var(--ide-border)', background:'var(--bg-base)', flexShrink:0 }}>
         <div style={{ background:'var(--bg-elevated)', borderRadius:10, border:`1px solid ${input.trim() ? 'var(--ide-border-light)' : 'var(--ide-border)'}`, overflow:'visible', position:'relative', transition:'border-color 0.15s', display:'flex', flexDirection:'column' }}>{mentionQuery !== null && (
@@ -1448,15 +1457,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 style={{ background: recording ? 'rgba(239,68,68,0.1)' : 'none', border:'none', color: recording ? 'var(--ide-red)' : 'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="1" width="6" height="9" rx="3"/><path d="M1 8a7 7 0 0014 0M8 15v-2"/></svg>
               </button>
-              <button
-                onClick={() => setShowModelPicker(v => !v)}
-                style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background: showModelPicker ? 'var(--bg-overlay)' : 'transparent', color:'var(--ide-text3)', cursor:'pointer', fontFamily:'var(--font-sans)', transition:'var(--t)', letterSpacing:'-0.01em' }}
+              {/* Automatic model routing — system picks the best model per task */}
+              <span
+                title="WyberAi automatically picks the best model: top-tier for new builds, a fast model for quick edits. You only pay for what each change needs."
+                style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:4 }}
               >
-                {MODEL_LABELS[modelTier].label} ▾
-              </button>
-              {/* Credit cost estimate */}
-              <span style={{ fontSize:9, color:'var(--ide-text3)', opacity:0.7, letterSpacing:'0.01em' }} title="Estimated credit cost for this action">
-                {MODEL_LABELS[modelTier].credits}
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Auto
               </span>
             </div>
             <button
