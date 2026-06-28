@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
@@ -952,6 +952,112 @@ async function refundCredits(userId: string, amount: number, reason: string): Pr
   } catch (e) { console.error('[refund] failed', e) }
 }
 
+/**
+ * Decide which model tier to run on — fully automatic, server-side.
+ * Policy (see model-defaults): Opus for first builds, Sonnet for edits, and
+ * escalate genuinely complex edits back to Opus via a sub-cent Haiku check.
+ * Plan + self-heal passes run on Sonnet (cheap; self-heal is free to the user).
+ */
+async function resolveModelTier(opts: {
+  actionType: string
+  isNewBuild: boolean
+  selfHeal: boolean
+  stage: string
+  prompt: string
+  fileContext?: string
+}): Promise<ModelTier> {
+  const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext } = opts
+  if (stage === 'plan' || selfHeal) return 'fast'
+  // Staged build passes (scaffold/fill) are part of an initial build → keep Opus.
+  if (stage === 'scaffold' || stage === 'fill') return 'default'
+  // From-scratch builds get the best model for a strong first impression.
+  if (isNewBuild || actionType === 'web-build' || actionType === 'mobile-build') return 'default'
+  // It's an edit to an existing app — Sonnet by default, escalate when complex.
+  return (await isComplexEdit(prompt, fileContext)) ? 'default' : 'fast'
+}
+
+/**
+ * Sub-cent Haiku classifier: is this edit architecturally complex (multi-file,
+ * auth/routing/state/data-model, large refactor) and worth escalating to Opus?
+ * Fails to LOW (Sonnet) on any error so a misfire never costs Opus money.
+ */
+async function isComplexEdit(prompt: string, fileContext?: string): Promise<boolean> {
+  try {
+    const fileCount = fileContext ? (fileContext.match(/<file /g)?.length ?? 0) : 0
+    const res = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 5,
+      system: `You rate an edit request to an existing app as LOW or HIGH complexity.
+HIGH = touches multiple files, OR changes auth/routing/state/data-model, OR a large refactor, OR "rebuild/overhaul everything".
+LOW = a single-component tweak: styling, copy, colors, layout, or adding one small feature.
+Reply with EXACTLY one word: LOW or HIGH.`,
+      messages: [{ role: 'user', content: `Files in project: ${fileCount}\nRequest: ${prompt.slice(0, 1500)}` }],
+    })
+    const text = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').toUpperCase()
+    return text.includes('HIGH')
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Rolling project memory — the builder's long-term memory of an app.
+ * Mirrors the AI-Employees reflect/memory pattern (run-engine.ts): a compact,
+ * always-injected summary of what the app is, key decisions, schema and the
+ * user's standing requests — so context survives past the last-N-messages window.
+ * Reads/writes a `memory_summary` column on projects; a graceful no-op until the
+ * column exists (migration 034), so it ships safely ahead of the migration.
+ */
+async function loadProjectMemory(projectId: string): Promise<string> {
+  if (!projectId) return ''
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    const { data, error } = await db.from('projects').select('memory_summary').eq('id', projectId).single()
+    if (error) return ''
+    return ((data?.memory_summary as string | null) ?? '').trim()
+  } catch { return '' }
+}
+
+/**
+ * Distill the just-finished turn into the rolling memory (cheap Haiku pass).
+ * Runs via next/server `after()` so it never adds latency to the build stream.
+ */
+async function updateProjectMemory(opts: {
+  projectId: string
+  userPrompt: string
+  generatedText: string
+  prevMemory: string
+  isNewBuild: boolean
+}): Promise<void> {
+  const { projectId, userPrompt, generatedText, prevMemory, isNewBuild } = opts
+  if (!projectId || !userPrompt.trim()) return
+  try {
+    // Keep only the human-readable summary — strip file/edit bodies so the
+    // distillation stays cheap and focused on intent, not code.
+    const builtSummary = generatedText
+      .replace(/<file[\s\S]*?<\/file>/g, '')
+      .replace(/<edit[\s\S]*?<\/edit>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 1200)
+    const res = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 700,
+      system: `You maintain a compact long-term memory of a web/mobile app a user is building with an AI builder. Merge the new turn into the existing memory. Keep ONLY durable facts that help future edits: what the app is, its main screens/features, the data model/schema, design conventions, integrations (e.g. Supabase), and standing user preferences. Drop one-off chatter. Terse note form, <=900 characters. Output ONLY the updated memory text — no preamble, no markdown headers.`,
+      messages: [{
+        role: 'user',
+        content: `EXISTING MEMORY:\n${prevMemory || '(none yet)'}\n\nNEW TURN — user ${isNewBuild ? 'built a new app' : 'requested a change'}:\nUSER: ${userPrompt.slice(0, 1500)}\nBUILDER DID: ${builtSummary || '(applied code changes)'}\n\nReturn the updated memory.`,
+      }],
+    })
+    const text = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').trim()
+    if (!text) return
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    await db.from('projects').update({ memory_summary: text.slice(0, 2000) }).eq('id', projectId)
+  } catch (e) { console.error('[project-memory] update failed', e) }
+}
+
 export async function POST(req: NextRequest) {
   // Tracks credits actually deducted so any failure path can refund exactly once.
   let deductedCost = 0
@@ -964,7 +1070,9 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json()
-    const { prompt, fileContext, history, image, modelTier = 'default', userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [] } = body
+    // NOTE: modelTier is no longer read from the client — the server picks the
+    // model automatically (see resolveModelTier). The field is ignored if sent.
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [] } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -978,11 +1086,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine action type for cost calculation
-    const tier = (modelTier as ModelTier) in MODEL_IDS ? (modelTier as ModelTier) : 'default'
     const isNewBuild = !fileContext || fileContext.length < 200
     const actionType = projectType === 'mobile' ? 'mobile-build'
       : isNewBuild ? 'web-build'
       : 'small-edit'
+    // Model tier is decided SERVER-SIDE (fully automatic) — the client no longer
+    // chooses. From-scratch builds get Opus for the best first impression; edits
+    // run on Sonnet (cheaper, fast) unless a sub-cent Haiku check rates the edit
+    // as architecturally complex, in which case we escalate back to Opus.
+    const tier = await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
     const cost = creditCost(actionType, tier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
@@ -1209,7 +1321,7 @@ ${code}
       ]
     }
 
-    const resolvedTier = (modelTier as ModelTier) in MODEL_IDS ? (modelTier as ModelTier) : 'default' as ModelTier
+    const resolvedTier = tier
     const model = MODELS[resolvedTier] ?? MODELS.default
     const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
@@ -1217,6 +1329,8 @@ ${code}
     const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
     const supabaseContext = supabaseResult.context
     const supabaseStatus = supabaseResult.status
+    // Durable rolling memory of this project (no-op until migration 034 is applied).
+    const projectMemory = projectId ? await loadProjectMemory(projectId) : ''
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
@@ -1231,6 +1345,12 @@ ${code}
     let stageMaxTokens = maxTokens
     let staticSystemPrompt: string
     const perRequestParts: string[] = []
+
+    // Durable project memory FIRST — what this app is and the user's standing
+    // requests, so the model honors decisions made many messages ago.
+    if (projectMemory) {
+      perRequestParts.push(`\n\n━━━ PROJECT MEMORY (durable context from earlier in this project — honor it) ━━━\n${projectMemory}`)
+    }
 
     // These vary per project/prompt — keep them out of the system prompt so the cache breakpoint stays byte-stable
     if (supabaseContext) {
@@ -1293,6 +1413,8 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
     let readable: ReadableStream<Uint8Array>
     // If the stream produces no text at all, the build failed — refund.
     let emittedAny = false
+    // Full assistant output, captured for the post-response memory distillation.
+    let generatedText = ''
 
     const encoder = new TextEncoder()
     const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
@@ -1349,6 +1471,7 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
             }
           } catch (err) { console.error('Stream error:', err) }
           finally {
+            generatedText = assistantSoFar
             controller.close()
             // No text emitted → generation failed; give the credits back.
             if (!emittedAny) await settleRefund('empty-generation')
@@ -1404,7 +1527,7 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
                 try {
                   const parsed = JSON.parse(json) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
                   const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                  if (text) { emittedAny = true; controller.enqueue(encoder.encode(text)) }
+                  if (text) { emittedAny = true; generatedText += text; controller.enqueue(encoder.encode(text)) }
                 } catch { /* skip malformed SSE */ }
               }
             }
@@ -1416,6 +1539,20 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
         },
       })
     }
+
+    // After the build finishes streaming, distill the turn into durable project
+    // memory. `after()` runs post-response (within maxDuration) so it adds ZERO
+    // latency to the build. Skipped for plan/self-heal passes and empty outputs.
+    after(async () => {
+      if (!emittedAny || selfHeal || stage === 'plan' || !projectId) return
+      await updateProjectMemory({
+        projectId,
+        userPrompt: prompt,
+        generatedText,
+        prevMemory: projectMemory,
+        isNewBuild,
+      })
+    })
 
     return new Response(readable, {
       headers: {
