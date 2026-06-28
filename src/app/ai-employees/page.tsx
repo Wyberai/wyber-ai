@@ -183,6 +183,9 @@ export default function AIEmployeesPage() {
       {/* Main */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px' }}>
         <div style={{ marginBottom: 36 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '4px 12px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 12 }}>
+            Coming soon · first hire Mon, Jul 6
+          </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>AI Employees</h1>
           <p style={{ color: '#3f3f46', fontSize: 14, margin: 0 }}>Hire AI department heads that connect your tools, run tasks, and report back. Chat with them like colleagues.</p>
         </div>

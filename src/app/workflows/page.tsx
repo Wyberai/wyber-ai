@@ -93,6 +93,9 @@ export default function WorkflowsPage() {
 
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#f59e0b', marginBottom: 10, fontWeight: 700 }}>
+            Coming soon
+          </div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#22c55e', marginBottom: 16, fontWeight: 700 }}>
             ⚡ {WORKFLOW_GALLERY.length} Automation Templates
           </div>
