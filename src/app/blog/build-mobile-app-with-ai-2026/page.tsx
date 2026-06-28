@@ -3,8 +3,10 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'How to build a mobile app with AI in 2026 — WyberAi Blog',
+  title: 'How to build a mobile app with AI in 2026',
   description: 'React Native + Expo from a plain-English prompt. Preview on your phone in minutes. No Xcode, no Android Studio, no code.',
+  alternates: { canonical: 'https://wyberai.com/blog/build-mobile-app-with-ai-2026' },
+  openGraph: { title: 'How to build a mobile app with AI in 2026', url: 'https://wyberai.com/blog/build-mobile-app-with-ai-2026', type: 'article' },
   robots: { index: false, follow: false },
 }
 

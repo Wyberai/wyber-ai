@@ -3,8 +3,15 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'What are AI agents? A practical guide for non-technical founders — WyberAi Blog',
+  title: 'What are AI agents? A practical guide for non-technical founders',
   description: 'Agents watch data, make decisions, and take action automatically. Here\'s what they actually are, what they\'re good for, and how to build one without code.',
+  alternates: { canonical: 'https://wyberai.com/blog/what-are-ai-agents-guide' },
+  openGraph: {
+    title: 'What are AI agents? A practical guide for non-technical founders',
+    description: 'Agents watch data, make decisions, and take action automatically. Here\'s what they actually are, what they\'re good for, and how to build one without code.',
+    url: 'https://wyberai.com/blog/what-are-ai-agents-guide',
+    type: 'article',
+  },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', green: '#10b981' }

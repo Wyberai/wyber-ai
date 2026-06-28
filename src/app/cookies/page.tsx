@@ -3,8 +3,9 @@ import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy — WyberAi',
+  title: 'Cookie Policy',
   description: 'How WyberAi uses cookies and similar technologies.',
+  alternates: { canonical: 'https://wyberai.com/cookies' },
 };
 
 const COOKIES = [

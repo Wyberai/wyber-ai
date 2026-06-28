@@ -3,8 +3,10 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'How to build a SaaS MVP with AI in 2026 — WyberAi Blog',
+  title: 'How to build a SaaS MVP with AI in 2026',
   description: 'A step-by-step guide to going from idea to live SaaS product in under an hour using AI app builders. No coding required.',
+  alternates: { canonical: 'https://wyberai.com/blog/build-saas-mvp-with-ai-2026' },
+  openGraph: { title: 'How to build a SaaS MVP with AI in 2026', url: 'https://wyberai.com/blog/build-saas-mvp-with-ai-2026', type: 'article' },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9' }

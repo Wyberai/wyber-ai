@@ -23,21 +23,10 @@ BUILDER:
 - Plan Mode — shows a step-by-step build plan before generating; user approves it first
 - Screenshot-to-app — paste a screenshot and WyberAi clones the UI
 
-GALLERY (500+ prebuilt templates, always 0 credits):
-- CRM, sales pipeline, contact management
-- Admin dashboards, analytics, KPI reporting
-- E-commerce, product catalog, shopping cart
-- Landing pages, SaaS pages, waitlists, coming soon pages
-- Kanban boards, project management, sprint tracking
-- Invoicing, billing, estimates
-- Booking systems, calendars, scheduling
-- HR dashboards, employee management, recruiting
-- Real estate listings, property management
-- Restaurant POS, menu builder, ordering
-- Banking dashboard, budgeting, transactions
-- Portfolio, personal site, resume
-- Chat apps, messaging UIs
-- And 500+ more — load instantly at zero credit cost
+GALLERY (prebuilt apps, always 0 credits):
+- Users can browse a gallery of ready-made apps (CRM, dashboards, e-commerce, etc.)
+- Gallery apps load instantly at zero credit cost
+- But the core product is FRESH AI generation — every build creates unique code from scratch
 
 DEPLOYMENT & EXPORT:
 - One-click deploy to Vercel — live URL in minutes

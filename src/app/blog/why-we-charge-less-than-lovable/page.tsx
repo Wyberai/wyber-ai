@@ -3,8 +3,10 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'How WyberAi keeps pricing transparent — WyberAi Blog',
-  description: 'Our 500+ prebuilt app library serves 60%+ of prompts at zero API cost. Here\'s how our credit system works.',
+  title: 'How WyberAi keeps pricing transparent',
+  description: 'Smart model routing, prompt caching, and self-healing builds. Here\'s how WyberAi keeps prices lower than Lovable.',
+  alternates: { canonical: 'https://wyberai.com/blog/why-we-charge-less-than-lovable' },
+  openGraph: { title: 'How WyberAi keeps pricing transparent', url: 'https://wyberai.com/blog/why-we-charge-less-than-lovable', type: 'article' },
   robots: { index: true, follow: true },
 }
 
@@ -31,10 +33,10 @@ export default function Post() {
 
           <p>Here's how WyberAi makes it work.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The prebuilt library changes the math</h2>
-          <p>WyberAi maintains a library of 500+ prebuilt app templates — CRM, invoicing, HR, analytics, e-commerce, booking, and more. When a user prompt matches a template closely (which happens roughly 60% of the time), we serve the template directly and personalize it with a much smaller, cheaper generation call.</p>
+          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Smart routing changes the math</h2>
+          <p>Not every prompt needs the most expensive model. WyberAi automatically routes each request to the right AI tier — a full new build gets the most capable model, while a small edit like "change the button color to blue" uses a lighter, faster one. Complex multi-file edits get escalated back up. You never have to think about it.</p>
 
-          <p>The template serves the structure. The LLM only needs to fill in the specifics. A generation that would otherwise cost $0.12 in API calls costs $0.02. That savings flows directly to you as lower prices and more credits per dollar.</p>
+          <p>The result: most interactions cost a fraction of what a single-tier system would charge. That savings flows directly to you as lower prices and more credits per dollar.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Prompt caching</h2>
           <p>For every generation, WyberAi uses Anthropic's prompt caching to cache the static system prompt — the wyberDNA design rules and output format instructions that go with every request. On the second and subsequent generations in a session, those cached tokens cost 90% less. That's another significant reduction in per-request API cost.</p>
@@ -65,7 +67,7 @@ export default function Post() {
           <p>Expiring credits create artificial urgency and punish users who don't build constantly. We don't want that relationship with our users. If you buy a top-up, it's yours until you use it. We'd rather compete on product quality than on credit anxiety.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What this means for all six products</h2>
-          <p>The same economics apply across all six products. Mobile apps use the same template-first approach. Workflow automations serve from a gallery of pre-built canvas templates. Agent canvases are assembled from tool node templates. The more the library grows, the better the cost-per-generation gets — and that savings continues to flow to users as more credits per dollar.</p>
+          <p>The same economics apply across all six products. Web apps, mobile apps, AI Employees, workflows — every generation uses the same smart routing and prompt caching. Self-healing builds that fix their own errors never cost you a credit. The more efficiently we run inference, the more credits you get per dollar.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>See for yourself</div>

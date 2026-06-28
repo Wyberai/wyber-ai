@@ -42,7 +42,7 @@ export default function Page() {
 
       <DocSection title="Free credits & plans">
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-          Free accounts get <strong>15 credits on signup</strong> plus <strong>3 daily bonus credits</strong> that refill every 24 hours — up to ~50 credits per month. No credit card required. Paid plans start at $29/month (Starter: 150 credits).
+          Free accounts get <strong>50 credits on signup</strong>. No credit card required. Paid plans start at $29/month (Starter: 150 credits/month).
         </p>
         <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginTop: 8 }}>
           Paid plans give you more monthly credits and a larger daily bonus. See the <Link href="/docs/account-billing/plans" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Plans & pricing</Link> page for a full comparison.

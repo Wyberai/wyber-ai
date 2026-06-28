@@ -1,7 +1,7 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Affiliates — WyberAi', description: 'Earn 30% recurring commission for every customer you refer to WyberAi.' };
+export const metadata: Metadata = { title: 'Affiliates', description: 'Earn 30% recurring commission for every customer you refer to WyberAi.', alternates: { canonical: 'https://wyberai.com/affiliates' } };
 const STEPS = [
   { n:'01', title:'Apply and get your link', desc:'Email us. We approve within 24 hours and send you a unique referral link tracked to your account.' },
   { n:'02', title:'Share with your audience', desc:'Post it in your newsletter, YouTube description, blog, Twitter, Discord — any format works.' },

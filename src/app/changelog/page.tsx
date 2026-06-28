@@ -1,13 +1,13 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
-export const metadata: Metadata = { title: 'Changelog — WyberAi', description: 'Every feature, fix, and improvement — logged as we ship.' };
+export const metadata: Metadata = { title: 'Changelog', description: 'Every feature, fix, and improvement — logged as we ship.', alternates: { canonical: 'https://wyberai.com/changelog' } };
 const RELEASES = [
   { date:'June 20, 2026', version:'v1.0', tag:'The AI Business Platform', color:'#10b981', items:[
     { type:'new', text:'Self-healing preview — build errors auto-fix with AI, 0 credits charged' },
     { type:'new', text:'Command palette (Cmd+K) — instant access to any page, template, or action' },
     { type:'new', text:'Persona onboarding — solo founder, team, agency, or enterprise' },
-    { type:'new', text:'500+ app templates — up from 118, across 30+ industries' },
+    { type:'new', text:'App gallery with ready-to-use web apps across 15+ industries' },
     { type:'new', text:'120 mobile templates — 12 categories from social to kids apps' },
     { type:'new', text:'100 workflow templates — AI-generated with full node configs' },
     { type:'new', text:'Svelte + Astro frameworks — added alongside React, Vue, Next.js' },

@@ -3,8 +3,9 @@ import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About — WyberAi',
+  title: 'About',
   description: 'WyberAi is built by SignalPulse Technologies. We build tools that help founders ship faster.',
+  alternates: { canonical: 'https://wyberai.com/about' },
 };
 
 const PRODUCTS = [

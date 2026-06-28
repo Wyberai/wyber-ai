@@ -159,7 +159,7 @@ export const USE_CASES: UseCase[] = [
     ],
     features: [
       { title: 'Complete app — not components', desc: 'Other no-code tools generate UI snippets. WyberAi generates a complete, running application with every file wired together.' },
-      { title: '500+ prebuilt app templates', desc: 'Start from a CRM, dashboard, invoice tracker, kanban board, or any of 500+ templates at zero credit cost.' },
+      { title: 'Fresh code every build', desc: 'No recycled templates. Every app is generated from scratch for your exact prompt — unique, purpose-built, and fully yours.' },
       { title: 'Click-to-edit any element', desc: 'Click anything in the live preview and describe the change. No CSS selectors, no code.' },
       { title: 'Supabase database integration', desc: 'Connect Supabase and your app uses real Postgres with auth, RLS, and live data — wired automatically.' },
       { title: 'One-click Vercel deploy', desc: 'Publish to a live URL in minutes. Free wyberai.app subdomain or your own domain.' },
@@ -194,7 +194,7 @@ export const USE_CASES: UseCase[] = [
       { title: 'Mobile app builder', desc: 'React Native + Expo apps for iOS and Android. Preview on your phone instantly via QR code.' },
       { title: 'AI agent builder', desc: 'Autonomous agents connected to 250+ tools, run manually or on a schedule — with AI reasoning built in.' },
       { title: 'Workflow automation', desc: 'Multi-step automations that connect your apps, apply AI logic, and run without supervision.' },
-      { title: '500+ prebuilt templates', desc: 'CRM, invoicing, HR, analytics, e-commerce, booking, and 500+ more — all at 0 credits.' },
+      { title: 'Fresh code every build', desc: 'No recycled templates. Every app is purpose-built for your prompt — CRM, invoicing, HR, analytics, anything.' },
       { title: 'One-click deploy', desc: 'Vercel deployment in A few minutes. Free subdomain or your own domain.' },
     ],
     promptExample: 'Build a SaaS platform for freelancers: a web dashboard for project and invoice management, a mobile app for on-the-go time tracking, an agent that emails clients when invoices are overdue, and a workflow that logs new clients to a Google Sheet.',

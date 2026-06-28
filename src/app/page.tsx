@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { WyberLogo } from '@/components/shared/WyberLogo';
+import { Footer } from '@/components/shared/FooterClient';
 
 const BRAND = '#0EA5E9';
 
@@ -392,7 +393,7 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
-            Vibe code with<br />
+            Vibe code with{' '}<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               WyberAi
             </span>
@@ -471,7 +472,7 @@ export default function HomePage() {
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Products</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
-              Five products, one platform
+              Six products, one platform
             </h2>
             <p style={{ fontSize: 15, color: '#71717a', marginTop: 8 }}>Everything you need to build, launch, and grow — in one place.</p>
           </div>
@@ -679,36 +680,7 @@ export default function HomePage() {
         </a>
       </section>
 
-      {/* Footer */}
-      <footer style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <WyberLogo markSize={20} wordmarkSize={13} />
-            <span style={{ fontSize: 12, color: '#3f3f46' }}>· A product by SignalPulse Technologies · © 2026</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <a href="https://www.linkedin.com/company/wyber-ai" target="_blank" rel="noopener" aria-label="WyberAi on LinkedIn" style={{ color: '#52525b', display: 'flex' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#0EA5E9'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5.001A2.5 2.5 0 014.98 3.5zM3 8.98h4v12.02H3V8.98zM9.5 8.98h3.84v1.64h.05c.53-1 1.84-2.05 3.79-2.05 4.05 0 4.8 2.67 4.8 6.14V21h-4v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21h-4V8.98z"/></svg>
-            </a>
-            <a href="https://x.com/WyberAi" target="_blank" rel="noopener" aria-label="WyberAi on X" style={{ color: '#52525b', display: 'flex' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-            </a>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-          {([['Privacy', '/privacy'], ['Terms', '/terms'], ['Pricing', '/pricing'], ['Blog', '/blog']] as [string, string][]).map(([l, h]) => (
-            <Link key={l} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#a1a1aa'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#52525b'}>
-              {l}
-            </Link>
-          ))}
-        </div>
-      </footer>
+      <Footer />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');

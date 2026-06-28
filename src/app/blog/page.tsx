@@ -3,11 +3,52 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Blog — WyberAi',
+  title: 'Blog',
   description: 'Build logs, product guides, and deep dives on AI app building — web apps, mobile apps, AI agents, and workflow automation.',
+  alternates: { canonical: 'https://wyberai.com/blog' },
 }
 
 const POSTS = [
+  {
+    slug: 'ai-app-builder-for-startups',
+    title: 'Why startups are ditching dev agencies for AI app builders',
+    excerpt: 'Dev agencies charge $15k–$50k and take months. AI app builders ship an MVP in an afternoon for under $30. Here\'s what changed.',
+    date: 'June 29, 2026',
+    readTime: '6 min read',
+    tag: 'Startups',
+    tagColor: '#f59e0b',
+    isNew: true,
+  },
+  {
+    slug: 'no-code-vs-ai-code-generation',
+    title: 'No-code vs AI code generation — which one should you use in 2026?',
+    excerpt: 'Bubble and Glide give you drag-and-drop. WyberAi and Lovable generate real code. The trade-offs are shifting fast.',
+    date: 'June 28, 2026',
+    readTime: '7 min read',
+    tag: 'Guide',
+    tagColor: '#0EA5E9',
+    isNew: true,
+  },
+  {
+    slug: 'how-to-deploy-ai-generated-app',
+    title: 'How to deploy an AI-generated app to production',
+    excerpt: 'Your app works in preview. Now what? Custom domains, databases, environment variables, and going live — the complete checklist.',
+    date: 'June 27, 2026',
+    readTime: '5 min read',
+    tag: 'Guide',
+    tagColor: '#0EA5E9',
+    isNew: true,
+  },
+  {
+    slug: 'build-internal-tools-with-ai',
+    title: 'Build internal tools in minutes — not months',
+    excerpt: 'Admin panels, dashboards, approval workflows. Your team needs them yesterday. Here\'s how to ship them with a single prompt.',
+    date: 'June 25, 2026',
+    readTime: '5 min read',
+    tag: 'Use Case',
+    tagColor: '#a855f7',
+    isNew: true,
+  },
   {
     slug: 'what-are-ai-agents-guide',
     title: 'What are AI agents? A practical guide for non-technical founders',
@@ -16,7 +57,6 @@ const POSTS = [
     readTime: '7 min read',
     tag: 'AI Agents',
     tagColor: '#10b981',
-    isNew: true,
   },
   {
     slug: 'ai-workflow-automation-guide',
@@ -26,7 +66,6 @@ const POSTS = [
     readTime: '5 min read',
     tag: 'Workflows',
     tagColor: '#f59e0b',
-    isNew: true,
   },
   {
     slug: 'build-saas-mvp-with-ai-2026',
@@ -36,6 +75,42 @@ const POSTS = [
     readTime: '7 min read',
     tag: 'Guide',
     tagColor: '#0EA5E9',
+  },
+  {
+    slug: 'why-we-charge-less-than-lovable',
+    title: 'How WyberAi keeps pricing transparent',
+    excerpt: 'Smart model routing, prompt caching, and self-healing builds. Here\'s how WyberAi keeps prices lower than competitors.',
+    date: 'May 25, 2026',
+    readTime: '4 min read',
+    tag: 'Pricing',
+    tagColor: '#10b981',
+  },
+  {
+    slug: 'build-saas-without-code',
+    title: 'How to build a SaaS app without writing code in 2026',
+    excerpt: 'AI app builders have changed what is possible for solo founders. Go from idea to live product in a single afternoon.',
+    date: 'May 20, 2026',
+    readTime: '6 min read',
+    tag: 'Guide',
+    tagColor: '#0EA5E9',
+  },
+  {
+    slug: 'nextjs-app-in-one-hour',
+    title: 'Build a production Next.js app in under an hour with AI',
+    excerpt: 'Next.js is the default framework in WyberAi. SSR, SEO, and performance out of the box. A step-by-step walkthrough.',
+    date: 'May 15, 2026',
+    readTime: '5 min read',
+    tag: 'Guide',
+    tagColor: '#0EA5E9',
+  },
+  {
+    slug: 'wyber-vs-lovable',
+    title: 'WyberAi vs Lovable — an honest comparison',
+    excerpt: 'Both tools build full-stack apps from plain English. Six products vs one. Here\'s what actually matters.',
+    date: 'May 10, 2026',
+    readTime: '5 min read',
+    tag: 'Compare',
+    tagColor: '#f59e0b',
   },
 ]
 

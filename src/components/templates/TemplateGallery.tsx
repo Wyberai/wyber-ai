@@ -190,7 +190,7 @@ export function TemplateGallery({ onClose }: Props) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search 500+ templates..."
+          placeholder="Search apps..."
           style={{ width: '100%', padding: '6px 10px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>

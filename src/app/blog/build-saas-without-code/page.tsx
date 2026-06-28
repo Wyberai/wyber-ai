@@ -4,8 +4,10 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'How to build a SaaS app without writing code in 2026 -- WyberAi Blog',
+  title: 'How to build a SaaS app without writing code in 2026',
   description: 'AI app builders have changed what is possible for solo founders. Go from idea to live product in a single afternoon.',
+  alternates: { canonical: 'https://wyberai.com/blog/build-saas-without-code' },
+  openGraph: { title: 'How to build a SaaS app without writing code in 2026', url: 'https://wyberai.com/blog/build-saas-without-code', type: 'article' },
 };
 
 export default function Post() {

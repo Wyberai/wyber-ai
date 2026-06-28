@@ -3,8 +3,10 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'I built a Lovable competitor in 6 weeks as a solo founder — WyberAi Blog',
+  title: 'I built a Lovable competitor in 6 weeks as a solo founder',
   description: 'How I shipped an AI app builder from zero to live in 6 weeks, and the decisions that made it possible.',
+  alternates: { canonical: 'https://wyberai.com/blog/built-lovable-competitor-6-weeks' },
+  openGraph: { title: 'I built a Lovable competitor in 6 weeks as a solo founder', url: 'https://wyberai.com/blog/built-lovable-competitor-6-weeks', type: 'article' },
   robots: { index: false, follow: false },
 }
 
@@ -35,7 +37,7 @@ export default function Post() {
           <p>So from day one, WyberAi was designed as a multi-product platform: <strong style={{ color: s.text }}>web apps, mobile apps, AI agents, workflows, AI employees, and a GTM engine</strong> — all from the same workspace, all from plain English.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Week 1–2: Web app generator</h2>
-          <p>I started with web apps because the core loop — prompt → code → preview → deploy — was the most validated. The hardest part wasn't the code generation; it was the prebuilt app library. We built 500+ templates that serve common prompts at zero API cost. When someone asks for a CRM or an invoice tracker, they get a template-seeded result instantly instead of waiting for generation. That's what makes the pricing work.</p>
+          <p>I started with web apps because the core loop — prompt → code → preview → deploy — was the most validated. The hardest part wasn't code generation; it was making the output production-grade. Self-healing builds that detect and fix their own errors, automatic Tailwind styling, proper component structure — these are what separate a demo from a product. Every build generates fresh code, purpose-built for the prompt. No templates, no recycled boilerplate.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Week 3: Mobile</h2>
           <p>React Native was the obvious choice — one codebase, two platforms, Expo handles the build and preview pipeline. The QR code preview was the unlock: you can hand your phone to anyone and show them a real app running in 60 seconds. No App Store submission, no TestFlight, no Android APK.</p>
@@ -44,7 +46,7 @@ export default function Post() {
           <p>The agent builder was the most technically interesting product. The visual canvas (trigger → AI node → tool nodes → output) maps well to how non-technical users think about automation. The key integration was Composio — 250+ tool connections managed server-side, so users never touch an API key. Connect Gmail once; every agent can use it.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Week 5–6: Workflows + pricing</h2>
-          <p>Workflows share the canvas infrastructure with agents but are sequential rather than agentic. The pricing decision was straightforward: offer transparent credit-based pricing (Builder $99/mo for 300 credits), never expire top-ups, and make templates always free. The 500+ prebuilt library is what makes the math work — most generations don't touch the API at all.</p>
+          <p>Workflows share the canvas infrastructure with agents but are sequential rather than agentic. The pricing decision was straightforward: offer transparent credit-based pricing (Builder $79/mo for 500 credits), never expire top-ups, and make self-healing error fixes always free. Smart model routing — Opus for new builds, Sonnet for edits — is what makes the math work.</p>
 
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What I'd do differently</h2>
           <p>Ship the mobile builder in week one, not week three. It's the most differentiated product and the clearest demo. When you show someone their app running on their phone in 60 seconds, they understand immediately what WyberAi is — in a way that a web dashboard doesn't communicate as viscerally.</p>

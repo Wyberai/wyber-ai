@@ -126,7 +126,7 @@ export default async function PublicProjectPage({ params }: Props) {
               Start building free →
             </Link>
             <Link href="/gallery" style={{ padding: '13px 22px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 14, textDecoration: 'none' }}>
-              Browse 500+ templates
+              Browse gallery
             </Link>
           </div>
         </div>

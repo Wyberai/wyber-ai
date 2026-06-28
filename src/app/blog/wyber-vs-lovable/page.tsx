@@ -4,8 +4,10 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'WyberAi vs Lovable -- WyberAi Blog',
+  title: 'WyberAi vs Lovable',
   description: 'Both tools build full-stack apps from plain English. An honest comparison for developers and founders.',
+  alternates: { canonical: 'https://wyberai.com/blog/wyber-vs-lovable' },
+  openGraph: { title: 'WyberAi vs Lovable', url: 'https://wyberai.com/blog/wyber-vs-lovable', type: 'article' },
 };
 
 const COMPARISON = [
