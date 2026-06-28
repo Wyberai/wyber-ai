@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     title: 'A new AI employee every Monday',
-    desc: 'Starting Monday June 29 with the Marketing Manager, we release a new AI employee each week. It’s not a single agent — each employee commands 200+ agents and runs on its own schedule.',
+    desc: 'Starting Monday July 6 with the Marketing Manager, we release a new AI employee each week. It’s not a single agent — each employee commands 200+ agents and runs on its own schedule.',
     target: null,
   },
   {

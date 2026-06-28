@@ -124,6 +124,9 @@ export default function AgentsPage() {
       <div style={{ maxWidth:1200, margin:'0 auto', padding:'32px 32px' }}>
         {/* Hero */}
         <div style={{ textAlign:'center', marginBottom:40 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:7, background:'rgba(245,158,11,0.1)', border:'1px solid rgba(245,158,11,0.25)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#f59e0b', marginBottom:10, fontWeight:700 }}>
+            Coming soon
+          </div>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#0EA5E9', marginBottom:16, fontWeight:700 }}>
             ⚡ {total === null ? '…' : total.toLocaleString()} AI Agents Available
           </div>

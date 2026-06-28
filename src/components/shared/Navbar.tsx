@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
@@ -46,15 +46,20 @@ const RESOURCES = [
 // Flat list of all hrefs for arrow-key navigation
 const ALL_ITEMS = RESOURCES.flatMap(g => g.items);
 
-const NAV_LINKS = [
+// `soon` marks products that aren't live yet (only Web + Mobile are live).
+// The pages stay reachable but carry a "soon" marker so we don't present them
+// as shipped — matching the dashboard, which already groups them under Coming Soon.
+const NAV_LINKS: [label: string, href: string, soon?: boolean][] = [
   ['Web Apps', '/gallery'],
   ['Mobile', '/templates/mobile'],
-  ['AI Employees', '/ai-employees'],
-  ['Agents', '/agents'],
-  ['Workflows', '/workflows'],
-  ['GTM', '/gtm'],
+  ['AI Employees', '/ai-employees', true],
+  ['Agents', '/agents', true],
+  ['Workflows', '/workflows', true],
+  ['GTM', '/gtm', true],
   ['Pricing', '/pricing'],
-] as const;
+];
+
+const soonPillStyle: CSSProperties = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 };
 
 export function Navbar({ user }: Props) {
   const { theme, toggle } = useTheme();
@@ -177,8 +182,10 @@ export function Navbar({ user }: Props) {
 
         {/* Desktop nav */}
         <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: 24, position: 'relative' }}>
-          {NAV_LINKS.map(([label, href]) => (
-            <Link key={href} href={href} className="wy-nav-link">{label}</Link>
+          {NAV_LINKS.map(([label, href, soon]) => (
+            <Link key={href} href={href} className="wy-nav-link" style={soon ? { display: 'inline-flex', alignItems: 'center', gap: 5 } : undefined}>
+              {label}{soon && <span style={soonPillStyle}>soon</span>}
+            </Link>
           ))}
 
           {/* Resources trigger */}
@@ -303,10 +310,10 @@ export function Navbar({ user }: Props) {
           padding: '12px 20px 20px', display: 'flex', flexDirection: 'column',
           boxShadow: 'var(--shadow-lg)', maxHeight: 'calc(100vh - 58px)', overflowY: 'auto',
         }}>
-          {NAV_LINKS.map(([label, href]) => (
+          {NAV_LINKS.map(([label, href, soon]) => (
             <Link key={href} href={href} onClick={() => setMenuOpen(false)}
-              style={{ fontSize: 15, fontWeight: 500, color: 'var(--text2)', padding: '11px 0', borderBottom: '1px solid var(--border)' }}>
-              {label}
+              style={{ fontSize: 15, fontWeight: 500, color: 'var(--text2)', padding: '11px 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              {label}{soon && <span style={soonPillStyle}>soon</span>}
             </Link>
           ))}
 

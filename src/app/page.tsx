@@ -226,7 +226,7 @@ const PRODUCTS = [
 // ── AI Employee launch spotlight — carousel hyping the Marketing Manager ──────
 const MM_SLIDES = [
   {
-    tag: 'Launching Mon · June 29',
+    tag: 'Launching Mon · Jul 6',
     title: 'Meet your new AI employee',
     sub: 'The Marketing Manager — the first of a new AI employee every Monday.',
     bullets: ['Onboards in minutes, then runs on its own schedule', 'Reports back to you after every shift', 'Works while you sleep'],
