@@ -205,7 +205,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'How is WyberAi different from other AI app builders?', a: 'Every other tool covers one category. Lovable, Bolt, and v0 build web apps only. WyberAi covers all six products — including AI Employees and a full GTM engine — from one workspace at one price.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in minutes. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
-      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Growth is $399/month (4,000 credits). Scale is $799/month (10,000 credits). Every plan unlocks all features — credits are the only currency.' },
+      { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Every plan unlocks all features — credits are the only currency.' },
     ],
   },
 ]

@@ -11,6 +11,19 @@ import { ImportModal } from '@/components/dashboard/ImportModal';
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 
+// Deterministic, timezone/locale-independent date label. toLocaleDateString()
+// renders differently on the server vs the client (different TZ/locale), which
+// caused a hydration mismatch (React #418) on the dashboard. Formatting from UTC
+// parts with a fixed month table guarantees server and client produce the same
+// string.
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtDate(iso?: string | null): string {
+  if (!iso) return 'New';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 'New';
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
+}
+
 interface Props { profile: Profile | null; projects: Partial<Project>[]; }
 
 // SVG icons — no emojis
@@ -466,7 +479,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                           )}
                           <TypeBadge type={(p as any).project_type} />
                         </div>
-                        <div style={{ fontSize: 10, color: DIM }}>{p.framework || 'react'} · {p.updated_at ? new Date(p.updated_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'New'}</div>
+                        <div style={{ fontSize: 10, color: DIM }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</div>
                       </div>
                     </div>
                   </Link>
