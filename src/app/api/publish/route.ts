@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sanitizeFiles } from '@/lib/sanitize-files'
 
+// The publish flow runs a full remote build (30–45s) then fetches + stores the
+// output. Without this, the serverless function is killed at the platform's
+// default timeout mid-build, so the client's "Deploying…" state hangs forever
+// and no URL is ever returned. Match the preview-build ceiling.
+export const maxDuration = 300
+
 function slugify(name: string): string {
   return name
     .toLowerCase()

@@ -297,6 +297,13 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   useEffect(() => {
     if (!resolvedProjectId || !hasInit) return;
     const key = `wyber_prompt_${resolvedProjectId}`;
+    // Never regenerate over an already-built project. The one-shot sessionStorage
+    // key is the primary guard, but if it ever lingers (e.g. a force-reload mid
+    // generation), this makes reopening a saved app load it deterministically
+    // instead of re-running generation — which is non-deterministic and yields a
+    // different app on every open. hasGeneratedFiles is true only once a real app
+    // is loaded/built (the brand-new starter scaffold leaves it false).
+    if (hasGeneratedFiles) { sessionStorage.removeItem(key); return; }
     const savedPrompt = sessionStorage.getItem(key);
     if (!savedPrompt) return;
     sessionStorage.removeItem(key);
@@ -305,7 +312,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       window.dispatchEvent(new CustomEvent('wyber_auto_generate', { detail: { prompt: savedPrompt } }));
     }, 800);
     return () => clearTimeout(timer);
-  }, [resolvedProjectId, hasInit]);
+  }, [resolvedProjectId, hasInit, hasGeneratedFiles]);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
