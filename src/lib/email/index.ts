@@ -77,14 +77,14 @@ export async function sendWelcomeEmail(to: string, name?: string) {
     ${h1('Welcome to WyberAi ⚡')}
     ${p(`Hey ${displayName}, you're in.`)}
     ${p('You have <strong style="color:#f0f0f4">50 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
-    ${p('A few things to try first:')}
-    <ul style="margin:0 0 24px;padding-left:20px;color:#8888a0;font-size:15px;line-height:1.9">
-      <li>Build a <strong style="color:#f0f0f4">web app</strong> — just describe it</li>
-      <li>Build a <strong style="color:#f0f0f4">mobile app</strong> — preview on your phone, export for the App Store</li>
-      <li>Paste a screenshot or Figma file to clone any UI</li>
-      <li>Connect your own Supabase to add a real database</li>
-    </ul>
-    ${p('And there\'s more coming: a new <strong style="color:#f0f0f4">AI employee</strong> every Monday — starting with the Marketing Manager.')}
+    ${p('Here\'s what you can do:')}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">web app</strong> — just describe it in plain English</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">mobile app</strong> — preview on your phone via QR code</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Paste a <strong style="color:#f0f0f4">screenshot or Figma file</strong> to clone any UI</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 45 more integrations</td></tr>
+    </table>
+    ${p('We\'re also running a <strong style="color:#f0f0f4">Weekly Build Challenge — $500 in prizes every week</strong>. Build the best app, share it with #BuiltWithWyberAi, and win cash. <a href="https://wyberai.com/challenge" style="color:#0EA5E9">Learn more →</a>')}
     <div style="text-align:center;margin:28px 0">
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
@@ -451,12 +451,12 @@ export async function sendFirstBuildEmail(to: string, name: string, projectName:
     ${h1('You built your first app 🎉')}
     ${p(`${name}, <strong style="color:#f0f0f4">${projectName}</strong> is ready. That's huge.`)}
     ${p("Here's what you can do next:")}
-    <ul style="margin:0 0 24px;padding-left:20px;color:#8888a0;font-size:15px;line-height:1.9">
-      <li><strong style="color:#f0f0f4">Deploy it</strong> — go live in one click</li>
-      <li><strong style="color:#f0f0f4">Connect Supabase</strong> — add a real database so data persists</li>
-      <li><strong style="color:#f0f0f4">Share it</strong> — export as a ZIP or push to GitHub</li>
-      <li><strong style="color:#f0f0f4">Keep building</strong> — chat with the AI to add features</li>
-    </ul>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Deploy it</strong> — go live in one click</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Connect Supabase</strong> — add a real database so data persists</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Share it</strong> — export as a ZIP or push to GitHub</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">Keep building</strong> — chat with the AI to add features</td></tr>
+    </table>
     <div style="text-align:center;margin:28px 0">
       ${btn('Open your app →', previewUrl)}
     </div>
