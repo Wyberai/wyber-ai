@@ -22,6 +22,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   // at a time with a bottom tab bar so the preview is always reachable.
   const [isNarrow, setIsNarrow] = useState(false)
   const [mobileView, setMobileView] = useState<'preview' | 'chat' | 'store'>('chat')
+  const { isGenerating } = useEditorStore()
   useEffect(() => {
     if (typeof window === 'undefined') return
     const mq = window.matchMedia('(max-width: 820px)')
@@ -30,6 +31,9 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
   }, [])
+  useEffect(() => {
+    if (isNarrow && isGenerating) setMobileView('preview')
+  }, [isGenerating, isNarrow])
 
   const saveRename = async () => {
     const newName = nameInput.trim()

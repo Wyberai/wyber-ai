@@ -32,6 +32,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   // tab bar so the preview is always reachable.
   const [isNarrow, setIsNarrow] = useState(false);
   const [mobileView, setMobileView] = useState<'preview' | 'chat' | 'code'>('chat');
+  const { isGenerating, hasGeneratedFiles } = useEditorStore();
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(max-width: 820px)');
@@ -40,6 +41,10 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     mq.addEventListener('change', apply);
     return () => mq.removeEventListener('change', apply);
   }, []);
+  // Auto-switch to preview when build starts on mobile
+  useEffect(() => {
+    if (isNarrow && isGenerating) setMobileView('preview');
+  }, [isGenerating, isNarrow]);
 
   // Hydrate store from server data + load messages and knowledge
   useEffect(() => {

@@ -418,6 +418,8 @@ input, textarea, select { font-family: var(--font-sans); }
   .hide-mobile { display: none !important; }
   .stack-mobile { flex-direction: column !important; }
   .full-mobile { width: 100% !important; }
+  .wyb-nav-desktop { display: none !important; }
+  .wyb-nav-hamburger { display: flex !important; }
 }
 
 @media (max-width: 480px) {
