@@ -492,7 +492,7 @@ export default function HomePage() {
           <div className="wyb-why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {[
               { icon: '⚡', title: 'Fresh code, every time', desc: 'No drag-and-drop. No stale templates. AI writes real React + Tailwind CSS from scratch for every project.', color: BRAND },
-              { icon: '🔄', title: 'Self-healing builds', desc: 'Build errors? The AI detects them and fixes itself. No debugging, no Stack Overflow rabbit holes.', color: '#22c55e' },
+              { icon: '🔄', title: 'Auto error fix', desc: 'Build errors? The AI detects and resolves them automatically. No debugging, no Stack Overflow rabbit holes.', color: '#22c55e' },
               { icon: '🚀', title: 'One-click deploy', desc: 'Your app goes live on Vercel with a real URL. Connect your domain, share with the world — in seconds.', color: '#f97316' },
               { icon: '📦', title: 'Full-stack out of the box', desc: 'Auth, database, API routes, file uploads — generated and wired up. Not just a pretty frontend.', color: '#a855f7' },
               { icon: '🔗', title: 'GitHub integration', desc: 'Push to your own repo. Own your code. Fork it, extend it, hire devs later if you want. Zero lock-in.', color: '#10b981' },

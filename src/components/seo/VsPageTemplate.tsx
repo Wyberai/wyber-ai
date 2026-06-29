@@ -36,12 +36,12 @@ const s = {
 }
 
 const PRODUCTS = [
-  { id: 'web',       label: 'Web Apps',      icon: '🖥', desc: 'Full-stack React app in minutes' },
-  { id: 'mobile',    label: 'Mobile Apps',   icon: '📱', desc: 'React Native + Expo, iOS & Android' },
-  { id: 'agents',    label: 'AI Agents',     icon: '🤖', desc: 'Autonomous agents with 250+ tools' },
-  { id: 'workflows', label: 'Workflows',     icon: '⚡', desc: 'Multi-step automations, no code' },
-  { id: 'employees', label: 'AI Employees',  icon: '👥', desc: '100 roles, runs on schedule' },
-  { id: 'gtm',       label: 'GTM Engine',    icon: '🎯', desc: 'ICP, leads, sequences, outreach' },
+  { id: 'web',       label: 'Web Apps',       icon: '🖥', desc: 'Full-stack React app in minutes' },
+  { id: 'mobile',    label: 'Mobile Apps',    icon: '📱', desc: 'React Native + Expo, iOS & Android' },
+  { id: 'integrations', label: '48 Integrations', icon: '🔗', desc: 'Supabase, Stripe, OpenAI & more' },
+  { id: 'deploy',    label: 'One-click Deploy', icon: '🚀', desc: 'Live URL in seconds' },
+  { id: 'github',    label: 'GitHub Sync',    icon: '📦', desc: 'Own your code, zero lock-in' },
+  { id: 'challenge', label: 'Weekly Challenge', icon: '🏆', desc: 'Win credits every week' },
 ]
 
 export function VsPageTemplate({

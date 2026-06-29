@@ -24,7 +24,7 @@ const PLANS = [
       '150 credits/month — never expire',
       'Web apps + mobile apps — unlimited projects',
       'AI generates fresh code every time',
-      'Live preview + self-healing errors',
+      'Live preview + auto error fix',
       'One-click deploy to Vercel',
       'GitHub push + export as ZIP',
       'Community support',
@@ -452,7 +452,7 @@ export default function PricingPage() {
           <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
-              ['What counts as a credit?', 'Building a web or mobile app from scratch costs 10 credits. Each edit or iteration costs 3 credits. Image generation costs 3 credits. Deploy, publish, GitHub push, ZIP export, and self-healing error fixes are always free. Top-up packs can be added anytime and never expire.'],
+              ['What counts as a credit?', 'Building a web or mobile app from scratch costs 10 credits. Each edit or iteration costs 3 credits. Image generation costs 3 credits. Deploy, publish, GitHub push, ZIP export, and auto error fixes are always free. Top-up packs can be added anytime and never expire.'],
               ['Are features locked behind higher plans?', 'No. Every plan unlocks all features — web apps, mobile apps, Supabase integration, 48 connectors, deploy, GitHub sync. The only difference is how many credits you get.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
               ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. All integrations are available on every plan.'],
