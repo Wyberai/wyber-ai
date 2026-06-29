@@ -20,7 +20,7 @@ export default function CreditsPage() {
             ['Lead enrichment', '1 credit', 'Per contact imported/enriched via Apollo'],
             ['Image generation', '3 credits', 'AI-generated image or asset'],
             ['Template load', '0 credits', 'Instant template loading — always free'],
-            ['Auto-fix errors', '0 credits', 'Self-healing — always free'],
+            ['Auto-fix errors', '0 credits', 'Always free'],
             ['Export ZIP', '0 credits', 'Download your code — always free'],
             ['Deploy to Vercel', '0 credits', 'One-click deployment — always free'],
             ['GitHub push', '0 credits', 'Push to any repo — always free'],

@@ -94,7 +94,7 @@ const jsonLd = {
       featureList: [
         'AI generates production-ready React + Tailwind code',
         'Build web apps and mobile apps from a prompt',
-        'Self-healing builds that fix their own errors',
+        'Automatic error detection and resolution during builds',
         'One-click deploy to a live URL on Vercel',
         'Supabase database + auth, GitHub push, custom domains',
         '48 integrations — Supabase, Stripe, OpenAI and more',

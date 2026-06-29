@@ -89,7 +89,7 @@ const CREDIT_TABLE = [
   { action: 'Image generation',              cost: '3 credits',  icon: '🎨' },
   { action: 'Deploy / publish',              cost: 'Free',       icon: '🚀' },
   { action: 'GitHub push / ZIP export',      cost: 'Free',       icon: '📦' },
-  { action: 'Self-healing error fix',        cost: 'Free',       icon: '🔧' },
+  { action: 'Auto error fix',                 cost: 'Free',       icon: '🔧' },
 ]
 
 // ── Icons ─────────────────────────────────────────────────────────────────────

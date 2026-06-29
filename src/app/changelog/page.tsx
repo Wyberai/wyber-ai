@@ -4,7 +4,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Changelog', description: 'Every feature, fix, and improvement — logged as we ship.', alternates: { canonical: 'https://wyberai.com/changelog' } };
 const RELEASES = [
   { date:'June 20, 2026', version:'v1.0', tag:'The AI Business Platform', color:'#10b981', items:[
-    { type:'new', text:'Self-healing preview — build errors auto-fix with AI, 0 credits charged' },
+    { type:'new', text:'Auto error fix — build errors detected and resolved automatically, 0 credits charged' },
     { type:'new', text:'Command palette (Cmd+K) — instant access to any page, template, or action' },
     { type:'new', text:'Persona onboarding — solo founder, team, agency, or enterprise' },
     { type:'new', text:'App gallery with ready-to-use web apps across 15+ industries' },
