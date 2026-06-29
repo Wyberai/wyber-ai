@@ -772,6 +772,7 @@ SUPABASE IS CONNECTED — USE IT FOR EVERYTHING (REACT NATIVE)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 The user has connected their own Supabase project. Use it for ALL data and auth.
 These are the user's own keys — they are safe to embed in client code.
+If the user asks whether Supabase is connected: YES, it is. Confirm it and offer to rebuild with Supabase integration. Do NOT say "we don't have Supabase."
 
 ── STEP 1: Create lib/supabase.ts FIRST ──
 <file path="lib/supabase.ts">
@@ -850,6 +851,8 @@ create policy "Users manage own items" on items for all
 SUPABASE IS CONNECTED — USE IT FOR EVERYTHING
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This project has Supabase connected. You MUST use it for ALL data and auth.
+If the user asks whether Supabase is connected: YES, it is. Confirm it and offer to rebuild the app with Supabase integration. Do NOT say "we don't have Supabase" — the connection is live even if the current code still uses local state.
+Do NOT include the "Data is stored in browser memory" banner — Supabase handles persistence.
 
 ── STEP 1: Create src/lib/supabase.ts FIRST (before any other file) ──
 <file path="src/lib/supabase.ts">

@@ -223,6 +223,17 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const [recording, setRecording] = useState(false);
   const [dismissedNoPersist, setDismissedNoPersist] = useState(false);
+  const [supabaseConnected, setSupabaseConnected] = useState(false);
+  useEffect(() => {
+    if (!resolvedProjectId) return
+    const check = () => fetch(`/api/connectors?projectId=${resolvedProjectId}`)
+      .then(r => r.json())
+      .then(d => { if (d.connectors?.some((c: { service: string }) => c.service === 'supabase')) setSupabaseConnected(true) })
+      .catch(() => {})
+    check()
+    window.addEventListener('focus', check)
+    return () => window.removeEventListener('focus', check)
+  }, [resolvedProjectId])
   const [pendingRegulated, setPendingRegulated] = useState<{ prompt: string; img: AttachedImage | null; domains: RegulatedDomain[] } | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
@@ -1072,7 +1083,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       {/* No-backend storage banner — shown when files have data but no Supabase */}
       {(() => {
-        if (dismissedNoPersist || isGenerating) return null
+        if (dismissedNoPersist || isGenerating || supabaseConnected) return null
         const allContent = Object.values(files as Record<string, { content?: string }>).map(f => f?.content ?? '').join('\n')
         if (!allContent) return null
         const hasData = /useState[<(][^)]*\[\]|initialData\s*[=:]\s*\[|useState\(\[/.test(allContent)
@@ -1419,7 +1430,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               {(Object.keys(files).length > 2 || hasGeneratedFiles
                 ? [
                     { label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with persistent theme. Use CSS variables for all colors.' },
-                    { label: 'Connect Supabase', prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' },
+                    ...(supabaseConnected ? [] : [{ label: 'Connect Supabase', prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' }]),
                     { label: 'Add settings page', prompt: 'Add a Settings page with profile info, notification preferences, and theme toggle.' },
                     { label: 'Make responsive', prompt: 'Make the entire app fully responsive. Mobile-first layout, collapsible sidebar, stacked cards on small screens.' },
                   ]
