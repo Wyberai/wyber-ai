@@ -3,18 +3,74 @@ import { useState } from 'react';
 import { useEditorStore } from '@/store/editor';
 
 const CONNECTORS = [
-  { id: 'supabase', name: 'Supabase', desc: 'Database, Auth, Storage', icon: '🗄', color: '#3FCF8E', category: 'Database', prompt: 'Add Supabase integration with auth and database to this app. Use @supabase/supabase-js.' },
-  { id: 'stripe', name: 'Stripe', desc: 'Payments & subscriptions', icon: '💳', color: '#635BFF', category: 'Payments', prompt: 'Add Stripe payment integration with a checkout button.' },
-  { id: 'resend', name: 'Resend', desc: 'Email delivery', icon: '📧', color: '#0EA5E9', category: 'Email', prompt: 'Add email functionality using Resend API.' },
-  { id: 'openai', name: 'OpenAI', desc: 'GPT models & embeddings', icon: '🤖', color: '#74AA9C', category: 'AI', prompt: 'Add OpenAI API integration for AI features.' },
-  { id: 'anthropic', name: 'Anthropic', desc: 'Claude AI models', icon: '🧠', color: '#CC785C', category: 'AI', prompt: 'Add Anthropic Claude API integration.' },
-  { id: 'firebase', name: 'Firebase', desc: 'Google auth & Firestore', icon: '🔥', color: '#FFCA28', category: 'Database', prompt: 'Add Firebase authentication and Firestore database.' },
-  { id: 'planetscale', name: 'PlanetScale', desc: 'MySQL-compatible database', icon: '🌍', color: '#F4F4F5', category: 'Database', prompt: 'Add PlanetScale database connection.' },
-  { id: 'cloudinary', name: 'Cloudinary', desc: 'Image & video CDN', icon: '🖼', color: '#3448C5', category: 'Storage', prompt: 'Add Cloudinary for image upload and optimization.' },
-  { id: 'mapbox', name: 'Mapbox', desc: 'Maps & location data', icon: '🗺', color: '#4264FB', category: 'Maps', prompt: 'Add an interactive Mapbox map to this app.' },
-  { id: 'twilio', name: 'Twilio', desc: 'SMS & voice', icon: '📱', color: '#F22F46', category: 'Communication', prompt: 'Add Twilio SMS notification functionality.' },
-  { id: 'pusher', name: 'Pusher', desc: 'Real-time websockets', icon: '⚡', color: '#300D4F', category: 'Real-time', prompt: 'Add Pusher for real-time updates and live collaboration.' },
-  { id: 'algolia', name: 'Algolia', desc: 'Search & discovery', icon: '🔍', color: '#003DFF', category: 'Search', prompt: 'Add Algolia search with instant results.' },
+  // Database & Auth
+  { id: 'supabase', name: 'Supabase', desc: 'Database, Auth, Storage, Realtime', icon: '🗄', color: '#3FCF8E', category: 'Database & Auth', prompt: 'Add Supabase integration with auth and database to this app. Use @supabase/supabase-js.' },
+  { id: 'firebase', name: 'Firebase', desc: 'Auth, Firestore, Cloud Functions', icon: '🔥', color: '#FFCA28', category: 'Database & Auth', prompt: 'Add Firebase authentication and Firestore database.' },
+  { id: 'planetscale', name: 'PlanetScale', desc: 'Serverless MySQL', icon: '🌍', color: '#F4F4F5', category: 'Database & Auth', prompt: 'Add PlanetScale database connection with Drizzle ORM.' },
+  { id: 'neon', name: 'Neon', desc: 'Serverless Postgres', icon: '🐘', color: '#00E5A0', category: 'Database & Auth', prompt: 'Add Neon serverless Postgres database with connection pooling.' },
+  { id: 'mongodb', name: 'MongoDB Atlas', desc: 'Document database', icon: '🍃', color: '#47A248', category: 'Database & Auth', prompt: 'Add MongoDB Atlas with Mongoose for document storage.' },
+  { id: 'convex', name: 'Convex', desc: 'Reactive backend-as-a-service', icon: '🔺', color: '#EE5522', category: 'Database & Auth', prompt: 'Add Convex backend with real-time queries and mutations.' },
+  { id: 'clerk', name: 'Clerk', desc: 'Drop-in auth & user management', icon: '🔐', color: '#6C47FF', category: 'Database & Auth', prompt: 'Add Clerk authentication with sign-in, sign-up, and user profile components.' },
+  { id: 'auth0', name: 'Auth0', desc: 'Identity & access management', icon: '🛡', color: '#EB5424', category: 'Database & Auth', prompt: 'Add Auth0 authentication with social login, MFA, and session management.' },
+  { id: 'appwrite', name: 'Appwrite', desc: 'Open-source backend', icon: '🏗', color: '#FD366E', category: 'Database & Auth', prompt: 'Add Appwrite backend for auth, database, storage, and functions.' },
+  { id: 'prisma', name: 'Prisma', desc: 'Type-safe ORM', icon: '💎', color: '#2D3748', category: 'Database & Auth', prompt: 'Add Prisma ORM with type-safe database queries and migrations.' },
+
+  // Payments
+  { id: 'stripe', name: 'Stripe', desc: 'Payments, subscriptions, invoices', icon: '💳', color: '#635BFF', category: 'Payments', prompt: 'Add Stripe payment integration with checkout, subscriptions, and webhook handling.' },
+  { id: 'lemonsqueezy', name: 'Lemon Squeezy', desc: 'Payments for SaaS & digital products', icon: '🍋', color: '#FFC233', category: 'Payments', prompt: 'Add Lemon Squeezy for product sales with checkout overlay and license key validation.' },
+  { id: 'paypal', name: 'PayPal', desc: 'Online payments', icon: '🅿', color: '#003087', category: 'Payments', prompt: 'Add PayPal payment buttons with checkout and order management.' },
+  { id: 'razorpay', name: 'Razorpay', desc: 'Payments for India & global', icon: '💰', color: '#0C2451', category: 'Payments', prompt: 'Add Razorpay payment gateway with checkout and subscription billing.' },
+
+  // AI & ML
+  { id: 'openai', name: 'OpenAI', desc: 'GPT, DALL-E, Whisper, Embeddings', icon: '🤖', color: '#74AA9C', category: 'AI & ML', prompt: 'Add OpenAI API integration for chat completions, embeddings, and image generation.' },
+  { id: 'anthropic', name: 'Anthropic', desc: 'Claude AI models', icon: '🧠', color: '#CC785C', category: 'AI & ML', prompt: 'Add Anthropic Claude API for AI chat, analysis, and content generation.' },
+  { id: 'replicate', name: 'Replicate', desc: 'Run ML models via API', icon: '🎨', color: '#0A0A0A', category: 'AI & ML', prompt: 'Add Replicate API to run image generation, video, and audio ML models.' },
+  { id: 'huggingface', name: 'Hugging Face', desc: 'Open-source ML models', icon: '🤗', color: '#FFD21E', category: 'AI & ML', prompt: 'Add Hugging Face Inference API for NLP, image, and audio models.' },
+  { id: 'pinecone', name: 'Pinecone', desc: 'Vector database for AI', icon: '🌲', color: '#000000', category: 'AI & ML', prompt: 'Add Pinecone vector database for semantic search and RAG.' },
+  { id: 'langchain', name: 'LangChain', desc: 'AI agent framework', icon: '🦜', color: '#1C3C3C', category: 'AI & ML', prompt: 'Add LangChain for building AI agents with tools, memory, and chains.' },
+
+  // Email & Communication
+  { id: 'resend', name: 'Resend', desc: 'Modern email API', icon: '📧', color: '#0EA5E9', category: 'Email & Messaging', prompt: 'Add Resend for transactional emails with React Email templates.' },
+  { id: 'sendgrid', name: 'SendGrid', desc: 'Email delivery at scale', icon: '📨', color: '#1A82E2', category: 'Email & Messaging', prompt: 'Add SendGrid for sending transactional and marketing emails.' },
+  { id: 'twilio', name: 'Twilio', desc: 'SMS, voice, WhatsApp', icon: '📱', color: '#F22F46', category: 'Email & Messaging', prompt: 'Add Twilio for SMS notifications, voice calls, and WhatsApp messaging.' },
+  { id: 'pusher', name: 'Pusher', desc: 'Real-time websockets', icon: '⚡', color: '#300D4F', category: 'Email & Messaging', prompt: 'Add Pusher Channels for real-time updates, live notifications, and collaborative features.' },
+  { id: 'stream', name: 'Stream', desc: 'Chat & activity feeds', icon: '💬', color: '#006CFF', category: 'Email & Messaging', prompt: 'Add Stream Chat for in-app messaging with channels, threads, and reactions.' },
+  { id: 'knock', name: 'Knock', desc: 'Notification infrastructure', icon: '🔔', color: '#6366F1', category: 'Email & Messaging', prompt: 'Add Knock for multi-channel notifications (in-app, email, push, Slack).' },
+
+  // Storage & Media
+  { id: 'cloudinary', name: 'Cloudinary', desc: 'Image & video optimization', icon: '🖼', color: '#3448C5', category: 'Storage & Media', prompt: 'Add Cloudinary for image/video upload, transformation, and CDN delivery.' },
+  { id: 'uploadthing', name: 'UploadThing', desc: 'File uploads for Next.js', icon: '📁', color: '#EF4444', category: 'Storage & Media', prompt: 'Add UploadThing for drag-and-drop file uploads with progress and previews.' },
+  { id: 'aws-s3', name: 'AWS S3', desc: 'Object storage', icon: '☁', color: '#FF9900', category: 'Storage & Media', prompt: 'Add AWS S3 for file uploads with presigned URLs and bucket management.' },
+  { id: 'mux', name: 'Mux', desc: 'Video streaming & analytics', icon: '🎬', color: '#FB3475', category: 'Storage & Media', prompt: 'Add Mux for video upload, adaptive streaming, and playback analytics.' },
+
+  // Analytics & Monitoring
+  { id: 'posthog', name: 'PostHog', desc: 'Product analytics & feature flags', icon: '🦔', color: '#1D4AFF', category: 'Analytics', prompt: 'Add PostHog for event tracking, session replay, feature flags, and A/B testing.' },
+  { id: 'mixpanel', name: 'Mixpanel', desc: 'User analytics & funnels', icon: '📊', color: '#7856FF', category: 'Analytics', prompt: 'Add Mixpanel for user event tracking, funnels, and retention analysis.' },
+  { id: 'sentry', name: 'Sentry', desc: 'Error tracking & performance', icon: '🐛', color: '#362D59', category: 'Analytics', prompt: 'Add Sentry for error tracking, performance monitoring, and session replay.' },
+  { id: 'vercel-analytics', name: 'Vercel Analytics', desc: 'Web analytics & vitals', icon: '📈', color: '#000000', category: 'Analytics', prompt: 'Add Vercel Analytics for page views, web vitals, and audience insights.' },
+  { id: 'plausible', name: 'Plausible', desc: 'Privacy-friendly analytics', icon: '📉', color: '#5850EC', category: 'Analytics', prompt: 'Add Plausible Analytics for lightweight, privacy-friendly web analytics.' },
+
+  // CMS & Content
+  { id: 'sanity', name: 'Sanity', desc: 'Headless CMS', icon: '📝', color: '#F36458', category: 'CMS & Content', prompt: 'Add Sanity CMS for structured content with GROQ queries and real-time previews.' },
+  { id: 'contentful', name: 'Contentful', desc: 'Content platform', icon: '📄', color: '#2478CC', category: 'CMS & Content', prompt: 'Add Contentful CMS for managing and delivering content via API.' },
+  { id: 'strapi', name: 'Strapi', desc: 'Open-source headless CMS', icon: '🚀', color: '#4945FF', category: 'CMS & Content', prompt: 'Add Strapi headless CMS for content management with REST or GraphQL API.' },
+  { id: 'notion', name: 'Notion API', desc: 'Notion as a database', icon: '📓', color: '#000000', category: 'CMS & Content', prompt: 'Add Notion API integration to use Notion databases as a content backend.' },
+
+  // Maps & Location
+  { id: 'mapbox', name: 'Mapbox', desc: 'Maps, geocoding, directions', icon: '🗺', color: '#4264FB', category: 'Maps & Location', prompt: 'Add Mapbox GL for interactive maps with markers, popups, and directions.' },
+  { id: 'google-maps', name: 'Google Maps', desc: 'Maps & Places API', icon: '📍', color: '#4285F4', category: 'Maps & Location', prompt: 'Add Google Maps with markers, search, autocomplete, and directions.' },
+
+  // Search
+  { id: 'algolia', name: 'Algolia', desc: 'Instant search & discovery', icon: '🔍', color: '#003DFF', category: 'Search', prompt: 'Add Algolia for instant search with faceted filtering and typo tolerance.' },
+  { id: 'typesense', name: 'Typesense', desc: 'Open-source search engine', icon: '🔎', color: '#D64444', category: 'Search', prompt: 'Add Typesense for fast, typo-tolerant search with geo-search support.' },
+
+  // Scheduling & Calendar
+  { id: 'cal', name: 'Cal.com', desc: 'Scheduling & booking', icon: '📅', color: '#292929', category: 'Scheduling', prompt: 'Add Cal.com embed for appointment booking and scheduling.' },
+  { id: 'google-calendar', name: 'Google Calendar', desc: 'Calendar events API', icon: '🗓', color: '#4285F4', category: 'Scheduling', prompt: 'Add Google Calendar API for creating, reading, and managing calendar events.' },
+
+  // E-commerce
+  { id: 'shopify', name: 'Shopify Storefront', desc: 'Headless commerce', icon: '🛒', color: '#96BF48', category: 'E-commerce', prompt: 'Add Shopify Storefront API for products, cart, and checkout.' },
+  { id: 'snipcart', name: 'Snipcart', desc: 'Drop-in shopping cart', icon: '🛍', color: '#F5D553', category: 'E-commerce', prompt: 'Add Snipcart for a drop-in shopping cart with product management and checkout.' },
 ];
 
 export function ConnectorsPanel({ projectId }: { projectId: string }) {
