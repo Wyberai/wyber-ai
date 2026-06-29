@@ -1,256 +1,316 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>WyberAi — Demo Intro</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>WyberAi Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
-  :root { --brand:#0EA5E9; --purple:#a855f7; --green:#22c55e; --orange:#f97316; }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { height:100%; background:#09090b; overflow:hidden; font-family:'Space Grotesk',sans-serif; color:#fafafa; }
-  .stage { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
-  .frame { width:min(100vw,56.25vh); height:min(177.78vw,100vh); position:relative; overflow:hidden;
-           background:radial-gradient(ellipse 90% 45% at 50% 42%, rgba(14,165,233,0.10) 0%, transparent 62%); }
-  .scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-           opacity:0; transform:scale(0.985); transition:opacity 0.6s ease, transform 0.6s ease; text-align:center; padding:0 6%; }
-  .scene.active { opacity:1; transform:none; }
-  h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; line-height:1.05; }
-  .grad { background:linear-gradient(135deg,var(--brand),var(--purple)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
-  .sub { color:#a1a1aa; margin-top:2.4vmin; font-size:2.1vmin; }
-  .eyebrow { font-size:1.5vmin; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:2vmin; }
+:root { --brand:#0EA5E9; --purple:#a855f7; --green:#22c55e; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; background:#09090b; overflow:hidden; font-family:'Space Grotesk',sans-serif; color:#fafafa; }
+.frame { position:fixed; inset:0; }
+.glow { position:absolute; width:50vmax; height:50vmax; border-radius:50%; filter:blur(80px); opacity:0; transition:opacity 1s; pointer-events:none; }
+.glow.show { opacity:1; }
+#g1 { top:-20%; left:-10%; background:rgba(14,165,233,0.07); }
+#g2 { bottom:-20%; right:-10%; background:rgba(168,85,247,0.06); }
 
-  /* Official WyberAi logo */
-  .logo { display:inline-flex; align-items:center; gap:1.3vmin; }
-  .logo svg { display:block; }
-  .logo .word { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.03em; line-height:1; }
-  .logo .word .w { color:#f4f4f5; } .logo .word .a { color:#0EA5E9; }
-  #s1 .logo { margin-bottom:3.4vmin; } #s1 .logo svg { width:7vmin; height:7vmin; } #s1 .logo .word { font-size:5vmin; }
-  #s1 h1 { font-size:8vmin; }
+.scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         opacity:0; pointer-events:none; text-align:center; padding:0 6%; }
+.scene.active { opacity:1; pointer-events:auto; }
+h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; line-height:1.08; }
+.grad { background:linear-gradient(135deg,var(--brand),var(--purple)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 
-  /* Prompt */
-  .prompt-box { width:min(72%,820px); background:rgba(16,18,26,0.92); border:1px solid rgba(255,255,255,0.08);
-                border-radius:1.6vmin; padding:3vmin 3vmin 2.4vmin; text-align:left; box-shadow:0 1.5vmin 6vmin rgba(0,0,0,0.55); }
-  .prompt-label { font-size:1.6vmin; color:#52525b; margin-bottom:1.4vmin; }
-  .typed { font-size:3vmin; font-weight:500; min-height:4vmin; }
-  .caret { display:inline-block; width:2px; height:3vmin; background:var(--brand); vertical-align:-0.4vmin; animation:blink 1s steps(1) infinite; }
-  .send { margin-top:2.6vmin; display:inline-flex; align-items:center; gap:1vmin; background:var(--brand); color:#fff; font-weight:700; font-size:1.8vmin; padding:1.3vmin 2.4vmin; border-radius:1.1vmin; }
-  .inputs { margin-top:2.2vmin; display:flex; gap:1vmin; flex-wrap:wrap; justify-content:center; }
-  .inputs span { font-size:1.6vmin; color:#a1a1aa; border:1px solid rgba(255,255,255,0.1); border-radius:2vmin; padding:0.7vmin 1.6vmin; }
+/* Animatable elements */
+.reveal { opacity:0; transform:translateY(20px); }
+.reveal.show { opacity:1; transform:none; transition:opacity 0.45s ease, transform 0.45s ease; }
 
-  /* Build steps */
-  .build { width:min(68%,720px); text-align:left; }
-  .step { display:flex; align-items:center; gap:1.6vmin; padding:1.5vmin 2vmin; margin-bottom:1.4vmin; border-radius:1.2vmin;
-          background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07);
-          opacity:0; transform:translateY(1.6vmin); transition:opacity 0.45s ease, transform 0.45s ease; }
-  .active .step { opacity:1; transform:none; }
-  .active #b2 { transition-delay:0.5s; } .active #b3 { transition-delay:1.0s; } .active #b4 { transition-delay:1.5s; }
-  .step .dot { width:3vmin; height:3vmin; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(34,197,94,0.15); border:1px solid var(--green); color:var(--green); font-size:1.8vmin; }
-  .step .txt { font-size:2vmin; font-weight:500; } .step .meta { font-size:1.5vmin; color:#52525b; }
+/* Scene 1 */
+#s1 .logo { font-family:'Sora',sans-serif; font-size:min(6vh,48px); font-weight:800; }
+#s1 .logo .a { color:var(--brand); }
+#s1 h1 { font-size:min(10vh,80px); margin-top:12px; }
+#s1 .sub { color:#71717a; font-size:min(2.4vh,18px); margin-top:16px; }
 
-  /* Hosting choice */
-  .host-row { display:flex; gap:2.4vmin; margin-top:4vmin; }
-  .host-card { width:34vmin; background:#111113; border:1px solid rgba(255,255,255,0.08); border-radius:1.8vmin; padding:3vmin 2.6vmin; text-align:left; }
-  .host-card.brand { border-color:rgba(14,165,233,0.4); }
-  .host-card.green { border-color:rgba(34,197,94,0.4); }
-  .host-kicker { font-size:1.4vmin; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1.4vmin; }
-  .host-card.green .host-kicker { color:var(--green); } .host-card.brand .host-kicker { color:var(--brand); }
-  .host-url { font-family:'Sora',sans-serif; font-weight:800; font-size:2.6vmin; margin-bottom:1vmin; }
-  .host-meta { font-size:1.6vmin; color:#71717a; }
+/* Scene 2 */
+.prompt-box { width:min(82%,640px); background:rgba(16,18,26,0.95); border:1px solid rgba(255,255,255,0.08);
+              border-radius:14px; padding:24px 24px 20px; text-align:left; box-shadow:0 16px 60px rgba(0,0,0,0.6); }
+.prompt-label { font-size:13px; color:#52525b; margin-bottom:10px; }
+.typed-line { font-size:min(2.8vh,20px); font-weight:500; min-height:26px; }
+.caret { display:inline-block; width:2px; height:min(2.8vh,20px); background:var(--brand); vertical-align:-2px; animation:blink 1s steps(1) infinite; }
+@keyframes blink { 50%{opacity:0} }
+.prompt-bar { margin-top:14px; display:flex; align-items:center; justify-content:space-between; }
+.prompt-chips { display:flex; gap:6px; }
+.prompt-chip { font-size:11px; color:#52525b; border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:4px 10px; }
+.send-pill { background:var(--brand); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.send-pill svg { width:14px; height:14px; }
 
-  /* Feature chips */
-  .feat-wrap { display:flex; gap:1.4vmin; flex-wrap:wrap; justify-content:center; max-width:84%; margin-top:3.6vmin; }
-  .feat { font-size:1.9vmin; font-weight:500; color:#e4e4e7; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:2.4vmin; padding:1.1vmin 2vmin; }
-  .feat b { color:var(--brand); font-weight:700; }
+/* Scene 3 */
+.build-col { width:min(72%,520px); text-align:left; }
+.bstep { display:flex; align-items:center; gap:14px; padding:14px 18px; margin-bottom:10px; border-radius:12px;
+         background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); }
+.bdot { width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+        font-size:13px; transition:all 0.3s; }
+.bdot.pending { border:2px solid #3f3f46; color:#3f3f46; background:none; }
+.bdot.done { border:2px solid var(--green); color:var(--green); background:rgba(34,197,94,0.1); }
+.btxt { font-size:min(2vh,15px); font-weight:500; }
+.bmeta { font-size:min(1.5vh,12px); color:#52525b; }
+.timer { font-family:'Sora',sans-serif; font-size:min(3vh,24px); font-weight:800; color:var(--brand); margin-top:16px; text-align:center; }
 
-  /* Mobile */
-  .mob-row { display:flex; align-items:center; gap:4vmin; margin-top:3.6vmin; text-align:left; }
-  .phone { width:16vmin; height:30vmin; border-radius:3vmin; border:2px solid rgba(255,255,255,0.14); background:linear-gradient(160deg,#0d1a26,#0d1218); flex-shrink:0; position:relative; }
-  .phone .notch { width:5vmin; height:1.2vmin; border-radius:1vmin; background:rgba(255,255,255,0.18); position:absolute; top:1.4vmin; left:50%; transform:translateX(-50%); }
-  .phone .qr { width:9vmin; height:9vmin; border-radius:1.2vmin; background:#fff; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-               background-image:linear-gradient(#000 25%,transparent 0),linear-gradient(90deg,#000 25%,transparent 0); background-size:2vmin 2vmin; }
-  .mob-list { list-style:none; display:flex; flex-direction:column; gap:1.6vmin; }
-  .mob-list li { font-size:2vmin; color:#d4d4d8; display:flex; gap:1.2vmin; align-items:flex-start; }
-  .mob-list .chk { color:var(--orange); flex-shrink:0; }
+/* Scene 4 */
+.app-preview { width:min(80%,640px); background:#111113; border:1px solid rgba(34,197,94,0.2); border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+.app-toolbar { height:36px; background:#1a1a1e; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; padding:0 12px; gap:6px; }
+.app-dot { width:8px; height:8px; border-radius:50%; }
+.app-body { padding:24px; min-height:200px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.app-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px; }
+.app-card-num { font-family:'Sora',sans-serif; font-size:min(3.5vh,28px); font-weight:800; }
+.app-card-label { font-size:11px; color:#52525b; text-transform:uppercase; letter-spacing:0.06em; margin-top:4px; }
+.app-live { display:flex; align-items:center; gap:8px; padding:12px 16px; border-top:1px solid rgba(255,255,255,0.06); }
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px rgba(34,197,94,0.6); animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.live-url { font-size:13px; color:var(--green); font-weight:500; }
 
-  /* Marketing Manager super-agent teaser */
-  .mm-tag { display:inline-flex; align-items:center; gap:1vmin; font-size:1.6vmin; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:#c4b5fd; border:1px solid rgba(168,85,247,0.3); background:rgba(168,85,247,0.1); padding:0.9vmin 1.8vmin; border-radius:3vmin; margin-bottom:2.6vmin; }
-  .mm-tag .pulse { background:var(--purple); }
-  .mm-card { width:min(76%,880px); background:#111113; border:1px solid rgba(168,85,247,0.3); border-radius:2vmin; padding:4vmin; text-align:left; }
-  .mm-eyebrow { font-size:1.5vmin; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); margin-bottom:1.4vmin; }
-  .mm-card h2 { font-family:'Sora',sans-serif; font-weight:800; font-size:4.2vmin; letter-spacing:-0.03em; line-height:1.1; margin-bottom:1.2vmin; }
-  .mm-card .mm-sub { color:#a1a1aa; font-size:2vmin; margin-bottom:2.6vmin; }
-  .mm-bullets { list-style:none; display:flex; flex-direction:column; gap:1.4vmin; }
-  .mm-bullets li { display:flex; align-items:flex-start; gap:1.2vmin; font-size:1.9vmin; color:#d4d4d8; opacity:0; transform:translateY(1.2vmin); transition:opacity 0.45s ease, transform 0.45s ease; }
-  .active .mm-bullets li { opacity:1; transform:none; }
-  .active .mm-bullets li:nth-child(2){ transition-delay:0.35s; } .active .mm-bullets li:nth-child(3){ transition-delay:0.7s; }
-  .active .mm-bullets li:nth-child(4){ transition-delay:1.05s; } .active .mm-bullets li:nth-child(5){ transition-delay:1.4s; }
-  .mm-bullets .chk { color:var(--purple); flex-shrink:0; }
+/* Scene 5 */
+.int-grid { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:600px; margin-top:20px; }
+.int-pill { font-size:min(1.9vh,14px); color:#d4d4d8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:8px 18px; font-weight:500; }
 
-  /* Coming soon (workflows + gtm) */
-  .soon-row { display:flex; gap:2.4vmin; margin-top:4vmin; }
-  .soon-card { width:36vmin; background:#111113; border:1px solid rgba(255,255,255,0.08); border-radius:1.8vmin; padding:3vmin 2.6vmin; text-align:left; }
-  .soon-badge { font-size:1.3vmin; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:#71717a; border:1px solid rgba(255,255,255,0.12); border-radius:2vmin; padding:0.5vmin 1.4vmin; display:inline-block; margin-bottom:1.6vmin; }
-  .soon-title { font-family:'Sora',sans-serif; font-weight:800; font-size:2.8vmin; margin-bottom:1vmin; }
-  .soon-title.green { color:var(--green); } .soon-title.teal { color:#10b981; }
-  .soon-desc { font-size:1.7vmin; color:#a1a1aa; margin-bottom:1.8vmin; }
-  .soon-list { list-style:none; display:flex; flex-direction:column; gap:1vmin; }
-  .soon-list li { font-size:1.6vmin; color:#d4d4d8; display:flex; gap:1vmin; align-items:flex-start; }
-  .soon-list .d { color:#52525b; flex-shrink:0; }
+/* Scene 6 */
+.prize-row { display:flex; gap:14px; margin-top:28px; flex-wrap:wrap; justify-content:center; }
+.prize-card { padding:20px 24px; border-radius:14px; text-align:center; min-width:110px; }
+.prize-amt { font-family:'Sora',sans-serif; font-weight:800; }
+.prize-label { font-size:11px; color:#71717a; margin-top:6px; }
+.weekly-tag { font-size:12px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); padding:6px 16px; border-radius:20px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.25); margin-bottom:20px; display:inline-block; }
 
-  #s9 .logo { margin-bottom:3vmin; } #s9 .logo svg { width:5.4vmin; height:5.4vmin; } #s9 .logo .word { font-size:3.8vmin; }
-  #s9 h1 { font-size:6.4vmin; } #s9 .cta { margin-top:3.2vmin; font-size:2.2vmin; color:#a1a1aa; }
-  #s9 .signoff { margin-top:5vmin; padding-top:2.6vmin; border-top:1px solid rgba(255,255,255,0.1); }
-  #s9 .signoff .co { font-size:1.8vmin; color:#d4d4d8; font-weight:500; }
-  #s9 .signoff .contact { font-size:1.7vmin; color:#0EA5E9; margin-top:0.8vmin; }
+/* Scene 7 */
+#s7 h1 { font-size:min(8vh,64px); }
+.final-cta { display:inline-block; margin-top:28px; background:var(--brand); color:#fff; font-size:min(2.2vh,17px); font-weight:700; padding:16px 40px; border-radius:12px; box-shadow:0 0 50px rgba(14,165,233,0.35); }
+.final-sub { font-size:13px; color:#52525b; margin-top:14px; }
 
-  @keyframes blink { 50%{opacity:0} }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .pulse { width:1.4vmin; height:1.4vmin; border-radius:50%; background:var(--green); animation:pulse 1.4s infinite; display:inline-block; }
+/* Mobile */
+@media (max-width:600px), (max-aspect-ratio:3/4) {
+  .scene { padding:0 5%; }
+  #s1 .logo { font-size:32px; }
+  #s1 h1 { font-size:40px; }
+  #s1 .sub { font-size:14px; }
+  .prompt-box { width:92%; padding:16px; }
+  .typed-line { font-size:16px; }
+  .caret { height:16px; }
+  .prompt-chips { display:none; }
+  .build-col { width:92%; }
+  .bstep { padding:10px 12px; gap:10px; }
+  .btxt { font-size:13px; }
+  .bmeta { font-size:10px; }
+  .bdot { width:24px; height:24px; font-size:11px; }
+  .timer { font-size:20px; }
+  .app-preview { width:92%; }
+  .app-body { grid-template-columns:1fr; gap:8px; padding:16px; }
+  .app-card-num { font-size:24px; }
+  .int-grid { max-width:100%; gap:6px; }
+  .int-pill { font-size:12px; padding:6px 12px; }
+  .prize-row { gap:8px; }
+  .prize-card { min-width:70px; padding:14px 16px; }
+  .prize-amt { font-size:20px !important; }
+  .weekly-tag { font-size:10px; padding:5px 12px; }
+  #s6 h1 { font-size:36px !important; }
+  #s7 h1 { font-size:36px; }
+  .final-cta { font-size:14px; padding:14px 28px; }
+}
 </style>
 </head>
 <body>
-  <div class="stage"><div class="frame">
+<div class="frame">
+  <div class="glow" id="g1"></div>
+  <div class="glow" id="g2"></div>
 
-    <div class="scene" id="s1">
-      <div class="eyebrow" style="color:#71717a">Introducing</div>
-      <div class="logo">
-        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
-        <span class="word"><span class="w">Wyber</span><span class="a">Ai</span></span>
-      </div>
-      <h1>Vibe code with <span class="grad">AI</span></h1>
-      <div class="sub">From idea to live app — no code, one prompt.</div>
-    </div>
+  <div class="scene" id="s1">
+    <div class="reveal logo" data-d="0">Wyber<span class="a">Ai</span></div>
+    <h1 class="reveal" data-d="200">Describe it.<br><span class="grad">It builds.</span></h1>
+    <div class="reveal sub" data-d="500">Web apps & mobile apps — no code, one prompt.</div>
+  </div>
 
-    <div class="scene" id="s2">
-      <div class="prompt-box">
-        <div class="prompt-label">Describe the app you want to build…</div>
-        <div class="typed"><span id="type"></span><span class="caret"></span></div>
-        <div class="send">Build it — it's free →</div>
-      </div>
-      <div class="inputs"><span>Plain English</span><span>Screenshot</span><span>Figma file</span><span>Docs</span></div>
-    </div>
-
-    <div class="scene" id="s3">
-      <div class="build">
-        <div class="step" id="b1"><div class="dot">✓</div><div><div class="txt">Generating fresh React code</div><div class="meta">no templates · Tailwind CSS</div></div></div>
-        <div class="step" id="b2"><div class="dot">✓</div><div><div class="txt">Wiring auth, database &amp; APIs</div><div class="meta">Supabase · full-stack out of the box</div></div></div>
-        <div class="step" id="b3"><div class="dot">✓</div><div><div class="txt">48 integrations ready</div><div class="meta">Supabase · Stripe · OpenAI &amp; more</div></div></div>
-        <div class="step" id="b4"><div class="dot">✓</div><div><div class="txt">Deployed to a live URL</div><div class="meta">one click</div></div></div>
-      </div>
-    </div>
-
-    <div class="scene" id="s4">
-      <h1>Go live, <span class="grad">your way</span>.</h1>
-      <div class="host-row">
-        <div class="host-card green">
-          <div class="host-kicker">Hosted free</div>
-          <div class="host-url">yourapp.wyberai.app</div>
-          <div class="host-meta">Instant — nothing to set up</div>
+  <div class="scene" id="s2">
+    <div class="prompt-box reveal" data-d="0">
+      <div class="prompt-label">Describe the app you want to build...</div>
+      <div class="typed-line"><span id="typeTarget"></span><span class="caret"></span></div>
+      <div class="prompt-bar">
+        <div class="prompt-chips">
+          <span class="prompt-chip">Plain English</span>
+          <span class="prompt-chip">Screenshot</span>
+          <span class="prompt-chip">Figma</span>
         </div>
-        <div class="host-card brand">
-          <div class="host-kicker">Your custom domain</div>
-          <div class="host-url">yourbrand.com</div>
-          <div class="host-meta">Add one DNS record — we handle SSL</div>
-        </div>
+        <div class="send-pill"><svg viewBox="0 0 24 24" fill="white"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
       </div>
     </div>
+  </div>
 
-    <div class="scene" id="s5">
-      <div class="eyebrow" style="color:var(--brand)">Everything's included</div>
-      <h1>No feature gates.<br><span class="grad">Own your code.</span></h1>
-      <div class="feat-wrap">
-        <span class="feat">Fresh code <b>every build</b></span>
-        <span class="feat">48 integrations</span>
-        <span class="feat">Supabase auth + database</span>
-        <span class="feat">GitHub push</span>
-        <span class="feat">Export as ZIP</span>
-        <span class="feat">Custom domains</span>
-        <span class="feat">Image generation</span>
-        <span class="feat">Iterate in plain English</span>
-        <span class="feat">One-click deploy</span>
+  <div class="scene" id="s3">
+    <h1 class="reveal" data-d="0" style="font-size:min(3.6vh,28px);margin-bottom:20px;color:#71717a">Building your app...</h1>
+    <div class="build-col">
+      <div class="bstep reveal" data-d="0" id="b1"><div class="bdot pending" id="d1">○</div><div><div class="btxt">Planning components</div><div class="bmeta">Architecture · routing · data model</div></div></div>
+      <div class="bstep reveal" data-d="300" id="b2"><div class="bdot pending" id="d2">○</div><div><div class="btxt">Writing fresh React code</div><div class="bmeta">Tailwind CSS · no templates</div></div></div>
+      <div class="bstep reveal" data-d="600" id="b3"><div class="bdot pending" id="d3">○</div><div><div class="btxt">Wiring 48 integrations</div><div class="bmeta">Supabase · Stripe · OpenAI</div></div></div>
+      <div class="bstep reveal" data-d="900" id="b4"><div class="bdot pending" id="d4">○</div><div><div class="btxt">Deploying to live URL</div><div class="bmeta">One click — instant</div></div></div>
+    </div>
+    <div class="timer reveal" data-d="200" id="timerEl">0.0s</div>
+  </div>
+
+  <div class="scene" id="s4">
+    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)"><span class="grad">Your app is live.</span></h1>
+    <div class="app-preview reveal" data-d="200">
+      <div class="app-toolbar">
+        <div class="app-dot" style="background:#ef4444"></div>
+        <div class="app-dot" style="background:#f59e0b"></div>
+        <div class="app-dot" style="background:#22c55e"></div>
+        <span style="flex:1"></span>
+        <span style="font-size:11px;color:#52525b">Preview</span>
+      </div>
+      <div class="app-body">
+        <div class="app-card reveal" data-d="400"><div class="app-card-num" style="color:var(--brand)" id="c1">0</div><div class="app-card-label">Components</div></div>
+        <div class="app-card reveal" data-d="550"><div class="app-card-num" style="color:var(--purple)" id="c2">0</div><div class="app-card-label">Pages</div></div>
+        <div class="app-card reveal" data-d="700"><div class="app-card-num" style="color:var(--green)" id="c3">0</div><div class="app-card-label">Integrations</div></div>
+      </div>
+      <div class="app-live reveal" data-d="900">
+        <div class="live-dot"></div>
+        <div class="live-url">myapp.wyberai.app</div>
+        <span style="flex:1"></span>
+        <span style="font-size:12px;color:#71717a">Built in 7.2s</span>
       </div>
     </div>
+  </div>
 
-    <div class="scene" id="s6">
-      <h1>And <span class="grad">mobile</span>, too.</h1>
-      <div class="mob-row">
-        <div class="phone"><div class="notch"></div><div class="qr"></div></div>
-        <ul class="mob-list">
-          <li><span class="chk">✓</span><span>Real React Native apps with Expo</span></li>
-          <li><span class="chk">✓</span><span>Preview on your phone — scan the QR</span></li>
-          <li><span class="chk">✓</span><span>Camera, GPS, push notifications</span></li>
-          <li><span class="chk">✓</span><span>Export for the App Store</span></li>
-        </ul>
-      </div>
+  <div class="scene" id="s5">
+    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)">Everything <span class="grad">included</span>.</h1>
+    <div class="reveal sub" data-d="200" style="margin-bottom:8px">50 free credits · No credit card · Most apps ready in 3-5 credits</div>
+    <div class="int-grid">
+      <span class="int-pill reveal" data-d="100">Supabase</span>
+      <span class="int-pill reveal" data-d="180">Stripe</span>
+      <span class="int-pill reveal" data-d="260">OpenAI</span>
+      <span class="int-pill reveal" data-d="340">Clerk</span>
+      <span class="int-pill reveal" data-d="420">Firebase</span>
+      <span class="int-pill reveal" data-d="500">Resend</span>
+      <span class="int-pill reveal" data-d="580">Cloudinary</span>
+      <span class="int-pill reveal" data-d="660">PostHog</span>
+      <span class="int-pill reveal" data-d="740">Twilio</span>
+      <span class="int-pill reveal" data-d="820">Sentry</span>
+      <span class="int-pill reveal" data-d="900">Algolia</span>
+      <span class="int-pill reveal" data-d="980" style="color:var(--brand);border-color:rgba(14,165,233,0.3)">+ 37 more</span>
     </div>
+  </div>
 
-    <div class="scene" id="s7">
-      <div class="eyebrow" style="color:var(--purple)">Weekly contest</div>
-      <h1><span class="grad">$500</span> in prizes.<br>Every week.</h1>
-      <div class="sub" style="max-width:80%">Build the best app on WyberAi and win cash. New winners every Sunday.</div>
-      <div class="feat-wrap" style="margin-top:3vmin">
-        <span class="feat" style="border-color:rgba(255,215,0,0.4);color:#FFD700">🥇 $200</span>
-        <span class="feat" style="border-color:rgba(192,192,192,0.3);color:#C0C0C0">🥈 $100</span>
-        <span class="feat" style="border-color:rgba(205,127,50,0.3);color:#CD7F32">🥉 $50</span>
-        <span class="feat" style="border-color:rgba(168,85,247,0.3);color:#a855f7">🏅 $25 ×2</span>
-      </div>
-      <div class="sub" style="margin-top:2vmin;font-size:1.8vmin">wyberai.com/challenge · Free to enter</div>
+  <div class="scene" id="s6">
+    <div class="weekly-tag reveal" data-d="0">Weekly Build Challenge</div>
+    <h1 class="reveal" data-d="200" style="font-size:min(8vh,64px)"><span class="grad">$500</span> every week.</h1>
+    <div class="reveal sub" data-d="400">Build the best app. Win cash. New winners every Sunday.</div>
+    <div class="prize-row">
+      <div class="prize-card reveal" data-d="500" style="border:1px solid rgba(255,215,0,0.3);background:rgba(255,215,0,0.06)"><div class="prize-amt" style="font-size:min(4vh,32px);color:#FFD700">$200</div><div class="prize-label">1st place</div></div>
+      <div class="prize-card reveal" data-d="600" style="border:1px solid rgba(192,192,192,0.2);background:rgba(192,192,192,0.04)"><div class="prize-amt" style="font-size:min(3.2vh,26px);color:#C0C0C0">$100</div><div class="prize-label">2nd place</div></div>
+      <div class="prize-card reveal" data-d="700" style="border:1px solid rgba(205,127,50,0.2);background:rgba(205,127,50,0.04)"><div class="prize-amt" style="font-size:min(2.8vh,22px);color:#CD7F32">$50</div><div class="prize-label">3rd place</div></div>
+      <div class="prize-card reveal" data-d="800" style="border:1px solid rgba(168,85,247,0.15);background:rgba(168,85,247,0.04)"><div class="prize-amt" style="font-size:min(2.4vh,20px);color:#a855f7">$25×2</div><div class="prize-label">4th-5th</div></div>
     </div>
+  </div>
 
-    <div class="scene" id="s8">
-      <div class="eyebrow" style="color:var(--brand)">48 integrations</div>
-      <h1>Connect <span class="grad">anything</span>.</h1>
-      <div class="feat-wrap" style="margin-top:2vmin">
-        <span class="feat">Supabase</span>
-        <span class="feat">Stripe</span>
-        <span class="feat">OpenAI</span>
-        <span class="feat">Clerk</span>
-        <span class="feat">Resend</span>
-        <span class="feat">Firebase</span>
-        <span class="feat">Cloudinary</span>
-        <span class="feat">Twilio</span>
-        <span class="feat">PostHog</span>
-        <span class="feat">+ 39 more</span>
-      </div>
-    </div>
+  <div class="scene" id="s7">
+    <div class="reveal logo" data-d="0" style="font-family:'Sora',sans-serif;font-size:min(4vh,32px);font-weight:800">Wyber<span style="color:var(--brand)">Ai</span></div>
+    <h1 class="reveal" data-d="200" style="margin-top:12px">Your next app is<br><span class="grad">one prompt away.</span></h1>
+    <div class="reveal final-cta" data-d="500">wyberai.com/challenge</div>
+    <div class="reveal final-sub" data-d="700">Free to enter · 50 credits on signup · #BuiltWithWyberAi</div>
+  </div>
+</div>
 
-    <div class="scene" id="s9">
-      <div class="logo">
-        <svg viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
-        <span class="word"><span class="w">Wyber</span><span class="a">Ai</span></span>
-      </div>
-      <h1>Your next app is<br><span class="grad">one prompt away.</span></h1>
-      <div class="cta">wyberai.com · 50 free credits · no card</div>
-      <div class="signoff">
-        <div class="co">A product from SignalPulse Technologies, USA</div>
-        <div class="contact">Hello@wyberai.com</div>
-      </div>
-    </div>
+<script>
+const SCENES = ['s1','s2','s3','s4','s5','s6','s7'];
+const TIMING = [3000, 4500, 5000, 4000, 4000, 4500, 3500];
+const PROMPT = 'A project management tool with kanban board, team members, and analytics dashboard';
 
-  </div></div>
+let current = -1;
 
-  <script>
-    var phrase = "A CRM with a pipeline board and a dashboard";
-    var typeEl = document.getElementById('type');
-    var typeTimer;
-    function typeIt(){
-      clearTimeout(typeTimer); typeEl.textContent=''; var i=0;
-      (function tick(){ if(i<=phrase.length){ typeEl.textContent = phrase.slice(0,i); i++; typeTimer=setTimeout(tick,65);} })();
+function revealChildren(sceneEl) {
+  const items = sceneEl.querySelectorAll('.reveal');
+  items.forEach(el => {
+    const d = parseInt(el.dataset.d || '0');
+    setTimeout(() => el.classList.add('show'), d);
+  });
+}
+
+function typeText(el, text, speed) {
+  let i = 0;
+  const t = setInterval(() => {
+    el.textContent = text.slice(0, ++i);
+    if (i >= text.length) clearInterval(t);
+  }, speed);
+}
+
+function countUp(el, target, duration) {
+  const start = performance.now();
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    el.textContent = Math.round(p * target);
+    if (p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function animateBuild() {
+  const dots = ['d1','d2','d3','d4'];
+  const delays = [400, 1200, 2200, 3200];
+  dots.forEach((id, i) => {
+    setTimeout(() => {
+      const d = document.getElementById(id);
+      d.classList.remove('pending');
+      d.classList.add('done');
+      d.textContent = '✓';
+    }, delays[i]);
+  });
+  // Timer
+  const timerEl = document.getElementById('timerEl');
+  let t = 0;
+  const iv = setInterval(() => {
+    t += 0.1;
+    timerEl.textContent = t.toFixed(1) + 's';
+    if (t >= 7.2) { clearInterval(iv); timerEl.style.color = '#22c55e'; }
+  }, 100);
+}
+
+function showScene(idx) {
+  SCENES.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (i === idx) {
+      el.classList.add('active');
+      el.style.transition = 'opacity 0.5s ease';
+      revealChildren(el);
+    } else {
+      el.classList.remove('active');
+      el.querySelectorAll('.reveal').forEach(r => r.classList.remove('show'));
     }
-    var scenes = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
-    var holds  = [3000, 4400, 5200, 3800, 4400, 4400, 6400, 5200, 5200];
-    function show(idx){
-      scenes.forEach(function(id){ document.getElementById(id).classList.toggle('active', id===scenes[idx]); });
-      if(scenes[idx]==='s2') typeIt();
-    }
-    function run(){
-      var t=0;
-      scenes.forEach(function(_,idx){ setTimeout(function(){ show(idx); }, t); t+=holds[idx]; });
-      setTimeout(run, t);
-    }
-    run();
-  </script>
+  });
+}
+
+function advance() {
+  current++;
+  if (current >= SCENES.length) return;
+  showScene(current);
+
+  if (current === 0) {
+    document.getElementById('g1').classList.add('show');
+    document.getElementById('g2').classList.add('show');
+  }
+  if (current === 1) {
+    setTimeout(() => typeText(document.getElementById('typeTarget'), PROMPT, 40), 400);
+  }
+  if (current === 2) {
+    setTimeout(animateBuild, 300);
+  }
+  if (current === 3) {
+    setTimeout(() => countUp(document.getElementById('c1'), 8, 800), 600);
+    setTimeout(() => countUp(document.getElementById('c2'), 6, 600), 800);
+    setTimeout(() => countUp(document.getElementById('c3'), 48, 1000), 1000);
+  }
+
+  if (current < SCENES.length - 1) {
+    setTimeout(advance, TIMING[current]);
+  }
+}
+
+setTimeout(advance, 400);
+</script>
 </body>
 </html>
