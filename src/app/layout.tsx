@@ -10,9 +10,18 @@ import Script from 'next/script'
 import { Suspense } from 'react'
 
 export const metadata: Metadata = {
+  manifest: '/manifest.json',
   icons: {
-    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
-    apple: '/icon.svg',
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }, { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    apple: '/icons/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'WyberAi',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
   },
   metadataBase: new URL('https://wyberai.com'),
   title: { default: 'WyberAi — Build apps and automate your business with AI', template: '%s | WyberAi' },
@@ -126,6 +135,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <Script src="https://www.googletagmanager.com/gtag/js?id=G-YJTD8LYK6V" strategy="afterInteractive" />
       <Script id="google-analytics" strategy="afterInteractive">
         {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-YJTD8LYK6V');`}
+      </Script>
+      <Script id="sw-register" strategy="afterInteractive">
+        {`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}
       </Script>
       <body>
         <PostHogProvider>
