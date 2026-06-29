@@ -223,10 +223,15 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const [recording, setRecording] = useState(false);
   const [dismissedNoPersist, setDismissedNoPersist] = useState(false);
-  const [supabaseConnected, setSupabaseConnected] = useState(false);
+  const [supabaseConnected, setSupabaseConnected] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('supabase') === 'pick'
+    }
+    return false
+  });
   useEffect(() => {
     if (!resolvedProjectId) return
-    const check = () => fetch(`/api/connectors?projectId=${resolvedProjectId}`, { credentials: 'include' })
+    const check = () => fetch(`/api/connectors?projectId=${resolvedProjectId}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.connectors?.some((c: { service: string }) => c.service === 'supabase')) setSupabaseConnected(true) })
       .catch(() => {})
