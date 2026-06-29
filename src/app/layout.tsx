@@ -88,7 +88,7 @@ const jsonLd = {
         'Self-healing builds that fix their own errors',
         'One-click deploy to a live URL on Vercel',
         'Supabase database + auth, GitHub push, custom domains',
-        'AI Employees — a new role every Monday',
+        '48 integrations — Supabase, Stripe, OpenAI and more',
       ],
       offers: {
         '@type': 'Offer',

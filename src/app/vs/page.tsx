@@ -87,7 +87,7 @@ export default function VsIndex() {
 
         {/* Six products banner */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 56 }}>
-          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🤖','AI Agents','250+ tool integrations'],['⚡','Workflows','Multi-step automation'],['👥','AI Employees','100 roles, runs on schedule'],['🎯','GTM Engine','ICP, leads & outreach']].map(([icon,label,sub])=>(
+          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🔗','48 Integrations','Supabase, Stripe, OpenAI...'],['🚀','One-click Deploy','Live URL in seconds'],['📦','GitHub Sync','Own your code'],['🏆','Weekly Challenge','$500 in prizes']].map(([icon,label,sub])=>(
             <div key={label} style={{ background: s.card, border: `1px solid rgba(14,165,233,0.15)`, borderRadius: 12, padding: '16px 18px', textAlign: 'center' }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.sky, marginBottom: 2 }}>{label}</div>
