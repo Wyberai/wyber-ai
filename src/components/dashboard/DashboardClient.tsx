@@ -96,6 +96,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [showImport, setShowImport] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
   const [promptInput, setPromptInput] = useState('');
+  const [buildMode, setBuildMode] = useState<'app' | 'mobile'>('app');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -208,10 +209,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     { label: 'Mobile Apps',  href: '/dashboard',        icon: <IconPhone />,     view: 'mobile' as const },
     { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
   ];
-  const COMING_SOON = [
-    { label: 'AI Employees', href: '/ai-employees',     icon: <IconPeople />, soon: true },
-    { label: 'Workflows',    href: '/flows',            icon: <IconWorkflow />, soon: true },
-    { label: 'GTM Engine',   href: '/gtm',              icon: <IconAgents />, soon: true },
+  const COMING_SOON: { label: string; href: string; icon: React.ReactNode; soon?: boolean }[] = [
   ];
 
   // Web Apps / Mobile Apps filter the project grid (web = anything not mobile).
@@ -244,8 +242,6 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           {[
             { label: 'Home',    href: '/dashboard',   icon: <IconHome /> },
             { label: 'Build',   href: '/gallery',     icon: <IconTemplates /> },
-            { label: 'Agents',  href: '/agents',      icon: <IconAgents /> },
-            { label: 'GTM',     href: '/gtm',         icon: <IconZap /> },
           ].map(item => (
             <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 10, fontWeight: 600 }}>
               {item.icon}
@@ -396,9 +392,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 placeholder="Describe the app you want to build..." rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '2px 3px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
+                  <button onClick={() => setBuildMode('app')} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: buildMode === 'app' ? 'rgba(14,165,233,0.15)' : 'transparent', color: buildMode === 'app' ? BRAND : '#52525b', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>Web</button>
+                  <button onClick={() => setBuildMode('mobile')} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: buildMode === 'mobile' ? 'rgba(168,85,247,0.15)' : 'transparent', color: buildMode === 'mobile' ? '#a855f7' : '#52525b', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>Mobile</button>
+                </div>
                 <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} credits</span>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
-                <button onClick={() => openChooser(promptInput.trim() || undefined)} disabled={creating}
+                <button onClick={() => buildMode === 'mobile' ? startProject(promptInput.trim() || undefined, 'mobile') : openChooser(promptInput.trim() || undefined)} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />

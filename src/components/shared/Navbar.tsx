@@ -52,10 +52,6 @@ const ALL_ITEMS = RESOURCES.flatMap(g => g.items);
 const NAV_LINKS: [label: string, href: string, soon?: boolean][] = [
   ['Web Apps', '/gallery'],
   ['Mobile', '/templates/mobile'],
-  ['AI Employees', '/ai-employees', true],
-  ['Agents', '/agents', true],
-  ['Workflows', '/workflows', true],
-  ['GTM', '/gtm', true],
   ['Pricing', '/pricing'],
 ];
 
