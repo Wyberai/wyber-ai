@@ -195,7 +195,6 @@ export function PreviewPanel() {
     }
   }, [html, editMode])
 
-  const [healToast, setHealToast] = useState<string | null>(null)
   // Total auto-heal attempts spent on the CURRENT user generation. Bounded so the
   // loop always converges — see the auto-heal effect below.
   const healTotal = useRef(0)
@@ -235,10 +234,9 @@ export function PreviewPanel() {
           }
         }
         setFiles(updatedFiles as typeof files)
-        const names = (data.filesChanged ?? Object.keys(data.files)).map(p => p.split('/').pop()).join(', ')
-        setHealToast(`Auto-fixed ${names}`)
+        // Silent: do NOT announce the fix. The rebuild that follows looks like a
+        // normal build, so the user never sees that anything was auto-fixed.
         setError(null)
-        setTimeout(() => setHealToast(null), 4000)
         setFixing(false)
         return
       }
@@ -296,9 +294,11 @@ Find this element in the code and apply the change.`
       <Confetti trigger={confettiTrigger} />
       {/* Toolbar */}
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
-        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: fixing ? '#f59e0b' : building ? '#f59e0b' : error ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : fixing ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: fixing ? 'pulse 1s ease infinite' : 'none' }} />
+        <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: (building || fixing || (error && !healFailed)) ? '#f59e0b' : healFailed ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : (building || fixing || (error && !healFailed)) ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: (fixing || (error && !healFailed)) ? 'pulse 1s ease infinite' : 'none' }} />
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
-          {fixing ? 'Self-healing...' : isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : error ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
+          {/* Auto-fix is presented as a normal build step — never surfaced as "self-healing"
+              or a build error unless it genuinely can't recover (healFailed). */}
+          {isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : (fixing || (error && !healFailed)) ? MESSAGES[msgIdx] : healFailed ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
         </span>
         {html && !building && !error && (
           <button onClick={toggleEditMode} title="Click an element to edit it"
@@ -366,20 +366,14 @@ Find this element in the code and apply the change.`
           </div>
         )}
 
-        {building && !isGenerating && (
+        {/* One neutral "building" overlay covers the real build AND the silent
+            auto-fix retries — the user can't tell a fix happened. The error
+            screen below only shows if it genuinely can't recover (healFailed). */}
+        {(building || fixing || (error && !healFailed)) && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{MESSAGES[msgIdx]}</div>
-            <div style={{ fontSize: 11, color: '#52525b' }}>{seconds}s · first build ~15s, then instant</div>
-          </div>
-        )}
-
-        {/* Calm self-healing state — hides the raw build error while auto-fix runs */}
-        {error && !building && !healFailed && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#e4e4e7', textAlign: 'center', fontWeight: 600 }}>Putting on the finishing touches…</div>
-            <div style={{ fontSize: 11, color: '#71717a', textAlign: 'center', maxWidth: 320 }}>Auto-fixing a small issue — this is free and usually takes a few seconds.</div>
+            <div style={{ fontSize: 11, color: '#52525b' }}>Building your app…</div>
           </div>
         )}
 
@@ -407,21 +401,6 @@ Find this element in the code and apply the change.`
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !building && !isGenerating && !error ? 'block' : 'none', background: '#09090b' }}
         />
       </div>
-      {/* Self-heal success toast */}
-      {healToast && (
-        <div style={{
-          position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(13,148,136,0.95)', color: '#fff', padding: '8px 16px',
-          borderRadius: 8, fontSize: 12, fontWeight: 600, zIndex: 100,
-          display: 'flex', alignItems: 'center', gap: 6,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          animation: 'healIn 0.3s ease',
-        }}>
-          <span>&#10003;</span>
-          {healToast}
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>0 credits</span>
-        </div>
-      )}
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
