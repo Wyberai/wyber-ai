@@ -1410,7 +1410,10 @@ Do NOT add this banner for: pure landing pages, portfolios, dashboards displayin
 
     const encoder = new TextEncoder()
     const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
-    const systemBlocks = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
+    const systemBlocks: { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }[] = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
+    if (supabaseStatus === 'ok') {
+      systemBlocks.push({ type: 'text', text: '\n\n[SYSTEM FACT] Supabase IS connected to this project. If the user asks about Supabase connection status, confirm it is connected. Do NOT contradict this — it is a verified system state, not a guess.' })
+    }
 
     try {
       // Probe the first stream so any auth/quota error throws here and falls

@@ -52,11 +52,33 @@ export async function POST(req: NextRequest) {
       subdomain = await ensureUniqueSlug(base, admin)
     }
 
+    // Strip the in-app storage notice if Supabase is connected
+    let files = project.files || {}
+    const { data: connector } = await admin
+      .from('project_connectors')
+      .select('service')
+      .eq('project_id', projectId)
+      .eq('service', 'supabase')
+      .maybeSingle()
+    if (connector) {
+      const appEntry = Object.entries(files).find(([p]) => p.endsWith('App.tsx') || p.endsWith('App.jsx'))
+      if (appEntry) {
+        const [path, file] = appEntry as [string, { content?: string }]
+        const content = file?.content || ''
+        if (content.includes('_storageNotice')) {
+          const cleaned = content
+            .replace(/\s*const\s*\[_storageNotice[^\n]*\n/g, '')
+            .replace(/\s*\{_storageNotice\s*&&\s*\([\s\S]*?\)\}\s*/g, '')
+          files = { ...files, [path]: { ...file, content: cleaned } }
+        }
+      }
+    }
+
     // Build the app via Railway
     const buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: sanitizeFiles(project.files || {}), projectId }),
+      body: JSON.stringify({ files: sanitizeFiles(files), projectId }),
     })
 
     const buildData = await buildRes.json()
