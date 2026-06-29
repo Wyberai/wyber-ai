@@ -66,8 +66,7 @@ export default function OnboardingPage() {
     <div style={S.page}>
       <div style={S.box}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
-          <WyberLogo markSize={40} showWordmark={false} />
-          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.055em', color: 'var(--text)' }}>Wyber<span style={{ color: 'var(--sky)' }}>Ai</span></span>
+          <WyberLogo markSize={40} wordmarkSize={18} />
         </div>
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>

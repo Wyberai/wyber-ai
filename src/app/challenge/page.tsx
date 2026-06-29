@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
   title: 'Weekly Build Challenge — Win Cash Every Week | WyberAi',
@@ -51,8 +52,8 @@ export default function ChallengePage() {
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
       {/* Nav */}
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <Link href="/" style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', textDecoration: 'none' }}>
-          <span style={{ color: BRAND }}>{'<'}</span> Wyber<span style={{ color: BRAND }}>Ai</span>
+        <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <Link href="/signup" style={{ padding: '8px 20px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
           Start Building →
