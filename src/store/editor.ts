@@ -36,6 +36,12 @@ export interface Project {
   userId?: string;
 }
 
+export interface Connector {
+  service: string;
+  config?: Record<string, unknown>;
+  connected_at?: string;
+}
+
 interface EditorState {
   project: Project | null;
   framework: Framework;
@@ -48,6 +54,7 @@ interface EditorState {
   streamingContent: string;
   knowledge: string;
   checkpoints: Checkpoint[];
+  connectors: Connector[];
   hydrated: boolean; // true once project data loaded from server
 
   previewUrl: string | null;
@@ -98,6 +105,7 @@ interface EditorState {
   toggleFileTree: () => void;
   consumeCredit: () => void;
   setCredits: (n: number) => void;
+  setConnectors: (c: Connector[]) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -124,6 +132,7 @@ export const useEditorStore = create<EditorState>()(
     streamingContent: '',
     knowledge: '',
     checkpoints: [],
+    connectors: [],
     hydrated: false,
     previewUrl: null,
     previewMode: 'preview',
@@ -145,6 +154,7 @@ export const useEditorStore = create<EditorState>()(
       s.streamingContent = '';
       s.knowledge = '';
       s.checkpoints = [];
+      s.connectors = [];
       s.hydrated = false;
     }),
     setFramework: (f) => set((s) => { s.framework = f; }),
@@ -250,5 +260,6 @@ export const useEditorStore = create<EditorState>()(
     toggleFileTree: () => set((s) => { s.showFileTree = !s.showFileTree; }),
     consumeCredit: () => set((s) => { s.credits = Math.max(0, s.credits - 1); }),
     setCredits: (n) => set((s) => { s.credits = n; }),
+    setConnectors: (c) => set((s) => { s.connectors = c; }),
   }))
 );

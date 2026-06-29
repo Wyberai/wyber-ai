@@ -1348,21 +1348,9 @@ ${code}
     if (supabaseContext) {
       perRequestParts.push(supabaseContext)
     } else {
-      // No database connected — ask AI to include a storage notice in data-heavy apps
       perRequestParts.push(`\n\n=== STORAGE CONTEXT (no backend connected) ===
 Use useState with inline mock data for all persistent data. Do NOT import or reference Supabase.
-IMPORTANT: If this app creates, edits, lists, or manages any records, users, items, tasks, or other user data, include a dismissable notice banner as the VERY FIRST child inside the root return() of App.tsx:
-
-const [_storageNotice, _setStorageNotice] = useState(true)
-...
-{_storageNotice && (
-  <div className="fixed top-0 left-0 right-0 z-50 bg-amber-900/95 text-amber-100 px-4 py-2 text-xs flex items-center justify-between gap-3 backdrop-blur-sm">
-    <span>⚠ Data is stored in browser memory only — resets on page refresh. Connect a database to save permanently.</span>
-    <button onClick={()=>_setStorageNotice(false)} className="text-amber-100 hover:text-white text-lg font-bold leading-none">×</button>
-  </div>
-)}
-
-Do NOT add this banner for: pure landing pages, portfolios, dashboards displaying only static data, or any app where the user has no ability to create or edit records. Only add it when the app actively manages user-created or user-edited data.`)
+Do NOT add any storage-notice banner or warning about data persistence — the platform handles that externally.`)
     }
     if (knowledgeContext) perRequestParts.push(knowledgeContext)
     if (templateRef) perRequestParts.push(templateRef)

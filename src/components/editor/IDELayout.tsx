@@ -20,7 +20,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   const {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
-    hydrateProject, setHydrated, setCredits,resetForProject,
+    hydrateProject, setHydrated, setCredits, setConnectors, resetForProject,
   } = useEditorStore();
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
@@ -58,17 +58,19 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     // Set credits from profile
     if (initialProfile?.credits !== undefined) setCredits(initialProfile.credits);
 
-    // Load messages + knowledge in parallel, then hydrate everything at once
+    // Load messages, knowledge, and connectors in parallel, then hydrate
     Promise.all([
       fetch(`/api/projects/messages?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ messages: [] })),
       fetch(`/api/projects/knowledge?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ knowledge: '' })),
-    ]).then(([msgData, kData]) => {
+      fetch(`/api/connectors?projectId=${initialProject.id}`).then(r => r.ok ? r.json() : { connectors: [] }).catch(() => ({ connectors: [] })),
+    ]).then(([msgData, kData, cData]) => {
       hydrateProject({
         project,
         files: (initialProject.files && Object.keys(initialProject.files).length > 0) ? initialProject.files as any : undefined,
         messages: msgData.messages || [],
         knowledge: kData.knowledge || '',
       });
+      if (cData.connectors?.length) setConnectors(cData.connectors);
     });
   }, [initialProject?.id]);
 

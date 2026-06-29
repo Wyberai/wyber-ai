@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function MobileLayout({ initialProject, initialProfile }: Props) {
-  const { hydrateProject, resetForProject, setCredits } = useEditorStore()
+  const { hydrateProject, resetForProject, setCredits, setConnectors } = useEditorStore()
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [displayName, setDisplayName] = useState(initialProject?.name || 'Mobile App')
@@ -57,13 +57,15 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     Promise.all([
       fetch(`/api/projects/messages?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ messages: [] })),
       fetch(`/api/projects/knowledge?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ knowledge: '' })),
-    ]).then(([msgData, kData]) => {
+      fetch(`/api/connectors?projectId=${initialProject.id}`).then(r => r.ok ? r.json() : { connectors: [] }).catch(() => ({ connectors: [] })),
+    ]).then(([msgData, kData, cData]) => {
       hydrateProject({
         project,
         files: (initialProject.files && Object.keys(initialProject.files).length > 0) ? initialProject.files : undefined,
         messages: msgData.messages || [],
         knowledge: kData.knowledge || '',
       })
+      if (cData.connectors?.length) setConnectors(cData.connectors)
     })
   }, [initialProject?.id])
 

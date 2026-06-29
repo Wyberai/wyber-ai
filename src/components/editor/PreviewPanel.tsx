@@ -33,7 +33,7 @@ function hashStr(s: string): number {
 }
 
 export function PreviewPanel() {
-  const { files, isGenerating, project, hydrated } = useEditorStore()
+  const { files, isGenerating, project, hydrated, connectors } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
@@ -318,6 +318,20 @@ Find this element in the code and apply the change.`
           </button>
         )}
       </div>
+
+      {/* Platform-level storage banner — not baked into generated code */}
+      {html && !building && !connectors.some(c => c.service === 'supabase') && (() => {
+        const allContent = Object.values(files).map(f => (f as { content?: string })?.content ?? '').join('\n')
+        const hasData = /useState[<(][^)]*\[\]|initialData\s*[=:]\s*\[|useState\(\[/.test(allContent)
+        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase')
+        if (!hasData || hasBackend) return null
+        return (
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+            <span>⚠ Data is stored in browser memory only — resets on page refresh. Connect a database to save permanently.</span>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>Connect Supabase →</button>
+          </div>
+        )
+      })()}
 
       {/* Visual edit instruction bar */}
       {editMode && selectedEl && (
