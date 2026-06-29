@@ -226,14 +226,27 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [supabaseConnected, setSupabaseConnected] = useState(false);
   useEffect(() => {
     if (!resolvedProjectId) return
-    const check = () => fetch(`/api/connectors?projectId=${resolvedProjectId}`)
-      .then(r => r.json())
-      .then(d => { if (d.connectors?.some((c: { service: string }) => c.service === 'supabase')) setSupabaseConnected(true) })
+    const check = () => fetch(`/api/connectors?projectId=${resolvedProjectId}`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.connectors?.some((c: { service: string }) => c.service === 'supabase')) setSupabaseConnected(true) })
       .catch(() => {})
     check()
     window.addEventListener('focus', check)
     return () => window.removeEventListener('focus', check)
   }, [resolvedProjectId])
+  // When Supabase gets connected, strip the in-app storage notice from App.tsx
+  useEffect(() => {
+    if (!supabaseConnected) return
+    const appFile = Object.entries(files).find(([p]) => p.endsWith('App.tsx') || p.endsWith('App.jsx'))
+    if (!appFile) return
+    const [path, file] = appFile
+    const content = (file as { content?: string })?.content || ''
+    if (!content.includes('_storageNotice')) return
+    const cleaned = content
+      .replace(/\s*const\s*\[_storageNotice.*?\n/g, '')
+      .replace(/\s*\{_storageNotice\s*&&\s*\([\s\S]*?\)\}\s*/g, '')
+    if (cleaned !== content) setFiles({ ...files, [path]: { ...(file as object), content: cleaned } })
+  }, [supabaseConnected])
   const [pendingRegulated, setPendingRegulated] = useState<{ prompt: string; img: AttachedImage | null; domains: RegulatedDomain[] } | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
