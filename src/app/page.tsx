@@ -182,45 +182,6 @@ const PRODUCTS = [
     href: '/templates/mobile',
     mockup: <MobileMockup />,
   },
-  {
-    key: 'employees',
-    label: 'AI Employees',
-    emoji: '🤖',
-    accent: '#a855f7',
-    heading: 'Hire AI department heads.',
-    body: 'Marketing Manager, Sales Lead, Ops Director — they connect your tools, run tasks on schedule, and report back. Chat with them like colleagues.',
-    bullets: ['8 departments: Marketing, Sales, Finance, Ops, HR…', 'Connects 30+ tools · runs on schedule', 'Emails you a digest after every run'],
-    cta: 'Explore roles',
-    href: '/coming-soon?product=AI+Employees',
-    soon: true,
-    mockup: <EmployeeMockup />,
-  },
-  {
-    key: 'workflows',
-    label: 'Workflows',
-    emoji: '🔀',
-    accent: '#22c55e',
-    heading: 'Draw it. It runs.',
-    body: 'Visual flow builder with AI reasoning at every step. Wire triggers, conditions, and actions. No code, no YAML.',
-    bullets: ['Drag-and-drop canvas · parallel execution', 'Webhook & schedule triggers', '30+ tool integrations'],
-    cta: 'Learn more',
-    href: '/coming-soon?product=Workflows',
-    soon: true,
-    mockup: <WorkflowMockup />,
-  },
-  {
-    key: 'gtm',
-    label: 'GTM Engine',
-    emoji: '🎯',
-    accent: '#10b981',
-    heading: 'Define your ICP. Fill your pipeline.',
-    body: 'Describe who you sell to. Wyber finds matching leads, enriches them, and launches multi-step outreach across email, call, and LinkedIn.',
-    bullets: ['Intent signals · lead scoring · waterfall enrichment', 'AI-personalized sequences', 'Meeting booking · CRM sync'],
-    cta: 'Learn more',
-    href: '/coming-soon?product=GTM+Engine',
-    soon: true,
-    mockup: <GTMMockup />,
-  },
 ] as const;
 
 // ── AI Employee launch spotlight — carousel hyping the Marketing Manager ──────
@@ -314,7 +275,6 @@ const HOME_FAQS: [string, string][] = [
   ['Do I need to know how to code?', 'No. You describe your app in plain English. WyberAi writes the code, wires up auth, database, and APIs, and deploys it. You can still push to GitHub and own the code if you want.'],
   ['How is WyberAi different from template builders?', 'WyberAi generates fresh code from scratch every time — never stale templates. Builds self-heal their own errors, ship full-stack (auth, database, APIs), and you own the code via GitHub with zero lock-in.'],
   ['How much does WyberAi cost?', 'You can start free with 50 credits, no credit card required. Paid plans start at $29/month, and one-time credit top-ups never expire.'],
-  ['What are AI Employees?', 'AI Employees are autonomous AI workers — each a "super agent" that commands 200+ specialized agents to run real work on a schedule. WyberAi launches a new AI employee every Monday, starting with the Marketing Manager.'],
 ]
 
 export default function HomePage() {
@@ -447,8 +407,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── AI EMPLOYEE LAUNCH SPOTLIGHT ─────────────────────────────── */}
-      <AIEmployeeSpotlight />
+      {/* AI Employee spotlight hidden until launch */}
 
       {/* ── HOW IT WORKS — 3 steps ──────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: '#0b0b0e' }}>
@@ -479,7 +438,7 @@ export default function HomePage() {
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Products</div>
             <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
-              Six products, one platform
+              Web apps & mobile apps, one platform
             </h2>
             <p style={{ fontSize: 15, color: '#71717a', marginTop: 8 }}>Everything you need to build, launch, and grow — in one place.</p>
           </div>

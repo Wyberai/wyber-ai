@@ -48,7 +48,7 @@ const PLANS = [
       'Supabase database + auth integration',
       'Connect custom domains',
       'Priority build queue — your apps build first',
-      'Early access to AI Employees + Workflows',
+      'Early access to new features',
       'Priority email support',
     ],
   },
@@ -279,7 +279,7 @@ export default function PricingPage() {
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/coming-soon?product=AI+Employees" style={{ fontSize: 13, color: '#71717a', textDecoration: 'none', padding: '6px 12px', borderRadius: 7 }}>AI Employees</Link>
+          <Link href="/challenge" style={{ fontSize: 13, color: '#a855f7', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 600 }}>Weekly Challenge</Link>
           {user
             ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
             : <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Get started →</Link>
@@ -453,7 +453,7 @@ export default function PricingPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
               ['What counts as a credit?', 'Building a web or mobile app from scratch costs 10 credits. Each edit or iteration costs 3 credits. Image generation costs 3 credits. Deploy, publish, GitHub push, ZIP export, and self-healing error fixes are always free. Top-up packs can be added anytime and never expire.'],
-              ['Are features locked behind higher plans?', 'No. Every plan unlocks all features — web apps, mobile apps, Supabase integration, deploy, GitHub sync. The only difference is how many credits you get. When AI Employees and Workflows launch, they\'ll use the same credit system.'],
+              ['Are features locked behind higher plans?', 'No. Every plan unlocks all features — web apps, mobile apps, Supabase integration, 48 connectors, deploy, GitHub sync. The only difference is how many credits you get.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
               ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. All integrations are available on every plan.'],
               ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record.'],
