@@ -76,6 +76,36 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
       }
     }
 
+    // 2b. package.json must list the FULL stack PLUS the Tailwind/PostCSS toolchain.
+    // The builder runs `npm install` from package.json, replacing its pre-installed
+    // node_modules — so a starter package.json that omits tailwindcss/autoprefixer
+    // makes PostCSS fail ("Cannot find module 'tailwindcss'") and @tailwind ship raw,
+    // breaking EVERY cold build; omitted runtime deps (framer-motion, etc.) fail to
+    // resolve in Rollup. (Verified against the live builder.) Merge the standard set
+    // into whatever package.json exists — existing versions win — so the first build
+    // is clean and the result is deterministic (so the builder's install cache hits
+    // and iterative edits stay fast).
+    const REQUIRED_DEPS: Record<string, string> = {
+      react: '^18.3.1', 'react-dom': '^18.3.1', 'react-router-dom': '^6.28.0',
+      'lucide-react': '^0.383.0', recharts: '^2.12.7', clsx: '^2.1.1',
+      'date-fns': '^3.6.0', 'framer-motion': '^11.0.0', zustand: '^4.5.2', axios: '^1.7.2',
+    }
+    const REQUIRED_DEV: Record<string, string> = {
+      vite: '^5.4.0', '@vitejs/plugin-react': '^4.3.1',
+      tailwindcss: '^3.4.4', autoprefixer: '^10.4.19', postcss: '^8.4.38',
+      typescript: '^5.5.0', '@types/react': '^18.3.0', '@types/react-dom': '^18.3.0',
+    }
+    let pkg: Record<string, unknown> = {}
+    const rawPkg = fileContent(out['package.json'])
+    if (rawPkg) { try { const p = JSON.parse(rawPkg); if (p && typeof p === 'object') pkg = p } catch { /* malformed → rebuild */ } }
+    pkg.name = (typeof pkg.name === 'string' && pkg.name) || 'wyber-app'
+    pkg.private = true
+    pkg.type = 'module'
+    pkg.scripts = { dev: 'vite', build: 'vite build', preview: 'vite preview', ...(pkg.scripts as object || {}) }
+    pkg.dependencies = { ...REQUIRED_DEPS, ...(pkg.dependencies as object || {}) }
+    pkg.devDependencies = { ...REQUIRED_DEV, ...(pkg.devDependencies as object || {}) }
+    out['package.json'] = { content: JSON.stringify(pkg, null, 2) + '\n', language: 'json' }
+
     // 3. an entry that imports the stylesheet, and an index.html that loads it.
     const existingMain = ['src/main.tsx', 'src/main.jsx', 'src/index.tsx', 'src/index.jsx'].find(p => p in out)
     const mainPath = existingMain ?? `src/main.${appExt}`
