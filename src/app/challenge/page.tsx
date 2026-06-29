@@ -3,11 +3,11 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
-  title: 'Weekly Build Challenge — Win Cash Every Week | WyberAi',
-  description: 'Build the best app on WyberAi every week and win up to $200. Free to enter. New winners every Sunday.',
+  title: 'Weekly Build Challenge — Win Credits Every Week | WyberAi',
+  description: 'Submit your app idea or a finished build. Best entries win up to 2,000 WyberAi credits every week. Free to enter.',
   openGraph: {
-    title: 'WyberAi Weekly Build Challenge — Win Cash Every Week',
-    description: 'Weekly contest: build the best app using AI and win cash prizes. Free to enter, no coding required. New winners every Sunday.',
+    title: 'WyberAi Weekly Build Challenge — Win Credits Every Week',
+    description: 'Submit your idea or a finished app. Best entries win up to 2,000 credits every week. Free to enter, no coding required.',
     url: 'https://wyberai.com/challenge',
   },
 }
@@ -15,24 +15,23 @@ export const metadata: Metadata = {
 const BRAND = '#0EA5E9'
 
 const PRIZES = [
-  { place: '1st', amount: '$200', color: '#FFD700', emoji: '🥇', sub: 'every week' },
-  { place: '2nd', amount: '$100', color: '#C0C0C0', emoji: '🥈', sub: 'every week' },
-  { place: '3rd', amount: '$50', color: '#CD7F32', emoji: '🥉', sub: 'every week' },
-  { place: '4th', amount: '$25', color: '#a855f7', emoji: '🏅', sub: 'every week' },
-  { place: '5th', amount: '$25', color: '#a855f7', emoji: '🏅', sub: 'every week' },
+  { place: '1st', amount: '2,000 credits', color: '#FFD700', emoji: '🥇', sub: 'worth $199' },
+  { place: '2nd', amount: '1,000 credits', color: '#C0C0C0', emoji: '🥈', sub: 'worth $99' },
+  { place: '3rd', amount: '500 credits', color: '#CD7F32', emoji: '🥉', sub: 'worth $49' },
+  { place: '4th-5th', amount: '250 credits', color: '#a855f7', emoji: '🏅', sub: 'worth $25 each' },
 ]
 
 const RULES = [
-  { icon: '🛠', title: 'Build on WyberAi', desc: 'Your app must be built entirely on WyberAi. Free account works — no paid plan required.' },
-  { icon: '🌐', title: 'Publish a live URL', desc: 'Hit Publish in WyberAi to get a live link. Your app must be publicly accessible for judging.' },
-  { icon: '📢', title: 'Share with #BuiltWithWyberAi', desc: 'Post your app on Twitter, LinkedIn, or Reddit with the hashtag #BuiltWithWyberAi to enter.' },
-  { icon: '🔁', title: 'New winners every Sunday', desc: 'Submit by Saturday 11:59 PM UTC. Winners announced every Sunday. Enter as many weeks as you want — build something new each week or improve your previous entry.' },
+  { icon: '💡', title: 'Submit your idea', desc: 'Tell us what you\'re building — or submit a finished app. Ideas and completed apps are both welcome. We pick the most creative and impactful ones.' },
+  { icon: '🛠', title: 'Build on WyberAi', desc: 'Your app must be built entirely on WyberAi. Free account works — no paid plan required. 50 credits on signup is enough to get started.' },
+  { icon: '📢', title: 'Share with #BuiltWithWyberAi', desc: 'Post your idea or app on Twitter, LinkedIn, or Reddit with #BuiltWithWyberAi to enter. Tag us so we see it.' },
+  { icon: '🔁', title: 'New winners every Sunday', desc: 'We review submissions every week and pick winners. Credits are added to your account instantly. Enter every week with new ideas.' },
 ]
 
 const CRITERIA = [
-  { label: 'Creativity', weight: '30%', desc: 'Is it a unique idea? Does it solve a real problem?' },
-  { label: 'Complexity', weight: '25%', desc: 'Multi-page apps with real features score higher than simple landing pages.' },
-  { label: 'Design & Polish', weight: '25%', desc: 'Does it look professional? Is the UX intuitive?' },
+  { label: 'Idea', weight: '35%', desc: 'Is it a unique idea? Does it solve a real problem? Would people actually use this?' },
+  { label: 'Execution', weight: '25%', desc: 'If submitted as a built app — does it work well? Multi-page apps with real features score higher.' },
+  { label: 'Design & Polish', weight: '20%', desc: 'Does it look professional? Is the UX intuitive?' },
   { label: 'Wow Factor', weight: '20%', desc: 'Would someone share this? Does it make people say "wait, AI built this?"' },
 ]
 
@@ -72,7 +71,7 @@ export default function ChallengePage() {
             </span>
           </h1>
           <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 32, maxWidth: 540, margin: '0 auto 32px' }}>
-            Build the best app using only plain English. No coding required. <strong style={{ color: '#fafafa' }}>$500 in cash prizes every week.</strong>
+            Submit your app idea or a finished build. We pick the best ones every week and reward them with <strong style={{ color: '#fafafa' }}>credits to keep building.</strong>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
@@ -89,7 +88,7 @@ export default function ChallengePage() {
       {/* Prizes */}
       <section style={{ padding: '60px clamp(20px,4vw,48px)', maxWidth: 800, margin: '0 auto' }}>
         <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>Weekly Prizes</h2>
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 40 }}>$500 awarded every week — enter as many times as you want</p>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 40 }}>Credits added to your account instantly — enter every week</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           {PRIZES.map(p => (
             <div key={p.place} style={{ flex: '1 1 140px', maxWidth: 160, padding: '24px 16px', borderRadius: 14, border: `1px solid ${p.color}30`, background: `${p.color}08`, textAlign: 'center' }}>
@@ -147,7 +146,7 @@ export default function ChallengePage() {
       <section style={{ padding: '80px clamp(20px,4vw,48px)', textAlign: 'center' }}>
         <div style={{ maxWidth: 500, margin: '0 auto', padding: '48px 32px', borderRadius: 20, background: 'linear-gradient(135deg, rgba(168,85,247,0.1), rgba(14,165,233,0.1))', border: '1px solid rgba(168,85,247,0.2)' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, letterSpacing: '-0.03em' }}>Ready to Build?</h2>
-          <p style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 24 }}>Sign up free, describe your app, and publish it. New winners every Sunday.</p>
+          <p style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 24 }}>Submit an idea or a finished app. Best entries get credits every Sunday.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '14px 40px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
             Start Building — It&apos;s Free →
           </Link>

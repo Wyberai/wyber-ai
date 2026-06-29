@@ -345,7 +345,7 @@ export default function HomePage() {
       {/* ── BUILD CHALLENGE BANNER ──────────────────────────────────── */}
       <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 20px', background: 'linear-gradient(90deg, rgba(168,85,247,0.15), rgba(14,165,233,0.15))', borderBottom: '1px solid rgba(168,85,247,0.2)', textDecoration: 'none', color: '#fafafa', fontSize: 13, fontWeight: 600 }}>
         <span style={{ fontSize: 16 }}>🏆</span>
-        <span>Weekly Build Challenge — <span style={{ color: '#a855f7' }}>$500 in prizes every week</span> — New winners every Sunday</span>
+        <span>Weekly Build Challenge — <span style={{ color: '#a855f7' }}>Submit your idea, win credits</span> — New winners every Sunday</span>
         <span style={{ color: '#a855f7', fontSize: 12 }}>Enter now →</span>
       </Link>
 
