@@ -86,6 +86,47 @@ describe('sanitizeFiles — guarantees Tailwind compile inputs (BUG-1)', () => {
   })
 })
 
+// The builder runs `npm install` from package.json, so it must list the tailwind
+// toolchain (or @tailwind ships raw) and the full runtime stack (or imports fail).
+describe('sanitizeFiles — completes package.json (cold-build fix)', () => {
+  const pkgOf = (out: Record<string, unknown>) => JSON.parse(contentOf(out['package.json']))
+
+  it('adds a complete package.json when none exists', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } })
+    const p = pkgOf(out)
+    expect(p.devDependencies.tailwindcss).toBeTruthy()
+    expect(p.devDependencies.autoprefixer).toBeTruthy()
+    expect(p.devDependencies.postcss).toBeTruthy()
+    expect(p.dependencies['lucide-react']).toBeTruthy()
+    expect(p.dependencies['framer-motion']).toBeTruthy()
+    expect(p.dependencies.recharts).toBeTruthy()
+  })
+
+  it('completes a starter package.json that omits the tailwind toolchain', () => {
+    const starter = JSON.stringify({
+      name: 'my-app', private: true, type: 'module',
+      dependencies: { react: '^18.2.0', 'react-dom': '^18.2.0', 'lucide-react': '^0.300.0' },
+      devDependencies: { vite: '^5.0.0', '@vitejs/plugin-react': '^4.0.0' },
+    })
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'package.json': { content: starter } })
+    const p = pkgOf(out)
+    expect(p.devDependencies.tailwindcss).toBeTruthy() // added — the missing piece
+    expect(p.name).toBe('my-app')                       // preserved
+    expect(p.dependencies.react).toBe('^18.2.0')        // existing version wins
+  })
+
+  it('rebuilds a malformed package.json instead of failing', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'package.json': { content: '{ not json' } })
+    const p = pkgOf(out)
+    expect(p.devDependencies.tailwindcss).toBeTruthy()
+  })
+
+  it('does not add a package.json when there is no App entry', () => {
+    const out = sanitizeFiles({ 'src/util.ts': { content: 'export const x = 1' } })
+    expect('package.json' in out).toBe(false)
+  })
+})
+
 describe('sanitizeFiles — entry + index.html', () => {
   it('synthesizes a main entry that imports the stylesheet and an index.html that loads it', () => {
     const out = sanitizeFiles({ 'src/App.tsx': { content: APP } })
