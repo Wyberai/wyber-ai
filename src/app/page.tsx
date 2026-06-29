@@ -382,6 +382,13 @@ export default function HomePage() {
         </div>
       )}
 
+      {/* ── BUILD CHALLENGE BANNER ──────────────────────────────────── */}
+      <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 20px', background: 'linear-gradient(90deg, rgba(168,85,247,0.15), rgba(14,165,233,0.15))', borderBottom: '1px solid rgba(168,85,247,0.2)', textDecoration: 'none', color: '#fafafa', fontSize: 13, fontWeight: 600 }}>
+        <span style={{ fontSize: 16 }}>🏆</span>
+        <span>Build Challenge — <span style={{ color: '#a855f7' }}>$500 in prizes</span> — Build the best app on WyberAi and win</span>
+        <span style={{ color: '#a855f7', fontSize: 12 }}>Enter now →</span>
+      </Link>
+
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section style={{ position: 'relative', minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(80px,12vw,160px) clamp(20px,4vw,48px) clamp(60px,8vw,100px)', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(14,165,233,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
