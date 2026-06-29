@@ -24,7 +24,7 @@ const PRIZES = [
 const RULES = [
   { icon: '💡', title: 'Submit your idea', desc: 'Tell us what you\'re building — or submit a finished app. Ideas and completed apps are both welcome. We pick the most creative and impactful ones.' },
   { icon: '🛠', title: 'Build on WyberAi', desc: 'Your app must be built entirely on WyberAi. Free account works — no paid plan required. 50 credits on signup is enough to get started.' },
-  { icon: '📢', title: 'Share with #BuiltWithWyberAi', desc: 'Post your idea or app on Twitter with #BuiltWithWyberAi, or submit on our Reddit page at reddit.com/user/WyberAi. Tag us so we see it.' },
+  { icon: '📢', title: 'Submit your entry', desc: 'Built an app? Share it on Twitter with #BuiltWithWyberAi. Got an idea? Drop it in our weekly Reddit thread at reddit.com/user/WyberAi or DM us on Twitter @WyberAi.' },
   { icon: '🔁', title: 'New winners every Sunday', desc: 'We review submissions every week and pick winners. Credits are added to your account instantly. Enter every week with new ideas.' },
 ]
 
