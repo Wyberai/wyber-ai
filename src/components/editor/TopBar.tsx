@@ -28,6 +28,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const displayCredits = initialProfile?.credits ?? credits;
   const [exporting, setExporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
+  const [deploySecs, setDeploySecs] = useState(0);
   const [deployUrl, setDeployUrl] = useState('');
   const [pushing, setPushing] = useState(false);
   const [pushUrl, setPushUrl] = useState('');
@@ -175,8 +176,15 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const handleDeploy = async () => {
     if (!projectId || deploying) return;
     setDeploying(true);
+    setDeploySecs(0);
+    // Live elapsed counter so a ~30–45s publish reads as "working", not frozen.
+    const t0 = Date.now();
+    const tick = setInterval(() => setDeploySecs(Math.round((Date.now() - t0) / 1000)), 500);
+    // Hard timeout so a stuck publish can never leave the button spinning forever.
+    const ctrl = new AbortController();
+    const killer = setTimeout(() => ctrl.abort(), 180000);
     try {
-      const res = await fetch('/api/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId }) });
+      const res = await fetch('/api/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId }), signal: ctrl.signal });
       const data = await res.json();
       const url = data.publishedUrl || data.url;
       if (url) {
@@ -185,8 +193,16 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       } else {
         alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
       }
-    } catch (e) { alert('Publish failed: ' + (e instanceof Error ? e.message : 'Network error')); }
-    setDeploying(false);
+    } catch (e) {
+      const aborted = e instanceof DOMException && e.name === 'AbortError';
+      alert(aborted
+        ? 'Publishing is taking longer than expected — your app may still be building. Give it a moment and try again.'
+        : 'Publish failed: ' + (e instanceof Error ? e.message : 'Network error'));
+    } finally {
+      clearTimeout(killer);
+      clearInterval(tick);
+      setDeploying(false);
+    }
   };
 
   const handleGitHubPush = async () => {
@@ -331,7 +347,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
           </button>
         )}
         <button onClick={() => handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
-          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying...</> : deployUrl ? 'Live' : 'Publish'}
+          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying{deploySecs ? ` ${deploySecs}s` : ''}…</> : deployUrl ? 'Live' : 'Publish'}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}
