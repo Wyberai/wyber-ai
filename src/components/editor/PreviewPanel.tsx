@@ -196,7 +196,9 @@ export function PreviewPanel() {
   }, [html, editMode])
 
   const [healToast, setHealToast] = useState<string | null>(null)
-  const healAttempted = useRef<Record<string, number>>({})
+  // Total auto-heal attempts spent on the CURRENT user generation. Bounded so the
+  // loop always converges — see the auto-heal effect below.
+  const healTotal = useRef(0)
   const { setFiles } = useEditorStore()
 
   const tryToFix = useCallback(async () => {
@@ -248,21 +250,29 @@ export function PreviewPanel() {
     setTimeout(() => setFixing(false), 3000)
   }, [error, fixing, files, setFiles])
 
-  // Auto-trigger self-heal on errors (up to 3 attempts per unique error)
+  // Auto-trigger self-heal on errors — BOUNDED so it always converges.
+  // The budget is a TOTAL number of attempts per user-initiated generation, and
+  // it is NOT reset when auto-fix rewrites files. The previous logic capped
+  // "attempts per unique error" but reset that counter on every files change —
+  // and tryToFix changes files — so the cap never bit and a build that failed
+  // for any reason auto-fix couldn't resolve looped "Build failed → finishing
+  // touches →…" forever. Once the budget is spent we stop and surface the error.
+  const MAX_HEAL = 3
   useEffect(() => {
     if (error && !building && !isGenerating && !fixing) {
-      const attempts = healAttempted.current[error] ?? 0
-      if (attempts >= 3) { setHealFailed(true); return }
+      if (healTotal.current >= MAX_HEAL) { setHealFailed(true); return }
       setHealFailed(false)
-      healAttempted.current[error] = attempts + 1
-      const delay = attempts === 0 ? 1500 : 3000
+      const delay = healTotal.current === 0 ? 1500 : 3000
+      healTotal.current += 1
       const t = setTimeout(() => tryToFix(), delay)
       return () => clearTimeout(t)
     }
   }, [error, building, isGenerating, fixing, tryToFix])
 
   useEffect(() => { if (!error) setHealFailed(false) }, [error])
-  useEffect(() => { healAttempted.current = {}; setHealFailed(false) }, [files])
+  // Fresh heal budget only when the USER kicks off a new generation/edit — never
+  // on the file changes that auto-fix itself makes (that was the infinite loop).
+  useEffect(() => { if (isGenerating) { healTotal.current = 0; setHealFailed(false) } }, [isGenerating])
 
   const sendVisualEdit = () => {
     if (!selectedEl || !editInstruction.trim()) return
