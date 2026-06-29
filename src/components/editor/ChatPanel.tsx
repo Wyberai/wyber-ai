@@ -339,9 +339,22 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       executeGenerationRef.current?.(detail.prompt, null, { silent: true })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
+    // Connector/theme panels send prompts via this event
+    const chatPromptHandler = (e: Event) => {
+      const prompt = (e as CustomEvent).detail
+      if (typeof prompt === 'string' && prompt.trim()) {
+        setInput(prompt)
+        setTimeout(() => {
+          const btn = document.querySelector('[data-send-button]') as HTMLButtonElement | null
+          if (btn) btn.click()
+        }, 100)
+      }
+    }
+    window.addEventListener('wyber:chat-prompt', chatPromptHandler)
     return () => {
       window.removeEventListener('wyber_auto_generate', handler as EventListener)
       window.removeEventListener('wyber-autofix', autofixHandler)
+      window.removeEventListener('wyber:chat-prompt', chatPromptHandler)
     }
   }, []);
 
