@@ -66,9 +66,10 @@ export async function POST(req: NextRequest) {
         const [path, file] = appEntry as [string, { content?: string }]
         const content = file?.content || ''
         if (content.includes('_storageNotice')) {
-          const cleaned = content
-            .replace(/\s*const\s*\[_storageNotice[^\n]*\n/g, '')
-            .replace(/\s*\{_storageNotice\s*&&\s*\([\s\S]*?\)\}\s*/g, '')
+          const cleaned = content.replace(
+            'const [_storageNotice, _setStorageNotice] = useState(true)',
+            'const [_storageNotice, _setStorageNotice] = useState(false)'
+          )
           files = { ...files, [path]: { ...file, content: cleaned } }
         }
       }

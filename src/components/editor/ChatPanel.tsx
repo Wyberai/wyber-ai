@@ -247,9 +247,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     const [path, file] = appFile
     const content = (file as { content?: string })?.content || ''
     if (!content.includes('_storageNotice')) return
-    const cleaned = content
-      .replace(/\s*const\s*\[_storageNotice.*?\n/g, '')
-      .replace(/\s*\{_storageNotice\s*&&\s*\([\s\S]*?\)\}\s*/g, '')
+    const cleaned = content.replace(
+      'const [_storageNotice, _setStorageNotice] = useState(true)',
+      'const [_storageNotice, _setStorageNotice] = useState(false)'
+    )
     if (cleaned !== content) setFiles({ ...files, [path]: { ...(file as object), content: cleaned } })
   }, [supabaseConnected])
   const [pendingRegulated, setPendingRegulated] = useState<{ prompt: string; img: AttachedImage | null; domains: RegulatedDomain[] } | null>(null);
