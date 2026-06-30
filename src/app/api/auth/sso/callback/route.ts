@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       clientId: process.env.WORKOS_CLIENT_ID,
     })
 
-    const { tokenHash } = await reconcileSsoLogin({
+    const { email, emailOtp } = await reconcileSsoLogin({
       email: profile.email,
       organizationId: profile.organizationId ?? null,
       firstName: profile.firstName,
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.verifyOtp({ type: 'magiclink', token_hash: tokenHash })
+    const { error } = await supabase.auth.verifyOtp({ type: 'email', email, token: emailOtp })
     if (error) throw error
 
     return NextResponse.redirect(`${origin}/dashboard`)

@@ -9,10 +9,11 @@ export type WorkosProfile = {
 
 // Reconciles a WorkOS SSO login into the SAME `profiles` table used by email/GitHub
 // signup, so an SSO user is indistinguishable elsewhere in the app (including billing).
-// Returns a one-time magic-link token_hash the callback route uses to establish a
+// Returns a one-time email OTP the callback route verifies (via email+token, not
+// token_hash — more reliable for this admin-generated-session pattern) to establish a
 // normal Supabase session — after this, the user flows through middleware.ts and every
 // existing query path completely unchanged.
-export async function reconcileSsoLogin(profile: WorkosProfile): Promise<{ tokenHash: string; orgId: string | null }> {
+export async function reconcileSsoLogin(profile: WorkosProfile): Promise<{ email: string; emailOtp: string; orgId: string | null }> {
   const email = profile.email.trim().toLowerCase()
   const db = createServiceClient()
 
@@ -55,6 +56,6 @@ export async function reconcileSsoLogin(profile: WorkosProfile): Promise<{ token
     }
   }
 
-  const tokenHash = linkData.properties.hashed_token
-  return { tokenHash, orgId }
+  const emailOtp = linkData.properties.email_otp
+  return { email, emailOtp, orgId }
 }
