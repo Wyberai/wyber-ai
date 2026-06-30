@@ -11,12 +11,8 @@ export async function GET(req: NextRequest) {
   const { searchParams, origin } = req.nextUrl
   const code = searchParams.get('code')
   if (!code) {
-    // TEMP: surface whatever WorkOS actually sent back instead of a code — remove once SSO flow is confirmed working.
-    const workosError = searchParams.get('error')
-    const workosErrorDescription = searchParams.get('error_description')
-    return NextResponse.redirect(
-      `${origin}/login?error=sso&reason=${encodeURIComponent(`no_code:${workosError ?? 'none'}:${workosErrorDescription ?? 'none'}`)}`
-    )
+    console.error('SSO callback missing code:', searchParams.get('error'), searchParams.get('error_description'))
+    return NextResponse.redirect(`${origin}/login?error=sso`)
   }
   if (!process.env.WORKOS_API_KEY || !process.env.WORKOS_CLIENT_ID) {
     return NextResponse.json({ error: 'SSO is not configured' }, { status: 501 })
@@ -56,8 +52,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${origin}/dashboard`)
   } catch (e) {
     console.error('SSO callback error:', e)
-    // TEMP: surface the real error for diagnosis — remove once SSO flow is confirmed working.
-    const message = e instanceof Error ? e.message : String(e)
-    return NextResponse.redirect(`${origin}/login?error=sso&reason=${encodeURIComponent(message)}`)
+    return NextResponse.redirect(`${origin}/login?error=sso`)
   }
 }
