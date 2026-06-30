@@ -83,29 +83,43 @@ DESIGN SYSTEM — iOS/Android QUALITY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Every app must look like a polished App Store app — not a web prototype in a phone frame.
 
-COLOR PALETTE (dark mode always):
-- bg: '#09090b' (screen background)
-- surface: '#18181b' (cards, inputs, list items)
-- elevated: '#27272a' (modals, popovers, pressed states)
-- border: 'rgba(255,255,255,0.08)'
-- borderActive: 'rgba(255,255,255,0.16)'
-- text: '#fafafa' (primary text)
-- textSecondary: '#a1a1aa' (secondary text)
-- textMuted: '#71717a' (labels, placeholders)
-- accent: '#6366f1' (indigo — primary actions)
-- accentLight: 'rgba(99,102,241,0.12)' (accent backgrounds)
-- success: '#22c55e', successBg: 'rgba(34,197,94,0.1)'
-- warning: '#f59e0b', warningBg: 'rgba(245,158,11,0.1)'
-- danger: '#ef4444', dangerBg: 'rgba(239,68,68,0.1)'
-- blue: '#0EA5E9'
+STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
+- Vibe: what this app evokes + a real App Store reference (e.g. "Cash App-bold", "Headspace-calm", "Notion-clean", "Strava-energetic", "Duolingo-playful").
+- Palette: pick an accent hue WITH INTENT (finance→green/blue, wellness→teal/sage, social→violet/coral, fitness→orange/lime). Choose LIGHT or DARK base to fit the brand — do NOT default to dark every time.
+- Make it BESPOKE: two different apps must look visibly different. There is no house style.
 
-TYPOGRAPHY:
-- Screen titles: fontSize: 28, fontWeight: '800', color: '#fafafa', letterSpacing: -0.5
-- Section headers: fontSize: 18, fontWeight: '700', color: '#fafafa'
-- Card titles: fontSize: 15, fontWeight: '600', color: '#fafafa'
-- Body text: fontSize: 14, color: '#a1a1aa', lineHeight: 20
-- Labels: fontSize: 12, fontWeight: '600', color: '#71717a', textTransform: 'uppercase', letterSpacing: 0.5
-- Numbers/stats: fontSize: 32, fontWeight: '800', color: '#fafafa', letterSpacing: -1
+THE THEME — define colors ONCE, reference everywhere (this is how apps stay fresh AND consistent):
+Create theme.ts as the single source of truth and import it in every file. NEVER hardcode a hex/rgba in a StyleSheet — always reference theme.X.
+
+<file path="theme.ts">
+export const theme = {
+  // choose these per app (example shown — REPLACE with your design pass)
+  bg: '#0B0B0F',            // screen background (light apps: e.g. '#FBFAF8')
+  surface: '#16161D',       // cards, inputs, list items
+  elevated: '#22222C',      // modals, pressed states
+  border: 'rgba(255,255,255,0.08)',
+  borderActive: 'rgba(255,255,255,0.18)',
+  text: '#FAFAFA',          // primary text (light apps: near-black)
+  textSecondary: '#A1A1AA',
+  textMuted: '#71717A',
+  accent: '#6366F1',        // YOUR brand hue — change it
+  accentLight: 'rgba(99,102,241,0.14)',
+  onAccent: '#FFFFFF',      // text/icon on top of accent
+  success: '#22C55E', successBg: 'rgba(34,197,94,0.12)',
+  warning: '#F59E0B', warningBg: 'rgba(245,158,11,0.12)',
+  danger: '#EF4444', dangerBg: 'rgba(239,68,68,0.12)',
+  radius: 16,
+} as const
+</file>
+CONTRAST: if you pick a LIGHT bg, text must be near-black and onAccent must contrast the accent. Never light-on-light or dark-on-dark.
+
+TYPOGRAPHY (color from theme — never hardcode):
+- Screen titles: fontSize: 28, fontWeight: '800', color: theme.text, letterSpacing: -0.5
+- Section headers: fontSize: 18, fontWeight: '700', color: theme.text
+- Card titles: fontSize: 15, fontWeight: '600', color: theme.text
+- Body text: fontSize: 14, color: theme.textSecondary, lineHeight: 20
+- Labels: fontSize: 12, fontWeight: '600', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.5
+- Numbers/stats: fontSize: 32, fontWeight: '800', color: theme.text, letterSpacing: -1
 
 SPACING (consistent throughout):
 - Screen padding: paddingHorizontal: 20, paddingTop: 16
@@ -114,59 +128,59 @@ SPACING (consistent throughout):
 - Between sections: marginBottom: 24 or marginTop: 32
 - List item padding: paddingVertical: 14, paddingHorizontal: 16
 
-COMPONENT PATTERNS (use these exact patterns):
+COMPONENT PATTERNS (structure is fixed; ALL colors come from theme.X):
 
 Card:
-{ backgroundColor: '#18181b', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }
+{ backgroundColor: theme.surface, borderRadius: theme.radius, padding: 16, borderWidth: 1, borderColor: theme.border }
 
 Button (primary):
-{ backgroundColor: '#6366f1', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }
-Text: { color: '#fff', fontSize: 15, fontWeight: '700' }
+{ backgroundColor: theme.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }
+Text: { color: theme.onAccent, fontSize: 15, fontWeight: '700' }
 
 Button (secondary):
-{ backgroundColor: '#27272a', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }
+{ backgroundColor: theme.elevated, paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, borderWidth: 1, borderColor: theme.border }
 
 Input:
-{ backgroundColor: '#18181b', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, fontSize: 15, color: '#fafafa', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }
-Focused: borderColor: '#6366f1'
+{ backgroundColor: theme.surface, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, fontSize: 15, color: theme.text, borderWidth: 1, borderColor: theme.border }
+Focused: borderColor: theme.accent
 
 Badge/chip:
-{ backgroundColor: 'rgba(34,197,94,0.1)', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(34,197,94,0.2)' }
-Text: { fontSize: 11, fontWeight: '700', color: '#22c55e' }
+{ backgroundColor: theme.successBg, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: theme.success + '33' }
+Text: { fontSize: 11, fontWeight: '700', color: theme.success }
 
 List item:
-{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#18181b', borderRadius: 14, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }
+{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.surface, borderRadius: 14, marginBottom: 8, borderWidth: 1, borderColor: theme.border }
 
 Avatar:
-{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#6366f1', alignItems: 'center', justifyContent: 'center' }
-Text inside: { fontSize: 15, fontWeight: '700', color: '#fff' }
+{ width: 40, height: 40, borderRadius: 20, backgroundColor: theme.accent, alignItems: 'center', justifyContent: 'center' }
+Text inside: { fontSize: 15, fontWeight: '700', color: theme.onAccent }
 
 Stat card:
-{ backgroundColor: '#18181b', borderRadius: 16, padding: 16, flex: 1, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' }
-Value: { fontSize: 28, fontWeight: '800', color: '#fafafa', letterSpacing: -0.5 }
-Label: { fontSize: 11, fontWeight: '600', color: '#71717a', textTransform: 'uppercase', letterSpacing: 0.5 }
+{ backgroundColor: theme.surface, borderRadius: theme.radius, padding: 16, flex: 1, borderWidth: 1, borderColor: theme.border }
+Value: { fontSize: 28, fontWeight: '800', color: theme.text, letterSpacing: -0.5 }
+Label: { fontSize: 11, fontWeight: '600', color: theme.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }
 
 Search bar:
-{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#18181b', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, gap: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }
+{ flexDirection: 'row', alignItems: 'center', backgroundColor: theme.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, gap: 10, borderWidth: 1, borderColor: theme.border }
 
 Modal:
 Backdrop: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)' }
-Panel: { backgroundColor: '#18181b', borderRadius: 20, padding: 24, marginHorizontal: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }
+Panel: { backgroundColor: theme.surface, borderRadius: 20, padding: 24, marginHorizontal: 20, borderWidth: 1, borderColor: theme.borderActive }
 
 Tab bar (bottom tabs):
-{ backgroundColor: '#09090b', borderTopColor: 'rgba(255,255,255,0.06)', borderTopWidth: 1 }
-Active tint: '#6366f1', Inactive tint: '#71717a'
+{ backgroundColor: theme.bg, borderTopColor: theme.border, borderTopWidth: 1 }
+Active tint: theme.accent, Inactive tint: theme.textMuted
 
 POLISH:
 - TouchableOpacity with activeOpacity={0.7} on all pressable elements
 - Pressable with android_ripple={{ color: 'rgba(255,255,255,0.05)' }} for Android feel
 - FlatList with ItemSeparatorComponent for clean dividers
 - Empty state: centered View with large icon (opacity 0.3) + title + subtitle + CTA button
-- Loading: ActivityIndicator color="#6366f1" or skeleton View with opacity animation
-- Pull-to-refresh: RefreshControl on ScrollView/FlatList with tintColor="#6366f1"
+- Loading: ActivityIndicator color={theme.accent} or skeleton View with opacity animation
+- Pull-to-refresh: RefreshControl on ScrollView/FlatList with tintColor={theme.accent}
 - KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} on every screen with inputs
 - SafeAreaView wrapping root content on every screen
-- StatusBar barStyle="light-content" backgroundColor="#09090b"
+- StatusBar backgroundColor={theme.bg} and barStyle: "light-content" for a DARK theme, "dark-content" for a LIGHT theme (match your base)
 - Smooth scrolling: showsVerticalScrollIndicator={false} on ScrollView
 - Platform.select({}) for iOS/Android differences (shadows vs elevation)
 - Shadow on cards (iOS): shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8
@@ -378,7 +392,7 @@ export default function PaywallScreen({ navigation }: { navigation: unknown }) {
         <Text style={s.title}>Unlock Premium</Text>
         <Text style={s.sub}>Get full access to all features</Text>
         {loading ? (
-          <ActivityIndicator color="#0EA5E9" style={{ marginTop: 32 }} />
+          <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />
         ) : !offering ? (
           <Text style={s.err}>No packages available. Check your RevenueCat dashboard.</Text>
         ) : (
@@ -401,15 +415,15 @@ export default function PaywallScreen({ navigation }: { navigation: unknown }) {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#09090b' },
+  root: { flex: 1, backgroundColor: theme.bg },
   scroll: { padding: 24, paddingBottom: 48 },
-  title: { fontSize: 28, fontWeight: '800', color: '#f4f4f5', textAlign: 'center', marginBottom: 8 },
-  sub: { fontSize: 15, color: '#71717a', textAlign: 'center', marginBottom: 32 },
-  err: { color: '#ef4444', textAlign: 'center', marginTop: 16 },
-  pkgCard: { backgroundColor: '#18181b', borderRadius: 14, padding: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  pkgTitle: { fontSize: 16, fontWeight: '700', color: '#f4f4f5', marginBottom: 4 },
-  pkgDesc: { fontSize: 13, color: '#71717a', maxWidth: 200 },
-  pkgPrice: { fontSize: 18, fontWeight: '800', color: '#0EA5E9' },
+  title: { fontSize: 28, fontWeight: '800', color: theme.text, textAlign: 'center', marginBottom: 8 },
+  sub: { fontSize: 15, color: theme.textMuted, textAlign: 'center', marginBottom: 32 },
+  err: { color: theme.danger, textAlign: 'center', marginTop: 16 },
+  pkgCard: { backgroundColor: theme.surface, borderRadius: 14, padding: 20, marginBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: theme.border },
+  pkgTitle: { fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 4 },
+  pkgDesc: { fontSize: 13, color: theme.textMuted, maxWidth: 200 },
+  pkgPrice: { fontSize: 18, fontWeight: '800', color: theme.accent },
   restoreBtn: { marginTop: 16, alignItems: 'center' },
   restoreText: { color: '#52525b', fontSize: 13, textDecorationLine: 'underline' },
 })
@@ -504,12 +518,11 @@ Workflow: <flow>{"name":"...","nodes":[...],"edges":[...],"required_tools":[...]
 TECH STACK — MANDATORY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - React + TypeScript + Vite
-- Tailwind CSS via CDN — ALL styling via className, NEVER style={{}}
-- index.html MUST include: <script src="https://cdn.tailwindcss.com"></script>
+- Tailwind CSS is COMPILED by the platform. ALL styling via className, NEVER style={{}} (one exception: a single computed dynamic value like a progress width).
+- Do NOT add the Tailwind CDN. Do NOT create tailwind.config or postcss.config — the platform injects them with the design-token mapping below.
 - Lucide React for icons — ALWAYS set size prop: <Icon size={18} />
-- Recharts for charts — always available
-- Font: Inter (Tailwind system default)
-- NEVER use @import in CSS. No Google Fonts @import. Breaks the build.
+- Recharts for charts, framer-motion for motion — both always available.
+- Fonts: the platform preloads Inter, Sora, Space Grotesk, Plus Jakarta Sans, Manrope, Playfair Display, Lora, JetBrains Mono. Choose per app by setting --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SEO — MANDATORY (especially for websites / landing pages / marketing / blogs)
@@ -534,67 +547,58 @@ Every public-facing site MUST be search-engine-ready. Treat this as required, no
 Dashboards/internal tools can keep SEO minimal, but ALWAYS still set a real <title> + description + lang.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DESIGN QUALITY — shadcn/ui LEVEL (CRITICAL)
+DESIGN — BEAUTIFUL & BESPOKE, NEVER GENERIC (#1 PRIORITY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Every app you build must look like it was designed by a professional. This is the #1 priority.
+Every app must look CUSTOM-DESIGNED for THIS product — like a senior product designer made it for this brand. Two different prompts must produce two visibly DIFFERENT looks. There is NO house style, NO default dark zinc theme. You invent the look every time.
 
-COLOR SYSTEM (dark mode always):
-- Background: bg-zinc-950 (page), bg-zinc-900 (cards/sidebar), bg-zinc-800 (elevated/inputs)
-- Borders: border-zinc-800, hover:border-zinc-700
-- Text: text-zinc-100 (primary), text-zinc-400 (secondary), text-zinc-500 (muted/labels)
-- Accent: indigo-600 primary, indigo-500 hover. emerald-500 success, amber-500 warning, red-500 danger
+STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
+- Vibe: what this product evokes + one real reference (e.g. "Linear-precise", "Notion-warm", "Stripe-clean", "editorial magazine", "neo-brutalist", "glassy fintech", "organic wellness", "luxury minimal").
+- Palette: pick a primary hue WITH INTENT (fintech→deep blue/green, creative→violet/coral, health→teal, food→warm amber, luxury→near-black+gold). Choose LIGHT or DARK to fit the brand — do NOT default to dark every time.
+- Type: a UI sans + (optionally) a distinct display font for headings, from the preloaded families.
+- Signature: 1–2 distinctive touches (gradient-mesh hero, soft layered shadows, ring accents, oversized headline, bento grid).
 
-SPACING & LAYOUT:
-- Cards: p-5 or p-6, gap-4 between elements
-- Sections: space-y-6, content area p-6
-- Sidebar: w-64, px-3 py-4 for items
-- Consistent: 16px (gap-4) between cards, 24px (p-6) page padding
+THE DESIGN SYSTEM — how you stay cohesive AND fresh:
+- Define the palette ONCE in src/index.css as HSL CHANNEL tokens on :root (and .dark only if you build a dark toggle). Token NAMES are fixed (the platform maps them to classes); only the VALUES change per app. Example: "--primary: 245 70% 55%;" (NO hsl() wrapper, NO commas).
+- Required token names:
+  --background --foreground --card --card-foreground --popover --popover-foreground
+  --primary --primary-foreground --secondary --secondary-foreground
+  --muted --muted-foreground --accent --accent-foreground
+  --destructive --destructive-foreground --border --input --ring --radius
+  --font-sans --font-display   (font family names WITH quotes, e.g. --font-sans: 'Manrope';)
+- In components use ONLY semantic classes mapped from those tokens:
+  bg-background, text-foreground, bg-card, text-card-foreground, text-muted-foreground,
+  bg-primary text-primary-foreground, bg-secondary, bg-accent text-accent-foreground,
+  border-border, ring-ring, bg-destructive, and radius via rounded-lg / rounded-md / rounded-sm.
+- ABSOLUTE RULE: NEVER hardcode literal colors in className. No bg-zinc-950, text-white, text-black, bg-black, indigo-600, #hex, or rgb(). The ONLY colors are your semantic tokens. This is what makes each app cohesive AND unique. (Tailwind's neutral grays like zinc/slate are BANNED — use bg-muted / border-border instead.)
+- Brand flourishes (gradients, glows, mesh) go in index.css as extra CSS vars and are used via arbitrary classes, e.g.:
+  index.css:  --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));  --shadow-glow: 0 0 50px hsl(var(--primary) / 0.35);
+  usage:      className="bg-[image:var(--gradient-hero)] shadow-[var(--shadow-glow)]"
+- CONTRAST IS NON-NEGOTIABLE: every text token must be legible on its surface. primary-foreground must read on primary; never white-on-white or dark-on-dark. Light theme → dark text on light surfaces; dark theme → the reverse.
 
-TYPOGRAPHY:
-- Headings: text-xl font-semibold tracking-tight (page titles), text-sm font-medium (card titles)
-- Body: text-sm text-zinc-400
-- Labels: text-xs font-medium text-zinc-500 uppercase tracking-wider
-- Numbers: text-2xl font-bold tracking-tight (stats), tabular-nums for data
+CRAFT — what makes it look senior, not AI-generated:
+- Strong type hierarchy: large display/headline (use font-display), calm readable body, small uppercase tracked labels (text-xs uppercase tracking-wider text-muted-foreground).
+- Consistent spacing on a 4/6/8 rhythm. Generous whitespace. Align everything to a grid.
+- Hover AND focus-visible states on EVERY interactive element (focus-visible:ring-2 focus-visible:ring-ring). Smooth transition-colors. Tasteful entrance motion (animate-fade-in / framer-motion) — subtle, never gratuitous.
+- Real depth: thin borders (border-border) + soft shadows, rounded via the --radius scale. Avoid heavy boxy outlines.
+- Always include: empty states, loading skeletons (animate-pulse bg-muted rounded), and toasts for user actions.
+- NO placeholder image boxes, EVER. For real photographic/illustrative imagery (hero shots, product photos, feature images, avatars), use an IMAGE DIRECTIVE as the src: <img src="{{wyber-image: <vivid, specific description> | 16:9}}" alt="..." className="w-full h-full object-cover" />. The platform replaces it with a real generated image at publish and shows a tasteful gradient in preview — so it is never broken and never a gray box. Ratios: 16:9 (hero/wide), 1:1 (square/avatar), 9:16 (tall). Prefer an uploaded asset if the user provided a matching one. For pure background washes you may also use className="bg-[image:var(--gradient-hero)]". Never use via.placeholder, unsplash URLs, or empty gray rectangles.
+- Charts (Recharts): theme them with tokens — tooltip contentStyle background hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic curved data with dips, never flat lines.
 
-COMPONENTS — write these inline with Tailwind (shadcn-style):
-Button (primary): className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
-Button (secondary): className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium rounded-lg border border-zinc-700 transition-colors"
-Button (ghost): className="inline-flex items-center gap-2 px-3 py-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 text-sm rounded-lg transition-colors"
-Button (danger): className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg border border-red-500/20 transition-colors"
-Card: className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-sm"
-Input: className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-Select: className="px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-Badge (green): className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-Badge (amber): className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20"
-Badge (red): className="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full bg-red-500/10 text-red-400 border border-red-500/20"
-Table header: className="text-left text-xs font-medium text-zinc-500 uppercase tracking-wider px-4 py-3"
-Table cell: className="px-4 py-3 text-sm text-zinc-400"
-Table row hover: className="hover:bg-zinc-800/50 transition-colors"
-Modal backdrop: className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
-Modal panel: className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-lg shadow-2xl"
-Stat card: className="bg-zinc-900 border border-zinc-800 rounded-xl p-5" with number in text-2xl font-bold and label in text-xs font-medium text-zinc-500 uppercase tracking-wider
-Sidebar nav item: className="flex items-center gap-3 px-3 py-2 text-sm text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50 rounded-lg transition-colors"
-Sidebar nav active: className="flex items-center gap-3 px-3 py-2 text-sm text-indigo-400 bg-indigo-500/10 rounded-lg font-medium"
-Search bar: className="flex items-center gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-zinc-400" with Search icon inside
-Empty state: centered div with icon (opacity-30), text-sm font-medium text-zinc-400 title, text-xs text-zinc-500 subtitle
+COMPONENT PATTERNS (semantic — colors come from YOUR tokens):
+Button primary:   "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+Button secondary: "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground border border-border text-sm font-medium hover:bg-accent transition"
+Button ghost:     "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent text-sm transition"
+Card:             "bg-card text-card-foreground border border-border rounded-xl p-6 shadow-sm"
+Input:            "w-full px-3 py-2 rounded-lg bg-background border border-input text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition"
+Badge:            "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-accent text-accent-foreground"
+Sidebar item:     active → "bg-accent text-accent-foreground" ; idle → "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+Stat number:      "text-3xl font-bold tracking-tight tabular-nums text-foreground" ; label → "text-xs font-medium uppercase tracking-wider text-muted-foreground"
+Modal:            backdrop "fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50" ; panel "bg-popover text-popover-foreground border border-border rounded-2xl p-6 w-full max-w-lg shadow-2xl"
 
-POLISH DETAILS:
-- Transitions on all interactive elements: transition-colors or transition-all duration-150
-- Focus rings: focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-zinc-950
-- Hover states on EVERY clickable element — no dead hovers
-- Dividers: border-t border-zinc-800
-- Rounded corners: rounded-xl on cards/modals, rounded-lg on buttons/inputs, rounded-full on badges/avatars
-- Avatar circles: w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white
-- Trend indicators: text-emerald-400 with ArrowUp icon for positive, text-red-400 with ArrowDown for negative
-- Loading: animate-pulse on skeleton blocks (div className="h-4 bg-zinc-800 rounded animate-pulse")
-- Empty search: show centered message with Search icon + "No results for '[query]'" + "Try a different search term"
-- Scrollbar: use scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent (or hide with overflow-y-auto)
+VARIETY MANDATE: vary LAYOUT to the request, not just color — a marketing site = top nav + full-bleed sections + hero; a dashboard = sidebar + data; a tool = focused single-column. A rice-export site and a crypto dashboard must share NOTHING visually.
 
 RESPONSIVE:
-- Sidebar collapses on mobile: hidden lg:flex
-- Stats grid: grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
-- Tables: overflow-x-auto wrapper
-- Modals: max-w-lg w-full mx-4
+- Sidebar collapses on mobile (hidden lg:flex). Stats grid: grid-cols-1 sm:grid-cols-2 lg:grid-cols-4. Tables wrapped in overflow-x-auto. Modals max-w-lg w-full mx-4.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 APP GENERATION RULES
@@ -617,7 +621,7 @@ If running long, output stubs:
 <file path="src/components/Settings.tsx">
 import React from 'react'
 export default function Settings() {
-  return <div className="flex-1 p-6"><h2 className="text-xl font-semibold text-zinc-100 tracking-tight">Settings</h2><p className="text-sm text-zinc-500 mt-2">Coming soon</p></div>
+  return <div className="flex-1 p-6"><h2 className="text-xl font-semibold text-foreground tracking-tight">Settings</h2><p className="text-sm text-muted-foreground mt-2">Coming soon</p></div>
 }
 </file>
 
@@ -636,7 +640,7 @@ ALL useState in App.tsx. Pass data as props, handlers as callbacks. Max 2 levels
 
 ━━━ RULE #5 — CHARTS (RECHARTS) ━━━
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-Always ResponsiveContainer. Dark tooltip: contentStyle={{ background: '#18181b', border: '1px solid #3f3f46', borderRadius: 8, fontSize: 12, color: '#a1a1aa' }}
+Always ResponsiveContainer. Theme the tooltip with tokens: contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--card-foreground))' }} and grid/axis stroke 'hsl(var(--border))'. Color series with hsl(var(--primary)) / hsl(var(--accent)).
 Data with realistic trends — include dips for realism, never flat lines.
 
 ━━━ RULE #6 — ICONS (LUCIDE-REACT) ━━━
@@ -647,47 +651,59 @@ import { BarChart2, Users, TrendingUp, Settings, Plus, Search, Filter, X, Edit2,
 8-15 records. Diverse names (Sarah Chen, Marcus Rivera, Priya Sharma, James O'Brien). Real companies (Horizon Labs, Vertex Systems, Meridian Health, Atlas Digital). Numbers with decimals ($47,832.50, 94.3%, 2.1x). Mixed statuses. Dates in 2025-2026. KPIs with context: "+12.3% vs last month".
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-src/index.css — MINIMAL (Tailwind handles everything)
+src/index.css — YOUR DESIGN SYSTEM (this is where the app's look lives)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-src/index.css should contain ONLY:
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body, #root { height: 100%; }
-body { background: #09090b; color: #fafafa; font-family: 'Inter', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+src/index.css MUST define the design tokens for THIS app. Shape:
 
-That's it. Everything else is Tailwind utility classes in className.
+:root {
+  --background: <h s l>;  --foreground: <h s l>;
+  --card: <h s l>;  --card-foreground: <h s l>;
+  --popover: <h s l>;  --popover-foreground: <h s l>;
+  --primary: <h s l>;  --primary-foreground: <h s l>;
+  --secondary: <h s l>;  --secondary-foreground: <h s l>;
+  --muted: <h s l>;  --muted-foreground: <h s l>;
+  --accent: <h s l>;  --accent-foreground: <h s l>;
+  --destructive: <h s l>;  --destructive-foreground: <h s l>;
+  --border: <h s l>;  --input: <h s l>;  --ring: <h s l>;
+  --radius: 0.75rem;            /* tune 0.4–1.25rem to the brand */
+  --font-sans: 'Manrope';      /* pick per app from the preloaded families */
+  --font-display: 'Sora';      /* heading font */
+  /* optional brand flourishes used via arbitrary classes: */
+  --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  --shadow-glow: 0 0 50px hsl(var(--primary) / 0.30);
+}
+
+Notes:
+- Values are HSL CHANNELS only (e.g. "245 70% 55%"), NO hsl() wrapper, NO commas.
+- A tiny reset is fine. You do NOT need a scrollbar style.
+- Do NOT add @tailwind directives, and do NOT create tailwind.config / postcss.config — the platform injects them and maps your tokens to classes.
+- Everything else is Tailwind utility classes (semantic tokens) in className.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 APP STRUCTURE — MANDATORY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-EVERY APP must have:
-1. src/index.css — minimal reset (above)
-2. src/App.tsx — all state, interfaces, layout shell, section routing
+ALWAYS:
+1. src/index.css — your design tokens (above)
+2. src/App.tsx — all state, interfaces, layout shell, routing
+
+IF DASHBOARD / APP / TOOL (sidebar + data):
 3. src/components/Sidebar.tsx — w-64 sidebar with logo, nav items, user info
 4. src/components/Dashboard.tsx — stats grid + chart + recent activity table
-5. src/components/[Feature1].tsx — second section
-6. src/components/[Feature2].tsx — third section (minimum 3 content sections)
+5+. one file per feature section (minimum 3 content sections)
+Must include: search filtering on keystroke; at least one modal with form; stat cards with numbers + trend indicators (use text-primary / text-destructive + ArrowUp/ArrowDown, never literal emerald/red); ≥1 Recharts chart; 8–15 realistic records; empty state on no results; 4–6 sidebar nav items with lucide icons; active nav state; user avatar+name at sidebar bottom; responsive (sidebar hidden lg:flex, stats stack).
 
-EVERY APP must include:
-✓ Working search filtering on keystroke
-✓ At least one modal (add/edit/view) with form
-✓ Stats cards with numbers + trend indicators (↑12.3% in emerald, ↓2.1% in red)
-✓ At least one Recharts chart
-✓ 8-15 realistic data records
-✓ Empty state when search returns nothing
-✓ 4-6 sidebar nav items with lucide icons
-✓ Active state on current nav item
-✓ User avatar + name at sidebar bottom
-✓ Responsive: sidebar hidden on mobile, stats stack on small screens
+IF WEBSITE / LANDING / MARKETING (top nav + sections — NO sidebar):
+3. src/components/Navbar.tsx — logo + nav links + CTA, sticky, backdrop-blur
+4. src/components/Hero.tsx — bold headline (font-display), subcopy, primary + secondary CTA, a real gradient/SVG visual (no placeholder box)
+5+. Features, Pricing/Services, Testimonials/About, Contact, Footer — full-bleed scrolling sections
+Must include: strong hero, ≥3 content sections, real copy (not lorem), responsive layout, footer with links. Apply the SEO block fully.
 
-LAYOUT PATTERN:
-<div className="flex h-screen bg-zinc-950">
+LAYOUT PATTERN (dashboard — semantic tokens, NOT literal colors):
+<div className="flex h-screen bg-background text-foreground">
   <Sidebar currentSection={section} onNavigate={setSection} />
   <main className="flex-1 overflow-y-auto">
-    <header className="sticky top-0 z-10 bg-zinc-950/80 backdrop-blur-sm border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+    <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border px-6 py-4 flex items-center justify-between">
       <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
       <button className="...primary button..."><Plus size={16} /> Add New</button>
     </header>
@@ -712,7 +728,11 @@ NEVER truncate. NEVER "// ... rest". NEVER stop before all files output.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-□ Would this pass a design review at a top startup? Visual hierarchy, spacing, color.
+□ Does it look BESPOKE for this product — a custom palette + font pairing, not a generic dark dashboard?
+□ Did you define real tokens in index.css and use ONLY semantic classes? ZERO literal colors (no zinc/slate/indigo/white/black/#hex) in any className?
+□ Contrast checked — every foreground legible on its surface? No white-on-white / dark-on-dark?
+□ Real imagery (gradient/SVG/asset) — zero placeholder boxes?
+□ Would this pass a design review at a top startup? Visual hierarchy, spacing, type.
 □ Every button wired up? Every form submits? Every modal opens/closes?
 □ Data realistic? (diverse names, mixed statuses, decimal numbers, trend dips)
 □ Charts have realistic curves with dips? (not flat)
@@ -1355,6 +1375,34 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     }
     if (knowledgeContext) perRequestParts.push(knowledgeContext)
     if (templateRef) perRequestParts.push(templateRef)
+
+    // DESIGN SEED — freshness lever. We promise fresh code each time, so a fresh
+    // BUILD must not reuse one house style. For new web builds, nudge the model
+    // toward a distinct aesthetic direction (palette + type + layout). It is a
+    // STARTING POINT only and yields to any explicit user style/brand/colors.
+    if (!hasExisting && projectType === 'mobile' && stage !== 'plan') {
+      const MOBILE_DIRECTIONS = [
+        "Cash App-bold: near-black base, ONE vivid accent (lime/green or electric blue), huge numbers, minimal chrome.",
+        "Headspace-calm: warm light base (cream/off-white), soft rounded cards, a gentle accent (coral/peach or teal), lots of breathing room.",
+        "Notion-clean: light neutral base, near-black text, a single restrained accent, crisp dividers, content-first.",
+        "Strava-energetic: dark base with a punchy orange/red accent, bold stats, high-contrast.",
+        "Duolingo-playful: bright friendly base, rounded everything, a saturated primary (green/purple) + cheerful supporting colors.",
+        "Premium fintech: deep navy or charcoal base, refined teal/emerald accent, tabular numbers, subtle shadows.",
+        "Wellness sage: light sage/sand palette, organic rounded shapes, calm muted accent, airy spacing.",
+        "Luxury dark: true-black base, a champagne/gold accent, lots of negative space, elegant restraint.",
+      ]
+      const seed = MOBILE_DIRECTIONS[Math.floor(Math.random() * MOBILE_DIRECTIONS.length)]
+      perRequestParts.push(`\n\n━━━ DESIGN SEED (fresh build — make it bespoke) ━━━\nUnless the user named a specific style, brand, or colors, take THIS as your starting aesthetic and commit to it in theme.ts (choose a light or dark base + accent to match): ${seed}\nDo not default to a generic dark indigo app.`)
+    }
+    if (!hasExisting && projectType !== 'mobile' && stage !== 'plan') {
+      // Inject a complete, hand-tuned, domain-matched HSL token palette as a
+      // concrete DESIGN BRIEF (not vague adjectives). Guarantees every fresh
+      // build starts from a beautiful, accessible, distinct palette; freshness
+      // comes from picking a different one each build. Yields to explicit user
+      // colors/brand.
+      const { pickPalette, renderDesignBrief } = await import('@/lib/design-palettes')
+      perRequestParts.push(renderDesignBrief(pickPalette(prompt)))
+    }
 
     if (stage === 'plan') {
       staticSystemPrompt = "You are a software architect. Given an app request, output ONLY a JSON array of the files needed to build it. Each item must be {\"path\":\"src/...\",\"purpose\":\"short feature description\"}. List shell files (src/index.css, src/App.tsx, src/components/Sidebar.tsx) FIRST, then one file per feature. Aim for 5-9 files. Output ONLY the raw JSON array starting with [ and ending with ]. No prose, no markdown, no code fences."

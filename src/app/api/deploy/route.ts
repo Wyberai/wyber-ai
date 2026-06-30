@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { sendDeploySuccessEmail } from '@/lib/email';
 import { sanitizeFiles } from '@/lib/sanitize-files';
+import { scanForExposedSecrets } from '@/lib/security-scan';
+import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project';
 
 // Build scaffold files needed for Vercel to build the app
 function getBuildScaffold(framework: string, projectName: string): Record<string, string> {
@@ -125,7 +127,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { projectId, userId, files, projectName, framework = 'react-vite' } = await req.json();
+    const { projectId, userId, files, projectName, framework = 'react-vite', override = false } = await req.json();
 
     const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
     if (!VERCEL_TOKEN) {
@@ -173,9 +175,44 @@ export async function POST(req: NextRequest) {
     // <script> would be stripped by the build, same as the preview/publish path.
     const sanitized = sanitizeFiles(finalFiles as Record<string, string>);
 
+    // ── PUBLISH SECURITY GATE ────────────────────────────────────────────────
+    // 1. A server-only secret (service-role key, Stripe secret, private key)
+    //    embedded in client code is a guaranteed compromise — HARD block, no
+    //    override. This is deterministic and local, so it never false-blocks a
+    //    legit deploy on scanner failure.
+    const secretScan = scanForExposedSecrets(sanitized);
+    if (!secretScan.ok) {
+      return NextResponse.json({
+        blocked: true,
+        kind: 'secret',
+        message: 'Publish blocked: a secret key that must stay server-side is exposed in your shipped code.',
+        findings: secretScan.findings,
+      }, { status: 409 });
+    }
+
+    // 2. A connected database that leaks user data to the public anon key is the
+    //    CVE-2025-48757 failure mode. Block on CRITICAL findings unless the user
+    //    explicitly chose to publish anyway. Never block on scanner errors
+    //    (fail-open for availability — the gate is a safety net, not a wall).
+    if (!override && projectId) {
+      try {
+        const { connected, report } = await runProjectRlsScan(supabase, projectId, user.id, 'publish-gate');
+        if (connected && hasCriticalLeak(report)) {
+          return NextResponse.json({
+            blocked: true,
+            kind: 'rls',
+            message: 'Publish blocked: your database is leaking private data to anyone with your public key. Fix the row-level security issues below, or publish anyway.',
+            report,
+          }, { status: 409 });
+        }
+      } catch (e) {
+        console.warn('[deploy] RLS gate skipped (scan failed):', String(e));
+      }
+    }
+
     // Format for Vercel API (sanitizeFiles may add object-shaped entries)
     const vercelFiles = Object.entries(sanitized).map(([path, val]) => {
-      const content = typeof val === 'string' ? val : (val?.content ?? '');
+      const content = typeof val === 'string' ? val : ((val as { content?: string })?.content ?? '');
       return {
         file: path,
         data: Buffer.from(content).toString('base64'),

@@ -3,6 +3,9 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sanitizeFiles } from '@/lib/sanitize-files'
 import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
+import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
+import { extractImageDirectives, replaceTokenInFiles, gradientDataUri } from '@/lib/image-directives'
+import { generateAndPersistImage } from '@/lib/generate-image-persist'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { projectId } = await req.json()
+    const { projectId, override = false } = await req.json()
     const admin = createServiceClient()
 
     const { data: project } = await admin
@@ -54,12 +57,47 @@ export async function POST(req: NextRequest) {
       subdomain = await ensureUniqueSlug(base, admin)
     }
 
-    const sanitized = sanitizeFiles(project.files || {})
+    // Resolve image directives → real, PERSISTED images (fallback to a gradient
+    // so the live app is never broken). Tokens are replaced with permanent URLs
+    // and saved back, so re-publishing won't regenerate and the preview/editor
+    // now shows the real images too. Only runs when the build contains tokens.
+    let projectFiles = project.files || {}
+    const directives = extractImageDirectives(projectFiles)
+    if (directives.length > 0) {
+      for (const d of directives) {
+        let url: string | null = null
+        try { url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId) } catch { /* fall back */ }
+        projectFiles = replaceTokenInFiles(projectFiles, d.token, url || gradientDataUri(d.prompt, d.ratio))
+      }
+      try { await admin.from('projects').update({ files: projectFiles }).eq('id', projectId) } catch { /* non-critical */ }
+    }
+
+    const sanitized = sanitizeFiles(projectFiles)
 
     const secretScan = scanForExposedSecrets(sanitized)
     if (!secretScan.ok) {
       const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ')
       return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
+    }
+
+    // RLS gate: if the connected database leaks private data to the public anon
+    // key (the CVE-2025-48757 failure mode), block on CRITICAL findings unless
+    // the user explicitly chose to publish anyway. Never block on scanner errors
+    // (fail-open — the gate is a safety net, not a wall).
+    if (!override) {
+      try {
+        const { connected, report } = await runProjectRlsScan(supabase, projectId, user.id, 'publish-gate')
+        if (connected && hasCriticalLeak(report)) {
+          return NextResponse.json({
+            blocked: true,
+            kind: 'rls',
+            message: 'Publish blocked: your database is leaking private data to anyone with your public key. Fix the row-level security issues, or publish anyway.',
+            report,
+          }, { status: 409 })
+        }
+      } catch (e) {
+        console.warn('[publish] RLS gate skipped (scan failed):', String(e))
+      }
     }
 
     // Build the app via Railway
