@@ -68,10 +68,14 @@ export function Footer() {
         {/* Bottom row */}
         <div style={{ paddingTop: 20, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
           <p style={{ fontSize: 12, color: 'var(--text3)' }}>© 2026 SignalPulse Technologies LLC. All rights reserved.</p>
-          <div style={{ display: 'flex', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             {[['Privacy','/privacy'],['Terms','/terms'],['Cookies','/cookies']].map(([l,h]) => (
               <Link key={h} href={h} style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 400 }}>{l}</Link>
             ))}
+            <a href="https://turbo0.com/item/wyberai" target="_blank" rel="noopener noreferrer">
+              <img src="https://img.turbo0.com/badge-listed-dark.svg" alt="Listed on Turbo0" className="turbo0-badge-dark" style={{ height: 28, width: 'auto' }} />
+              <img src="https://img.turbo0.com/badge-listed-light.svg" alt="Listed on Turbo0" className="turbo0-badge-light" style={{ height: 28, width: 'auto' }} />
+            </a>
           </div>
         </div>
       </div>
