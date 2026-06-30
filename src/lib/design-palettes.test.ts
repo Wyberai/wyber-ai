@@ -50,6 +50,14 @@ describe('design-palettes — pickPalette', () => {
     expect(PALETTES).toContain(p)
   })
 
+  it('does NOT narrow on generic keywords (todo/app/dashboard) — uses the full pool for variety', () => {
+    // 'app'/'dashboard' are weak → full pool, so index 0 is the first palette
+    // overall, NOT one of the indigo saas palettes. Proves generic apps vary.
+    expect(pickPalette('a simple todo app dashboard', () => 0).id).toBe(PALETTES[0].id)
+    // and a strong vertical still narrows correctly
+    expect(pickPalette('a health tracker app', () => 0).domains).toContain('health')
+  })
+
   it('is deterministic given a fixed RNG', () => {
     const a = pickPalette('a wellness meditation app', () => 0.0)
     const b = pickPalette('a wellness meditation app', () => 0.0)

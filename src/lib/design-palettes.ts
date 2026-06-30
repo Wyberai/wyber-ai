@@ -143,10 +143,23 @@ export const PALETTES: Palette[] = [
 
 const SANS_FALLBACK = "ui-sans-serif, system-ui, sans-serif"
 
-/** Pick a palette: domain-matched when the prompt hints a vertical, else random. */
+// Generic/structural keywords that describe ANY app, not a vertical. These must
+// NOT narrow the palette pool — otherwise "todo app" / "dashboard" always lands
+// on the same (indigo) SaaS palettes and every build looks identical. Only a
+// STRONG vertical signal (finance, health, food, luxury…) narrows the pool;
+// everything else gets the full 12-palette spread for real per-build variety.
+const WEAK_DOMAINS = new Set([
+  'saas', 'dashboard', 'tool', 'startup', 'landing', 'product', 'app',
+  'admin', 'platform', 'internal', 'b2b', 'enterprise', 'website', 'site',
+])
+
+/** Pick a palette: narrow to a vertical only on a STRONG domain hint, else full
+ *  pool (random) so generic apps get fresh colors each build. */
 export function pickPalette(prompt: string, rnd: () => number = Math.random): Palette {
   const p = (prompt || '').toLowerCase()
-  const matched = PALETTES.filter((pal) => pal.domains.some((d) => p.includes(d)))
+  const matched = PALETTES.filter((pal) =>
+    pal.domains.some((d) => !WEAK_DOMAINS.has(d) && p.includes(d)),
+  )
   const pool = matched.length > 0 ? matched : PALETTES
   return pool[Math.floor(rnd() * pool.length)]
 }
