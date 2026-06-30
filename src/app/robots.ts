@@ -18,6 +18,7 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'CCBot', allow: '/', disallow: DISALLOW },
       { userAgent: 'Google-Extended', allow: '/', disallow: DISALLOW },
       { userAgent: 'Bytespider', allow: '/', disallow: DISALLOW },
+      { userAgent: 'Bravebot', allow: '/', disallow: DISALLOW },
     ],
     sitemap: 'https://wyberai.com/sitemap.xml',
   }
