@@ -4,21 +4,21 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { USE_CASES } from './[slug]/data'
 
 export const metadata: Metadata = {
-  title: 'Use Cases — Build Web Apps, Mobile Apps, AI Agents & Workflows | WyberAi',
-  description: 'Explore how WyberAi helps you build web apps, mobile apps, AI agents, and workflow automations from plain English — no code required.',
+  title: 'Use Cases — Build Web Apps & Mobile Apps | WyberAi',
+  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English — no code required.',
   alternates: { canonical: 'https://wyberai.com/use-cases' },
-  openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps, mobile apps, AI agents, and workflows from plain English. No code required.' },
+  openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
 }
 
 const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.08)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', green: '#10b981', amber: '#f59e0b', violet: '#8b5cf6' }
 
-const PILLAR_COLORS: Record<string, string> = { web: s.sky, mobile: s.violet, agents: s.green, workflows: s.amber }
+const PILLAR_COLORS: Record<string, string> = { web: s.sky, mobile: s.violet }
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   name: 'WyberAi Use Cases',
-  description: 'Explore how WyberAi helps you build web apps, mobile apps, AI agents, and workflow automations from plain English.',
+  description: 'Explore how WyberAi helps you build web apps and mobile apps from plain English.',
   url: 'https://wyberai.com/use-cases',
 }
 
@@ -40,12 +40,12 @@ export default function UseCasesIndex() {
             What can you build with WyberAi?
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
-            From web dashboards to mobile apps, AI agents, and workflow automations — all from plain English, no coding required.
+            From web dashboards to mobile apps — all from plain English, no coding required.
           </p>
         </header>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {USE_CASES.map(uc => {
+          {USE_CASES.filter(uc => uc.pillar === 'web' || uc.pillar === 'mobile').map(uc => {
             const color = PILLAR_COLORS[uc.pillar] ?? s.sky
             return (
               <Link key={uc.slug} href={`/use-cases/${uc.slug}`} style={{ display: 'block', background: s.card, border: `1px solid ${s.border}`, borderRadius: 14, padding: 'clamp(18px,3vw,28px)', textDecoration: 'none', color: 'inherit' }}>

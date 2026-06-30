@@ -3,9 +3,9 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
-  description: 'WyberAi vs Lovable: six products (web apps, mobile apps, AI agents, workflows, AI employees, GTM engine) vs Lovable\'s web-only builder. Verified June 2026.',
+  description: 'WyberAi vs Lovable: fresh code every build, web + mobile apps, self-healing builds, 48 integrations, and GitHub ownership. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/lovable' },
-  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Six products vs one. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
+  openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Fresh code, web + mobile, self-healing builds. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
 }
 
 const ROWS = [
@@ -37,8 +37,8 @@ const FAQS = [
     a: 'Correct. Lovable generates React web apps only. WyberAi also generates full React Native + Expo mobile apps that run on iOS and Android. You can scan a QR code to preview on your phone instantly.',
   },
   {
-    q: 'Does WyberAi have AI agents like Lovable?',
-    a: 'WyberAi has a dedicated AI agent builder with 250+ integrations (Gmail, Slack, HubSpot, Airtable, and more), schedules, and conditional logic. Lovable does not offer an agent builder.',
+    q: 'Does WyberAi build mobile apps? Lovable doesn\'t.',
+    a: 'WyberAi builds both web and mobile apps (React Native + Expo) from the same workspace. Lovable only builds web apps. WyberAi also includes self-healing builds that auto-fix errors, so your app ships clean every time.',
   },
   {
     q: 'Which is better for non-technical founders?',
@@ -57,7 +57,7 @@ export default function VsLovable() {
       competitorName="Lovable"
       competitorUrl="https://lovable.dev"
       tagline="Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 48 integrations that Lovable doesn't have."
-      blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and the six-product difference. Verified June 2026."
+      blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
       pillarNote="Lovable builds web apps only."

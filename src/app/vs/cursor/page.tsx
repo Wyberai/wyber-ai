@@ -15,8 +15,8 @@ const ROWS = [
   { feature: 'Coding required',         wyber: 'None',                     other: '✓ Full IDE',               winner: 'wyber' as const },
   { feature: 'App generation speed',    wyber: 'A few minutes',            other: 'Hours (code-assisted)',    winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗ (editor only)',          winner: 'wyber' as const },
-  { feature: 'AI agent builder',        wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
-  { feature: 'Workflow automation',     wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
+  { feature: 'Self-healing builds',      wyber: '✓ Auto-fixes errors',      other: '✗',                        winner: 'wyber' as const },
+  { feature: '48 integrations',         wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
   { feature: 'Code generation',    wyber: 'Always fresh AI code',           other: 'None',                     winner: 'wyber' as const },
   { feature: 'Live preview',            wyber: '✓ Real-time',              other: 'Run locally',              winner: 'wyber' as const },
   { feature: 'One-click deploy',        wyber: '✓ Vercel',                 other: '✗ Manual deploy',          winner: 'wyber' as const },
@@ -50,8 +50,8 @@ const FAQS = [
     a: 'Yes — many do. Use WyberAi to generate the initial app fast, export the source code, then open it in Cursor for deeper customization. You get the speed of Wyber with the control of a full IDE.',
   },
   {
-    q: 'Does WyberAi have AI agents? Cursor doesn\'t.',
-    a: 'WyberAi includes a dedicated agent builder with 250+ integrations and workflow automation. Cursor is an editor only — it doesn\'t run autonomous agents or automations.',
+    q: 'Does WyberAi have self-healing builds?',
+    a: 'Yes. When a build hits an error, WyberAi automatically detects and fixes it. Cursor is an editor — it helps you write code but doesn\'t build or auto-fix apps.',
   },
 ]
 
@@ -61,11 +61,11 @@ export default function VsCursor() {
       slug="cursor"
       competitorName="Cursor"
       competitorUrl="https://cursor.com"
-      tagline="Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete apps in minutes, plus mobile, agents, and workflows."
+      tagline="Cursor is the AI code editor developers love. WyberAi is the no-code app builder non-technical founders need — complete web + mobile apps in minutes with self-healing builds."
       blurb="Honest comparison of WyberAi vs Cursor: no-code app generation vs AI-assisted coding. Who each tool is built for. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}
-      pillarNote="Cursor is a code editor — it has no app generation, mobile builder, agent builder, or workflow automation."
+      pillarNote="Cursor is a code editor — it has no app generation or mobile builder."
       competitorKey="cursor"
     />
   )

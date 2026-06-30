@@ -50,10 +50,11 @@ CREDITS & PLANS:
 - Credit estimate shown before every generation — no surprises
 
 vs COMPETITORS:
-- Wyber covers 6 products (web, mobile, agents, workflows, AI employees, GTM engine) vs competitors covering 1-2
-- Lovable, Bolt, v0 build web apps only — no AI Employees, no workflows
+- Wyber generates fresh code from scratch every time — not templates
+- Wyber does web AND mobile apps; Lovable, Bolt are web-only
 - v0 by Vercel generates UI components only — not full apps
 - Replit is a full cloud IDE — powerful for developers, complex for non-technical users
+- Self-healing builds — AI catches and fixes its own errors automatically
 
 DONE-FOR-YOU (book at wyberai.com/setup-call):
 - $99 consultation — scope the app, get a firm quote and delivery date

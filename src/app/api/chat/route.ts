@@ -18,11 +18,6 @@ TWO PRODUCTS (live now):
 1. 🌐 Web Apps — Describe any app. AI generates React + Tailwind code, previews live, deploys to Vercel. Connect Supabase for database/auth. Takes a few minutes.
 2. 📱 Mobile Apps — Describe screens and features. AI generates React Native + Expo apps. Preview on your phone via Expo Go (QR code).
 
-COMING SOON (join waitlist at wyberai.com/coming-soon):
-- AI Employees — agentic department heads with memory and reasoning
-- Workflows — visual automations with AI at every step
-- GTM Engine — ICP targeting, lead gen, multi-channel outreach
-
 HELPING USERS:
 - Web App stuck? Describe what you want in the chat, wait for preview, then iterate with edits
 - Mobile App stuck? Describe screens, install Expo Go on your phone, scan QR to preview
@@ -42,10 +37,8 @@ DONE-FOR-YOU BUILDS:
 - Book at wyberai.com/setup-call
 
 COMPARED TO COMPETITORS:
-- vs Lovable: Wyber has 6 products (apps, mobile, agents, workflows, AI employees, GTM). Lovable is apps only. Wyber starts at $29/mo and covers everything a startup needs to build and grow.
-- vs Bolt: Similar app generation, but no agents or automations.
-- vs Zapier/Make: Wyber adds AI reasoning to every automation step. Not just connect-the-dots but intelligent decision-making.
-- vs Taskade: Both do apps + agents + automations. Wyber has a larger agent library (5,000 vs templates).
+- vs Lovable: Wyber generates fresh code from scratch (not templates), does web AND mobile apps, self-heals build errors, and you own the code on GitHub. Starts at $29/mo.
+- vs Bolt: Similar app generation, but Wyber also does mobile apps, self-healing builds, and 48 built-in integrations.
 
 HOW TO GET STARTED:
 1. Sign up free at wyberai.com — no credit card
@@ -78,7 +71,7 @@ export async function POST(req: NextRequest) {
     const { allowed } = rateLimit(`chat:${user.id}`, 20, 60000)
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please wait a minute.' }, { status: 429 })
 
-    const { messages, systemOverride } = await req.json()
+    const { messages } = await req.json()
     if (!messages?.length) {
       return new Response('Messages required', { status: 400 })
     }
@@ -87,9 +80,9 @@ export async function POST(req: NextRequest) {
     const recentMessages = messages.slice(-10)
 
     const stream = await anthropic.messages.stream({
-      model: systemOverride ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
-      max_tokens: systemOverride ? 1000 : 400,
-      system: systemOverride || SYSTEM,
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 400,
+      system: SYSTEM,
       messages: recentMessages,
     })
 
