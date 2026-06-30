@@ -46,7 +46,10 @@ export async function GET(req: NextRequest) {
       body: JSON.stringify({ domains: [name] }),
     })
     const availData = await availRes.json()
-    if (!availRes.ok) return NextResponse.json({ error: availData.message || 'Availability check failed' }, { status: 500 })
+    if (!availRes.ok) {
+      console.error('[domain/search] availability check failed', availRes.status, JSON.stringify(availData))
+      return NextResponse.json({ error: availData.message || availData.error?.message || `Availability check failed (${availRes.status})` }, { status: 500 })
+    }
 
     const available = Boolean(availData.results?.[0]?.available)
 
@@ -59,7 +62,10 @@ export async function GET(req: NextRequest) {
       headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
     })
     const priceData = await priceRes.json()
-    if (!priceRes.ok) return NextResponse.json({ error: priceData.message || 'Price lookup failed' }, { status: 500 })
+    if (!priceRes.ok) {
+      console.error('[domain/search] price lookup failed', priceRes.status, JSON.stringify(priceData))
+      return NextResponse.json({ error: priceData.message || priceData.error?.message || `Price lookup failed (${priceRes.status})` }, { status: 500 })
+    }
 
     const dollars = extractDollars(priceData.purchasePrice)
 
@@ -70,6 +76,7 @@ export async function GET(req: NextRequest) {
       period: priceData.years ?? 1,
     })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('[domain/search] unexpected error', err)
+    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
 }
