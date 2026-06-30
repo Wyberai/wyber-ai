@@ -158,7 +158,9 @@ export async function POST(req: NextRequest) {
             .single()
           if (!purchaseRow?.contact_info) throw new Error('No contact_info stored for this purchase')
 
-          const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+          // WYBERAI_DOMAINS is a separately-scoped token with Vercel Registrar API
+          // access (the original VERCEL_TOKEN lacked the right scope for it).
+          const VERCEL_TOKEN = process.env.WYBERAI_DOMAINS || process.env.VERCEL_TOKEN
           const VERCEL_TEAM = process.env.VERCEL_TEAM_ID
           const teamQ = VERCEL_TEAM ? `?teamId=${VERCEL_TEAM}` : ''
           // Old v4/v5 domains/buy was sunset Nov 9 2025 → Registrar API, which

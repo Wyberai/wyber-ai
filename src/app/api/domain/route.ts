@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+// WYBERAI_DOMAINS is a separately-scoped token with Vercel Registrar API access
+// (the original VERCEL_TOKEN lacked the right scope/permissions for it).
+const VERCEL_TOKEN = process.env.WYBERAI_DOMAINS || process.env.VERCEL_TOKEN
 const VERCEL_TEAM = process.env.VERCEL_TEAM_ID
 
 export async function POST(req: NextRequest) {

@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       
       if (verified) {
         // Register domain with Vercel so it routes correctly
-        const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+        const VERCEL_TOKEN = process.env.WYBERAI_DOMAINS || process.env.VERCEL_TOKEN
         const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID
         const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_pTqy3kMHCQ6CTOrkbCXVuCETb0bZ'
         
