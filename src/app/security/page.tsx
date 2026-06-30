@@ -12,6 +12,9 @@ const CHECKS = [
   { icon: '◎', title: 'Isolated workspaces', desc: 'Each project is logically separated. No cross-account data access is possible.' },
   { icon: '↻', title: 'Continuous monitoring', desc: 'Platform activity monitored for anomalous behavior and abuse in real time.' },
   { icon: '💳', title: 'Dodo Payments — PCI DSS', desc: 'All payments processed by Dodo Payments. We never touch or store card numbers. PCI DSS compliant checkout.' },
+  { icon: '🛰', title: 'Single Sign-On', desc: 'SAML and OIDC SSO for Enterprise orgs, so access follows your identity provider — not a separate password.' },
+  { icon: '👥', title: 'Org roles & permissions', desc: 'Owner, admin, member, and viewer roles enforce who can deploy, invite, or manage settings at the org level.' },
+  { icon: '📋', title: 'Audit logs', desc: 'Every org-level action — invites, role changes, project deploys — is logged with who, what, and when.' },
 ];
 const COMPLIANCE = [
   { label: 'HTTPS / TLS 1.3', ok: true },
@@ -21,8 +24,10 @@ const COMPLIANCE = [
   { label: 'Automatic security scan on deploy', ok: true },
   { label: 'PCI DSS compliant payments (Dodo Payments)', ok: true },
   { label: 'GDPR compliant', ok: true },
-  { label: 'SOC 2 Type II', ok: false, note: 'In progress' },
-  { label: 'ISO 27001', ok: false, note: 'Planned' },
+  { label: 'SSO (SAML / OIDC) — Enterprise', ok: true },
+  { label: 'Org-level audit logs — Enterprise', ok: true },
+  { label: 'SOC 2 Type II', ok: false, note: 'On our roadmap' },
+  { label: 'ISO 27001', ok: false, note: 'On our roadmap' },
 ];
 export default function SecurityPage() {
   return (
@@ -52,6 +57,10 @@ export default function SecurityPage() {
               {c.note && <span style={{ fontSize:11, color:'var(--text3)' }}>{c.note}</span>}
             </div>
           ))}
+        </div>
+        <div style={{ maxWidth:640, padding:'28px 32px', borderRadius:16, background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.2)', marginBottom:24 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'var(--amber)', marginBottom:10 }}>RLS Trust Scanner</div>
+          <p style={{ fontSize:14, color:'var(--text2)', lineHeight:1.8, margin:0 }}>Most app builders generate database access rules and hope they're right. We scan every project's live database the same way an attacker would — using the public anon key — and flag tables that are readable or writable without proper Row Level Security, before you ship. It's built into every project's Security tab, not a one-time audit you have to remember to run.</p>
         </div>
         <div style={{ maxWidth:640, padding:'28px 32px', borderRadius:16, background:'var(--sky3)', border:'1px solid rgba(14,165,233,0.2)' }}>
           <div style={{ fontSize:13, fontWeight:700, color:'var(--sky)', marginBottom:10 }}>Our commitment</div>
