@@ -104,6 +104,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [view, setView] = useState<'all' | 'web' | 'mobile'>('all');
   const searchParams = useSearchParams();
 
+  // Reddit pixel: fire SignUp conversion once per user session
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (window as any).rdt && !sessionStorage.getItem('rdt_signup_fired')) {
+      (window as any).rdt('track', 'SignUp');
+      sessionStorage.setItem('rdt_signup_fired', '1');
+    }
+  }, []);
+
   // Deep-link: /dashboard?new=app|mobile|agent|workflow → open chooser
   // When ?template= is present for mobile, the type is already known — skip chooser.
   useEffect(() => {
