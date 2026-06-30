@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json() as {
-    program: 'blood_donor' | 'build_in_public' | 'accessibility' | 'open_source' | 'follow_linkedin' | 'follow_reddit' | 'review_taaft'
+    program: 'blood_donor' | 'build_in_public' | 'accessibility' | 'open_source' | 'follow_linkedin' | 'follow_reddit' | 'review_producthunt'
     proof_url?: string
     proof_text?: string
   }
@@ -44,11 +44,11 @@ export async function POST(req: NextRequest) {
     open_source: { bonus_credits: 0, bonus_type: '30% discount on plan' },
     follow_linkedin: { bonus_credits: 25, bonus_type: '25 bonus credits' },
     follow_reddit: { bonus_credits: 25, bonus_type: '25 bonus credits' },
-    review_taaft: { bonus_credits: 50, bonus_type: '50 bonus credits' },
+    review_producthunt: { bonus_credits: 50, bonus_type: '50 bonus credits' },
   }
 
   // Programs that grant credits automatically once a proof URL is supplied.
-  const AUTO_APPROVE = new Set(['build_in_public', 'follow_linkedin', 'follow_reddit', 'review_taaft'])
+  const AUTO_APPROVE = new Set(['build_in_public', 'follow_linkedin', 'follow_reddit', 'review_producthunt'])
 
   const program = PROGRAMS[body.program]
   if (!program) return NextResponse.json({ error: 'Unknown program' }, { status: 400 })
