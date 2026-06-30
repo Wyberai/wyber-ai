@@ -83,6 +83,11 @@ OUTPUT FORMAT: Plain text. No markdown headers. No bullet lists. Just conversati
 
 export async function POST(req: NextRequest) {
   try {
+    const { createClient } = await import('@/lib/supabase/server')
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return new Response('Unauthorized', { status: 401 })
+
     const { messages, canvasType, projectId } = await req.json()
 
     // Get the last user message to search agents
