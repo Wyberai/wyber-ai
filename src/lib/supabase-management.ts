@@ -159,3 +159,26 @@ export async function listTablesWithoutRls(token: string, ref: string): Promise<
   ) as { relname: string }[]
   return Array.isArray(rows) ? rows.map(r => r.relname) : []
 }
+
+/**
+ * Read-only check (no data is mutated): public-schema tables that have a
+ * PERMISSIVE write policy open to the anon/public role with an effectively
+ * unrestricted check — i.e. an anonymous visitor can INSERT/UPDATE/DELETE rows.
+ * This is the write-side counterpart to the anon read probe; doing it via the
+ * Management API avoids any destructive probe against the live table.
+ */
+export async function listAnonWritableTables(token: string, ref: string): Promise<string[]> {
+  const rows = await runSql(
+    token,
+    ref,
+    `select distinct p.tablename
+     from pg_policies p
+     where p.schemaname = 'public'
+       and p.permissive = 'PERMISSIVE'
+       and p.cmd in ('ALL','INSERT','UPDATE','DELETE')
+       and (p.roles = '{public}' or 'anon' = any(p.roles) or 'public' = any(p.roles))
+       and coalesce(btrim(p.with_check, '()'), 'true') in ('true','')
+       and coalesce(btrim(p.qual, '()'), 'true') in ('true','');`
+  ) as { tablename: string }[]
+  return Array.isArray(rows) ? rows.map(r => r.tablename) : []
+}

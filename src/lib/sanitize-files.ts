@@ -5,6 +5,7 @@
 // index.html". This normalizes paths and resolves file-vs-directory collisions.
 
 import { collectMissingStubs } from './stub-missing-imports'
+import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -55,19 +56,26 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
     const fileContent = (v: FileVal | undefined): string =>
       v == null ? '' : typeof v === 'string' ? v : (v.content ?? '')
 
-    // 1. index.css must carry the @tailwind directives (keep any existing reset).
+    // 1. index.css must carry the @tailwind directives AND the design-system
+    //    tokens. Apps style themselves with semantic classes (bg-primary,
+    //    text-foreground, …) whose values come from per-app HSL tokens; if the
+    //    model forgot to define them, inject sane defaults so the app is never
+    //    unstyled and `hsl(var(--…))` never resolves to nothing. (Keep any
+    //    existing reset / tokens the model wrote — defaults only fill the gap.)
     const TW_DIRECTIVES = '@tailwind base;\n@tailwind components;\n@tailwind utilities;'
     const css = fileContent(out['src/index.css'])
-    if (!css.includes('@tailwind')) {
-      out['src/index.css'] = { content: `${TW_DIRECTIVES}\n${css}`.trim() + '\n', language: 'css' }
+    let nextCss = css
+    if (!nextCss.includes('@tailwind')) nextCss = `${TW_DIRECTIVES}\n${nextCss}`
+    if (!/--background\s*:/.test(nextCss)) nextCss = `${nextCss.trimEnd()}\n\n${DEFAULT_TOKENS_CSS}`
+    if (nextCss !== css) {
+      out['src/index.css'] = { content: nextCss.trim() + '\n', language: 'css' }
     }
 
-    // 2. tailwind + postcss config so the builder's PostCSS pass compiles utilities.
+    // 2. tailwind + postcss config so the builder's PostCSS pass compiles
+    //    utilities. The config maps the semantic token names → classes (shared
+    //    with the preview engine via design-system.ts so preview == published).
     if (!['tailwind.config.js', 'tailwind.config.ts', 'tailwind.config.cjs'].some(p => p in out)) {
-      out['tailwind.config.js'] = {
-        content: `export default {\n  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],\n  theme: { extend: {} },\n  plugins: [],\n}\n`,
-        language: 'javascript',
-      }
+      out['tailwind.config.js'] = { content: TAILWIND_CONFIG_FILE, language: 'javascript' }
     }
     if (!['postcss.config.js', 'postcss.config.cjs'].some(p => p in out)) {
       out['postcss.config.js'] = {
@@ -140,6 +148,7 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>App</title>
+    ${GOOGLE_FONTS_LINKS}
   </head>
   <body>
     <div id="root"></div>

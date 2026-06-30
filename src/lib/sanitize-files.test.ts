@@ -59,10 +59,22 @@ describe('sanitizeFiles — guarantees Tailwind compile inputs (BUG-1)', () => {
     expect(css.indexOf('@tailwind')).toBeLessThan(css.indexOf(reset))
   })
 
-  it('does not duplicate directives when index.css already has them', () => {
+  it('does not duplicate @tailwind directives, but injects default tokens when missing', () => {
     const css = '@tailwind base;\n@tailwind components;\n@tailwind utilities;\nbody{}'
     const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'src/index.css': { content: css } })
-    expect(contentOf(out['src/index.css'])).toBe(css)
+    const result = contentOf(out['src/index.css'])
+    expect(result.match(/@tailwind base/g)?.length).toBe(1) // directives appear exactly once
+    expect(result).toContain('body{}')                       // original reset preserved
+    expect(result).toContain('--background:')                // default semantic tokens injected
+    expect(result).toContain('--primary:')
+  })
+
+  it('does NOT inject default tokens when the app already defines them', () => {
+    const css = '@tailwind base;\n:root { --background: 220 40% 6%; --primary: 245 80% 60%; }'
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'src/index.css': { content: css } })
+    const result = contentOf(out['src/index.css'])
+    expect(result).toContain('220 40% 6%')   // the app's own value survives
+    expect(result).not.toContain('0 0% 100%') // default light value not appended
   })
 
   it('creates tailwind.config.js and postcss.config.js when absent', () => {
@@ -70,6 +82,9 @@ describe('sanitizeFiles — guarantees Tailwind compile inputs (BUG-1)', () => {
     expect('tailwind.config.js' in out).toBe(true)
     expect('postcss.config.js' in out).toBe(true)
     expect(contentOf(out['tailwind.config.js'])).toContain('./src/**/*.{js,ts,jsx,tsx}')
+    // maps semantic tokens → classes so bg-primary / text-foreground compile
+    expect(contentOf(out['tailwind.config.js'])).toContain('hsl(var(--primary))')
+    expect(contentOf(out['tailwind.config.js'])).toContain('hsl(var(--background))')
     expect(contentOf(out['postcss.config.js'])).toContain('tailwindcss')
     expect(contentOf(out['postcss.config.js'])).toContain('autoprefixer')
   })

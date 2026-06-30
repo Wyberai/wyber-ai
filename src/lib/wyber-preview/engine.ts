@@ -19,6 +19,9 @@
  *   App renders at full screen
  */
 
+import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/lib/design-system'
+import { resolveDirectivesForPreview } from '@/lib/image-directives'
+
 export interface PreviewFile {
   content: string
   path: string
@@ -126,10 +129,12 @@ export async function bundleFiles(
   try {
     const esbuild = await getEsbuild()
 
-    // Normalize all file paths
+    // Normalize all file paths, and resolve any image directives to a gradient
+    // data URI so the preview shows a tasteful placeholder (never a broken image
+    // or literal {{wyber-image}} text). Real images are generated at publish.
     const normalizedFiles: Record<string, string> = {}
     for (const [path, content] of Object.entries(files)) {
-      normalizedFiles[normalizeFilePath(path)] = content
+      normalizedFiles[normalizeFilePath(path)] = resolveDirectivesForPreview(content)
     }
 
     // Find entry point
@@ -288,16 +293,24 @@ ${js}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wyber Preview</title>
-  <!-- Tailwind Play CDN: the generator styles apps with Tailwind utility classes
-       (see system prompt), so the preview must load Tailwind or every className
-       resolves to nothing and the app renders unstyled. Published apps get this
-       via their index.html; the preview builds its own shell, so add it here too. -->
+  ${GOOGLE_FONTS_LINKS}
+  <!-- Tailwind Play CDN + the SHARED semantic-token config. Apps are styled with
+       semantic classes (bg-primary, text-foreground, border-border, …) whose values
+       come from per-app HSL tokens in src/index.css — so each app looks bespoke.
+       The same token names + config are used by the compiled publish build
+       (src/lib/design-system.ts), so preview and published app render identically.
+       Published apps load Tailwind via their compiled CSS; the preview builds its
+       own shell, so load the CDN + config here. -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = ${PREVIEW_TAILWIND_CONFIG};</script>
   <script type="importmap">${importmap}</script>
   <style>
+    /* Default token values — a safety net so previews are never unstyled before
+       the app's own index.css (injected below) overrides them. */
+    ${TOKEN_VARS_CSS}
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body, #root { height: 100%; width: 100%; }
-    body { background: #09090b; color: #fafafa; font-family: 'Space Grotesk', sans-serif; }
+    body { background: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--font-sans, 'Inter', ui-sans-serif, system-ui, sans-serif); -webkit-font-smoothing: antialiased; }
   </style>
   <style id="app-styles">${css}</style>
 </head>
