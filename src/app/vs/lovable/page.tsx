@@ -24,6 +24,7 @@ const ROWS = [
   { feature: 'Vercel deployment',       wyber: '✓',              other: '✓',               winner: 'tie'   as const },
   { feature: 'Custom subdomain',        wyber: '✓',              other: 'Pro+',            winner: 'wyber' as const },
   { feature: 'Real-time collaboration', wyber: 'Roadmap',        other: '✓',               winner: 'other' as const },
+  { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
   { feature: 'India/APAC pricing',      wyber: '✓ INR soon',     other: 'USD only',        winner: 'wyber' as const },
 ]
 
@@ -47,6 +48,10 @@ const FAQS = [
   {
     q: 'Can I switch from Lovable to WyberAi?',
     a: 'Yes. Export your code from Lovable (it\'s standard React + Vite), paste the files into a Wyber project, and continue iterating. Or start a new project — most apps generate in minutes.',
+  },
+  {
+    q: 'Does WyberAi check my database for security holes?',
+    a: 'Yes. WyberAi runs a live RLS (Row Level Security) trust scan on every published app — it probes your actual Supabase database using the public anon key, the same way an attacker would, to confirm other users\' data is actually locked down. This catches misconfigured RLS policies before they ship, not after a breach. It\'s not a static linter; it\'s a real query against your live database.',
   },
 ]
 

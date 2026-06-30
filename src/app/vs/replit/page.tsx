@@ -25,6 +25,7 @@ const ROWS = [
   { feature: 'Persistent backend',      wyber: 'Via Supabase',             other: '✓ Native',                winner: 'other' as const },
   { feature: '50+ language support',    wyber: 'Web/mobile apps (JS)',     other: '✓',                       winner: 'other' as const },
   { feature: 'Custom subdomain',        wyber: '✓',                        other: 'Core+',                   winner: 'wyber' as const },
+  { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
   { feature: 'India/APAC pricing',      wyber: '✓ INR soon',               other: 'USD only',                winner: 'wyber' as const },
 ]
 

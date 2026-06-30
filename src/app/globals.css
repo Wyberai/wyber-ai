@@ -502,3 +502,6 @@ input, textarea, select { font-family: var(--font-sans); }
   --mkt-border:  rgba(0,0,0,0.08);
   --mkt-border2: rgba(0,0,0,0.14);
 }
+.turbo0-badge-light { display: none; }
+[data-theme="light"] .turbo0-badge-dark  { display: none; }
+[data-theme="light"] .turbo0-badge-light { display: inline; }

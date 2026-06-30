@@ -26,6 +26,7 @@ const ROWS = [
   { feature: 'Vercel deployment',       wyber: '✓',                 other: '✓',                 winner: 'tie'   as const },
   { feature: 'Non-technical users',     wyber: '✓ Guided',          other: 'Developer-focused', winner: 'wyber' as const },
   { feature: 'Team collaboration',      wyber: '✓ Built-in',       other: '✓ Teams plan',      winner: 'other' as const },
+  { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
   { feature: 'India/APAC pricing',      wyber: '✓ INR soon',        other: 'USD only',          winner: 'wyber' as const },
 ]
 

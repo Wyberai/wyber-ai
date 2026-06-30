@@ -19,6 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/use-cases/build-mobile-app-with-ai`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/use-cases/ai-agent-builder-no-code`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/use-cases/build-saas-without-code`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${base}/use-cases/secure-ai-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/use-cases/ai-workflow-automation`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${base}/use-cases/no-code-web-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/use-cases/ai-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },

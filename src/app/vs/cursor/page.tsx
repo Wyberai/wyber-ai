@@ -26,6 +26,7 @@ const ROWS = [
   { feature: 'Free tier',               wyber: '50 credits/month',         other: '2-week trial',             winner: 'wyber' as const },
   { feature: 'Supabase integration',    wyber: '✓ Auto',                   other: 'Manual setup',             winner: 'wyber' as const },
   { feature: 'GitHub sync',             wyber: '✓',                        other: '✓',                        winner: 'tie'   as const },
+  { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
 ]
 
 const FAQS = [

@@ -24,6 +24,7 @@ const ROWS = [
   { feature: 'Code generation',     wyber: 'Always fresh AI code',         other: 'Component library',     winner: 'wyber' as const },
   { feature: 'Non-technical users',      wyber: '✓ Guided',               other: 'Developer-focused',     winner: 'wyber' as const },
   { feature: 'Free tier',                wyber: '50 credits/month',       other: 'Limited free',          winner: 'tie'   as const },
+  { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },
   { feature: 'India/APAC pricing',       wyber: '✓ INR soon',             other: 'USD only',              winner: 'wyber' as const },
 ]
 

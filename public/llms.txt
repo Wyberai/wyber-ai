@@ -1,0 +1,31 @@
+# WyberAi
+
+> WyberAi is an AI app builder: describe what you want in plain English and it generates production-ready web and mobile apps — live preview, one-click deploy, no engineers needed. Maker: SignalPulse Technologies.
+
+WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on shipping apps with real Supabase-backed auth, data, and a security scanner (RLS trust scan) that checks the live database the way an attacker would, not a static linter.
+
+## Product
+- [Homepage](https://wyberai.com): overview, pricing, live builder
+- [Pricing](https://wyberai.com/pricing): plans and credits
+- [Templates](https://wyberai.com/templates): prebuilt app templates to start from
+- [Gallery](https://wyberai.com/gallery): apps built with WyberAi
+- [Docs](https://wyberai.com/docs): how the builder works
+
+## Comparisons
+- [WyberAi vs Lovable](https://wyberai.com/vs/lovable)
+- [WyberAi vs Bolt.new](https://wyberai.com/vs/bolt)
+- [WyberAi vs v0](https://wyberai.com/vs/v0)
+- [WyberAi vs Replit](https://wyberai.com/vs/replit)
+- [WyberAi vs Cursor](https://wyberai.com/vs/cursor)
+
+## Use cases
+- [Build a mobile app with AI](https://wyberai.com/use-cases/build-mobile-app-with-ai)
+- [AI agent builder, no code](https://wyberai.com/use-cases/ai-agent-builder-no-code)
+- [Build a SaaS without code](https://wyberai.com/use-cases/build-saas-without-code)
+- [AI workflow automation](https://wyberai.com/use-cases/ai-workflow-automation)
+- [No-code web app builder](https://wyberai.com/use-cases/no-code-web-app-builder)
+- [Secure AI app builder (live RLS security scanning)](https://wyberai.com/use-cases/secure-ai-app-builder)
+
+## Company
+- [About](https://wyberai.com/about)
+- [Changelog](https://wyberai.com/changelog)
