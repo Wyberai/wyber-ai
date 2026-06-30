@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WyberAi Ad Creatives</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #18181b; color: #fafafa; font-family: 'Space Grotesk', sans-serif; padding: 40px; }
+h1 { font-family: 'Sora', sans-serif; font-size: 28px; margin-bottom: 8px; }
+.subtitle { color: #71717a; font-size: 14px; margin-bottom: 40px; }
+.section-title { font-family: 'Sora', sans-serif; font-size: 20px; margin: 48px 0 8px; color: #0EA5E9; }
+.section-sub { color: #52525b; font-size: 13px; margin-bottom: 24px; }
+.grid { display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 48px; }
+.ad-wrap { display: flex; flex-direction: column; gap: 8px; }
+.ad-wrap .label { font-size: 12px; color: #71717a; font-weight: 600; letter-spacing: 0.5px; }
+.ad-wrap .dims { font-size: 11px; color: #3f3f46; }
+
+/* Ad base styles */
+.ad {
+  background: #09090b;
+  font-family: 'Space Grotesk', sans-serif;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.ad .glow {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.ad .logo {
+  display: flex; align-items: center; gap: 9px;
+}
+.ad .logo .mark {
+  flex-shrink: 0;
+}
+.ad .logo .wordmark {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.ad .logo .wordmark .w { color: #f4f4f5; }
+.ad .logo .wordmark .a { color: #0EA5E9; }
+.ad h2 {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #fafafa;
+}
+.ad .accent { color: #0EA5E9; }
+.ad .accent-orange { color: #f97316; }
+.ad .accent-green { color: #22c55e; }
+.ad .accent-purple { color: #a855f7; }
+.ad .accent-red { color: #ef4444; }
+.ad .sub { color: #a1a1aa; line-height: 1.6; }
+.ad .cta-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #0EA5E9; color: #fff; font-weight: 700;
+  border-radius: 12px; text-decoration: none;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.ad .cta-btn.orange { background: #f97316; }
+.ad .cta-btn.purple { background: #a855f7; }
+.ad .muted { color: #52525b; }
+.ad .pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 20px; font-weight: 600;
+}
+.ad .terminal {
+  background: #111113;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+.ad .terminal .dots { display: flex; gap: 6px; align-items: center; }
+.ad .terminal .dots span { width: 10px; height: 10px; border-radius: 50%; }
+.ad .terminal .dots .r { background: #ff5f57; }
+.ad .terminal .dots .y { background: #febc2e; }
+.ad .terminal .dots .g { background: #28c840; }
+.ad .step-row {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.ad .step-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ad .check-dot { background: rgba(34,197,94,0.15); border: 1.5px solid #22c55e; }
+.ad .active-dot { background: #0EA5E9; border: 1.5px solid #0EA5E9; }
+.ad .feature-row {
+  padding: 12px 16px; border-radius: 10px;
+}
+.ad .challenge-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 20px;
+  background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25);
+  font-size: 13px; font-weight: 700; color: #c4b5fd;
+}
+
+/* Scale helper: render at native res, scale for display */
+.scale-50 { transform: scale(0.5); transform-origin: top left; }
+.scale-40 { transform: scale(0.4); transform-origin: top left; }
+.scale-35 { transform: scale(0.35); transform-origin: top left; }
+</style>
+</head>
+<body>
+
+<h1>WyberAi — Ad Creative Pack</h1>
+<p class="subtitle">Right-click any ad → "Save image as" or screenshot it. All ads at native resolution for pixel-perfect export.</p>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- AD 1: PAIN POINT -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Ad 1 — Pain Point</div>
+<p class="section-sub">"Tired of paying $10K+ for an MVP?" — Best for r/startups, r/Entrepreneur, LinkedIn</p>
+<div class="grid">
+
+<!-- Reddit 4:5 -->
+<div class="ad-wrap">
+  <div class="label">Reddit (4:5 Mobile)</div>
+  <div class="dims">1080 × 1350</div>
+  <div style="width: 432px; height: 540px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1350px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(14,165,233,0.12) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 60px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 28px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+        <h2 style="font-size: 56px; margin-bottom: 32px;">Tired of paying $10K+ for an MVP that takes 3 months?</h2>
+        <p class="sub" style="font-size: 24px; margin-bottom: 48px;">Describe your app in plain English.<br>AI builds and deploys it — in minutes.</p>
+
+        <div class="terminal" style="padding: 24px; margin-bottom: 40px;">
+          <div class="dots" style="margin-bottom: 20px;"><span class="r"></span><span class="y"></span><span class="g"></span><span style="color: #52525b; font-size: 13px; margin-left: 8px;">wyberai.com — Live Build</span></div>
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="step-row"><div class="step-dot check-dot"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><div><div style="font-weight: 600; color: #a1a1aa; font-size: 17px;">Prompt received</div><div style="color: #3f3f46; font-size: 14px;">"Build me a CRM with pipeline view"</div></div></div>
+            <div class="step-row"><div class="step-dot check-dot"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><div><div style="font-weight: 600; color: #a1a1aa; font-size: 17px;">Generating React code</div><div style="color: #3f3f46; font-size: 14px;">14 files · Supabase auth · database</div></div></div>
+            <div class="step-row"><div class="step-dot check-dot"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><div><div style="font-weight: 600; color: #a1a1aa; font-size: 17px;">Pushed to GitHub</div><div style="color: #3f3f46; font-size: 14px;">You own the code — no lock-in</div></div></div>
+            <div class="step-row"><div class="step-dot active-dot"><div style="width: 8px; height: 8px; border-radius: 50%; background: #fff;"></div></div><div><div style="font-weight: 700; color: #fafafa; font-size: 17px;">Deployed to Vercel ✓</div><div style="color: #3f3f46; font-size: 14px;">crm-abc123.vercel.app — live now</div></div></div>
+          </div>
+        </div>
+
+        <div class="challenge-badge" style="margin-bottom: 32px;">🏆 Weekly Build Challenge — win up to 2,000 credits</div>
+
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <span class="cta-btn" style="padding: 18px 36px; font-size: 21px;">Start free — 50 credits →</span>
+          <span class="muted" style="font-size: 16px;">No credit card required</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reddit 1:1 -->
+<div class="ad-wrap">
+  <div class="label">Reddit / LinkedIn (1:1)</div>
+  <div class="dims">1080 × 1080</div>
+  <div style="width: 432px; height: 432px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1080px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(14,165,233,0.12) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 48px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 26px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+        <h2 style="font-size: 52px; margin-bottom: 24px;">Tired of paying $10K+ for an MVP?</h2>
+        <p class="sub" style="font-size: 22px; margin-bottom: 36px;">Describe your app in plain English. AI builds it, deploys it, gives you a live URL — in minutes.</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px;">
+          <span class="pill" style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: #22c55e; padding: 8px 18px; font-size: 16px;">✓ Fresh code every build</span>
+          <span class="pill" style="background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2); color: #0EA5E9; padding: 8px 18px; font-size: 16px;">✓ Web + Mobile</span>
+          <span class="pill" style="background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); color: #a855f7; padding: 8px 18px; font-size: 16px;">✓ Self-healing builds</span>
+          <span class="pill" style="background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); color: #f97316; padding: 8px 18px; font-size: 16px;">✓ Own the code on GitHub</span>
+        </div>
+        <div class="challenge-badge" style="margin-bottom: 28px;">🏆 Weekly Challenge — win up to 2,000 credits</div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <span class="cta-btn" style="padding: 16px 32px; font-size: 20px;">Start free — 50 credits →</span>
+          <span class="muted" style="font-size: 15px;">No credit card</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Google Display 16:9 -->
+<div class="ad-wrap">
+  <div class="label">Google Display (16:9)</div>
+  <div class="dims">1200 × 628</div>
+  <div style="width: 480px; height: 251px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1200px; height: 628px; padding: 48px 56px;">
+      <div class="glow" style="background: radial-gradient(ellipse 60% 60% at 30% 40%, rgba(14,165,233,0.1) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1; display: flex; gap: 48px; height: 100%;">
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+          <div class="logo" style="margin-bottom: 28px;">
+            <svg class="mark" width="30" height="30" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+            <span class="wordmark" style="font-size: 22px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+          </div>
+          <h2 style="font-size: 38px; margin-bottom: 16px;">Tired of paying $10K+ for an MVP?</h2>
+          <p class="sub" style="font-size: 18px; margin-bottom: 24px;">Describe your app → AI builds it → live URL in minutes.</p>
+          <div style="display: flex; align-items: center; gap: 16px;">
+            <span class="cta-btn" style="padding: 14px 28px; font-size: 17px;">Start free →</span>
+            <span class="muted" style="font-size: 13px;">50 credits · No card</span>
+          </div>
+        </div>
+        <div style="width: 420px; display: flex; flex-direction: column; justify-content: center;">
+          <div class="terminal" style="padding: 20px;">
+            <div class="dots" style="margin-bottom: 14px;"><span class="r"></span><span class="y"></span><span class="g"></span><span style="color: #52525b; font-size: 11px; margin-left: 6px;">Live Build</span></div>
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 13px;">
+              <div class="step-row"><div class="step-dot check-dot" style="width: 18px; height: 18px;"><svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><div><div style="font-weight: 600; color: #a1a1aa;">Prompt → 14 files</div></div></div>
+              <div class="step-row"><div class="step-dot check-dot" style="width: 18px; height: 18px;"><svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#22c55e" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div><div><div style="font-weight: 600; color: #a1a1aa;">Auth + DB wired</div></div></div>
+              <div class="step-row"><div class="step-dot active-dot" style="width: 18px; height: 18px;"><div style="width: 6px; height: 6px; border-radius: 50%; background: #fff;"></div></div><div><div style="font-weight: 700; color: #fafafa;">Deployed ✓</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- AD 2: PROOF -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Ad 2 — Proof / Demo</div>
+<p class="section-sub">"I described a CRM in one sentence. AI built it in 2 minutes." — Best for r/SaaS, r/SideProject</p>
+<div class="grid">
+
+<!-- Reddit 4:5 -->
+<div class="ad-wrap">
+  <div class="label">Reddit (4:5 Mobile)</div>
+  <div class="dims">1080 × 1350</div>
+  <div style="width: 432px; height: 540px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1350px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(34,197,94,0.1) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 60px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 28px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+        <h2 style="font-size: 52px; margin-bottom: 12px;">I described a CRM in one sentence.</h2>
+        <h2 style="font-size: 52px; margin-bottom: 40px;"><span class="accent">AI built it in 2 minutes.</span></h2>
+
+        <div class="terminal" style="padding: 20px; margin-bottom: 40px;">
+          <p style="color: #71717a; font-size: 19px; font-style: italic;">"Build me a CRM with pipeline view and email tracking"</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 40px;">
+          <div style="background: #111113; border: 1.5px solid rgba(34,197,94,0.2); border-radius: 14px; padding: 24px; text-align: center;">
+            <div style="font-size: 44px; font-weight: 800; color: #22c55e; font-family: 'Sora', sans-serif;">14</div>
+            <div style="color: #71717a; font-size: 15px; margin-top: 4px;">files</div>
+          </div>
+          <div style="background: #111113; border: 1.5px solid rgba(14,165,233,0.2); border-radius: 14px; padding: 24px; text-align: center;">
+            <div style="font-size: 44px; font-weight: 800; color: #0EA5E9; font-family: 'Sora', sans-serif;">1:47</div>
+            <div style="color: #71717a; font-size: 15px; margin-top: 4px;">build time</div>
+          </div>
+          <div style="background: #111113; border: 1.5px solid rgba(168,85,247,0.2); border-radius: 14px; padding: 24px; text-align: center;">
+            <div style="font-size: 44px; font-weight: 800; color: #a855f7; font-family: 'Sora', sans-serif;">$0</div>
+            <div style="color: #71717a; font-size: 15px; margin-top: 4px;">free tier</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 36px;">
+          <div class="feature-row" style="background: rgba(14,165,233,0.05); border: 1px solid rgba(14,165,233,0.12);"><span style="color: #0EA5E9; font-size: 18px; font-weight: 600;">⚛️ React + Next.js — production-ready</span></div>
+          <div class="feature-row" style="background: rgba(34,197,94,0.05); border: 1px solid rgba(34,197,94,0.12);"><span style="color: #22c55e; font-size: 18px; font-weight: 600;">🔐 Auth + Database — Supabase</span></div>
+          <div class="feature-row" style="background: rgba(168,85,247,0.05); border: 1px solid rgba(168,85,247,0.12);"><span style="color: #a855f7; font-size: 18px; font-weight: 600;">🔌 48 Integrations — Stripe, Slack, OpenAI…</span></div>
+          <div class="feature-row" style="background: rgba(249,115,22,0.05); border: 1px solid rgba(249,115,22,0.12);"><span style="color: #f97316; font-size: 18px; font-weight: 600;">📂 Your code on GitHub — no lock-in</span></div>
+        </div>
+
+        <div class="challenge-badge" style="margin-bottom: 28px;">🏆 Weekly Build Challenge — win up to 2,000 credits</div>
+
+        <span class="cta-btn" style="padding: 18px 36px; font-size: 21px;">Try it free — 50 credits →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 1:1 -->
+<div class="ad-wrap">
+  <div class="label">LinkedIn / Reddit (1:1)</div>
+  <div class="dims">1080 × 1080</div>
+  <div style="width: 432px; height: 432px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1080px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(34,197,94,0.08) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 48px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 26px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+        <h2 style="font-size: 48px; margin-bottom: 24px;">One sentence.<br><span class="accent">Full-stack app.</span><br>2 minutes.</h2>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 32px;">
+          <div style="background: #111113; border: 1px solid rgba(34,197,94,0.2); border-radius: 12px; padding: 20px; text-align: center;">
+            <div style="font-size: 36px; font-weight: 800; color: #22c55e; font-family: 'Sora';">14</div>
+            <div style="color: #71717a; font-size: 13px;">files</div>
+          </div>
+          <div style="background: #111113; border: 1px solid rgba(14,165,233,0.2); border-radius: 12px; padding: 20px; text-align: center;">
+            <div style="font-size: 36px; font-weight: 800; color: #0EA5E9; font-family: 'Sora';">1:47</div>
+            <div style="color: #71717a; font-size: 13px;">build</div>
+          </div>
+          <div style="background: #111113; border: 1px solid rgba(168,85,247,0.2); border-radius: 12px; padding: 20px; text-align: center;">
+            <div style="font-size: 36px; font-weight: 800; color: #a855f7; font-family: 'Sora';">$0</div>
+            <div style="color: #71717a; font-size: 13px;">free</div>
+          </div>
+        </div>
+        <p class="sub" style="font-size: 20px; margin-bottom: 28px;">Auth, database, APIs, 48 integrations — all from a prompt. Real code you own on GitHub.</p>
+        <div class="challenge-badge" style="margin-bottom: 24px; font-size: 14px;">🏆 Weekly Challenge — win 2,000 credits</div>
+        <span class="cta-btn" style="padding: 16px 32px; font-size: 20px;">Start free →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- AD 3: CONTRARIAN -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Ad 3 — Contrarian</div>
+<p class="section-sub">"Template builders are dead." — Best for r/nocode, r/webdev</p>
+<div class="grid">
+
+<!-- Reddit 4:5 -->
+<div class="ad-wrap">
+  <div class="label">Reddit (4:5 Mobile)</div>
+  <div class="dims">1080 × 1350</div>
+  <div style="width: 432px; height: 540px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1350px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(239,68,68,0.08) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 60px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 28px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+        <h2 style="font-size: 58px; margin-bottom: 12px;">Template builders</h2>
+        <h2 style="font-size: 58px; margin-bottom: 40px;">are <span class="accent-red" style="text-decoration: line-through;">dead</span>.</h2>
+        <p class="sub" style="font-size: 24px; margin-bottom: 48px;">Here's what replaced them.</p>
+
+        <!-- Comparison -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin-bottom: 40px; border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06);">
+          <div style="background: rgba(255,255,255,0.02); padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);"><span style="color: #71717a; font-size: 14px; font-weight: 700;">TEMPLATE BUILDERS</span></div>
+          <div style="background: rgba(14,165,233,0.06); padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);"><span class="accent" style="font-size: 14px; font-weight: 700;">WYBERAI</span></div>
+
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);"><span class="accent-red" style="font-size: 17px;">Recycled templates</span></div>
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(14,165,233,0.03);"><span class="accent-green" style="font-size: 17px;">Fresh code every build</span></div>
+
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);"><span class="accent-red" style="font-size: 17px;">Web only</span></div>
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(14,165,233,0.03);"><span class="accent-green" style="font-size: 17px;">Web + Mobile</span></div>
+
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);"><span class="accent-red" style="font-size: 17px;">You debug it</span></div>
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(14,165,233,0.03);"><span class="accent-green" style="font-size: 17px;">Self-healing builds</span></div>
+
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04);"><span class="accent-red" style="font-size: 17px;">Vendor lock-in</span></div>
+          <div style="padding: 18px 24px; border-bottom: 1px solid rgba(255,255,255,0.04); background: rgba(14,165,233,0.03);"><span class="accent-green" style="font-size: 17px;">Your code on GitHub</span></div>
+
+          <div style="padding: 18px 24px;"><span class="accent-red" style="font-size: 17px;">Limited integrations</span></div>
+          <div style="padding: 18px 24px; background: rgba(14,165,233,0.03);"><span class="accent-green" style="font-size: 17px;">48 integrations built-in</span></div>
+        </div>
+
+        <div class="challenge-badge" style="margin-bottom: 28px;">🏆 Weekly Build Challenge — win up to 2,000 credits</div>
+
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <span class="cta-btn" style="padding: 18px 36px; font-size: 21px;">Start free — 50 credits →</span>
+          <span class="muted" style="font-size: 15px;">wyberai.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- AD 4: MOBILE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Ad 4 — Mobile</div>
+<p class="section-sub">"Build a mobile app without writing a single line of code." — Best for r/reactnative, r/iOSProgramming</p>
+<div class="grid">
+
+<!-- Reddit 4:5 -->
+<div class="ad-wrap">
+  <div class="label">Reddit (4:5 Mobile)</div>
+  <div class="dims">1080 × 1350</div>
+  <div style="width: 432px; height: 540px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1350px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(249,115,22,0.1) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 60px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 28px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+        <h2 style="font-size: 54px; margin-bottom: 12px;">Build a mobile app</h2>
+        <h2 style="font-size: 54px; margin-bottom: 40px;">without writing <span class="accent-orange">a single line of code.</span></h2>
+
+        <p class="sub" style="font-size: 22px; margin-bottom: 48px;">Describe it in English → AI generates React Native → preview on your phone → export for App Store.</p>
+
+        <!-- Phone mockup -->
+        <div style="display: flex; justify-content: center; margin-bottom: 40px;">
+          <div style="width: 300px; border: 2px solid rgba(255,255,255,0.1); border-radius: 36px; padding: 16px; background: #111113;">
+            <div style="width: 100px; height: 24px; border-radius: 12px; background: #09090b; margin: 0 auto 16px;"></div>
+            <div style="background: #0d0d10; border-radius: 8px; padding: 16px;">
+              <div style="background: rgba(249,115,22,0.08); border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 12px;">
+                <span style="color: #f97316; font-size: 16px; font-weight: 700;">📱 My App</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 14px; color: #a1a1aa; font-size: 13px;">🏠 Home</div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 14px; color: #a1a1aa; font-size: 13px;">👤 Profile</div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 10px 14px; color: #a1a1aa; font-size: 13px;">🛒 Cart</div>
+              </div>
+              <div style="margin-top: 12px; text-align: center;">
+                <span class="pill" style="background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3); color: #f97316; padding: 6px 14px; font-size: 12px;">React Native + Expo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px;">
+          <span class="pill" style="background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); color: #f97316; padding: 10px 20px; font-size: 16px;">📱 Camera, GPS, biometrics</span>
+          <span class="pill" style="background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2); color: #0EA5E9; padding: 10px 20px; font-size: 16px;">🌐 Does web apps too</span>
+        </div>
+
+        <div class="challenge-badge" style="margin-bottom: 28px;">🏆 Weekly Challenge — win up to 2,000 credits</div>
+
+        <span class="cta-btn orange" style="padding: 18px 36px; font-size: 21px;">Build your app free →</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- AD 5: SPEED + CHALLENGE -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="section-title">Ad 5 — Speed + Weekly Challenge</div>
+<p class="section-sub">"From idea to live URL in under 2 minutes" + challenge promo — Broadest appeal</p>
+<div class="grid">
+
+<!-- Reddit 4:5 -->
+<div class="ad-wrap">
+  <div class="label">Reddit (4:5 Mobile)</div>
+  <div class="dims">1080 × 1350</div>
+  <div style="width: 432px; height: 540px; overflow: hidden;">
+    <div class="ad scale-40" style="width: 1080px; height: 1350px; padding: 60px;">
+      <div class="glow" style="background: radial-gradient(ellipse 80% 50% at 50% 20%, rgba(168,85,247,0.1) 0%, transparent 60%);"></div>
+      <div style="position: relative; z-index: 1;">
+        <div class="logo" style="margin-bottom: 60px;">
+          <svg class="mark" width="36" height="36" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="#0EA5E9"/><path d="M20 7L11 16L20 25" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"/></svg>
+          <span class="wordmark" style="font-size: 28px;"><span class="w">Wyber</span><span class="a">Ai</span></span>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="color: #52525b; font-size: 18px; font-weight: 600; letter-spacing: 3px;">FROM</span>
+        </div>
+        <h2 style="font-size: 58px; text-align: center; margin-bottom: 16px;">"I have an idea"</h2>
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="color: #52525b; font-size: 18px; font-weight: 600; letter-spacing: 3px;">TO</span>
+        </div>
+        <h2 style="font-size: 58px; text-align: center; margin-bottom: 16px;"><span class="accent">live URL</span></h2>
+        <h2 style="font-size: 42px; text-align: center; margin-bottom: 48px;">in under 2 minutes.</h2>
+
+        <!-- Feature pills -->
+        <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 40px;">
+          <span class="pill" style="background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2); color: #0EA5E9; padding: 10px 22px; font-size: 17px;">No code</span>
+          <span class="pill" style="background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); color: #a855f7; padding: 10px 22px; font-size: 17px;">No devs</span>
+          <span class="pill" style="background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: #22c55e; padding: 10px 22px; font-size: 17px;">No templates</span>
+          <span class="pill" style="background: rgba(249,115,22,0.08); border: 1px solid rgba(249,115,22,0.2); color: #f97316; padding: 10px 22px; font-size: 17px;">Self-healing</span>
+          <span class="pill" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); color: #d4d4d8; padding: 10px 22px; font-size: 17px;">Own the code</span>
+        </div>
+
+        <p class="sub" style="font-size: 20px; text-align: center; margin-bottom: 40px;">Describe your app in plain English. AI generates React code, wires up auth + database, deploys to Vercel. Web and mobile.</p>
+
+        <!-- Challenge callout -->
+        <div style="background: rgba(168,85,247,0.06); border: 1px solid rgba(168,85,247,0.2); border-radius: 16px; padding: 28px; text-align: center; margin-bottom: 36px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
+          <div style="font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; color: #fafafa; margin-bottom: 8px;">Weekly Build Challenge</div>
+          <div style="color: #a1a1aa; font-size: 16px; margin-bottom: 12px;">Submit your idea or a finished app. Best entries win credits every Sunday.</div>
+          <div style="display: flex; justify-content: center; gap: 16px;">
+            <span style="color: #FFD700; font-weight: 700; font-size: 15px;">🥇 2,000 cr</span>
+            <span style="color: #C0C0C0; font-weight: 700; font-size: 15px;">🥈 1,000 cr</span>
+            <span style="color: #CD7F32; font-weight: 700; font-size: 15px;">🥉 500 cr</span>
+          </div>
+        </div>
+
+        <div style="text-align: center;">
+          <span class="cta-btn purple" style="padding: 18px 36px; font-size: 21px;">Start building free →</span>
+          <div class="muted" style="margin-top: 14px; font-size: 15px;">50 free credits · No credit card · Cancel anytime</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- EXPORT INSTRUCTIONS -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div style="margin-top: 60px; padding: 32px; background: #111113; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; max-width: 800px;">
+  <h2 style="font-family: 'Sora', sans-serif; font-size: 20px; margin-bottom: 16px;">📦 How to Export</h2>
+  <div style="color: #a1a1aa; font-size: 14px; line-height: 1.8;">
+    <p><strong>Option 1 — Screenshot:</strong> Use browser DevTools (F12) → set device to the exact dimensions shown above → screenshot the ad element.</p>
+    <p style="margin-top: 8px;"><strong>Option 2 — Puppeteer:</strong> <code style="background: #09090b; padding: 2px 8px; border-radius: 4px;">npx puppeteer screenshot --url http://localhost:3000/ads --selector ".ad" --viewport 1080x1350</code></p>
+    <p style="margin-top: 8px;"><strong>Option 3 — Browser extension:</strong> GoFullPage or Nimbus can capture specific elements at exact dimensions.</p>
+  </div>
+  <div style="margin-top: 24px; color: #71717a; font-size: 13px;">
+    <strong>Required dimensions:</strong><br>
+    Reddit: 1080×1350 (4:5, mobile-first), 1080×1080 (1:1, universal)<br>
+    LinkedIn: 1080×1080 (1:1) or 1200×628 (16:9)<br>
+    Google Display: 1200×628 (16:9), 300×250, 728×90<br>
+    Meta/Instagram: 1080×1080 (1:1), 1080×1350 (4:5)
+  </div>
+</div>
+
+</body>
+</html>
