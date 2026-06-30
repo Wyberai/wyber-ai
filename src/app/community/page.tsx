@@ -17,7 +17,7 @@ export default async function CommunityPage() {
   const categories = ['All', 'Dashboard', 'CRM', 'E-commerce', 'Analytics', 'Portfolio', 'SaaS', 'Tool']
 
   return (
-    <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#f0f0f5', fontFamily:'Inter,-apple-system,sans-serif' }}>
+    <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#f0f0f5', fontFamily: 'var(--font-sans)' }}>
       {/* Header */}
       <div style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', display:'flex', alignItems:'center', height:60, gap:24 }}>

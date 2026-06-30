@@ -58,7 +58,7 @@ export function WyberEdge({
               fontWeight: 700,
               color: '#0EA5E9',
               pointerEvents: 'all',
-              fontFamily: "'Space Grotesk', sans-serif",
+              fontFamily: 'var(--font-display)',
               letterSpacing: '0.04em',
             }}
             className="nodrag nopan"

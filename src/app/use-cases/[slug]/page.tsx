@@ -52,7 +52,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Nav */}
@@ -83,7 +83,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: `${color}18`, border: `1px solid ${color}30`, fontSize: 11, fontWeight: 700, color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 20 }}>
             {uc.pillarLabel}
           </div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,4vw,46px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 18px', lineHeight: 1.12 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,4vw,46px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 18px', lineHeight: 1.12 }}>
             {uc.h1}
           </h1>
           <p style={{ fontSize: 17, color: s.muted, maxWidth: 640, lineHeight: 1.65, margin: '0 0 28px' }}>
@@ -108,7 +108,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
 
         {/* Features grid */}
         <section style={{ marginBottom: 64 }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 28px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 28px' }}>
             Everything you need, nothing you don't
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 16 }}>
@@ -125,7 +125,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
         {/* Starter prompt */}
         <section style={{ marginBottom: 64, background: s.card, borderRadius: 14, padding: 'clamp(20px,3vw,32px)', border: `1px solid ${color}25` }}>
           <div style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>Ready-to-use starter prompt</div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 800, margin: '0 0 16px' }}>Copy this prompt and paste it into WyberAi</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, margin: '0 0 16px' }}>Copy this prompt and paste it into WyberAi</h2>
           <div style={{ background: '#0d0d10', borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, fontSize: 14, color: '#e2e8f0', lineHeight: 1.7, fontFamily: 'monospace', marginBottom: 20, whiteSpace: 'pre-wrap' }}>
             {uc.promptExample}
           </div>
@@ -136,7 +136,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
 
         {/* FAQ */}
         <section style={{ marginBottom: 64 }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 24px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 24px' }}>
             Frequently asked questions
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -156,7 +156,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
 
         {/* CTA footer */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 50 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 50 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Your first app in minutes.</p>
           <Link href={uc.ctaHref} style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: color, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             {uc.ctaLabel}
@@ -175,7 +175,7 @@ export default async function UseCasePage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); details summary::-webkit-details-marker{display:none}`}</style>
+      <style>{` details summary::-webkit-details-marker{display:none}`}</style>
     </div>
   )
 }

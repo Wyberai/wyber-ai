@@ -18,7 +18,7 @@ const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', te
 
 export default function Post() {
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
@@ -32,21 +32,21 @@ export default function Post() {
           <span style={{ fontSize: 12, color: s.dim }}>June 13, 2026 · 7 min read</span>
         </div>
 
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
           What are AI agents? A practical guide for non-technical founders
         </h1>
 
         <div style={{ fontSize: 16, color: s.muted, lineHeight: 1.75 }}>
           <p>"AI agent" has become one of those terms that means everything and nothing. Vendors use it to describe anything from a simple chatbot to a fully autonomous system that takes action in the world on your behalf. Here's the plain-English version.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The simplest definition</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The simplest definition</h2>
           <p>An AI agent is a program that <strong style={{ color: s.text }}>observes</strong> something (an email inbox, a database, a schedule), <strong style={{ color: s.text }}>decides</strong> what to do using AI reasoning, and <strong style={{ color: s.text }}>takes action</strong> — all without you having to trigger it manually.</p>
 
           <p>That's it. The word "agent" just means it acts on your behalf, autonomously, on a recurring basis.</p>
 
           <p>Compare that to a chatbot, which waits for you to type something and responds once. An agent doesn't wait — it monitors, reasons, and acts on its own schedule.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What agents are actually good for</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What agents are actually good for</h2>
           <p>The best use cases for agents share three characteristics: the trigger is well-defined (a new email, a new row, 8 AM every morning), the decision requires some intelligence (classify this, summarize that, score this lead), and the action is something you currently do manually and hate doing.</p>
 
           <p>Real examples from WyberAi users:</p>
@@ -59,7 +59,7 @@ export default function Post() {
             ].map(ex => <li key={ex}>{ex}</li>)}
           </ul>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The anatomy of an agent</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The anatomy of an agent</h2>
           <p>Every agent has the same three parts:</p>
 
           {[
@@ -73,7 +73,7 @@ export default function Post() {
             </div>
           ))}
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>How to build one without code</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>How to build one without code</h2>
           <p>In WyberAi's agent builder, you describe the agent in plain English — the trigger, what you want it to reason about, and what it should do with the result. The builder generates the visual canvas: each step appears as a node, connected by arrows.</p>
 
           <p>You connect your tools once in Settings → Integrations (Gmail, Slack, HubSpot, etc.), then activate. The agent runs automatically from that point on.</p>
@@ -84,7 +84,7 @@ export default function Post() {
 
           <p>That prompt generates a canvas with four nodes: Schedule Trigger → Gmail tool → Claude AI reasoning → Slack DM. Connect Gmail and Slack, activate, and you're done.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>When not to use an agent</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>When not to use an agent</h2>
           <p>Agents are overkill if the task is purely deterministic (no AI needed), if it only needs to run once, or if a simple Zapier-style automation would do. The AI reasoning step is what justifies the complexity — if you don't need judgment, you just need a workflow.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.green}10`, border: `1px solid ${s.green}25`, borderRadius: 12 }}>
@@ -96,7 +96,7 @@ export default function Post() {
           </div>
         </div>
       </article>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

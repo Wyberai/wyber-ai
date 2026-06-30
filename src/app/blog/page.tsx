@@ -121,7 +121,7 @@ const s = {
 
 export default function BlogPage() {
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
@@ -136,7 +136,7 @@ export default function BlogPage() {
       <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)' }}>
         <header style={{ marginBottom: 52 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Blog</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 14px' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 14px' }}>
             Build logs, guides, and product news
           </h1>
           <p style={{ fontSize: 15, color: s.muted, lineHeight: 1.65, margin: 0, maxWidth: 520 }}>
@@ -159,7 +159,7 @@ export default function BlogPage() {
                   )}
                   <span style={{ fontSize: 12, color: s.dim }}>{post.date} · {post.readTime}</span>
                 </div>
-                <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(16px,2vw,20px)', fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 8px', lineHeight: 1.3, color: s.text }}>
+                <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(16px,2vw,20px)', fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 8px', lineHeight: 1.3, color: s.text }}>
                   {post.title}
                 </h2>
                 <p style={{ fontSize: 14, color: s.muted, lineHeight: 1.65, margin: 0 }}>
@@ -170,7 +170,7 @@ export default function BlogPage() {
           ))}
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); .blog-post { transition: padding-left 0.15s; } .blog-post:hover { padding-left: 6px !important; }`}</style>
+      <style>{` .blog-post { transition: padding-left 0.15s; } .blog-post:hover { padding-left: 6px !important; }`}</style>
     </div>
   )
 }

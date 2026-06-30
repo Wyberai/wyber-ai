@@ -135,7 +135,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
         borderRadius: 14,
         boxShadow: selected ? `0 0 0 3px ${meta.color}25, 0 8px 32px rgba(0,0,0,0.5)` : '0 4px 20px rgba(0,0,0,0.4)',
         cursor: 'pointer', transition: 'all 0.15s', position: 'relative', overflow: 'hidden',
-        fontFamily: "'Space Grotesk', sans-serif",
+        fontFamily: 'var(--font-display)',
       }}
     >
       {/* Status dot */}
@@ -580,7 +580,7 @@ function ConfigPanel() {
         <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
       </div>
 
-      <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--font-display)' }}>
         <div>
           <label style={labelStyle}>Name</label>
           <input value={node.data.label as string} onChange={e => updateNodeData(node.id, { label: e.target.value })} style={fieldStyle} />
@@ -976,7 +976,7 @@ function ExecutionLog() {
   const logEndRef = (el: HTMLDivElement | null) => { if (el) el.scrollTop = el.scrollHeight }
 
   return (
-    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 180, background: '#070709', borderTop: `1px solid ${hasErrors ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', flexDirection: 'column', zIndex: 10, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 180, background: '#070709', borderTop: `1px solid ${hasErrors ? 'rgba(239,68,68,0.25)' : 'rgba(255,255,255,0.06)'}`, display: 'flex', flexDirection: 'column', zIndex: 10, fontFamily: 'var(--font-display)' }}>
       <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, color: hasErrors ? '#ef4444' : '#52525b' }}>
           {isRunning && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease infinite' }} />}
@@ -1011,7 +1011,7 @@ function ExecutionLog() {
                   href="/settings?tab=integrations"
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '3px 9px', borderRadius: 6, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', color: '#0EA5E9', fontSize: 10, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', textDecoration: 'none', cursor: 'pointer' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '3px 9px', borderRadius: 6, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', color: '#0EA5E9', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-display)', textDecoration: 'none', cursor: 'pointer' }}
                 >
                   {toolkitName ? `Connect ${toolkitName}` : 'Connect in Settings'}
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -1242,7 +1242,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
 
   if (loadingCanvas) {
     return (
-      <div style={{ height: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div style={{ height: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: '#52525b' }}>
           <div style={{ width: 32, height: 32, border: '2px solid rgba(255,255,255,0.06)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <div style={{ fontSize: 13 }}>Loading canvas...</div>
@@ -1253,7 +1253,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#09090b', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#09090b', fontFamily: 'var(--font-display)' }}>
 
       {/* Top bar */}
       <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0d0d0f', flexShrink: 0, zIndex: 20 }}>
@@ -1479,7 +1479,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             />
             {nodes.length <= 1 && (
               <Panel position="top-center">
-                <div style={{ marginTop: 60, textAlign: 'center', color: '#a1a1aa', pointerEvents: 'auto', fontFamily: "'Space Grotesk', sans-serif", maxWidth: 400 }}>
+                <div style={{ marginTop: 60, textAlign: 'center', color: '#a1a1aa', pointerEvents: 'auto', fontFamily: 'var(--font-display)', maxWidth: 400 }}>
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, opacity: 0.6 }}>
                     {isAgent ? <IcoCpu size={36} color="#8b5cf6" /> : <IcoZap size={36} color="#0EA5E9" />}
                   </div>

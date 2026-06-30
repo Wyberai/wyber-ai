@@ -10,14 +10,14 @@ export default async function GTMPage() {
 
   if (!user) {
     return (
-      <div style={{ minHeight: '100vh', background: '#09090b', fontFamily: "'Space Grotesk', sans-serif", color: '#fafafa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) clamp(16px,4vw,40px)', textAlign: 'center' }}>
+      <div style={{ minHeight: '100vh', background: '#09090b', fontFamily: 'var(--font-display)', color: '#fafafa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(40px,8vw,80px) clamp(16px,4vw,40px)', textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 14 }}>
           Coming soon
         </div>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', fontSize: 11, fontWeight: 700, color: '#10b981', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 28 }}>
           🎯 GTM Engine
         </div>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,64px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 20, maxWidth: 700 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,5vw,64px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 20, maxWidth: 700 }}>
           Define your ICP.<br />
           <span style={{ background: 'linear-gradient(135deg, #10b981, #0EA5E9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Wyber fills your pipeline.

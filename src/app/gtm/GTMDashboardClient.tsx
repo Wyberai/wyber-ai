@@ -36,7 +36,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -58,12 +58,12 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
             {editing ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input value={gtmName} onChange={e => setGtmName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleRename()} autoFocus
-                  style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', background: '#111113', border: `1px solid ${s.border}`, borderRadius: 8, color: s.text, padding: '4px 12px', outline: 'none', width: 320 }} />
+                  style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', background: '#111113', border: `1px solid ${s.border}`, borderRadius: 8, color: s.text, padding: '4px 12px', outline: 'none', width: 320 }} />
                 <button onClick={handleRename} disabled={saving} style={{ padding: '6px 14px', borderRadius: 6, background: s.sky, color: '#fff', border: 'none', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{saving ? '...' : 'Save'}</button>
                 <button onClick={() => setEditing(false)} style={{ padding: '6px 14px', borderRadius: 6, background: 'transparent', color: s.muted, border: `1px solid ${s.border}`, fontSize: 12, cursor: 'pointer' }}>Cancel</button>
               </div>
             ) : (
-              <h1 onClick={() => setEditing(true)} title="Click to rename" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4, cursor: 'pointer', borderBottom: '1px dashed transparent' }}
+              <h1 onClick={() => setEditing(true)} title="Click to rename" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 4, cursor: 'pointer', borderBottom: '1px dashed transparent' }}
                 onMouseEnter={e => (e.currentTarget.style.borderBottomColor = s.muted)} onMouseLeave={e => (e.currentTarget.style.borderBottomColor = 'transparent')}>
                 {gtmName} <span style={{ fontSize: 14, color: s.dim, fontWeight: 400 }}>✎</span>
               </h1>
@@ -97,7 +97,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
           ].map(stat => (
             <div key={stat.label} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, padding: '16px 18px' }}>
               <div style={{ fontSize: 11, color: s.muted, marginBottom: 6 }}>{stat.label}</div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: stat.color, letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>{stat.value}</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: stat.color, letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>{stat.value}</div>
             </div>
           ))}
         </div>
@@ -168,7 +168,7 @@ export default function GTMDashboardClient({ user, profile, campaigns, totalLead
           </div>
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

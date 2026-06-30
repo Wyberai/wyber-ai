@@ -35,7 +35,7 @@ function GTMNode({ data, selected }: NodeProps) {
     <div style={{
       background: s.card, border: `1.5px solid ${selected ? color : color + '50'}`,
       borderRadius: 10, minWidth: 180, boxShadow: selected ? `0 0 0 2px ${color}30` : '0 2px 12px rgba(0,0,0,0.5)',
-      fontFamily: "'Space Grotesk', sans-serif",
+      fontFamily: 'var(--font-display)',
     }}>
       <Handle type="target" position={Position.Top} style={{ background: color, border: 'none', width: 10, height: 10 }} />
       <div style={{ padding: '10px 14px 8px', borderBottom: `1px solid rgba(255,255,255,0.05)`, display: 'flex', alignItems: 'center', gap: 8, background: color + '12', borderRadius: '8px 8px 0 0' }}>
@@ -170,7 +170,7 @@ export default function GTMCanvas() {
   const estimatedCredits = nodes.filter(n => (n.data as any).creditCost).length * 50
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: s.bg, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: s.bg, fontFamily: 'var(--font-display)' }}>
       {/* Toolbar */}
       <div style={{ height: 52, background: s.card, borderBottom: `1px solid ${s.border}`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10, flexShrink: 0, zIndex: 10 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', color: 'inherit', marginRight: 8 }}><WyberLogo markSize={20} wordmarkSize={12} /></Link>
@@ -249,7 +249,7 @@ export default function GTMCanvas() {
           }} onDelete={(id) => removeNode(id)} />
         )}
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); .react-flow__attribution{display:none!important;} input{color-scheme:dark;} textarea{color-scheme:dark;}`}</style>
+      <style>{` .react-flow__attribution{display:none!important;} input{color-scheme:dark;} textarea{color-scheme:dark;}`}</style>
     </div>
   )
 }
@@ -272,7 +272,7 @@ function NodeEditor({ node, onClose, onChange, onDelete }: { node: any; onClose:
   }
 
   return (
-    <div style={{ width: 280, background: s.card, borderLeft: `1px solid ${s.border}`, padding: '16px', overflowY: 'auto', flexShrink: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ width: 280, background: s.card, borderLeft: `1px solid ${s.border}`, padding: '16px', overflowY: 'auto', flexShrink: 0, fontFamily: 'var(--font-display)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color }}>{d.icon} {d.label}</div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: s.muted, cursor: 'pointer', fontSize: 16 }}>×</button>

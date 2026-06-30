@@ -143,11 +143,11 @@ function PlanCard({
 
         {price !== null ? (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 42, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>${price}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>${price}</span>
             <span style={{ fontSize: 13, color: '#52525b' }}>/mo{annual ? ' · billed annually' : ''}</span>
           </div>
         ) : (
-          <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 34, fontWeight: 800, letterSpacing: '-0.03em', color: '#fafafa' }}>Custom</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-0.03em', color: '#fafafa' }}>Custom</div>
         )}
 
         {annual && price !== null && (
@@ -271,7 +271,7 @@ export default function PricingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -296,7 +296,7 @@ export default function PricingPage() {
           <div style={{ width: 6, height: 6, borderRadius: '50%', background: BRAND, animation: 'pulse 2s infinite' }} />
           Simple, transparent pricing
         </div>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,64px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,5vw,64px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
           Build apps with AI.<br />
           <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             Pay only for what you use.
@@ -331,7 +331,7 @@ export default function PricingPage() {
           {/* Credit table */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>What 1 credit buys you</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>Credits work across everything</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>Credits work across everything</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {CREDIT_TABLE.map(row => (
                 <div key={row.action} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: '#111113', borderRadius: 9, gap: 12 }}>
@@ -351,7 +351,7 @@ export default function PricingPage() {
           {/* Top-ups */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Need more? Top up anytime</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>One-time credit packs</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>One-time credit packs</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {TOPUPS.map(t => (
                 <div key={t.key} style={{ position: 'relative', background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
@@ -384,7 +384,7 @@ export default function PricingPage() {
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Done For You</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12 }}>
               We build it for you
             </h2>
             <p style={{ fontSize: 15, color: '#71717a', maxWidth: 480, margin: '0 auto' }}>
@@ -424,7 +424,7 @@ export default function PricingPage() {
                     <div style={{ fontSize: 13, fontWeight: 800, color: b.color }}>{b.name}</div>
                     <div style={{ fontSize: 10, color: '#52525b' }}>⏱ {b.delivery}</div>
                   </div>
-                  <div style={{ marginLeft: 'auto', fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, color: '#fafafa' }}>{b.price}</div>
+                  <div style={{ marginLeft: 'auto', fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, color: '#fafafa' }}>{b.price}</div>
                 </div>
                 <div style={{ marginBottom: 14 }}>
                   {b.items.map(item => (
@@ -449,7 +449,7 @@ export default function PricingPage() {
       {/* FAQ */}
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
               ['What counts as a credit?', 'Building a web or mobile app from scratch costs 10 credits. Each edit or iteration costs 3 credits. Image generation costs 3 credits. Deploy, publish, GitHub push, ZIP export, and auto error fixes are always free. Top-up packs can be added anytime and never expire.'],
@@ -475,7 +475,7 @@ export default function PricingPage() {
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 560, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
             Your next app is<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #38bdf8)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               one prompt away.
@@ -499,7 +499,7 @@ export default function PricingPage() {
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Community</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>Community programs</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>Community programs</h2>
             <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>We believe in giving back. These programs reward our community for doing good.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px,100%), 1fr))', gap: 14 }}>
@@ -555,7 +555,7 @@ export default function PricingPage() {
       </footer>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         details[open] > summary span { transform: rotate(45deg); display: inline-block; }
         details summary::-webkit-details-marker { display: none; }

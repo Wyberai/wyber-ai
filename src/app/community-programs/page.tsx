@@ -135,7 +135,7 @@ export default function CommunityProgramsPage() {
   const getStatus = (programId: string) => submissions.find(s => s.program === programId)?.status
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', fontFamily: "'Space Grotesk', sans-serif", color: '#fafafa' }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', fontFamily: 'var(--font-display)', color: '#fafafa' }}>
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: toast.ok ? '#0f2a1a' : '#2a0f0f', border: `1px solid ${toast.ok ? '#22c55e33' : '#ef444433'}`, color: toast.ok ? '#22c55e' : '#ef4444', padding: '12px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 9999 }}>
           {toast.msg}
@@ -154,7 +154,7 @@ export default function CommunityProgramsPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: SKY, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 20 }}>
             Community
           </div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
             Good people get rewarded
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>

@@ -72,7 +72,7 @@ export function OnboardingTour() {
       {rect && (
         <div style={{ position: 'fixed', top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: 10, boxShadow: '0 0 0 9999px rgba(0,0,0,0.65)', border: '2px solid #0EA5E9', zIndex: 10001, pointerEvents: 'none' }} />
       )}
-      <div style={{ ...cardStyle, zIndex: 10002, width: 320, background: '#111118', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.6)', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ ...cardStyle, zIndex: 10002, width: 320, background: '#111118', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 16, padding: 24, boxShadow: '0 24px 64px rgba(0,0,0,0.6)', fontFamily: 'var(--font-sans)' }}>
         <div style={{ display: 'flex', gap: 5, marginBottom: 16 }}>
           {STEPS.map((_, i) => (
             <div key={i} style={{ height: 4, flex: i === step ? 2 : 1, borderRadius: 2, background: i <= step ? '#0EA5E9' : 'rgba(255,255,255,0.1)', transition: 'all 0.3s' }} />

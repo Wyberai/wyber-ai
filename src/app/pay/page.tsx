@@ -43,16 +43,16 @@ export default function PayPage() {
   const s = { bg:'#09090b', card:'#111113', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#71717a', sky:'#0EA5E9' }
 
   return (
-    <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily:"'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding:'0 clamp(16px,4vw,48px)', height:60, display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:`1px solid ${s.border}`, background:'rgba(9,9,11,0.95)', backdropFilter:'blur(16px)' }}>
-        <Link href="/" style={{ fontFamily:"'Sora', sans-serif", fontWeight:800, fontSize:14, textDecoration:'none', color:s.text, display:'flex', alignItems:'center', gap:8 }}>
+        <Link href="/" style={{ fontFamily: 'var(--font-display)', fontWeight:800, fontSize:14, textDecoration:'none', color:s.text, display:'flex', alignItems:'center', gap:8 }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
       </nav>
 
       <div style={{ maxWidth:800, margin:'0 auto', padding:'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <div style={{ textAlign:'center', marginBottom:48 }}>
-          <h1 style={{ fontFamily:"'Sora', sans-serif", fontSize:'clamp(26px,4vw,38px)', fontWeight:800, letterSpacing:'-0.04em', marginBottom:10 }}>Complete your build payment</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize:'clamp(26px,4vw,38px)', fontWeight:800, letterSpacing:'-0.04em', marginBottom:10 }}>Complete your build payment</h1>
           <p style={{ fontSize:14, color:s.muted }}>Select the tier we agreed on during your consultation. Your $99 consultation fee has been credited.</p>
         </div>
 
@@ -66,11 +66,11 @@ export default function PayPage() {
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                   <span style={{ fontSize:22 }}>{b.icon}</span>
                   <div>
-                    <div style={{ fontSize:14, fontWeight:800, color:b.color, fontFamily:"'Sora', sans-serif" }}>{b.name}</div>
+                    <div style={{ fontSize:14, fontWeight:800, color:b.color, fontFamily: 'var(--font-display)' }}>{b.name}</div>
                     <div style={{ fontSize:11, color:s.muted }}>⏱ {b.delivery}</div>
                   </div>
                 </div>
-                <div style={{ fontSize:32, fontWeight:800, fontFamily:"'Sora', sans-serif", marginBottom:4 }}>{b.price}</div>
+                <div style={{ fontSize:32, fontWeight:800, fontFamily: 'var(--font-display)', marginBottom:4 }}>{b.price}</div>
               </div>
               <div style={{ flex:1, marginBottom:18 }}>
                 {b.includes.map(item => (
@@ -93,7 +93,7 @@ export default function PayPage() {
           Wrong tier or have a question? <a href="mailto:hello@wyberai.com" style={{ color:s.sky, textDecoration:'none', fontWeight:600 }}>Email us →</a>
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

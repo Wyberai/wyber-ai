@@ -13,7 +13,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
 
   if (!role) {
     return (
-      <div style={{ minHeight: '100vh', background: s.bg, color: s.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: s.bg, color: s.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Role not found</h1>
@@ -28,7 +28,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
   const hireUrl = `/ai-employees/new?roleSlug=${encodeURIComponent(role.slug)}&role=${encodeURIComponent(role.title)}&dept=${encodeURIComponent(role.department)}&tools=${encodeURIComponent(role.tools.join(','))}&instructions=${encodeURIComponent(role.description + '\n\n' + role.systemPromptExtra)}`
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ borderBottom: `1px solid ${s.border}`, padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(11,13,18,0.95)', backdropFilter: 'blur(12px)' }}>
         <Link href="/ai-employees" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
@@ -47,7 +47,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
           <div style={{ width: 72, height: 72, borderRadius: 18, background: role.color + '15', border: `2px solid ${role.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, flexShrink: 0 }}>{role.emoji}</div>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: role.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>{role.department}</div>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 8px' }}>{role.title}</h1>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 8px' }}>{role.title}</h1>
             <p style={{ fontSize: 16, color: s.muted, lineHeight: 1.6, margin: 0 }}>{role.tagline}</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
             {role.kpiDefaults.map(k => (
               <div key={k.name} style={{ padding: 14, borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: `1px solid ${s.border}` }}>
                 <div style={{ fontSize: 12, color: s.muted, marginBottom: 4 }}>{k.name}</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: role.color, fontFamily: "'Sora', sans-serif" }}>{k.target} <span style={{ fontSize: 11, fontWeight: 400, color: s.dim }}>{k.unit}</span></div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: role.color, fontFamily: 'var(--font-display)' }}>{k.target} <span style={{ fontSize: 11, fontWeight: 400, color: s.dim }}>{k.unit}</span></div>
               </div>
             ))}
           </div>
@@ -149,7 +149,6 @@ export default function RolePage({ params }: { params: Promise<{ slug: string }>
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
 }

@@ -33,7 +33,7 @@ export default function GTMMarketPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/gtm" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>← GTM</Link>
@@ -42,7 +42,7 @@ export default function GTMMarketPage() {
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Market Intelligence</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Your Total Addressable Market</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Your Total Addressable Market</h1>
           <p style={{ fontSize: 14, color: s.muted }}>Based on your ICP — companies and contacts matching your ideal customer profile.</p>
         </div>
 
@@ -90,7 +90,7 @@ export default function GTMMarketPage() {
               ].map(stat => (
                 <div key={stat.label} style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 12, padding: '24px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 28, marginBottom: 8 }}>{stat.icon}</div>
-                  <div style={{ fontSize: 38, fontWeight: 800, color: stat.color, letterSpacing: '-0.04em', fontFamily: "'Sora', sans-serif", lineHeight: 1, marginBottom: 6 }}>{stat.value}</div>
+                  <div style={{ fontSize: 38, fontWeight: 800, color: stat.color, letterSpacing: '-0.04em', fontFamily: 'var(--font-display)', lineHeight: 1, marginBottom: 6 }}>{stat.value}</div>
                   <div style={{ fontSize: 12, color: s.muted }}>{stat.label}</div>
                   {noKey && <div style={{ fontSize: 10, color: s.dim, marginTop: 4 }}>estimated</div>}
                 </div>
@@ -141,7 +141,7 @@ export default function GTMMarketPage() {
           </>
         )}
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
+      <style>{` @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }`}</style>
     </div>
   )
 }

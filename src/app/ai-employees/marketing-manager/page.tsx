@@ -14,7 +14,7 @@ const interviewUrl = `/ai-employees/roles/${M.slug}/interview`
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{value}</div>
+      <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{value}</div>
       <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{label}</div>
     </div>
   )
@@ -26,7 +26,7 @@ export default function MarketingManagerPage() {
     fetch(`/api/ai-employees/pricing?role=${M.slug}`).then(r => r.ok ? r.json() : null).then(d => d && setPrice(d)).catch(() => {})
   }, [])
   return (
-    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
       {/* Nav */}
       <nav style={{ borderBottom: `1px solid ${BORDER}`, padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(11,13,18,0.9)', backdropFilter: 'blur(12px)' }}>
         <Link href="/ai-employees" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
@@ -44,7 +44,7 @@ export default function MarketingManagerPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, color: ACCENT, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, padding: '5px 14px', borderRadius: 20, background: ACCENT + '12', border: `1px solid ${ACCENT}30` }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> {M.years}+ years experience · Available to hire
           </div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 52, fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 8px', lineHeight: 1.05 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 52, fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 8px', lineHeight: 1.05 }}>
             Meet {M.name}, your<br />AI {M.title}
           </h1>
           <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.6, maxWidth: 620, margin: '16px auto 0' }}>{M.tagline}</p>
@@ -135,7 +135,7 @@ export default function MarketingManagerPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, marginBottom: 72 }}>
           {M.kpis.map(k => (
             <div key={k.name} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: 20, textAlign: 'center' }}>
-              <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, color: ACCENT }}>{k.target.toLocaleString()}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: ACCENT }}>{k.target.toLocaleString()}</div>
               <div style={{ fontSize: 11, color: DIM, marginBottom: 6 }}>{k.unit}</div>
               <div style={{ fontSize: 12.5, color: '#a1a1aa' }}>{k.name}</div>
             </div>
@@ -144,7 +144,7 @@ export default function MarketingManagerPage() {
 
         {/* Final CTA */}
         <div style={{ textAlign: 'center', padding: '48px 24px', borderRadius: 20, background: `radial-gradient(600px 300px at 50% 0%, ${ACCENT}1f, transparent 70%)`, border: `1px solid ${BORDER}` }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 10px' }}>Put {M.name} to work today</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', margin: '0 0 10px' }}>Put {M.name} to work today</h2>
           <p style={{ fontSize: 15, color: MUTED, margin: '0 0 28px', maxWidth: 460, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>Interview him like a real candidate, then hire him in two minutes. He starts working immediately.</p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href={hireUrl} style={{ padding: '15px 40px', borderRadius: 12, background: SKY, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: `0 8px 30px ${SKY}40` }}>Hire {M.name} →</Link>
@@ -153,7 +153,6 @@ export default function MarketingManagerPage() {
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
 }
@@ -162,7 +161,7 @@ function Section({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div style={{ textAlign: 'center', marginBottom: 28 }}>
       <div style={{ fontSize: 12, fontWeight: 700, color: ACCENT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>{eyebrow}</div>
-      <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>{title}</h2>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>{title}</h2>
     </div>
   )
 }

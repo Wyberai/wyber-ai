@@ -331,7 +331,7 @@ export default function SettingsPage() {
   };
 
   const S = {
-    page: { minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif", display: 'flex' as const },
+    page: { minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex' as const },
     sidebar: { width: 220, borderRight: '1px solid rgba(255,255,255,0.07)', padding: '24px 12px', flexShrink: 0 as const, display: 'flex' as const, flexDirection: 'column' as const },
     main: { flex: 1, padding: '32px 48px', maxWidth: 680 },
     tabBtn: (active: boolean) => ({ display: 'flex' as const, alignItems: 'center' as const, gap: 10, width: '100%', padding: '9px 12px', borderRadius: 8, border: 'none', background: active ? 'rgba(14,165,233,0.1)' : 'transparent', color: active ? '#0EA5E9' : '#a1a1aa', fontSize: 13, fontWeight: active ? 600 : 400, cursor: 'pointer', textAlign: 'left' as const, transition: 'all 0.15s', fontFamily: 'inherit', marginBottom: 2 }),
@@ -340,7 +340,7 @@ export default function SettingsPage() {
     input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const },
     btn: (color = '#0EA5E9') => ({ padding: '9px 20px', borderRadius: 8, border: 'none', background: color, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'opacity 0.15s' }),
     ghost: { padding: '9px 20px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#a1a1aa', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' },
-    h2: { fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 },
+    h2: { fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 4 },
     sub: { fontSize: 13, color: '#71717a', marginBottom: 24, lineHeight: 1.5 },
     row: { display: 'flex' as const, alignItems: 'center' as const, justifyContent: 'space-between' as const },
   };
@@ -427,7 +427,7 @@ export default function SettingsPage() {
             <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Current Plan</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800 }}>{PLANS.find(p => p.id === (profile?.plan || 'free'))?.name || 'Free'}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800 }}>{PLANS.find(p => p.id === (profile?.plan || 'free'))?.name || 'Free'}</div>
                 <div style={{ fontSize: 13, color: '#71717a', marginTop: 2 }}>
                   <span style={{ color: '#0EA5E9', fontWeight: 700 }}>{profile?.credits ?? 0} credits</span> remaining this month
                 </div>
@@ -454,7 +454,7 @@ export default function SettingsPage() {
                 <div style={{ fontSize: 11, fontWeight: 700, color: p.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
                   {p.id === (profile?.plan || 'free') && '✓ '}{p.name}
                 </div>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{p.price}<span style={{ fontSize: 11, fontWeight: 400, color: '#52525b' }}>/mo</span></div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8 }}>{p.price}<span style={{ fontSize: 11, fontWeight: 400, color: '#52525b' }}>/mo</span></div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {p.features.map(f => <div key={f} style={{ fontSize: 11, color: '#71717a', display: 'flex', gap: 6 }}><span style={{ color: p.color }}>✓</span>{f}</div>)}
                 </div>
@@ -611,7 +611,7 @@ export default function SettingsPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               {[['API Calls', '0'], ['Credits Used', '0'], ['Errors', '0']].map(([l, v]) => (
                 <div key={l} style={{ padding: '12px', background: '#18181b', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 700 }}>{v}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700 }}>{v}</div>
                   <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>{l}</div>
                 </div>
               ))}
@@ -802,7 +802,6 @@ export default function SettingsPage() {
         </>}
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   );
 }

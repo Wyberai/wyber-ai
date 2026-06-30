@@ -157,7 +157,7 @@ export default function AIEmployeesPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: "'Space Grotesk', sans-serif", color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
 
       {/* Toast */}
       {toast && (
@@ -197,7 +197,7 @@ export default function AIEmployeesPage() {
             <div style={{ width: 64, height: 64, borderRadius: 18, background: 'rgba(232,121,249,0.14)', border: '2px solid rgba(232,121,249,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, flexShrink: 0, position: 'relative' }}>📣</div>
             <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#e879f9', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>★ Featured · New this week</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: "'Sora', sans-serif", letterSpacing: '-0.02em' }}>Meet Marcus — your AI Marketing Manager</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display)', letterSpacing: '-0.02em' }}>Meet Marcus — your AI Marketing Manager</div>
               <div style={{ fontSize: 13, color: '#a1a1aa', marginTop: 4 }}>12 years experience · runs campaigns, commands a fleet of marketing agents, reports like a VP.</div>
             </div>
             <div style={{ position: 'relative', fontSize: 13, fontWeight: 700, color: '#fff', background: SKY, padding: '10px 20px', borderRadius: 10, whiteSpace: 'nowrap', flexShrink: 0 }}>Meet him →</div>
@@ -221,7 +221,7 @@ export default function AIEmployeesPage() {
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: SKY }} />
                 {EMPLOYEE_ROLES.length} roles · 8 departments · chat like a colleague
               </div>
-              <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>
+              <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
                 Hire your first AI department head
               </h2>
               <p style={{ color: '#52525b', fontSize: 15, margin: '0 0 28px', maxWidth: 500, marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.65 }}>

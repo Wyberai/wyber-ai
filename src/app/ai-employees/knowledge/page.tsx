@@ -48,14 +48,14 @@ export default function KnowledgePage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ borderBottom: `1px solid ${s.border}`, padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/ai-employees" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/ai-employees" style={{ fontSize: 12, color: s.muted, textDecoration: 'none' }}>← AI Employees</Link>
       </nav>
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '40px 32px 80px' }}>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, margin: '0 0 6px' }}>Company knowledge</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, margin: '0 0 6px' }}>Company knowledge</h1>
         <p style={{ fontSize: 14, color: s.muted, margin: '0 0 28px', lineHeight: 1.6 }}>
           Upload your brand book, product docs, ICP, past campaigns — anything about your business. <strong style={{ color: s.text }}>Every employee you hire learns from this</strong> and grounds their work in it. Add it once; they all know it.
         </p>
@@ -92,7 +92,7 @@ export default function KnowledgePage() {
           </div>
         )}
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

@@ -231,7 +231,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const accentFor = (n?: string) => ACCENT_PALETTE[Math.abs((n?.charCodeAt(0) ?? 0) % ACCENT_PALETTE.length)];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
 
       {/* Mobile top bar */}
       {isMobile && (
@@ -390,7 +390,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 20% 40%, rgba(14,165,233,0.18) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 60%, rgba(139,92,246,0.14) 0%, transparent 60%)`, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
 
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(22px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
             What are we building, {name.split(' ')[0]}?
           </h1>
 
@@ -527,7 +527,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       </main>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
       `}</style>
       <ProjectTypeChooser

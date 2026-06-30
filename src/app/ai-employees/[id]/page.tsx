@@ -197,10 +197,10 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3f3f46', fontFamily: "'Space Grotesk', sans-serif" }}>Loading…</div>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3f3f46', fontFamily: 'var(--font-display)' }}>Loading…</div>
   )
   if (!employee) return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: "'Space Grotesk', sans-serif", color: '#52525b' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: 'var(--font-display)', color: '#52525b' }}>
       <p>Employee not found.</p>
       <Link href="/ai-employees" style={{ color: SKY, fontSize: 14 }}>← Back</Link>
     </div>
@@ -222,7 +222,7 @@ export default function EmployeeDetailPage({ params }: { params: Promise<{ id: s
   const TAB: React.CSSProperties = { padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', fontFamily: 'inherit', transition: 'all 0.15s' }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: "'Space Grotesk', sans-serif", color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
       {toast && (
         <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', background:toast.ok?'#0f2a1a':'#2a0f0f', border:`1px solid ${toast.ok?'#22c55e33':'#ef444433'}`, color:toast.ok?GREEN:RED, padding:'12px 20px', borderRadius:10, fontSize:13, fontWeight:600, zIndex:9999, whiteSpace:'nowrap' }}>
           {toast.msg}

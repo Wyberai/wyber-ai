@@ -68,7 +68,7 @@ export default function GalleryPage() {
   useEffect(() => { setPage(1) }, [activeCategory, activeGroup, search, sort])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={24} wordmarkSize={13} />
@@ -83,7 +83,7 @@ export default function GalleryPage() {
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Prebuilt Web Apps</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>
             {apps.length > 0 ? `${apps.length}` : ''} ready-to-use web apps
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 500 }}>Click any app to load it instantly. Or go to the dashboard and describe something completely custom — AI builds it from scratch in minutes.</p>

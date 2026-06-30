@@ -15,7 +15,7 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
 
   if (!org) {
     return (
-      <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: "'Space Grotesk', sans-serif", display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#52525b' }}>
+      <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, color: '#52525b' }}>
         <div style={{ fontSize: 32 }}>🤖</div>
         <p style={{ fontSize: 16 }}>No AI employees found for {domain}</p>
         <Link href="https://wyberai.com" style={{ color: '#0EA5E9', fontSize: 14 }}>Powered by WyberAi</Link>
@@ -26,7 +26,7 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
   const employees = org.ai_employees?.filter((e: { is_active: boolean }) => e.is_active) ?? []
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: "'Space Grotesk', sans-serif", color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
       <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{org.name}</div>
         <a href="https://wyberai.com" style={{ fontSize: 11, color: '#3f3f46', textDecoration: 'none' }}>Powered by WyberAi</a>

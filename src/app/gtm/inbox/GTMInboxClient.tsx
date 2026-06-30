@@ -57,7 +57,7 @@ export default function GTMInboxClient({ initialEvents }: { initialEvents: any[]
       {/* Left: event list */}
       <div style={{ width: 320, borderRight: `1px solid ${s.border}`, overflowY: 'auto', flexShrink: 0 }}>
         <div style={{ padding: '16px 16px 8px', borderBottom: `1px solid ${s.border}` }}>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 10 }}>Inbox</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 10 }}>Inbox</h1>
           <div style={{ display: 'flex', gap: 4 }}>
             {['all', 'replied', 'call done', 'meeting'].map(f => (
               <button key={f} onClick={() => setFilter(f)} style={{ padding: '4px 10px', borderRadius: 20, border: 'none', background: filter === f ? s.violet : 'rgba(255,255,255,0.05)', color: filter === f ? '#fff' : s.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>

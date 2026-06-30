@@ -49,7 +49,7 @@ export default async function PublicProjectPage({ params }: Props) {
   const previewUrl = project.deployed_url || project.published_url || null
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Nav */}
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
@@ -72,7 +72,7 @@ export default async function PublicProjectPage({ params }: Props) {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 20, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
             ⚡ Built with WyberAi
           </div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1, color: '#fafafa' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, lineHeight: 1.1, color: '#fafafa' }}>
             {project.name}
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', lineHeight: 1.65 }}>
@@ -117,7 +117,7 @@ export default async function PublicProjectPage({ params }: Props) {
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: '40px 24px', borderRadius: 16, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Want to build something like this?</div>
-          <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, color: '#fafafa' }}>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, color: '#fafafa' }}>
             Build your own app in 60 seconds
           </div>
           <div style={{ fontSize: 14, color: '#71717a', marginBottom: 24 }}>No code required. 50 free credits. No card needed.</div>
@@ -132,7 +132,6 @@ export default async function PublicProjectPage({ params }: Props) {
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
 }

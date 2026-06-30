@@ -31,7 +31,7 @@ export function DocsPage({ section, title, intro, requirements, children }: Docs
       </div>
 
       {/* Title */}
-      <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,4vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', color: TEXT, margin: '0 0 16px', lineHeight: 1.15 }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,4vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', color: TEXT, margin: '0 0 16px', lineHeight: 1.15 }}>
         {title}
       </h1>
 
@@ -69,7 +69,7 @@ export function DocsPage({ section, title, intro, requirements, children }: Docs
 export function DocSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section style={{ marginBottom: 40 }}>
-      <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: TEXT, margin: '0 0 16px', paddingBottom: 10, borderBottom: `1px solid ${BORDER}` }}>
+      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: TEXT, margin: '0 0 16px', paddingBottom: 10, borderBottom: `1px solid ${BORDER}` }}>
         {title}
       </h2>
       {children}

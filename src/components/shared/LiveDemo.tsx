@@ -30,7 +30,7 @@ import DataTable from './DataTable'
 export default function Dashboard() {
   return (
     <main style={{flex:1,padding:24,overflow:'auto',background:'#09090b'}}>
-      <h1 style={{fontFamily:'Sora',fontSize:24,fontWeight:800,color:'#fafafa',marginBottom:20}}>
+      <h1 style={{fontFamily: 'var(--font-display)',fontSize:24,fontWeight:800,color:'#fafafa',marginBottom:20}}>
         Overview
       </h1>
       <StatsGrid />
@@ -111,7 +111,7 @@ export function LiveDemo() {
       borderRadius: 16,
       overflow: 'hidden',
       boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
-      fontFamily: "'Space Grotesk', sans-serif",
+      fontFamily: 'var(--font-display)',
     }}>
       {/* Window chrome */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, background: '#0d0d0f' }}>

@@ -3,8 +3,8 @@ export const metadata: Metadata = { title: 'Credits & Pricing — WyberAi', desc
 
 export default function CreditsPage() {
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px', fontFamily: 'Space Grotesk, sans-serif', color: '#fafafa' }}>
-      <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 40, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>Credits & Pricing</h1>
+    <div style={{ maxWidth: 800, margin: '0 auto', padding: '60px 24px', fontFamily: 'var(--font-display)', color: '#fafafa' }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 40, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>Credits & Pricing</h1>
       <p style={{ fontSize: 16, color: '#a1a1aa', marginBottom: 48, lineHeight: 1.6 }}>Transparent pricing. No hidden costs. You always know exactly what you are spending.</p>
 
       <section style={{ marginBottom: 48 }}>
@@ -50,7 +50,7 @@ export default function CreditsPage() {
           ].map(({ plan, price, credits, color }) => (
             <div key={plan} style={{ padding: 20, borderRadius: 12, background: '#111113', border: `1px solid ${color}30` }}>
               <div style={{ fontSize: 11, fontWeight: 700, color, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: 8 }}>{plan}</div>
-              <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 4 }}>{price}<span style={{ fontSize: 13, fontWeight: 400, color: '#71717a' }}>/mo</span></div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 4 }}>{price}<span style={{ fontSize: 13, fontWeight: 400, color: '#71717a' }}>/mo</span></div>
               <div style={{ fontSize: 14, fontWeight: 700, color }}>{credits >= 99999 ? 'Unlimited' : credits.toLocaleString()} credits</div>
               <div style={{ fontSize: 11, color: '#52525b', marginTop: 4 }}>{credits >= 99999 ? 'Never runs out' : `~${credits} generations`}</div>
             </div>

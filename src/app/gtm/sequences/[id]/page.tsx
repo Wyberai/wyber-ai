@@ -39,7 +39,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
   const liSteps    = template.steps.filter(s => s.type === 'linkedin')
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -52,7 +52,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
         {/* Header */}
         <div style={{ marginBottom: 36 }}>
           <div style={{ fontSize: 40, marginBottom: 14, lineHeight: 1 }}>{template.emoji}</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>{template.name}</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>{template.name}</h1>
           <p style={{ fontSize: 15, color: s.muted, marginBottom: 16, lineHeight: 1.6 }}>{template.description}</p>
 
           {/* Meta pills */}
@@ -103,7 +103,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
         </div>
 
         {/* Step-by-step */}
-        <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 20 }}>The sequence</h2>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 20 }}>The sequence</h2>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           {template.steps.map((step, idx) => {
@@ -142,7 +142,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
                         <div style={{ fontSize: 12, fontWeight: 700, color: s.muted, marginBottom: 4 }}>Subject</div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: s.text, marginBottom: 12, fontStyle: 'italic' }}>{step.subject}</div>
                         <div style={{ fontSize: 12, fontWeight: 700, color: s.muted, marginBottom: 4 }}>Body</div>
-                        <pre style={{ margin: 0, fontSize: 12, color: '#d4d4d8', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: "'Space Grotesk', sans-serif" }}>{step.body}</pre>
+                        <pre style={{ margin: 0, fontSize: 12, color: '#d4d4d8', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-display)' }}>{step.body}</pre>
                       </>
                     )}
 
@@ -150,7 +150,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
                     {step.type === 'call' && (
                       <>
                         <div style={{ fontSize: 12, fontWeight: 700, color: s.muted, marginBottom: 4 }}>Call script</div>
-                        <pre style={{ margin: 0, fontSize: 12, color: '#d4d4d8', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: "'Space Grotesk', sans-serif", marginBottom: step.note ? 12 : 0 }}>{step.script}</pre>
+                        <pre style={{ margin: 0, fontSize: 12, color: '#d4d4d8', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-display)', marginBottom: step.note ? 12 : 0 }}>{step.script}</pre>
                         {step.duration_min && (
                           <div style={{ fontSize: 11, color: s.muted, marginTop: 8 }}>⏱ Target: {step.duration_min} min call</div>
                         )}
@@ -161,7 +161,7 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
                     {step.type === 'linkedin' && (
                       <>
                         <div style={{ fontSize: 12, fontWeight: 700, color: s.muted, marginBottom: 4 }}>Message copy</div>
-                        <pre style={{ margin: 0, fontSize: 12, color: '#d4d4d8', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: "'Space Grotesk', sans-serif" }}>{step.message}</pre>
+                        <pre style={{ margin: 0, fontSize: 12, color: '#d4d4d8', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: 'var(--font-display)' }}>{step.message}</pre>
                       </>
                     )}
 
@@ -197,7 +197,6 @@ export default async function SequenceDetailPage({ params }: { params: Promise<{
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
 }

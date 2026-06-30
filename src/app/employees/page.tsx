@@ -29,7 +29,7 @@ export default function EmployeesGalleryPage() {
   const departments = Object.keys(byDept).sort()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: "'Space Grotesk', sans-serif", color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
       {/* Nav */}
       <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
@@ -46,7 +46,7 @@ export default function EmployeesGalleryPage() {
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 20, padding: '5px 14px', fontSize: 11, color: '#7dd3fc', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 24 }}>
           100 Roles · 12 Departments · Runs on autopilot
         </div>
-        <h1 style={{ fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, margin: '0 0 18px', fontFamily: "'Sora', sans-serif" }}>
+        <h1 style={{ fontSize: 'clamp(32px, 5vw, 54px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, margin: '0 0 18px', fontFamily: 'var(--font-display)' }}>
           Your AI workforce.<br /><span style={{ color: '#0EA5E9' }}>Ready to deploy.</span>
         </h1>
         <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, margin: '0 0 36px', maxWidth: 580, marginLeft: 'auto', marginRight: 'auto' }}>
@@ -126,7 +126,7 @@ export default function EmployeesGalleryPage() {
         </div>
       </div>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         .emp-side-link:hover { background: rgba(14,165,233,0.08); color: #0EA5E9 !important; }
         .emp-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.08); }
       `}</style>

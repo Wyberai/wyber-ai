@@ -32,14 +32,14 @@ export default function AdminRequestsPage() {
   const pending = requests.filter(r => r.status === 'pending_payment')
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ borderBottom: `1px solid ${s.border}`, padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/ai-employees" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <span style={{ fontSize: 12, color: s.muted }}>Hires</span>
       </nav>
 
       <div style={{ maxWidth: 760, margin: '0 auto', padding: '40px 32px 80px' }}>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, margin: '0 0 6px' }}>Hires</h1>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, margin: '0 0 6px' }}>Hires</h1>
         <p style={{ fontSize: 13, color: s.muted, margin: '0 0 28px' }}>Every employee hired through the site. Payment activates them automatically.</p>
 
         {forbidden ? (
@@ -51,9 +51,9 @@ export default function AdminRequestsPage() {
         ) : (
           <>
             <div style={{ display: 'flex', gap: 24, marginBottom: 28 }}>
-              <div><div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color: GREEN }}>{active.length}</div><div style={{ fontSize: 12, color: s.muted }}>Active hires</div></div>
-              <div><div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color: AMBER }}>{pending.length}</div><div style={{ fontSize: 12, color: s.muted }}>Awaiting payment</div></div>
-              <div><div style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color: SKY }}>{fmt(active.reduce((n, r) => n + r.quoted_price_cents, 0))}</div><div style={{ fontSize: 12, color: s.muted }}>MRR</div></div>
+              <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: GREEN }}>{active.length}</div><div style={{ fontSize: 12, color: s.muted }}>Active hires</div></div>
+              <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: AMBER }}>{pending.length}</div><div style={{ fontSize: 12, color: s.muted }}>Awaiting payment</div></div>
+              <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: SKY }}>{fmt(active.reduce((n, r) => n + r.quoted_price_cents, 0))}</div><div style={{ fontSize: 12, color: s.muted }}>MRR</div></div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -64,7 +64,7 @@ export default function AdminRequestsPage() {
                     <div style={{ fontSize: 12.5, color: s.muted, marginTop: 3 }}>{r.requester_email}{r.company ? ` · ${r.company}` : ''}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 800, color: '#fff' }}>{fmt(r.quoted_price_cents)}<span style={{ fontSize: 11, color: s.dim }}>/mo</span></div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, color: '#fff' }}>{fmt(r.quoted_price_cents)}<span style={{ fontSize: 11, color: s.dim }}>/mo</span></div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: STATUS_COLOR[r.status] ?? s.dim, marginTop: 2 }}>{STATUS_LABEL[r.status] ?? r.status}</div>
                   </div>
                 </div>
@@ -73,7 +73,7 @@ export default function AdminRequestsPage() {
           </>
         )}
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

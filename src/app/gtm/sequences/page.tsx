@@ -18,7 +18,7 @@ const STEP_TYPE_ICONS: Record<string, { icon: string; color: string; label: stri
 
 export default function SequencesPage() {
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -31,7 +31,7 @@ export default function SequencesPage() {
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Sequence Library</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>
             10 battle-tested sequences
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 600 }}>
@@ -115,7 +115,7 @@ export default function SequencesPage() {
 
         {/* Bottom CTA */}
         <div style={{ marginTop: 48, background: `linear-gradient(135deg, rgba(249,115,22,0.08) 0%, rgba(139,92,246,0.08) 100%)`, border: `1px solid rgba(249,115,22,0.2)`, borderRadius: 16, padding: '32px', textAlign: 'center' }}>
-          <div style={{ fontSize: 20, fontWeight: 800, fontFamily: "'Sora', sans-serif", marginBottom: 8 }}>Want a custom sequence?</div>
+          <div style={{ fontSize: 20, fontWeight: 800, fontFamily: 'var(--font-display)', marginBottom: 8 }}>Want a custom sequence?</div>
           <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>Describe your ICP and goal — our AI will generate a personalised multi-channel sequence in seconds.</p>
           <Link href="/gtm/campaigns/new" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.orange, color: '#fff', fontSize: 14, fontWeight: 800, textDecoration: 'none' }}>
             ✦ Build on canvas →
@@ -123,7 +123,7 @@ export default function SequencesPage() {
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); a div:hover { border-color: rgba(255,255,255,0.15) !important; }`}</style>
+      <style>{` a div:hover { border-color: rgba(255,255,255,0.15) !important; }`}</style>
     </div>
   )
 }

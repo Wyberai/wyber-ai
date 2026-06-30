@@ -115,7 +115,7 @@ export function CommandPalette() {
             placeholder="Search commands, pages, templates..."
             style={{
               flex: 1, background: 'none', border: 'none', outline: 'none',
-              color: '#fafafa', fontSize: 15, fontFamily: "'Space Grotesk', sans-serif",
+              color: '#fafafa', fontSize: 15, fontFamily: 'var(--font-display)',
             }}
           />
           <kbd style={{
@@ -152,7 +152,7 @@ export function CommandPalette() {
                         display: 'flex', alignItems: 'center', gap: 12,
                         background: isSelected ? 'rgba(14,165,233,0.08)' : 'transparent',
                         border: 'none', cursor: 'pointer', textAlign: 'left',
-                        fontFamily: "'Space Grotesk', sans-serif",
+                        fontFamily: 'var(--font-display)',
                         transition: 'background 0.1s',
                       }}
                     >

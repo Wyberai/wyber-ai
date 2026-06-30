@@ -71,7 +71,7 @@ export default function GTMSetupPage() {
   const steps = ['Company', 'ICP', 'Messaging']
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/gtm" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>← Back to GTM</Link>
@@ -80,7 +80,7 @@ export default function GTMSetupPage() {
       <div style={{ maxWidth: 640, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.orange, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8 }}>Step {step + 1} of {steps.length}</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8 }}>
             {step === 0 ? 'Tell us about your company' : step === 1 ? 'Who is your ideal customer?' : 'Your messaging'}
           </h1>
           <p style={{ fontSize: 14, color: s.muted }}>
@@ -181,7 +181,7 @@ export default function GTMSetupPage() {
           }
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); input,textarea{color-scheme:dark;}`}</style>
+      <style>{` input,textarea{color-scheme:dark;}`}</style>
     </div>
   )
 }

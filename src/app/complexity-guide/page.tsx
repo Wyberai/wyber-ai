@@ -50,9 +50,9 @@ const SIGNALS = [
 export default function ComplexityGuidePage() {
   const s = { bg:'#09090b',card:'#111113',border:'rgba(255,255,255,0.08)',text:'#fafafa',muted:'#71717a',sky:'#0EA5E9' }
   return (
-    <div style={{minHeight:'100vh',background:s.bg,color:s.text,fontFamily:"'Space Grotesk', sans-serif"}}>
+    <div style={{minHeight:'100vh',background:s.bg,color:s.text,fontFamily: 'var(--font-display)'}}>
       <nav style={{padding:'0 clamp(16px,4vw,48px)',height:60,display:'flex',alignItems:'center',justifyContent:'space-between',borderBottom:`1px solid ${s.border}`,position:'sticky',top:0,zIndex:100,background:'rgba(9,9,11,0.95)',backdropFilter:'blur(16px)'}}>
-        <Link href="/" style={{fontFamily:"'Sora', sans-serif",fontWeight:800,fontSize:14,textDecoration:'none',color:s.text,display:'flex',alignItems:'center',gap:8}}>
+        <Link href="/" style={{fontFamily: 'var(--font-display)',fontWeight:800,fontSize:14,textDecoration:'none',color:s.text,display:'flex',alignItems:'center',gap:8}}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
         <Link href="/setup-call" style={{padding:'7px 16px',borderRadius:8,background:s.sky,color:'#fff',fontSize:13,fontWeight:700,textDecoration:'none'}}>Book a session →</Link>
@@ -60,7 +60,7 @@ export default function ComplexityGuidePage() {
       <div style={{maxWidth:900,margin:'0 auto',padding:'clamp(40px,6vw,80px) clamp(16px,4vw,48px)'}}>
         <div style={{marginBottom:48}}>
           <div style={{fontSize:11,fontWeight:700,color:s.sky,letterSpacing:'0.1em',textTransform:'uppercase',marginBottom:12}}>Build complexity guide</div>
-          <h1 style={{fontFamily:"'Sora', sans-serif",fontSize:'clamp(28px,5vw,46px)',fontWeight:800,letterSpacing:'-0.04em',marginBottom:16,lineHeight:1.1}}>Simple, Medium, or Complex?</h1>
+          <h1 style={{fontFamily: 'var(--font-display)',fontSize:'clamp(28px,5vw,46px)',fontWeight:800,letterSpacing:'-0.04em',marginBottom:16,lineHeight:1.1}}>Simple, Medium, or Complex?</h1>
           <p style={{fontSize:15,color:s.muted,maxWidth:560,lineHeight:1.75}}>Use this to estimate your timeline before booking. Still unsure? Book a consultation — we'll scope it on the call and give you a firm quote and delivery date.</p>
         </div>
 
@@ -93,7 +93,7 @@ export default function ComplexityGuidePage() {
                 <div style={{display:'flex',alignItems:'center',gap:12}}>
                   <span style={{fontSize:26}}>{tier.icon}</span>
                   <div>
-                    <div style={{fontFamily:"'Sora', sans-serif",fontSize:20,fontWeight:800,color:tier.color}}>{tier.name}</div>
+                    <div style={{fontFamily: 'var(--font-display)',fontSize:20,fontWeight:800,color:tier.color}}>{tier.name}</div>
                     <div style={{fontSize:12,color:s.muted}}>Delivered in {tier.delivery}</div>
                   </div>
                 </div>
@@ -125,12 +125,12 @@ export default function ComplexityGuidePage() {
         </div>
 
         <div style={{textAlign:'center',padding:36,background:s.card,borderRadius:14,border:`1px solid ${s.border}`}}>
-          <div style={{fontSize:20,fontWeight:700,fontFamily:"'Sora', sans-serif",marginBottom:8}}>Not sure which tier?</div>
+          <div style={{fontSize:20,fontWeight:700,fontFamily: 'var(--font-display)',marginBottom:8}}>Not sure which tier?</div>
           <div style={{fontSize:14,color:s.muted,marginBottom:20}}>That's what the consultation is for. Describe your idea, we scope it, you get a firm quote and timeline.</div>
           <Link href="/setup-call" style={{display:'inline-block',padding:'12px 28px',borderRadius:10,background:s.sky,color:'#fff',fontSize:14,fontWeight:700,textDecoration:'none'}}>Book a consultation →</Link>
         </div>
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

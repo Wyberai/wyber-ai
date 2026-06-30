@@ -21,7 +21,7 @@ export default function DocsIndexPage() {
         <div style={{ fontSize: 11, fontWeight: 700, color: SKY, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
           Documentation
         </div>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', color: TEXT, margin: '0 0 14px', lineHeight: 1.15 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', color: TEXT, margin: '0 0 14px', lineHeight: 1.15 }}>
           WyberAi Docs
         </h1>
         <p style={{ fontSize: 16, color: TEXT2, lineHeight: 1.7, maxWidth: 540, margin: 0 }}>

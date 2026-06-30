@@ -72,7 +72,7 @@ export default function WorkflowsPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px', background: '#0d0d0f' }}>
@@ -99,7 +99,7 @@ export default function WorkflowsPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#22c55e', marginBottom: 16, fontWeight: 700 }}>
             ⚡ {WORKFLOW_GALLERY.length} Automation Templates
           </div>
-          <h1 style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>
+          <h1 style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
             Automate any business process<br />
             <span style={{ color: '#0EA5E9' }}>with one click</span>
           </h1>
@@ -239,7 +239,7 @@ export default function WorkflowsPage() {
         {/* CTA */}
         <div style={{ marginTop: 56, padding: '36px', background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 16, textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Build from scratch</div>
-          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>Need a custom automation?</div>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, fontFamily: 'var(--font-display)' }}>Need a custom automation?</div>
           <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>Start with a blank canvas and drag in triggers, AI steps, and actions.</div>
           <Link href="/flows" style={{ display: 'inline-block', padding: '11px 24px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Create blank flow →
@@ -248,7 +248,7 @@ export default function WorkflowsPage() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @keyframes spin { to { transform: rotate(360deg) } }
         input::placeholder { color: #52525b }
       `}</style>

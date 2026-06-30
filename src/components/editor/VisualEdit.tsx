@@ -196,7 +196,7 @@ IMPORTANT: Only modify the specific element described. Keep everything else iden
         padding: '6px 12px', borderRadius: 20,
         fontSize: 11, fontWeight: 600, color: '#fff',
         boxShadow: '0 4px 20px rgba(14,165,233,0.4)',
-        fontFamily: 'Space Grotesk, sans-serif',
+        fontFamily: 'var(--font-display)',
       }}>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         Click any element to edit it
@@ -210,7 +210,7 @@ IMPORTANT: Only modify the specific element described. Keep everything else iden
           background: '#0EA5E9', color: '#fff', padding: '2px 8px',
           borderRadius: 5, fontSize: 10, fontWeight: 700,
           pointerEvents: 'none', zIndex: 9999,
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'var(--font-display)',
           whiteSpace: 'nowrap',
         }}>
           &lt;{hover.tag}&gt; {hover.text ? `"${hover.text.slice(0, 30)}"` : ''}
@@ -230,7 +230,7 @@ IMPORTANT: Only modify the specific element described. Keep everything else iden
           padding: 12,
           width: 320,
           boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-          fontFamily: 'Space Grotesk, sans-serif',
+          fontFamily: 'var(--font-display)',
         }}>
           <div style={{ fontSize: 11, color: '#0EA5E9', fontWeight: 700, marginBottom: 8 }}>
             ✏️ Edit &lt;{selected.tag}&gt; {selected.text ? `"${selected.text.slice(0, 30)}"` : ''}

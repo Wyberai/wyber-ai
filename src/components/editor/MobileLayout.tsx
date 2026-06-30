@@ -88,13 +88,13 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
             onChange={e => setNameInput(e.target.value)}
             onBlur={saveRename}
             onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditingName(false); }}
-            style={{ fontSize: 12, color: '#fafafa', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '1px 6px', outline: 'none', fontFamily: "'Space Grotesk', sans-serif" }}
+            style={{ fontSize: 12, color: '#fafafa', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 5, padding: '1px 6px', outline: 'none', fontFamily: 'var(--font-display)' }}
           />
         ) : (
           <span
             onClick={() => { setNameInput(displayName); setEditingName(true); }}
             title="Click to rename"
-            style={{ fontSize: 12, color: '#a1a1aa', fontFamily: "'Space Grotesk', sans-serif", cursor: 'pointer', padding: '1px 4px', borderRadius: 4 }}
+            style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'var(--font-display)', cursor: 'pointer', padding: '1px 4px', borderRadius: 4 }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >{displayName}</span>

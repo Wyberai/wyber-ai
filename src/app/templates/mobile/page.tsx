@@ -26,7 +26,7 @@ export default function MobileTemplatesPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Header */}
       <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 32px', background: '#0d0d0f' }}>
@@ -51,7 +51,7 @@ export default function MobileTemplatesPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#8b5cf6', marginBottom: 16, fontWeight: 700 }}>
             📱 {MOBILE_GALLERY.length} Mobile Templates
           </div>
-          <h1 style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: "'Sora', sans-serif" }}>
+          <h1 style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, margin: '0 0 12px', letterSpacing: '-0.03em', fontFamily: 'var(--font-display)' }}>
             Ship mobile apps in<br />
             <span style={{ color: '#0EA5E9' }}>minutes, not months</span>
           </h1>
@@ -154,7 +154,7 @@ export default function MobileTemplatesPage() {
         {/* CTA */}
         <div style={{ marginTop: 56, padding: '36px', background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', borderRadius: 16, textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Don&apos;t see your app?</div>
-          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>Describe any mobile app in plain English</div>
+          <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, fontFamily: 'var(--font-display)' }}>Describe any mobile app in plain English</div>
           <div style={{ fontSize: 14, color: '#71717a', marginBottom: 20 }}>The AI mobile builder creates full Expo apps from your description.</div>
           <Link href="/dashboard?new=mobile" style={{ display: 'inline-block', padding: '11px 24px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Build from scratch →
@@ -163,7 +163,7 @@ export default function MobileTemplatesPage() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @keyframes spin { to { transform: rotate(360deg) } }
         input::placeholder { color: #52525b }
       `}</style>

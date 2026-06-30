@@ -103,7 +103,7 @@ export const IntegrationNode = memo(({ data }: NodeProps) => {
       padding: '10px 14px',
       minWidth: 160,
       boxShadow: `0 0 0 1px ${color}20, 0 4px 20px rgba(0,0,0,0.3)`,
-      fontFamily: 'Inter, sans-serif',
+      fontFamily: 'var(--font-sans)',
       position: 'relative',
     }}>
       <Handle type="target" position={Position.Left} style={{ background: color, width: 8, height: 8, border: 'none' }} />

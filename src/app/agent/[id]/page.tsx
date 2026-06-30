@@ -146,10 +146,10 @@ export default function AgentStudioPage() {
 
   const allConnected = requiredTools.length === 0 || requiredTools.every(t => connectedTools.some(c => c.tool_id === t.id))
 
-  if (!agent) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#52526a',fontFamily:'Inter,sans-serif'}}>Loading...</div>
+  if (!agent) return <div style={{minHeight:'100vh',background:'#0a0a0f',display:'flex',alignItems:'center',justifyContent:'center',color:'#52526a',fontFamily: 'var(--font-sans)'}}>Loading...</div>
 
   return (
-    <div style={{minHeight:'100vh',background:'#0a0a0f',color:'#f0f0f5',fontFamily:'Inter,-apple-system,sans-serif'}}>
+    <div style={{minHeight:'100vh',background:'#0a0a0f',color:'#f0f0f5',fontFamily: 'var(--font-sans)'}}>
       <div style={{borderBottom:'1px solid rgba(255,255,255,0.06)',padding:'0 32px'}}>
         <div style={{maxWidth:1100,margin:'0 auto',display:'flex',alignItems:'center',height:60,gap:16}}>
           <button onClick={() => router.push('/agents')} style={{background:'none',border:'none',color:'#52526a',cursor:'pointer',fontSize:13}}>← Agents</button>

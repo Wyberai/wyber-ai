@@ -104,7 +104,7 @@ export default function AgentsPage() {
   }
 
   return (
-    <div style={{ minHeight:'100vh', background:'#09090b', color:'#fafafa', fontFamily:"'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight:'100vh', background:'#09090b', color:'#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Header */}
       <div style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px', background: '#0d0d0f' }}>
@@ -130,7 +130,7 @@ export default function AgentsPage() {
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#0EA5E9', marginBottom:16, fontWeight:700 }}>
             ⚡ {total === null ? '…' : total.toLocaleString()} AI Agents Available
           </div>
-          <h1 style={{ fontSize:'clamp(28px,4vw,42px)', fontWeight:800, margin:'0 0 12px', letterSpacing:'-0.03em', fontFamily:"'Sora', sans-serif" }}>
+          <h1 style={{ fontSize:'clamp(28px,4vw,42px)', fontWeight:800, margin:'0 0 12px', letterSpacing:'-0.03em', fontFamily: 'var(--font-display)' }}>
             Deploy AI agents for<br />
             <span style={{ color:'#0EA5E9' }}>any business workflow</span>
           </h1>
@@ -278,7 +278,7 @@ export default function AgentsPage() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         @keyframes spin{to{transform:rotate(360deg)}}
         input::placeholder{color:#52525b}

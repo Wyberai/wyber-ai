@@ -64,7 +64,7 @@ export default function InterviewPage({ params }: { params: Promise<{ slug: stri
 
   if (!role) {
     return (
-      <div style={{ minHeight: '100vh', background: s.bg, color: s.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: s.bg, color: s.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)' }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
           <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 8 }}>Role not found</h1>
@@ -87,7 +87,7 @@ export default function InterviewPage({ params }: { params: Promise<{ slug: stri
   const suggestions = role.examplePrompts.slice(0, 3)
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
       <nav style={{ borderBottom: `1px solid ${s.border}`, padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50, background: 'rgba(11,13,18,0.95)', backdropFilter: 'blur(12px)' }}>
         <Link href={`/ai-employees/roles/${slug}`} style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
           <WyberLogo markSize={24} wordmarkSize={14} />
@@ -103,7 +103,7 @@ export default function InterviewPage({ params }: { params: Promise<{ slug: stri
         <div style={{ width: 48, height: 48, borderRadius: 14, background: accent + '15', border: `2px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{role.emoji}</div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 700, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Interviewing · {role.department}</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', margin: '2px 0 0' }}>{role.title}</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', margin: '2px 0 0' }}>{role.title}</h1>
         </div>
       </div>
 
@@ -156,7 +156,6 @@ export default function InterviewPage({ params }: { params: Promise<{ slug: stri
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
 }

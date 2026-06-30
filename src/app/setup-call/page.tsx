@@ -28,9 +28,9 @@ export default function SetupCallPage() {
   const s = { bg:'#09090b', card:'#111113', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#71717a', sky:'#0EA5E9' }
 
   return (
-    <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily:"'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight:'100vh', background:s.bg, color:s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding:'0 clamp(16px,4vw,48px)', height:60, display:'flex', alignItems:'center', justifyContent:'space-between', borderBottom:`1px solid ${s.border}`, position:'sticky', top:0, zIndex:100, background:'rgba(9,9,11,0.95)', backdropFilter:'blur(16px)' }}>
-        <Link href="/" style={{ fontFamily:"'Sora', sans-serif", fontWeight:800, fontSize:14, textDecoration:'none', color:s.text, display:'flex', alignItems:'center', gap:8 }}>
+        <Link href="/" style={{ fontFamily: 'var(--font-display)', fontWeight:800, fontSize:14, textDecoration:'none', color:s.text, display:'flex', alignItems:'center', gap:8 }}>
           <WyberLogo markSize={22} wordmarkSize={14} />
         </Link>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
@@ -44,7 +44,7 @@ export default function SetupCallPage() {
         {/* Hero */}
         <div style={{ textAlign:'center', marginBottom:48 }}>
           <div style={{ display:'inline-block', padding:'4px 14px', borderRadius:20, background:'rgba(14,165,233,0.1)', border:'1px solid rgba(14,165,233,0.2)', fontSize:11, fontWeight:700, color:s.sky, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:16 }}>Done-for-you builds</div>
-          <h1 style={{ fontFamily:"'Sora', sans-serif", fontSize:'clamp(28px,5vw,46px)', fontWeight:800, letterSpacing:'-0.04em', lineHeight:1.1, marginBottom:16 }}>Tell us what you need.<br/>We build it for you.</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize:'clamp(28px,5vw,46px)', fontWeight:800, letterSpacing:'-0.04em', lineHeight:1.1, marginBottom:16 }}>Tell us what you need.<br/>We build it for you.</h1>
           <p style={{ fontSize:15, color:s.muted, maxWidth:480, margin:'0 auto 20px', lineHeight:1.75 }}>Start with a 60-minute consultation. We scope, quote, and agree on a delivery date — then build and hand it over.</p>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'8px 18px', borderRadius:20, background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)' }}>
             <div style={{ width:7, height:7, borderRadius:'50%', background:'#22c55e' }}/>
@@ -58,12 +58,12 @@ export default function SetupCallPage() {
             <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>$99 consultation fee</div>
             <div style={{ fontSize:12, color:s.muted }}>You'll receive a payment link after booking to confirm your slot. Credited toward your build.</div>
           </div>
-          <div style={{ fontSize:22, fontWeight:800, color:s.sky, fontFamily:"'Sora', sans-serif" }}>$99</div>
+          <div style={{ fontSize:22, fontWeight:800, color:s.sky, fontFamily: 'var(--font-display)' }}>$99</div>
         </div>
 
         {/* Cal.com embed — always visible */}
         <div style={{ marginBottom:44 }}>
-          <div style={{ fontSize:18, fontWeight:700, fontFamily:"'Sora', sans-serif", marginBottom:6, textAlign:'center' }}>Pick a time</div>
+          <div style={{ fontSize:18, fontWeight:700, fontFamily: 'var(--font-display)', marginBottom:6, textAlign:'center' }}>Pick a time</div>
           <div style={{ fontSize:13, color:s.muted, textAlign:'center', marginBottom:18 }}>Available 24/7 · Google Meet · Worldwide</div>
           <div style={{ borderRadius:16, overflow:'hidden', border:`1px solid ${s.border}` }}>
             <iframe
@@ -76,13 +76,13 @@ export default function SetupCallPage() {
 
         {/* How it works */}
         <div style={{ marginBottom:44 }}>
-          <div style={{ fontSize:18, fontWeight:700, fontFamily:"'Sora', sans-serif", marginBottom:18, textAlign:'center' }}>How it works</div>
+          <div style={{ fontSize:18, fontWeight:700, fontFamily: 'var(--font-display)', marginBottom:18, textAlign:'center' }}>How it works</div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:12 }}>
             {STEPS.map(step => (
               <div key={step.n} style={{ background:s.card, border:`1px solid ${s.border}`, borderRadius:12, padding:18 }}>
                 <div style={{ fontSize:22, marginBottom:8 }}>{step.icon}</div>
                 <div style={{ fontSize:11, fontWeight:800, color:s.sky, letterSpacing:'0.1em', marginBottom:5 }}>{step.n}</div>
-                <div style={{ fontSize:13, fontWeight:700, marginBottom:5, fontFamily:"'Sora', sans-serif" }}>{step.title}</div>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:5, fontFamily: 'var(--font-display)' }}>{step.title}</div>
                 <div style={{ fontSize:12, color:s.muted, lineHeight:1.6 }}>{step.desc}</div>
               </div>
             ))}
@@ -92,7 +92,7 @@ export default function SetupCallPage() {
         {/* Delivery tiers */}
         <div style={{ marginBottom:44 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, flexWrap:'wrap', gap:8 }}>
-            <div style={{ fontSize:18, fontWeight:700, fontFamily:"'Sora', sans-serif" }}>Delivery timelines</div>
+            <div style={{ fontSize:18, fontWeight:700, fontFamily: 'var(--font-display)' }}>Delivery timelines</div>
             <Link href="/complexity-guide" style={{ fontSize:13, color:s.sky, textDecoration:'none', fontWeight:600 }}>Full complexity guide →</Link>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12 }}>
@@ -101,7 +101,7 @@ export default function SetupCallPage() {
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                   <span style={{ fontSize:18 }}>{t.icon}</span>
                   <div>
-                    <div style={{ fontSize:15, fontWeight:800, color:t.color, fontFamily:"'Sora', sans-serif" }}>{t.name}</div>
+                    <div style={{ fontSize:15, fontWeight:800, color:t.color, fontFamily: 'var(--font-display)' }}>{t.name}</div>
                     <div style={{ fontSize:11, color:s.muted }}>⏱ {t.delivery}</div>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ export default function SetupCallPage() {
 
         {/* FAQ */}
         <div style={{ marginBottom:44 }}>
-          <div style={{ fontSize:18, fontWeight:700, fontFamily:"'Sora', sans-serif", marginBottom:18 }}>FAQ</div>
+          <div style={{ fontSize:18, fontWeight:700, fontFamily: 'var(--font-display)', marginBottom:18 }}>FAQ</div>
           {FAQ.map(({ q, a }) => (
             <div key={q} style={{ padding:'14px 0', borderBottom:`1px solid ${s.border}` }}>
               <div style={{ fontSize:14, fontWeight:700, marginBottom:5 }}>{q}</div>
@@ -124,13 +124,12 @@ export default function SetupCallPage() {
 
         {/* Bottom CTA */}
         <div style={{ textAlign:'center', padding:32, background:s.card, borderRadius:14, border:`1px solid ${s.border}` }}>
-          <div style={{ fontSize:16, fontWeight:700, fontFamily:"'Sora', sans-serif", marginBottom:6 }}>Questions before booking?</div>
+          <div style={{ fontSize:16, fontWeight:700, fontFamily: 'var(--font-display)', marginBottom:6 }}>Questions before booking?</div>
           <div style={{ fontSize:13, color:s.muted, marginBottom:16 }}>Email us — usually reply within a few hours.</div>
           <a href="mailto:hello@wyberai.com?subject=Build Session Enquiry" style={{ display:'inline-block', padding:'10px 22px', borderRadius:9, background:s.sky, color:'#fff', fontSize:13, fontWeight:700, textDecoration:'none' }}>hello@wyberai.com →</a>
         </div>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
     </div>
   )
 

@@ -14,7 +14,7 @@ const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', te
 
 export default function Post() {
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
@@ -28,7 +28,7 @@ export default function Post() {
           <span style={{ fontSize: 12, color: s.dim }}>June 14, 2026 · 6 min read</span>
         </div>
 
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
           How to build a mobile app with AI in 2026 — iOS and Android, no coding
         </h1>
 
@@ -39,34 +39,34 @@ export default function Post() {
 
           <p>Here's exactly how it works.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 1: Describe your app</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 1: Describe your app</h2>
           <p>Open WyberAi, click <strong style={{ color: s.text }}>Mobile App</strong>, and type a description. Be specific about screens and data — the more you give it, the less you'll need to iterate.</p>
 
           <div style={{ background: s.card, borderRadius: 10, padding: '16px 20px', border: `1px solid ${s.border}`, fontFamily: 'monospace', fontSize: 14, color: '#e2e8f0', lineHeight: 1.7, margin: '16px 0' }}>
             Build a fitness tracker with a Home screen showing today's workout summary, a History screen with a weekly chart, and a Profile screen with total workouts and current streak. Bottom tab navigation.
           </div>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 2: Preview on your phone</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 2: Preview on your phone</h2>
           <p>Generation takes in a few minutes. When it finishes, you'll see a QR code in the preview pane. Open the <strong style={{ color: s.text }}>Expo Go</strong> app on your iPhone or Android and scan it — your app loads instantly. No USB cable, no Xcode, no build queue.</p>
 
           <p>What you get is a real React Native app running on real hardware, not a web wrapper or a mockup. Touch interactions, navigation gestures, platform fonts — all native.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 3: Iterate in chat</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 3: Iterate in chat</h2>
           <p>Everything in the app is editable by describing the change. "Add a Settings screen with a notification toggle and dark mode switch." "Make the history chart a bar chart instead of a line." "Change the accent color to green." Each change regenerates the affected files and updates the preview automatically.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 4: Export and publish</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 4: Export and publish</h2>
           <p>When you're ready to submit to the App Store or Google Play, export the full Expo project as a ZIP. Open it in VS Code if you want to customize further, or use <strong style={{ color: s.text }}>EAS Build</strong> (Expo's cloud build service) to generate an IPA or APK without needing a Mac or a Windows build machine.</p>
 
           <p>The export is clean, production-ready React Native code. You own it completely.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What WyberAi generates</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What WyberAi generates</h2>
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {['Bottom tab navigator (React Navigation)', 'All screens with StyleSheet — no web CSS', 'Ionicons from @expo/vector-icons', 'Realistic seed data so every screen looks complete', 'Dark background design system tuned for mobile', 'package.json with the correct Expo SDK and navigation deps'].map(item => (
               <li key={item}>{item}</li>
             ))}
           </ul>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What it costs</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What it costs</h2>
           <p>The free plan gives you ~50 credits a month. Starter is $29/month for 150 credits — web/mobile builds cost 10 credits, edits cost 3. Top-ups available anytime. No credit card required to start.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.violet}10`, border: `1px solid ${s.violet}25`, borderRadius: 12 }}>
@@ -78,7 +78,7 @@ export default function Post() {
           </div>
         </div>
       </article>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

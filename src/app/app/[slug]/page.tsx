@@ -89,7 +89,7 @@ export default async function PublishedAppPage({ params }: Props) {
   if (!loaded) {
     // App not built yet — show a building page
     return (
-      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', gap: 16 }}>
+      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-sans)', gap: 16 }}>
         <div style={{ width: 32, height: 32, border: '3px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <div style={{ color: '#71717a', fontSize: 14 }}>Building your app...</div>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -115,8 +115,8 @@ export default async function PublishedAppPage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd }} />
       )}
       <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter, sans-serif' }}>Built with</span>
-        <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'Inter, sans-serif' }}>WyberAi</a>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
+        <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
       </div>
       {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
       <iframe

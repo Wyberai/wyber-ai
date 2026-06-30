@@ -75,7 +75,7 @@ function MobileMockup() {
 
 function EmployeeMockup() {
   return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'var(--font-display)', fontSize: 11 }}>
       <WindowChrome title="wyberai.com — AI Employees" />
       {[
         { emoji: '📣', name: 'Marketing Manager', dept: 'Marketing · daily 09:00', status: 'Active', color: '#22c55e', detail: 'Drafted competitor analysis and 3 blog outlines' },
@@ -98,7 +98,7 @@ function EmployeeMockup() {
 
 function WorkflowMockup() {
   return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'var(--font-display)', fontSize: 11 }}>
       <WindowChrome title="wyberai.com — Workflows" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {[
@@ -125,7 +125,7 @@ function WorkflowMockup() {
 
 function GTMMockup() {
   return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: "'Space Grotesk', sans-serif", fontSize: 11 }}>
+    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'var(--font-display)', fontSize: 11 }}>
       <WindowChrome title="wyberai.com — GTM Engine" />
       <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>ICP Match · 142 leads found</div>
@@ -236,7 +236,7 @@ function AIEmployeeSpotlight() {
 
         <div style={{ background: '#111113', border: `1px solid ${s.accent}30`, borderRadius: 20, padding: 'clamp(28px,4vw,48px)', minHeight: 280, display: 'grid', gridTemplateColumns: '1fr', gap: 8, transition: 'border-color 0.5s' }}>
           <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: s.accent, marginBottom: 4, transition: 'color 0.5s' }}>{s.tag}</div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>{s.title}</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>{s.title}</h2>
           <p style={{ fontSize: 'clamp(14px,1.6vw,17px)', color: '#a1a1aa', lineHeight: 1.6, maxWidth: 620, marginBottom: 12 }}>{s.sub}</p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px,100%), 1fr))', gap: 10 }}>
             {s.bullets.map(b => (
@@ -292,7 +292,7 @@ export default function HomePage() {
   const product = PRODUCTS[activeProduct];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: "'Space Grotesk', sans-serif", overflowX: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', overflowX: 'hidden' }}>
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -359,7 +359,7 @@ export default function HomePage() {
             Now live — Web Apps & Mobile Apps
           </div>
 
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
             Vibe code with{' '}<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               WyberAi
@@ -400,7 +400,7 @@ export default function HomePage() {
             { value: '99.9%', label: 'uptime' },
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fafafa', fontFamily: "'Sora', sans-serif" }}>{s.value}</div>
+              <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fafafa', fontFamily: 'var(--font-display)' }}>{s.value}</div>
               <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
@@ -414,7 +414,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 56 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em' }}>From idea to live app in 3 steps</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em' }}>From idea to live app in 3 steps</h2>
           </div>
           <div className="wyb-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40 }}>
             {[
@@ -423,8 +423,8 @@ export default function HomePage() {
               { step: '03', title: 'Ship it', desc: 'Deploy to a live URL with one click. Connect your domain, push to GitHub, iterate with simple feedback.', color: '#22c55e' },
             ].map(s => (
               <div key={s.step} style={{ textAlign: 'center' }}>
-                <div style={{ width: 56, height: 56, borderRadius: 16, background: s.color + '12', border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22, fontWeight: 800, color: s.color, fontFamily: "'Sora', sans-serif" }}>{s.step}</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: "'Sora', sans-serif" }}>{s.title}</div>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: s.color + '12', border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22, fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)' }}>{s.step}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: 'var(--font-display)' }}>{s.title}</div>
                 <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
               </div>
             ))}
@@ -437,7 +437,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Products</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
               Web apps & mobile apps, one platform
             </h2>
             <p style={{ fontSize: 15, color: '#71717a', marginTop: 8 }}>Everything you need to build, launch, and grow — in one place.</p>
@@ -457,7 +457,7 @@ export default function HomePage() {
           {/* Active product detail */}
           <div className="wyb-product-detail" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }}>
             <div>
-              <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12, color: '#fafafa', lineHeight: 1.15 }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12, color: '#fafafa', lineHeight: 1.15 }}>
                 {product.heading}
               </h3>
               <p style={{ fontSize: 15, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 24 }}>
@@ -485,7 +485,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why WyberAi</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
               Not another template marketplace
             </h2>
           </div>
@@ -502,7 +502,7 @@ export default function HomePage() {
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = f.color + '30'}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'}>
                 <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 6, fontFamily: "'Sora', sans-serif" }}>{f.title}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 6, fontFamily: 'var(--font-display)' }}>{f.title}</div>
                 <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
@@ -514,7 +514,7 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pricing</div>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14 }}>
             Simple, transparent pricing
           </h2>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Start free. Upgrade when you need more builds. All features included on every plan.</p>
@@ -529,7 +529,7 @@ export default function HomePage() {
                 {(p as any).badge && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: p.highlight ? BRAND : '#8b5cf6', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{(p as any).badge}</div>}
                 <div style={{ fontSize: 12, fontWeight: 700, color: p.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{p.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, justifyContent: 'center', marginBottom: 14 }}>
-                  <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 36, fontWeight: 800, color: '#fafafa' }}>{p.price}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: '#fafafa' }}>{p.price}</span>
                   <span style={{ fontSize: 12, color: '#52525b' }}>/mo</span>
                 </div>
                 <div style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>{p.credits} credits</div>
@@ -542,7 +542,7 @@ export default function HomePage() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: '#f97316', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Done-for-you</div>
-                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 800, color: '#fafafa', marginBottom: 4 }}>We build it for you</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: '#fafafa', marginBottom: 4 }}>We build it for you</div>
                 <div style={{ fontSize: 13, color: '#71717a', maxWidth: 420 }}>Prefer to hand it off? Book a $99 scoping call — the fee is credited toward your build.</div>
               </div>
               <a href="/setup-call" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: '#f97316', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
@@ -560,7 +560,7 @@ export default function HomePage() {
                   <div style={{ fontSize: 18, marginBottom: 8 }}>{b.icon}</div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: b.color, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>{b.name}</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                    <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, color: '#fafafa' }}>{b.price}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: '#fafafa' }}>{b.price}</span>
                     <span style={{ fontSize: 11, color: '#52525b' }}>{b.delivery}</span>
                   </div>
                   <div style={{ fontSize: 11.5, color: '#71717a', lineHeight: 1.5 }}>{b.desc}</div>
@@ -580,7 +580,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>FAQ</div>
-            <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>Questions, answered</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>Questions, answered</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {HOME_FAQS.map(([q, a], i) => (
@@ -607,7 +607,7 @@ export default function HomePage() {
       <section style={{ padding: 'clamp(80px,10vw,140px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(32px,5vw,60px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.05 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,5vw,60px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.05 }}>
             Stop dreaming.<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Start shipping.</span>
           </h2>
@@ -649,7 +649,7 @@ export default function HomePage() {
       <Footer />
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         @media (max-width: 768px) {
           .wyb-nav-desktop { display: none !important; }

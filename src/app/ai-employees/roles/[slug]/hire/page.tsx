@@ -46,7 +46,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ borderBottom: `1px solid ${s.border}`, padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href={`/ai-employees/${slug === 'marketing-manager' ? 'marketing-manager' : `roles/${slug}`}`} style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href={`/ai-employees/roles/${slug}/interview`} style={{ fontSize: 12, color: s.muted, textDecoration: 'none' }}>← Interview first</Link>
@@ -56,7 +56,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
         {done ? (
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>✅</div>
-            <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, margin: '0 0 10px' }}>Almost there</h1>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, margin: '0 0 10px' }}>Almost there</h1>
             <p style={{ fontSize: 15, color: s.muted, lineHeight: 1.65, maxWidth: 380, margin: '0 auto' }}>
               <strong style={{ color: s.text }}>{name}</strong> is reserved at <strong style={{ color: accent }}>{done.priceLabel}</strong>. We&apos;ll email you a secure payment link — once you pay, {name} is hired and ready to set up.
             </p>
@@ -68,7 +68,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
               <div style={{ width: 52, height: 52, borderRadius: 14, background: accent + '15', border: `2px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>{role.emoji}</div>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{role.department}</div>
-                <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 24, fontWeight: 800, margin: 0 }}>Hire a {role.title}</h1>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, margin: 0 }}>Hire a {role.title}</h1>
               </div>
             </div>
 
@@ -76,7 +76,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
             <div style={{ margin: '22px 0', padding: 18, borderRadius: 14, background: accent + '0d', border: `1px solid ${accent}30` }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 13, color: s.muted }}>Current price</span>
-                <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 28, fontWeight: 800, color: '#fff' }}>{price?.priceLabel ?? '…'}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: '#fff' }}>{price?.priceLabel ?? '…'}</span>
               </div>
               <p style={{ fontSize: 12, color: s.muted, margin: '8px 0 0', lineHeight: 1.5 }}>Billed monthly. You&apos;re only charged once your hire is approved and you complete payment.</p>
             </div>
@@ -104,7 +104,7 @@ export default function HireRequestPage({ params }: { params: Promise<{ slug: st
           </>
         )}
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

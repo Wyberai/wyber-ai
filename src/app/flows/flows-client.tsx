@@ -337,7 +337,7 @@ export default function FlowsPage() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#f0f0f5', fontFamily: 'Inter,-apple-system,sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0a0a0f', color: '#f0f0f5', fontFamily: 'var(--font-sans)' }}>
       <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '0 32px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', height: 60, gap: 16 }}>
           <Link href="/dashboard" style={{ fontSize: 13, color: MUTED, textDecoration: 'none' }}>← Dashboard</Link>

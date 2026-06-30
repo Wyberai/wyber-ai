@@ -14,7 +14,7 @@ const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.07)', te
 
 export default function Post() {
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, position: 'sticky', top: 0, zIndex: 100, background: 'rgba(9,9,11,0.9)', backdropFilter: 'blur(16px)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
@@ -25,7 +25,7 @@ export default function Post() {
           <span style={{ padding: '3px 10px', borderRadius: 20, background: s.violet + '15', border: `1px solid ${s.violet}30`, fontSize: 11, fontWeight: 700, color: s.violet }}>Product</span>
           <span style={{ fontSize: 12, color: s.dim }}>May 30, 2026 · 4 min read</span>
         </div>
-        <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,42px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.12, marginBottom: 28 }}>
           How WyberAi keeps pricing transparent — the math behind our credits
         </h1>
         <div style={{ fontSize: 16, color: s.muted, lineHeight: 1.75 }}>
@@ -33,15 +33,15 @@ export default function Post() {
 
           <p>Here's how WyberAi makes it work.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Smart routing changes the math</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Smart routing changes the math</h2>
           <p>Not every prompt needs the most expensive model. WyberAi automatically routes each request to the right AI tier — a full new build gets the most capable model, while a small edit like "change the button color to blue" uses a lighter, faster one. Complex multi-file edits get escalated back up. You never have to think about it.</p>
 
           <p>The result: most interactions cost a fraction of what a single-tier system would charge. That savings flows directly to you as lower prices and more credits per dollar.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Prompt caching</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Prompt caching</h2>
           <p>For every generation, WyberAi uses Anthropic's prompt caching to cache the static system prompt — the wyberDNA design rules and output format instructions that go with every request. On the second and subsequent generations in a session, those cached tokens cost 90% less. That's another significant reduction in per-request API cost.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The comparison</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The comparison</h2>
           <div style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${s.border}`, margin: '20px 0' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', background: 'rgba(255,255,255,0.04)', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: s.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               <span>Feature</span><span>WyberAi Builder</span><span>Lovable Starter</span>
@@ -63,10 +63,10 @@ export default function Post() {
             ))}
           </div>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Why credits never expire</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Why credits never expire</h2>
           <p>Expiring credits create artificial urgency and punish users who don't build constantly. We don't want that relationship with our users. If you buy a top-up, it's yours until you use it. We'd rather compete on product quality than on credit anxiety.</p>
 
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What this means for all six products</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What this means for all six products</h2>
           <p>The same economics apply across all six products. Web apps, mobile apps, AI Employees, workflows — every generation uses the same smart routing and prompt caching. Self-healing builds that fix their own errors never cost you a credit. The more efficiently we run inference, the more credits you get per dollar.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
@@ -76,7 +76,7 @@ export default function Post() {
           </div>
         </div>
       </article>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');`}</style>
+
     </div>
   )
 }

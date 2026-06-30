@@ -432,7 +432,7 @@ function CertificateCard({ name, date }: { name: string; date: string }) {
       <h2 style={{
         fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em',
         color: 'var(--text, #f0f0f5)', margin: '0 0 8px',
-        fontFamily: "'Space Grotesk', sans-serif",
+        fontFamily: 'var(--font-display)',
       }}>
         Wyber Certified
       </h2>
@@ -564,7 +564,7 @@ export default function LearnPage() {
         @media (max-width: 767px) { .learn-layout { flex-direction: column !important; } .learn-sidebar { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border, rgba(255,255,255,0.06)) !important; flex-direction: row !important; gap: 4px !important; padding: 12px !important; overflow-x: auto !important; } .learn-sidebar-inner { flex-direction: row !important; gap: 4px !important; } .learn-track-btn { flex-direction: column !important; align-items: center !important; min-width: 80px !important; padding: 10px 8px !important; font-size: 11px !important; gap: 4px !important; } }
       `}</style>
 
-      <main style={{ minHeight: '100vh', background: 'var(--bg, #0a0a0f)', color: 'var(--text, #f0f0f5)', fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      <main style={{ minHeight: '100vh', background: 'var(--bg, #0a0a0f)', color: 'var(--text, #f0f0f5)', fontFamily: 'var(--font-sans)' }}>
 
         {/* Hero */}
         <section style={{ textAlign: 'center', padding: 'clamp(48px,8vw,80px) clamp(20px,5vw,40px) clamp(32px,5vw,56px)', borderBottom: '1px solid var(--border, rgba(255,255,255,0.06))' }}>
@@ -572,7 +572,7 @@ export default function LearnPage() {
             Interactive Learning
           </div>
           <h1 style={{
-            fontFamily: "'Space Grotesk', sans-serif",
+            fontFamily: 'var(--font-display)',
             fontSize: 'clamp(28px,5vw,52px)', fontWeight: 800, letterSpacing: '-0.04em',
             color: 'var(--text, #f0f0f5)', margin: '0 0 16px', lineHeight: 1.1,
           }}>
@@ -655,7 +655,7 @@ export default function LearnPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <span style={{ color: track.color }}>{track.icon}</span>
                 <h2 style={{
-                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontFamily: 'var(--font-display)',
                   fontSize: 'clamp(18px,3vw,26px)', fontWeight: 800, letterSpacing: '-0.03em',
                   color: 'var(--text, #f0f0f5)', margin: 0,
                 }}>
@@ -811,7 +811,7 @@ export default function LearnPage() {
           }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🎓</div>
             <h3 style={{
-              fontFamily: "'Space Grotesk', sans-serif",
+              fontFamily: 'var(--font-display)',
               fontSize: 'clamp(16px,2.5vw,22px)', fontWeight: 800, letterSpacing: '-0.02em',
               color: 'var(--text, #f0f0f5)', margin: '0 0 8px',
             }}>

@@ -1,5 +1,19 @@
-/* WyberAi brand faces — Sora (display) · Inter (UI/body) · JetBrains Mono (code) */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* WyberAi brand faces — General Sans (display) · Switzer (UI/body) · JetBrains Mono (code).
+   General Sans and Switzer are self-hosted (not loaded from a third-party CDN) under the
+   ITF Free Font License (commercial use + self-hosting explicitly permitted) — see
+   public/fonts/. JetBrains Mono still loads from Google Fonts (no self-hosted copy yet). */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@font-face { font-family: 'General Sans'; src: url('/fonts/GeneralSans-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'General Sans'; src: url('/fonts/GeneralSans-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'General Sans'; src: url('/fonts/GeneralSans-600.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'General Sans'; src: url('/fonts/GeneralSans-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-600.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
+
 @import "tailwindcss";
 
 /* ─── LIGHT THEME ─── */
@@ -64,11 +78,13 @@
   --t:         all 0.15s var(--ease);
   --t-slow:    all 0.35s var(--ease);
 
-  /* Typography — Sora display, Inter UI/body, JetBrains mono.
-     --font-serif is retired; kept as an alias to display (Sora) for
-     backwards compatibility with any remaining references. */
-  --font-display: 'Sora', system-ui, -apple-system, sans-serif;
-  --font-sans:    'Inter', system-ui, -apple-system, sans-serif;
+  /* Typography — General Sans display, Switzer UI/body, JetBrains mono.
+     Both display/body faces are self-hosted (see @font-face above), not
+     loaded from a generic Google Fonts CDN. --font-serif is retired; kept
+     as an alias to display for backwards compatibility with any remaining
+     references. */
+  --font-display: 'General Sans', system-ui, -apple-system, sans-serif;
+  --font-sans:    'Switzer', system-ui, -apple-system, sans-serif;
   --font-serif:   var(--font-display);
   --font-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 

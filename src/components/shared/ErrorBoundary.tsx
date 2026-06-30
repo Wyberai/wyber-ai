@@ -28,7 +28,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div style={{
           padding: '40px 24px', textAlign: 'center',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-          color: 'var(--ide-text3, #71717a)', fontFamily: "'Space Grotesk', sans-serif",
+          color: 'var(--ide-text3, #71717a)', fontFamily: 'var(--font-display)',
         }}>
           <div style={{ fontSize: 32, marginBottom: 4 }}>⚠️</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ide-text, #fafafa)' }}>

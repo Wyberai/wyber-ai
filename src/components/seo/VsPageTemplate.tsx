@@ -84,7 +84,7 @@ export function VsPageTemplate({
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -117,7 +117,7 @@ export function VsPageTemplate({
         {/* Hero */}
         <header style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Comparison · Verified June 2026</div>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, margin: '0 0 12px' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, margin: '0 0 12px' }}>
             WyberAi vs {competitorName}
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '12px auto 8px', lineHeight: 1.65 }}>{tagline}</p>
@@ -131,7 +131,7 @@ export function VsPageTemplate({
 
         {/* Six-product differentiator */}
         <section aria-labelledby="six-products-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
-          <h2 id="six-products-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
+          <h2 id="six-products-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
             The key difference: Wyber does six things, not one
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
@@ -150,7 +150,7 @@ export function VsPageTemplate({
 
         {/* Comparison table */}
         <section aria-labelledby="comparison-table-heading">
-          <h2 id="comparison-table-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 16, margin: '0 0 16px' }}>
+          <h2 id="comparison-table-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 16, margin: '0 0 16px' }}>
             Feature comparison
           </h2>
           <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 14, overflow: 'hidden', marginBottom: 8 }}>
@@ -175,7 +175,7 @@ export function VsPageTemplate({
 
         {/* FAQ */}
         <section aria-labelledby="faq-heading" style={{ marginBottom: 48 }}>
-          <h2 id="faq-heading" style={{ fontFamily: "'Sora', sans-serif", fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 24, margin: '0 0 24px' }}>
+          <h2 id="faq-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 24, margin: '0 0 24px' }}>
             Frequently asked questions
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -193,7 +193,7 @@ export function VsPageTemplate({
 
         {/* CTA */}
         <section style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>Try WyberAi free</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, marginBottom: 8, margin: '0 0 8px' }}>Try WyberAi free</h2>
           <p style={{ fontSize: 14, color: s.muted, marginBottom: 20 }}>50 credits/month free. Build a web app, mobile app, or AI agent in minutes. No credit card required.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →
@@ -215,7 +215,7 @@ export function VsPageTemplate({
         </nav>
       </div>
 
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); details summary::-webkit-details-marker { display: none; } details[open] summary span { transform: rotate(45deg); display: inline-block; }`}</style>
+      <style>{` details summary::-webkit-details-marker { display: none; } details[open] summary span { transform: rotate(45deg); display: inline-block; }`}</style>
     </div>
   )
 }

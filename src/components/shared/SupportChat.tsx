@@ -86,7 +86,7 @@ export function SupportChat() {
           background: '#111113', border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 16, display: 'flex', flexDirection: 'column',
           boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-          fontFamily: "'Space Grotesk', sans-serif",
+          fontFamily: 'var(--font-display)',
           animation: 'slideUp 0.2s ease',
         }}>
           {/* Header */}
@@ -143,7 +143,7 @@ export function SupportChat() {
 
       <style>{`
         @keyframes slideUp { from { opacity:0; transform:translateY(12px) } to { opacity:1; transform:translateY(0) } }
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        
       `}</style>
     </>
   )

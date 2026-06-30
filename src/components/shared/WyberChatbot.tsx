@@ -136,7 +136,7 @@ export function WyberChatbot() {
   return (
     <>
       {open && (
-        <div style={{ position: 'fixed', bottom: 88, right: 20, width: 360, height: 500, background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', zIndex: 9999, fontFamily: 'Inter,-apple-system,sans-serif', animation: 'chatSlideUp 0.2s ease' }}>
+        <div style={{ position: 'fixed', bottom: 88, right: 20, width: 360, height: 500, background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, boxShadow: '0 24px 64px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', zIndex: 9999, fontFamily: 'var(--font-sans)', animation: 'chatSlideUp 0.2s ease' }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>⚡</div>
             <div>

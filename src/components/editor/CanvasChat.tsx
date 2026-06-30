@@ -327,7 +327,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   const allToolsConnected = pendingPrompt !== null && stillMissing.length === 0 && missingTools.length > 0
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0d0d0f', fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0d0d0f', fontFamily: 'var(--font-display)' }}>
       {/* Header */}
       <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
         <div style={{ width: 30, height: 30, borderRadius: 9, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

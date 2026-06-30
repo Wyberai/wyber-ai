@@ -14,7 +14,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
 
       {/* Top bar */}
       <header style={{
@@ -101,7 +101,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap');
+        
         @media (max-width: 768px) {
           .docs-sidebar { display: none !important; }
           .docs-mobile-menu-btn { display: flex !important; }

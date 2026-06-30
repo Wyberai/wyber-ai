@@ -55,7 +55,7 @@ export default function ImportLeadsPage() {
   const estimatedCost = results.length * CREDIT_COST
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
       <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}`, background: 'rgba(9,9,11,0.92)', backdropFilter: 'blur(16px)', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link href="/gtm" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
         <Link href="/gtm/leads" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>← Leads</Link>
@@ -63,7 +63,7 @@ export default function ImportLeadsPage() {
 
       <div style={{ maxWidth: 840, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Import leads</h1>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Import leads</h1>
           <p style={{ fontSize: 13, color: s.muted }}>Each imported contact costs {CREDIT_COST} credits.</p>
         </div>
 
@@ -174,7 +174,7 @@ export default function ImportLeadsPage() {
           </div>
         )}
       </div>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap'); input{color-scheme:dark;}`}</style>
+      <style>{` input{color-scheme:dark;}`}</style>
     </div>
   )
 }

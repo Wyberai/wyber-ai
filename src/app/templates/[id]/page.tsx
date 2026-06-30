@@ -31,7 +31,7 @@ export default function TemplatePage() {
     <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ width: 32, height: 32, border: '3px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
-        <div style={{ fontSize: 14, color: '#52525b', fontFamily: 'Inter,sans-serif' }}>Setting up your project...</div>
+        <div style={{ fontSize: 14, color: '#52525b', fontFamily: 'var(--font-sans)' }}>Setting up your project...</div>
         <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
       </div>
     </div>
