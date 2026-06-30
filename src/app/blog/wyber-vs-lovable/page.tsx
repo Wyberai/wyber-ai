@@ -22,7 +22,8 @@ const COMPARISON = [
   { feature: 'Figma import', wyber: 'Yes', lovable: 'Yes' },
   { feature: 'Visual editor', wyber: 'Click-to-edit', lovable: 'Yes' },
   { feature: 'Community', wyber: 'Early stage', lovable: '160K+ Discord members' },
-  { feature: 'SOC2', wyber: 'In progress', lovable: 'Yes -- Type II' },
+  { feature: 'SSO (SAML / OIDC)', wyber: 'Yes -- Enterprise plan', lovable: 'Yes' },
+  { feature: 'SOC2', wyber: 'On our roadmap', lovable: 'Yes -- Type II' },
 ];
 
 export default function Post() {
@@ -62,7 +63,7 @@ export default function Post() {
           <h2>Where Lovable wins</h2>
           <p><strong>Community.</strong> 160K Discord members. If you want to learn alongside other builders, Lovable's community is unmatched.</p>
           <p><strong>Visual editor.</strong> Click any element to edit without prompting. WyberAi does not have this yet.</p>
-          <p><strong>Enterprise maturity.</strong> SOC2 Type II, ISO 27001, SSO, SCIM. More mature for large organizations.</p>
+          <p><strong>Enterprise maturity.</strong> SOC2 Type II, ISO 27001, and SCIM. WyberAi has SSO and org-level audit logs today, with SOC2 and ISO 27001 on our roadmap -- Lovable is further along on formal certification.</p>
           <h2>The bottom line</h2>
           <p>Choose Lovable if you want the most mature tool with the largest community. Choose WyberAi if you want framework flexibility, free error fixes, and lower pricing.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>

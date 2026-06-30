@@ -23,7 +23,7 @@ const COMPLIANCE = [
   { label: 'No model training on user data', ok: true },
   { label: 'Automatic security scan on deploy', ok: true },
   { label: 'PCI DSS compliant payments (Dodo Payments)', ok: true },
-  { label: 'GDPR compliant', ok: true },
+  { label: 'GDPR-aligned data practices', ok: true },
   { label: 'SSO (SAML / OIDC) — Enterprise', ok: true },
   { label: 'Org-level audit logs — Enterprise', ok: true },
   { label: 'SOC 2 Type II', ok: false, note: 'On our roadmap' },

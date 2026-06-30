@@ -397,11 +397,13 @@ export default function HomePage() {
             { value: '2,400+', label: 'apps built' },
             { value: '30s', label: 'avg build time' },
             { value: '4.9/5', label: 'user rating' },
-            { value: '99.9%', label: 'uptime' },
+            { value: '99.9%', label: 'uptime target', href: '/status' },
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fafafa', fontFamily: 'var(--font-display)' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>
+                {s.href ? <a href={s.href} style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>{s.label}</a> : s.label}
+              </div>
             </div>
           ))}
         </div>
