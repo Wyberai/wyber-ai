@@ -30,6 +30,7 @@ export const DOC_NAV: DocSection[] = [
       { label: 'Connecting Supabase', href: '/docs/web-apps/supabase-backend' },
       { label: 'Publishing', href: '/docs/web-apps/publishing' },
       { label: 'Custom domains', href: '/docs/web-apps/custom-domains' },
+      { label: 'Exporting & self-hosting', href: '/docs/web-apps/exporting-and-scaling' },
     ],
   },
   {

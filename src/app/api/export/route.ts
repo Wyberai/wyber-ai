@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { sanitizeFiles } from '@/lib/sanitize-files';
+import { scanForExposedSecrets } from '@/lib/security-scan';
 
 export async function POST(req: NextRequest) {
   // Auth: only the project owner may export
@@ -50,11 +52,23 @@ export async function POST(req: NextRequest) {
     const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
 
-    // Add all project files
-    const files = project.files as Record<string, { content: string }>;
-    for (const [path, file] of Object.entries(files)) {
-      zip.file(path, file.content);
+    // Sanitize before export: guarantees entry points, package.json toolchain,
+    // and stubs missing imports so the exported project actually builds
+    // (mirrors the same pass deploy/route.ts runs before pushing to Vercel).
+    const rawFiles = project.files as Record<string, { content: string }>;
+    const files = sanitizeFiles(rawFiles);
+
+    const secretScan = scanForExposedSecrets(files);
+    if (!secretScan.ok) {
+      const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ');
+      return NextResponse.json({ error: `Export blocked: exposed secret detected (${summary}). Move it to an env var before exporting.` }, { status: 400 });
     }
+    for (const [path, file] of Object.entries(files)) {
+      const content = typeof file === 'string' ? file : file.content ?? '';
+      zip.file(path, content);
+    }
+
+    const hasSupabaseEnv = Object.keys(files).some(p => /supabase/i.test(p));
 
     // Add a README
     zip.file('WYBER_EXPORT.md', `# ${project.name}
@@ -67,9 +81,15 @@ ${project.framework}
 ## Files
 ${Object.keys(files).join('\n')}
 
+## Required setup
+${hasSupabaseEnv
+  ? '- This project uses Supabase. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (or check `src/lib/supabase.ts` for hardcoded values to move into env vars) before running.'
+  : '- No external services required.'}
+
 ## Running locally
 \`\`\`bash
 npm install
+npm run build   # verifies the project builds cleanly
 npm run dev
 \`\`\`
 

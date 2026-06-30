@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+import { runSmokeTest } from '@/lib/smoke-test'
+import { scanForExposedSecrets } from '@/lib/security-scan'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -52,11 +54,19 @@ export async function POST(req: NextRequest) {
       subdomain = await ensureUniqueSlug(base, admin)
     }
 
+    const sanitized = sanitizeFiles(project.files || {})
+
+    const secretScan = scanForExposedSecrets(sanitized)
+    if (!secretScan.ok) {
+      const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ')
+      return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
+    }
+
     // Build the app via Railway
     const buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: sanitizeFiles(project.files || {}), projectId }),
+      body: JSON.stringify({ files: sanitized, projectId }),
     })
 
     const buildData = await buildRes.json()
@@ -75,6 +85,13 @@ export async function POST(req: NextRequest) {
       .replace(/src="\.\/assets\//g, `src="${baseUrl}/assets/`)
       .replace(/href="\.\/assets\//g, `href="${baseUrl}/assets/`)
       .replace(/from "\.\/assets\//g, `from "${baseUrl}/assets/`)
+
+    // Reject builds that "succeeded" (got a URL) but ship a blank page or
+    // unhandled runtime error — buildData.url alone doesn't guarantee that.
+    const smokeTest = await runSmokeTest(fixedHtml, baseUrl)
+    if (!smokeTest.ok) {
+      return NextResponse.json({ error: 'Smoke test failed: ' + smokeTest.error }, { status: 500 })
+    }
 
     // Store in Supabase Storage
     const { error: uploadError } = await admin.storage

@@ -104,10 +104,11 @@ export async function POST(req: NextRequest) {
       if (dupeErr) console.warn('Dodo dedupe insert failed (processing anyway):', String(dupeErr.message || dupeErr))
     }
 
-    const userId =
-      (event.data as Record<string, unknown> | undefined)?.metadata?.user_id ||
-      (event.metadata as Record<string, unknown> | undefined)?.user_id ||
-      null
+    const metadata =
+      (event.data as Record<string, unknown> | undefined)?.metadata as Record<string, unknown> | undefined ||
+      (event.metadata as Record<string, unknown> | undefined) || {}
+
+    const userId = (metadata.user_id as string | undefined) || null
 
     const productId = String(
       (event.data as Record<string, unknown> | undefined)?.product_cart?.[0]?.product_id ||
@@ -138,6 +139,43 @@ export async function POST(req: NextRequest) {
     if (eventType === 'refund.succeeded' || eventType === 'payment.refunded' || eventType === 'refund.created') {
       if (userEmail) sendRefundEmail(userEmail).catch(() => {})
       console.log(`Refund processed for ${userId}`)
+      return NextResponse.json({ received: true })
+    }
+
+    // Domain purchase confirmation: buy the domain via Vercel and attach it
+    // to the project. Distinct from credit top-ups/plans — keyed by metadata,
+    // not productId, since the domain product is pay-what-you-want.
+    if (eventType === 'payment.succeeded' && metadata.purchase_type === 'domain') {
+      const purchaseId = String(metadata.domain_purchase_id || '')
+      const domain = String(metadata.domain || '')
+      const projectIdForDomain = String(metadata.project_id || '') || null
+      if (purchaseId && domain) {
+        try {
+          const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+          const VERCEL_TEAM = process.env.VERCEL_TEAM_ID
+          const teamQ = VERCEL_TEAM ? `?teamId=${VERCEL_TEAM}` : ''
+          const buyRes = await fetch(`https://api.vercel.com/v5/domains/buy${teamQ}`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: domain }),
+          })
+          const buyData = await buyRes.json()
+          if (!buyRes.ok) throw new Error(buyData?.error?.message || `Vercel buy failed: ${buyRes.status}`)
+
+          await admin.from('domain_purchases').update({
+            status: 'purchased', purchased_at: new Date().toISOString(),
+          }).eq('id', purchaseId)
+
+          if (projectIdForDomain) {
+            await admin.from('projects').update({ custom_domain: domain }).eq('id', projectIdForDomain)
+          }
+          console.log(`Domain purchased: ${domain} for ${userId}`)
+          if (userEmail) sendAdminPaymentAlert(userEmail, `Domain purchase: ${domain}`).catch(() => {})
+        } catch (buyErr) {
+          console.error('Domain purchase failed after payment:', String(buyErr))
+          await admin.from('domain_purchases').update({ status: 'failed' }).eq('id', purchaseId)
+        }
+      }
       return NextResponse.json({ received: true })
     }
 

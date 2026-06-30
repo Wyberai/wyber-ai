@@ -148,3 +148,14 @@ export function runSql(token: string, ref: string, query: string): Promise<unkno
     body: JSON.stringify({ query }),
   })
 }
+
+/** List public-schema tables that have row-level security disabled. */
+export async function listTablesWithoutRls(token: string, ref: string): Promise<string[]> {
+  const rows = await runSql(
+    token,
+    ref,
+    `select relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'r' and c.relrowsecurity = false;`
+  ) as { relname: string }[]
+  return Array.isArray(rows) ? rows.map(r => r.relname) : []
+}

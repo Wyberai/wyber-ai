@@ -4,7 +4,7 @@ import { encrypt, decrypt } from '@/lib/secrets-crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   listOrganizations, listProjects, getApiKeys, createProject, projectUrl,
-  refreshTokens, getProject,
+  refreshTokens, getProject, listTablesWithoutRls,
 } from '@/lib/supabase-management'
 
 /**
@@ -119,7 +119,13 @@ export async function POST(req: NextRequest) {
     if (!ref) return NextResponse.json({ error: 'ref required to link' }, { status: 400 })
     await getProject(token, ref) // validates the ref belongs to the user
     await linkProject(supabase, projectId, user.id, token, ref)
-    return NextResponse.json({ linked: true, ref, url: projectUrl(ref) })
+    // Best-effort: warn if any table has RLS disabled — a freshly linked
+    // existing project may already have tables, unlike a brand-new one.
+    let rlsWarning: string[] = []
+    try {
+      rlsWarning = await listTablesWithoutRls(token, ref)
+    } catch { /* non-fatal — surfaced as empty warning */ }
+    return NextResponse.json({ linked: true, ref, url: projectUrl(ref), tablesWithoutRls: rlsWarning })
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 400 })
   }

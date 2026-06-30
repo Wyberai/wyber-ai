@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeFiles } from '@/lib/sanitize-files'
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,7 +8,8 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
 
-    const { files, projectName, repoName } = await req.json()
+    const { files: rawFiles, projectName, repoName } = await req.json()
+    const files = sanitizeFiles(rawFiles as Record<string, { content: string }>)
 
     // Get GitHub token
     const { data: conn } = await supabase.from('github_connections')
@@ -26,8 +28,9 @@ export async function POST(req: NextRequest) {
 
     // Push all files
     const results = []
-    for (const [path, file] of Object.entries(files as Record<string, { content: string }>)) {
+    for (const [path, file] of Object.entries(files)) {
       const cleanPath = path.replace(/^\//, '')
+      const content = typeof file === 'string' ? file : file.content ?? ''
       // Check if file exists
       const existsRes = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/${cleanPath}`, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' },
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
       const existing = existsRes.ok ? await existsRes.json() : null
       const body: any = {
         message: `Update ${cleanPath} via WyberAi`,
-        content: Buffer.from(file.content || '').toString('base64'),
+        content: Buffer.from(content).toString('base64'),
       }
       if (existing?.sha) body.sha = existing.sha
 
