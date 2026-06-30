@@ -88,7 +88,7 @@ const jsonLd = {
       sameAs: [
         'https://www.linkedin.com/company/wyber-ai',
         'https://x.com/WyberAi',
-        'https://theresanaiforthat.com/ai/wyberai/',
+        'https://www.producthunt.com/products/wyberai',
       ],
       description: 'Describe your web or mobile app in plain English. WyberAi generates fresh, production-ready React code, provisions a database, and deploys to a live URL in minutes — no engineers needed.',
       featureList: [
