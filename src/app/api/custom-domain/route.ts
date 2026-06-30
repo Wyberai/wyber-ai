@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { detectProvider, type DnsProvider } from '@/lib/dns-provider'
+
+// dashboardUrl is a function — resolve it to a plain string before returning
+// from an API route, since NextResponse.json() silently drops function props.
+function serializeProvider(provider: DnsProvider | null, domain: string) {
+  return provider ? { name: provider.name, dashboardUrl: provider.dashboardUrl(domain) } : null
+}
 
 // Where users point their domain. Apex (root) domains cannot use a CNAME —
 // they must use an A record to Vercel's anycast IP. Subdomains (e.g. www) use a CNAME.
@@ -120,9 +127,11 @@ export async function POST(req: NextRequest) {
       }
 
       const rec = recordFor(cleanDomain)
+      const provider = await detectProvider(cleanDomain)
       return NextResponse.json({
         verified: false,
         error,
+        provider: serializeProvider(provider, cleanDomain),
         instructions: {
           ...rec,
           message: `Add ${rec.type === 'A' ? 'an' : 'a'} ${rec.type} record: ${rec.name} → ${rec.value}. If your domain uses email (e.g. Zoho/Google), leave existing MX records untouched.`
@@ -138,11 +147,15 @@ export async function POST(req: NextRequest) {
     }).eq('id', projectId)
 
     const rec = recordFor(cleanDomain)
+    const provider = await detectProvider(cleanDomain)
     return NextResponse.json({
       domain: cleanDomain,
       verified: false,
+      provider: serializeProvider(provider, cleanDomain),
       instructions: {
-        step1: `Go to your DNS provider / domain registrar (e.g. Namecheap, GoDaddy, Cloudflare, Zoho).`,
+        step1: provider
+          ? `Go to ${provider.name} — we detected this domain's nameservers point there.`
+          : `Go to your DNS provider / domain registrar (e.g. Namecheap, GoDaddy, Cloudflare, Zoho).`,
         step2: rec.type === 'A'
           ? `This is a root domain, so add an A record (root domains can't use CNAME):`
           : `Add a CNAME record:`,

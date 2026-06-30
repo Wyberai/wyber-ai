@@ -38,6 +38,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [customDomainStatus, setCustomDomainStatus] = useState<'idle'|'saving'|'verifying'|'verified'|'error'>('idle');
   const [customDomainError, setCustomDomainError] = useState('');
   const [dnsInstructions, setDnsInstructions] = useState<any>(null);
+  const [dnsProvider, setDnsProvider] = useState<{ name: string; dashboardUrl: string } | null>(null);
   const [buyDomainQuery, setBuyDomainQuery] = useState('');
   const [buyDomainResult, setBuyDomainResult] = useState<{ name: string; available: boolean; priceCents: number | null } | null>(null);
   const [buyDomainStatus, setBuyDomainStatus] = useState<'idle' | 'searching' | 'buying' | 'error'>('idle');
@@ -241,10 +242,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       if (data.verified) {
         setCustomDomainStatus('verified');
         setDnsInstructions(null);
+        setDnsProvider(null);
       } else {
         setCustomDomainStatus('error');
         setCustomDomainError(data.error || 'DNS not verified yet');
         if (data.instructions) setDnsInstructions(data.instructions);
+        setDnsProvider(data.provider ?? null);
       }
     } catch {
       setCustomDomainStatus('error');
@@ -501,6 +504,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
                   {dnsInstructions && customDomainStatus !== 'verified' && (
                     <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {dnsProvider && (
+                        <a href={dnsProvider.dashboardUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#38bdf8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          Detected: {dnsProvider.name} — open DNS settings →
+                        </a>
+                      )}
                       <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>Add this DNS record:</span>
                       <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 11, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
                         <span>Type: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.type || 'CNAME'}</strong></span>
