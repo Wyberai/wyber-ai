@@ -507,7 +507,7 @@ export default function PricingPage() {
               { emoji: '📣', title: 'Build in Public', desc: 'Share what you built with WyberAI on Twitter/LinkedIn and get 50 free credits instantly.', color: BRAND, reward: '50 free credits' },
               { emoji: '💼', title: 'Follow on LinkedIn', desc: 'Follow WyberAI on LinkedIn and get 25 bonus credits added to your account instantly.', color: '#0a66c2', reward: '25 free credits' },
               { emoji: '👽', title: 'Follow on Reddit', desc: 'Join r/WyberAI and get 25 bonus credits instantly. Share builds, get feedback, grow with us.', color: '#ff4500', reward: '25 free credits' },
-              { emoji: '⭐', title: 'Review on TAAFT', desc: 'Leave an honest review on There’s An AI For That and get 50 bonus credits instantly.', color: '#22c55e', reward: '50 free credits' },
+              { emoji: '⭐', title: 'Review on Product Hunt', desc: 'Leave an honest review on Product Hunt and get 50 bonus credits instantly.', color: '#ff6154', reward: '50 free credits' },
               { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get double credits on your next purchase. Because saving lives should be rewarded.', color: '#ef4444', reward: '2x credits on purchase' },
               { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan for people with disabilities. Reviewed manually — we never ask for medical records.', color: '#a855f7', reward: '50% off any plan' },
             ].map(p => (
