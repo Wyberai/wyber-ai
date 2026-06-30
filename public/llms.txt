@@ -24,6 +24,7 @@ WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on 
 - [Build a SaaS without code](https://wyberai.com/use-cases/build-saas-without-code)
 - [AI workflow automation](https://wyberai.com/use-cases/ai-workflow-automation)
 - [No-code web app builder](https://wyberai.com/use-cases/no-code-web-app-builder)
+- [Secure AI app builder (live RLS security scanning)](https://wyberai.com/use-cases/secure-ai-app-builder)
 
 ## Company
 - [About](https://wyberai.com/about)
