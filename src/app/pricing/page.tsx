@@ -74,6 +74,27 @@ const PLANS = [
       'Priority support + Slack channel',
     ],
   },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    monthlyPrice: null,
+    annualPrice: null,
+    planKey: null,
+    color: '#f59e0b',
+    highlight: false,
+    badge: null,
+    tagline: 'For organizations with security, SSO, and audit needs.',
+    credits: 0,
+    perCredit: null,
+    features: [
+      'Everything in Pro',
+      'Single Sign-On (SAML / OIDC)',
+      'Org-level roles & permissions',
+      'Audit logs',
+      'Volume-based custom pricing',
+      'Dedicated onboarding',
+    ],
+  },
 ]
 
 const TOPUPS = [
@@ -563,7 +584,7 @@ export default function PricingPage() {
           .wyb-pricing-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
         }
         @media (min-width: 769px) and (max-width: 1024px) {
-          .wyb-pricing-grid { grid-template-columns: repeat(3, 1fr) !important; }
+          .wyb-pricing-grid { grid-template-columns: repeat(2, 1fr) !important; }
         }
       `}</style>
     </div>
