@@ -4,9 +4,16 @@ import { NextRequest } from 'next/server'
 export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
+  const { searchParams, origin } = new URL(req.url)
   const title = searchParams.get('title') || 'Build. Think. Act.'
   const desc = searchParams.get('desc') || 'Apps. Agents. Automations. One platform.'
+
+  // Satori (which ImageResponse uses) needs TTF/OTF font data, not woff2 —
+  // fetched at request time since the edge runtime has no filesystem access.
+  const [regular, bold] = await Promise.all([
+    fetch(new URL('/fonts/GeneralSans-600.ttf', origin)).then(r => r.arrayBuffer()),
+    fetch(new URL('/fonts/GeneralSans-700.ttf', origin)).then(r => r.arrayBuffer()),
+  ])
 
   return new ImageResponse(
     (
@@ -20,7 +27,7 @@ export async function GET(req: NextRequest) {
           justifyContent: 'flex-end',
           background: '#09090b',
           padding: '64px 72px',
-          fontFamily: 'sans-serif',
+          fontFamily: 'General Sans',
         }}
       >
         {/* Grid pattern */}
@@ -49,13 +56,13 @@ export async function GET(req: NextRequest) {
               <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
             </svg>
           </div>
-          <span style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em' }}>
+          <span style={{ fontSize: 28, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.04em' }}>
             WyberAi
           </span>
         </div>
 
         {/* Title */}
-        <div style={{ fontSize: 56, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 20, maxWidth: 800 }}>
+        <div style={{ fontSize: 56, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 20, maxWidth: 800 }}>
           {title}
         </div>
 
@@ -82,6 +89,13 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        { name: 'General Sans', data: regular, weight: 600, style: 'normal' },
+        { name: 'General Sans', data: bold, weight: 700, style: 'normal' },
+      ],
+    }
   )
 }

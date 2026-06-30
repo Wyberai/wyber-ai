@@ -4,9 +4,14 @@ import { NextRequest } from 'next/server'
 export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
+  const { searchParams, origin } = new URL(req.url)
   const name = searchParams.get('name') || 'Wyber Builder'
   const date = searchParams.get('date') || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+
+  const [regular, bold] = await Promise.all([
+    fetch(new URL('/fonts/GeneralSans-600.ttf', origin)).then(r => r.arrayBuffer()),
+    fetch(new URL('/fonts/GeneralSans-700.ttf', origin)).then(r => r.arrayBuffer()),
+  ])
 
   return new ImageResponse(
     (
@@ -17,7 +22,7 @@ export async function GET(req: NextRequest) {
           display: 'flex',
           flexDirection: 'column',
           background: '#09090b',
-          fontFamily: 'sans-serif',
+          fontFamily: 'General Sans',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -51,7 +56,7 @@ export async function GET(req: NextRequest) {
                 <path d="M23 11L28 16L23 21" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
               </svg>
             </div>
-            <span style={{ fontSize: 26, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
+            <span style={{ fontSize: 26, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.03em' }}>WyberAi</span>
           </div>
 
           {/* Seal */}
@@ -71,7 +76,7 @@ export async function GET(req: NextRequest) {
           </div>
 
           {/* Title */}
-          <div style={{ fontSize: 48, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, textAlign: 'center', marginBottom: 6 }}>
+          <div style={{ fontSize: 48, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.04em', lineHeight: 1.1, textAlign: 'center', marginBottom: 6 }}>
             Wyber Certified
           </div>
           <div style={{ fontSize: 20, color: '#8b8b9a', marginBottom: 4 }}>All Six Products</div>
@@ -89,7 +94,7 @@ export async function GET(req: NextRequest) {
             gap: 4,
             marginBottom: 32,
           }}>
-            <div style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em' }}>{name}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: '#fafafa', letterSpacing: '-0.02em' }}>{name}</div>
             <div style={{ fontSize: 13, color: '#52526a' }}>{date}</div>
           </div>
 
@@ -115,6 +120,13 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        { name: 'General Sans', data: regular, weight: 600, style: 'normal' },
+        { name: 'General Sans', data: bold, weight: 700, style: 'normal' },
+      ],
+    }
   )
 }
