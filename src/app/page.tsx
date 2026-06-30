@@ -638,11 +638,11 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Featured on TAAFT */}
+      {/* Featured on Product Hunt */}
       <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'center' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <a href="https://theresanaiforthat.com/ai/wyberai/?ref=featured&v=11040803" target="_blank" rel="nofollow noopener" style={{ display: 'inline-block', lineHeight: 0 }}>
-          <img width="280" src="https://media.theresanaiforthat.com/featured-on-taaft.png?width=600" alt="Featured on There's An AI For That" />
+        <a href="https://www.producthunt.com/products/wyberai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyberai" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', lineHeight: 0 }}>
+          <img width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1180538&theme=light" alt="WyberAi - From idea to live app — no code, just one prompt. | Product Hunt" />
         </a>
       </section>
 
