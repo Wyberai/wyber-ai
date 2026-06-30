@@ -49,6 +49,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${origin}/dashboard`)
   } catch (e) {
     console.error('SSO callback error:', e)
-    return NextResponse.redirect(`${origin}/login?error=sso`)
+    // TEMP: surface the real error for diagnosis — remove once SSO flow is confirmed working.
+    const message = e instanceof Error ? e.message : String(e)
+    return NextResponse.redirect(`${origin}/login?error=sso&reason=${encodeURIComponent(message)}`)
   }
 }
