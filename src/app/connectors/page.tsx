@@ -1,46 +1,50 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
+import { ConnectorLogo } from '@/components/shared/ConnectorLogo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Connectors — WyberAi', description: 'Connect your app to 27 services with real OAuth — Airtable, Notion, HubSpot, Stripe, Slack, and more — via Composio.' };
 // `soon: true` entries have no Composio toolkit (verified against the live
 // catalog) and have no real auth path yet — shown but not clickable, not
 // counted in the "connectors" total below.
+// `slug` is the Composio toolkit slug (verified against the live catalog) —
+// used to pull the real brand logo from logos.composio.dev. Entries without
+// one are `soon: true` and have no real logo source either.
 const CONNECTORS = [
-  { name:'Airtable', icon:'⬡', color:'#F59E0B', cat:'Data' },
-  { name:'Notion', icon:'◈', color:'#374151', cat:'Data' },
-  { name:'Supabase', icon:'⚡', color:'#3ECF8E', cat:'Data' },
+  { name:'Airtable', icon:'⬡', color:'#F59E0B', cat:'Data', slug:'airtable' },
+  { name:'Notion', icon:'◈', color:'#374151', cat:'Data', slug:'notion' },
+  { name:'Supabase', icon:'⚡', color:'#3ECF8E', cat:'Data', slug:'supabase' },
   { name:'BigQuery', icon:'◉', color:'#4285F4', cat:'Data', soon:true },
-  { name:'Snowflake', icon:'❄', color:'#29B5E8', cat:'Data' },
+  { name:'Snowflake', icon:'❄', color:'#29B5E8', cat:'Data', slug:'snowflake' },
   { name:'MongoDB', icon:'🍃', color:'#00ED64', cat:'Data', soon:true },
-  { name:'Contentful', icon:'◫', color:'#2478CC', cat:'CMS' },
-  { name:'Storyblok', icon:'◧', color:'#00B3B0', cat:'CMS' },
-  { name:'Sanity', icon:'◨', color:'#F03E2F', cat:'CMS' },
-  { name:'HubSpot', icon:'◎', color:'#FF7A59', cat:'CRM' },
-  { name:'Salesforce', icon:'☁', color:'#00A1E0', cat:'CRM' },
-  { name:'Pipedrive', icon:'◑', color:'#1A73E8', cat:'CRM' },
-  { name:'Slack', icon:'⬢', color:'#4A154B', cat:'Comms' },
-  { name:'Resend', icon:'✉', color:'#0EA5E9', cat:'Comms' },
+  { name:'Contentful', icon:'◫', color:'#2478CC', cat:'CMS', slug:'contentful' },
+  { name:'Storyblok', icon:'◧', color:'#00B3B0', cat:'CMS', slug:'storyblok' },
+  { name:'Sanity', icon:'◨', color:'#F03E2F', cat:'CMS', slug:'sanity' },
+  { name:'HubSpot', icon:'◎', color:'#FF7A59', cat:'CRM', slug:'hubspot' },
+  { name:'Salesforce', icon:'☁', color:'#00A1E0', cat:'CRM', slug:'salesforce' },
+  { name:'Pipedrive', icon:'◑', color:'#1A73E8', cat:'CRM', slug:'pipedrive' },
+  { name:'Slack', icon:'⬢', color:'#4A154B', cat:'Comms', slug:'slack' },
+  { name:'Resend', icon:'✉', color:'#0EA5E9', cat:'Comms', slug:'resend' },
   { name:'Mailgun', icon:'📬', color:'#F06B0E', cat:'Comms', soon:true },
-  { name:'Brevo', icon:'◆', color:'#0092FF', cat:'Comms' },
+  { name:'Brevo', icon:'◆', color:'#0092FF', cat:'Comms', slug:'brevo' },
   { name:'Twilio', icon:'📱', color:'#F22F46', cat:'Comms', soon:true },
-  { name:'Discord', icon:'🎮', color:'#5865F2', cat:'Comms' },
-  { name:'Stripe', icon:'💳', color:'#635BFF', cat:'Payments' },
+  { name:'Discord', icon:'🎮', color:'#5865F2', cat:'Comms', slug:'discord' },
+  { name:'Stripe', icon:'💳', color:'#635BFF', cat:'Payments', slug:'stripe' },
   { name:'Paddle', icon:'🏓', color:'#0FA46A', cat:'Payments', soon:true },
-  { name:'OpenAI', icon:'✦', color:'#10A37F', cat:'AI' },
+  { name:'OpenAI', icon:'✦', color:'#10A37F', cat:'AI', slug:'openai' },
   { name:'Anthropic', icon:'◎', color:'#D4A574', cat:'AI', soon:true },
-  { name:'ElevenLabs', icon:'🎙', color:'#9333EA', cat:'AI', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
+  { name:'ElevenLabs', icon:'🎙', color:'#9333EA', cat:'AI', slug:'elevenlabs', url:'https://try.elevenlabs.io/si0z5cfaw6nq' },
   { name:'Perplexity', icon:'🔎', color:'#20B2AA', cat:'AI', soon:true },
-  { name:'Replicate', icon:'◈', color:'#374151', cat:'AI' },
-  { name:'GitHub', icon:'⌥', color:'#24292E', cat:'Dev' },
-  { name:'Linear', icon:'▲', color:'#5E6AD2', cat:'Dev' },
-  { name:'Jira', icon:'◉', color:'#0052CC', cat:'Dev' },
-  { name:'Vercel', icon:'▲', color:'#24292E', cat:'Dev' },
-  { name:'Google Maps', icon:'📍', color:'#4285F4', cat:'Location' },
-  { name:'Mapbox', icon:'🗺', color:'#4264FB', cat:'Location' },
-  { name:'PostHog', icon:'🦔', color:'#F54E00', cat:'Analytics' },
-  { name:'Mixpanel', icon:'📊', color:'#7856FF', cat:'Analytics' },
-  { name:'Amplitude', icon:'📈', color:'#1B1B1B', cat:'Analytics' },
+  { name:'Replicate', icon:'◈', color:'#374151', cat:'AI', slug:'replicate' },
+  { name:'GitHub', icon:'⌥', color:'#24292E', cat:'Dev', slug:'github' },
+  { name:'Linear', icon:'▲', color:'#5E6AD2', cat:'Dev', slug:'linear' },
+  { name:'Jira', icon:'◉', color:'#0052CC', cat:'Dev', slug:'jira' },
+  { name:'Vercel', icon:'▲', color:'#24292E', cat:'Dev', slug:'vercel' },
+  { name:'Google Maps', icon:'📍', color:'#4285F4', cat:'Location', slug:'google_maps' },
+  { name:'Mapbox', icon:'🗺', color:'#4264FB', cat:'Location', slug:'mapbox' },
+  { name:'PostHog', icon:'🦔', color:'#F54E00', cat:'Analytics', slug:'posthog' },
+  { name:'Mixpanel', icon:'📊', color:'#7856FF', cat:'Analytics', slug:'mixpanel' },
+  { name:'Amplitude', icon:'📈', color:'#1B1B1B', cat:'Analytics', slug:'amplitude' },
 ];
 const LIVE_COUNT = CONNECTORS.filter(c => !c.soon).length;
 export default function ConnectorsPage() {
@@ -56,7 +60,7 @@ export default function ConnectorsPage() {
           {CONNECTORS.map(c=>{
             const inner = (
               <>
-                <div style={{ width:32, height:32, borderRadius:8, background:['#24292E','#374151','#1B1B1B'].includes(c.color) ? 'var(--bg3)' : c.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.icon}</div>
+                <ConnectorLogo slug={c.slug} emoji={c.icon} color={c.color} name={c.name} />
                 <div>
                   <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', letterSpacing:'-0.01em' }}>{c.name}</div>
                   <div style={{ fontSize:10, color:'var(--text3)', marginTop:1 }}>{c.soon ? 'Coming soon' : c.cat}</div>

@@ -2,6 +2,22 @@
 import { useState, useEffect } from 'react';
 import { useEditorStore } from '@/store/editor';
 
+// Real brand logos for everything with a Composio toolkit (Composio hosts a
+// CDN of them, keyed by the same toolkit slug we already use for OAuth) —
+// falls back to the emoji glyph if the image 404s or hasn't loaded yet.
+function ConnectorIcon({ logoUrl, emoji, color, name }: { logoUrl?: string; emoji: string; color: string; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = logoUrl && !failed;
+  return (
+    <div style={{ width: 30, height: 30, borderRadius: 7, background: showImage ? '#fff' : color + '18', border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0, overflow: 'hidden' }}>
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={logoUrl} alt={name} width={20} height={20} style={{ objectFit: 'contain' }} onError={() => setFailed(true)} />
+      ) : emoji}
+    </div>
+  );
+}
+
 // composioSlug is set ONLY for connectors verified against Composio's live
 // toolkit catalog (1047 toolkits, checked via cursor pagination) — these get
 // a real OAuth connect flow. Everything without a composioSlug has no real
@@ -62,7 +78,7 @@ const CONNECTORS = [
 
   // Maps & Location
   { id: 'mapbox', name: 'Mapbox', desc: 'Maps, geocoding, directions', icon: '🗺', color: '#4264FB', category: 'Maps & Location', composioSlug: 'mapbox', prompt: 'Add Mapbox GL for interactive maps with markers, popups, and directions.' },
-  { id: 'google-maps', name: 'Google Maps', desc: 'Maps & Places API', icon: '📍', color: '#4285F4', category: 'Maps & Location', composioSlug: 'googlemaps', prompt: 'Add Google Maps with markers, search, autocomplete, and directions.' },
+  { id: 'google-maps', name: 'Google Maps', desc: 'Maps & Places API', icon: '📍', color: '#4285F4', category: 'Maps & Location', composioSlug: 'google_maps', prompt: 'Add Google Maps with markers, search, autocomplete, and directions.' },
 
   // Search
   { id: 'algolia', name: 'Algolia', desc: 'Instant search & discovery', icon: '🔍', color: '#003DFF', category: 'Search', composioSlug: 'algolia', prompt: 'Add Algolia for instant search with faceted filtering and typo tolerance.' },
@@ -183,12 +199,13 @@ export function ConnectorsPanel({ projectId }: { projectId: string }) {
               {filtered.filter(c => c.category === cat).map(c => {
                 const isComingSoon = c.id !== 'supabase' && !c.composioSlug;
                 const isConnected = c.composioSlug ? connectedSlugs.has(c.composioSlug) : false;
+                const logoUrl = c.id === 'supabase' ? 'https://logos.composio.dev/api/supabase' : c.composioSlug ? `https://logos.composio.dev/api/${c.composioSlug}` : undefined;
                 return (
                 <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', opacity: isComingSoon ? 0.55 : 1, transition: 'all 0.15s' }}
                   onMouseEnter={e => !isComingSoon && ((e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)')}
                   onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'}
                 >
-                  <div style={{ width: 30, height: 30, borderRadius: 7, background: c.color + '18', border: `1px solid ${c.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{c.icon}</div>
+                  <ConnectorIcon logoUrl={logoUrl} emoji={c.icon} color={c.color} name={c.name} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{c.name}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.desc}</div>
