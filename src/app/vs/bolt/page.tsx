@@ -3,7 +3,7 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
-  description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, self-healing builds, and 48 integrations. Verified June 2026.',
+  description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, self-healing builds, and 27 integrations. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/bolt' },
   openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, web + mobile, self-healing builds. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
@@ -17,7 +17,7 @@ const ROWS = [
   { feature: 'Daily bonus',             wyber: '8 credits/day',     other: 'None',              winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',    other: '✗ Web only',        winner: 'wyber' as const },
   { feature: 'Self-healing builds',      wyber: '✓ Auto-fixes errors', other: '✗',               winner: 'wyber' as const },
-  { feature: '48 integrations',         wyber: '✓ Built-in',        other: 'Limited',           winner: 'wyber' as const },
+  { feature: '27 integrations',         wyber: '✓ Built-in',        other: 'Limited',           winner: 'wyber' as const },
   { feature: 'Code generation',    wyber: 'Always fresh AI code',    other: 'None',              winner: 'wyber' as const },
   { feature: 'Credit estimate upfront', wyber: '✓',                 other: '✗',                 winner: 'wyber' as const },
   { feature: 'Visual click-to-edit',    wyber: '✓',                 other: 'Limited',           winner: 'wyber' as const },
@@ -58,7 +58,7 @@ export default function VsBolt() {
       slug="bolt"
       competitorName="Bolt.new"
       competitorUrl="https://bolt.new"
-      tagline="Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 48 integrations Bolt doesn't have."
+      tagline="Bolt.new is a powerful web app builder for developers. WyberAi offers predictable fixed-credit pricing, a friendlier interface, mobile apps, self-healing builds, and 27 integrations Bolt doesn't have."
       blurb="Honest comparison of WyberAi vs Bolt.new: pricing model, credits, and features. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}

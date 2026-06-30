@@ -184,7 +184,7 @@ export const USE_CASES: UseCase[] = [
     pillar: 'web',
     pillarLabel: 'Web Apps',
     pillarColor: '#0EA5E9',
-    tagline: 'The AI app builder that ships web + mobile apps from plain English — with fresh code, self-healing builds, and 48 integrations.',
+    tagline: 'The AI app builder that ships web + mobile apps from plain English — with fresh code, self-healing builds, and 27 integrations.',
     body: [
       'Most AI app builders generate web-only UI components. WyberAi builds complete full-stack web apps and mobile apps — from the same workspace, from plain English.',
       'Every build generates fresh code (no templates), auto-fixes errors with self-healing, and deploys to a live URL. You own the code on GitHub.',
@@ -193,7 +193,7 @@ export const USE_CASES: UseCase[] = [
       { title: 'Web app builder', desc: 'Full-stack React apps with dashboard UI, data tables, charts, modals, and Supabase database — generated in A few minutes.' },
       { title: 'Mobile app builder', desc: 'React Native + Expo apps for iOS and Android. Preview on your phone instantly via QR code.' },
       { title: 'Self-healing builds', desc: 'When a build hits an error, WyberAi auto-detects and fixes it so your app ships clean every time.' },
-      { title: '48 integrations', desc: 'Stripe, Supabase, OpenAI, Slack, and 44 more — built into the builder, no API key management.' },
+      { title: '27 integrations', desc: 'Stripe, Supabase, OpenAI, Slack, and 23 more — connected via real OAuth, no API key management.' },
       { title: 'Fresh code every build', desc: 'No recycled templates. Every app is purpose-built for your prompt — CRM, invoicing, HR, analytics, anything.' },
       { title: 'One-click deploy', desc: 'Vercel deployment in A few minutes. Free subdomain or your own domain.' },
     ],
@@ -202,7 +202,7 @@ export const USE_CASES: UseCase[] = [
     ctaHref: '/dashboard',
     faqs: [
       { q: 'What can WyberAi build?', a: 'WyberAi builds web apps (React, full-stack) and mobile apps (React Native + Expo) — all from plain English. Every build uses fresh code, self-healing error fixes, and deploys to a live URL.' },
-      { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code (no templates), auto-fixes build errors, includes 48 integrations, and gives you full GitHub ownership.' },
+      { q: 'How is WyberAi different from other AI app builders?', a: 'Most tools build web apps only. WyberAi builds both web and mobile apps, generates fresh code (no templates), auto-fixes build errors, includes 27 integrations, and gives you full GitHub ownership.' },
       { q: 'Do I need technical knowledge?', a: 'No. WyberAi is designed for non-technical founders, operators, and makers. You describe what you want; we generate it.' },
       { q: 'How fast does it generate?', a: 'Most apps generate in minutes. You see the code streaming in real time so you\'re never waiting on a blank screen.' },
       { q: 'What does it cost?', a: 'Plans start at $29/month (Starter: 150 credits). Builder is $79/month (500 credits). Pro is $199/month (1,500 credits). Every plan unlocks all features — credits are the only currency.' },

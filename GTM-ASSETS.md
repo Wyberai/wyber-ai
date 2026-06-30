@@ -25,7 +25,7 @@ What makes it different:
 - Fresh code every build — never stale templates
 - Self-healing builds — AI detects and fixes its own errors automatically
 - Full-stack out of the box — auth, Supabase DB, API routes, file uploads
-- 48 integrations — Stripe, OpenAI, Gmail, Slack, HubSpot, and more
+- 27 integrations — Stripe, OpenAI, Gmail, Slack, HubSpot, and more
 - You own the code — push to GitHub, fork it, hire a dev to extend it
 
 Web apps ship as React + Next.js. Mobile apps ship as React Native + Expo — preview on your phone via QR code, export for App Store.
@@ -44,7 +44,7 @@ So I built WyberAi: describe what you want in plain English, and AI writes produ
 A few things I'm proud of:
 - Every build is fresh code, not a remix of templates. You get a real codebase you can push to GitHub.
 - Builds self-heal. If the AI makes an error, it catches and fixes it automatically — up to 4 passes.
-- It's full-stack: auth, database, API routes, file uploads, 48 integrations — all wired up from a prompt.
+- It's full-stack: auth, database, API routes, file uploads, 27 integrations — all wired up from a prompt.
 
 We also do mobile apps (React Native + Expo) from the same workflow.
 
@@ -54,7 +54,7 @@ I'd love your feedback — what would you build with it?
 ### PH Gallery Images (5 slides — descriptions for designer)
 1. **Hero slide:** "Describe it. AI builds it. Ship it." with a split-screen showing a prompt on the left and a live deployed app on the right.
 2. **Build process:** Show the 3-step flow — Describe → AI builds live → Deploy. Use the actual builder UI screenshot.
-3. **Full-stack:** Grid showing what's included: Auth, Database, APIs, File uploads, 48 integrations, Custom domains.
+3. **Full-stack:** Grid showing what's included: Auth, Database, APIs, File uploads, 27 integrations, Custom domains.
 4. **Mobile apps:** Phone mockup showing QR code preview + "Export to App Store" flow.
 5. **Pricing:** Clean visual: "Start free. 50 credits. No credit card." with the 3 plan tiers.
 
@@ -127,7 +127,7 @@ Web AND mobile from the same builder.
 ```
 
 ```
-7/ 48 integrations out of the box:
+7/ 27 integrations out of the box:
 
 Stripe, OpenAI, Gmail, Slack, HubSpot, Notion, Twilio, SendGrid, Shopify, Airtable...
 
@@ -235,7 +235,7 @@ Not a mockup. Not a prototype. A working app with a real codebase you own on Git
 A few numbers:
 → 2,400+ apps built so far
 → 30-second average build time
-→ 48 integrations (Stripe, Supabase, OpenAI, Slack...)
+→ 27 integrations (Stripe, Supabase, OpenAI, Slack...)
 → Starts free, no credit card
 
 If you've ever had an idea you couldn't build because of the technical barrier — that barrier is gone.
@@ -269,7 +269,7 @@ So I built WyberAi — describe your web or mobile app in plain English, and it 
 What makes it different from template builders:
 - Fresh code every time (not templates)
 - Self-healing builds (AI catches and fixes its own errors)
-- Full-stack: auth, Supabase DB, API routes, 48 integrations
+- Full-stack: auth, Supabase DB, API routes, 27 integrations
 - You own the code on GitHub — no lock-in
 
 Also does mobile apps (React Native + Expo).
@@ -340,7 +340,7 @@ Describe your web or mobile app in plain English → AI builds production-ready 
 
 What's new:
 • Self-healing builds — AI catches and fixes errors automatically
-• 48 integrations — Stripe, OpenAI, Slack, HubSpot, and more
+• 27 integrations — Stripe, OpenAI, Slack, HubSpot, and more
 • Mobile apps — React Native + Expo, preview via QR code
 • You own the code — push to GitHub, no lock-in
 
@@ -505,7 +505,7 @@ Primary text: Template builders give you someone else's vision with guardrails.
 
 WyberAi writes fresh code from scratch — exactly what YOU describe.
 
-Auth. Database. APIs. 48 integrations. Deployed to a live URL.
+Auth. Database. APIs. 27 integrations. Deployed to a live URL.
 
 And you own every line on GitHub.
 
@@ -600,7 +600,7 @@ Contact: Get in touch with the WyberAi team. Support, partnerships, done-for-you
 - Bolt is browser-based with a code editor; WyberAi is prompt-first
 - WyberAi deploys to Vercel with custom domains; Bolt hosts on their infra
 - WyberAi generates full-stack (auth + DB); Bolt is more frontend-focused
-- WyberAi has 48 integrations built-in
+- WyberAi has 27 integrations built-in
 
 ### WyberAi vs v0 (Vercel)
 - v0 generates UI components; WyberAi generates full applications
@@ -621,7 +621,7 @@ Contact: Get in touch with the WyberAi team. Support, partnerships, done-for-you
 **Do:**
 - Use plain language ("describe what you want" not "leverage natural language processing")
 - Lead with outcomes ("get a live URL in minutes" not "our AI generates code")
-- Be specific (48 integrations, 14 files, 2 minutes, $29/mo)
+- Be specific (27 integrations, 14 files, 2 minutes, $29/mo)
 - Acknowledge the pain ("hiring devs costs $10K+", "ideas dying in Google Docs")
 
 **Don't:**

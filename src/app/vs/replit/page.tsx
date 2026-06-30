@@ -35,7 +35,7 @@ const FAQS = [
   },
   {
     q: 'Is WyberAi cheaper than Replit?',
-    a: 'WyberAi Starter is $29/month for 150 credits vs Replit Core at $20/month. WyberAi includes mobile apps, 48 integrations, and fresh code generation that Replit doesn\'t offer. Top-ups never expire.',
+    a: 'WyberAi Starter is $29/month for 150 credits vs Replit Core at $20/month. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Replit doesn\'t offer. Top-ups never expire.',
   },
   {
     q: 'Does Replit have a mobile app builder?',

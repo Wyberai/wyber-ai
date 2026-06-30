@@ -16,7 +16,7 @@ const ROWS = [
   { feature: 'App generation speed',    wyber: 'A few minutes',            other: 'Hours (code-assisted)',    winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗ (editor only)',          winner: 'wyber' as const },
   { feature: 'Self-healing builds',      wyber: '✓ Auto-fixes errors',      other: '✗',                        winner: 'wyber' as const },
-  { feature: '48 integrations',         wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
+  { feature: '27 integrations',         wyber: '✓ Built-in',               other: '✗',                        winner: 'wyber' as const },
   { feature: 'Code generation',    wyber: 'Always fresh AI code',           other: 'None',                     winner: 'wyber' as const },
   { feature: 'Live preview',            wyber: '✓ Real-time',              other: 'Run locally',              winner: 'wyber' as const },
   { feature: 'One-click deploy',        wyber: '✓ Vercel',                 other: '✗ Manual deploy',          winner: 'wyber' as const },

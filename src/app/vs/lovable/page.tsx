@@ -3,7 +3,7 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
-  description: 'WyberAi vs Lovable: fresh code every build, web + mobile apps, self-healing builds, 48 integrations, and GitHub ownership. Verified June 2026.',
+  description: 'WyberAi vs Lovable: fresh code every build, web + mobile apps, self-healing builds, 27 integrations, and GitHub ownership. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/lovable' },
   openGraph: { title: 'WyberAi vs Lovable (2026)', description: 'Fresh code, web + mobile, self-healing builds. Verified June 2026.', url: 'https://wyberai.com/vs/lovable' },
 }
@@ -16,7 +16,7 @@ const ROWS = [
   { feature: 'Top-up expiry',           wyber: 'Never',          other: '12 months',       winner: 'wyber' as const },
   { feature: 'Credit estimate upfront', wyber: '✓',              other: '✗',               winner: 'wyber' as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native', other: '✗ Web only',      winner: 'wyber' as const },
-  { feature: '48 integrations',          wyber: '✓ Built-in',     other: 'Limited',         winner: 'wyber' as const },
+  { feature: '27 integrations',          wyber: '✓ Built-in',     other: 'Limited',         winner: 'wyber' as const },
   { feature: 'Code generation',    wyber: 'Always fresh AI code', other: 'Templates',       winner: 'wyber' as const },
   { feature: 'Visual click-to-edit',    wyber: '✓',              other: '✓',               winner: 'tie'   as const },
   { feature: 'GitHub sync',             wyber: '✓',              other: '✓',               winner: 'tie'   as const },
@@ -30,7 +30,7 @@ const ROWS = [
 const FAQS = [
   {
     q: 'How does WyberAi pricing compare to Lovable?',
-    a: 'WyberAi Starter is $29/month for 150 credits vs Lovable\'s $25/month for ~250 credits. WyberAi includes mobile apps, 48 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
+    a: 'WyberAi Starter is $29/month for 150 credits vs Lovable\'s $25/month for ~250 credits. WyberAi includes mobile apps, 27 integrations, and fresh code generation that Lovable doesn\'t offer. Top-ups on Wyber never expire.',
   },
   {
     q: 'Can WyberAi build mobile apps? Lovable can\'t.',
@@ -56,7 +56,7 @@ export default function VsLovable() {
       slug="lovable"
       competitorName="Lovable"
       competitorUrl="https://lovable.dev"
-      tagline="Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 48 integrations that Lovable doesn't have."
+      tagline="Lovable is the leading AI web app builder. WyberAi generates fresh code (no templates), builds mobile apps, and includes 27 integrations that Lovable doesn't have."
       blurb="Honest comparison of WyberAi vs Lovable: pricing, credits, features, and what each builder can actually ship. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}

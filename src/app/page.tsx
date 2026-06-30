@@ -165,7 +165,7 @@ const PRODUCTS = [
     accent: BRAND,
     heading: 'Describe it. It builds.',
     body: 'Type what you want in plain English. Wyber generates production-ready React code, provisions a database, and deploys to a live URL — in minutes.',
-    bullets: ['Fresh code every time — no stale templates', '48 integrations — Supabase, Stripe, OpenAI & more', 'GitHub push · Vercel deploy · custom domains'],
+    bullets: ['Fresh code every time — no stale templates', '27 integrations — Supabase, Stripe, OpenAI & more', 'GitHub push · Vercel deploy · custom domains'],
     cta: 'Start building',
     href: '/gallery',
     mockup: <WebAppMockup />,

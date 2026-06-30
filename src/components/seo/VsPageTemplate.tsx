@@ -38,7 +38,7 @@ const s = {
 const PRODUCTS = [
   { id: 'web',       label: 'Web Apps',       icon: '🖥', desc: 'Full-stack React app in minutes' },
   { id: 'mobile',    label: 'Mobile Apps',    icon: '📱', desc: 'React Native + Expo, iOS & Android' },
-  { id: 'integrations', label: '48 Integrations', icon: '🔗', desc: 'Supabase, Stripe, OpenAI & more' },
+  { id: 'integrations', label: '27 Integrations', icon: '🔗', desc: 'Supabase, Stripe, OpenAI & more' },
   { id: 'deploy',    label: 'One-click Deploy', icon: '🚀', desc: 'Live URL in seconds' },
   { id: 'github',    label: 'GitHub Sync',    icon: '📦', desc: 'Own your code, zero lock-in' },
   { id: 'challenge', label: 'Weekly Challenge', icon: '🏆', desc: 'Win credits every week' },
