@@ -151,16 +151,30 @@ export async function POST(req: NextRequest) {
       const projectIdForDomain = String(metadata.project_id || '') || null
       if (purchaseId && domain) {
         try {
+          const { data: purchaseRow } = await admin
+            .from('domain_purchases')
+            .select('price_cents, contact_info')
+            .eq('id', purchaseId)
+            .single()
+          if (!purchaseRow?.contact_info) throw new Error('No contact_info stored for this purchase')
+
           const VERCEL_TOKEN = process.env.VERCEL_TOKEN
           const VERCEL_TEAM = process.env.VERCEL_TEAM_ID
           const teamQ = VERCEL_TEAM ? `?teamId=${VERCEL_TEAM}` : ''
-          const buyRes = await fetch(`https://api.vercel.com/v5/domains/buy${teamQ}`, {
+          // Old v4/v5 domains/buy was sunset Nov 9 2025 → Registrar API, which
+          // additionally requires years, expectedPrice, and ICANN contact info.
+          const buyRes = await fetch(`https://api.vercel.com/v1/registrar/domains/${encodeURIComponent(domain)}/buy${teamQ}`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: domain }),
+            body: JSON.stringify({
+              autoRenew: false,
+              years: 1,
+              expectedPrice: (purchaseRow.price_cents as number) / 100,
+              contactInformation: purchaseRow.contact_info,
+            }),
           })
           const buyData = await buyRes.json()
-          if (!buyRes.ok) throw new Error(buyData?.error?.message || `Vercel buy failed: ${buyRes.status}`)
+          if (!buyRes.ok) throw new Error(buyData?.message || buyData?.error?.message || `Vercel buy failed: ${buyRes.status}`)
 
           await admin.from('domain_purchases').update({
             status: 'purchased', purchased_at: new Date().toISOString(),

@@ -4,7 +4,26 @@ import { createClient } from '@/lib/supabase/server'
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN
 const VERCEL_TEAM = process.env.VERCEL_TEAM_ID
 
-// Real availability + price lookup via Vercel's Domains API — used by the
+// Old v4 domains/status + v4 domains/price were sunset Nov 9 2025 in favor of
+// the Registrar API (v1/registrar/domains/availability + .../{domain}/price).
+// https://vercel.com/changelog/new-domains-registrar-api-for-domain-search-pricing-purchase-and-management-R7NazqfLzVDvZlsmFxH7y
+
+// Vercel's price response wraps the amount in an object whose exact key isn't
+// pinned down in the docs (just shows "123" placeholders) — read defensively.
+function extractDollars(price: unknown): number | null {
+  if (price == null) return null
+  if (typeof price === 'number') return price
+  if (typeof price === 'object') {
+    const p = price as Record<string, unknown>
+    const v = p.amount ?? p.price ?? p.value
+    if (typeof v === 'number') return v
+    if (typeof v === 'string' && !isNaN(Number(v))) return Number(v)
+  }
+  if (typeof price === 'string' && !isNaN(Number(price))) return Number(price)
+  return null
+}
+
+// Real availability + price lookup via Vercel's Registrar API — used by the
 // domain-purchase flow so users see actual pricing, not a guess.
 export async function GET(req: NextRequest) {
   try {
@@ -19,27 +38,36 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Domain purchasing is not configured yet' }, { status: 503 })
     }
 
-    const teamQ = VERCEL_TEAM ? `&teamId=${VERCEL_TEAM}` : ''
+    const teamQ = VERCEL_TEAM ? `?teamId=${VERCEL_TEAM}` : ''
 
-    const [statusRes, priceRes] = await Promise.all([
-      fetch(`https://api.vercel.com/v4/domains/status?name=${encodeURIComponent(name)}${teamQ}`, {
-        headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
-      }),
-      fetch(`https://api.vercel.com/v4/domains/price?name=${encodeURIComponent(name)}${teamQ}`, {
-        headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
-      }),
-    ])
+    const availRes = await fetch(`https://api.vercel.com/v1/registrar/domains/availability${teamQ}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ domains: [name] }),
+    })
+    const availData = await availRes.json()
+    if (!availRes.ok) return NextResponse.json({ error: availData.message || 'Availability check failed' }, { status: 500 })
 
-    const status = await statusRes.json()
-    const price = await priceRes.json()
+    const available = Boolean(availData.results?.[0]?.available)
 
-    if (status.error) return NextResponse.json({ error: status.error.message }, { status: 500 })
+    if (!available) {
+      return NextResponse.json({ name, available: false, priceCents: null, period: 1 })
+    }
+
+    const priceTeamQ = VERCEL_TEAM ? `&teamId=${VERCEL_TEAM}` : ''
+    const priceRes = await fetch(`https://api.vercel.com/v1/registrar/domains/${encodeURIComponent(name)}/price?years=1${priceTeamQ}`, {
+      headers: { Authorization: `Bearer ${VERCEL_TOKEN}` },
+    })
+    const priceData = await priceRes.json()
+    if (!priceRes.ok) return NextResponse.json({ error: priceData.message || 'Price lookup failed' }, { status: 500 })
+
+    const dollars = extractDollars(priceData.purchasePrice)
 
     return NextResponse.json({
       name,
-      available: Boolean(status.available),
-      priceCents: price.price ? Math.round(price.price * 100) : null,
-      period: price.period ?? 1,
+      available: true,
+      priceCents: dollars != null ? Math.round(dollars * 100) : null,
+      period: priceData.years ?? 1,
     })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

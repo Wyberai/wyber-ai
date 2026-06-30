@@ -1,21 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+export interface DomainContactInfo {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  address1: string
+  city: string
+  state: string
+  zip: string
+  country: string
+}
+
+const REQUIRED_CONTACT_FIELDS: (keyof DomainContactInfo)[] = [
+  'firstName', 'lastName', 'email', 'phone', 'address1', 'city', 'state', 'zip', 'country',
+]
+
 // Domain prices vary per-name, so checkout uses a single Dodo product
 // configured as "pay what you want" (DODO_PRODUCT_DOMAIN) with the per-item
 // `amount` overridden to the real Vercel-quoted price. See domain/search for
 // the price lookup this amount must come from.
+//
+// Vercel's Registrar API "buy" endpoint requires ICANN registrant contact
+// info on every purchase — collected from the buyer here and stored so the
+// webhook can pass it through once payment confirms.
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { projectId, domain, priceCents } = await req.json() as {
-      projectId?: string; domain?: string; priceCents?: number
+    const { projectId, domain, priceCents, contactInfo } = await req.json() as {
+      projectId?: string; domain?: string; priceCents?: number; contactInfo?: DomainContactInfo
     }
     if (!domain || !priceCents || priceCents <= 0) {
       return NextResponse.json({ error: 'domain and priceCents required' }, { status: 400 })
+    }
+    if (!contactInfo || REQUIRED_CONTACT_FIELDS.some(f => !contactInfo[f]?.trim())) {
+      return NextResponse.json({ error: `contactInfo is required (${REQUIRED_CONTACT_FIELDS.join(', ')})` }, { status: 400 })
     }
 
     const productId = process.env.DODO_PRODUCT_DOMAIN
@@ -36,7 +59,7 @@ export async function POST(req: NextRequest) {
 
     const { data: purchase, error: insertErr } = await supabase
       .from('domain_purchases')
-      .insert({ user_id: user.id, project_id: projectId ?? null, domain, price_cents: priceCents, status: 'pending' })
+      .insert({ user_id: user.id, project_id: projectId ?? null, domain, price_cents: priceCents, status: 'pending', contact_info: contactInfo })
       .select()
       .single()
     if (insertErr || !purchase) return NextResponse.json({ error: 'Failed to create purchase record' }, { status: 500 })
