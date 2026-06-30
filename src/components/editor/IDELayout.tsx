@@ -74,6 +74,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
         files: (initialProject.files && Object.keys(initialProject.files).length > 0) ? initialProject.files as any : undefined,
         messages: msgData.messages || [],
         knowledge: kData.knowledge || '',
+        initialPrompt: (initialProject as any).initial_prompt || '',
       });
       if (cData.connectors?.length) setConnectors(cData.connectors);
     });

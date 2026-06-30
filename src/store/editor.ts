@@ -53,6 +53,7 @@ interface EditorState {
   hasGeneratedFiles: boolean;
   streamingContent: string;
   knowledge: string;
+  initialPrompt: string; // the prompt the project was created with (durable handoff fallback)
   checkpoints: Checkpoint[];
   connectors: Connector[];
   hydrated: boolean; // true once project data loaded from server
@@ -67,7 +68,7 @@ interface EditorState {
   // Project
   setProject: (p: Project) => void;
   setFramework: (f: Framework) => void;
-  hydrateProject: (data: { project: Project; files?: Record<string, FileNode>; messages?: ChatMessage[]; knowledge?: string }) => void;
+  hydrateProject: (data: { project: Project; files?: Record<string, FileNode>; messages?: ChatMessage[]; knowledge?: string; initialPrompt?: string }) => void;
   resetForProject: () => void;
   setHydrated: (v: boolean) => void;
 
@@ -131,6 +132,7 @@ export const useEditorStore = create<EditorState>()(
     hasGeneratedFiles: false,
     streamingContent: '',
     knowledge: '',
+    initialPrompt: '',
     checkpoints: [],
     connectors: [],
     hydrated: false,
@@ -153,6 +155,7 @@ export const useEditorStore = create<EditorState>()(
       s.hasGeneratedFiles = false;
       s.streamingContent = '';
       s.knowledge = '';
+      s.initialPrompt = '';
       s.checkpoints = [];
       s.connectors = [];
       s.hydrated = false;
@@ -175,6 +178,7 @@ export const useEditorStore = create<EditorState>()(
       }
       s.messages = data.messages ?? [];
       s.knowledge = data.knowledge ?? '';
+      s.initialPrompt = data.initialPrompt ?? '';
       s.hydrated = true;
     }),
 

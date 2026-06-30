@@ -166,7 +166,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     messages, isGenerating, addMessage, updateMessage, setMessages,
     setIsGenerating, streamingContent, setStreamingContent, clearStreamingContent,
     setFiles, files, framework, consumeCredit, credits, hasGeneratedFiles, setHasGeneratedFiles,
-    project, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints,
+    project, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints, initialPrompt,
   } = useEditorStore();
 
   const resolvedProjectId = projectId || project?.id;
@@ -305,15 +305,26 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // different app on every open. hasGeneratedFiles is true only once a real app
     // is loaded/built (the brand-new starter scaffold leaves it false).
     if (hasGeneratedFiles) { sessionStorage.removeItem(key); return; }
-    const savedPrompt = sessionStorage.getItem(key);
-    if (!savedPrompt) return;
+    // Primary: the one-shot sessionStorage handoff from the dashboard.
+    let promptToRun = sessionStorage.getItem(key) || '';
+    // Fallback: sessionStorage can be lost to a race or reload, but the project's
+    // initial_prompt is durably in the DB. Use it ONLY for a truly fresh, never-
+    // touched project (no messages, no files) so we can never re-generate over an
+    // existing app or double-charge credits.
+    if (!promptToRun && initialPrompt) {
+      const st = useEditorStore.getState();
+      if (st.messages.length === 0 && Object.keys(st.files).length === 0) {
+        promptToRun = initialPrompt;
+      }
+    }
+    if (!promptToRun) return;
     sessionStorage.removeItem(key);
     const timer = setTimeout(() => {
-      setInput(savedPrompt);
-      window.dispatchEvent(new CustomEvent('wyber_auto_generate', { detail: { prompt: savedPrompt } }));
+      setInput(promptToRun);
+      window.dispatchEvent(new CustomEvent('wyber_auto_generate', { detail: { prompt: promptToRun } }));
     }, 800);
     return () => clearTimeout(timer);
-  }, [resolvedProjectId, hasInit, hasGeneratedFiles]);
+  }, [resolvedProjectId, hasInit, hasGeneratedFiles, initialPrompt]);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
