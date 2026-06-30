@@ -38,6 +38,10 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [customDomainStatus, setCustomDomainStatus] = useState<'idle'|'saving'|'verifying'|'verified'|'error'>('idle');
   const [customDomainError, setCustomDomainError] = useState('');
   const [dnsInstructions, setDnsInstructions] = useState<any>(null);
+  const [buyDomainQuery, setBuyDomainQuery] = useState('');
+  const [buyDomainResult, setBuyDomainResult] = useState<{ name: string; available: boolean; priceCents: number | null } | null>(null);
+  const [buyDomainStatus, setBuyDomainStatus] = useState<'idle' | 'searching' | 'buying' | 'error'>('idle');
+  const [buyDomainError, setBuyDomainError] = useState('');
   const [copied, setCopied] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -242,6 +246,42 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     } catch {
       setCustomDomainStatus('error');
       setCustomDomainError('Failed to connect domain');
+    }
+  };
+
+  const handleSearchDomain = async () => {
+    if (!buyDomainQuery.trim()) return;
+    setBuyDomainStatus('searching');
+    setBuyDomainError('');
+    setBuyDomainResult(null);
+    try {
+      const res = await fetch(`/api/domain/search?name=${encodeURIComponent(buyDomainQuery.trim())}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Search failed');
+      setBuyDomainResult(data);
+      setBuyDomainStatus('idle');
+    } catch (err) {
+      setBuyDomainStatus('error');
+      setBuyDomainError(err instanceof Error ? err.message : 'Search failed');
+    }
+  };
+
+  const handleBuyDomain = async () => {
+    if (!buyDomainResult?.available || !buyDomainResult.priceCents) return;
+    setBuyDomainStatus('buying');
+    setBuyDomainError('');
+    try {
+      const res = await fetch('/api/domain/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, domain: buyDomainResult.name, priceCents: buyDomainResult.priceCents }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Purchase failed');
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      setBuyDomainStatus('error');
+      setBuyDomainError(err instanceof Error ? err.message : 'Purchase failed');
     }
   };
 
@@ -475,6 +515,50 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       {customDomainError && <span style={{ fontSize: 11, color: '#ef4444' }}>{customDomainError}</span>}
                     </div>
                   )}
+                </div>
+
+                <div style={{ height: 1, background: 'var(--ide-border)' }} />
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Buy a Domain</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      style={inputStyle}
+                      placeholder="mynewapp.com"
+                      value={buyDomainQuery}
+                      onChange={e => { setBuyDomainQuery(e.target.value); setBuyDomainResult(null); }}
+                      onKeyDown={e => e.key === 'Enter' && handleSearchDomain()}
+                    />
+                    <button
+                      onClick={handleSearchDomain}
+                      disabled={!buyDomainQuery.trim() || buyDomainStatus === 'searching'}
+                      style={{ ...btn, whiteSpace: 'nowrap', background: 'var(--bg-elevated)' }}
+                    >
+                      {buyDomainStatus === 'searching' ? 'Searching...' : 'Search'}
+                    </button>
+                  </div>
+
+                  {buyDomainResult && (
+                    <div style={{ background: buyDomainResult.available ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${buyDomainResult.available ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {buyDomainResult.available ? (
+                        <>
+                          <span style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>
+                            {buyDomainResult.name} is available — ${((buyDomainResult.priceCents ?? 0) / 100).toFixed(2)}/year
+                          </span>
+                          <button
+                            onClick={handleBuyDomain}
+                            disabled={buyDomainStatus === 'buying'}
+                            style={{ ...btn, background: 'rgba(34,197,94,0.1)', borderColor: 'rgba(34,197,94,0.3)', color: '#22c55e', justifyContent: 'center' }}
+                          >
+                            {buyDomainStatus === 'buying' ? 'Starting checkout...' : `Buy for $${((buyDomainResult.priceCents ?? 0) / 100).toFixed(2)}`}
+                          </button>
+                        </>
+                      ) : (
+                        <span style={{ fontSize: 12, color: '#ef4444', fontWeight: 600 }}>{buyDomainResult.name} is not available</span>
+                      )}
+                    </div>
+                  )}
+                  {buyDomainError && <span style={{ fontSize: 11, color: '#ef4444' }}>{buyDomainError}</span>}
                 </div>
               </>
             )}
