@@ -70,7 +70,7 @@ describe('design-palettes — renderDesignBrief', () => {
     const pal = PALETTES.find((p) => p.id === 'fintech-emerald-dark')!
     const brief = renderDesignBrief(pal)
     expect(brief).toContain('--primary: 152 64% 46%;')
-    expect(brief).toContain("--font-sans: 'Manrope'")
+    expect(brief).toContain("--font-sans: 'Switzer'")
     expect(brief).toContain('--gradient-hero:')
     expect(brief).toContain('DESIGN BRIEF')
   })

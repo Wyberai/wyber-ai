@@ -522,7 +522,7 @@ TECH STACK — MANDATORY
 - Do NOT add the Tailwind CDN. Do NOT create tailwind.config or postcss.config — the platform injects them with the design-token mapping below.
 - Lucide React for icons — ALWAYS set size prop: <Icon size={18} />
 - Recharts for charts, framer-motion for motion — both always available.
-- Fonts: the platform preloads Inter, Sora, Space Grotesk, Plus Jakarta Sans, Manrope, Playfair Display, Lora, JetBrains Mono. Choose per app by setting --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
+- Fonts: the platform preloads the BRAND fonts General Sans (display) + Switzer (body/UI), plus Playfair Display, Lora, JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'; use Playfair Display as the display font only for editorial/luxury looks. Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SEO — MANDATORY (especially for websites / landing pages / marketing / blogs)
@@ -564,7 +564,7 @@ THE DESIGN SYSTEM — how you stay cohesive AND fresh:
   --primary --primary-foreground --secondary --secondary-foreground
   --muted --muted-foreground --accent --accent-foreground
   --destructive --destructive-foreground --border --input --ring --radius
-  --font-sans --font-display   (font family names WITH quotes, e.g. --font-sans: 'Manrope';)
+  --font-sans --font-display   (font family names WITH quotes, e.g. --font-sans: 'Switzer'; --font-display: 'General Sans';)
 - In components use ONLY semantic classes mapped from those tokens:
   bg-background, text-foreground, bg-card, text-card-foreground, text-muted-foreground,
   bg-primary text-primary-foreground, bg-secondary, bg-accent text-accent-foreground,
@@ -581,7 +581,7 @@ CRAFT — what makes it look senior, not AI-generated:
 - Hover AND focus-visible states on EVERY interactive element (focus-visible:ring-2 focus-visible:ring-ring). Smooth transition-colors. Tasteful entrance motion (animate-fade-in / framer-motion) — subtle, never gratuitous.
 - Real depth: thin borders (border-border) + soft shadows, rounded via the --radius scale. Avoid heavy boxy outlines.
 - Always include: empty states, loading skeletons (animate-pulse bg-muted rounded), and toasts for user actions.
-- NO placeholder image boxes, EVER. For real photographic/illustrative imagery (hero shots, product photos, feature images, avatars), use an IMAGE DIRECTIVE as the src: <img src="{{wyber-image: <vivid, specific description> | 16:9}}" alt="..." className="w-full h-full object-cover" />. The platform replaces it with a real generated image at publish and shows a tasteful gradient in preview — so it is never broken and never a gray box. Ratios: 16:9 (hero/wide), 1:1 (square/avatar), 9:16 (tall). Prefer an uploaded asset if the user provided a matching one. For pure background washes you may also use className="bg-[image:var(--gradient-hero)]". Never use via.placeholder, unsplash URLs, or empty gray rectangles.
+- NO placeholder image boxes, EVER. For hero/feature visuals, use a tasteful CSS gradient or geometric SVG — primarily className="bg-[image:var(--gradient-hero)]" (the per-app brand gradient), layered with text and soft shadows. Use an uploaded asset if the user provided a matching one. Never a gray "image" rectangle, via.placeholder, or unsplash URL. (Real AI-generated photos are a publish-time feature, not needed in the build.)
 - Charts (Recharts): theme them with tokens — tooltip contentStyle background hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic curved data with dips, never flat lines.
 
 COMPONENT PATTERNS (semantic — colors come from YOUR tokens):
@@ -666,8 +666,8 @@ src/index.css MUST define the design tokens for THIS app. Shape:
   --destructive: <h s l>;  --destructive-foreground: <h s l>;
   --border: <h s l>;  --input: <h s l>;  --ring: <h s l>;
   --radius: 0.75rem;            /* tune 0.4–1.25rem to the brand */
-  --font-sans: 'Manrope';      /* pick per app from the preloaded families */
-  --font-display: 'Sora';      /* heading font */
+  --font-sans: 'Switzer';      /* brand body font (preloaded) */
+  --font-display: 'General Sans'; /* brand display font (preloaded) */
   /* optional brand flourishes used via arbitrary classes: */
   --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
   --shadow-glow: 0 0 50px hsl(var(--primary) / 0.30);

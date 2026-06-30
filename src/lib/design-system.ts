@@ -13,9 +13,17 @@
 // Curated font menu. Loaded once in the preview shell and in the synthesized
 // index.html so any app can pick fonts via --font-sans / --font-display with no
 // build-breaking @import. Keep this list and the token defaults in sync.
-export const GOOGLE_FONTS_LINKS = `<link rel="preconnect" href="https://fonts.googleapis.com">
+// Brand fonts (General Sans + Switzer) come from Fontshare's CDN — cross-origin
+// friendly like Google Fonts, so they load in every generated/published app, not
+// just on wyberai.com. Playfair Display + Lora (editorial/luxury display) and
+// JetBrains Mono come from Google. This keeps generated apps ON-BRAND with the
+// same premium typography as the platform, instead of the generic Inter/Sora
+// "AI-SaaS" pairing.
+export const GOOGLE_FONTS_LINKS = `<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700;800&family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">`
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700,800&f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">`
 
 // Default token values — a clean, accessible light theme (+ matching dark) used
 // only as a SAFETY NET when an app forgets to define tokens, so nothing ever
@@ -41,8 +49,8 @@ export const TOKEN_VARS_CSS = `:root {
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.75rem;
-  --font-sans: 'Inter';
-  --font-display: 'Sora';
+  --font-sans: 'Switzer';
+  --font-display: 'General Sans';
   --font-mono: 'JetBrains Mono';
 }
 .dark {
@@ -70,7 +78,7 @@ export const TOKEN_VARS_CSS = `:root {
 // Base rules that wire the tokens to the page. Plain CSS (no @apply) so it
 // compiles in both engines.
 export const BASE_LAYER_CSS = `* { border-color: hsl(var(--border)); }
-body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--font-sans, 'Inter', ui-sans-serif, system-ui, sans-serif); -webkit-font-smoothing: antialiased; }`
+body { background-color: hsl(var(--background)); color: hsl(var(--foreground)); font-family: var(--font-sans, 'Switzer', ui-sans-serif, system-ui, sans-serif); -webkit-font-smoothing: antialiased; }`
 
 // Full default block injected into index.css as a fallback when tokens are absent.
 export const DEFAULT_TOKENS_CSS = `${TOKEN_VARS_CSS}\n${BASE_LAYER_CSS}`
