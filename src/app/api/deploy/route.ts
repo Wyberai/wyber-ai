@@ -4,6 +4,7 @@ import { sendDeploySuccessEmail } from '@/lib/email';
 import { sanitizeFiles } from '@/lib/sanitize-files';
 import { scanForExposedSecrets } from '@/lib/security-scan';
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project';
+import { getDeployEnvVars } from '@/lib/deploy-env';
 
 // Build scaffold files needed for Vercel to build the app
 function getBuildScaffold(framework: string, projectName: string): Record<string, string> {
@@ -230,6 +231,12 @@ export async function POST(req: NextRequest) {
       ? `https://api.vercel.com/v13/deployments?teamId=${VERCEL_TEAM_ID}`
       : 'https://api.vercel.com/v13/deployments';
 
+    // Collect user secrets + Supabase connector creds so the deployed app
+    // actually works at runtime — not just at code-generation time.
+    const deployEnv = (projectId && userId)
+      ? await getDeployEnvVars(projectId, userId)
+      : {}
+
     const deployRes = await fetch(deployUrl, {
       method: 'POST',
       headers: {
@@ -242,6 +249,7 @@ export async function POST(req: NextRequest) {
         projectSettings: frameworkConfig,
         target: 'production',
         ssoProtectionBypass: true,
+        ...(Object.keys(deployEnv).length > 0 ? { env: deployEnv } : {}),
         ...(VERCEL_TEAM_ID ? { teamId: VERCEL_TEAM_ID } : {}),
       }),
     });
