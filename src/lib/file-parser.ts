@@ -8,14 +8,33 @@ export interface ParseResult {
 }
 const FILE_BLOCK_RE = /<file\s+path="([^"]+)">([\s\S]*?)<\/file>/g;
 
-// Strip <thinking>...</thinking> reasoning blocks (and an unclosed trailing one)
-// so they never render as chat text.
+// Strip <thinking>...</thinking> blocks (banned model-authored prose, see the
+// CRITICAL OUTPUT RULES in generate/route.ts) and <reasoning>...</reasoning>
+// blocks (real extended-thinking output, opt-in on new-build full generation —
+// captured separately via extractReasoning() for its own collapsible display,
+// so it must never leak into chat text here) — including an unclosed trailing
+// one of either, so they never render as chat text.
 function stripThinking(raw: string): string {
   let out = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
-  // If a <thinking> was opened but never closed (model ran long), drop everything from it on
-  const openIdx = out.search(/<thinking>/i);
+  out = out.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '');
+  // If either tag was opened but never closed (model ran long / stream cut), drop everything from it on
+  const openIdx = out.search(/<thinking>|<reasoning>/i);
   if (openIdx !== -1) out = out.slice(0, openIdx);
   return out;
+}
+
+// Extract <reasoning>...</reasoning> content emitted by opt-in extended
+// thinking (new-build full generation only). Includes a still-open trailing
+// block so live streaming display isn't stuck empty until the tag closes.
+export function extractReasoning(raw: string): string {
+  let out = '';
+  const re = /<reasoning>([\s\S]*?)<\/reasoning>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) out += m[1];
+  const lastOpen = raw.lastIndexOf('<reasoning>');
+  const lastClose = raw.lastIndexOf('</reasoning>');
+  if (lastOpen !== -1 && lastOpen > lastClose) out += raw.slice(lastOpen + '<reasoning>'.length);
+  return out.trim();
 }
 
 export function parseGenerationOutput(raw: string): ParseResult {
@@ -76,6 +95,11 @@ export function cleanStreamingDisplay(raw: string): string {
   let out = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
   const openThink = out.search(/<thinking>/i);
   if (openThink !== -1) out = out.slice(0, openThink);
+  // <reasoning> (real extended-thinking output) is rendered in its own
+  // collapsible section via extractReasoning() — never as main chat text.
+  out = out.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '');
+  const openReasoning = out.search(/<reasoning>/i);
+  if (openReasoning !== -1) out = out.slice(0, openReasoning);
   // hide complete <file> and <edit> blocks from the streaming chat text
   out = out.replace(/<file\s+path="[^"]*">[\s\S]*?<\/file>/g, '');
   out = out.replace(/<edit\s+path="[^"]*">[\s\S]*?<\/edit>/g, '');

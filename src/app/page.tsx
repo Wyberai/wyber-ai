@@ -360,14 +360,14 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
-            Vibe code with{' '}<br />
+            The most powerful{' '}<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              WyberAi
+              app builder
             </span>
           </h1>
 
           <p style={{ fontSize: 'clamp(16px,2vw,22px)', color: '#a1a1aa', lineHeight: 1.6, maxWidth: 560, margin: '0 auto 40px' }}>
-            Describe your web or mobile app in plain English. AI builds it, deploys it, and gives you a live URL — in minutes, not months.
+            Self-healing builds. Live database security scans. The right AI model chosen for every task — automatically. Other builders generate code and hope. WyberAi engineers it.
           </p>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
@@ -487,18 +487,21 @@ export default function HomePage() {
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 48 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why WyberAi</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
               Not another template marketplace
             </h2>
+            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 560, margin: '0 auto' }}>
+              Every other AI builder generates code and hopes it holds. WyberAi checks its own work — automatically.
+            </p>
           </div>
           <div className="wyb-why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {[
               { icon: '⚡', title: 'Fresh code, every time', desc: 'No drag-and-drop. No stale templates. AI writes real React + Tailwind CSS from scratch for every project.', color: BRAND },
-              { icon: '🔄', title: 'Auto error fix', desc: 'Build errors? The AI detects and resolves them automatically. No debugging, no Stack Overflow rabbit holes.', color: '#22c55e' },
-              { icon: '🚀', title: 'One-click deploy', desc: 'Your app goes live on Vercel with a real URL. Connect your domain, share with the world — in seconds.', color: '#f97316' },
+              { icon: '🔄', title: 'Self-healing builds', desc: 'A broken import or a truncated file doesn\'t stop the build. WyberAi detects the failure and repairs itself in the same run — no red screen, no manual debugging.', color: '#22c55e' },
+              { icon: '🛡️', title: 'Live security scanning', desc: 'We probe your live database with the same anonymous key an attacker would use — real Row-Level Security testing, not a static linter guessing at your schema.', color: '#ef4444' },
               { icon: '📦', title: 'Full-stack out of the box', desc: 'Auth, database, API routes, file uploads — generated and wired up. Not just a pretty frontend.', color: '#a855f7' },
               { icon: '🔗', title: 'GitHub integration', desc: 'Push to your own repo. Own your code. Fork it, extend it, hire devs later if you want. Zero lock-in.', color: '#10b981' },
-              { icon: '💬', title: 'Iterate in English', desc: '"Make the header sticky." "Add dark mode." "Show a chart instead of a table." Just tell it what to change.', color: '#f43f5e' },
+              { icon: '🧠', title: 'Smart model routing', desc: 'Opus for builds, Sonnet for edits, Haiku when speed matters. WyberAi picks the right AI model for every task — automatically, no picker required.', color: '#eab308' },
             ].map(f => (
               <div key={f.title} style={{ padding: '24px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, transition: 'all 0.2s' }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = f.color + '30'}

@@ -2,14 +2,54 @@
 import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
-import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines } from '@/lib/file-parser';
+import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
 import { STARTER_TEMPLATES } from '@/lib/starter-templates';
 import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
 import { classifyIntent } from '@/lib/intent';
+import { windowedHistory } from '@/lib/chat-history-window';
 import { PlanMode } from './PlanMode';
 import { FileMentionDropdown } from './FileMentionDropdown';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import tsxLang from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import typescriptLang from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import jsxLang from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
+import javascriptLang from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import jsonLang from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import cssLang from 'react-syntax-highlighter/dist/esm/languages/prism/css';
+import markupLang from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
+import bashLang from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import sqlLang from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
+import pythonLang from 'react-syntax-highlighter/dist/esm/languages/prism/python';
+import yamlLang from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
+import markdownLang from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+
+// Register only the languages this app actually generates/discusses — keeps the
+// async-light bundle small instead of shipping every Prism grammar.
+SyntaxHighlighter.registerLanguage('tsx', tsxLang);
+SyntaxHighlighter.registerLanguage('typescript', typescriptLang);
+SyntaxHighlighter.registerLanguage('ts', typescriptLang);
+SyntaxHighlighter.registerLanguage('jsx', jsxLang);
+SyntaxHighlighter.registerLanguage('javascript', javascriptLang);
+SyntaxHighlighter.registerLanguage('js', javascriptLang);
+SyntaxHighlighter.registerLanguage('json', jsonLang);
+SyntaxHighlighter.registerLanguage('css', cssLang);
+SyntaxHighlighter.registerLanguage('html', markupLang);
+SyntaxHighlighter.registerLanguage('xml', markupLang);
+SyntaxHighlighter.registerLanguage('bash', bashLang);
+SyntaxHighlighter.registerLanguage('sh', bashLang);
+SyntaxHighlighter.registerLanguage('shell', bashLang);
+SyntaxHighlighter.registerLanguage('sql', sqlLang);
+SyntaxHighlighter.registerLanguage('python', pythonLang);
+SyntaxHighlighter.registerLanguage('py', pythonLang);
+SyntaxHighlighter.registerLanguage('yaml', yamlLang);
+SyntaxHighlighter.registerLanguage('yml', yamlLang);
+SyntaxHighlighter.registerLanguage('markdown', markdownLang);
+SyntaxHighlighter.registerLanguage('md', markdownLang);
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
 
@@ -152,10 +192,12 @@ function cleanMessage(text: string): string {
   return result;
 }
 
-// A real fenced code block (```sql ... ``` etc.) with a copy button — the
-// runnable-SQL / CLI-command case the chat lane is now explicitly allowed to
-// output (see /api/assist's system prompt) needs to actually be copyable,
-// not squeezed through the inline-`code` styling meant for single words.
+// A real fenced code block (```sql ... ``` etc.) with a copy button AND real
+// language-aware syntax highlighting — the runnable-SQL / CLI-command case the
+// chat lane is now explicitly allowed to output (see /api/assist's system
+// prompt) needs to actually be copyable, not squeezed through the inline-`code`
+// styling meant for single words, and monospace-only rendering reads as a toy
+// next to a real coding assistant.
 function CodeBlock({ lang, code }: { lang: string; code: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -169,90 +211,77 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
           {copied ? '✓ Copied' : 'Copy'}
         </button>
       </div>
-      <pre style={{ margin:0, padding:'8px 10px', overflowX:'auto', fontFamily:'monospace', fontSize:11, lineHeight:1.5, color:'var(--ide-text)', whiteSpace:'pre' }}>{code}</pre>
+      <SyntaxHighlighter
+        language={lang || 'text'}
+        style={oneDark}
+        customStyle={{ margin:0, padding:'8px 10px', overflowX:'auto', background:'transparent', fontSize:11, lineHeight:1.5 }}
+        codeTagProps={{ style: { fontFamily:'monospace' } }}
+      >
+        {code}
+      </SyntaxHighlighter>
     </div>
   );
 }
 
-// Inline-only parsing (bold, inline code) for a single line/paragraph of text.
-function renderInline(text: string, keyPrefix: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) return <strong key={`${keyPrefix}-${i}`}>{part.slice(2,-2)}</strong>;
-    if (part.startsWith('`') && part.endsWith('`')) return <code key={`${keyPrefix}-${i}`} style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }}>{part.slice(1,-1)}</code>;
-    return <span key={`${keyPrefix}-${i}`}>{part}</span>;
-  });
-}
-
-// Block-level structure for a plain-text segment (no fenced code in it): groups
-// consecutive bullet/numbered lines into real lists and headers into headings,
-// instead of dumping "1. do this\n2. do that" as one flat, unbroken blob.
-function renderTextBlock(text: string, keyPrefix: string) {
-  const lines = text.split('\n');
-  const blocks: ReactNode[] = [];
-  let i = 0;
-  let key = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-    const trimmed = line.trim();
-    if (!trimmed) { i++; continue; }
-
-    const header = trimmed.match(/^#{1,4}\s+(.+)/);
-    if (header) {
-      blocks.push(<div key={`${keyPrefix}-h${key++}`} style={{ fontWeight:700, marginTop: blocks.length ? 8 : 0 }}>{renderInline(header[1], `${keyPrefix}-h${key}`)}</div>);
-      i++; continue;
-    }
-
-    const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
-    const numberedMatch = trimmed.match(/^\d+[.)]\s+(.+)/);
-    if (bulletMatch || numberedMatch) {
-      const ordered = !!numberedMatch;
-      const items: string[] = [];
-      while (i < lines.length) {
-        const t = lines[i].trim();
-        const m = ordered ? t.match(/^\d+[.)]\s+(.+)/) : t.match(/^[-*]\s+(.+)/);
-        if (!m) break;
-        items.push(m[1]);
-        i++;
-      }
-      const ListTag = ordered ? 'ol' : 'ul';
-      blocks.push(
-        <ListTag key={`${keyPrefix}-l${key++}`} style={{ margin:'4px 0', paddingLeft:18 }}>
-          {items.map((it, j) => <li key={j} style={{ marginBottom:2 }}>{renderInline(it, `${keyPrefix}-li${j}`)}</li>)}
-        </ListTag>
-      );
-      continue;
-    }
-
-    // Plain paragraph line.
-    blocks.push(<div key={`${keyPrefix}-p${key++}`}>{renderInline(line, `${keyPrefix}-p${key}`)}</div>);
-    i++;
-  }
-  return blocks;
-}
+// Markdown component overrides: keep everything sized/spaced for a compact
+// chat bubble (the parent sets fontSize:12/lineHeight:1.65 — these just fix
+// margins/list indentation instead of full browser-default markdown spacing).
+// `pre` is where fenced code blocks land (inline code never has a `pre`
+// wrapper), so overriding it — not `code` — is what reliably distinguishes a
+// real code block from a single backtick-quoted word.
+const markdownComponents: Components = {
+  p: ({ children }) => <div style={{ margin:'2px 0' }}>{children}</div>,
+  h1: ({ children }) => <div style={{ fontWeight:700, fontSize:14, marginTop:8, marginBottom:2 }}>{children}</div>,
+  h2: ({ children }) => <div style={{ fontWeight:700, fontSize:13, marginTop:8, marginBottom:2 }}>{children}</div>,
+  h3: ({ children }) => <div style={{ fontWeight:700, marginTop:6, marginBottom:2 }}>{children}</div>,
+  h4: ({ children }) => <div style={{ fontWeight:700, marginTop:6, marginBottom:2 }}>{children}</div>,
+  ul: ({ children }) => <ul style={{ margin:'4px 0', paddingLeft:18 }}>{children}</ul>,
+  ol: ({ children }) => <ol style={{ margin:'4px 0', paddingLeft:18 }}>{children}</ol>,
+  li: ({ children }) => <li style={{ marginBottom:2 }}>{children}</li>,
+  blockquote: ({ children }) => <blockquote style={{ margin:'6px 0', paddingLeft:10, borderLeft:'3px solid var(--ide-border)', color:'var(--ide-text3)' }}>{children}</blockquote>,
+  hr: () => <hr style={{ margin:'8px 0', border:'none', borderTop:'1px solid var(--ide-border)' }} />,
+  a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color:'var(--accent)' }}>{children}</a>,
+  table: ({ children }) => <div style={{ overflowX:'auto', margin:'6px 0' }}><table style={{ borderCollapse:'collapse', fontSize:11, width:'100%' }}>{children}</table></div>,
+  th: ({ children }) => <th style={{ border:'1px solid var(--ide-border)', padding:'4px 8px', textAlign:'left', background:'var(--bg-overlay)', fontWeight:600 }}>{children}</th>,
+  td: ({ children }) => <td style={{ border:'1px solid var(--ide-border)', padding:'4px 8px' }}>{children}</td>,
+  code: ({ className, children }) => (
+    <code style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }} className={className}>
+      {children}
+    </code>
+  ),
+  pre: ({ children }) => {
+    // children is the single <code> element react-markdown produced for this
+    // fenced block; pull its language + text out and render our own CodeBlock
+    // instead of the default <pre><code> wrapper.
+    const codeEl = Array.isArray(children) ? children[0] : children;
+    const props = (codeEl as { props?: { className?: string; children?: ReactNode } })?.props;
+    const match = /language-(\w+)/.exec(props?.className || '');
+    const codeText = String(props?.children ?? '').replace(/\n$/, '');
+    return <CodeBlock lang={match?.[1] || ''} code={codeText} />;
+  },
+};
 
 function renderMessage(text: string) {
-  const cleaned = stripInternalMarkers(text);
-  const parts = cleaned.split(/(```edited:[^`]+```|```[\s\S]*?```)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('```edited:')) return null;
-    if (part.startsWith('```')) {
-      const body = part.slice(3, -3);
-      const firstLine = body.indexOf('\n');
-      const lang = firstLine === -1 ? '' : body.slice(0, firstLine).trim();
-      const code = (firstLine === -1 ? body : body.slice(firstLine + 1)).replace(/\n$/, '');
-      return <CodeBlock key={i} lang={lang} code={code} />;
-    }
-    if (!part.trim()) return null;
-    return <div key={i}>{renderTextBlock(part, `t${i}`)}</div>;
-  });
+  // <thinking>/<file>/<edit>/[progress:...] are this app's own custom protocol,
+  // not markdown — strip them first, same as before. Also drop any stray
+  // ```edited:...``` marker (parseGenerationOutput already strips these from
+  // freshly-generated text, but renderMessage also runs on older persisted
+  // messages, so keep this defensive strip too).
+  const cleaned = stripInternalMarkers(text).replace(/```edited:[^`]*```/g, '');
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+      {cleaned}
+    </ReactMarkdown>
+  );
 }
 
 interface AttachedImage { dataUrl: string; base64: string; mimeType: string; name: string; }
-type AttachedKind = 'image' | 'text' | 'file';
-interface AttachedFile { localId: string; name: string; mimeType: string; kind: AttachedKind; size: number; url?: string; text?: string; uploading: boolean; }
+type AttachedKind = 'image' | 'text' | 'pdf' | 'file';
+interface AttachedFile { localId: string; name: string; mimeType: string; kind: AttachedKind; size: number; url?: string; text?: string; base64?: string; uploading: boolean; }
 const TEXT_FILE_RE = /\.(txt|md|markdown|csv|tsv|json|ya?ml|html?|xml|css|scss|js|jsx|ts|tsx|py|rb|go|rs|java|php|sql|sh|env|toml|ini|log)$/i;
 const isTextFile = (f: File) => f.type.startsWith('text/') || f.type === 'application/json' || TEXT_FILE_RE.test(f.name);
+const isPdfFile = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+const isSpreadsheetFile = (f: File) => /\.xlsx?$/i.test(f.name);
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
@@ -265,13 +294,16 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     messages, isGenerating, addMessage, updateMessage, setMessages,
     setIsGenerating, streamingContent, setStreamingContent, clearStreamingContent,
     setFiles, files, framework, consumeCredit, credits, hasGeneratedFiles, setHasGeneratedFiles,
-    project, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints, initialPrompt,
+    project, setProject, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints, initialPrompt,
   } = useEditorStore();
 
   const resolvedProjectId = projectId || project?.id;
   const resolvedUserId = userId || project?.userId;
 
   const [input, setInput] = useState('');
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
   const [buildMsgIdx, setBuildMsgIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const isFirstBuild = !hasGeneratedFiles;
@@ -319,6 +351,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [secretSaving, setSecretSaving] = useState(false);
   // Live progress steps shown during streaming
   const [progressSteps, setProgressSteps] = useState<string[]>([]);
+  // Live extended-thinking text (opt-in, new-build full generation only) while
+  // streaming, plus which finished messages have their stored reasoning expanded.
+  const [liveReasoning, setLiveReasoning] = useState('');
+  const [expandedReasoning, setExpandedReasoning] = useState<Set<string>>(new Set());
 
   const [recording, setRecording] = useState(false);
   const connectors = useEditorStore(s => s.connectors);
@@ -334,6 +370,12 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
+  // Lifted out of executeGeneration's local scope so a user-facing "Stop" button
+  // can abort an in-flight generation from outside that closure.
+  const abortControllerRef = useRef<AbortController | null>(null);
+  // Distinguishes a user-pressed Stop from the 320s auto-timeout hitting the
+  // same AbortController, so the resulting message can be honest about which.
+  const userStoppedRef = useRef(false);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
 
@@ -344,12 +386,12 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   }, [input]);
 
   // Persist a message to Supabase
-  const persistMessage = useCallback((role: 'user'|'assistant', content: string, filesChanged?: string[]) => {
+  const persistMessage = useCallback((role: 'user'|'assistant', content: string, filesChanged?: string[], clientId?: string) => {
     if (!resolvedProjectId) return;
     fetch('/api/projects/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ projectId: resolvedProjectId, role, content, filesChanged: filesChanged || [] }),
+      body: JSON.stringify({ projectId: resolvedProjectId, role, content, filesChanged: filesChanged || [], clientId }),
     }).catch(() => {});
   }, [resolvedProjectId]);
 
@@ -513,6 +555,43 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       return;
     }
     const localId = uid();
+
+    // .xlsx/.xls: Claude has no native way to read binary spreadsheets, so parse
+    // every sheet to CSV client-side and route it through the same `text` kind
+    // (attachedText) pipeline plain text files already use — no new server-side
+    // handling needed for this one.
+    if (isSpreadsheetFile(file)) {
+      (async () => {
+        try {
+          const XLSX = await import('xlsx');
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, { type: 'array' });
+          const text = wb.SheetNames
+            .map(name => `--- Sheet: ${name} ---\n${XLSX.utils.sheet_to_csv(wb.Sheets[name])}`)
+            .join('\n\n')
+            .slice(0, 20000);
+          setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', kind: 'text', size: file.size, text, uploading: true }]);
+          uploadAsset(file, localId);
+        } catch {
+          addMessage({ id: uid(), role: 'assistant', content: `Couldn't read "${file.name}" as a spreadsheet — it may be corrupted or password-protected.`, timestamp: Date.now(), status: 'done' });
+        }
+      })();
+      return;
+    }
+
+    // .pdf: Claude's Messages API reads PDFs natively as a document content
+    // block (text, layout, tables) — no extraction needed, just send the bytes.
+    if (isPdfFile(file)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: 'application/pdf', kind: 'pdf', size: file.size, base64: dataUrl.split(',')[1], uploading: true }]);
+        uploadAsset(file, localId);
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const kind: AttachedKind = file.type.startsWith('image/') ? 'image' : isTextFile(file) ? 'text' : 'file';
     if (kind === 'image') {
       const reader = new FileReader();
@@ -654,8 +733,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; echoedUser?: boolean }) => {
-    // Clear any stale progress steps from a previous generation before starting
+    // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
+    setLiveReasoning('');
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
     if (!opts?.silent) autofixCountRef.current = 0;
 
@@ -679,8 +759,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // echoedUser: the conversational lane already added the user's bubble before
     // it decided this was actually a build — don't duplicate it.
     if (!opts?.silent && !opts?.echoedUser) {
-      addMessage({ id: uid(), role:'user', content: userContent, timestamp:Date.now(), status:'done' });
-      persistMessage('user', userContent);
+      const userMsgId = uid();
+      addMessage({ id: userMsgId, role:'user', content: userContent, timestamp:Date.now(), status:'done' });
+      persistMessage('user', userContent, undefined, userMsgId);
     }
 const storeProjectId = useEditorStore.getState().project?.id;
   if (resolvedProjectId && storeProjectId && storeProjectId !== resolvedProjectId) {
@@ -746,7 +827,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         outlineEntries.map(([p, f]) => `<outline path="${p}">\n${extractSignatures((f as any).content ?? '')}\n</outline>`).join('\n')
       : '';
     const fileContext = manifest + fullBlock + outlineBlock;
-    const history = messages.filter(m => m.status==='done').slice(-10).map(m => ({ role:m.role, content:m.content }));
+    const history = windowedHistory(messages.filter(m => m.status==='done')).map(m => ({ role:m.role, content:m.content }));
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
     let knowledgeStr = knowledge || '';
@@ -765,12 +846,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Wait for any in-flight uploads so their URLs are included this turn.
     let assets: { name: string; url: string; kind: string }[] = [];
     let attachedTextPayload: { name: string; content: string }[] = [];
+    let attachedDocuments: { name: string; base64: string }[] = [];
     if (!isSelfHeal) {
       const pending = Object.values(uploadPromisesRef.current);
       if (pending.length) { try { await Promise.allSettled(pending); } catch {} }
       const af = attachedFilesRef.current;
       assets = af.filter(f => f.url).map(f => ({ name: f.name, url: f.url!, kind: f.kind }));
       attachedTextPayload = af.filter(f => f.kind === 'text' && f.text).map(f => ({ name: f.name, content: f.text! }));
+      // PDFs go to Claude as native document content blocks (see /api/generate) —
+      // sent separately from attachedText since they're binary, not extracted text.
+      attachedDocuments = af.filter(f => f.kind === 'pdf' && f.base64).map(f => ({ name: f.name, base64: f.base64! }));
       if (af.length) { setAttachedFiles([]); uploadPromisesRef.current = {}; }
     }
 
@@ -778,8 +863,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // client-side ceiling too, a dropped connection or a server that hangs
     // after sending headers left the UI spinning "Applying changes..."
     // forever with no way out but a page reload. 20s past the server's own
-    // limit so a legitimately-still-running build isn't cut off early.
+    // limit so a legitimately-still-running build isn't cut off early. Lives in
+    // a ref (not a local const) so the user-facing Stop button can reach it.
+    userStoppedRef.current = false;
     const genController = new AbortController();
+    abortControllerRef.current = genController;
     const genTimeout = setTimeout(() => genController.abort(), 320_000);
     try {
       const res = await fetch('/api/generate', {
@@ -794,6 +882,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
           attachedText: attachedTextPayload.length ? attachedTextPayload : undefined,
+          documents: attachedDocuments.length ? attachedDocuments : undefined,
         }),
       });
 
@@ -843,6 +932,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // Extract [progress: ...] markers and surface them live
         const steps = extractProgressLines(full);
         if (steps.length > 0) setProgressSteps(steps);
+
+        // Live extended-thinking text (opt-in, new-build full generation only)
+        const reasoningSoFar = extractReasoning(full);
+        if (reasoningSoFar) setLiveReasoning(reasoningSoFar);
 
         const cleanedFull = cleanStreamingDisplay(full)
           .replace(/<agent>[\s\S]*?<\/agent>/g, '')
@@ -940,28 +1033,64 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
 
-      // Honest-error: a truly empty stream (no text at all) means the model produced
-      // nothing. The server refunds this case (`!emittedAny` → settleRefund), so tell
-      // the user the truth instead of a misleading "Done." and reassure on billing.
-      const emittedNothing = full.trim().length === 0;
-      if (emittedNothing && newFiles.length === 0 && editBlocks.length === 0) {
+      // Honest-error: a build/edit turn is only a real success if it actually produced
+      // a file or edit block. Checking ONLY for empty text (as this used to) misses the
+      // worse case — the model writes a confident "I did X" narrative with zero real
+      // <file>/<edit> blocks, which used to sail through as a verified "Built:" summary
+      // (confirmed live: a turn claimed "Loaded all 50 restaurants" while nothing in the
+      // app changed). The server mirrors this same check before deciding whether to
+      // refund (see generate/route.ts), so this case is never silently charged either.
+      const hasRealChange = newFiles.length > 0 || editBlocks.length > 0;
+      if (!hasRealChange) {
         if (!opts?.silent) {
-          const errMsg = "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again.";
-          updateMessage(assistantId, { content: errMsg, status: 'error' });
+          const emittedNothing = full.trim().length === 0;
+          const errMsg = emittedNothing
+            ? "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again."
+            : "**Nothing was actually changed** — the model responded but didn't produce any file changes, so the app is unmodified. You weren't charged for this. If your message included a large paste (a big table, a long document), try splitting it into smaller pieces and asking again.";
+          updateMessage(assistantId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
         }
+        setLiveReasoning('');
         return;
       }
 
       // Always run through cleanMessage so stored content is already scrubbed
       const finalContent = cleanMessage(chatText) || 'Done.';
+      // Extended-thinking output (opt-in, new-build full generation only) — kept
+      // client-side only for this session's collapsible display, not persisted
+      // to project_messages (no schema for it yet, and it's not needed on reload).
+      const finalReasoning = extractReasoning(full);
       if (!opts?.silent) {
         updateMessage(assistantId, {
           content: finalContent,
           status:'done',
           filesChanged: newFiles.map(f => f.path),
+          reasoning: finalReasoning || undefined,
         });
         persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+      }
+      setLiveReasoning('');
+
+      // The project row is created with a 40-char slice of the raw prompt as its
+      // name, and the server's Haiku rename (nameNewProject, in generate/route.ts's
+      // after() hook) only updates the DB — nothing here was ever refetching it, so
+      // the raw-prompt name stayed on screen for the rest of the session. `hasGeneratedFiles`
+      // here is the value captured in this closure BEFORE this build ran, so `!hasGeneratedFiles`
+      // means this was the project's first build — the one case the rename actually fires for.
+      if (!hasGeneratedFiles && resolvedProjectId && !opts?.silent) {
+        (async () => {
+          try {
+            const { createClient } = await import('@/lib/supabase/client');
+            const supabase = createClient();
+            // Small delay: the rename runs in the server's after() hook, which
+            // fires post-response — give it a moment to land before refetching.
+            await new Promise(r => setTimeout(r, 2500));
+            const { data } = await supabase.from('projects').select('name').eq('id', resolvedProjectId).single();
+            if (data?.name && project && data.name !== project.name) {
+              setProject({ ...project, name: data.name });
+            }
+          } catch { /* best-effort — worst case the name just stays as-is */ }
+        })();
       }
 
       // Honest DB warning — connector exists but the server couldn't use it.
@@ -977,20 +1106,23 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
     } catch (err: unknown) {
       if (!opts?.silent) {
-        const isTimeout = err instanceof Error && err.name === 'AbortError';
-        const errMsg = isTimeout
-          ? "**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed."
+        const isAbort = err instanceof Error && err.name === 'AbortError';
+        const errMsg = isAbort
+          ? (userStoppedRef.current
+              ? "**Stopped.** You cancelled this build before it finished — check if your credits were deducted before trying again, and reload the project to see what (if anything) landed."
+              : "**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed.")
           : `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
-        updateMessage(assistantId, { content: errMsg, status:'error' });
+        updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
         persistMessage('assistant', errMsg);
       }
     } finally {
       clearTimeout(genTimeout);
+      if (abortControllerRef.current === genController) abortControllerRef.current = null;
       setIsGenerating(false);
       clearStreamingContent();
       setProgressSteps([]);
     }
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint]);
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
@@ -1039,11 +1171,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
    * server may decide the message is actually a build/edit — in that case it
    * returns X-Assist-Intent: action and we route to executeGeneration instead.
    */
-  const handleConversational = useCallback(async (userMsg: string, img: AttachedImage | null, forceChat: boolean) => {
+  const handleConversational = useCallback(async (userMsg: string, img: AttachedImage | null, forceChat: boolean, opts?: { echoedUser?: boolean }) => {
     const hasFiles = Object.keys(files ?? {}).length > 0;
-    // Echo the user's message immediately (always correct to show their own text).
-    addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
-    persistMessage('user', userMsg);
+    // Echo the user's message immediately (always correct to show their own text) —
+    // unless the caller already did (a retry re-sending a message already on screen).
+    if (!opts?.echoedUser) {
+      const userMsgId = uid();
+      addMessage({ id: userMsgId, role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+      persistMessage('user', userMsg, undefined, userMsgId);
+    }
 
     // Lightweight context: full file manifest so replies are accurate.
     const allPaths = Object.keys(files ?? {});
@@ -1097,11 +1233,29 @@ const storeProjectId = useEditorStore.getState().project?.id;
     } catch (err) {
       setChatThinking(false);
       const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Could not reach the assistant'}`;
-      addMessage({ id: uid(), role: 'assistant', content: errMsg, timestamp: Date.now(), status: 'error' });
+      addMessage({ id: uid(), role: 'assistant', content: errMsg, timestamp: Date.now(), status: 'error', retryPrompt: userMsg, retryLane: 'chat' });
     } finally {
       setChatThinking(false);
     }
   }, [files, messages, addMessage, updateMessage, persistMessage, executeGeneration]);
+
+  // The intent-routing tail shared by a normal send, a Retry, and edit-and-
+  // regenerate: classify (CHAT/AMBIGUOUS → conversational lane, EDIT/BUILD →
+  // generation) and dispatch. Pulled out of handleSend so those other entry
+  // points don't have to re-run handleSend's input-box-specific gates above
+  // this point (plan mode, regulated-domain notice, pre-gen dep gate) — those
+  // only make sense for a message freshly typed into the box.
+  const dispatchTurn = useCallback(async (content: string, img: AttachedImage | null, hasAttachments = false) => {
+    const isNewBuild = Object.keys(files ?? {}).length === 0;
+    if (!img && !hasAttachments) {
+      const intent = classifyIntent(content, !isNewBuild);
+      if (intent === 'CHAT' || intent === 'AMBIGUOUS') {
+        await handleConversational(content, img, intent === 'CHAT');
+        return;
+      }
+    }
+    await executeGeneration(content, img);
+  }, [files, handleConversational, executeGeneration]);
 
   const handleSend = useCallback(async () => {
     // No credits<=0 gate here — conversational messages are FREE, so the box
@@ -1173,16 +1327,75 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Images always build (screenshot-to-app). Otherwise classify: CHAT and
     // AMBIGUOUS go to the conversational lane (no credits, no build loader);
     // EDIT/BUILD go straight to generation.
-    if (!img && !hasAttachments) {
-      const intent = classifyIntent(userMsg, !isNewBuild);
-      if (intent === 'CHAT' || intent === 'AMBIGUOUS') {
-        await handleConversational(userMsg, img, intent === 'CHAT');
-        return;
-      }
-    }
+    await dispatchTurn(userMsg, img, hasAttachments);
+  }, [input, attachedImage, attachedFiles, isGenerating, credits, planMode, files, dispatchTurn]);
 
-    await executeGeneration(userMsg, img);
-  }, [input, attachedImage, attachedFiles, isGenerating, credits, planMode, files, executeGeneration, handleConversational]);
+  // Halts an in-flight generation via the ref-lifted AbortController (see
+  // executeGeneration). userStoppedRef distinguishes this from the 320s
+  // auto-timeout hitting the same controller, so the resulting message is honest
+  // about which happened.
+  const handleStop = useCallback(() => {
+    userStoppedRef.current = true;
+    abortControllerRef.current?.abort();
+  }, []);
+
+  const handleCopyMessage = useCallback((id: string, content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedMessageId(id);
+      setTimeout(() => setCopiedMessageId(prev => (prev === id ? null : prev)), 1500);
+    });
+  }, []);
+
+  // Re-sends whatever the failed turn originally sent, through whichever lane
+  // it originally used (retryPrompt/retryLane, set at the point of failure) —
+  // not a fresh classification, since re-classifying could pick a different
+  // lane than what actually failed.
+  const handleRetry = useCallback(async (messageId: string) => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg?.retryPrompt) return;
+    setMessages(messages.filter(m => m.id !== messageId));
+    if (msg.retryLane === 'chat') {
+      await handleConversational(msg.retryPrompt, null, true, { echoedUser: true });
+    } else {
+      await executeGeneration(msg.retryPrompt, null, { echoedUser: true });
+    }
+  }, [messages, setMessages, handleConversational, executeGeneration]);
+
+  const handleStartEdit = useCallback((msg: { id: string; content: string }) => {
+    setEditingMessageId(msg.id);
+    setEditingText(msg.content);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingMessageId(null);
+    setEditingText('');
+  }, []);
+
+  // v1 scope: linear edit, not branching — everything from the edited message
+  // onward is discarded (both client state and the DB rows, via the PATCH
+  // below) and the edited content is resent through the normal dispatch path,
+  // which re-classifies and re-persists it fresh. Matches how a user retyping
+  // the message from scratch would behave.
+  const handleSaveEdit = useCallback(async () => {
+    const messageId = editingMessageId;
+    const newContent = editingText.trim();
+    if (!messageId || !newContent || isGenerating) return;
+    const idx = messages.findIndex(m => m.id === messageId);
+    if (idx === -1) return;
+    setEditingMessageId(null);
+    setEditingText('');
+    setMessages(messages.slice(0, idx));
+    if (resolvedProjectId) {
+      try {
+        await fetch('/api/projects/messages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: resolvedProjectId, messageId }),
+        });
+      } catch { /* best-effort — the in-memory truncation above already reflects the edit */ }
+    }
+    await dispatchTurn(newContent, null, false);
+  }, [editingMessageId, editingText, isGenerating, messages, setMessages, resolvedProjectId, dispatchTurn]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -1451,16 +1664,44 @@ const storeProjectId = useEditorStore.getState().project?.id;
         {messages.map(msg => (
           <div key={msg.id} style={{ padding:'4px 12px', marginBottom:1 }}>
             {msg.role === 'user' ? (
-              <div style={{ display:'flex', justifyContent:'flex-end' }}>
-                <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:12, lineHeight:1.55, color:'#fff', maxWidth:'85%', letterSpacing:'-0.01em' }}>
-                  {msg.content.startsWith('[Image:') ? (
-                    <div style={{ display:'flex', alignItems:'center', gap:5 }}>
-                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{opacity:0.8}}><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      {msg.content.split('\n')[0].replace('[Image: ','').replace(']','')}
+              editingMessageId === msg.id ? (
+                <div style={{ display:'flex', justifyContent:'flex-end' }}>
+                  <div style={{ width:'85%', display:'flex', flexDirection:'column', gap:5 }}>
+                    <textarea
+                      value={editingText}
+                      onChange={e => setEditingText(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(); } if (e.key === 'Escape') handleCancelEdit(); }}
+                      autoFocus
+                      rows={Math.min(8, Math.max(2, editingText.split('\n').length))}
+                      style={{ width:'100%', padding:'9px 13px', borderRadius:10, border:'1px solid var(--accent)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:12, lineHeight:1.55, fontFamily:'inherit', resize:'vertical', outline:'none' }}
+                    />
+                    <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
+                      <button onClick={handleCancelEdit} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>Cancel</button>
+                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>Save & regenerate</button>
                     </div>
-                  ) : msg.content}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'flex-end', gap:5 }}>
+                  {!isGenerating && !msg.content.startsWith('[Image:') && (
+                    <button
+                      onClick={() => handleStartEdit(msg)}
+                      title="Edit and regenerate from here"
+                      style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:3, borderRadius:5, display:'flex', flexShrink:0 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                    </button>
+                  )}
+                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:12, lineHeight:1.55, color:'#fff', maxWidth:'85%', letterSpacing:'-0.01em' }}>
+                    {msg.content.startsWith('[Image:') ? (
+                      <div style={{ display:'flex', alignItems:'center', gap:5 }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{opacity:0.8}}><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        {msg.content.split('\n')[0].replace('[Image: ','').replace(']','')}
+                      </div>
+                    ) : msg.content}
+                  </div>
+                </div>
+              )
             ) : (
               <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
                 <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
@@ -1470,6 +1711,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   <div style={{ fontSize:12, lineHeight:1.65, color: msg.status === 'error' ? 'var(--ide-red)' : 'var(--ide-text2)', letterSpacing:'-0.01em' }}>
                     {msg.status === 'streaming'
                       ? <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                          {liveReasoning && (
+                            <div style={{ fontSize:10.5, fontStyle:'italic', color:'var(--ide-text3)', maxHeight:54, overflow:'hidden', maskImage:'linear-gradient(to bottom, black 60%, transparent)', WebkitMaskImage:'linear-gradient(to bottom, black 60%, transparent)' }}>
+                              🧠 {liveReasoning.slice(-260)}
+                            </div>
+                          )}
                           {progressSteps.length > 0
                             ? <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
                                 {progressSteps.map((step, i) => {
@@ -1492,7 +1738,29 @@ const storeProjectId = useEditorStore.getState().project?.id;
                               </span>
                           }
                         </div>
-                      : renderMessage(msg.content)
+                      : <>
+                          {msg.reasoning && (
+                            <div style={{ marginBottom:6 }}>
+                              <button
+                                onClick={() => setExpandedReasoning(prev => {
+                                  const next = new Set(prev);
+                                  if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
+                                  return next;
+                                })}
+                                style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0 }}
+                              >
+                                🧠 {expandedReasoning.has(msg.id) ? 'Hide reasoning' : 'Show reasoning'}
+                                <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: expandedReasoning.has(msg.id) ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
+                              </button>
+                              {expandedReasoning.has(msg.id) && (
+                                <div style={{ marginTop:5, padding:'8px 10px', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-elevated)', fontSize:11, fontStyle:'italic', lineHeight:1.6, color:'var(--ide-text3)', whiteSpace:'pre-wrap' }}>
+                                  {msg.reasoning}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {renderMessage(msg.content)}
+                        </>
                     }
                   </div>
                   {msg.filesChanged && msg.filesChanged.length > 0 && (
@@ -1500,6 +1768,27 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       {msg.filesChanged.map(f => (
                         <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize:10, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
                       ))}
+                    </div>
+                  )}
+                  {(msg.status === 'done' || msg.status === 'error') && (
+                    <div style={{ marginTop:5, display:'flex', gap:4 }}>
+                      <button
+                        onClick={() => handleCopyMessage(msg.id, msg.content)}
+                        title="Copy message"
+                        style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copiedMessageId === msg.id ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
+                      >
+                        {copiedMessageId === msg.id ? '✓ Copied' : 'Copy'}
+                      </button>
+                      {msg.status === 'error' && msg.retryPrompt && !isGenerating && (
+                        <button
+                          onClick={() => handleRetry(msg.id)}
+                          title="Retry this message"
+                          style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:3 }}
+                        >
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>
+                          Retry
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1545,10 +1834,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <div key={f.localId} style={{ padding:'6px 8px', background:'var(--bg-elevated)', borderRadius:8, border:'1px solid var(--accent-dim)', display:'flex', alignItems:'center', gap:8, maxWidth:220 }}>
               {f.kind === 'image' && attachedImage?.name === f.name
                 ? <img src={attachedImage.dataUrl} alt="" style={{ width:32, height:32, objectFit:'cover', borderRadius:5, flexShrink:0 }} />
-                : <span style={{ fontSize:18, flexShrink:0 }}>{f.kind === 'image' ? '🖼' : f.kind === 'text' ? '📄' : '📎'}</span>}
+                : <span style={{ fontSize:18, flexShrink:0 }}>{f.kind === 'image' ? '🖼' : f.kind === 'pdf' ? '📕' : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? '📊' : f.kind === 'text' ? '📄' : '📎'}</span>}
               <div style={{ minWidth:0 }}>
                 <div style={{ fontSize:12, color:'var(--text-primary)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
-                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? 'Uploading…' : f.kind === 'image' ? 'Image' : f.kind === 'text' ? 'Doc · text read' : 'Attached'}</div>
+                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? 'Uploading…' : f.kind === 'image' ? 'Image' : f.kind === 'pdf' ? 'PDF · read in full' : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? 'Spreadsheet · read as data' : f.kind === 'text' ? 'Doc · text read' : 'Attached'}</div>
               </div>
               <button onClick={() => removeAttachedFile(f.localId)} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:16, flexShrink:0, lineHeight:1 }}>×</button>
             </div>
@@ -1632,19 +1921,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
               </span>
             </div>
             <button
-              onClick={handleSend}
+              onClick={isGenerating ? handleStop : handleSend}
               data-send-button="true"
-              disabled={(!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating || !!pendingPlan || !!pendingGenArgs}
+              title={isGenerating ? 'Stop generating' : undefined}
+              disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs)}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
-                background: (!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating ? 'var(--bg-overlay)' : 'var(--accent)',
-                color: (!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating ? 'var(--ide-text3)' : 'white',
-                cursor: (!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating ? 'not-allowed' : 'pointer',
+                background: isGenerating ? 'var(--ide-red)' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--bg-overlay)' : 'var(--accent)',
+                color: isGenerating ? 'white' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--ide-text3)' : 'white',
+                cursor: isGenerating ? 'pointer' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'not-allowed' : 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s',
               }}
             >
               {isGenerating
-                ? <div style={{ width:11, height:11, border:'1.5px solid rgba(255,255,255,0.3)', borderTopColor:'white', borderRadius:'50%', animation:'spin 0.7s linear infinite' }} />
+                ? <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               }
             </button>

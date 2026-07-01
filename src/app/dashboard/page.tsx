@@ -46,9 +46,18 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
 
+  // `profile` here still holds the value fetched at the top of this request —
+  // the atomic claim above updates the DB but never mutates this local object.
+  // So `welcome_sent === false` is true on exactly one request per account: the
+  // very first dashboard load after signup (every later load re-fetches the
+  // now-flipped row). That makes it a reliable, per-account "is this genuinely
+  // a new signup" signal — unlike the tour's old localStorage-only gate, which
+  // showed the tour to any existing user on a browser that never set the flag.
+  const isNewUser = profile?.welcome_sent === false;
+
   return (
     <>
-      <OnboardingTour />
+      <OnboardingTour isNewUser={isNewUser} />
       <DashboardClient profile={profile} projects={projects ?? []} />
     </>
   );

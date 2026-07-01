@@ -17,6 +17,13 @@ export interface ChatMessage {
   timestamp: number;
   status?: 'streaming' | 'done' | 'error';
   filesChanged?: string[];
+  // Set on error-status assistant messages so a "Retry" action knows exactly
+  // what to resend and through which lane, without re-deriving/guessing either.
+  retryPrompt?: string;
+  retryLane?: 'build' | 'chat';
+  // Real extended-thinking output (opt-in, new-build full generation only —
+  // see generate/route.ts's useThinking). Shown collapsed under the message.
+  reasoning?: string;
 }
 
 export interface Checkpoint {

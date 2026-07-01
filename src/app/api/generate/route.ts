@@ -4,6 +4,70 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { withCacheBreakpoint } from '@/lib/anthropic-cache'
+import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
+
+// A build/edit turn only did something real if it produced an actual <file> or
+// <edit> block — not just because the model streamed text. Without this check,
+// a confident "I did X" narrative with zero real blocks sails through as a
+// verified success and the turn never gets refunded (confirmed live: a turn
+// claimed "Loaded all 50 restaurants" while the app never changed).
+// The 'plan' stage is the one exception: its whole job is to output a JSON file
+// manifest with no <file>/<edit> blocks at all, so non-empty text IS success there.
+function generationSucceeded(text: string, stage: string): boolean {
+  if (!text.trim()) return false
+  if (stage === 'plan') return true
+  const { files } = parseGenerationOutput(text)
+  return files.length > 0 || parseEditBlocks(text).length > 0
+}
+
+// Streams one string field out of a growing, not-yet-complete JSON object as
+// its raw text accumulates — used for live per-file progress on the write_file
+// tool (Phase 5 sub-phase 2). The SDK's own partial-JSON snapshot (the
+// `inputJson` event) only reveals a string value once its closing quote has
+// been seen, so it can't give incremental content; this decodes JSON escape
+// sequences by hand instead, byte-by-byte, and stops short of anything
+// ambiguous (a lone trailing backslash, a truncated \uXXXX) so it never
+// mis-decodes a chunk boundary that splits an escape sequence.
+function makeJsonFieldStreamer(key: string) {
+  const keyPattern = new RegExp(`"${key}"\\s*:\\s*"`)
+  let startIdx = -1
+  let cursor = -1
+  let value = ''
+  let closed = false
+  return function feed(buf: string): { value: string; closed: boolean } {
+    if (closed) return { value, closed: true }
+    if (startIdx === -1) {
+      const m = keyPattern.exec(buf)
+      if (!m) return { value: '', closed: false }
+      startIdx = m.index + m[0].length
+      cursor = startIdx
+    }
+    let i = cursor
+    while (i < buf.length) {
+      const ch = buf[i]
+      if (ch === '"') { closed = true; cursor = i + 1; return { value, closed: true } }
+      if (ch === '\\') {
+        if (i + 1 >= buf.length) break // dangling escape at chunk boundary — wait for more
+        const next = buf[i + 1]
+        if (next === 'u') {
+          if (i + 6 > buf.length) break // truncated \uXXXX — wait for more
+          value += String.fromCharCode(parseInt(buf.slice(i + 2, i + 6), 16))
+          i += 6
+          continue
+        }
+        const escapeMap: Record<string, string> = { n: '\n', t: '\t', r: '\r', '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f' }
+        value += escapeMap[next] ?? next
+        i += 2
+        continue
+      }
+      value += ch
+      i += 1
+    }
+    cursor = i
+    return { value, closed: false }
+  }
+}
 
 export const maxDuration = 300
 
@@ -1109,7 +1173,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     // NOTE: modelTier is no longer read from the client — the server picks the
     // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [] } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [] } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -1124,6 +1188,24 @@ export async function POST(req: NextRequest) {
 
     // Determine action type for cost calculation
     const isNewBuild = !fileContext || fileContext.length < 200
+    // Opt-in extended thinking: only on a genuinely fresh, one-shot build (not
+    // edits, not self-heal repairs) — the one case where seeing the model's
+    // architecture reasoning is worth the extra latency on every call.
+    const useThinking = stage === 'full' && isNewBuild && !selfHeal
+    // Tool-use (Phase 5): real write_file/edit_file tool calls instead of
+    // <file>/<edit> text tags. Started on new builds only (the 'fill' stage
+    // this was originally scoped for turned out to be disabled dead code —
+    // see runStagedBuild in ChatPanel.tsx), now extended to edits too. Each
+    // half has its own env escape hatch since these are the live default
+    // build AND edit paths: flip WYBER_TOOL_USE_BUILD=off or
+    // WYBER_TOOL_USE_EDIT=off to instantly revert either one to its legacy
+    // text-tag path with no deploy. selfHeal repairs stay on the legacy path
+    // regardless — narrower, already-well-tested recovery mechanism, not
+    // worth mixing with the new path's own continuation handling.
+    const useToolUse = stage === 'full' && !selfHeal && (
+      (isNewBuild && process.env.WYBER_TOOL_USE_BUILD !== 'off') ||
+      (!isNewBuild && process.env.WYBER_TOOL_USE_EDIT !== 'off')
+    )
     const actionType = projectType === 'mobile' ? 'mobile-build'
       : isNewBuild ? 'web-build'
       : 'small-edit'
@@ -1337,9 +1419,15 @@ ${code}
       ? `Current files:\n${fileContext}\n\nUser request: ${prompt}`
       : prompt) + assetContext
 
+    // The client already applies a cache-friendly stable window (see
+    // windowedHistory in ChatPanel.tsx — grows the tail instead of sliding it,
+    // so the prefix stays identical turn-to-turn and prompt caching can hit).
+    // Re-slicing to a tight, different-every-turn window here would undo that
+    // stability, so this is only a generous safety cap against a misbehaving
+    // client — comfortably above the client's own max window size.
     const trimmedHistory = (history || [])
       .filter((m: { content: string }) => m.content && !m.content.startsWith('[Image:'))
-      .slice(-10)
+      .slice(-25)
       .map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content.slice(0, 4000)
@@ -1348,11 +1436,29 @@ ${code}
     type MessageContent = string | Array<{
       type: 'image';
       source: { type: 'base64'; media_type: ValidMime; data: string };
-    } | { type: 'text'; text: string }>
+    } | { type: 'text'; text: string } | {
+      type: 'document';
+      source: { type: 'base64'; media_type: 'application/pdf'; data: string };
+    }>
+
+    // PDFs go straight to Claude as native document content blocks — the Messages
+    // API reads them directly (text, layout, tables), no custom extraction needed.
+    // (.xlsx has no equivalent native support, so that one is parsed client-side to
+    // CSV and flows in as plain text via `attachedText` above instead.)
+    const documentBlocks = (Array.isArray(documents) ? documents : [])
+      .filter((d: { base64?: string }) => d?.base64)
+      .map((d: { base64: string }) => ({
+        type: 'document' as const,
+        source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: d.base64 },
+      }))
 
     let userContent: MessageContent = userPrompt
+    if (documentBlocks.length > 0) {
+      userContent = [...documentBlocks, { type: 'text', text: userPrompt }]
+    }
     if (image?.base64 && isValidMime(image.mimeType)) {
       userContent = [
+        ...documentBlocks,
         { type: 'image', source: { type: 'base64', media_type: image.mimeType, data: image.base64 } },
         { type: 'text', text: userPrompt },
       ]
@@ -1371,7 +1477,45 @@ ${code}
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
-    
+
+    // Tool-use variant of the output rule (Phase 5) — same voice/behavior rules
+    // as outputRule, but files are written/changed via tools instead of
+    // <file>/<edit> text tags. The model gets a second turn (after tool_results
+    // come back) to add its closing recap, so rule 8's voice guidance still
+    // applies there. Both tools are always offered together (not gated by
+    // isNewBuild) since a single edit turn commonly needs both — e.g. "add a
+    // dark mode toggle" may need a new hook file AND changes to App.tsx.
+    const toolUseOutputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. To CREATE a new file, call write_file(path, content) once per file — full contents each time. Do NOT use <file> or <edit> tags; they do not exist in this mode.\n2. To CHANGE an existing file, call edit_file(path, search, replace) — search must be the EXACT existing lines (verbatim, same whitespace), keep it small (just the changed lines plus a little context). Never call write_file for a file that already exists — use edit_file instead, unless the change touches MANY places in one file (a full theme/color-scheme overhaul), in which case call write_file to replace the whole thing.\n3. PREFER FEWER, LARGER new files. Aim for 3-5 files for a fresh build, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n4. Call every tool for every file/change in the SAME turn — do not wait between calls.\n5. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "what next?"), do NOT call any tool — just answer in 1-2 warm, plain sentences.\n6. BUILD/EDIT COMMANDS MUST HAPPEN NOW. If the user asks for a concrete change, call the right tool(s) THIS turn — do not ask a clarifying question first when the intent is already clear.\n7. NEVER PROMISE FUTURE WORK. Do not say "sending it now", "building…", "one moment" — either call the tool now or say plainly what input you need.\n8. ALWAYS CONFIRM + GUIDE. Once your tool calls are done and you see their results, close with one short friendly recap of what you built/changed and ONE suggested next step. Keep it to 1-2 sentences, plain text, no more tool calls.'
+
+    const writeFileTool = {
+      name: 'write_file',
+      description: 'Write one complete NEW file. Call once per file you are creating — never for a file that already exists (use edit_file for those).',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          path: { type: 'string' as const, description: 'File path relative to the project root, e.g. src/components/Sidebar.tsx' },
+          content: { type: 'string' as const, description: 'The complete file contents.' },
+        },
+        required: ['path', 'content'],
+      },
+      cache_control: { type: 'ephemeral' as const },
+    }
+
+    const editFileTool = {
+      name: 'edit_file',
+      description: 'Make one targeted search/replace edit to an EXISTING file. Call once per distinct change — call it again (or call it multiple times) for multiple changes in the same or different files.',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          path: { type: 'string' as const, description: 'File path relative to the project root — must be an EXISTING file.' },
+          search: { type: 'string' as const, description: 'The exact existing lines to find, copied verbatim including indentation/whitespace. Keep this small — just the lines that change plus a little surrounding context.' },
+          replace: { type: 'string' as const, description: 'The replacement lines.' },
+        },
+        required: ['path', 'search', 'replace'],
+      },
+      cache_control: { type: 'ephemeral' as const },
+    }
+
     const wyberDNA = '' // merged into system prompt
     // ── Staged generation modes ──
     // Static system prompt (cacheable) — per-request context injected into user message instead.
@@ -1434,7 +1578,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     } else {
       staticSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt())
         + (projectType === 'mobile' ? '' : wyberDNA)
-        + outputRule
+        + (useToolUse ? toolUseOutputRule : outputRule)
       if (stage === 'scaffold') {
         const list = (stageFiles as string[]).join(', ')
         perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in later passes. Output each file as a complete <file> block.`)
@@ -1464,19 +1608,286 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // Try Anthropic primary, fallback to Vertex AI Gemini on failure
     let usedModel = model
     let readable: ReadableStream<Uint8Array>
-    // If the stream produces no text at all, the build failed — refund.
-    let emittedAny = false
-    // Full assistant output, captured for the post-response memory distillation.
+    // Full assistant output, captured for the post-response memory distillation
+    // and for the generationSucceeded() check below.
     let generatedText = ''
 
     const encoder = new TextEncoder()
-    const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
+    // Breakpoint goes on the last HISTORY message, not the new one being sent this
+    // turn (that one is always different — contextPrefix, file context, etc. change
+    // every request). windowedHistory() on the client keeps trimmedHistory's growth
+    // append-only, so this prefix matches what a previous turn already cached.
+    const finalMessages = [...withCacheBreakpoint(trimmedHistory), { role: 'user' as const, content: userContent }]
     const systemBlocks: { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }[] = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
     if (supabaseStatus === 'ok') {
       systemBlocks.push({ type: 'text', text: '\n\n[SYSTEM FACT] Supabase IS connected to this project. If the user asks about Supabase connection status, confirm it is connected. Do NOT contradict this — it is a verified system state, not a guess.' })
     }
 
+    // Extended thinking (opt-in, new-build full generation only — see useThinking
+    // above). 'adaptive' is the current API for Opus 4.8/Fable 5/Sonnet 4.6+;
+    // budget_tokens is deprecated/rejected on these models.
+    const thinkingParam = useThinking ? { thinking: { type: 'adaptive' as const, display: 'summarized' as const } } : {}
+
     try {
+      if (useToolUse) {
+        // ── Tool-use prototype (Phase 5 sub-phase 1) ──────────────────────
+        // Real write_file(path, content) tool calls instead of <file> text
+        // tags, converted BACK into <file> tags at the wire boundary so the
+        // entire existing client pipeline (parseGenerationOutput, progress
+        // steps, self-heal cut-off detection, hasRealChange refund check)
+        // keeps working unchanged. A model turn that calls tools always ends
+        // with stop_reason 'tool_use' and cannot add closing text until it
+        // sees tool_results — so this is a genuine multi-turn loop, not a
+        // single call: iteration 1 gets the files, we hand back trivial
+        // "File written." results, iteration 2 lets the model add its usual
+        // one-line recap. MAX_TOOL_ITERATIONS caps runaway loops; in practice
+        // this should almost always take exactly 2 passes.
+        const firstStream = await client.messages.stream({
+          model,
+          max_tokens: stageMaxTokens,
+          system: systemBlocks,
+          messages: finalMessages,
+          tools: [writeFileTool, editFileTool],
+          ...thinkingParam,
+        })
+
+        readable = new ReadableStream({
+          async start(controller) {
+            const MAX_TOOL_ITERATIONS = 6
+            let assistantSoFar = ''
+            let loopMessages: Anthropic.MessageParam[] = [...finalMessages]
+            let stream = firstStream
+            let inThinkingBlock = false
+            let toolJson = ''
+            let toolName = ''
+            // Live per-file streaming (sub-phase 2): the SDK's own partial-JSON
+            // snapshot (the `inputJson` event) turned out NOT to help here — its
+            // vendored parser only reveals a string field once its closing quote
+            // has arrived (verified against the real API: a 2.7KB file's `content`
+            // appeared in exactly ONE snapshot, at the very last delta, not
+            // incrementally). So this decodes the raw partial_json text by hand via
+            // makeJsonFieldStreamer, byte-by-byte, to get true incremental content
+            // as it's actually generated — same live "typing" feel as the legacy
+            // <file>-tag path, instead of buffering the whole file until
+            // content_block_stop.
+            let pathStreamer = makeJsonFieldStreamer('path')
+            let contentStreamer = makeJsonFieldStreamer('content')
+            let toolOpened = false
+            let toolEmittedLen = 0
+            try {
+              for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+                for await (const event of stream) {
+                  if (event.type === 'content_block_start') {
+                    if (event.content_block.type === 'thinking') {
+                      inThinkingBlock = true
+                      controller.enqueue(encoder.encode('<reasoning>'))
+                    } else if (event.content_block.type === 'tool_use') {
+                      toolJson = ''
+                      toolName = event.content_block.name
+                      toolOpened = false
+                      toolEmittedLen = 0
+                      pathStreamer = makeJsonFieldStreamer('path')
+                      contentStreamer = makeJsonFieldStreamer('content')
+                    }
+                  } else if (event.type === 'content_block_delta') {
+                    if (event.delta.type === 'text_delta') {
+                      assistantSoFar += event.delta.text
+                      controller.enqueue(encoder.encode(event.delta.text))
+                    } else if (event.delta.type === 'thinking_delta') {
+                      controller.enqueue(encoder.encode(event.delta.thinking))
+                    } else if (event.delta.type === 'input_json_delta') {
+                      toolJson += event.delta.partial_json
+                      if (toolName === 'write_file') {
+                        if (!toolOpened) {
+                          const p = pathStreamer(toolJson)
+                          if (p.closed) {
+                            toolOpened = true
+                            const openTag = `<file path="${p.value.replace(/"/g, '&quot;')}">\n`
+                            assistantSoFar += openTag
+                            controller.enqueue(encoder.encode(openTag))
+                          }
+                        }
+                        if (toolOpened) {
+                          const c = contentStreamer(toolJson)
+                          if (c.value.length > toolEmittedLen) {
+                            const newPiece = c.value.slice(toolEmittedLen)
+                            assistantSoFar += newPiece
+                            controller.enqueue(encoder.encode(newPiece))
+                            toolEmittedLen = c.value.length
+                          }
+                        }
+                      }
+                    }
+                  } else if (event.type === 'content_block_stop') {
+                    if (inThinkingBlock) {
+                      inThinkingBlock = false
+                      controller.enqueue(encoder.encode('</reasoning>'))
+                    } else if (toolName === 'write_file' && toolJson) {
+                      try {
+                        const parsed = JSON.parse(toolJson) as { path?: string; content?: string }
+                        if (parsed.path && typeof parsed.content === 'string') {
+                          if (!toolOpened) {
+                            // Never got a streaming snapshot (short call, one chunk) — fall
+                            // back to emitting the whole tag at once, same as sub-phase 1.
+                            const chunk = `<file path="${parsed.path.replace(/"/g, '&quot;')}">\n${parsed.content}\n</file>\n[progress: Wrote ${parsed.path}]\n`
+                            assistantSoFar += chunk
+                            controller.enqueue(encoder.encode(chunk))
+                          } else {
+                            // Catch up any tail the streaming snapshot hadn't resolved yet
+                            // (partial-json can lag a few chars behind near the end), then close.
+                            const tail = parsed.content.slice(toolEmittedLen)
+                            const closeChunk = `${tail}\n</file>\n[progress: Wrote ${parsed.path}]\n`
+                            assistantSoFar += closeChunk
+                            controller.enqueue(encoder.encode(closeChunk))
+                          }
+                        }
+                      } catch (e) { console.error('[generate tool-use] bad write_file JSON:', e) }
+                      toolJson = ''
+                      toolName = ''
+                      toolOpened = false
+                      toolEmittedLen = 0
+                    } else if (toolName === 'edit_file' && toolJson) {
+                      // Edits are small — buffer the whole call and emit once, same
+                      // pattern as sub-phase 1's original write_file approach. No live
+                      // typing needed here; a search/replace pair finishes almost
+                      // instantly regardless.
+                      try {
+                        const parsed = JSON.parse(toolJson) as { path?: string; search?: string; replace?: string }
+                        if (parsed.path && typeof parsed.search === 'string' && typeof parsed.replace === 'string') {
+                          const chunk = `<edit path="${parsed.path.replace(/"/g, '&quot;')}">\n<<<<<<< SEARCH\n${parsed.search}\n=======\n${parsed.replace}\n>>>>>>> REPLACE\n</edit>\n[progress: Edited ${parsed.path}]\n`
+                          assistantSoFar += chunk
+                          controller.enqueue(encoder.encode(chunk))
+                        }
+                      } catch (e) { console.error('[generate tool-use] bad edit_file JSON:', e) }
+                      toolJson = ''
+                      toolName = ''
+                    }
+                  }
+                }
+
+                const finalMsg = await stream.finalMessage()
+                const u = finalMsg.usage as unknown as Record<string, number>
+                console.log(`[generate cache] tool-iter=${iter} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+
+                if (finalMsg.stop_reason === 'max_tokens') {
+                  // Sub-phase 3: a tool call cut off mid-JSON can't be replayed as
+                  // an assistant prefill (same restriction as the legacy path) NOR
+                  // as a genuine tool_use continuation (write_file has no "append"
+                  // semantics — the schema is one complete file per call). So this
+                  // does one in-request retry: close out the dangling <file> tag
+                  // (as a harmless, immediately-closed placeholder — leaving it
+                  // truly unclosed would make parseGenerationOutput's greedy regex
+                  // merge it with the retry's later, correctly-closed tag for the
+                  // SAME path into one corrupted block), drop the invalid trailing
+                  // tool_use block from history (Anthropic still gives back valid
+                  // JSON for any EARLIER tool_use calls that completed in the same
+                  // turn — only the truncated one is malformed), and ask the model
+                  // to write that one file again, complete, in a plain follow-up
+                  // turn — all within this same streaming response, so the user
+                  // never sees a gap or a separate visible retry.
+                  let cutPath: string | null = null
+                  const cutTool = toolName
+                  if (toolName === 'write_file' && toolJson) {
+                    if (toolOpened) {
+                      cutPath = pathStreamer(toolJson).value
+                      controller.enqueue(encoder.encode('</file>\n'))
+                      assistantSoFar += '</file>\n'
+                    } else {
+                      const m = toolJson.match(/"path"\s*:\s*"([^"]*)"/)
+                      if (m) {
+                        cutPath = m[1]
+                        const chunk = `<file path="${cutPath.replace(/"/g, '&quot;')}"></file>\n`
+                        assistantSoFar += chunk
+                        controller.enqueue(encoder.encode(chunk))
+                      }
+                    }
+                  } else if (toolName === 'edit_file' && toolJson) {
+                    // edit_file is buffer-only (never streamed live), so there's no
+                    // dangling tag to close — just salvage the path for the retry note.
+                    const m = toolJson.match(/"path"\s*:\s*"([^"]*)"/)
+                    if (m) cutPath = m[1]
+                  }
+
+                  if (iter >= MAX_TOOL_ITERATIONS - 1) break // no budget left for a retry pass
+
+                  // Keep only genuinely complete tool_use blocks (all required fields
+                  // present for their tool) — the truncated trailing one (if any) is
+                  // missing a field and must never be replayed as history.
+                  const completeBlocks = finalMsg.content.filter(b => {
+                    if (b.type !== 'tool_use') return true
+                    if (b.name === 'write_file') {
+                      const inp = b.input as { path?: string; content?: string }
+                      return typeof inp?.path === 'string' && typeof inp?.content === 'string'
+                    }
+                    if (b.name === 'edit_file') {
+                      const inp = b.input as { path?: string; search?: string; replace?: string }
+                      return typeof inp?.path === 'string' && typeof inp?.search === 'string' && typeof inp?.replace === 'string'
+                    }
+                    return false
+                  })
+                  const completeToolUses = completeBlocks.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+                  if (completeBlocks.length > 0) {
+                    loopMessages = [...loopMessages, { role: 'assistant', content: completeBlocks }]
+                  }
+                  const retryText = cutPath
+                    ? (cutTool === 'edit_file'
+                      ? `Your edit_file call for ${cutPath} was cut off by a length limit before it finished. Call edit_file again for that exact path with a smaller, more targeted search/replace pair.`
+                      : `The file ${cutPath} was cut off by a length limit before it finished. Call write_file again for that exact path with the COMPLETE, CORRECT file contents from scratch — keep it more concise if that's what caused the cutoff.`)
+                    : `Your last response was cut off by a length limit before finishing. Continue with the remaining changes.`
+                  loopMessages = [
+                    ...loopMessages,
+                    {
+                      role: 'user',
+                      content: [
+                        ...completeToolUses.map(b => ({ type: 'tool_result' as const, tool_use_id: b.id, content: b.name === 'write_file' ? 'File written.' : 'File edited.' })),
+                        { type: 'text' as const, text: retryText },
+                      ],
+                    },
+                  ]
+                  stream = await client.messages.stream({
+                    model,
+                    max_tokens: stageMaxTokens,
+                    system: systemBlocks,
+                    messages: loopMessages,
+                    tools: [writeFileTool, editFileTool],
+                    ...thinkingParam,
+                  })
+                  continue
+                }
+                if (finalMsg.stop_reason !== 'tool_use') break // end_turn / refusal — done
+
+                const toolUseBlocks = finalMsg.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+                if (toolUseBlocks.length === 0) break
+                loopMessages = [
+                  ...loopMessages,
+                  { role: 'assistant', content: finalMsg.content },
+                  {
+                    role: 'user',
+                    content: toolUseBlocks.map(b => ({
+                      type: 'tool_result' as const,
+                      tool_use_id: b.id,
+                      content: b.name === 'write_file' ? 'File written.' : b.name === 'edit_file' ? 'File edited.' : 'Unknown tool.',
+                    })),
+                  },
+                ]
+                stream = await client.messages.stream({
+                  model,
+                  max_tokens: stageMaxTokens,
+                  system: systemBlocks,
+                  messages: loopMessages,
+                  tools: [writeFileTool, editFileTool],
+                  ...thinkingParam,
+                })
+              }
+            } catch (err) { console.error('Tool-use stream error:', err) }
+            finally {
+              generatedText = assistantSoFar
+              controller.close()
+              if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
+            }
+          },
+        })
+      } else {
       // Probe the first stream so any auth/quota error throws here and falls
       // through to the Gemini fallback below (rather than dying mid-ReadableStream).
       const firstStream = await client.messages.stream({
@@ -1484,26 +1895,46 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         max_tokens: stageMaxTokens,
         system: systemBlocks,
         messages: finalMessages,
+        ...thinkingParam,
       })
 
       readable = new ReadableStream({
         async start(controller) {
           // Auto-continuation: if a pass stops because it hit max_tokens, the
           // output was cut off mid-file (App.tsx is emitted LAST, so it's the
-          // usual casualty). Re-prompt with the partial text as an assistant
-          // prefill and keep streaming into the SAME response, so the client
-          // sees one seamless, complete output. Without this, truncated files
-          // render broken and every retry truncates the same way ("false hope").
+          // usual casualty). Assistant-turn prefill (ending the `messages` array
+          // on a `role: 'assistant'` entry) is what this used to do, but that's
+          // rejected with a 400 on every model this app uses (Opus 4.8, Sonnet
+          // 4.6, Fable 5 all removed prefill support) — so instead we close out
+          // the partial text as a real assistant turn and ask for a continuation
+          // in a fresh user turn, per Anthropic's documented prefill replacement.
           const MAX_CONTINUATIONS = 4
           let assistantSoFar = ''
           let stream = firstStream
+          // Extended-thinking content arrives as separate `thinking` content
+          // blocks before the real text — wrap them in <reasoning> tags (own
+          // convention, distinct from the banned model-authored <thinking>
+          // prose tag) so the client can render them as collapsible reasoning
+          // instead of chat text. Never appended to assistantSoFar: that string
+          // feeds parseGenerationOutput/continuation and must stay pure of
+          // reasoning prose.
+          let inThinkingBlock = false
           try {
             for (let pass = 0; pass <= MAX_CONTINUATIONS; pass++) {
               for await (const event of stream) {
-                if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                  emittedAny = true
-                  assistantSoFar += event.delta.text
-                  controller.enqueue(encoder.encode(event.delta.text))
+                if (event.type === 'content_block_start' && event.content_block.type === 'thinking') {
+                  inThinkingBlock = true
+                  controller.enqueue(encoder.encode('<reasoning>'))
+                } else if (event.type === 'content_block_delta') {
+                  if (event.delta.type === 'text_delta') {
+                    assistantSoFar += event.delta.text
+                    controller.enqueue(encoder.encode(event.delta.text))
+                  } else if (event.delta.type === 'thinking_delta') {
+                    controller.enqueue(encoder.encode(event.delta.thinking))
+                  }
+                } else if (event.type === 'content_block_stop' && inThinkingBlock) {
+                  inThinkingBlock = false
+                  controller.enqueue(encoder.encode('</reasoning>'))
                 }
               }
 
@@ -1513,27 +1944,35 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
               // Only continue when the model was cut off by the token ceiling.
               if (finalMsg.stop_reason !== 'max_tokens' || pass === MAX_CONTINUATIONS) break
-
-              // Anthropic rejects an assistant prefill ending in whitespace.
-              const prefill = assistantSoFar.replace(/\s+$/, '')
-              if (!prefill) break
-              console.log(`[generate] pass ${pass} hit max_tokens — continuing (prefill ${prefill.length} chars)`)
+              if (!assistantSoFar.trim()) break
+              console.log(`[generate] pass ${pass} hit max_tokens — continuing (${assistantSoFar.length} chars so far)`)
+              const cutoffTail = assistantSoFar.slice(-200)
               stream = await client.messages.stream({
                 model,
                 max_tokens: stageMaxTokens,
                 system: systemBlocks,
-                messages: [...finalMessages, { role: 'assistant' as const, content: prefill }],
+                messages: [
+                  ...finalMessages,
+                  { role: 'assistant' as const, content: assistantSoFar },
+                  {
+                    role: 'user' as const,
+                    content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress.`,
+                  },
+                ],
+                ...thinkingParam,
               })
             }
           } catch (err) { console.error('Stream error:', err) }
           finally {
             generatedText = assistantSoFar
             controller.close()
-            // No text emitted → generation failed; give the credits back.
-            if (!emittedAny) await settleRefund('empty-generation')
+            // No real file/edit block produced → generation failed (whether or not
+            // text was emitted); give the credits back.
+            if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
           }
         },
       })
+      }
     } catch (anthropicErr) {
       console.error('[generate] Anthropic failed, trying Vertex AI Gemini fallback:', String(anthropicErr))
 
@@ -1583,14 +2022,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                 try {
                   const parsed = JSON.parse(json) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
                   const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                  if (text) { emittedAny = true; generatedText += text; controller.enqueue(encoder.encode(text)) }
+                  if (text) { generatedText += text; controller.enqueue(encoder.encode(text)) }
                 } catch { /* skip malformed SSE */ }
               }
             }
           } catch (err) { console.error('Gemini stream error:', err) }
           finally {
             controller.close()
-            if (!emittedAny) await settleRefund('empty-generation')
+            if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
           }
         },
       })
@@ -1598,9 +2037,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
     // After the build finishes streaming, distill the turn into durable project
     // memory. `after()` runs post-response (within maxDuration) so it adds ZERO
-    // latency to the build. Skipped for plan/self-heal passes and empty outputs.
+    // latency to the build. Skipped for plan/self-heal passes and turns that
+    // didn't actually produce a real change — feeding a hallucinated "Built: X"
+    // narrative into durable memory would make future turns build on the lie.
     after(async () => {
-      if (!emittedAny || selfHeal || stage === 'plan' || !projectId) return
+      if (!generationSucceeded(generatedText, stage) || selfHeal || stage === 'plan' || !projectId) return
       await updateProjectMemory({
         projectId,
         userPrompt: prompt,

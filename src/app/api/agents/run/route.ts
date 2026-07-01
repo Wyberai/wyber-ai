@@ -5,6 +5,7 @@ import { getToolById, detectRequiredTools } from '@/lib/tool-registry'
 import Anthropic from '@anthropic-ai/sdk'
 import { creditCost } from '@/lib/credits'
 import { sendAgentCompletedEmail, sendAgentFailedEmail } from '@/lib/email'
+import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -153,7 +154,8 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Add log tool
+    // Add log tool. cache_control on the last tool caches both tool definitions
+    // across this run's iterations — they're identical on every call in the loop below.
     claudeTools.push({
       name: 'log_result',
       description: 'Log an agent result or finding',
@@ -166,6 +168,7 @@ export async function POST(req: NextRequest) {
         },
         required: ['type', 'message'],
       },
+      cache_control: { type: 'ephemeral' },
     })
 
     // Build system context with decrypted credentials
@@ -198,6 +201,10 @@ ADDITIONAL CONFIG: ${JSON.stringify(config || {})}
 
 Execute now. Return a structured summary of what you did and what you found.`
 
+    // systemPrompt is identical across every iteration of the tool-use loop below —
+    // cache it so only the first call in a run pays full input-token price.
+    const cachedSystem: Anthropic.TextBlockParam[] = [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }]
+
     // Create execution log entry
     const { data: execLog } = await admin
       .from('agent_executions')
@@ -222,25 +229,25 @@ Execute now. Return a structured summary of what you did and what you found.`
     // ── Initial Anthropic call — deduct before calling ────────────────────────
     await deductCredits(ITER_COST)
 
+    // Process tool-use loop
+    let messages: Anthropic.MessageParam[] = [
+      { role: 'user', content: input || 'Execute the agent workflow now.' }
+    ]
+
     let response: Anthropic.Message
     try {
       response = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-        system: systemPrompt,
+        system: cachedSystem,
         tools: claudeTools,
-        messages: [{ role: 'user', content: input || 'Execute the agent workflow now.' }],
+        messages: withCacheBreakpoint(messages),
       })
     } catch (callErr) {
       // The call we just paid for never produced a result → refund it.
       await refundCredits(ITER_COST, 'agent-execution-refund')
       throw callErr
     }
-
-    // Process tool-use loop
-    let messages: Anthropic.MessageParam[] = [
-      { role: 'user', content: input || 'Execute the agent workflow now.' }
-    ]
 
     let currentResponse = response
     let iterations = 0
@@ -307,9 +314,9 @@ Execute now. Return a structured summary of what you did and what you found.`
         currentResponse = await anthropic.messages.create({
           model: 'claude-sonnet-4-6',
           max_tokens: 4096,
-          system: systemPrompt,
+          system: cachedSystem,
           tools: claudeTools,
-          messages,
+          messages: withCacheBreakpoint(messages),
         })
       } catch (callErr) {
         // Refund the iteration we just paid for but couldn't complete.
