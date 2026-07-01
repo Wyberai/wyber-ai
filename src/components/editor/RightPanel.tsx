@@ -113,7 +113,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
           {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
           {active === 'security'   && <div style={scrollStyle}><RlsScanPanel projectId={projectId || ''} /></div>}
           {active === 'themes'     && <div style={scrollStyle}><ThemePanel /></div>}
-          {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
+          {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
           {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
         </div>
       </div>

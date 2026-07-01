@@ -49,7 +49,6 @@ export function classifyIntent(rawMsg: string, hasFiles: boolean): Intent {
   const lower = msg.toLowerCase()
   const words = lower.split(/\s+/)
   const firstWord = words[0].replace(/[^a-z]/g, '')
-  const wordCount = words.length
   const endsQuestion = msg.endsWith('?')
 
   // 1. Explicit confirmations / greetings → always chat.
@@ -75,8 +74,10 @@ export function classifyIntent(rawMsg: string, hasFiles: boolean): Intent {
   // 5. Files exist, no clear signal.
   //    An action verb anywhere in the sentence → lean edit.
   if (words.some(w => ACTION_VERBS.has(w.replace(/[^a-z]/g, '')))) return 'EDIT'
-  //    Very short fragment with no verb → likely a comment ("the footer").
-  if (wordCount <= 4) return 'CHAT'
-
+  //    Anything else short and verbless ("the footer", "go ahead", "yes
+  //    please") could be a stray comment or a bare confirmation of
+  //    something the assistant just proposed — the client can't tell
+  //    which without the prior turn, so defer to the server's Haiku
+  //    check (which sees history) instead of hard-coding CHAT here.
   return 'AMBIGUOUS'
 }

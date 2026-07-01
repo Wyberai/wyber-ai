@@ -96,9 +96,19 @@ const CONNECTORS: { id: string; name: string; desc: string; icon: string; color:
   { id: 'snipcart', name: 'Snipcart', desc: 'Drop-in shopping cart', icon: '🛍', color: '#F5D553', category: 'E-commerce', prompt: 'Add Snipcart for a drop-in shopping cart with product management and checkout.', secretKeys: [{ name: 'NEXT_PUBLIC_SNIPCART_API_KEY', placeholder: 'api key' }] },
 ];
 
-export function ConnectorsPanel({ projectId }: { projectId: string }) {
+export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: string; onSwitchToChat?: () => void }) {
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
+
+  // ChatPanel (which listens for these events) is only mounted while the
+  // Chat tab is active — RightPanel swaps tabs in and out, it doesn't stack
+  // them. Dispatching straight from here while the user is on the
+  // Connectors tab was a no-op: nothing was listening. Switch tabs first,
+  // then dispatch once ChatPanel has had a tick to mount and register.
+  const sendToChat = (eventName: string, detail: unknown) => {
+    onSwitchToChat?.();
+    setTimeout(() => window.dispatchEvent(new CustomEvent(eventName, { detail })), 60);
+  };
   // Names already in the user's secrets vault — this is what actually makes a
   // connector "work" (deploy-env.ts injects these into every Vercel deploy),
   // so it's the only thing worth showing a checkmark for.
@@ -151,7 +161,7 @@ export function ConnectorsPanel({ projectId }: { projectId: string }) {
             body: JSON.stringify({ projectId: project?.id, service: 'supabase', apiKey: data.anonKey, config: { url: data.supabaseUrl, ref: data.projectId } }),
           });
           useEditorStore.getState().setConnectors([...useEditorStore.getState().connectors, { service: 'supabase', config: { url: data.supabaseUrl }, connected_at: new Date().toISOString() }]);
-          window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: connector.prompt }));
+          sendToChat('wyber:chat-prompt', connector.prompt);
         } else {
           // Fallback: open the Supabase connector modal
           window.dispatchEvent(new CustomEvent('wyber-open-supabase'));
@@ -165,22 +175,20 @@ export function ConnectorsPanel({ projectId }: { projectId: string }) {
 
     // No key needed (e.g. Vercel Analytics) — just tell the AI to add it.
     if (!connector.secretKeys?.length) {
-      window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: connector.prompt }));
+      sendToChat('wyber:chat-prompt', connector.prompt);
       return;
     }
 
     // Already have every key this connector needs — build straight away.
     if (isConnected(connector)) {
-      window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: connector.prompt }));
+      sendToChat('wyber:chat-prompt', connector.prompt);
       return;
     }
 
     // Ask for the exact key(s) inline (same gate ChatPanel already shows for
     // Supabase/Stripe when typed in chat) — matches how Lovable prompts for a
     // secret right when a feature needs one, no OAuth dance, no fake "connected".
-    window.dispatchEvent(new CustomEvent('wyber:request-secrets', {
-      detail: { prompt: connector.prompt, group: { label: connector.name, icon: connector.icon, color: connector.color, keys: connector.secretKeys } },
-    }));
+    sendToChat('wyber:request-secrets', { prompt: connector.prompt, group: { label: connector.name, icon: connector.icon, color: connector.color, keys: connector.secretKeys } });
   };
 
   return (

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     // ── Step 1: classify (only when the client wasn't sure) ──────────────
     if (!forceChat) {
-      const intent = await classifyWithHaiku(prompt, hasFiles)
+      const intent = await classifyWithHaiku(prompt, hasFiles, history)
       if (intent === 'ACTION') {
         // Hand back to the build lane. No body needed.
         return new Response('', {
@@ -117,17 +117,29 @@ export async function POST(req: NextRequest) {
  * One-token classification: is this message a request to change/build the app
  * (ACTION) or a conversational message (CHAT)? Defaults to CHAT on any failure
  * so we never charge for a misfire.
+ *
+ * Takes the recent turns so a bare confirmation ("go ahead", "yes please")
+ * can be read against whatever the assistant just proposed — without history,
+ * a short reply like that is indistinguishable from an idle "ok, thanks" and
+ * silently drops the change the user thinks they just confirmed.
  */
-async function classifyWithHaiku(prompt: string, hasFiles: boolean): Promise<'ACTION' | 'CHAT'> {
+async function classifyWithHaiku(prompt: string, hasFiles: boolean, history: Array<{ role: string; content: string }>): Promise<'ACTION' | 'CHAT'> {
   try {
+    const contextMessages: Anthropic.MessageParam[] = [
+      ...history
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .slice(-4)
+        .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      { role: 'user', content: prompt },
+    ]
     const res = await client.messages.create({
       model: CHAT_MODEL,
       max_tokens: 5,
-      system: `You are an intent classifier for an AI app builder. The user ${hasFiles ? 'already has an app with code' : 'has no app yet'}. Decide if their message is:
-- ACTION: a request to build, create, change, add, remove, fix, or otherwise modify the app's code.
-- CHAT: a question, confirmation, greeting, thanks, status check, or anything conversational that does NOT ask for a code change.
+      system: `You are an intent classifier for an AI app builder. The user ${hasFiles ? 'already has an app with code' : 'has no app yet'}. Given the conversation so far, decide if the user's LATEST message is:
+- ACTION: a request to build, create, change, add, remove, fix, or otherwise modify the app's code — including a short confirmation ("go ahead", "yes please", "do it") when the assistant's immediately preceding message proposed a specific change and asked the user to confirm it.
+- CHAT: a question, a confirmation/acknowledgment that isn't approving a proposed change, a greeting, thanks, a status check, or anything else conversational that does NOT ask for or approve a code change.
 Reply with EXACTLY one word: ACTION or CHAT.`,
-      messages: [{ role: 'user', content: prompt }],
+      messages: contextMessages,
     })
     const text = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').toUpperCase()
     return text.includes('ACTION') ? 'ACTION' : 'CHAT'
