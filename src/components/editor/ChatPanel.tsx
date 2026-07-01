@@ -214,7 +214,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // ── Pre-gen dep gate state ──────────────────────────────────────────────
   // When deps are detected, we pause before generation and show a connect UI.
   // pendingGenArgs holds (prompt, img) waiting for the user to decide.
-  const [pendingGenArgs, setPendingGenArgs] = useState<{ prompt: string; img: AttachedImage | null; needsSupabase: boolean; needsStripe: boolean; composioTools: string[] } | null>(null);
+  const [pendingGenArgs, setPendingGenArgs] = useState<{ prompt: string; img: AttachedImage | null; needsSupabase: boolean; needsStripe: boolean; composioTools: string[]; customGroup?: { label: string; icon: string; color: string; keys: { name: string; placeholder: string }[] } | null } | null>(null);
   // Inline secret collection for the gate UI (key name → value)
   const [inlineSecrets, setInlineSecrets] = useState<Record<string, string>>({});
   const [secretSaving, setSecretSaving] = useState(false);
@@ -362,10 +362,23 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       }
     }
     window.addEventListener('wyber:chat-prompt', chatPromptHandler)
+    // ConnectorsPanel sends this when a service needs a key we don't have yet —
+    // opens the same inline vault-capture gate used for Supabase/Stripe, just
+    // with the exact field names for that one connector instead of a keyword guess.
+    const requestSecretsHandler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { prompt: string; group: { label: string; icon: string; color: string; keys: { name: string; placeholder: string }[] } } | undefined
+      if (!detail?.group?.keys?.length) return
+      const initialSecrets: Record<string, string> = {}
+      for (const k of detail.group.keys) initialSecrets[k.name] = ''
+      setInlineSecrets(initialSecrets)
+      setPendingGenArgs({ prompt: detail.prompt, img: null, needsSupabase: false, needsStripe: false, composioTools: [], customGroup: detail.group })
+    }
+    window.addEventListener('wyber:request-secrets', requestSecretsHandler)
     return () => {
       window.removeEventListener('wyber_auto_generate', handler as EventListener)
       window.removeEventListener('wyber-autofix', autofixHandler)
       window.removeEventListener('wyber:chat-prompt', chatPromptHandler)
+      window.removeEventListener('wyber:request-secrets', requestSecretsHandler)
     }
   }, []);
 
@@ -896,6 +909,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         });
       }
     } catch { /* non-fatal — proceed anyway */ }
+    window.dispatchEvent(new CustomEvent('wyber:secrets-saved'));
     const { prompt, img } = pendingGenArgs;
     setInlineSecrets({});
     setSecretSaving(false);
@@ -1249,6 +1263,26 @@ const storeProjectId = useEditorStore.getState().project?.id;
               />
               <div style={{ fontSize:10, color:'var(--ide-text3)', marginTop:5 }}>
                 Find this in dashboard.stripe.com → Developers → API keys
+              </div>
+            </div>
+          )}
+
+          {/* Generic connector (from the Connectors panel) */}
+          {pendingGenArgs.customGroup && (
+            <div style={{ background:`${pendingGenArgs.customGroup.color}0f`, border:`1px solid ${pendingGenArgs.customGroup.color}33`, borderRadius:8, padding:'10px 12px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
+                <span style={{ fontSize:14 }}>{pendingGenArgs.customGroup.icon}</span>
+                <span style={{ fontSize:12, fontWeight:700, color:pendingGenArgs.customGroup.color }}>{pendingGenArgs.customGroup.label}</span>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                {pendingGenArgs.customGroup.keys.map(k => (
+                  <input key={k.name}
+                    placeholder={k.placeholder}
+                    value={inlineSecrets[k.name] ?? ''}
+                    onChange={e => setInlineSecrets(s => ({ ...s, [k.name]: e.target.value }))}
+                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:`1px solid ${pendingGenArgs.customGroup!.color}33`, background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                  />
+                ))}
               </div>
             </div>
           )}
