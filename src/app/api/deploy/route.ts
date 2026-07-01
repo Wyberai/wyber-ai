@@ -5,6 +5,7 @@ import { sanitizeFiles } from '@/lib/sanitize-files';
 import { scanForExposedSecrets } from '@/lib/security-scan';
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project';
 import { getDeployEnvVars } from '@/lib/deploy-env';
+import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url';
 
 // Build scaffold files needed for Vercel to build the app
 function getBuildScaffold(framework: string, projectName: string): Record<string, string> {
@@ -280,6 +281,11 @@ export async function POST(req: NextRequest) {
     } catch (e) {
       console.error('Supabase save error:', e);
     }
+
+    // Keep the connected Supabase project's Auth Site URL pointed at this
+    // deploy — without this, email confirmation/magic-link/OAuth redirects
+    // keep pointing at localhost even after the app is live. Best-effort.
+    if (projectId) syncSupabaseAuthUrl(projectId, deployedUrl).catch(() => {});
 
     // Email notification — fire-and-forget
     if (userId) {

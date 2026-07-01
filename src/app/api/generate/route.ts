@@ -883,10 +883,11 @@ export const supabase = createClient('${url}', '${anonKey}')
 
 ── STEP 2: Auth — ALWAYS include signup/login/logout ──
 Auth API (use these exact methods):
-  // Sign up: const { data, error } = await supabase.auth.signUp({ email, password })
+  // Sign up: const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
   // Sign in: const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   // Sign out: await supabase.auth.signOut()
   // Get current user: const { data: { user } } = await supabase.auth.getUser()
+Always pass emailRedirectTo: window.location.origin on signUp — it makes the confirmation link point at wherever this app is actually running (localhost while previewing, the real domain once deployed) instead of a fixed URL.
 
 Listen for auth changes (put this in App.tsx useEffect):
   supabase.auth.onAuthStateChange((_event, session) => {
@@ -1069,6 +1070,29 @@ async function updateProjectMemory(opts: {
     const db = createServiceClient()
     await db.from('projects').update({ memory_summary: text.slice(0, 2000) }).eq('id', projectId)
   } catch (e) { console.error('[project-memory] update failed', e) }
+}
+
+/**
+ * Give a brand-new project a real name instead of the first 40 characters of
+ * the user's prompt (e.g. "create a full flow project management" instead of
+ * "ProjectFlow"). Cheap Haiku pass, same shape as updateProjectMemory — only
+ * called for isNewBuild, from `after()` so it adds zero latency to the build.
+ */
+async function nameNewProject(projectId: string, userPrompt: string): Promise<void> {
+  if (!projectId || !userPrompt.trim()) return
+  try {
+    const res = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 20,
+      system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, no the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
+      messages: [{ role: 'user', content: userPrompt.slice(0, 500) }],
+    })
+    const name = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').trim().slice(0, 60)
+    if (!name) return
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    await db.from('projects').update({ name }).eq('id', projectId)
+  } catch (e) { console.error('[project-naming] failed', e) }
 }
 
 export async function POST(req: NextRequest) {
@@ -1584,6 +1608,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         prevMemory: projectMemory,
         isNewBuild,
       })
+      if (isNewBuild) await nameNewProject(projectId, prompt)
     })
 
     return new Response(readable, {

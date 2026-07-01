@@ -25,35 +25,13 @@ export const GOOGLE_FONTS_LINKS = `<link rel="preconnect" href="https://api.font
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700,800&f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">`
 
-// Default token values — a clean, accessible light theme (+ matching dark) used
-// only as a SAFETY NET when an app forgets to define tokens, so nothing ever
-// ships unstyled. Real apps override every value in src/index.css.
+// Default token values — a dark theme (+ matching light) used only as a
+// SAFETY NET when an app forgets to define tokens, so nothing ever ships
+// unstyled. Real apps override every value in src/index.css. Dark is the
+// fallback (not light) because it's the platform's own visual convention
+// (dark IDE chrome, dark preview container background) — a light flash here
+// used to read as a broken/unstyled app rather than a loading state.
 export const TOKEN_VARS_CSS = `:root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-  --radius: 0.75rem;
-  --font-sans: 'Switzer';
-  --font-display: 'General Sans';
-  --font-mono: 'JetBrains Mono';
-}
-.dark {
   --background: 240 10% 3.9%;
   --foreground: 0 0% 98%;
   --card: 240 10% 5.5%;
@@ -73,6 +51,31 @@ export const TOKEN_VARS_CSS = `:root {
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
   --ring: 240 4.9% 83.9%;
+  --radius: 0.75rem;
+  --font-sans: 'Switzer';
+  --font-display: 'General Sans';
+  --font-mono: 'JetBrains Mono';
+}
+.light {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
 }`
 
 // Base rules that wire the tokens to the page. Plain CSS (no @apply) so it

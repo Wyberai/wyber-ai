@@ -6,6 +6,7 @@ import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { extractImageDirectives, replaceTokenInFiles, gradientDataUri } from '@/lib/image-directives'
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
+import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -156,6 +157,10 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', projectId)
+
+    // Keep the connected Supabase project's Auth Site URL pointed at this
+    // published URL — see deploy/route.ts for why. Best-effort.
+    syncSupabaseAuthUrl(projectId, publishedUrl).catch(() => {})
 
     return NextResponse.json({ subdomain, publishedUrl })
   } catch (err: any) {

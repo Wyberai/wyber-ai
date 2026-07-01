@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export const maxDuration = 60
 
@@ -36,12 +36,14 @@ export async function POST(req: NextRequest) {
       history = [],
       hasFiles = false,
       forceChat = true,
+      projectId,
     }: {
       prompt: string
       fileContext?: string
       history?: Array<{ role: string; content: string }>
       hasFiles?: boolean
       forceChat?: boolean
+      projectId?: string
     } = body
 
     if (!prompt || !prompt.trim()) {
@@ -67,7 +69,22 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Step 2: stream a conversational reply ────────────────────────────
-    const system = buildChatSystemPrompt(fileContext, hasFiles)
+    // Which connectors are already saved, so the assistant never claims
+    // ignorance about a Supabase project the user already connected, or
+    // asks them to re-paste credentials that are already stored.
+    let connectedServices: string[] = []
+    if (projectId) {
+      try {
+        const admin = await createAdminClient()
+        const { data } = await admin
+          .from('project_connectors')
+          .select('service')
+          .eq('project_id', projectId)
+        connectedServices = (data ?? []).map(r => r.service)
+      } catch { /* best-effort context only */ }
+    }
+
+    const system = buildChatSystemPrompt(fileContext, hasFiles, connectedServices)
     const messages: Anthropic.MessageParam[] = [
       ...history
         .filter(m => m.role === 'user' || m.role === 'assistant')
@@ -148,14 +165,17 @@ Reply with EXACTLY one word: ACTION or CHAT.`,
   }
 }
 
-function buildChatSystemPrompt(fileContext: string, hasFiles: boolean): string {
+function buildChatSystemPrompt(fileContext: string, hasFiles: boolean, connectedServices: string[] = []): string {
   return `You are the assistant inside WyberAi, an AI app builder. The user is talking to you about ${hasFiles ? 'an app they are building with you' : 'building an app'}.
 
 You are in CONVERSATION mode, not build mode. Rules:
 - Answer the user's question or respond to their message directly and concisely (1-3 short sentences).
-- NEVER output code, <file> blocks, <edit> blocks, or file contents. You are not editing anything right now.
+- NEVER output <file> or <edit> blocks, or app source/component code — you are not editing the project right now, that happens in the build lane.
+- EXCEPTION: if the user needs a SQL script to run in the Supabase SQL Editor, or a shell/CLI command to run locally, give it to them in full as a properly fenced code block (\`\`\`sql ... \`\`\` or \`\`\`bash ... \`\`\`) — never describe it in prose or a table instead of giving the runnable text, and never truncate or summarize it. This is an instruction for the user to run outside the app, not an edit to project files, so it's not covered by the no-code rule above.
 - If they ask "is it done?", "does it work?", or similar — answer based on what exists, and suggest the next step.
-- If they seem to want a change to the app, briefly confirm what you'll do and tell them to send it — don't write code here.
+- If they seem to want a change to the app, briefly confirm what you'll do and tell them to send it — don't write app code here (SQL/CLI snippets per the exception above are fine).
 - Be warm, plain-spoken, and brief. No preamble like "Great question!".
+${connectedServices.length ? `\nAlready connected for this project: ${connectedServices.join(', ')}. Treat these as live — never say they're not connected, and never ask the user to paste credentials for a service already in this list (point them to the Connectors/Database tab instead of chat if a key needs to change).` : ''}
+- If the user needs to connect Supabase (or any service) and it's NOT already in the connected list above, do NOT ask them to paste the URL/API key into chat — that panel already has a clear "Find these in Project Settings → API" walkthrough and stores the key securely. Tell them to open the Database (or Connectors) tab in the left sidebar and either auto-provision or paste their own project URL + anon key there.
 ${fileContext ? `\nHere is the current project so you can answer accurately:\n${fileContext.slice(0, 8000)}` : ''}`
 }
