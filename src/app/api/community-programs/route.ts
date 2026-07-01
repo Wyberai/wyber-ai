@@ -47,33 +47,26 @@ export async function POST(req: NextRequest) {
     review_producthunt: { bonus_credits: 50, bonus_type: '50 bonus credits' },
   }
 
-  // Programs that grant credits automatically once a proof URL is supplied.
-  const AUTO_APPROVE = new Set(['build_in_public', 'follow_linkedin', 'follow_reddit', 'review_producthunt'])
-
   const program = PROGRAMS[body.program]
   if (!program) return NextResponse.json({ error: 'Unknown program' }, { status: 400 })
 
-  const autoApprove = AUTO_APPROVE.has(body.program) && !!body.proof_url
-
+  // Every credit-granting program goes to manual review — there is no way to
+  // verify a "proof_url" server-side (it used to be trusted just for being a
+  // non-empty string, which meant anyone could self-grant up to 150 credits
+  // by calling this endpoint directly with a fake URL). NOTE: there is
+  // currently no admin UI to approve these and grant the credit — rows land
+  // in community_program_submissions with status='pending' and must be
+  // reviewed/credited manually (Supabase table editor) until one exists.
   const { error } = await db.from('community_program_submissions').insert({
     user_id: user.id,
     program: body.program,
     proof_url: body.proof_url ?? null,
     proof_text: body.proof_text ?? null,
     bonus_type: program.bonus_type,
-    status: autoApprove ? 'approved' : 'pending',
+    status: 'pending',
   })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Auto-approve credit-granting programs (just needs a valid proof URL)
-  if (autoApprove && program.bonus_credits > 0) {
-    const { data: profile } = await db.from('profiles').select('credits').eq('id', user.id).single()
-    if (profile) {
-      await db.from('profiles').update({ credits: (profile.credits ?? 0) + program.bonus_credits }).eq('id', user.id)
-    }
-    return NextResponse.json({ ok: true, auto_approved: true, bonus: `${program.bonus_credits} credits added`, message: `Thanks! ${program.bonus_credits} bonus credits added to your account.` })
-  }
 
   return NextResponse.json({ ok: true, status: 'pending', message: 'Submitted! We review submissions within 24 hours.' })
 }
