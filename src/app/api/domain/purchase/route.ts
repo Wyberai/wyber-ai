@@ -62,7 +62,13 @@ export async function POST(req: NextRequest) {
       .insert({ user_id: user.id, project_id: projectId ?? null, domain, price_cents: priceCents, status: 'pending', contact_info: contactInfo })
       .select()
       .single()
-    if (insertErr || !purchase) return NextResponse.json({ error: 'Failed to create purchase record' }, { status: 500 })
+    if (insertErr || !purchase) {
+      // The generic client-facing message here has hidden real causes before
+      // (missing RLS policy, and now possibly a missing column) — log the
+      // actual Postgres error so the next one doesn't need guess-and-check.
+      console.error('[domain/purchase] insert failed:', insertErr?.message || insertErr, insertErr?.details, insertErr?.hint)
+      return NextResponse.json({ error: 'Failed to create purchase record' }, { status: 500 })
+    }
 
     const res = await fetch('https://live.dodopayments.com/checkouts', {
       method: 'POST',
