@@ -1,7 +1,7 @@
 'use client'
 import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
 import { useEditorStore } from '@/store/editor';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
@@ -89,7 +89,12 @@ function extractSignatures(code: string): string {
   return out.join('\n') || '(no exports detected)';
 }
 
-function cleanMessage(text: string): string {
+// Strips internal markers (<thinking>/<file>/<edit>/[progress:...]) that can
+// leak into a message's natural-language text regardless of which lane
+// produced it. Safe to apply to ANY assistant message before rendering —
+// unlike cleanMessage below, it never touches code blocks, bullets, or
+// sentence count, so it can't mangle a real conversational answer.
+function stripInternalMarkers(text: string): string {
   let t = text;
   t = t.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
   t = t.replace(/<file[^\s>]*[^>]*>[\s\S]*?<\/file>/gi, '');
@@ -97,8 +102,17 @@ function cleanMessage(text: string): string {
   // cut any unclosed trailing block (stream/save ended mid-block)
   const _cuts = [t.search(/<thinking>/i), t.search(/<file/i), t.search(/<edit\s+path="/i)].filter(i => i !== -1);
   if (_cuts.length) t = t.slice(0, Math.min(..._cuts));
-  // strip progress markers — these belong in the checklist, never in chat text
   t = t.replace(/\[progress:[^\]]+\]/gi, '');
+  return t.trim();
+}
+
+// Aggressively distills the BUILD lane's raw commentary (which streams
+// alongside <file>/<edit> blocks and can leak code/JSX/file-manifest lines)
+// down to a short "Built: X" style confirmation. Only ever call this on
+// build-turn text before storing it — never on conversational chat-lane
+// answers, which need their full sentences, bullets, and code blocks intact.
+function cleanMessage(text: string): string {
+  let t = stripInternalMarkers(text);
   t = t.replace(/```[\s\S]*?```/g, '');
   t = t.replace(/`src\/[^`]+`/g, '');
   const lines = t.split('\n').map(l => l.trim()).filter(l => {
@@ -160,9 +174,66 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   );
 }
 
+// Inline-only parsing (bold, inline code) for a single line/paragraph of text.
+function renderInline(text: string, keyPrefix: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={`${keyPrefix}-${i}`}>{part.slice(2,-2)}</strong>;
+    if (part.startsWith('`') && part.endsWith('`')) return <code key={`${keyPrefix}-${i}`} style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }}>{part.slice(1,-1)}</code>;
+    return <span key={`${keyPrefix}-${i}`}>{part}</span>;
+  });
+}
+
+// Block-level structure for a plain-text segment (no fenced code in it): groups
+// consecutive bullet/numbered lines into real lists and headers into headings,
+// instead of dumping "1. do this\n2. do that" as one flat, unbroken blob.
+function renderTextBlock(text: string, keyPrefix: string) {
+  const lines = text.split('\n');
+  const blocks: ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    if (!trimmed) { i++; continue; }
+
+    const header = trimmed.match(/^#{1,4}\s+(.+)/);
+    if (header) {
+      blocks.push(<div key={`${keyPrefix}-h${key++}`} style={{ fontWeight:700, marginTop: blocks.length ? 8 : 0 }}>{renderInline(header[1], `${keyPrefix}-h${key}`)}</div>);
+      i++; continue;
+    }
+
+    const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
+    const numberedMatch = trimmed.match(/^\d+[.)]\s+(.+)/);
+    if (bulletMatch || numberedMatch) {
+      const ordered = !!numberedMatch;
+      const items: string[] = [];
+      while (i < lines.length) {
+        const t = lines[i].trim();
+        const m = ordered ? t.match(/^\d+[.)]\s+(.+)/) : t.match(/^[-*]\s+(.+)/);
+        if (!m) break;
+        items.push(m[1]);
+        i++;
+      }
+      const ListTag = ordered ? 'ol' : 'ul';
+      blocks.push(
+        <ListTag key={`${keyPrefix}-l${key++}`} style={{ margin:'4px 0', paddingLeft:18 }}>
+          {items.map((it, j) => <li key={j} style={{ marginBottom:2 }}>{renderInline(it, `${keyPrefix}-li${j}`)}</li>)}
+        </ListTag>
+      );
+      continue;
+    }
+
+    // Plain paragraph line.
+    blocks.push(<div key={`${keyPrefix}-p${key++}`}>{renderInline(line, `${keyPrefix}-p${key}`)}</div>);
+    i++;
+  }
+  return blocks;
+}
+
 function renderMessage(text: string) {
-  const cleaned = cleanMessage(text);
-  const parts = cleaned.split(/(```edited:[^`]+```|```[\s\S]*?```|\*\*[^*]+\*\*|`[^`]+`)/g);
+  const cleaned = stripInternalMarkers(text);
+  const parts = cleaned.split(/(```edited:[^`]+```|```[\s\S]*?```)/g);
   return parts.map((part, i) => {
     if (part.startsWith('```edited:')) return null;
     if (part.startsWith('```')) {
@@ -172,9 +243,8 @@ function renderMessage(text: string) {
       const code = (firstLine === -1 ? body : body.slice(firstLine + 1)).replace(/\n$/, '');
       return <CodeBlock key={i} lang={lang} code={code} />;
     }
-    if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2,-2)}</strong>;
-    if (part.startsWith('`') && part.endsWith('`')) return <code key={i} style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }}>{part.slice(1,-1)}</code>;
-    return <span key={i}>{part}</span>;
+    if (!part.trim()) return null;
+    return <div key={i}>{renderTextBlock(part, `t${i}`)}</div>;
   });
 }
 
@@ -704,10 +774,18 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (af.length) { setAttachedFiles([]); uploadPromisesRef.current = {}; }
     }
 
+    // Server gives up at maxDuration=300s (see /api/generate) — without a
+    // client-side ceiling too, a dropped connection or a server that hangs
+    // after sending headers left the UI spinning "Applying changes..."
+    // forever with no way out but a page reload. 20s past the server's own
+    // limit so a legitimately-still-running build isn't cut off early.
+    const genController = new AbortController();
+    const genTimeout = setTimeout(() => genController.abort(), 320_000);
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
+        signal: genController.signal,
         body: JSON.stringify({
           prompt: userMsg || (img ? 'Build a UI matching this screenshot exactly.' : 'Build this using the attached files.'),
           framework, fileContext, history, knowledge: knowledgeStr, modelTier,
@@ -899,10 +977,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
     } catch (err: unknown) {
       if (!opts?.silent) {
-        const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
+        const isTimeout = err instanceof Error && err.name === 'AbortError';
+        const errMsg = isTimeout
+          ? "**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed."
+          : `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
         updateMessage(assistantId, { content: errMsg, status:'error' });
+        persistMessage('assistant', errMsg);
       }
     } finally {
+      clearTimeout(genTimeout);
       setIsGenerating(false);
       clearStreamingContent();
       setProgressSteps([]);
