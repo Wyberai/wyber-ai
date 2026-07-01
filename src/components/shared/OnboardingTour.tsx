@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 const STEPS = [
   {
     title: 'Welcome to WyberAi 👋',
-    desc: 'Build production-ready web and mobile apps with AI — and soon, hire AI employees too. Here’s the 30-second tour.',
+    desc: 'Build production-ready web and mobile apps with AI. Here’s the 30-second tour.',
     target: null,
   },
   {
@@ -16,11 +16,6 @@ const STEPS = [
     title: 'Build a mobile app',
     desc: 'Same prompt box, real React Native apps. Preview on your phone via QR code, then export a ready-to-publish project for the App Store.',
     target: '[data-tour="build"]',
-  },
-  {
-    title: 'A new AI employee every Monday',
-    desc: 'Starting Monday July 6 with the Marketing Manager, we release a new AI employee each week. It’s not a single agent — each employee commands 200+ agents and runs on its own schedule.',
-    target: null,
   },
   {
     title: "You're ready!",

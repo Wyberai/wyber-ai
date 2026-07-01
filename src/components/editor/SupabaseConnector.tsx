@@ -32,14 +32,31 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
         const sb = d.connectors?.find((c: Connector) => c.service === 'supabase')
         if (sb) setConnected(sb)
       })
-    // Returned from Supabase OAuth consent → open the project picker.
+    // Returned from Supabase OAuth consent via a same-tab fallback (popup
+    // blocked) → open the project picker.
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('supabase') === 'pick') {
       openPicker()
     }
   }, [project?.id])
 
+  // Normal case: the OAuth callback runs in the popup and posts the result
+  // back here, so this tab (and its chat history) never navigates away.
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return
+      if (e.data?.type !== 'wyber:supabase-oauth-result') return
+      if (e.data.success) openPicker()
+      else setError(e.data.error || 'Supabase connection failed — please try again.')
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
   const oauthConnect = () => {
-    window.location.href = `/api/connectors/supabase/start?projectId=${project?.id}`
+    const startUrl = `/api/connectors/supabase/start?projectId=${project?.id}`
+    const popup = window.open(startUrl, 'supabase_oauth', 'width=520,height=680,scrollbars=yes,resizable=yes')
+    // Popup blocked — fall back to a same-tab redirect so the flow still works.
+    if (!popup) window.location.href = startUrl
   }
 
   async function openPicker() {

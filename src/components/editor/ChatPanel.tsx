@@ -909,12 +909,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
         });
       }
     } catch { /* non-fatal — proceed anyway */ }
-    window.dispatchEvent(new CustomEvent('wyber:secrets-saved'));
     const { prompt, img } = pendingGenArgs;
     setInlineSecrets({});
     setSecretSaving(false);
     setPendingGenArgs(null);
     await executeGeneration(prompt, img);
+    // Tell the Connectors panel to refresh only after the triggered build
+    // finishes — firing this right after the vault save made the panel show
+    // "✓ Connected" while "Applying changes..." was still spinning, which
+    // read as a stuck/contradictory state even though both were accurate.
+    window.dispatchEvent(new CustomEvent('wyber:secrets-saved'));
   }, [pendingGenArgs, inlineSecrets, executeGeneration]);
 
   /**
@@ -941,7 +945,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const res = await fetch('/api/assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMsg, fileContext: manifest, history, hasFiles, forceChat }),
+        body: JSON.stringify({ prompt: userMsg, fileContext: manifest, history, hasFiles, forceChat, projectId: resolvedProjectId }),
       });
 
       if (!res.ok) throw new Error(await res.text());
