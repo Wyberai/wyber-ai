@@ -33,8 +33,8 @@ Be concise, friendly, and direct. If you don't know something, say so honestly. 
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'unknown'
-    const { success } = await rateLimit(`support:${ip}`, 10, 60)
-    if (!success) return new Response('Too many requests', { status: 429 })
+    const { allowed } = rateLimit(`support:${ip}`, 10, 60)
+    if (!allowed) return new Response('Too many requests', { status: 429 })
 
     const { messages } = await req.json()
     if (!messages?.length) return new Response('No messages', { status: 400 })

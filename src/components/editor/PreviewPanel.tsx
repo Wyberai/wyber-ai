@@ -33,7 +33,7 @@ function hashStr(s: string): number {
 }
 
 export function PreviewPanel() {
-  const { files, isGenerating, project, hydrated, connectors } = useEditorStore()
+  const { files, isGenerating, project, hydrated, connectors, setPreviewError, setPreviewHealFailed, selectionConsumer, setSelectionConsumer } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
@@ -55,6 +55,12 @@ export function PreviewPanel() {
   const lastBuiltKey = useRef('')
   const buildRef = useRef<() => void>(() => {})
   const autoBuildTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Mirror local error/heal state into the store so UI outside this component
+  // (e.g. Wyberman) can know the preview is stuck, without touching any of the
+  // local state machine above.
+  useEffect(() => { setPreviewError(error) }, [error, setPreviewError])
+  useEffect(() => { setPreviewHealFailed(healFailed) }, [healFailed, setPreviewHealFailed])
 
   const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
   const hasApp = Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 200
@@ -157,12 +163,20 @@ export function PreviewPanel() {
     const handler = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== 'object') return
       if (e.data.type === 'wyber-element-selected') {
-        setSelectedEl({
+        const picked = {
           selector: e.data.selector || '',
           tag: e.data.tag || '',
           text: e.data.text || '',
           classes: e.data.classes || '',
-        })
+        }
+        // Route the pick to whichever feature currently owns selection mode —
+        // Wyberman's "point and ask" reuses this same channel but explains the
+        // element instead of opening the visual-edit instruction popup.
+        if (selectionConsumer === 'wyberman') {
+          window.dispatchEvent(new CustomEvent('wyberman-element-selected', { detail: picked }))
+        } else {
+          setSelectedEl(picked)
+        }
       }
       // Capture runtime errors from inside the iframe
       if (e.data.type === 'wyber-runtime-error') {
@@ -175,15 +189,31 @@ export function PreviewPanel() {
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [error, fixing, isGenerating])
+  }, [error, fixing, isGenerating, selectionConsumer])
 
   // Tell the iframe when edit mode toggles
   const toggleEditMode = () => {
     const next = !editMode
     setEditMode(next)
     setSelectedEl(null)
+    setSelectionConsumer(next ? 'visual-edit' : null)
     iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: next }, '*')
   }
+
+  // External features (e.g. Wyberman's "point and ask") can request the same
+  // click-to-select mode without reaching into this component's iframe ref.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { on: boolean; consumer: 'wyberman' } | undefined
+      if (!detail) return
+      setEditMode(detail.on)
+      setSelectedEl(null)
+      setSelectionConsumer(detail.on ? detail.consumer : null)
+      iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: detail.on }, '*')
+    }
+    window.addEventListener('wyber-request-edit-mode', handler)
+    return () => window.removeEventListener('wyber-request-edit-mode', handler)
+  }, [setSelectionConsumer])
 
   // Re-send edit mode state whenever the iframe reloads
   useEffect(() => {
@@ -357,7 +387,7 @@ Find this element in the code and apply the change.`
           </div>
         </div>
       )}
-      {editMode && !selectedEl && (
+      {editMode && !selectedEl && selectionConsumer !== 'wyberman' && (
         <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
           Click any element in the preview to edit it
         </div>
