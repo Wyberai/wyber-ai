@@ -138,11 +138,40 @@ function cleanMessage(text: string): string {
   return result;
 }
 
+// A real fenced code block (```sql ... ``` etc.) with a copy button — the
+// runnable-SQL / CLI-command case the chat lane is now explicitly allowed to
+// output (see /api/assist's system prompt) needs to actually be copyable,
+// not squeezed through the inline-`code` styling meant for single words.
+function CodeBlock({ lang, code }: { lang: string; code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div style={{ margin:'6px 0', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-overlay)', overflow:'hidden' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 8px', borderBottom:'1px solid var(--ide-border)', background:'var(--bg-base)' }}>
+        <span style={{ fontSize:10, color:'var(--ide-text3)', fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.04em' }}>{lang || 'code'}</span>
+        <button
+          onClick={() => { navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }); }}
+          style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copied ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
+        >
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
+      </div>
+      <pre style={{ margin:0, padding:'8px 10px', overflowX:'auto', fontFamily:'monospace', fontSize:11, lineHeight:1.5, color:'var(--ide-text)', whiteSpace:'pre' }}>{code}</pre>
+    </div>
+  );
+}
+
 function renderMessage(text: string) {
   const cleaned = cleanMessage(text);
-  const parts = cleaned.split(/(```edited:[^`]+```|\*\*[^*]+\*\*|`[^`]+`)/g);
+  const parts = cleaned.split(/(```edited:[^`]+```|```[\s\S]*?```|\*\*[^*]+\*\*|`[^`]+`)/g);
   return parts.map((part, i) => {
     if (part.startsWith('```edited:')) return null;
+    if (part.startsWith('```')) {
+      const body = part.slice(3, -3);
+      const firstLine = body.indexOf('\n');
+      const lang = firstLine === -1 ? '' : body.slice(0, firstLine).trim();
+      const code = (firstLine === -1 ? body : body.slice(firstLine + 1)).replace(/\n$/, '');
+      return <CodeBlock key={i} lang={lang} code={code} />;
+    }
     if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2,-2)}</strong>;
     if (part.startsWith('`') && part.endsWith('`')) return <code key={i} style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }}>{part.slice(1,-1)}</code>;
     return <span key={i}>{part}</span>;
