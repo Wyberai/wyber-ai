@@ -334,6 +334,14 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [modelTier] = useState<ModelTier>('default');
   const [planMode, setPlanMode] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ prompt: string; image: AttachedImage | null } | null>(null);
+  // First-build advisory offer: on a brand-new project's first message, ask
+  // once whether the user wants to see a build plan/roadmap first (reuses the
+  // existing, already-built Plan Mode flow) instead of silently building.
+  // Users don't discover the manual "◎ Plan" toggle on their own — this makes
+  // the same feature reachable without requiring that discovery. Shown at
+  // most once per project (planOfferShownRef), regardless of outcome.
+  const [pendingPlanOffer, setPendingPlanOffer] = useState<{ prompt: string; img: AttachedImage | null; hasAttachments: boolean } | null>(null);
+  const planOfferShownRef = useRef(false);
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
   const [lastModel, setLastModel] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -732,7 +740,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   }, [files, modelTier, resolvedUserId, resolvedProjectId, setFiles, setHasGeneratedFiles, saveProject, addMessage, persistMessage, setStreamingContent])
 
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; echoedUser?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; echoedUser?: boolean; displayContent?: string }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -748,14 +756,18 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     }
 
     // Snapshot current files for undo BEFORE generation
-    if (Object.keys(files ?? {}).length > 0) pushCheckpoint(userMsg.slice(0, 40) || 'Before edit');
+    if (Object.keys(files ?? {}).length > 0) pushCheckpoint((opts?.displayContent ?? userMsg).slice(0, 40) || 'Before edit');
 
     // Self-heal/autofix runs (silent) are FREE — they repair work the user
     // already paid for. Skip the optimistic client decrement; the server is
     // told `selfHeal: true` below and skips the deduction entirely.
     const isSelfHeal = !!opts?.silent;
     if (!isSelfHeal) consumeCredit();
-    const userContent = img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg;
+    // displayContent lets a caller send a large/technical userMsg to the model
+    // (e.g. an approved plan's full spec) while showing something clean and
+    // readable as the user's own chat bubble — same distinction Claude.ai
+    // draws between what you typed and what's actually in the context.
+    const userContent = opts?.displayContent ?? (img ? `[Image: ${img.name}]\n${userMsg || 'Build a UI matching this screenshot'}` : userMsg);
     // echoedUser: the conversational lane already added the user's bubble before
     // it decided this was actually a build — don't duplicate it.
     if (!opts?.silent && !opts?.echoedUser) {
@@ -1257,21 +1269,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
     await executeGeneration(content, img);
   }, [files, handleConversational, executeGeneration]);
 
-  const handleSend = useCallback(async () => {
-    // No credits<=0 gate here — conversational messages are FREE, so the box
-    // stays usable at 0 credits. The build/edit path is blocked separately in
-    // executeGeneration with a clear "out of credits" message.
-    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating) return;
-    const userMsg = input.trim();
-    const img = attachedImage;
-    const hasAttachments = attachedFiles.length > 0;
-    setInput('');
-    setAttachedImage(null);
-    if (planMode) {
-      setPendingPlan({ prompt: userMsg, image: img });
-      return;
-    }
-
+  // Everything that runs once the user has settled on "just build it" —
+  // regulated-domain notice, pre-gen dep gate, then the intent router. Pulled
+  // out of handleSend so the plan-offer gate's "Just build it" button can run
+  // the exact same path without duplicating it a third time (pendingRegulated
+  // already duplicates it once, for its own "continue" button).
+  const proceedPastPlanOffer = useCallback(async (userMsg: string, img: AttachedImage | null, hasAttachments: boolean) => {
     // ── Regulated-domain notice (non-blocking) ──────────────────────────
     // Only on new builds; skip if user already acknowledged this prompt.
     const isNewBuild = Object.keys(files ?? {}).length === 0;
@@ -1328,7 +1331,39 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // AMBIGUOUS go to the conversational lane (no credits, no build loader);
     // EDIT/BUILD go straight to generation.
     await dispatchTurn(userMsg, img, hasAttachments);
-  }, [input, attachedImage, attachedFiles, isGenerating, credits, planMode, files, dispatchTurn]);
+  }, [files, dispatchTurn]);
+
+  const handleSend = useCallback(async () => {
+    // No credits<=0 gate here — conversational messages are FREE, so the box
+    // stays usable at 0 credits. The build/edit path is blocked separately in
+    // executeGeneration with a clear "out of credits" message.
+    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating) return;
+    const userMsg = input.trim();
+    const img = attachedImage;
+    const hasAttachments = attachedFiles.length > 0;
+    setInput('');
+    setAttachedImage(null);
+    if (planMode) {
+      setPendingPlan({ prompt: userMsg, image: img });
+      return;
+    }
+
+    // ── First-build advisory offer ───────────────────────────────────────
+    // Ask once, on a genuinely new project's first message, whether the user
+    // wants to see a build plan/roadmap first — most people never discover
+    // the manual "◎ Plan" toggle above the input box on their own. Gated on
+    // `isFirstBuild` (!hasGeneratedFiles), NOT an empty-files check — every
+    // brand-new project gets an auto-seeded starter-template scaffold on
+    // mount (see the hydration effect above) so `files` is never actually
+    // empty by the time the user can type anything.
+    if (isFirstBuild && !img && !planOfferShownRef.current) {
+      planOfferShownRef.current = true;
+      setPendingPlanOffer({ prompt: userMsg, img, hasAttachments });
+      return;
+    }
+
+    await proceedPastPlanOffer(userMsg, img, hasAttachments);
+  }, [input, attachedImage, attachedFiles, isGenerating, planMode, isFirstBuild, proceedPastPlanOffer]);
 
   // Halts an in-flight generation via the ref-lifted AbortController (see
   // executeGeneration). userStoppedRef distinguishes this from the 320s
@@ -1449,12 +1484,55 @@ const storeProjectId = useEditorStore.getState().project?.id;
             fileContext={Object.entries(files).slice(0,10).map(([p,f]) => `<file path="${p}">\n${(f as any).content.slice(0,1500)}\n</file>`).join('\n\n')}
             projectId={projectId}
             onApprove={(planSpec) => {
-              const { image } = pendingPlan;
+              const { image, prompt: originalPrompt } = pendingPlan;
               setPendingPlan(null);
-              executeGeneration(planSpec, image);
+              // The model gets the full plan spec (title/approach/steps/Q&A);
+              // the chat bubble shows the user's own original words instead —
+              // a giant technical spec dumped into the thread would look
+              // nothing like a normal message.
+              executeGeneration(planSpec, image, { displayContent: originalPrompt });
             }}
             onCancel={() => setPendingPlan(null)}
           />
+        </div>
+      )}
+
+      {/* ── First-build advisory offer ────────────────────────────────── */}
+      {pendingPlanOffer && (
+        <div style={{ flexShrink:0, borderBottom:'1px solid var(--ide-border)', background:'var(--bg-base)', padding:'12px 14px', display:'flex', flexDirection:'column', gap:10 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+            <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>Want to see a plan first?</div>
+              <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
+                I can sketch the file structure and approach before writing any code — you can edit or approve it. Or I can just build it now.
+              </div>
+            </div>
+          </div>
+          <div style={{ display:'flex', gap:7 }}>
+            <button
+              onClick={() => {
+                const { prompt, img } = pendingPlanOffer;
+                setPendingPlanOffer(null);
+                setPendingPlan({ prompt, image: img });
+              }}
+              style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}
+            >
+              Show me a plan
+            </button>
+            <button
+              onClick={async () => {
+                const { prompt, img, hasAttachments } = pendingPlanOffer;
+                setPendingPlanOffer(null);
+                await proceedPastPlanOffer(prompt, img, hasAttachments);
+              }}
+              style={{ padding:'7px 14px', borderRadius:7, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text2)', fontSize:12, fontWeight:600, cursor:'pointer' }}
+            >
+              Just build it
+            </button>
+          </div>
         </div>
       )}
 
@@ -1861,7 +1939,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             />
           )}
           {/* Smart prompt suggestions — show contextual chips when input is empty */}
-          {!input && !isGenerating && !pendingGenArgs && !pendingPlan && credits > 0 && messages.length > 0 && (
+          {!input && !isGenerating && !pendingGenArgs && !pendingPlan && !pendingPlanOffer && credits > 0 && messages.length > 0 && (
             <div style={{ display: 'flex', gap: 4, padding: '6px 10px 0', flexWrap: 'wrap' }}>
               {(Object.keys(files).length > 2 || hasGeneratedFiles
                 ? [
@@ -1896,7 +1974,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={credits <= 0 ? 'No credits — questions are free; top up to build' : planMode ? 'Plan mode active — describe what to build...' : pendingGenArgs ? 'Add your keys above, or click "Build without backend"' : 'Ask anything or describe what you want to build...'}
-            disabled={isGenerating || !!pendingPlan || !!pendingGenArgs}
+            disabled={isGenerating || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer}
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:12, color:'var(--ide-text)', lineHeight:1.55, minHeight:40, maxHeight:140, overflowY:'auto', letterSpacing:'-0.01em' }}
           />
@@ -1924,7 +2002,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               onClick={isGenerating ? handleStop : handleSend}
               data-send-button="true"
               title={isGenerating ? 'Stop generating' : undefined}
-              disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs)}
+              disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer)}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
                 background: isGenerating ? 'var(--ide-red)' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--bg-overlay)' : 'var(--accent)',
