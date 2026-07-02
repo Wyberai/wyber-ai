@@ -1201,6 +1201,53 @@ async function nameNewProject(projectId: string, userPrompt: string): Promise<vo
   } catch (e) { console.error('[project-naming] failed', e) }
 }
 
+/**
+ * Rescue-persist: files are normally parsed and saved by the CLIENT after the
+ * stream ends — so a client that dies mid-stream (laptop sleep / tab suspend →
+ * ERR_NETWORK_IO_SUSPENDED, seen in the field) loses the whole build while the
+ * credits stay charged. This runs in `after()`: give a live client a short
+ * window to do its own save (visible as an updated_at bump), and only when the
+ * row stays untouched, apply the generated <file>/<edit> blocks server-side so
+ * the work is waiting in the project when the user comes back.
+ */
+async function persistGeneratedFiles(projectId: string, generatedText: string): Promise<void> {
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    const before = await db.from('projects').select('updated_at').eq('id', projectId).single()
+    if (!before.data) return
+    await new Promise(r => setTimeout(r, 8000))
+    const { data: proj } = await db.from('projects').select('files, updated_at').eq('id', projectId).single()
+    if (!proj) return
+    // updated_at moved during the window → the client is alive and saved (its
+    // save also runs sanitize passes this rescue skips) — nothing to do.
+    if (proj.updated_at !== before.data.updated_at) return
+
+    const { parseGenerationOutput, parseEditBlocks } = await import('@/lib/file-parser')
+    const { applyEdits } = await import('@/lib/patch-applier')
+    const { files: newFiles } = parseGenerationOutput(generatedText)
+    const editBlocks = parseEditBlocks(generatedText)
+    if (newFiles.length === 0 && editBlocks.length === 0) return
+
+    const langMap: Record<string, string> = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', css: 'css', html: 'html', json: 'json', vue: 'vue' }
+    const merged: Record<string, { path: string; content: string; language: string }> =
+      { ...((proj.files as Record<string, { path: string; content: string; language: string }>) ?? {}) }
+    for (const { path, content } of newFiles) {
+      const ext = path.split('.').pop() ?? ''
+      merged[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+    }
+    if (editBlocks.length > 0) {
+      const result = applyEdits(merged, editBlocks)
+      for (const [path, content] of Object.entries(result.updated)) {
+        const ext = path.split('.').pop() ?? ''
+        merged[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+      }
+    }
+    await db.from('projects').update({ files: merged, updated_at: new Date().toISOString() }).eq('id', projectId)
+    console.log(`[rescue-persist] client never saved — persisted ${newFiles.length} file(s) + ${editBlocks.length} edit(s) for ${projectId}`)
+  } catch (e) { console.error('[rescue-persist] failed', e) }
+}
+
 export async function POST(req: NextRequest) {
   // Tracks credits actually deducted so any failure path can refund exactly once.
   let deductedCost = 0
@@ -2158,14 +2205,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // narrative into durable memory would make future turns build on the lie.
     after(async () => {
       if (!generationSucceeded(generatedText, stage) || selfHeal || stage === 'plan' || !projectId) return
-      await updateProjectMemory({
-        projectId,
-        userPrompt: prompt,
-        generatedText,
-        prevMemory: projectMemory,
-        isNewBuild,
-      })
-      if (isNewBuild) await nameNewProject(projectId, prompt)
+      await Promise.all([
+        // Rescue-persist runs regardless of client fate; it detects a live
+        // client's own save and stands down (see helper above).
+        persistGeneratedFiles(projectId, generatedText),
+        (async () => {
+          await updateProjectMemory({
+            projectId,
+            userPrompt: prompt,
+            generatedText,
+            prevMemory: projectMemory,
+            isNewBuild,
+          })
+          if (isNewBuild) await nameNewProject(projectId, prompt)
+        })(),
+      ])
     })
 
     return new Response(readable, {

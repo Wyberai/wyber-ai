@@ -950,6 +950,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const genController = new AbortController();
     abortControllerRef.current = genController;
     const genTimeout = setTimeout(() => genController.abort(), 320_000);
+    // Keep the machine awake during the (minutes-long) build stream — a laptop
+    // dozing off mid-stream kills the fetch with ERR_NETWORK_IO_SUSPENDED and
+    // the whole generation is lost from the client's point of view. Best-effort:
+    // unsupported browsers just skip it (the server-side rescue-persist in
+    // /api/generate still saves the finished build for a dead client).
+    let wakeLock: { release: () => Promise<void> } | null = null;
+    try {
+      wakeLock = await (navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request('screen') ?? null;
+    } catch { /* denied or unsupported — fine */ }
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
@@ -1250,16 +1259,23 @@ const storeProjectId = useEditorStore.getState().project?.id;
     } catch (err: unknown) {
       if (!opts?.silent) {
         const isAbort = err instanceof Error && err.name === 'AbortError';
+        // fetch() surfaces a dropped connection (sleep/suspend, wifi drop, VPN
+        // blip) as a bare TypeError — the build usually FINISHES on the server
+        // and rescue-persist saves it, so point the user at reload, not retry.
+        const isNetworkDrop = !isAbort && err instanceof TypeError;
         const errMsg = isAbort
           ? (userStoppedRef.current
               ? "**Stopped.** You cancelled this build before it finished — check if your credits were deducted before trying again, and reload the project to see what (if anything) landed."
               : "**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed.")
+          : isNetworkDrop
+          ? "**Your connection dropped mid-build** (this happens when the computer sleeps or wifi blips). The build kept running on the server and gets saved to your project automatically — **wait ~30 seconds, then reload this page** and your files should be here. Only retry if nothing landed after reloading."
           : `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
         updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
         persistMessage('assistant', errMsg);
       }
     } finally {
       clearTimeout(genTimeout);
+      wakeLock?.release().catch(() => {});
       if (abortControllerRef.current === genController) abortControllerRef.current = null;
       setIsGenerating(false);
       clearStreamingContent();
