@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import { HumanSupportForm } from '@/components/shared/SupportChat'
+import { HumanSupportForm, SUPPORT_CHAT_ROUTES } from '@/components/shared/SupportChat'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -59,7 +59,11 @@ const SUGGESTED = [
 
 // Hide the marketing chatbot on app/editor/published routes.
 // '/app/' covers published user apps — they must never show our chatbot.
-const HIDDEN_ROUTES = ['/dashboard', '/project/', '/flows/', '/agent/', '/onboarding', '/app/']
+// SUPPORT_CHAT_ROUTES is spread in so this bot always yields to SupportChat on
+// logged-in surfaces — previously /settings, /flows and /agents matched BOTH
+// lists ('/flows/' ≠ '/flows', '/agent/' ≠ '/agents') and rendered two
+// overlapping bubbles.
+const HIDDEN_ROUTES = [...SUPPORT_CHAT_ROUTES, '/project/', '/agent/', '/app/']
 
 export function WyberChatbot() {
   const [open, setOpen] = useState(false)

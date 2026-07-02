@@ -68,8 +68,9 @@ export function HumanSupportForm({ transcript }: { transcript: Message[] }) {
 
 // Where this widget shows: the logged-in surfaces WyberChatbot (marketing FAQ
 // bot) hides on — EXCEPT the editor (/project/ has Wyberman) and published
-// user apps (/app/ must never show our chrome).
-const SHOWN_ROUTES = ['/dashboard', '/onboarding', '/flows', '/agents', '/settings']
+// user apps (/app/ must never show our chrome). Exported so WyberChatbot can
+// derive its hidden list from this — exactly ONE floating bubble per surface.
+export const SUPPORT_CHAT_ROUTES = ['/dashboard', '/onboarding', '/flows', '/agents', '/settings']
 
 export function SupportChat() {
   const [open, setOpen] = useState(false)
@@ -86,7 +87,7 @@ export function SupportChat() {
   // Same poll-the-path pattern as WyberChatbot: survives client-side navigations
   // that don't fire popstate.
   useEffect(() => {
-    const check = () => setVisible(SHOWN_ROUTES.some(r => window.location.pathname.startsWith(r)))
+    const check = () => setVisible(SUPPORT_CHAT_ROUTES.some(r => window.location.pathname.startsWith(r)))
     check()
     window.addEventListener('popstate', check)
     const id = setInterval(check, 500)
