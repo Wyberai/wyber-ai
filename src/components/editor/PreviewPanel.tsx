@@ -65,8 +65,16 @@ export function PreviewPanel() {
   const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
   const hasApp = Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 200
 
+  // Set when a build request arrives while another build is in flight. Without
+  // this, that request was silently DROPPED (build() early-returns on
+  // `building`) — the classic "generation finished but the preview never
+  // updated" case. The effect below re-runs build once the in-flight one ends;
+  // the content-hash check makes the re-run a no-op if nothing changed.
+  const pendingBuild = useRef(false)
+
   const build = useCallback(async (force = false) => {
-    if (!hasApp || building) return
+    if (!hasApp) return
+    if (building) { pendingBuild.current = true; return }
     const key = Object.keys(files).sort().map(p => `${p}:${hashStr((files[p] as any)?.content ?? '')}`).join('|')
     // Auto-builds skip when nothing changed; the manual Rebuild button passes
     // force=true so it always re-fetches (e.g. to pick up a new preview shell).
@@ -117,6 +125,14 @@ export function PreviewPanel() {
 
   useEffect(() => { buildRef.current = build }, [build])
 
+  // Drain the queued build request once the in-flight build finishes.
+  useEffect(() => {
+    if (!building && pendingBuild.current) {
+      pendingBuild.current = false
+      buildRef.current()
+    }
+  }, [building])
+
   useEffect(() => {
     if (prevGenerating.current && !isGenerating && hasApp) {
       buildRef.current()
@@ -135,12 +151,17 @@ export function PreviewPanel() {
     return () => { if (autoBuildTimer.current) clearTimeout(autoBuildTimer.current) }
   }, [files, hydrated, hasApp, isGenerating])
 
+  // When the current preview finished loading — runtime errors are only
+  // treated as build-breaking within a grace window after this (see handler).
+  const loadedAt = useRef(0)
+
   useEffect(() => {
     if (iframeRef.current && html) {
       iframeRef.current.src = html
       // Inject runtime error capture after iframe loads
       const iframe = iframeRef.current
       const injectErrorCapture = () => {
+        loadedAt.current = Date.now()
         try {
           const iframeWindow = iframe.contentWindow
           if (!iframeWindow) return
@@ -178,11 +199,17 @@ export function PreviewPanel() {
           setSelectedEl(picked)
         }
       }
-      // Capture runtime errors from inside the iframe
+      // Capture runtime errors from inside the iframe. Only errors within a
+      // grace window after load count as build-breaking (startup crashes /
+      // white screens). Errors thrown later — e.g. the user clicks a button
+      // with a bug in its handler — used to blank a perfectly visible preview
+      // and kick off the heal loop, which is the "preview keeps fluctuating"
+      // behavior. Those are now logged but don't tear down the preview.
       if (e.data.type === 'wyber-runtime-error') {
         const runtimeErr = `Runtime error: ${e.data.message || 'Unknown error'}${e.data.source ? ` in ${e.data.source}` : ''}${e.data.lineno ? `:${e.data.lineno}` : ''}`
         console.warn('[Preview] Runtime error caught:', runtimeErr)
-        if (!error && !fixing && !isGenerating) {
+        const withinStartupWindow = Date.now() - loadedAt.current < 15_000
+        if (!error && !fixing && !isGenerating && withinStartupWindow) {
           setError(runtimeErr)
         }
       }
@@ -412,12 +439,21 @@ Find this element in the code and apply the change.`
 
         {/* One neutral "building" overlay covers the real build AND the silent
             auto-fix retries — the user can't tell a fix happened. The error
-            screen below only shows if it genuinely can't recover (healFailed). */}
-        {(building || fixing || (error && !healFailed)) && !isGenerating && (
+            screen below only shows if it genuinely can't recover (healFailed).
+            Full-screen ONLY when there's no previous preview to show — once a
+            preview exists, rebuilds keep it on screen (no blank-out flicker)
+            with just a small pill announcing the update. */}
+        {(building || fixing || (error && !healFailed)) && !isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{MESSAGES[msgIdx]}</div>
             <div style={{ fontSize: 11, color: '#52525b' }}>Building your app…</div>
+          </div>
+        )}
+        {(building || fixing || (error && !healFailed)) && !isGenerating && html && (
+          <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
+            <div style={{ width: 12, height: 12, border: '2px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ fontSize: 11, color: '#e4e4e7', fontWeight: 600 }}>Updating preview…</span>
           </div>
         )}
 
@@ -442,7 +478,7 @@ Find this element in the code and apply the change.`
           ref={iframeRef}
           title="Wyber Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !building && !isGenerating && !error ? 'block' : 'none', background: '#09090b' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !isGenerating && !(error && healFailed) ? 'block' : 'none', background: '#09090b' }}
         />
       </div>
       <style>{`

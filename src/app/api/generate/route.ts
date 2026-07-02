@@ -1173,7 +1173,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     // NOTE: modelTier is no longer read from the client — the server picks the
     // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [] } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -1186,8 +1186,17 @@ export async function POST(req: NextRequest) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
-    // Determine action type for cost calculation
-    const isNewBuild = !fileContext || fileContext.length < 200
+    // Determine action type for cost calculation. The client sends isFirstBuild
+    // explicitly (its store knows whether this project ever completed a
+    // generation) because fileContext is NEVER small — every brand-new project
+    // is auto-seeded with a starter scaffold, so the old length heuristic
+    // classified every first build as an edit: charged 2–3 credits instead of
+    // 10, routed to Sonnet instead of Opus, skipped extended thinking, and
+    // nameNewProject never ran. Length check kept only as a fallback for
+    // clients that don't send the flag.
+    const isNewBuild = typeof isFirstBuild === 'boolean'
+      ? isFirstBuild
+      : (!fileContext || fileContext.length < 200)
     // Opt-in extended thinking: only on a genuinely fresh, one-shot build (not
     // edits, not self-heal repairs) — the one case where seeing the model's
     // architecture reasoning is worth the extra latency on every call.

@@ -891,6 +891,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
           framework, fileContext, history, knowledge: knowledgeStr, modelTier,
           userId: resolvedUserId, projectId: resolvedProjectId,
           projectType, selfHeal: isSelfHeal,
+          // The server can't infer "first build" from fileContext — the
+          // auto-seeded starter scaffold makes it non-empty on the very first
+          // message, so its length heuristic classified EVERY build as an
+          // edit (wrong price, Sonnet instead of Opus, no naming pass). Sent
+          // explicitly from the store's per-project flag instead.
+          isFirstBuild: !useEditorStore.getState().hasGeneratedFiles,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
           attachedText: attachedTextPayload.length ? attachedTextPayload : undefined,
