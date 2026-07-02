@@ -106,7 +106,7 @@ CREDITS & PLANS:
 - Scale ($799/mo): 10,000 credits/month — all features unlocked
 - No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
-- Web/mobile app build: 10 credits | App edit: 3 credits
+- Web/mobile app build: 30 credits | App edit: 2 credits | Build plan: 5 credits
 - AI Employee run: 5 credits | Agent run: 5 credits | Workflow run: 2 credits
 - GTM campaign action: 3 credits | Lead enrichment: 1 credit per contact | Image: 3 credits
 - Always free: templates, self-healing, export, deploy, GitHub push
@@ -1145,16 +1145,28 @@ async function updateProjectMemory(opts: {
 async function nameNewProject(projectId: string, userPrompt: string): Promise<void> {
   if (!projectId || !userPrompt.trim()) return
   try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    // Fallback only — the primary rename happens at creation time via
+    // /api/projects/auto-name. Never overwrite a name the user (or the
+    // creation-time pass) already set: only fire while the name is still the
+    // raw prompt slice or the "New Project HH:MM" default.
+    const { data: project } = await db.from('projects').select('name, initial_prompt').eq('id', projectId).single()
+    if (!project) return
+    const autoNames = [
+      userPrompt.slice(0, 40).trim(),
+      String(project.initial_prompt ?? '').slice(0, 40).trim(),
+    ].filter(Boolean)
+    const stillAuto = autoNames.includes(project.name) || /^New Project /.test(project.name ?? '')
+    if (!stillAuto) return
     const res = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 20,
-      system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, no the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
+      system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, not the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
       messages: [{ role: 'user', content: userPrompt.slice(0, 500) }],
     })
     const name = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').trim().slice(0, 60)
     if (!name) return
-    const { createServiceClient } = await import('@/lib/supabase/server')
-    const db = createServiceClient()
     await db.from('projects').update({ name }).eq('id', projectId)
   } catch (e) { console.error('[project-naming] failed', e) }
 }

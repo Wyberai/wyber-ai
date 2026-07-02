@@ -1,5 +1,6 @@
 'use client'
 import { CreditEstimateBar } from '@/components/shared/CreditEstimateBar'
+import { creditCost } from '@/lib/credits';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
@@ -468,12 +469,26 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     }
     if (!promptToRun) return;
     sessionStorage.removeItem(key);
+    // Name the project from its prompt RIGHT NOW, independent of the build.
+    // The old rename lived in the generate route's after() hook behind
+    // first-build detection, which proved unreliable (any files saved to the
+    // DB flip it forever) — so projects kept the raw prompt slice as a name.
+    // The route no-ops if the user already renamed the project manually.
+    fetch('/api/projects/auto-name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: resolvedProjectId, prompt: promptToRun }),
+    }).then(r => r.json()).then(d => {
+      if (!d?.name) return;
+      const p = useEditorStore.getState().project;
+      if (p && p.name !== d.name) setProject({ ...p, name: d.name });
+    }).catch(() => { /* best-effort — worst case the name stays as-is */ });
     const timer = setTimeout(() => {
       setInput(promptToRun);
       window.dispatchEvent(new CustomEvent('wyber_auto_generate', { detail: { prompt: promptToRun } }));
     }, 800);
     return () => clearTimeout(timer);
-  }, [resolvedProjectId, hasInit, hasGeneratedFiles, initialPrompt]);
+  }, [resolvedProjectId, hasInit, hasGeneratedFiles, initialPrompt, setProject]);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => {
@@ -1543,7 +1558,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               }}
               style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}
             >
-              Show me a plan
+              Show me a plan ({creditCost('plan', 'default')} credits)
             </button>
             <button
               onClick={async () => {

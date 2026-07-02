@@ -21,7 +21,7 @@ interface ProposedFix {
 }
 
 const GREETING = "Hey, I'm Wyberman. Stuck, confused, or hit an error? Ask me anything about this project."
-const SECURITY_COST = creditCost('web-build', 'default')
+const SECURITY_COST = creditCost('security-scan', 'default')
 const LANG_MAP: Record<string, string> = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', css: 'css', html: 'html', json: 'json' }
 const SEVERITY_ICON: Record<string, string> = { critical: '\u{1F534}', high: '\u{1F7E0}', medium: '\u{1F7E1}', low: '\u{1F535}' }
 

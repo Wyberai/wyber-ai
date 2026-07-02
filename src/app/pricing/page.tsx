@@ -98,15 +98,16 @@ const PLANS = [
 ]
 
 const TOPUPS = [
-  { credits: 200,  price: 19,  key: 'topup_200',  label: 'Boost',  desc: '~20 web builds' },
-  { credits: 600,  price: 49,  key: 'topup_600',  label: 'Power',  desc: '~60 web builds' },
-  { credits: 2000, price: 99,  key: 'topup_2000', label: 'Studio', desc: '~200 web builds', badge: 'Best value' as string | undefined },
+  { credits: 200,  price: 19,  key: 'topup_200',  label: 'Boost',  desc: '~6 web builds' },
+  { credits: 600,  price: 49,  key: 'topup_600',  label: 'Power',  desc: '~20 web builds' },
+  { credits: 2000, price: 99,  key: 'topup_2000', label: 'Studio', desc: '~66 web builds', badge: 'Best value' as string | undefined },
 ]
 
 const CREDIT_TABLE = [
-  { action: 'Web app build (from scratch)',  cost: '10 credits', icon: '🌐' },
-  { action: 'Mobile app build',              cost: '10 credits', icon: '📱' },
-  { action: 'App edit / iteration',          cost: '3 credits',  icon: '✏️' },
+  { action: 'Web app build (from scratch)',  cost: '30 credits', icon: '🌐' },
+  { action: 'Mobile app build',              cost: '30 credits', icon: '📱' },
+  { action: 'App edit / iteration',          cost: '2 credits',  icon: '✏️' },
+  { action: 'Build plan (Plan Mode)',        cost: '5 credits',  icon: '🗺️' },
   { action: 'Image generation',              cost: '3 credits',  icon: '🎨' },
   { action: 'Deploy / publish',              cost: 'Free',       icon: '🚀' },
   { action: 'GitHub push / ZIP export',      cost: 'Free',       icon: '📦' },
@@ -473,7 +474,7 @@ export default function PricingPage() {
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
-              ['What counts as a credit?', 'Building a web or mobile app from scratch costs 10 credits. Each edit or iteration costs 3 credits. Image generation costs 3 credits. Deploy, publish, GitHub push, ZIP export, and auto error fixes are always free. Top-up packs can be added anytime and never expire.'],
+              ['What counts as a credit?', 'Building a web or mobile app from scratch costs 30 credits. Each edit or iteration costs 2 credits. A build plan costs 5 credits and image generation costs 3 credits. Deploy, publish, GitHub push, ZIP export, and auto error fixes are always free. Top-up packs can be added anytime and never expire.'],
               ['Are features locked behind higher plans?', 'No. Every plan unlocks all features — web apps, mobile apps, Supabase integration, 48 connectors, deploy, GitHub sync. The only difference is how many credits you get.'],
               ['Do credits roll over?', 'Yes. Unused credits carry forward every billing cycle indefinitely as long as your subscription is active.'],
               ['What tools can AI employees use?', 'Gmail, Slack, HubSpot, Notion, Google Calendar, Google Sheets, LinkedIn, Airtable, GitHub, and 20+ more via Composio. All integrations are available on every plan.'],

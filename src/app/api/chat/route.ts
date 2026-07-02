@@ -22,7 +22,7 @@ HELPING USERS:
 - Web App stuck? Describe what you want in the chat, wait for preview, then iterate with edits
 - Mobile App stuck? Describe screens, install Expo Go on your phone, scan QR to preview
 - Build errors? Click "Send to AI" — self-healing fixes it automatically
-- Credits? Web/mobile build = 10 credits, edit = 3 credits, deploy/export = free
+- Credits? Web/mobile build = 30 credits, edit = 2 credits, build plan = 5 credits, deploy/export = free
 
 PRICING (3 plans):
 - Starter: $29/month — 150 credits

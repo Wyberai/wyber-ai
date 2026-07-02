@@ -11,7 +11,7 @@ export default function Page() {
       intro="From sign-up to a live, shareable web app — this walkthrough covers the exact steps."
       requirements={[
         { label: 'A WyberAi account', note: 'free, sign up at wyberai.com/signup' },
-        { label: '10 credits', note: 'new accounts start with 15 credits (plus 3 daily)' },
+        { label: '30 credits', note: 'new accounts start with 50 credits (plus 3 daily)' },
       ]}
     >
       <DocSection title="Step-by-step">
@@ -36,7 +36,7 @@ export default function Page() {
               Build a CRM dashboard with a contacts table, a deal pipeline board with drag-and-drop stages, and a sidebar nav. Use a dark theme with blue accents.
             </div>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, marginTop: 8 }}>
-              A credit estimate is shown before you generate — 10 credits for a standard web app build. Click <strong>Generate</strong> when you're ready.
+              A credit estimate is shown before you generate — 30 credits for a standard web app build. Click <strong>Generate</strong> when you're ready.
             </p>
             <ScreenshotPlaceholder label="Prompt input + credit estimate" />
           </Step>
@@ -48,7 +48,7 @@ export default function Page() {
           </Step>
           <Step n={5} title="Preview and iterate">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Once generation is complete, click any element in the preview to select it and describe a change — this uses <strong>click-to-edit</strong> mode. Or type a follow-up prompt in the chat panel to change a whole section. Each edit costs 3 credits and is non-destructive — you can always go back to the previous version.
+              Once generation is complete, click any element in the preview to select it and describe a change — this uses <strong>click-to-edit</strong> mode. Or type a follow-up prompt in the chat panel to change a whole section. Each edit costs 2 credits and is non-destructive — you can always go back to the previous version.
             </p>
             <ScreenshotPlaceholder label="Preview pane + chat panel" />
           </Step>

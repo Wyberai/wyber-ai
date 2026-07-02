@@ -11,6 +11,8 @@ export type ActionType =
   | 'component'
   | 'web-build'
   | 'mobile-build'
+  | 'plan'
+  | 'security-scan'
   | 'agent-create'
   | 'agent-run'
   | 'workflow-create'
@@ -55,10 +57,12 @@ export const MODEL_META: Record<ModelTier, {
  * Multiply by MODEL_MULTIPLIERS[tier] and round.
  */
 const BASE_COSTS: Record<ActionType, number> = {
-  'small-edit':         3,
-  'component':          5,
-  'web-build':         10,
-  'mobile-build':      10,
+  'small-edit':         2,
+  'component':          8,
+  'web-build':         30,
+  'mobile-build':      30,
+  'plan':               5,
+  'security-scan':     10,
   'agent-create':       5,
   'agent-run':          5,
   'workflow-create':    2,

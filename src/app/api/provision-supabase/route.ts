@@ -1,68 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { NextResponse } from 'next/server'
 
-const SUPABASE_MGMT_TOKEN = process.env.SUPABASE_MANAGEMENT_TOKEN
-const SUPABASE_ORG_ID = process.env.SUPABASE_ORG_ID
-
-export async function POST(req: NextRequest) {
-  try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-
-    if (!SUPABASE_MGMT_TOKEN || !SUPABASE_ORG_ID) {
-      return NextResponse.json({ error: 'Supabase provisioning not configured' }, { status: 503 })
-    }
-
-    const { projectId, projectName } = await req.json()
-
-    // Create a new Supabase project via Management API
-    const dbPassword = Math.random().toString(36).slice(2, 18) + Math.random().toString(36).slice(2, 18)
-    const projectSlug = `wyber-${user.id.slice(0, 8)}-${Date.now().toString(36)}`
-
-    const createRes = await fetch('https://api.supabase.com/v1/projects', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${SUPABASE_MGMT_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: `Wyber - ${projectName || 'My App'}`,
-        organization_id: SUPABASE_ORG_ID,
-        plan: 'free',
-        region: 'us-east-1',
-        db_pass: dbPassword,
-        desired_instance_size: 'micro',
-      }),
-    })
-
-    if (!createRes.ok) {
-      const err = await createRes.text()
-      return NextResponse.json({ error: `Provisioning failed: ${err}` }, { status: 500 })
-    }
-
-    const project = await createRes.json()
-
-    // Save to our DB
-    await supabase.from('supabase_projects').insert({
-      wyber_project_id: projectId,
-      user_id: user.id,
-      supabase_project_id: project.id,
-      supabase_url: `https://${project.id}.supabase.co`,
-      anon_key: project.anon_key,
-      service_key: project.service_role_key,
-      db_password: dbPassword,
-      status: 'provisioning',
-    })
-
-    return NextResponse.json({
-      supabaseUrl: `https://${project.id}.supabase.co`,
-      anonKey: project.anon_key,
-      projectId: project.id,
-      status: 'provisioning',
-      message: 'Supabase project created! Ready in ~30 seconds.',
-    })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
-  }
+/**
+ * DISABLED — do not re-enable without metering.
+ *
+ * This route used to create Supabase projects inside WyberAi's OWN org
+ * (SUPABASE_ORG_ID + platform management token), which put every customer
+ * database on the platform owner's Supabase bill (~$10/mo compute per project
+ * on a paid org) with generic names nobody could tell apart from real
+ * platform infrastructure.
+ *
+ * The supported flow is the OAuth connect (/api/connectors/supabase/*): the
+ * user links their own Supabase account and we create/link projects in THEIR
+ * org — free for them on Supabase's free tier, zero cost to us, and they own
+ * their data.
+ *
+ * If a managed "we host it for you" offering (Lovable Cloud-style) is ever
+ * wanted, it must charge credits per provisioned project + monthly upkeep
+ * before this is turned back on.
+ */
+export async function POST() {
+  return NextResponse.json({
+    error: 'Auto-provisioning is no longer available. Connect your own Supabase account instead — click "Connect Supabase" in the editor to link or create a project (free on Supabase\'s free tier).',
+  }, { status: 410 })
 }

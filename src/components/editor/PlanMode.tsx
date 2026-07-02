@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { creditCost } from '@/lib/credits';
+import { useEditorStore } from '@/store/editor';
 
 type IconKey = 'auth' | 'dashboard' | 'list' | 'board' | 'payment' | 'settings' | 'search' | 'chat' | 'calendar' | 'profile' | 'notification' | 'upload' | 'map' | 'analytics' | 'landing' | 'other';
 
@@ -170,6 +172,12 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      // Mirror the server-side plan charge in the local balance so the credit
+      // pill is honest without a page reload.
+      if (typeof data.creditsCharged === 'number' && data.creditsCharged > 0) {
+        const st = useEditorStore.getState();
+        st.setCredits(Math.max(0, st.credits - data.creditsCharged));
+      }
       setPlan(data);
       setStage('plan');
     } catch (err) {
@@ -300,7 +308,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
               {plan.complexity}
             </span>
             <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: 'var(--accent-glow, rgba(14,165,233,0.1))', color: 'var(--accent, #0EA5E9)', fontWeight: 600 }}>
-              {plan.estimatedCredits} credit{plan.estimatedCredits !== 1 ? 's' : ''}
+              ~{plan.estimatedCredits} credits incl. iterations
             </span>
           </div>
         </div>
@@ -448,7 +456,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
             title={plan.features.length === 0 ? 'Add at least one feature first' : undefined}
             style={{ flex: 1, justifyContent: 'center', fontSize: 13, background: plan.features.length > 0 ? 'var(--accent, #0EA5E9)' : 'var(--bg-overlay, rgba(255,255,255,0.08))', color: plan.features.length > 0 ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: 8, padding: '9px', fontWeight: 700, cursor: plan.features.length > 0 ? 'pointer' : 'not-allowed' }}
           >
-            ⚡ Build this plan ({plan.estimatedCredits} credit{plan.estimatedCredits !== 1 ? 's' : ''})
+            ⚡ Build this plan ({creditCost('web-build', 'default')} credits)
           </button>
           <button onClick={onCancel} className="btn btn-ghost" style={{ fontSize: 13, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
         </div>

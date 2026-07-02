@@ -143,33 +143,14 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
 
   const handleAdd = async (connector: typeof CONNECTORS[0]) => {
     if (connector.id === 'supabase') {
-      setAdding(connector.id);
-      // Auto-provision Supabase — no signup required
-      try {
-        const project = useEditorStore.getState().project;
-        const res = await fetch('/api/provision-supabase', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId: project?.id, projectName: project?.name }),
-        });
-        const data = await res.json();
-        if (res.ok) {
-          // Save connector so the store picks it up
-          await fetch('/api/connectors', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: project?.id, service: 'supabase', apiKey: data.anonKey, config: { url: data.supabaseUrl, ref: data.projectId } }),
-          });
-          useEditorStore.getState().setConnectors([...useEditorStore.getState().connectors, { service: 'supabase', config: { url: data.supabaseUrl }, connected_at: new Date().toISOString() }]);
-          sendToChat('wyber:chat-prompt', connector.prompt);
-        } else {
-          // Fallback: open the Supabase connector modal
-          window.dispatchEvent(new CustomEvent('wyber-open-supabase'));
-        }
-      } catch {
-        window.dispatchEvent(new CustomEvent('wyber-open-supabase'));
-      }
-      setAdding(null);
+      // Open the OAuth connect modal: the user links or creates a project in
+      // THEIR OWN Supabase org (their free tier — costs them nothing for the
+      // first two projects). The old path auto-provisioned into WyberAi's
+      // platform org via /api/provision-supabase, which put every customer
+      // database on OUR Supabase bill (~$10/mo each on a paid org) with
+      // generic names nobody could tell apart. Never bring that back without
+      // metering it as a paid, credit-charged managed offering.
+      window.dispatchEvent(new CustomEvent('wyber-open-supabase'));
       return;
     }
 

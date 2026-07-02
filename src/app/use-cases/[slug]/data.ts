@@ -109,7 +109,7 @@ export const USE_CASES: UseCase[] = [
       { q: 'Can I add payments (Stripe)?', a: 'You can ask WyberAi to add a Stripe checkout flow in chat. It generates the frontend components. For backend webhook handling, you\'d need to add a few lines of server code or use Supabase Edge Functions.' },
       { q: 'Who owns the code?', a: 'You do. Export the full source code anytime. It\'s standard React + Vite — take it to any developer, any hosting provider, or your own GitHub repo.' },
       { q: 'How do I handle my own domain?', a: 'Connect a custom domain in Settings → Domains. Or use your free yourapp.wyberai.app subdomain while you\'re in development.' },
-      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 150 credits/month). Web and mobile builds cost 10 credits; edits cost 3 credits. Done-for-you builds start at $199.' },
+      { q: 'What does it cost to build a SaaS with WyberAi?', a: 'Plans start at $29/month (Starter: 150 credits/month). Web and mobile builds cost 30 credits; edits cost 2 credits. Done-for-you builds start at $199.' },
     ],
   },
   {

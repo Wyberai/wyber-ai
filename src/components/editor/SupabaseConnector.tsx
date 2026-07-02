@@ -86,7 +86,9 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
   }
 
   async function createNew() {
-    const name = window.prompt('Name for the new Supabase project:')
+    // Default to the app's name so the project is identifiable in the user's
+    // Supabase dashboard instead of another generic "My App".
+    const name = window.prompt('Name for the new Supabase project:', project?.name || '')
     if (!name) return
     const dbPass = window.prompt('Database password (save it somewhere safe):')
     if (!dbPass) return

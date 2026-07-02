@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@/lib/supabase/server';
-import { MODEL_IDS } from '@/lib/credits';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { MODEL_IDS, creditCost } from '@/lib/credits';
 import { detectDeps } from '@/lib/detect-deps';
 import { rateLimit } from '@/lib/rate-limit';
 
@@ -86,17 +86,63 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  // Planning is intentionally free (no credit deduction) so it stays
-  // low-friction — but "free" + "no cap" on an Opus-tier, thinking-enabled
-  // call is a real cost-abuse vector, not just a theoretical one. A generous
-  // per-user cap covers genuine iterate-on-your-idea usage while stopping a
-  // scripted loop from generating unlimited paid AI calls for free.
+  // The clarifying-questions phase stays free (cheap Sonnet pass), but the
+  // rate limit still applies to both phases so a scripted loop can't farm
+  // unlimited paid AI calls.
   const { allowed } = rateLimit(`plan:${user.id}`, 20, 60 * 60 * 1000);
   if (!allowed) {
     return NextResponse.json({ error: "You've hit the planning limit for this hour — try again shortly, or just describe what to build directly in chat." }, { status: 429 });
   }
 
   const { prompt, framework, fileContext, phase, answers } = await req.json();
+
+  // The actual plan (phase 2) is a paid action: it's an Opus-tier,
+  // thinking-enabled call. Deducted up front, refunded if the call fails —
+  // same money invariant as /api/generate: never charge for nothing.
+  let deducted = 0;
+  const PLAN_COST = creditCost('plan', 'default');
+  if (phase !== 'questions') {
+    const admin = await createAdminClient();
+    const { data: profile } = await admin.from('profiles').select('credits').eq('id', user.id).single();
+    const balance = profile?.credits ?? 0;
+    if (balance < PLAN_COST) {
+      return NextResponse.json({
+        error: `Not enough credits. A build plan costs ${PLAN_COST} credits and you have ${balance}.`,
+        needed: PLAN_COST, balance,
+      }, { status: 402 });
+    }
+    // Atomic deduct — only succeeds if credits still >= cost
+    const { data: updated, error: deductErr } = await admin
+      .from('profiles')
+      .update({ credits: balance - PLAN_COST, updated_at: new Date().toISOString() })
+      .eq('id', user.id)
+      .gte('credits', PLAN_COST)
+      .select('credits')
+      .single();
+    if (deductErr || !updated) {
+      return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
+    }
+    deducted = PLAN_COST;
+    admin.from('credit_usage').insert({
+      user_id: user.id, amount: PLAN_COST, reason: 'plan',
+      credits_before: balance, credits_after: updated.credits,
+    }).then(() => {}, () => {});
+  }
+  const refund = async (reason: string) => {
+    if (deducted <= 0) return;
+    const amount = deducted;
+    deducted = 0;
+    try {
+      const admin = await createAdminClient();
+      const { data: prof } = await admin.from('profiles').select('credits').eq('id', user.id).single();
+      const current = prof?.credits ?? 0;
+      await admin.from('profiles').update({ credits: current + amount, updated_at: new Date().toISOString() }).eq('id', user.id);
+      admin.from('credit_usage').insert({
+        user_id: user.id, amount: -amount, reason: `refund:${reason}`,
+        credits_before: current, credits_after: current + amount,
+      }).then(() => {}, () => {});
+    } catch (e) { console.error('[plan-refund] failed', e); }
+  };
 
   try {
     // ── Phase 1: questions only ─────────────────────────────────────────
@@ -140,7 +186,7 @@ Scale the NUMBER of features to the real scope — do not compress a genuinely l
 - Medium app: 4-6 features.
 - Complex/enterprise app (multiple departments, roles, or workflows): 6-10 features — give each distinct part of the system its own entry rather than bundling several into one vague feature just to stay under a low count.
 
-Keep every feature meaningfully distinct either way — more features should mean more real coverage, not filler. estimatedCredits: 1 simple, 2 medium, 3 complex. Pick the closest "icon" category for each feature/screen from the allowed enum — use "other"/"landing" only if nothing else fits.
+Keep every feature meaningfully distinct either way — more features should mean more real coverage, not filler. estimatedCredits: set to 0 (the server computes the real cost from pricing — never invent a number). Pick the closest "icon" category for each feature/screen from the allowed enum — use "other"/"landing" only if nothing else fits.
 ${knownDeps.length > 0 ? `\nAlready detected as needed: ${knownDeps.join(', ')}. Include these in "integrations".` : ''}`;
 
     const userText = `User wants to build: ${prompt}${qaLines ? `\n\nClarifications:\n${qaLines}` : ''}`;
@@ -161,8 +207,16 @@ ${knownDeps.length > 0 ? `\nAlready detected as needed: ${knownDeps.join(', ')}.
     const textBlock = msg.content.find((b): b is Anthropic.TextBlock => b.type === 'text');
     if (!textBlock) throw new Error('Model returned no text output');
     const plan = JSON.parse(textBlock.text);
-    return NextResponse.json(plan);
+    // estimatedCredits comes from OUR price sheet, never the model — the model
+    // used to guess "1-3 credits" for a whole app, wildly misquoting the real
+    // build cost. Estimate = one from-scratch build + a few expected iterations
+    // scaled by complexity.
+    const iterCost = creditCost('small-edit', 'default');
+    const expectedIters = plan.complexity === 'complex' ? 5 : plan.complexity === 'medium' ? 2 : 0;
+    plan.estimatedCredits = creditCost('web-build', 'default') + expectedIters * iterCost;
+    return NextResponse.json({ ...plan, creditsCharged: deducted });
   } catch (err) {
+    await refund('plan-failed');
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
 }

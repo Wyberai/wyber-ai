@@ -1,7 +1,7 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SupabaseConnector } from './SupabaseConnector';
 
 interface Props {
@@ -61,6 +61,16 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState('');
+
+  // Several places (ConnectorsPanel, SupabasePanel, PreviewPanel's "Connect
+  // Supabase →") dispatch this event to open the Supabase connect modal — the
+  // modal lives here, so this is where the listener has to be. Before this,
+  // the event had NO listener anywhere: those buttons were silent no-ops.
+  useEffect(() => {
+    const open = () => setShowSupabase(true);
+    window.addEventListener('wyber-open-supabase', open);
+    return () => window.removeEventListener('wyber-open-supabase', open);
+  }, []);
 
   const openSnapshots = async () => {
     if (!projectId) return;

@@ -11,8 +11,9 @@ export default function CreditsPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.02em' }}>What uses credits</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[
-            ['Web / mobile app build', '10 credits', 'Full-stack React or React Native app generated'],
-            ['App edit / iteration', '3 credits', 'Any change, fix, or refinement to an existing build'],
+            ['Web / mobile app build', '30 credits', 'Full-stack React or React Native app generated'],
+            ['App edit / iteration', '2 credits', 'Any change, fix, or refinement to an existing build'],
+            ['Build plan (Plan Mode)', '5 credits', 'Feature/flow plan you can edit before building'],
             ['AI Agent run', '5 credits', 'Run any of the 5,000+ pre-built agents'],
             ['AI Employee run', '5 credits', 'Scheduled autonomous employee run'],
             ['Workflow run', '2 credits', 'Trigger a visual automation flow'],
