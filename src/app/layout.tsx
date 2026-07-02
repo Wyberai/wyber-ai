@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from '@/lib/theme';
 import { CookieBanner } from '@/components/shared/CookieBanner';
 import { WyberChatbot } from '@/components/shared/WyberChatbot';
+import { SupportChat } from '@/components/shared/SupportChat';
 import { CommandPalette } from '@/components/shared/CommandPalette';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
@@ -154,6 +155,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CookieBanner />
           <CommandPalette />
           <Suspense fallback={null}><WyberChatbot /></Suspense>
+          {/* Logged-in surfaces (dashboard etc.) — AI support + human escalation to Slack */}
+          <Suspense fallback={null}><SupportChat /></Suspense>
         </PostHogProvider>
       </body>
     </html>

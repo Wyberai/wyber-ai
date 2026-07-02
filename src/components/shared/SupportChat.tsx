@@ -4,15 +4,94 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
+// Shared "Talk to a human" escalation form — posts to /api/support/escalate,
+// which lands in the team Slack (email fallback). Reused by SupportChat and
+// the marketing-site WyberChatbot so there is exactly one escalation flow.
+export function HumanSupportForm({ transcript }: { transcript: Message[] }) {
+  const [email, setEmail] = useState('')
+  const [msg, setMsg] = useState('')
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [error, setError] = useState('')
+
+  const submit = async () => {
+    if (state === 'sending') return
+    setState('sending'); setError('')
+    try {
+      const res = await fetch('/api/support/escalate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, message: msg, transcript,
+          page: typeof window !== 'undefined' ? window.location.pathname : '',
+        }),
+      })
+      const d = await res.json()
+      if (!res.ok) { setState('error'); setError(d.error || 'Could not send — try again.'); return }
+      setState('sent')
+    } catch {
+      setState('error'); setError('Network error — try again.')
+    }
+  }
+
+  if (state === 'sent') {
+    return (
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px 14px', textAlign: 'center' }}>
+        <div style={{ fontSize: 28, marginTop: 40 }}>✅</div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa', marginTop: 8 }}>Sent to the team</div>
+        <div style={{ fontSize: 12, color: '#a1a1aa', marginTop: 6, lineHeight: 1.6 }}>We got your message and will reply to <strong style={{ color: '#d4d4d8' }}>{email}</strong> — usually within a few hours.</div>
+      </div>
+    )
+  }
+  return (
+    <div style={{ flex: 1, overflow: 'auto', padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ fontSize: 12, color: '#a1a1aa', lineHeight: 1.6 }}>Leave your email and what you need — it lands directly in the team&apos;s Slack and we reply by email.</div>
+      <input
+        type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@company.com"
+        style={{ padding: '9px 11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }}
+      />
+      <textarea
+        value={msg} onChange={e => setMsg(e.target.value)} placeholder="What do you need help with?" rows={4}
+        style={{ padding: '9px 11px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#18181b', color: '#fafafa', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit' }}
+      />
+      {error && <div style={{ fontSize: 11.5, color: '#f87171' }}>{error}</div>}
+      <button
+        onClick={submit}
+        disabled={state === 'sending' || !email.trim() || !msg.trim()}
+        style={{ padding: '10px 0', borderRadius: 10, border: 'none', background: email.trim() && msg.trim() && state !== 'sending' ? '#0EA5E9' : '#27272a', color: '#fff', fontSize: 13, fontWeight: 700, cursor: email.trim() && msg.trim() && state !== 'sending' ? 'pointer' : 'not-allowed' }}
+      >
+        {state === 'sending' ? 'Sending…' : 'Send to the team'}
+      </button>
+      <div style={{ fontSize: 11, color: '#52525b' }}>Your AI chat is attached for context.</div>
+    </div>
+  )
+}
+
+// Where this widget shows: the logged-in surfaces WyberChatbot (marketing FAQ
+// bot) hides on — EXCEPT the editor (/project/ has Wyberman) and published
+// user apps (/app/ must never show our chrome).
+const SHOWN_ROUTES = ['/dashboard', '/onboarding', '/flows', '/agents', '/settings']
+
 export function SupportChat() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hi! I\'m Wyber — your AI assistant. Ask me anything about building apps, templates, pricing, or troubleshooting.' }
+    { role: 'assistant', content: 'Hi! I\'m Wyber — your AI assistant. Ask me anything about building apps, pricing, or troubleshooting. Need a person? Tap "Talk to a human" above.' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [humanMode, setHumanMode] = useState(false)
+  const [visible, setVisible] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  // Same poll-the-path pattern as WyberChatbot: survives client-side navigations
+  // that don't fire popstate.
+  useEffect(() => {
+    const check = () => setVisible(SHOWN_ROUTES.some(r => window.location.pathname.startsWith(r)))
+    check()
+    window.addEventListener('popstate', check)
+    const id = setInterval(check, 500)
+    return () => { window.removeEventListener('popstate', check); clearInterval(id) }
+  }, [])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -55,6 +134,8 @@ export function SupportChat() {
     setLoading(false)
   }
 
+  if (!visible) return null
+
   return (
     <>
       {/* Bubble */}
@@ -63,8 +144,7 @@ export function SupportChat() {
         style={{
           position: 'fixed', bottom: 24, right: 24, zIndex: 9999,
           width: 52, height: 52, borderRadius: '50%',
-          background: '#09090b', border: '2px solid rgba(14,165,233,0.4)',
-          border: 'none', cursor: 'pointer',
+          background: '#09090b', border: 'none', cursor: 'pointer',
           boxShadow: '0 4px 20px rgba(14,165,233,0.4)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'all 0.2s',
@@ -92,16 +172,26 @@ export function SupportChat() {
           {/* Header */}
           <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#0EA5E9,#0284C7)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><WyberLogo markSize={26} showWordmark={false} /></div>
-            <div>
+            <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Wyber Support</div>
               <div style={{ fontSize: 11, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} />
                 Online · Typically replies instantly
               </div>
             </div>
+            <button
+              onClick={() => setHumanMode(m => !m)}
+              style={{ fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: humanMode ? 'rgba(14,165,233,0.12)' : 'transparent', color: humanMode ? '#0EA5E9' : '#a1a1aa', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              {humanMode ? '← Back to AI' : '👋 Talk to a human'}
+            </button>
           </div>
 
-          {/* Messages */}
+          {/* Human escalation form */}
+          {humanMode && <HumanSupportForm transcript={messages} />}
+
+          {/* Messages + input (AI mode) */}
+          {!humanMode && (<>
           <div style={{ flex: 1, overflow: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((m, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
@@ -138,6 +228,7 @@ export function SupportChat() {
               {loading ? '●' : '↑'}
             </button>
           </div>
+          </>)}
         </div>
       )}
 

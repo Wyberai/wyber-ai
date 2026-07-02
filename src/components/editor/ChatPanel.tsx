@@ -448,7 +448,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // Brand new project — seed starter template + greeting (skip if no template for this framework)
     const template = STARTER_TEMPLATES[framework];
     if (template) setFiles(template);
-    const greeting = { id: uid(), role:'assistant' as const, content:`**WyberAi ready** — describe what to build, paste a screenshot, or pick a template.`, timestamp:Date.now(), status:'done' as const };
+    const greeting = { id: uid(), role:'assistant' as const, content:`**WyberAi ready** — describe what you want to build, or paste a screenshot to match.`, timestamp:Date.now(), status:'done' as const };
     addMessage(greeting);
   }, [hydrated, hasInit, files, messages, framework, setFiles, addMessage]);
 

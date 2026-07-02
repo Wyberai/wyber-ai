@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { HumanSupportForm } from '@/components/shared/SupportChat'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -67,6 +68,7 @@ export function WyberChatbot() {
   const [loading, setLoading] = useState(false)
   const [hasGreeted, setHasGreeted] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
+  const [humanMode, setHumanMode] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -145,8 +147,15 @@ export function WyberChatbot() {
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e' }} /> Online
               </div>
             </div>
-            <button onClick={() => setOpen(false)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>
+            <button
+              onClick={() => setHumanMode(m => !m)}
+              style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.12)', background: humanMode ? 'rgba(14,165,233,0.12)' : 'transparent', color: humanMode ? '#0EA5E9' : '#a1a1aa', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              {humanMode ? '← Back to AI' : '👋 Human'}
+            </button>
+            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 4 }}>×</button>
           </div>
+          {humanMode ? <HumanSupportForm transcript={messages} /> : <>
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {messages.map((msg, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
@@ -176,6 +185,7 @@ export function WyberChatbot() {
           <div style={{ textAlign: 'center', padding: '6px 0 10px', fontSize: 10, color: '#3f3f46' }}>
             Powered by WyberAi · <a href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none' }}>Start building free →</a>
           </div>
+          </>}
         </div>
       )}
       <button onClick={() => setOpen(v => !v)} style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '50%', border: 'none', background: '#0EA5E9', boxShadow: '0 8px 32px rgba(14,165,233,0.4)', cursor: 'pointer', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} aria-label="Chat with WyberAi">

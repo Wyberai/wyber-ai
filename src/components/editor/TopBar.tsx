@@ -1,7 +1,7 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SupabaseConnector } from './SupabaseConnector';
 
 interface Props {
@@ -25,7 +25,13 @@ function WyberIcon() {
 
 export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Props = {}) {
   const { project, setProject, isGenerating, credits, files } = useEditorStore();
-  const displayCredits = initialProfile?.credits ?? credits;
+  // initialProfile.credits is server-rendered and STATIC — it must only cover
+  // the first paint, before IDELayout seeds the store. Once the store matches
+  // it (seeded), latch onto the store value forever: ChatPanel refreshes it
+  // after every charge, so the counter stays live instead of frozen.
+  const creditsLive = useRef(false);
+  if (initialProfile?.credits === undefined || credits === initialProfile.credits) creditsLive.current = true;
+  const displayCredits = creditsLive.current ? credits : (initialProfile?.credits ?? credits);
   const [exporting, setExporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [deploySecs, setDeploySecs] = useState(0);
@@ -87,6 +93,10 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     const t = setTimeout(() => { setShowShareModal(false); setRepublished(false); }, 2000);
     return () => clearTimeout(t);
   }, [republished]);
+
+  // Any edit after a publish makes the live site stale again — drop the
+  // "✓ Done" state so the button reads "Re-publish with latest changes".
+  useEffect(() => { setRepublished(false); }, [files]);
 
   const openSnapshots = async () => {
     if (!projectId) return;
