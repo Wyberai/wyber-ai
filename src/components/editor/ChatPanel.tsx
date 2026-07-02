@@ -661,10 +661,56 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     Array.from(e.dataTransfer.files || []).forEach(handleFile);
   }, [handleFile]);
 
-  const saveProject = useCallback(async (updatedFiles: typeof files) => {
+  // A failed save used to be swallowed with `.catch(() => {})` — one network
+  // blip and the whole build lived only in this tab's memory until it was
+  // closed. Saves now retry with quick backoff, then keep retrying in the
+  // background until they land, and the user is warned (once) so they don't
+  // close the tab believing everything is safe. pendingSave always holds the
+  // LATEST files, so overlapping saves collapse into "save the newest state".
+  const pendingSave = useRef<typeof files | null>(null);
+  const saveWarned = useRef(false);
+  const saveRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (saveRetryTimer.current) clearTimeout(saveRetryTimer.current); }, []);
+
+  const saveProject = useCallback((updatedFiles: typeof files) => {
     if (!resolvedProjectId) return;
-    fetch('/api/projects', { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ projectId: resolvedProjectId, files: updatedFiles, userId: resolvedUserId || "auto" }) }).catch(() => {});
-  }, [resolvedProjectId, resolvedUserId]);
+    pendingSave.current = updatedFiles;
+    if (saveRetryTimer.current) { clearTimeout(saveRetryTimer.current); saveRetryTimer.current = null; }
+
+    const attempt = async (): Promise<boolean> => {
+      if (!pendingSave.current) return true;
+      try {
+        const res = await fetch('/api/projects', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: resolvedProjectId, files: pendingSave.current, userId: resolvedUserId || 'auto' }),
+        });
+        return res.ok;
+      } catch { return false; }
+    };
+    const onSaved = () => {
+      pendingSave.current = null;
+      if (saveWarned.current) {
+        saveWarned.current = false;
+        addMessage({ id: uid(), role: 'assistant', content: '✓ Connection restored — all your changes are saved.', timestamp: Date.now(), status: 'done' });
+      }
+    };
+
+    void (async () => {
+      for (const delay of [0, 2000, 6000]) {
+        if (delay) await new Promise(r => setTimeout(r, delay));
+        if (await attempt()) { onSaved(); return; }
+      }
+      if (!saveWarned.current) {
+        saveWarned.current = true;
+        addMessage({ id: uid(), role: 'assistant', content: '⚠ **I can\'t reach the server to save your latest changes.** Your work is safe in this tab and I\'ll keep retrying — just don\'t close it until you see the saved confirmation.', timestamp: Date.now(), status: 'done' });
+      }
+      const loop = async () => {
+        if (await attempt()) { onSaved(); return; }
+        saveRetryTimer.current = setTimeout(loop, 20_000);
+      };
+      saveRetryTimer.current = setTimeout(loop, 20_000);
+    })();
+  }, [resolvedProjectId, resolvedUserId, addMessage]);
 
   // ── Staged generation: plan → scaffold → fill batches ──
   // Returns true if it handled the build (staged), false to fall back to one-shot.
@@ -1070,6 +1116,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }).then(r => r.json()).then((d: { applied?: boolean; reason?: string; error?: string }) => {
           if (d.applied) {
             addMessage({ id: uid(), role: 'assistant', content: '🗄 **Database tables set up automatically** in your connected Supabase project — your data now persists for real.', timestamp: Date.now(), status: 'done' });
+          } else if (d.reason === 'oauth-expired') {
+            addMessage({ id: uid(), role: 'assistant', content: '🗄 **Your Supabase connection expired**, so I couldn\'t create the database tables automatically. Click the Supabase button in the top bar and reconnect, then ask me to "set up my database tables" and I\'ll finish the job. (Or run the SQL below in Supabase → SQL Editor yourself.)\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
           } else if (d.reason === 'no-oauth') {
             addMessage({ id: uid(), role: 'assistant', content: '🗄 **One manual step to make data persist:** your Supabase connection doesn\'t let me create tables automatically. Open Supabase → SQL Editor and run:\n\n```sql\n' + schemaSql + '\n```\n\nTip: reconnect Supabase with the one-click connect button to enable automatic setup next time.', timestamp: Date.now(), status: 'done' });
           } else if (d.reason === 'sql-error') {

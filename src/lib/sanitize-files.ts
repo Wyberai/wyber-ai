@@ -112,6 +112,52 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
     pkg.scripts = { dev: 'vite', build: 'vite build', preview: 'vite preview', ...(pkg.scripts as object || {}) }
     pkg.dependencies = { ...REQUIRED_DEPS, ...(pkg.dependencies as object || {}) }
     pkg.devDependencies = { ...REQUIRED_DEV, ...(pkg.devDependencies as object || {}) }
+
+    // 2c. Imports outside the guaranteed set fail the remote build with
+    // "Cannot find module 'X'" and burn a self-heal loop (or worse: the model
+    // wires Supabase but forgets to add @supabase/supabase-js to package.json,
+    // which is NOT in REQUIRED_DEPS). Scan every source file's bare import
+    // specifiers and merge pinned versions for the packages models actually
+    // reach for. Truly unknown packages are left alone — guessing a version
+    // breaks `npm install` harder than the missing module breaks vite, and
+    // self-heal already covers that path.
+    const KNOWN_DEP_VERSIONS: Record<string, string> = {
+      '@supabase/supabase-js': '^2.45.0',
+      'react-hot-toast': '^2.4.1', sonner: '^1.5.0',
+      '@tanstack/react-query': '^5.51.0',
+      uuid: '^9.0.1', nanoid: '^5.0.7', immer: '^10.1.1',
+      papaparse: '^5.4.1', xlsx: '^0.18.5', 'file-saver': '^2.0.5',
+      'chart.js': '^4.4.3', 'react-chartjs-2': '^5.2.0',
+      dayjs: '^1.11.11', lodash: '^4.17.21',
+      'react-hook-form': '^7.52.0', zod: '^3.23.8',
+      'react-markdown': '^9.0.1', marked: '^13.0.2',
+      'qrcode.react': '^3.1.0', jspdf: '^2.5.1', html2canvas: '^1.4.1',
+      'react-dropzone': '^14.2.3',
+      '@dnd-kit/core': '^6.1.0', '@dnd-kit/sortable': '^8.0.0', '@dnd-kit/utilities': '^3.2.2',
+      'react-beautiful-dnd': '^13.1.1',
+      'socket.io-client': '^4.7.5',
+      'react-icons': '^5.2.1', '@heroicons/react': '^2.1.4',
+      'react-select': '^5.8.0', 'react-datepicker': '^7.3.0',
+      'emoji-picker-react': '^4.11.1', 'canvas-confetti': '^1.9.3',
+    }
+    const importRe = /(?:import|export)\s+(?:[\w*{}\s,]+?from\s+)?['"]([^'"]+)['"]|(?:import|require)\s*\(\s*['"]([^'"]+)['"]/g
+    const bareImports = new Set<string>()
+    for (const [p, v] of Object.entries(out)) {
+      if (!/\.(tsx?|jsx?|mjs|cjs)$/.test(p)) continue
+      for (const m of fileContent(v).matchAll(importRe)) {
+        const spec = m[1] || m[2]
+        if (!spec || spec.startsWith('.') || spec.startsWith('/') || spec.startsWith('@/')) continue
+        const segs = spec.split('/')
+        bareImports.add(spec.startsWith('@') ? segs.slice(0, 2).join('/') : segs[0])
+      }
+    }
+    const depMap = pkg.dependencies as Record<string, string>
+    const devDepMap = pkg.devDependencies as Record<string, string>
+    for (const name of bareImports) {
+      if (depMap[name] || devDepMap[name] || !KNOWN_DEP_VERSIONS[name]) continue
+      depMap[name] = KNOWN_DEP_VERSIONS[name]
+    }
+
     out['package.json'] = { content: JSON.stringify(pkg, null, 2) + '\n', language: 'json' }
 
     // 3. an entry that imports the stylesheet, and an index.html that loads it.

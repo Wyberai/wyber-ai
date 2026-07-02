@@ -160,6 +160,15 @@ export function updateAuthConfig(token: string, ref: string, opts: { siteUrl: st
   })
 }
 
+/**
+ * Restore a paused project. Supabase pauses FREE-tier projects after ~1 week
+ * of inactivity — the #1 silent killer of published hobby apps ("my app worked
+ * last week, now nothing loads"). Restore takes ~1 minute.
+ */
+export function restoreProject(token: string, ref: string): Promise<unknown> {
+  return mgmt(token, `/projects/${ref}/restore`, { method: 'POST', body: JSON.stringify({}) })
+}
+
 /** Run SQL against the project's database (used for schema push). */
 export function runSql(token: string, ref: string, query: string): Promise<unknown> {
   return mgmt(token, `/projects/${ref}/database/query`, {

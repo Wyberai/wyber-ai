@@ -892,9 +892,14 @@ Add a Sign Out button in your tab bar or header when user is logged in.
 
 ── STEP 3: Database CRUD ──
   // Fetch: const { data } = await supabase.from('items').select('*').order('created_at', { ascending: false })
-  // Insert: await supabase.from('items').insert({ user_id: user.id, ...fields })
-  // Update: await supabase.from('items').update({ field: value }).eq('id', id)
-  // Delete: await supabase.from('items').delete().eq('id', id)
+  // Insert: const { error } = await supabase.from('items').insert({ user_id: user.id, ...fields })
+  // Update: const { error } = await supabase.from('items').update({ field: value }).eq('id', id)
+  // Delete: const { error } = await supabase.from('items').delete().eq('id', id)
+
+EVERY WRITE MUST BE HONEST — never optimistic-only UI. Check \`error\` on every
+insert/update/delete; on failure show a visible message (Alert.alert or an
+inline banner) and do NOT update local state as if it succeeded. For bulk
+imports report real counts ("42 rows saved, 3 failed").
 
 useEffect pattern (re-run when user changes):
   useEffect(() => {
@@ -974,6 +979,16 @@ Add a Sign Out button in the header/navbar.
   // Delete:
   const { error } = await supabase.from('items').delete().eq('id', id)
 
+EVERY WRITE MUST BE HONEST — never optimistic-only UI. Check \`error\` on every
+insert/update/delete; on failure show a VISIBLE message (inline banner or a
+small self-built fixed-position toast that auto-dismisses) saying what failed,
+and do NOT update local state as if it succeeded. Silent write failures are the
+#1 user complaint ("looked like it saved but the database is empty"). Pattern:
+  const { error } = await supabase.from('items').insert(row)
+  if (error) { showToast('Could not save: ' + error.message); return }
+  setItems(prev => [row, ...prev])   // update UI only AFTER a clean write
+For bulk imports (CSV upload etc.) report real counts: "42 rows saved, 3 failed".
+
 ALWAYS use useEffect to load data (re-run when user changes):
   useEffect(() => {
     if (!user) { setItems([]); return }
@@ -1022,14 +1037,25 @@ async function refundCredits(userId: string, amount: number, reason: string): Pr
   if (!userId || amount <= 0) return
   try {
     const admin = await createAdminClient()
-    const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
-    const current = prof?.credits ?? 0
-    await admin.from('profiles')
-      .update({ credits: current + amount, updated_at: new Date().toISOString() })
-      .eq('id', userId)
+    // Atomic when the adjust_credits RPC exists (migration 20260702130000) —
+    // the old read-then-write raced with concurrent deducts/refunds and could
+    // clobber a balance. Fallback kept until the migration is applied.
+    let after: number | null = null
+    const { data: adjusted, error: adjErr } = await admin.rpc('adjust_credits', {
+      p_user_id: userId, p_delta: amount,
+    })
+    if (!adjErr && typeof adjusted === 'number') after = adjusted
+    if (after === null) {
+      const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
+      const current = prof?.credits ?? 0
+      after = current + amount
+      await admin.from('profiles')
+        .update({ credits: after, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+    }
     admin.from('credit_usage').insert({
       user_id: userId, amount: -amount, reason: `refund:${reason}`,
-      credits_before: current, credits_after: current + amount,
+      credits_before: after - amount, credits_after: after,
     }).then(() => {}).catch(() => {})
   } catch (e) { console.error('[refund] failed', e) }
 }

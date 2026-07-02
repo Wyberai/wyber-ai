@@ -43,7 +43,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'That project cannot be modified.' }, { status: 403 })
   }
   const token = await getMgmtToken(supabase, projectId, user.id)
-  if (!token || !conn.ref) return NextResponse.json({ applied: false, reason: 'no-oauth' })
+  if (!token || !conn.ref) {
+    // Distinguish "never OAuth-connected" (manual anon-key link — expected,
+    // degrade to manual SQL) from "was connected but the token can't be
+    // refreshed" (user revoked access in the Supabase dashboard, or the
+    // refresh grant expired) — the latter needs a RECONNECT nudge or the
+    // degradation is permanent and invisible.
+    const { data: oauthRow } = await supabase
+      .from('project_connectors')
+      .select('service')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .eq('service', 'supabase-oauth')
+      .maybeSingle()
+    return NextResponse.json({ applied: false, reason: oauthRow ? 'oauth-expired' : 'no-oauth' })
+  }
 
   try {
     await runSql(token, conn.ref, sql)

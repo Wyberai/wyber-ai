@@ -161,6 +161,66 @@ export function PreviewPanel() {
     return () => { if (autoBuildTimer.current) clearTimeout(autoBuildTimer.current) }
   }, [files, hydrated, hasApp, isGenerating])
 
+  // Supabase FREE projects auto-pause after ~1 week of inactivity — the app
+  // then looks broken (nothing loads or saves) with no visible cause, and
+  // users blame the builder. Poll health when a Supabase connector exists and
+  // offer a one-click restore. Fully isolated: any failure here only hides
+  // the banner, never touches the preview state machine.
+  const [dbHealth, setDbHealth] = useState<'paused' | 'restoring' | null>(null)
+  const dbPollGen = useRef(0)
+  // Derived render guard (instead of resetting state inside the effect):
+  // stale health from a disconnected project simply stops rendering.
+  const hasSupabaseConn = connectors.some(c => c.service === 'supabase')
+  useEffect(() => {
+    if (!project?.id || !hasSupabaseConn) return
+    const gen = ++dbPollGen.current
+    const check = async () => {
+      try {
+        const r = await fetch(`/api/connectors/supabase/health?projectId=${project.id}`)
+        const d = await r.json() as { status?: string }
+        if (dbPollGen.current !== gen) return
+        if (d.status === 'paused') setDbHealth('paused')
+        else if (d.status === 'restoring') setDbHealth('restoring')
+        else setDbHealth(null)
+      } catch { /* banner stays as-is; never disturb the preview */ }
+    }
+    check()
+    const t = setInterval(check, 5 * 60_000)
+    return () => { dbPollGen.current++; clearInterval(t) }
+  }, [project?.id, hasSupabaseConn])
+
+  // Plain function (not useCallback): only used as an onClick handler, and
+  // the ref mutation inside trips the react-compiler memoization check.
+  const restoreDb = async () => {
+    if (!project?.id) return
+    setDbHealth('restoring')
+    try {
+      const r = await fetch('/api/connectors/supabase/health', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.id, action: 'restore' }),
+      })
+      const d = await r.json() as { restored?: boolean }
+      if (!d.restored) {
+        // Can't restore from here (no OAuth) — reopen the connect modal so the
+        // user can fix the connection; banner returns to paused.
+        setDbHealth('paused')
+        window.dispatchEvent(new CustomEvent('wyber-open-supabase'))
+        return
+      }
+      // Poll until the project comes back (usually <1 min, cap ~4 min).
+      const gen = ++dbPollGen.current
+      for (let i = 0; i < 24; i++) {
+        await new Promise(res => setTimeout(res, 10_000))
+        if (dbPollGen.current !== gen) return
+        try {
+          const h = await fetch(`/api/connectors/supabase/health?projectId=${project.id}`)
+          const hd = await h.json() as { status?: string }
+          if (hd.status === 'ok') { setDbHealth(null); return }
+        } catch { /* keep polling */ }
+      }
+    } catch { setDbHealth('paused') }
+  }
+
   // When the current preview finished loading — runtime errors are only
   // treated as build-breaking within a grace window after this (see handler).
   const loadedAt = useRef(0)
@@ -390,6 +450,21 @@ Find this element in the code and apply the change.`
           </button>
         )}
       </div>
+
+      {/* Paused-database banner — Supabase free projects pause after ~1 week
+          of inactivity; without this the app just silently stops persisting. */}
+      {hasSupabaseConn && dbHealth === 'paused' && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+          <span>⏸ Your Supabase database is <strong>paused</strong> (free projects pause after a week of inactivity) — nothing will load or save until it&apos;s restored.</span>
+          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>Restore now</button>
+        </div>
+      )}
+      {hasSupabaseConn && dbHealth === 'restoring' && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+          <div style={{ width: 11, height: 11, border: '2px solid rgba(251,191,36,0.25)', borderTopColor: '#fbbf24', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span>Restoring your database — usually takes under a minute…</span>
+        </div>
+      )}
 
       {/* Platform-level storage banner — not baked into generated code */}
       {html && !building && !connectors.some(c => c.service === 'supabase') && (() => {

@@ -86,11 +86,13 @@ export async function POST(req: NextRequest) {
   const eventType = String(event.type || '')
   console.log('Dodo event:', eventType)
 
+  // Hoisted so the catch below can release the idempotency claim on failure.
+  const dedupeId = headerId || String((event.data as Record<string, unknown> | undefined)?.payment_id || (event as Record<string, unknown>).id || '')
+
   try {
     const admin = getAdmin()
 
     // ── Idempotency: webhooks are retried; never apply the same event twice ──
-    const dedupeId = headerId || String((event.data as Record<string, unknown> | undefined)?.payment_id || (event as Record<string, unknown>).id || '')
     if (dedupeId) {
       const { error: dupeErr } = await admin
         .from('processed_webhooks')
@@ -199,12 +201,24 @@ export async function POST(req: NextRequest) {
       // Check if it's a top-up first
       const topupCredits = TOPUPS[productId]
       if (topupCredits) {
-        const before = (profile?.credits as number) || 0
-        const newBalance = before + topupCredits
-        await admin.from('profiles').update({
-          credits: newBalance,
-          updated_at: new Date().toISOString(),
-        }).eq('id', userId)
+        // Atomic when the adjust_credits RPC exists (migration
+        // 20260702130000); read-then-write fallback until it's applied.
+        let newBalance: number | null = null
+        const { data: adjusted, error: adjErr } = await admin.rpc('adjust_credits', {
+          p_user_id: userId, p_delta: topupCredits,
+        })
+        if (!adjErr && typeof adjusted === 'number') newBalance = adjusted
+        if (newBalance === null) {
+          const before = (profile?.credits as number) || 0
+          newBalance = before + topupCredits
+          const { error: updErr } = await admin.from('profiles').update({
+            credits: newBalance,
+            updated_at: new Date().toISOString(),
+          }).eq('id', userId)
+          // A failed grant must NOT be acked — throw so the catch below
+          // releases the idempotency claim and Dodo retries the delivery.
+          if (updErr) throw updErr
+        }
         console.log(`Topup +${topupCredits} for ${userId}`)
         if (userEmail) {
           sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
@@ -218,13 +232,14 @@ export async function POST(req: NextRequest) {
         console.warn('Dodo webhook: unknown product, no plan change:', productId)
         return NextResponse.json({ received: true, warning: 'unknown product' })
       }
-      await admin.from('profiles').update({
+      const { error: planErr } = await admin.from('profiles').update({
         plan: planConfig.plan,
         credits: planConfig.credits,
         daily_credits: planConfig.dailyCredits,
         subscription_status: 'active',
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
+      if (planErr) throw planErr // unacked → Dodo retries
       console.log(`Plan activated: ${planConfig.plan} for ${userId}`)
       if (userEmail) {
         sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
@@ -237,10 +252,11 @@ export async function POST(req: NextRequest) {
       if (planConfig) {
         const rollover = Math.min(profile?.credits || 0, planConfig.credits)
         const newBalance = planConfig.credits + rollover
-        await admin.from('profiles').update({
+        const { error: renewErr } = await admin.from('profiles').update({
           credits: newBalance,
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
+        if (renewErr) throw renewErr // unacked → Dodo retries
         console.log(`Renewed for ${userId}, rollover: ${rollover}`)
         if (userEmail) {
           sendRenewalEmail(userEmail, planConfig.label, planConfig.credits, rollover).catch(() => {})
@@ -265,6 +281,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (err) {
     console.error('Webhook DB error:', String(err))
-    return NextResponse.json({ received: true, dbError: String(err) })
+    // A failed grant must never be acked with 200: the user paid, and the
+    // provider's retry — the one chance to fix it — would then be swallowed
+    // as a duplicate by the idempotency claim taken above. Release the claim
+    // and return 500 so Dodo redelivers.
+    if (dedupeId) {
+      try { await getAdmin().from('processed_webhooks').delete().eq('id', dedupeId) } catch { /* best-effort */ }
+    }
+    return NextResponse.json({ error: 'Processing failed — retry' }, { status: 500 })
   }
 }

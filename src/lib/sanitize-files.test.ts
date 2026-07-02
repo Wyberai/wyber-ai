@@ -214,3 +214,50 @@ describe('sanitizeFiles — runtime-error relay (blank-white-preview fix)', () =
     expect('index.html' in out).toBe(false)
   })
 })
+
+// Imports outside REQUIRED_DEPS fail the remote build ("Cannot find module") —
+// most damagingly @supabase/supabase-js, which every Supabase-wired app needs
+// but which is not in the always-merged set. Known packages get pinned
+// versions merged into package.json; unknown (hallucinated) ones are left for
+// self-heal rather than poisoning npm install with a bad guess.
+describe('sanitizeFiles — import-based dependency detection', () => {
+  const pkgOf = (out: Record<string, unknown>) =>
+    JSON.parse(contentOf(out['package.json' as keyof typeof out])) as {
+      dependencies: Record<string, string>
+    }
+
+  it('adds known packages found in imports (incl. scoped ones)', () => {
+    const out = sanitizeFiles({
+      'src/App.tsx': { content: APP },
+      'src/lib/supabase.ts': { content: "import { createClient } from '@supabase/supabase-js'\nexport const supabase = createClient('u', 'k')" },
+      'src/Upload.tsx': { content: "import Papa from 'papaparse'\nexport const x = () => Papa" },
+    })
+    const pkg = pkgOf(out)
+    expect(pkg.dependencies['@supabase/supabase-js']).toBeTruthy()
+    expect(pkg.dependencies['papaparse']).toBeTruthy()
+  })
+
+  it('ignores relative, alias, and unknown imports', () => {
+    const out = sanitizeFiles({
+      'src/App.tsx': { content: `import { x } from './util'\nimport y from '@/lib/thing'\nimport z from 'totally-hallucinated-pkg'\n${APP}` },
+    })
+    const pkg = pkgOf(out)
+    expect(pkg.dependencies['totally-hallucinated-pkg']).toBeUndefined()
+    expect(Object.keys(pkg.dependencies).some(k => k.startsWith('.') || k.startsWith('@/'))).toBe(false)
+  })
+
+  it('never overrides a version the model already pinned', () => {
+    const out = sanitizeFiles({
+      'src/App.tsx': { content: `import dayjs from 'dayjs'\n${APP}` },
+      'package.json': { content: JSON.stringify({ dependencies: { dayjs: '^1.0.0' } }) },
+    })
+    expect(pkgOf(out).dependencies['dayjs']).toBe('^1.0.0')
+  })
+
+  it('catches dynamic imports too', () => {
+    const out = sanitizeFiles({
+      'src/App.tsx': { content: `const load = () => import('canvas-confetti')\n${APP}` },
+    })
+    expect(pkgOf(out).dependencies['canvas-confetti']).toBeTruthy()
+  })
+})
