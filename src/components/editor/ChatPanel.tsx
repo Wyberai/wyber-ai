@@ -1017,6 +1017,23 @@ const storeProjectId = useEditorStore.getState().project?.id;
         setHasGeneratedFiles(true);
         await saveProject(updatedFiles);
       }
+      // 4b. Safety net for the failure the server's forced follow-up also
+      // guards: a "successful" build whose files never included a real entry
+      // file. The starter scaffold's App.tsx is a tiny placeholder (kept
+      // under PreviewPanel's 200-char hasApp threshold on purpose), so if the
+      // model wrote components but no real App, the preview stays blank
+      // forever with no error to heal from. Ask for exactly the missing file
+      // via the free self-heal lane.
+      const appAfter = (updatedFiles['src/App.tsx'] || updatedFiles['src/App.jsx'] || updatedFiles['App.tsx']) as { content?: string } | undefined
+      if (newFiles.length >= 2 && !isSelfHeal && !fileCut && !editCut && (appAfter?.content?.length ?? 0) <= 200) {
+        const entry = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+            detail: { prompt: `The build finished but ${entry} was never written (or is still the empty placeholder), so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist. Do not rewrite other files.` }
+          }));
+        }, 600);
+      }
+
       // 4. Fallback: any patch that didn't match → ask AI for the full file
       if (failedPaths.length > 0) {
         setTimeout(() => {

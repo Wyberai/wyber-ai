@@ -1683,6 +1683,9 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             let contentStreamer = makeJsonFieldStreamer('content')
             let toolOpened = false
             let toolEmittedLen = 0
+            // One-shot: forced follow-up when a new build ends without its
+            // entry file (see the end_turn branch below).
+            let entryRetried = false
             try {
               for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
                 for await (const event of stream) {
@@ -1863,7 +1866,39 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   })
                   continue
                 }
-                if (finalMsg.stop_reason !== 'tool_use') break // end_turn / refusal — done
+                if (finalMsg.stop_reason !== 'tool_use') {
+                  // New builds MUST produce the entry file. By convention the
+                  // model writes src/App.tsx LAST, so a turn that ends early
+                  // (token budget, or the model deciding it's done) can leave
+                  // components with no App to mount them — the client merges
+                  // them over the starter's tiny placeholder App.tsx, the
+                  // preview's hasApp gate stays false, and the user gets a
+                  // permanently blank preview with no error to self-heal
+                  // from. One forced follow-up turn closes that hole.
+                  const entryPath = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
+                  const wroteAnyFile = assistantSoFar.includes('<file path="')
+                  const wroteEntry = assistantSoFar.includes(`path="${entryPath}"`)
+                    || (projectType !== 'mobile' && assistantSoFar.includes('path="src/App.jsx"'))
+                  if (isNewBuild && wroteAnyFile && !wroteEntry && !entryRetried
+                      && iter < MAX_TOOL_ITERATIONS - 1 && finalMsg.content.length > 0) {
+                    entryRetried = true
+                    loopMessages = [
+                      ...loopMessages,
+                      { role: 'assistant', content: finalMsg.content },
+                      { role: 'user', content: `You finished without writing ${entryPath} — the app cannot render without its entry file. Call write_file now with the COMPLETE ${entryPath}, wiring together the components you already created. Do not rewrite any other file.` },
+                    ]
+                    stream = await client.messages.stream({
+                      model,
+                      max_tokens: stageMaxTokens,
+                      system: systemBlocks,
+                      messages: loopMessages,
+                      tools: [writeFileTool, editFileTool],
+                      ...thinkingParam,
+                    })
+                    continue
+                  }
+                  break // end_turn / refusal — done
+                }
 
                 const toolUseBlocks = finalMsg.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
                 if (toolUseBlocks.length === 0) break
