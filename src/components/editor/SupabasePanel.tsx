@@ -111,6 +111,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
     setSaving(false)
     if (data.error) { setError(data.error); return }
     setUrl(''); setAnonKey('')
+    window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
     await load()
   }
 
@@ -121,6 +122,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
       body: JSON.stringify({ projectId, service: 'supabase' }),
     })
     setConnected(null)
+    window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
   }
 
   const copy = (text: string, key: string) => {

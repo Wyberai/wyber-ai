@@ -92,6 +92,22 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     });
   }, [initialProject?.id]);
 
+  // Connect/disconnect flows (SupabaseConnector, ConnectorsPanel) dispatch this
+  // after saving so every connector-keyed UI (e.g. the "connect a database"
+  // banner above the preview) updates immediately — without it the store only
+  // reflects connections made before the page loaded.
+  useEffect(() => {
+    if (!initialProject?.id) return;
+    const refresh = () => {
+      fetch(`/api/connectors?projectId=${initialProject.id}`)
+        .then(r => r.ok ? r.json() : { connectors: [] })
+        .then(d => setConnectors(d.connectors ?? []))
+        .catch(() => {});
+    };
+    window.addEventListener('wyber-connectors-changed', refresh);
+    return () => window.removeEventListener('wyber-connectors-changed', refresh);
+  }, [initialProject?.id]);
+
   const resizeLeft = useCallback(
     (delta: number) => setLeftPanelWidth(Math.max(160, Math.min(400, leftPanelWidth + delta))),
     [leftPanelWidth, setLeftPanelWidth]

@@ -388,18 +388,30 @@ export function PreviewPanel() {
   // for any reason auto-fix couldn't resolve looped "Build failed → finishing
   // touches →…" forever. Once the budget is spent we stop and surface the error.
   const MAX_HEAL = 3
+  // When heal gives up but an earlier build worked, fall back to that build in
+  // the iframe (with an error strip on top) instead of a full-screen error —
+  // a broken update (e.g. mid-connector integration) must never blank out a
+  // previously working app.
+  const [revertedToGood, setRevertedToGood] = useState(false)
   useEffect(() => {
     if (error && !building && !isGenerating && !fixing) {
-      if (healTotal.current >= MAX_HEAL) { setHealFailed(true); return }
+      if (healTotal.current >= MAX_HEAL) {
+        setHealFailed(true)
+        if (lastGoodUrl.current) {
+          setRevertedToGood(true)
+          if (lastGoodUrl.current !== html) setHtml(lastGoodUrl.current)
+        }
+        return
+      }
       setHealFailed(false)
       const delay = healTotal.current === 0 ? 1500 : 3000
       healTotal.current += 1
       const t = setTimeout(() => tryToFix(), delay)
       return () => clearTimeout(t)
     }
-  }, [error, building, isGenerating, fixing, tryToFix])
+  }, [error, building, isGenerating, fixing, tryToFix, html])
 
-  useEffect(() => { if (!error) setHealFailed(false) }, [error])
+  useEffect(() => { if (!error) { setHealFailed(false); setRevertedToGood(false) } }, [error])
   // Fresh heal budget only when the USER kicks off a new generation/edit — never
   // on the file changes that auto-fix itself makes (that was the infinite loop).
   useEffect(() => { if (isGenerating) { healTotal.current = 0; setHealFailed(false) } }, [isGenerating])
@@ -563,7 +575,19 @@ Find this element in the code and apply the change.`
           </div>
         )}
 
-        {error && !building && healFailed && (
+        {/* Heal gave up but a previous build works — keep that on screen and
+            surface the failure as a strip instead of nuking the preview. */}
+        {error && !building && healFailed && revertedToGood && (
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.94)', borderBottom: '1px solid rgba(248,113,113,0.3)', fontSize: 11, color: '#fecaca', zIndex: 7 }}>
+            <span>⚠ The latest update didn&apos;t build — showing your last working preview.</span>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button onClick={tryToFix} disabled={fixing} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: fixing ? 'wait' : 'pointer', fontSize: 11, fontWeight: 700, padding: '3px 10px' }}>{fixing ? 'Fixing…' : 'Try to fix'}</button>
+              <button onClick={() => build(true)} style={{ background: 'none', border: '1px solid rgba(254,202,202,0.35)', borderRadius: 6, color: '#fecaca', cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px' }}>Retry</button>
+            </div>
+          </div>
+        )}
+
+        {error && !building && healFailed && !revertedToGood && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
@@ -584,7 +608,7 @@ Find this element in the code and apply the change.`
           ref={iframeRef}
           title="Wyber Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed) ? 'block' : 'none', background: '#09090b' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed && !revertedToGood) ? 'block' : 'none', background: '#09090b' }}
         />
       </div>
       <style>{`

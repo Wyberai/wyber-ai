@@ -79,6 +79,15 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   // Close + reset so the next open starts without a stale "done" state.
   const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
 
+  // Republish: show the "✓ Done" state briefly, then dismiss the modal on its
+  // own. Only for RE-publishes — a first publish keeps the modal open so the
+  // user can copy/share their new live URL.
+  useEffect(() => {
+    if (!republished) return;
+    const t = setTimeout(() => { setShowShareModal(false); setRepublished(false); }, 2000);
+    return () => clearTimeout(t);
+  }, [republished]);
+
   const openSnapshots = async () => {
     if (!projectId) return;
     setShowSnapshots(true);

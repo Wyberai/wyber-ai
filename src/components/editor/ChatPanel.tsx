@@ -144,6 +144,14 @@ function stripInternalMarkers(text: string): string {
   const _cuts = [t.search(/<thinking>/i), t.search(/<file/i), t.search(/<edit\s+path="/i)].filter(i => i !== -1);
   if (_cuts.length) t = t.slice(0, Math.min(..._cuts));
   t = t.replace(/\[progress:[^\]]+\]/gi, '');
+  // Platform protocol that must never render as chat: the auto-applied schema
+  // block and stray SEARCH/REPLACE conflict markers outside an <edit> wrapper.
+  t = t.replace(/\/\*\s*SQL TO RUN IN SUPABASE[\s\S]*?\*\//gi, '');
+  const _openSql = t.search(/\/\*\s*SQL TO RUN IN SUPABASE/i);
+  if (_openSql !== -1) t = t.slice(0, _openSql);
+  t = t.replace(/<<<<<<<\s*SEARCH[\s\S]*?>>>>>>>\s*REPLACE/g, '');
+  const _openSearch = t.search(/<<<<<<<\s*SEARCH/);
+  if (_openSearch !== -1) t = t.slice(0, _openSearch);
   return t.trim();
 }
 
@@ -1010,7 +1018,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
         // Extract [progress: ...] markers and surface them live
         const steps = extractProgressLines(full);
-        if (steps.length > 0) setProgressSteps(steps);
+        // Deterministic batch notice for big builds: the system prompt asks the
+        // model to announce >5-file builds, but this guarantees the user is told
+        // regardless — pinned as the first progress line for the whole stream.
+        const fileTagCount = (full.match(/<file path="/g) || []).length;
+        const batchNotice = fileTagCount > 5
+          ? [`📦 Big build — ${fileTagCount} files so far, generating in batches. The preview loads automatically when the last one lands.`]
+          : [];
+        if (steps.length > 0 || batchNotice.length > 0) setProgressSteps([...batchNotice, ...steps]);
 
         // Live extended-thinking text (opt-in, new-build full generation only)
         const reasoningSoFar = extractReasoning(full);

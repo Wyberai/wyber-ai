@@ -73,6 +73,20 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     })
   }, [initialProject?.id])
 
+  // Refresh connector state after any connect/disconnect so banners keyed on
+  // it (e.g. "connect a database" above the preview) update without a reload.
+  useEffect(() => {
+    if (!initialProject?.id) return
+    const refresh = () => {
+      fetch(`/api/connectors?projectId=${initialProject.id}`)
+        .then(r => r.ok ? r.json() : { connectors: [] })
+        .then(d => setConnectors(d.connectors ?? []))
+        .catch(() => {})
+    }
+    window.addEventListener('wyber-connectors-changed', refresh)
+    return () => window.removeEventListener('wyber-connectors-changed', refresh)
+  }, [initialProject?.id])
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#09090b', overflow: 'hidden' }}>
       {/* Top bar */}

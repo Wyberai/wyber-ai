@@ -2,21 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export async function GET(req: NextRequest) {
-  const domain = req.nextUrl.searchParams.get('domain')
-  
-  if (!domain) return new NextResponse('Not found', { status: 404 })
+  // Prefer the query param set by the proxy rewrite, but fall back to the Host
+  // header — headers always survive a rewrite even if query params are dropped.
+  const raw = req.nextUrl.searchParams.get('domain') || req.headers.get('host')
+
+  if (!raw) return new NextResponse('Not found', { status: 404 })
+
+  // Normalize: lowercase, strip port. Users connect either the apex or the www
+  // variant, so match both — visitors reach the app from either host.
+  const domain = raw.toLowerCase().replace(/:\d+$/, '')
+  const variants = domain.startsWith('www.')
+    ? [domain, domain.slice(4)]
+    : [domain, `www.${domain}`]
 
   try {
     const admin = await createAdminClient()
-    
-    const { data: project } = await admin
+
+    const { data: projects } = await admin
       .from('projects')
       .select('id, name, files')
-      .eq('custom_domain', domain)
+      .in('custom_domain', variants)
       .eq('custom_domain_verified', true)
       .eq('is_public', true)
-      .single()
+      .limit(1)
 
+    const project = projects?.[0]
     if (!project) return new NextResponse('App not found', { status: 404 })
 
     // Get built HTML from Supabase Storage

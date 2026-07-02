@@ -2,17 +2,17 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
-  const host = request.headers.get('host') || ''
+  const host = (request.headers.get('host') || '').toLowerCase().replace(/:\d+$/, '')
 
   // Handle custom domains — if the host is not wyberai.com, serve the published app
   const isWyberDomain = host.includes('wyberai.com') || host.includes('vercel.app') || host.includes('localhost')
   
   if (!isWyberDomain && host.includes('.')) {
     // Custom domain request — rewrite to /api/serve-custom-domain
-    const url = request.nextUrl.clone()
-    url.pathname = `/api/serve-custom-domain`
-    url.searchParams.set('domain', host)
-    url.searchParams.set('path', path)
+    const url = new URL(
+      `/api/serve-custom-domain?domain=${encodeURIComponent(host)}&path=${encodeURIComponent(path)}`,
+      request.url
+    )
     return NextResponse.rewrite(url)
   }
 

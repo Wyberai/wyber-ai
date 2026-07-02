@@ -241,6 +241,7 @@ function DatabaseTab({ projectId }: { projectId?: string }) {
       if (!testRes.ok) { setError('Connection failed — check your URL and key'); setTesting(false); return }
       await fetch('/api/connectors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, service: 'supabase', apiKey: anonKey, config: { url } }) })
       setConnected(true)
+      window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
     } catch { setError('Network error') }
     setTesting(false)
   }

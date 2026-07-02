@@ -1549,7 +1549,6 @@ ${code}
         },
         required: ['path', 'content'],
       },
-      cache_control: { type: 'ephemeral' as const },
     }
 
     const editFileTool = {
@@ -1564,7 +1563,6 @@ ${code}
         },
         required: ['path', 'search', 'replace'],
       },
-      cache_control: { type: 'ephemeral' as const },
     }
 
     const wyberDNA = '' // merged into system prompt
@@ -1664,11 +1662,18 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     let generatedText = ''
 
     const encoder = new TextEncoder()
-    // Breakpoint goes on the last HISTORY message, not the new one being sent this
-    // turn (that one is always different — contextPrefix, file context, etc. change
-    // every request). windowedHistory() on the client keeps trimmedHistory's growth
-    // append-only, so this prefix matches what a previous turn already cached.
-    const finalMessages = [...withCacheBreakpoint(trimmedHistory), { role: 'user' as const, content: userContent }]
+    // TWO message breakpoints: one on the last HISTORY message (matches the prefix a
+    // previous turn already cached — windowedHistory() on the client keeps growth
+    // append-only), and one on the NEW user message. The new message carries the full
+    // fileContext (often the biggest part of the request); caching it means the
+    // tool-use loop and max_tokens continuations below read it from cache on every
+    // iteration instead of re-paying it as fresh input each time. Budget: 4
+    // breakpoints max per request = system(1) + history(2) + new message(3), leaving
+    // one for the rolling loop breakpoint.
+    const finalMessages = withCacheBreakpoint([
+      ...withCacheBreakpoint(trimmedHistory),
+      { role: 'user' as const, content: userContent },
+    ])
     const systemBlocks: { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }[] = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
     if (supabaseStatus === 'ok') {
       systemBlocks.push({ type: 'text', text: '\n\n[SYSTEM FACT] Supabase IS connected to this project. If the user asks about Supabase connection status, confirm it is connected. Do NOT contradict this — it is a verified system state, not a guess.' })
@@ -1923,7 +1928,9 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                     model,
                     max_tokens: stageMaxTokens,
                     system: systemBlocks,
-                    messages: loopMessages,
+                    // Rolling breakpoint (4th slot): each iteration caches the turns added
+                    // so far, so the next one reads them instead of re-sending fresh.
+                    messages: withCacheBreakpoint(loopMessages),
                     tools: [writeFileTool, editFileTool],
                     ...thinkingParam,
                   })
@@ -1954,7 +1961,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                       model,
                       max_tokens: stageMaxTokens,
                       system: systemBlocks,
-                      messages: loopMessages,
+                      messages: withCacheBreakpoint(loopMessages),
                       tools: [writeFileTool, editFileTool],
                       ...thinkingParam,
                     })
@@ -1981,7 +1988,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   model,
                   max_tokens: stageMaxTokens,
                   system: systemBlocks,
-                  messages: loopMessages,
+                  messages: withCacheBreakpoint(loopMessages),
                   tools: [writeFileTool, editFileTool],
                   ...thinkingParam,
                 })
@@ -2058,14 +2065,16 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                 model,
                 max_tokens: stageMaxTokens,
                 system: systemBlocks,
-                messages: [
+                // Breakpoint on the continuation turn caches the (large) assistant
+                // text so later passes read it from cache instead of re-paying it.
+                messages: withCacheBreakpoint([
                   ...finalMessages,
                   { role: 'assistant' as const, content: assistantSoFar },
                   {
                     role: 'user' as const,
                     content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress.`,
                   },
-                ],
+                ]),
                 ...thinkingParam,
               })
             }

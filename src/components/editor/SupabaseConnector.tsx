@@ -80,6 +80,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       const d = await r.json()
       if (!r.ok) { setError(d.error || 'Could not link project'); return }
       setConnected({ service: 'supabase', config: { url: d.url }, connected_at: new Date().toISOString() })
+      window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
       setPicker(false)
     } catch { setError('Could not link project') }
     finally { setPickerBusy(false) }
@@ -103,6 +104,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       const d = await r.json()
       if (!r.ok) { setError(d.error || 'Could not create project'); return }
       setConnected({ service: 'supabase', config: { url: d.url }, connected_at: new Date().toISOString() })
+      window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
       setPicker(false)
     } catch { setError('Could not create project') }
     finally { setPickerBusy(false) }
@@ -133,6 +135,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       })
       if (res.ok) {
         setConnected({ service: 'supabase', config: { url: url.trim() }, connected_at: new Date().toISOString() })
+        window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
       } else {
         setError('Failed to save connection')
       }
@@ -148,6 +151,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       body: JSON.stringify({ projectId: project?.id, service: 'supabase' })
     })
     setConnected(null); setUrl(''); setAnonKey('')
+    window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
   }
 
   return (

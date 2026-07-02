@@ -108,6 +108,16 @@ export function cleanStreamingDisplay(raw: string): string {
   if (openFile !== -1) out = out.slice(0, openFile);
   const openEdit = out.search(/<edit\s+path="/i);
   if (openEdit !== -1) out = out.slice(0, openEdit);
+  // The schema block ("/* SQL TO RUN IN SUPABASE ... */") is platform protocol —
+  // parsed and auto-applied by ChatPanel, never meant to render as chat text.
+  out = out.replace(/\/\*\s*SQL TO RUN IN SUPABASE[\s\S]*?\*\//gi, '');
+  const openSql = out.search(/\/\*\s*SQL TO RUN IN SUPABASE/i);
+  if (openSql !== -1) out = out.slice(0, openSql);
+  // Stray conflict markers emitted OUTSIDE an <edit> wrapper (model slip) —
+  // never show raw SEARCH/REPLACE machinery in chat.
+  out = out.replace(/<<<<<<<\s*SEARCH[\s\S]*?>>>>>>>\s*REPLACE/g, '');
+  const openSearch = out.search(/<<<<<<<\s*SEARCH/);
+  if (openSearch !== -1) out = out.slice(0, openSearch);
   return out.trim();
 }
 
