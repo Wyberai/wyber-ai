@@ -1,6 +1,7 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import { AutoFix } from './AutoFix';
+import { Wyberman } from './Wyberman';
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { TopBar } from './TopBar';
 import { FileTree } from './FileTree';
@@ -45,6 +46,17 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   useEffect(() => {
     if (isNarrow && isGenerating) setMobileView('preview');
   }, [isGenerating, isNarrow]);
+
+  // Wyberman's "point and ask" needs the preview tab reachable on mobile too —
+  // it dispatches this instead of reaching into layout state directly.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const view = (e as CustomEvent).detail as 'preview' | 'chat' | 'code' | undefined;
+      if (view) setMobileView(view);
+    };
+    window.addEventListener('wyber-request-mobile-view', handler);
+    return () => window.removeEventListener('wyber-request-mobile-view', handler);
+  }, []);
 
   // Hydrate store from server data + load messages and knowledge
   useEffect(() => {
@@ -161,6 +173,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
       </div>
       )}
       <AutoFix />
+      <Wyberman />
     </div>
   );
 }

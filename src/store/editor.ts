@@ -72,6 +72,14 @@ interface EditorState {
   showFileTree: boolean;
   credits: number;
 
+  // Read-only mirror of PreviewPanel's build/heal state, for UI (e.g. Wyberman)
+  // that lives outside PreviewPanel and needs to know if the preview is stuck.
+  previewError: string | null;
+  previewHealFailed: boolean;
+  // Which feature currently owns the preview's click-to-select mode, so two
+  // features asking for a selection at once don't both react to the same click.
+  selectionConsumer: 'visual-edit' | 'wyberman' | null;
+
   // Project
   setProject: (p: Project) => void;
   setFramework: (f: Framework) => void;
@@ -114,6 +122,9 @@ interface EditorState {
   consumeCredit: () => void;
   setCredits: (n: number) => void;
   setConnectors: (c: Connector[]) => void;
+  setPreviewError: (e: string | null) => void;
+  setPreviewHealFailed: (v: boolean) => void;
+  setSelectionConsumer: (c: 'visual-edit' | 'wyberman' | null) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -149,6 +160,9 @@ export const useEditorStore = create<EditorState>()(
     rightPanelWidth: 360,
     showFileTree: true,
     credits: 100,
+    previewError: null,
+    previewHealFailed: false,
+    selectionConsumer: null,
 
     // IMPORTANT: setProject no longer wipes files/messages — hydration handles that
     setProject: (p) => set((s) => { s.project = p; }),
@@ -272,5 +286,8 @@ export const useEditorStore = create<EditorState>()(
     consumeCredit: () => set((s) => { s.credits = Math.max(0, s.credits - 1); }),
     setCredits: (n) => set((s) => { s.credits = n; }),
     setConnectors: (c) => set((s) => { s.connectors = c; }),
+    setPreviewError: (e) => set((s) => { s.previewError = e; }),
+    setPreviewHealFailed: (v) => set((s) => { s.previewHealFailed = v; }),
+    setSelectionConsumer: (c) => set((s) => { s.selectionConsumer = c; }),
   }))
 );
