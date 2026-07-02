@@ -1049,6 +1049,36 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }, 600);
       }
 
+      // 4c. Auto-apply the generated database schema. Supabase builds end with
+      // a "SQL TO RUN IN SUPABASE DASHBOARD" comment block — historically the
+      // user had to copy it into the SQL editor by hand, and nobody did, so
+      // every insert hit a missing table and silently failed ("frontend works,
+      // backend doesn't"). OAuth-connected projects get it run automatically
+      // via the Management API; anon-key-only connections get the SQL surfaced
+      // as an explicit action item instead of buried in generated code.
+      const sqlMatch = full.match(/\/\*\s*SQL TO RUN IN SUPABASE[^\n]*\n([\s\S]*?)\*\//i)
+      // Fallback: tool-use builds sometimes write the schema as a .sql file
+      // instead of the chat comment block — only files written THIS turn
+      // count, so old schema files never re-trigger on unrelated edits.
+      const sqlFileThisTurn = newFiles.find(f => f.path.endsWith('.sql'))
+      const schemaSql = (sqlMatch?.[1] ?? sqlFileThisTurn?.content ?? '').trim()
+      if (schemaSql && resolvedProjectId) {
+        fetch('/api/connectors/supabase/apply-schema', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: resolvedProjectId, sql: schemaSql }),
+        }).then(r => r.json()).then((d: { applied?: boolean; reason?: string; error?: string }) => {
+          if (d.applied) {
+            addMessage({ id: uid(), role: 'assistant', content: '🗄 **Database tables set up automatically** in your connected Supabase project — your data now persists for real.', timestamp: Date.now(), status: 'done' });
+          } else if (d.reason === 'no-oauth') {
+            addMessage({ id: uid(), role: 'assistant', content: '🗄 **One manual step to make data persist:** your Supabase connection doesn\'t let me create tables automatically. Open Supabase → SQL Editor and run:\n\n```sql\n' + schemaSql + '\n```\n\nTip: reconnect Supabase with the one-click connect button to enable automatic setup next time.', timestamp: Date.now(), status: 'done' });
+          } else if (d.reason === 'sql-error') {
+            addMessage({ id: uid(), role: 'assistant', content: '⚠ I tried to create your database tables in Supabase but hit an error:\n\n```\n' + (d.error || 'unknown') + '\n```\n\nRun this in Supabase → SQL Editor instead:\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
+          }
+          // reason 'not-connected' → mock-data app, nothing to apply
+        }).catch(() => { /* best-effort — the SQL block is still in the transcript */ });
+      }
+
       // 4. Fallback: any patch that didn't match → ask AI for the full file
       if (failedPaths.length > 0) {
         setTimeout(() => {

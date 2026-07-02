@@ -34,6 +34,10 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [pushUrl, setPushUrl] = useState('');
   const [showSupabase, setShowSupabase] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  // Flips true when a deploy finishes for an app that was ALREADY live — the
+  // share modal stays open and shows "done" instead of silently reopening
+  // with the same content (which read as "it looped back to the same popup").
+  const [republished, setRepublished] = useState(false);
   const [customDomain, setCustomDomain] = useState('');
   const [customDomainStatus, setCustomDomainStatus] = useState<'idle'|'saving'|'verifying'|'verified'|'error'>('idle');
   const [customDomainError, setCustomDomainError] = useState('');
@@ -71,6 +75,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     window.addEventListener('wyber-open-supabase', open);
     return () => window.removeEventListener('wyber-open-supabase', open);
   }, []);
+
+  // Close + reset so the next open starts without a stale "done" state.
+  const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
 
   const openSnapshots = async () => {
     if (!projectId) return;
@@ -193,7 +200,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
   const handleDeploy = async () => {
     if (!projectId || deploying) return;
+    const wasLive = !!deployUrl;
     setDeploying(true);
+    setRepublished(false);
     setDeploySecs(0);
     // Live elapsed counter so a ~30–45s publish reads as "working", not frozen.
     const t0 = Date.now();
@@ -208,6 +217,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       if (url) {
         setDeployUrl(url);
         setShowShareModal(true);
+        if (wasLive) setRepublished(true);
       } else {
         alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
       }
@@ -446,11 +456,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       )}
 
       {showShareModal && (
-        <div onClick={() => setShowShareModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div onClick={closeShareModal} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 28, width: 460, maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Publish & Share</span>
-              <button onClick={() => setShowShareModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
+              <button onClick={closeShareModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
             </div>
 
             {!deployUrl ? (
@@ -459,8 +469,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>Your app is ready to go live on <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
-                <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  Publish now
+                <button onClick={() => handleDeploy()} disabled={deploying} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: deploying ? 'wait' : 'pointer' }}>
+                  {deploying ? `Publishing… ${deploySecs}s` : 'Publish now'}
                 </button>
               </div>
             ) : (
@@ -473,8 +483,20 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? 'Copied!' : 'Copy'}</button>
                     <button onClick={() => window.open(liveUrl, '_blank')} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Open</button>
                   </div>
-                  <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, color: '#0EA5E9', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-                    Re-publish with latest changes
+                  {/* Stays in the modal: inline progress + a clear "done" state.
+                      The old close→deploy→reopen flow read as an infinite loop. */}
+                  <button onClick={() => handleDeploy()} disabled={deploying}
+                    style={{
+                      background: republished ? 'rgba(34,197,94,0.1)' : 'rgba(14,165,233,0.08)',
+                      border: `1px solid ${republished ? 'rgba(34,197,94,0.3)' : 'rgba(14,165,233,0.2)'}`,
+                      borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600,
+                      color: republished ? '#22c55e' : '#0EA5E9',
+                      cursor: deploying ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                    }}>
+                    {deploying ? (
+                      <><div style={{ width: 11, height: 11, border: '2px solid rgba(14,165,233,0.25)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Republishing… {deploySecs}s</>
+                    ) : republished ? '✓ Done — your latest changes are live' : 'Re-publish with latest changes'}
                   </button>
                 </div>
 

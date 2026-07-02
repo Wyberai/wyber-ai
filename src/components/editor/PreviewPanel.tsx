@@ -72,6 +72,12 @@ export function PreviewPanel() {
   // the content-hash check makes the re-run a no-op if nothing changed.
   const pendingBuild = useRef(false)
 
+  // URL of the previous successful build. When a fresh bundle crashes at
+  // startup (blank white screen — common mid-Supabase-integration), the iframe
+  // reverts to this while self-heal repairs the new one, so the user keeps
+  // seeing a working app instead of a white void.
+  const lastGoodUrl = useRef<string | null>(null)
+
   const build = useCallback(async (force = false) => {
     if (!hasApp) return
     if (building) { pendingBuild.current = true; return }
@@ -104,6 +110,10 @@ export function PreviewPanel() {
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
       if (data.url) {
+        // The build being replaced rendered without a startup crash (a crash
+        // would have reverted html to the previous good URL already) — keep it
+        // as the fallback for the incoming one.
+        if (html) lastGoodUrl.current = html
         setHtml(data.url + (data.url.includes('?') ? '&' : '?') + 't=' + Date.now())
         setError(null)
         if (isFirstBuild.current && Object.keys(files).length > 3) {
@@ -211,12 +221,17 @@ export function PreviewPanel() {
         const withinStartupWindow = Date.now() - loadedAt.current < 15_000
         if (!error && !fixing && !isGenerating && withinStartupWindow) {
           setError(runtimeErr)
+          // Show the previous working build while self-heal repairs this one —
+          // a startup crash otherwise leaves a blank white iframe on screen.
+          if (lastGoodUrl.current && lastGoodUrl.current !== html) {
+            setHtml(lastGoodUrl.current)
+          }
         }
       }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [error, fixing, isGenerating, selectionConsumer])
+  }, [error, fixing, isGenerating, selectionConsumer, html])
 
   // Tell the iframe when edit mode toggles
   const toggleEditMode = () => {
@@ -430,10 +445,20 @@ Find this element in the code and apply the change.`
           </div>
         )}
 
-        {isGenerating && (
+        {/* Full-screen "writing" state ONLY when there is no previous preview
+            to show. Once a build exists it STAYS VISIBLE while the AI works —
+            hiding a working app behind a spinner for a whole generation read
+            as "the preview disappeared while it worked on Supabase". */}
+        {isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Writing your app...</div>
+          </div>
+        )}
+        {isGenerating && html && (
+          <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
+            <div style={{ width: 12, height: 12, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ fontSize: 11, color: '#e4e4e7', fontWeight: 600 }}>Writing your app — preview updates when it&apos;s done…</span>
           </div>
         )}
 
@@ -478,7 +503,7 @@ Find this element in the code and apply the change.`
           ref={iframeRef}
           title="Wyber Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !isGenerating && !(error && healFailed) ? 'block' : 'none', background: '#09090b' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed) ? 'block' : 'none', background: '#09090b' }}
         />
       </div>
       <style>{`

@@ -173,14 +173,24 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
               <div style={{ fontSize: 11, color: '#52526a', fontFamily: 'monospace' }}>{connected.config?.url}</div>
             </div>
             <div style={{ fontSize: 12, color: '#8b8b9a', marginBottom: 16 }}>
-              Your next generation will include a Supabase client, real CRUD operations, and data that persists between sessions.
+              Connecting alone doesn&apos;t change your app — it still runs on mock data until it&apos;s rebuilt against Supabase. One click below rewires it: real reads/writes, auth, and the database tables created automatically.
             </div>
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('wyber:chat-prompt', {
+                  detail: 'Wire the entire app to my connected Supabase project: replace all mock/local state with real Supabase reads and writes, add signup/login if missing, and include the schema SQL block at the end so my tables are created.',
+                }))
+                onClose()
+              }}
+              style={{ width: '100%', padding: '11px 0', borderRadius: 8, border: 'none', background: '#3ecf8e', color: '#06281c', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>⚡</span> Wire my app to Supabase now
+            </button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={disconnect} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Disconnect
               </button>
-              <button onClick={onClose} style={{ flex: 2, padding: '9px 0', borderRadius: 8, border: 'none', background: '#6366f1', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Done
+              <button onClick={onClose} style={{ flex: 2, padding: '9px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#8b8b9a', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Close
               </button>
             </div>
           </div>

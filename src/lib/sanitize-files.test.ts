@@ -173,7 +173,11 @@ describe('sanitizeFiles — entry + index.html', () => {
   it('preserves an existing index.html (points at its own entry, no synthesis)', () => {
     const html = '<!doctype html><html><head><title>x</title></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>'
     const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'src/main.tsx': { content: "import './index.css'" }, 'index.html': { content: html } })
-    expect(contentOf(out['index.html'])).toBe(html)
+    const result = contentOf(out['index.html'])
+    // Only the error relay is injected — everything the model wrote survives.
+    expect(result).toContain('<title>x</title>')
+    expect(result).toContain('src="/src/main.tsx"')
+    expect(result).toContain('wyber-error-relay')
   })
 
   it('does nothing structural when there is no App entry', () => {
@@ -181,5 +185,32 @@ describe('sanitizeFiles — entry + index.html', () => {
     expect('index.html' in out).toBe(false)
     expect('tailwind.config.js' in out).toBe(false)
     expect(contentOf(out['src/index.css'])).toBe('body{}')
+  })
+})
+
+// Cross-origin preview iframes can't have window.onerror attached from the
+// editor side, so every index.html must carry its own error relay that
+// postMessages runtime crashes ('wyber-runtime-error') to the parent editor.
+describe('sanitizeFiles — runtime-error relay (blank-white-preview fix)', () => {
+  it('injects the relay into a synthesized index.html', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } })
+    const html = contentOf(out['index.html'])
+    expect(html).toContain('wyber-error-relay')
+    expect(html).toContain('wyber-runtime-error')
+    // Relay registers in <head>, before the app bundle in <body> executes.
+    expect(html.indexOf('wyber-error-relay')).toBeLessThan(html.indexOf('<body>'))
+  })
+
+  it('injects the relay into a model-written index.html exactly once', () => {
+    const html = '<!doctype html><html><head></head><body><div id="root"></div></body></html>'
+    const once = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'src/main.tsx': { content: "import './index.css'" }, 'index.html': { content: html } })
+    const twice = sanitizeFiles(once)
+    const result = contentOf(twice['index.html'])
+    expect(result.split('wyber-error-relay').length - 1).toBe(1)
+  })
+
+  it('is a no-op for the relay when there is no index.html at all', () => {
+    const out = sanitizeFiles({ 'src/util.ts': { content: 'x' } })
+    expect('index.html' in out).toBe(false)
   })
 })

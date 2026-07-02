@@ -905,7 +905,7 @@ useEffect pattern (re-run when user changes):
   }, [user])
 
 ── STEP 4: SQL block at the end ──
-Output the SQL to run in Supabase at the VERY END as a comment:
+Output the schema SQL at the VERY END as a comment (the marker line must match exactly — the platform parses it):
 /* SQL TO RUN IN SUPABASE DASHBOARD → SQL EDITOR:
 create table if not exists items (
   id uuid primary key default gen_random_uuid(),
@@ -914,9 +914,11 @@ create table if not exists items (
   created_at timestamptz default now()
 );
 alter table items enable row level security;
+drop policy if exists "Users manage own items" on items;
 create policy "Users manage own items" on items for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 */
+The platform runs this SQL AUTOMATICALLY against the connected Supabase project right after your build — keep it idempotent ("create table if not exists", "drop policy if exists" before each "create policy") and tell the user their tables were set up automatically.
 
 ── MANDATORY CHECKLIST ──
 [x] lib/supabase.ts with AsyncStorage session persistence and the real URL/key above
@@ -985,7 +987,7 @@ The anon key is safe in client code. Security comes from Row Level Security poli
 ALWAYS include these policies so users only see their own data.
 
 ── STEP 5: SQL block at the end ──
-Output the SQL to run in Supabase at the VERY END as a comment block. Use this exact format:
+Output the schema SQL at the VERY END as a comment block. Use this exact format (the marker line must match exactly — the platform parses it):
 /* SQL TO RUN IN SUPABASE DASHBOARD → SQL EDITOR:
 create table if not exists items (
   id uuid primary key default gen_random_uuid(),
@@ -994,9 +996,11 @@ create table if not exists items (
   created_at timestamptz default now()
 );
 alter table items enable row level security;
+drop policy if exists "Users manage own items" on items;
 create policy "Users manage own items" on items for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 */
+The platform runs this SQL AUTOMATICALLY against the connected Supabase project right after your build — so it MUST be idempotent: "create table if not exists" for tables, "drop policy if exists" before every "create policy". In your closing recap tell the user their database tables were set up automatically; do NOT tell them to run SQL by hand.
 
 ── MANDATORY CHECKLIST ──
 Before finishing, confirm your generated app has:
@@ -1497,7 +1501,7 @@ ${code}
     const projectMemory = projectId ? await loadProjectMemory(projectId) : ''
     const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
-    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
+    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach. EXCEPTION — complex builds: if this build spans MORE than ~5 files, your one opening sentence must set expectations instead, e.g. "This is a complex build across multiple files — I\'m generating them in batches; the preview updates when the last file lands." (still one sentence, still followed immediately by the file output).\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
 
     // Tool-use variant of the output rule (Phase 5) — same voice/behavior rules
     // as outputRule, but files are written/changed via tools instead of
@@ -1506,7 +1510,7 @@ ${code}
     // applies there. Both tools are always offered together (not gated by
     // isNewBuild) since a single edit turn commonly needs both — e.g. "add a
     // dark mode toggle" may need a new hook file AND changes to App.tsx.
-    const toolUseOutputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. To CREATE a new file, call write_file(path, content) once per file — full contents each time. Do NOT use <file> or <edit> tags; they do not exist in this mode.\n2. To CHANGE an existing file, call edit_file(path, search, replace) — search must be the EXACT existing lines (verbatim, same whitespace), keep it small (just the changed lines plus a little context). Never call write_file for a file that already exists — use edit_file instead, unless the change touches MANY places in one file (a full theme/color-scheme overhaul), in which case call write_file to replace the whole thing.\n3. PREFER FEWER, LARGER new files. Aim for 3-5 files for a fresh build, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n4. Call every tool for every file/change in the SAME turn — do not wait between calls.\n5. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "what next?"), do NOT call any tool — just answer in 1-2 warm, plain sentences.\n6. BUILD/EDIT COMMANDS MUST HAPPEN NOW. If the user asks for a concrete change, call the right tool(s) THIS turn — do not ask a clarifying question first when the intent is already clear.\n7. NEVER PROMISE FUTURE WORK. Do not say "sending it now", "building…", "one moment" — either call the tool now or say plainly what input you need.\n8. ALWAYS CONFIRM + GUIDE. Once your tool calls are done and you see their results, close with one short friendly recap of what you built/changed and ONE suggested next step. Keep it to 1-2 sentences, plain text, no more tool calls.'
+    const toolUseOutputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. To CREATE a new file, call write_file(path, content) once per file — full contents each time. Do NOT use <file> or <edit> tags; they do not exist in this mode.\n2. To CHANGE an existing file, call edit_file(path, search, replace) — search must be the EXACT existing lines (verbatim, same whitespace), keep it small (just the changed lines plus a little context). Never call write_file for a file that already exists — use edit_file instead, unless the change touches MANY places in one file (a full theme/color-scheme overhaul), in which case call write_file to replace the whole thing.\n3. PREFER FEWER, LARGER new files. Aim for 3-5 files for a fresh build, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines. If the build genuinely spans MORE than ~5 files, say so FIRST in one short sentence before any tool call — e.g. "This is a complex build across multiple files — I\'m generating them in batches; the preview updates when the last file lands." — so the user knows a longer generation is expected, then start writing files.\n4. Call every tool for every file/change in the SAME turn — do not wait between calls.\n5. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "what next?"), do NOT call any tool — just answer in 1-2 warm, plain sentences.\n6. BUILD/EDIT COMMANDS MUST HAPPEN NOW. If the user asks for a concrete change, call the right tool(s) THIS turn — do not ask a clarifying question first when the intent is already clear.\n7. NEVER PROMISE FUTURE WORK. Do not say "sending it now", "building…", "one moment" — either call the tool now or say plainly what input you need.\n8. ALWAYS CONFIRM + GUIDE. Once your tool calls are done and you see their results, close with one short friendly recap of what you built/changed and ONE suggested next step. Keep it to 1-2 sentences, plain text, no more tool calls.\n9. SCHEMA SQL STILL APPLIES IN TOOL MODE. If the storage context told you to end with a "SQL TO RUN IN SUPABASE" comment block, append that complete block after your recap exactly as instructed — the platform parses and runs it automatically. Rule 8\'s brevity limit does not apply to that block.'
 
     const writeFileTool = {
       name: 'write_file',
@@ -1699,7 +1703,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // entry file (see the end_turn branch below).
             let entryRetried = false
             try {
-              for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
+              // `<=` — one pass past MAX_TOOL_ITERATIONS is reserved for the
+              // entry-file guarantee: even when the continuation budget is
+              // spent, a new build must never end without src/App.tsx (that is
+              // a guaranteed-blank preview, strictly worse than a build that
+              // is merely missing one feature file).
+              for (let iter = 0; iter <= MAX_TOOL_ITERATIONS; iter++) {
                 for await (const event of stream) {
                   if (event.type === 'content_block_start') {
                     if (event.content_block.type === 'thinking') {
@@ -1832,7 +1841,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                     if (m) cutPath = m[1]
                   }
 
-                  if (iter >= MAX_TOOL_ITERATIONS - 1) break // no budget left for a retry pass
+                  // Continuation budget spent → normally stop. EXCEPT when a
+                  // new build still has no entry file: spend the one reserved
+                  // extra pass (loop runs to MAX_TOOL_ITERATIONS inclusive)
+                  // demanding App.tsx, or the user ends with components that
+                  // nothing mounts and a permanently blank preview.
+                  let demandEntry = false
+                  const entryPathMt = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
+                  if (iter >= MAX_TOOL_ITERATIONS - 1) {
+                    const wroteEntryMt = assistantSoFar.includes(`path="${entryPathMt}"`)
+                      || (projectType !== 'mobile' && assistantSoFar.includes('path="src/App.jsx"'))
+                    if (!isNewBuild || wroteEntryMt || entryRetried
+                        || !assistantSoFar.includes('<file path="')) break
+                    entryRetried = true
+                    demandEntry = true
+                  }
 
                   // Keep only genuinely complete tool_use blocks (all required fields
                   // present for their tool) — the truncated trailing one (if any) is
@@ -1853,7 +1876,9 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   if (completeBlocks.length > 0) {
                     loopMessages = [...loopMessages, { role: 'assistant', content: completeBlocks }]
                   }
-                  const retryText = cutPath
+                  const retryText = demandEntry
+                    ? `You are out of output budget and ${entryPathMt} was never written — the app cannot render without its entry file. Call write_file ONCE now with the COMPLETE ${entryPathMt}, wiring together the components you already created. Keep it lean and write nothing else.`
+                    : cutPath
                     ? (cutTool === 'edit_file'
                       ? `Your edit_file call for ${cutPath} was cut off by a length limit before it finished. Call edit_file again for that exact path with a smaller, more targeted search/replace pair.`
                       : `The file ${cutPath} was cut off by a length limit before it finished. Call write_file again for that exact path with the COMPLETE, CORRECT file contents from scratch — keep it more concise if that's what caused the cutoff.`)
@@ -1892,7 +1917,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   const wroteEntry = assistantSoFar.includes(`path="${entryPath}"`)
                     || (projectType !== 'mobile' && assistantSoFar.includes('path="src/App.jsx"'))
                   if (isNewBuild && wroteAnyFile && !wroteEntry && !entryRetried
-                      && iter < MAX_TOOL_ITERATIONS - 1 && finalMsg.content.length > 0) {
+                      && iter < MAX_TOOL_ITERATIONS && finalMsg.content.length > 0) {
                     entryRetried = true
                     loopMessages = [
                       ...loopMessages,

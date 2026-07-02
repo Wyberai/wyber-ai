@@ -51,11 +51,11 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
   // From-scratch generated apps emit only src/* with a minimal reset index.css and
   // no config, so they render unstyled. Guarantee the compile inputs here — this
   // runs before every preview build and publish, fixing existing projects too.
+  const fileContent = (v: FileVal | undefined): string =>
+    v == null ? '' : typeof v === 'string' ? v : (v.content ?? '')
+
   const appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
   if (appExt) {
-    const fileContent = (v: FileVal | undefined): string =>
-      v == null ? '' : typeof v === 'string' ? v : (v.content ?? '')
-
     // 1. index.css must carry the @tailwind directives AND the design-system
     //    tokens. Apps style themselves with semantic classes (bg-primary,
     //    text-foreground, …) whose values come from per-app HSL tokens; if the
@@ -158,6 +158,26 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
         language: 'html',
       }
     }
+  }
+
+  // Runtime-error relay: the preview iframe is served from the remote builder's
+  // origin, so the editor CANNOT reach into it and attach window.onerror from
+  // outside (PreviewPanel's inject is a silent no-op cross-origin). A bundle
+  // that crashes at startup therefore used to be a blank WHITE screen with
+  // nothing for the self-heal loop to catch. Bake a tiny relay into index.html
+  // that forwards runtime errors to the parent editor via postMessage — the
+  // editor already listens for 'wyber-runtime-error'. No-op when the app isn't
+  // embedded in an iframe (window.parent === window), so published sites are
+  // unaffected. Plain non-module inline script: vite build leaves it untouched
+  // and it registers before the app bundle executes.
+  const ERROR_RELAY = `<script>/* wyber-error-relay */(function(){if(window.parent===window)return;var send=function(m,s,l){try{window.parent.postMessage({type:'wyber-runtime-error',message:String(m||'Script error'),source:s?String(s).split('/').pop():undefined,lineno:l},'*')}catch(e){}};window.addEventListener('error',function(e){send(e.message||e.error,e.filename,e.lineno)});window.addEventListener('unhandledrejection',function(e){send(e.reason&&e.reason.message?e.reason.message:e.reason)})})()</script>`
+  const idxVal = out['index.html']
+  const idxHtml = fileContent(idxVal)
+  if (idxHtml && !idxHtml.includes('wyber-error-relay')) {
+    const injected = idxHtml.includes('<head>')
+      ? idxHtml.replace('<head>', `<head>\n    ${ERROR_RELAY}`)
+      : `${ERROR_RELAY}\n${idxHtml}`
+    out['index.html'] = typeof idxVal === 'string' ? injected : { ...(idxVal as object), content: injected }
   }
 
   // Completeness pass: stub any locally-imported file that was never generated
