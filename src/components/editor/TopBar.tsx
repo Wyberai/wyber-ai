@@ -240,7 +240,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       const res = await fetch('/api/github', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'push', projectId, userId: initialProfile?.id, files, commitMessage: `wyber: update ${project?.name ?? ''}` }) });
       const data = await res.json();
       if (data.error === 'GitHub not connected') {
-        window.open(`/api/auth/github?projectId=${projectId}`, '_blank');
+        // This runs in an async callback — the user-gesture window is gone, so
+        // popup blockers kill window.open here. Fall back to same-tab OAuth
+        // (the callback redirects back to this project) when that happens.
+        const popup = window.open(`/api/auth/github?projectId=${projectId}`, '_blank');
+        if (!popup) window.location.href = `/api/auth/github?projectId=${projectId}`;
       } else if (data.url) {
         setPushUrl(data.url);
       }
@@ -481,7 +485,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
                     <span style={{ flex: 1, fontSize: 12, color: '#22c55e', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveUrl}</span>
                     <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? 'Copied!' : 'Copy'}</button>
-                    <button onClick={() => window.open(liveUrl, '_blank')} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Open</button>
+                    {/* Real <a>, not window.open — mobile popup blockers swallow window.open silently */}
+                    <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', textDecoration: 'none' }}>Open</a>
                   </div>
                   {/* Stays in the modal: inline progress + a clear "done" state.
                       The old close→deploy→reopen flow read as an infinite loop. */}
@@ -501,9 +506,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 </div>
 
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>X / Twitter</button>
-                  <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>LinkedIn</button>
-                  <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>WhatsApp</button>
+                  <a href={`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>X / Twitter</a>
+                  <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>LinkedIn</a>
+                  <a href={`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>WhatsApp</a>
                 </div>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />

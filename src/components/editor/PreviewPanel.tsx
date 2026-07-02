@@ -443,6 +443,12 @@ Find this element in the code and apply the change.`
           <button onClick={() => build(true)} title="Rebuild preview"
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
         )}
+        {/* Real <a>, not window.open: mobile browsers' popup blockers silently
+            swallow window.open, which is why "open in new tab" never worked. */}
+        {html && !building && !error && (
+          <a href={html} target="_blank" rel="noopener noreferrer" title="Open preview in a new tab"
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
+        )}
         {hasApp && !building && !html && !error && (
           <button onClick={() => build(true)}
             style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
