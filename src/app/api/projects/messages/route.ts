@@ -19,6 +19,10 @@ async function verifyProjectAccess(projectId: string): Promise<boolean> {
   const session = await createSessionClient();
   const { data: { user } } = await session.auth.getUser();
   if (!user) return false;
+  // Support mode: allowlisted admins can open any customer project — without
+  // this the rescued project loads with an empty, unusable chat panel.
+  const { isAdminEmail } = await import('@/lib/admin');
+  if (isAdminEmail(user.email)) return true;
   const admin = adminClient();
   const { data: project } = await admin.from('projects').select('user_id, org_id').eq('id', projectId).maybeSingle();
   if (!project) return false;

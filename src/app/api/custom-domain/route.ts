@@ -89,6 +89,32 @@ export async function POST(req: NextRequest) {
 
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
+    // Custom domains are a paid feature (pricing lists them under Builder+),
+    // and they serve WITHOUT the free-tier "Built with WyberAi" badge — so an
+    // ungated connect would both undercut the upgrade and bypass attribution.
+    // Exceptions: a domain the user BOUGHT through Wyber (that purchase was
+    // itself paid), and support-mode admins acting on a customer's behalf.
+    if (action !== 'verify') {
+      const { isAdminEmail } = await import('@/lib/admin')
+      if (!isAdminEmail(user.email)) {
+        const { data: prof } = await admin.from('profiles').select('plan').eq('id', user.id).single()
+        if ((prof?.plan ?? 'free') === 'free') {
+          const { data: bought } = await admin
+            .from('domain_purchases')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('domain', cleanDomain)
+            .eq('status', 'purchased')
+            .maybeSingle()
+          if (!bought) {
+            return NextResponse.json({
+              error: 'Connecting your own domain is available on the Builder plan and up. Upgrade to connect it — or buy a new domain right here and it works on any plan.',
+            }, { status: 402 })
+          }
+        }
+      }
+    }
+
     if (action === 'verify') {
       // Check if DNS is configured
       const { verified, error } = await verifyDNS(cleanDomain, projectId)

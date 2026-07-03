@@ -38,18 +38,30 @@ function extractSeo(html: string): AppSeo {
   }
 }
 
-async function loadHtml(slug: string): Promise<{ name: string; html: string } | null> {
+async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string } | null> {
   const supabase = await createClient()
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name')
+    .select('id, name, user_id')
     .eq('subdomain', slug)
     .eq('is_public', true)
     .single()
   if (!project) return null
   const { data: fileData } = await supabase.storage.from('published-apps').download(`${project.id}/index.html`)
   if (!fileData) return null
-  return { name: project.name, html: await fileData.text() }
+  // Owner's plan decides the "Built with WyberAi" badge (free = badge, paid =
+  // clean app). RLS hides other users' profile rows from the session client,
+  // so this lookup needs the service client; a failed lookup falls back to
+  // 'free' — matching the profiles schema default — so the badge fails toward
+  // showing, never toward silently removing a free-tier attribution.
+  let ownerPlan = 'free'
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const { data: owner } = await createServiceClient()
+      .from('profiles').select('plan').eq('id', project.user_id).single()
+    if (owner?.plan) ownerPlan = String(owner.plan)
+  } catch { /* fall back to free */ }
+  return { name: project.name, html: await fileData.text(), ownerPlan }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -97,7 +109,7 @@ export default async function PublishedAppPage({ params }: Props) {
     )
   }
 
-  const { name, html } = loaded
+  const { name, html, ownerPlan } = loaded
   // Hoist the app's JSON-LD up to the real document so crawlers + rich results
   // see it (iframe/srcdoc structured data is not attributed to the page).
   // SECURITY: this runs in the wyberai.com origin (not the sandboxed iframe), so
@@ -114,10 +126,13 @@ export default async function PublishedAppPage({ params }: Props) {
       {safeJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd }} />
       )}
-      <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
-        <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
-      </div>
+      {/* Free-tier attribution — paid plans publish clean, unbranded apps. */}
+      {ownerPlan === 'free' && (
+        <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
+          <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
+        </div>
+      )}
       {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
       <iframe
         srcDoc={html}
