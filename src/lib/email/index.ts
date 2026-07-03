@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { memeImg } from './memes'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
@@ -75,8 +76,9 @@ function divider(): string {
 export async function sendWelcomeEmail(to: string, name?: string) {
   const displayName = name ?? to.split('@')[0]
   const html = wrap(`
+    ${memeImg('welcome')}
     ${h1('Welcome to WyberAi ⚡')}
-    ${p(`Hey ${displayName}, you're in.`)}
+    ${p(`Hey ${displayName}, you're in. Your ideas + our AI — this is the handshake.`)}
     ${p('You have <strong style="color:#f0f0f4">50 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
     ${p('Here\'s what you can do:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
@@ -123,8 +125,10 @@ export async function sendAdminSignupAlert(userEmail: string, provider?: string)
 }
 
 export async function sendAdminPaymentAlert(userEmail: string, description: string, amount?: string) {
+  // Internal-only email to the founder — money printer goes brrr.
   const html = wrap(`
-    ${h1('New payment 💰')}
+    ${memeImg('admin-money')}
+    ${h1('New payment 💰 brrrrr')}
     ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just paid.`)}
     ${infoBox([['Customer', userEmail], ['Purchase', description], ...(amount ? [['Amount', amount] as [string, string]] : []), ['When', new Date().toUTCString()]], '#3dd68c44')}
   `, `Payment from ${userEmail}`)
@@ -161,10 +165,13 @@ export async function sendAuthEmail(to: string, action: AuthAction, url: string,
 }
 
 // ── 3. Plan upgrade confirmed ─────────────────────────────────────────────────
+// Meme matrix: DJ Khaled "Suffering from Success" — congratulate them on
+// unlocking god-mode.
 export async function sendUpgradeConfirmEmail(to: string, plan: string, credits: number) {
   const html = wrap(`
-    ${h1(`You're on ${plan} ⚡`)}
-    ${p(`Your upgrade to <strong style="color:#f0f0f4">WyberAi ${plan}</strong> is confirmed and active now.`)}
+    ${memeImg('upgrade-success')}
+    ${h1(`Suffering from Success? Welcome to ${plan} 🏆`)}
+    ${p(`Your upgrade to <strong style="color:#f0f0f4">WyberAi ${plan}</strong> is confirmed and active <em>right now</em>. You officially have too much power. Try not to break the internet with it.`)}
     ${infoBox([
       ['Monthly credits', credits.toLocaleString()],
       ['Credit rollover', '✓ Unused credits carry forward'],
@@ -176,14 +183,16 @@ export async function sendUpgradeConfirmEmail(to: string, plan: string, credits:
     ${p('To manage billing or cancel anytime, go to Settings → Billing.')}
   `, `Your ${plan} plan is active`)
 
-  return resend.emails.send({ from: FROM, to, subject: `WyberAi ${plan} confirmed ✓`, html })
+  return resend.emails.send({ from: FROM, to, subject: `Suffering from Success? Welcome to ${plan} 🏆 (confirmed)`, html })
 }
 
 // ── 4. Subscription renewed ───────────────────────────────────────────────────
+// DJ Khaled again, but this time: "Another one."
 export async function sendRenewalEmail(to: string, plan: string, creditsAdded: number, rollover: number) {
   const html = wrap(`
-    ${h1('Credits refreshed ✓')}
-    ${p(`Your <strong style="color:#f0f0f4">WyberAi ${plan}</strong> subscription has renewed.`)}
+    ${memeImg('renewal')}
+    ${h1('Another one. 🔑')}
+    ${p(`Your <strong style="color:#f0f0f4">WyberAi ${plan}</strong> subscription renewed and a fresh month of credits just landed. Major key to success: not having to think about this at all.`)}
     ${infoBox([
       ['New monthly credits', creditsAdded.toLocaleString()],
       ['Rolled over from last month', rollover > 0 ? `+${rollover}` : '0'],
@@ -194,16 +203,18 @@ export async function sendRenewalEmail(to: string, plan: string, creditsAdded: n
     </div>
   `, `${creditsAdded} credits added to your account`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `WyberAi ${plan} renewed — ${creditsAdded} credits added`, html })
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Another one. ${plan} renewed — ${creditsAdded} credits added 🔑`, html })
 }
 
 // ── 5. Subscription cancelled ─────────────────────────────────────────────────
+// Ben Affleck smoking outside. We're not mad. We're just processing.
 export async function sendCancellationEmail(to: string, plan: string) {
   const html = wrap(`
-    ${h1('Subscription cancelled')}
-    ${p(`Your <strong style="color:#f0f0f4">WyberAi ${plan}</strong> subscription has been cancelled.`)}
-    ${p('Your account moves to the Free plan. Any unused credits from your plan are removed, but any one-time top-up credits you purchased are kept.')}
-    ${p("We'd love to know what made you cancel — hit reply and tell us. It takes 30 seconds and helps us a lot.")}
+    ${memeImg('cancelled')}
+    ${h1("We're not mad. We're just standing outside for a bit.")}
+    ${p(`Your <strong style="color:#f0f0f4">WyberAi ${plan}</strong> subscription has been cancelled. We took it like absolute champions (see above).`)}
+    ${p('Your account moves to the Free plan. Any unused credits from your plan are removed, but any one-time top-up credits you purchased are kept — those are yours forever.')}
+    ${p("Seriously though — what made you cancel? Hit reply and tell us. 30 seconds, a human reads it, and it genuinely shapes what we build next.")}
     ${divider()}
     ${p('Changed your mind? You can resubscribe anytime — your projects and history are still there.')}
     <div style="text-align:center;margin:24px 0">
@@ -215,10 +226,12 @@ export async function sendCancellationEmail(to: string, plan: string) {
 }
 
 // ── 6. Credit top-up confirmed ────────────────────────────────────────────────
+// Stonks. Line goes up.
 export async function sendTopupEmail(to: string, credits: number, newBalance: number) {
   const html = wrap(`
-    ${h1(`${credits} credits added ✓`)}
-    ${p('Your one-time credit purchase is confirmed.')}
+    ${memeImg('topup')}
+    ${h1(`${credits} credits added 📈`)}
+    ${p('Purchase confirmed. Credit balance: <strong style="color:#3dd68c">stonks</strong>. And unlike your actual portfolio, these never go down on their own — they never expire.')}
     ${infoBox([
       ['Credits purchased', `+${credits}`],
       ['New balance', newBalance.toLocaleString()],
@@ -233,20 +246,23 @@ export async function sendTopupEmail(to: string, credits: number, newBalance: nu
 }
 
 // ── 6b. Payment failed (dunning) ──────────────────────────────────────────────
+// Meme matrix: Hulk Hogan's twin-referee meltdown — "they took the belt right
+// off our waist!" The bank ran a dirty finish on the transaction.
 export async function sendPaymentFailedEmail(to: string, plan?: string) {
   const planLabel = plan ? `WyberAi ${plan}` : 'your WyberAi subscription'
   const html = wrap(`
-    ${h1('Payment failed — action needed')}
-    ${p(`We couldn't process the latest payment for <strong style="color:#f0f0f4">${planLabel}</strong>.`)}
-    ${p('This usually means your card expired or had insufficient funds. Please update your payment method to keep your plan and credits active — we\'ll retry automatically once it\'s updated.')}
+    ${memeImg('payment-failed')}
+    ${h1('THEY TOOK THE BELT RIGHT OFF OUR WAIST 😭')}
+    ${p(`Okay, deep breaths. Your bank just ran a <em>dirty finish</em> on the latest payment for <strong style="color:#f0f0f4">${planLabel}</strong> — usually an expired card or insufficient funds, occasionally just your bank being dramatic.`)}
+    ${p('Update your payment method and we\'ll retry automatically. The championship belt (your plan and credits) goes right back around your waist.')}
     <div style="text-align:center;margin:28px 0">
-      ${btn('Update payment method →', `${APP_URL}/settings?tab=billing`, '#f0a429')}
+      ${btn('Reclaim the belt →', `${APP_URL}/settings?tab=billing`, '#f0a429')}
     </div>
-    ${p('If we can\'t collect payment, your account will move to the Free plan, but your projects and history stay safe.')}
-    ${p('Questions about a charge? Just reply — hello@wyberai.com goes straight to the team.')}
-  `, 'Update your payment method to keep building')
+    ${p('If we can\'t collect payment, your account moves to the Free plan — but your projects and history stay exactly where you left them. Nobody touches those.')}
+    ${p('Think the charge itself is wrong? Just reply — hello@wyberai.com goes straight to a human referee.')}
+  `, 'Your payment failed — update billing to keep your plan')
 
-  return resend.emails.send({ from: FROM, to, subject: `Payment failed — update your WyberAi billing`, html })
+  return resend.emails.send({ from: FROM, to, subject: `Whose belt is this anyway?! (Your WyberAi payment failed)`, html })
 }
 
 // ── 6c. Refund processed ──────────────────────────────────────────────────────
@@ -265,11 +281,13 @@ export async function sendRefundEmail(to: string, amount?: string) {
 }
 
 // ── 7. Running low on credits ─────────────────────────────────────────────────
+// "This is fine." — dog, burning room. The balance is the room.
 export async function sendCreditLowEmail(to: string, remaining: number) {
   const html = wrap(`
-    ${h1('Running low on credits')}
-    ${p(`You have <strong style="color:#f0a429">${remaining} credits</strong> remaining.`)}
-    ${p('Top up instantly — top-up credits never expire and are yours forever.')}
+    ${memeImg('credits-low')}
+    ${h1('This is fine. 🔥')}
+    ${p(`Everything is fine. Totally fine. You have <strong style="color:#f0a429">${remaining} credits</strong> left, which is roughly ${remaining >= 30 ? 'one build' : 'a few edits'} before the room is fully on fire.`)}
+    ${p('Top up before the flames reach the desk — top-up credits never expire and are yours forever.')}
     <div style="display:grid;gap:10px;margin:0 0 28px">
       ${([
         ['200 credits', '$19', `${APP_URL}/pricing#topup`],
@@ -285,18 +303,22 @@ export async function sendCreditLowEmail(to: string, remaining: number) {
     ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at $79.')}
   `, `${remaining} credits remaining`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Low credits: ${remaining} remaining on WyberAi`, html })
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `This is fine — ${remaining} credits remaining 🔥`, html })
 }
 
 // ── 7b. Out of credits — recurring drip (cron: /api/cron/email-drip) ─────────
 // sendNumber varies the copy so nudge #3 doesn't read like nudge #1 verbatim.
 // Marketing email → always carries the recipient's signed unsubscribe link.
 export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, unsubUrl: string) {
-  const variants: { subject: string; heading: string; body: string }[] = [
+  // Meme matrix: nudge 1 = Wonka "You get nothing!", nudge 3 = Ben Affleck
+  // smoking (peak exhaustion). Nudge 4 stays meme-free — a respectful goodbye
+  // reads wrong with a GIF on top.
+  const variants: { subject: string; heading: string; body: string; meme?: Parameters<typeof memeImg>[0] }[] = [
     {
-      subject: "You're out of credits — here's the fastest way back",
-      heading: "You're out of credits",
-      body: 'Your balance hit zero, so builds and edits are paused. Your projects are saved and exactly where you left them — top up or upgrade and you can pick up mid-thought.',
+      subject: "You lose! Good day, sir! 🍫 (You're out of credits)",
+      heading: 'You get nothing! Good day, sir!',
+      body: "You ran through those credits faster than Charlie went through the chocolate factory. Builds and edits are paused — but unlike Wonka, we're bluffing: your projects are saved exactly where you left them, and one top-up reopens the gates.",
+      meme: 'out-of-credits',
     },
     {
       subject: 'Your projects are waiting on WyberAi',
@@ -304,9 +326,10 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
       body: 'Everything you built is safe in your dashboard — it just needs credits to keep evolving. 200 credits is $19 and they never expire.',
     },
     {
-      subject: 'The app you started deserves to ship',
-      heading: 'Finish what you started',
-      body: "Most ideas die at 80% done. Yours doesn't have to — one top-up covers roughly 6 full builds or 100 edits, and unused credits never expire.",
+      subject: 'Your credits are still at zero and honestly... same 🚬',
+      heading: "We're not mad. We're just standing outside.",
+      body: "Your balance has been at zero for a while and your half-finished app knows it. We're out here doing our best Ben Affleck impression about it. Most ideas die at 80% done — yours doesn't have to. One top-up covers roughly 6 full builds or 100 edits, and unused credits never expire.",
+      meme: 'nudge-exhausted',
     },
     {
       subject: 'Last nudge from us — your credits are still at zero',
@@ -316,6 +339,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
   ]
   const v = variants[Math.min(Math.max(sendNumber - 1, 0), variants.length - 1)]
   const html = wrap(`
+    ${v.meme ? memeImg(v.meme) : ''}
     ${h1(v.heading)}
     ${p(v.body)}
     <div style="display:grid;gap:10px;margin:0 0 28px">
@@ -341,8 +365,9 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
 // ── 7c. Never-built nudge (signed up, never generated an app) ────────────────
 export async function sendGettingStartedNudgeEmail(to: string, name: string, unsubUrl: string) {
   const html = wrap(`
+    ${memeImg('still-waiting')}
     ${h1('Your 50 free credits are still unspent')}
-    ${p(`Hey ${name}, you signed up but haven't built anything yet — and building the first one takes about 60 seconds.`)}
+    ${p(`Hey ${name}, you signed up but haven't built anything yet. Your credits have been sitting there so long they've gone full skeleton. Building the first app takes about 60 seconds — less time than it took to read this far.`)}
     ${p('Type one sentence, get a working app:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
       <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“A CRM to track my freelance clients and invoices”</td></tr>
@@ -360,8 +385,9 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
 // ── 7d. Built-but-never-published nudge ───────────────────────────────────────
 export async function sendPublishNudgeEmail(to: string, projectName: string, projectId: string, unsubUrl: string) {
   const html = wrap(`
+    ${memeImg('publish-nudge')}
     ${h1(`${projectName} is done — but nobody can see it`)}
-    ${p(`You built <strong style="color:#f0f0f4">${projectName}</strong> and it's been sitting unpublished. Publishing is one click and completely free — you get a live link you can share anywhere.`)}
+    ${p(`That's us, pointing at <strong style="color:#f0f0f4">${projectName}</strong>. You built a real app and it's been sitting unpublished like a movie that never premiered. Publishing is one click and completely free — you get a live link you can share anywhere.`)}
     <div style="text-align:center;margin:28px 0">
       ${btn('Publish it now →', `${APP_URL}/project/${projectId}`)}
     </div>
@@ -371,10 +397,13 @@ export async function sendPublishNudgeEmail(to: string, projectName: string, pro
 }
 
 // ── 8. App deployed successfully ──────────────────────────────────────────────
+// Jonah Hill losing his mind — pure, unfiltered hype. It's the user's biggest
+// moment on the platform; the email should scream a little.
 export async function sendDeploySuccessEmail(to: string, projectName: string, url: string) {
   const html = wrap(`
-    ${h1('Your app is live ⚡')}
-    ${p(`<strong style="color:#f0f0f4">${projectName}</strong> deployed successfully.`)}
+    ${memeImg('deployed')}
+    ${h1("IT'S HAPPENING — your app is LIVE 💥")}
+    ${p(`<strong style="color:#f0f0f4">${projectName}</strong> is on the internet. Right now. With a real URL. We couldn't even keep our cool writing this email.`)}
     <div style="background:#1a1a1e;border:1px solid #3dd68c33;border-radius:10px;padding:18px 20px;margin:0 0 24px">
       <span style="color:#3dd68c;font-size:14px">● Live &nbsp;</span>
       <a href="${url}" style="color:#3dd68c;font-size:14px;text-decoration:none;word-break:break-all;font-weight:500">${url}</a>
@@ -385,7 +414,7 @@ export async function sendDeploySuccessEmail(to: string, projectName: string, ur
     ${p("Keep iterating — every generation auto-saves. Connect GitHub to commit changes automatically.")}
   `, `${projectName} is live`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `${projectName} is live ✓`, html })
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `IT'S HAPPENING — ${projectName} is live 💥`, html })
 }
 
 // ── 9. Security / deploy blocked ─────────────────────────────────────────────
@@ -531,8 +560,9 @@ export async function sendTemplatePublishedEmail(to: string, templateName: strin
 // ── 17. First app built (onboarding milestone) ────────────────────────────────
 export async function sendFirstBuildEmail(to: string, name: string, projectName: string, previewUrl: string) {
   const html = wrap(`
+    ${memeImg('first-build')}
     ${h1('You built your first app 🎉')}
-    ${p(`${name}, <strong style="color:#f0f0f4">${projectName}</strong> is ready. That's huge.`)}
+    ${p(`${name}, <strong style="color:#f0f0f4">${projectName}</strong> is ready. Most people talk about building an app for years. You did it before lunch.`)}
     ${p("Here's what you can do next:")}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Deploy it</strong> — go live in one click</td></tr>
@@ -578,9 +608,15 @@ export async function sendWeeklyDigestEmail(to: string, name: string, stats: {
   creditsRemaining: number
   topProject?: string
 }) {
+  // Power-user flex (meme matrix: Homelander nod) — only when the week's
+  // numbers actually earn it; a 2-build week with a Homelander GIF reads odd.
+  const powerUser = stats.appsBuilt >= 10
   const html = wrap(`
-    ${h1('Your week on WyberAi')}
-    ${p(`Here's what you built this week, ${name}.`)}
+    ${powerUser ? memeImg('power-user') : ''}
+    ${powerUser ? h1("You're doing numbers. We see you. 🦸") : h1('Your week on WyberAi')}
+    ${powerUser
+      ? p(`${name}, ${stats.appsBuilt} builds and edits in one week. That's not regular usage — that's superpower-level output. The crowd is cheering and we're nodding approvingly.`)
+      : p(`Here's what you built this week, ${name}.`)}
     ${infoBox([
       ['Apps & edits', stats.appsBuilt.toString()],
       ['Credits used', stats.creditsUsed.toString()],
