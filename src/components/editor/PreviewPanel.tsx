@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+import { isPlaceholderApp } from '@/lib/starter-templates'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -63,7 +64,11 @@ export function PreviewPanel() {
   useEffect(() => { setPreviewHealFailed(healFailed) }, [healFailed, setPreviewHealFailed])
 
   const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
-  const hasApp = Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 200
+  // "A real App exists" — not the starter placeholder. The old `length > 200`
+  // check passed for the ~460-char starter placeholder, so a build that never
+  // wrote App.tsx still "previewed": it built the placeholder page with every
+  // generated component unmounted, which users read as a blank/broken preview.
+  const hasApp = Object.keys(files).length >= 2 && !isPlaceholderApp(appFile?.content)
 
   // Set when a build request arrives while another build is in flight. Without
   // this, that request was silently DROPPED (build() early-returns on

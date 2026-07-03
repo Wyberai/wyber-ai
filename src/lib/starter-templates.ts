@@ -2,6 +2,19 @@ import { Framework, FileNode } from '@/store/editor';
 
 type FileMap = Record<string, FileNode>;
 
+// The starter scaffold ships a placeholder App so the editor has something to
+// show before the first build. Everything that gates on "did the model write a
+// REAL App yet" (PreviewPanel's hasApp, ChatPanel's missing-entry backstop)
+// must use this check — a length threshold alone breaks the moment the
+// placeholder grows past it, which is exactly how builds that skipped App.tsx
+// silently previewed the placeholder instead of triggering the free fix lane.
+export function isPlaceholderApp(content: string | null | undefined): boolean {
+  const c = (content ?? '').trim();
+  return c.length <= 200
+    || c.includes('Your app will appear here')      // web starter marker
+    || c.includes('Describe your app in the chat'); // react-native starter marker
+}
+
 function f(path: string, content: string): FileNode {
   const ext = path.split('.').pop() ?? '';
   const langMap: Record<string, string> = {
@@ -38,15 +51,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>
 );`),
-    'src/App.tsx': f('src/App.tsx', `import { useState } from 'react';
-export default function App() {
-  return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'system-ui', gap: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, color: '#0EA5E9' }}>Your app will appear here</h1>
-      <p style={{ color: '#a1a1aa', fontSize: 15 }}>Describe what you want to build in the chat &rarr;</p>
-
-    </div>
-  );
+    'src/App.tsx': f('src/App.tsx', `export default function App() {
+  return <h1 style={{ marginTop: '40vh', textAlign: 'center', fontFamily: 'system-ui', color: '#0EA5E9' }}>Your app will appear here</h1>;
 }`),
     'src/index.css': f('src/index.css', `*, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; padding: 0; }`),

@@ -254,9 +254,16 @@ export default function PricingPage() {
     })
   }, [])
 
-  const handleCheckout = async (planKey: string) => {
+  // Checkout opens in a NEW tab so the app (and any in-flight build/session
+  // state) stays alive — same-tab navigation meant users came back via the
+  // browser Back button to a remounted editor. The blank tab must be opened
+  // synchronously inside the click gesture; window.open after the fetch
+  // resolves gets swallowed by popup blockers. Falls back to same-tab if the
+  // popup was blocked anyway.
+  const startCheckout = async (planKey: string) => {
     if (!user) { window.location.href = '/login?next=/pricing'; return }
     setLoading(planKey)
+    const tab = window.open('about:blank', '_blank')
     try {
       const res = await fetch('/api/dodo/checkout', {
         method: 'POST',
@@ -264,33 +271,23 @@ export default function PricingPage() {
         body: JSON.stringify({ planKey }),
       })
       const d = await res.json()
-      if (d.url) window.location.href = d.url
-      else alert(d.error ?? 'Checkout error')
+      if (d.url) {
+        if (tab) tab.location.href = d.url
+        else window.location.href = d.url
+      } else {
+        tab?.close()
+        alert(d.error ?? 'Checkout error')
+      }
     } catch {
+      tab?.close()
       alert('Network error')
     } finally {
       setLoading(null)
     }
   }
 
-  const handleTopup = async (key: string) => {
-    if (!user) { window.location.href = '/login?next=/pricing'; return }
-    setLoading(key)
-    try {
-      const res = await fetch('/api/dodo/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey: key }),
-      })
-      const d = await res.json()
-      if (d.url) window.location.href = d.url
-      else alert(d.error ?? 'Checkout error')
-    } catch {
-      alert('Network error')
-    } finally {
-      setLoading(null)
-    }
-  }
+  const handleCheckout = startCheckout
+  const handleTopup = startCheckout
 
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>

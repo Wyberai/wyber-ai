@@ -6,7 +6,7 @@ import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react'
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
-import { STARTER_TEMPLATES } from '@/lib/starter-templates';
+import { STARTER_TEMPLATES, isPlaceholderApp } from '@/lib/starter-templates';
 import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
 import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
@@ -1104,13 +1104,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
       }
       // 4b. Safety net for the failure the server's forced follow-up also
       // guards: a "successful" build whose files never included a real entry
-      // file. The starter scaffold's App.tsx is a tiny placeholder (kept
-      // under PreviewPanel's 200-char hasApp threshold on purpose), so if the
-      // model wrote components but no real App, the preview stays blank
-      // forever with no error to heal from. Ask for exactly the missing file
-      // via the free self-heal lane.
+      // file. If the model wrote components but App is still missing or still
+      // the starter placeholder, the preview stays blank forever with no error
+      // to heal from. isPlaceholderApp (marker + length, NOT length alone —
+      // the old <=200 check silently never fired because the starter
+      // placeholder had grown past 200 chars) detects it; ask for exactly the
+      // missing file via the free self-heal lane.
       const appAfter = (updatedFiles['src/App.tsx'] || updatedFiles['src/App.jsx'] || updatedFiles['App.tsx']) as { content?: string } | undefined
-      if (newFiles.length >= 2 && !isSelfHeal && !fileCut && !editCut && (appAfter?.content?.length ?? 0) <= 200) {
+      if (newFiles.length >= 2 && !isSelfHeal && !fileCut && !editCut && isPlaceholderApp(appAfter?.content)) {
         const entry = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
