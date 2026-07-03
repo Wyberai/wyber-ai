@@ -45,7 +45,7 @@ export default function Page() {
           </Step>
           <Step n={5} title="Iterate">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Send follow-up prompts in the chat panel to change screens, add new tabs, or tweak the design. Each iteration costs 1 credit.
+              Send follow-up prompts in the chat panel to change screens, add new tabs, or tweak the design. Each iteration costs 2 credits.
             </p>
           </Step>
         </Steps>
