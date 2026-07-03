@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/editor'
 import { ChatPanel } from './ChatPanel'
 import { MobilePreviewPanel } from './MobilePreviewPanel'
 import { MobileRightPanel } from './MobileRightPanel'
+import { Wyberman } from './Wyberman'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
 interface Props {
@@ -44,6 +45,9 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     try { await fetch('/api/projects/rename', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: initialProject.id, name: newName }) }) } catch {}
   }
 
+  // Tell the page-level hydration watchdog React is alive (see project/[id]/page.tsx).
+  useEffect(() => { (window as unknown as { __wyber_hydrated?: boolean }).__wyber_hydrated = true }, [])
+
   useEffect(() => {
     if (!initialProject?.id) return
     resetForProject()
@@ -71,6 +75,26 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
       })
       if (cData.connectors?.length) setConnectors(cData.connectors)
     })
+  }, [initialProject?.id])
+
+  // The project row is created with a prompt-slice name and renamed by Haiku
+  // ~2-4s later (creation-time smart naming) — but this header renders the
+  // SSR snapshot, so mobile projects kept showing the raw prompt slice for
+  // the whole session (IDELayout got this refetch; MobileLayout never did).
+  // One delayed refetch picks up the smart name.
+  useEffect(() => {
+    if (!initialProject?.id) return
+    const t = setTimeout(async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const { data } = await createClient().from('projects').select('name').eq('id', initialProject.id).single()
+        if (data?.name) {
+          setDisplayName(prev => (data.name !== prev ? data.name : prev))
+          document.title = `${data.name} — WyberAi`
+        }
+      } catch { /* best-effort — worst case the prompt-slice name stays */ }
+    }, 4000)
+    return () => clearTimeout(t)
   }, [initialProject?.id])
 
   // Refresh connector state after any connect/disconnect so banners keyed on
@@ -177,6 +201,9 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
         </div>
       </div>
       )}
+      {/* Self-isolated (own ErrorBoundary, read-only against preview state) —
+          safe to mount here per the preview-isolation rule. */}
+      <Wyberman />
     </div>
   )
 }

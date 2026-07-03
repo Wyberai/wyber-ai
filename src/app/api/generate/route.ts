@@ -69,7 +69,10 @@ function makeJsonFieldStreamer(key: string) {
   }
 }
 
-export const maxDuration = 300
+// 800s needs Fluid compute (Pro) — Vercel clamps/rejects it otherwise. Raised
+// from 300 after five observed timeouts on giant multi-iteration builds; the
+// client ceiling in ChatPanel is set 20s past this, keep them in sync.
+export const maxDuration = 800
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -1273,6 +1276,36 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+    }
+
+    // ── Free-lane abuse guard ─────────────────────────────────────────
+    // `selfHeal` and the (legacy, now client-unused) 'plan' stage skip billing
+    // entirely, and both flags come straight from the request body — so any
+    // registered user could craft POSTs and burn Anthropic spend for free,
+    // unmetered. Legit self-heal traffic is small (the client caps autofix
+    // passes per turn), so cap free generations per user per hour. Counted in
+    // credit_usage (amount 0) so the limit holds across serverless instances;
+    // the insert is awaited because a fire-and-forget row could miss the very
+    // burst it's supposed to count.
+    if (selfHeal || stage === 'plan') {
+      const FREE_PASSES_PER_HOUR = 30
+      const guardAdmin = await createAdminClient()
+      const hourAgo = new Date(Date.now() - 3600_000).toISOString()
+      const { count } = await guardAdmin
+        .from('credit_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reason', 'free-pass')
+        .gte('created_at', hourAgo)
+      if ((count ?? 0) >= FREE_PASSES_PER_HOUR) {
+        return new Response(JSON.stringify({
+          error: 'Auto-fix limit reached for this hour — please try again in a little while.',
+        }), { status: 429 })
+      }
+      await guardAdmin.from('credit_usage').insert({
+        user_id: user.id, amount: 0, reason: 'free-pass',
+        credits_before: 0, credits_after: 0,
+      })
     }
 
     // Determine action type for cost calculation. The client sends isFirstBuild

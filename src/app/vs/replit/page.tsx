@@ -3,7 +3,7 @@ import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Replit (2026) — AI App Builder vs Cloud IDE',
-  description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and six products Replit doesn\'t have. Verified June 2026.',
+  description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and web + mobile app building Replit doesn\'t offer. Verified June 2026.',
   alternates: { canonical: 'https://wyberai.com/vs/replit' },
   openGraph: { title: 'WyberAi vs Replit (2026)', description: 'AI app builder vs cloud IDE. Verified June 2026.', url: 'https://wyberai.com/vs/replit' },
 }
@@ -58,7 +58,7 @@ export default function VsReplit() {
       slug="replit"
       competitorName="Replit"
       competitorUrl="https://replit.com"
-      tagline="Replit is a powerful cloud IDE for developers. WyberAi is a no-code app builder for founders — with predictable pricing and six products Replit doesn't cover."
+      tagline="Replit is a powerful cloud IDE for developers. WyberAi is a no-code app builder for founders — with predictable pricing and web + mobile app building Replit doesn't cover."
       blurb="Honest comparison of WyberAi vs Replit: AI app builder vs cloud IDE, pricing, and the six-product difference. Verified June 2026."
       rows={ROWS}
       faqs={FAQS}

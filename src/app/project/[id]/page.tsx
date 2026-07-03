@@ -7,6 +7,16 @@ import type { Metadata } from 'next'
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ type?: string }> }
 
+// Hydration watchdog. Proven failure mode (Jul 3 2026): antivirus web filters
+// (Kaspersky et al.) rewrite streamed documents and the re-inserted scripts
+// never execute — the editor renders as inert SSR HTML with NO error anywhere,
+// and users blame the app. This inline, non-module script survives because AV
+// filters leave plain inline scripts in the initial HTML alone; the editor
+// layouts set window.__wyber_hydrated on mount, and if that hasn't happened
+// after 12s we show a plain-DOM banner naming the real culprit. Self-removes
+// the moment hydration is detected late.
+const HYDRATION_WATCHDOG = `(function(){setTimeout(function(){if(window.__wyber_hydrated)return;var b=document.createElement('div');b.id='wyber-hydration-warning';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#7c2d12;color:#fed7aa;font:13px/1.5 system-ui;padding:10px 44px 10px 16px;text-align:center';b.innerHTML='The editor could not start in this browser. This is usually caused by antivirus software (e.g. Kaspersky) filtering web traffic \\u2014 add wyberai.com to its exclusions or disable \\u201cscript injection\\u201d, then reload. It also works from another browser or your phone.';var x=document.createElement('button');x.textContent='\\u00d7';x.style.cssText='position:absolute;right:10px;top:6px;background:none;border:none;color:#fed7aa;font-size:18px;cursor:pointer';x.onclick=function(){b.remove()};b.appendChild(x);document.body.appendChild(b);var iv=setInterval(function(){if(window.__wyber_hydrated){b.remove();clearInterval(iv)}},2000)},12000)})()`
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params
   const supabase = await createClient()
@@ -47,12 +57,17 @@ export default async function ProjectPage({ params, searchParams }: Props) {
   // Determine canvas type from URL param or project type
   const canvasType = type || project.project_type || 'app'
 
+  const watchdog = <script dangerouslySetInnerHTML={{ __html: HYDRATION_WATCHDOG }} />
+
   if (canvasType === 'mobile') {
     return (
-      <MobileLayout
-        initialProject={{ id, name: project.name || 'Untitled', files: project.files, project_type: project.project_type, user_id: user.id }}
-        initialProfile={initialProfile}
-      />
+      <>
+        {watchdog}
+        <MobileLayout
+          initialProject={{ id, name: project.name || 'Untitled', files: project.files, project_type: project.project_type, user_id: user.id }}
+          initialProfile={initialProfile}
+        />
+      </>
     )
   }
 
@@ -69,9 +84,12 @@ export default async function ProjectPage({ params, searchParams }: Props) {
   }
 
   return (
-    <IDELayout
-      initialProject={project}
-      initialProfile={initialProfile}
-    />
+    <>
+      {watchdog}
+      <IDELayout
+        initialProject={project}
+        initialProfile={initialProfile}
+      />
+    </>
   )
 }

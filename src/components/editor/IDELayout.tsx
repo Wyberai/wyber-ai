@@ -58,6 +58,10 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     return () => window.removeEventListener('wyber-request-mobile-view', handler);
   }, []);
 
+  // Tell the page-level hydration watchdog React is alive (see project/[id]/page.tsx —
+  // AV web filters can render the editor as inert SSR HTML with no error).
+  useEffect(() => { (window as unknown as { __wyber_hydrated?: boolean }).__wyber_hydrated = true }, []);
+
   // Hydrate store from server data + load messages and knowledge
   useEffect(() => {
     if (!initialProject?.id) return;

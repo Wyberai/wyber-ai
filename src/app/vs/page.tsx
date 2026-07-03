@@ -81,7 +81,7 @@ export default function VsIndex() {
             WyberAi vs Every Alternative
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
-            Honest, up-to-date comparisons. WyberAi is the only platform that covers all six products — web apps, mobile apps, AI agents, workflows, AI employees, and GTM engine — from one workspace.
+            Honest, up-to-date comparisons. WyberAi ships full-stack web apps and native mobile apps from one workspace — with deploy, integrations, and GitHub code ownership built in.
           </p>
         </header>
 

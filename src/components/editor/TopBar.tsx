@@ -44,6 +44,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   // share modal stays open and shows "done" instead of silently reopening
   // with the same content (which read as "it looped back to the same popup").
   const [republished, setRepublished] = useState(false);
+  // Post-publish RLS advisory (free, fire-and-forget): after an app goes live
+  // we probe its Supabase DB with the anon key — the attacker's view. Critical
+  // findings surface as a warning in the share modal; a failed/not-connected
+  // scan stays silent so this can never block or noise up publishing.
+  const [postPublishScan, setPostPublishScan] = useState<{ score: number; criticals: number } | null>(null);
   const [customDomain, setCustomDomain] = useState('');
   const [customDomainStatus, setCustomDomainStatus] = useState<'idle'|'saving'|'verifying'|'verified'|'error'>('idle');
   const [customDomainError, setCustomDomainError] = useState('');
@@ -237,6 +242,15 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         setDeployUrl(url);
         setShowShareModal(true);
         if (wasLive) setRepublished(true);
+        setPostPublishScan(null);
+        fetch('/api/security/rls-scan', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        }).then(r => r.ok ? r.json() : null).then((d: { score?: number; findings?: Array<{ severity?: string }> } | null) => {
+          if (!d || !Array.isArray(d.findings)) return; // no Supabase connected / scan unavailable
+          const criticals = d.findings.filter(f => f.severity === 'critical').length;
+          if (criticals > 0) setPostPublishScan({ score: d.score ?? 0, criticals });
+        }).catch(() => {});
       } else {
         alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
       }
@@ -541,18 +555,29 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       <><div style={{ width: 11, height: 11, border: '2px solid rgba(14,165,233,0.25)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Republishing… {deploySecs}s</>
                     ) : republished ? '✓ Done — your latest changes are live' : 'Re-publish with latest changes'}
                   </button>
+                  {postPublishScan && (
+                    <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#fca5a5', lineHeight: 1.55 }}>
+                      ⚠ <strong style={{ color: '#ef4444' }}>Security check:</strong> your live database has {postPublishScan.criticals} critical exposure{postPublishScan.criticals === 1 ? '' : 's'} — data an anonymous visitor can read right now. Open the <strong>Security</strong> tab to review and one-click fix. Your app stays live either way.
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <a href={`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>X / Twitter</a>
-                  <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>LinkedIn</a>
-                  <a href={`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>WhatsApp</a>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share your app</span>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <a href={`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>X / Twitter</a>
+                    <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>LinkedIn</a>
+                    <a href={`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>WhatsApp</a>
+                  </div>
                 </div>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom Domain</span>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Connect a domain you own</span>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
+                    Three steps: enter your domain and hit Connect, add the DNS record we show you at your registrar, then hit Verify. Your app serves from your domain once DNS propagates (usually minutes).
+                  </span>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input
                       style={inputStyle}
@@ -566,7 +591,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       disabled={!customDomain.trim() || customDomainStatus === 'saving'}
                       style={{ ...btn, whiteSpace: 'nowrap', background: 'var(--bg-elevated)' }}
                     >
-                      {customDomainStatus === 'saving' ? 'Saving...' : 'Save'}
+                      {customDomainStatus === 'saving' ? 'Connecting...' : 'Connect'}
                     </button>
                   </div>
 
