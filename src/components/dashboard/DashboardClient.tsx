@@ -104,11 +104,32 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [view, setView] = useState<'all' | 'web' | 'mobile'>('all');
   const searchParams = useSearchParams();
 
-  // Reddit pixel: fire SignUp conversion once per user session
+  // Reddit conversion events — fire ONLY on the real moments, then strip the
+  // marker param so a refresh never double-counts.
+  //   SignUp   → only when the auth callback tagged a genuine first signup
+  //              (?signup=1). The old code fired for every returning user's
+  //              dashboard load, teaching the ad optimizer to chase the wrong
+  //              people. Now it's one clean conversion per real account.
+  //   Purchase → on return from Dodo checkout (?upgraded=1 / ?topup=1), with
+  //              the charged value (?rv=) so campaigns can optimize for revenue.
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).rdt && !sessionStorage.getItem('rdt_signup_fired')) {
-      (window as any).rdt('track', 'SignUp');
-      sessionStorage.setItem('rdt_signup_fired', '1');
+    if (typeof window === 'undefined') return;
+    const rdt = (window as any).rdt;
+    const sp = new URLSearchParams(window.location.search);
+    let dirty = false;
+
+    if (sp.get('signup') === '1') {
+      if (rdt) rdt('track', 'SignUp');
+      sp.delete('signup'); dirty = true;
+    }
+    if (sp.get('upgraded') === '1' || sp.get('topup') === '1') {
+      const value = parseFloat(sp.get('rv') || '0');
+      if (rdt) rdt('track', 'Purchase', value > 0 ? { value, currency: 'USD' } : {});
+      sp.delete('upgraded'); sp.delete('topup'); sp.delete('rv'); dirty = true;
+    }
+    if (dirty) {
+      const qs = sp.toString();
+      window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
     }
   }, []);
 

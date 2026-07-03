@@ -21,6 +21,16 @@ const PRODUCT_IDS: Record<string, string | undefined> = {
   'topup_2000': process.env.DODO_TOPUP_2000,
 }
 
+// Charged USD amount per plan — attached to the post-checkout return URL so the
+// client can report a Purchase conversion WITH value (for Reddit/analytics
+// ROAS). Annual = monthly-equivalent × 12. 0 = value unknown/not sold (the
+// conversion still fires, just without a revenue figure).
+const PLAN_VALUE: Record<string, number> = {
+  starter_monthly: 29, builder_monthly: 79, pro_monthly: 199, growth_monthly: 0, scale_monthly: 0,
+  starter_annual: 276, builder_annual: 756, pro_annual: 1908, growth_annual: 0, scale_annual: 0,
+  topup_200: 19, topup_600: 49, topup_2000: 99,
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -48,7 +58,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         product_cart: [{ product_id: productId, quantity: 1 }],
         customer: { email: user.email, name: user.email?.split('@')[0] },
-        return_url: `${origin}/dashboard?${isTopup ? 'topup=1' : 'upgraded=1'}`,
+        return_url: `${origin}/dashboard?${isTopup ? 'topup=1' : 'upgraded=1'}&rv=${PLAN_VALUE[planKey] ?? 0}`,
         metadata: { user_id: user.id, plan: planKey },
       }),
     })

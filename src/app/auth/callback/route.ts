@@ -49,6 +49,7 @@ export async function GET(request: Request) {
 
       // Send welcome + owner alert exactly once per user. Atomically flip
       // welcome_sent (admin client bypasses RLS); a returned row = first time.
+      let isFirstSignup = false;
       try {
         const admin = await createAdminClient();
         const { data: firstTime } = await admin
@@ -59,6 +60,7 @@ export async function GET(request: Request) {
           .select('id')
           .maybeSingle();
         if (firstTime?.id && user.email) {
+          isFirstSignup = true;
           const fullName = (user.user_metadata?.full_name as string | undefined);
           const provider = (user.app_metadata?.provider as string | undefined);
           sendWelcomeEmail(user.email, fullName).catch(() => {});
@@ -66,7 +68,12 @@ export async function GET(request: Request) {
         }
       } catch (e) { console.error('welcome/signup-alert failed:', e); }
 
-      return NextResponse.redirect(`${origin}${next}`);
+      // Tag the redirect for GENUINE first signups only, so the Reddit/analytics
+      // SignUp conversion fires once per real account — not on every returning
+      // user's dashboard load (the old sessionStorage approach counted both).
+      const dest = new URL(`${origin}${next}`);
+      if (isFirstSignup) dest.searchParams.set('signup', '1');
+      return NextResponse.redirect(dest.toString());
     }
 
     console.error('Auth callback error:', error);
