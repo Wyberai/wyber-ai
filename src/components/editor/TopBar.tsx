@@ -321,6 +321,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     if (!buyDomainResult?.available || !buyDomainResult.priceCents || !domainContactComplete) return;
     setBuyDomainStatus('buying');
     setBuyDomainError('');
+    // Checkout opens in a NEW tab so the editor (and any in-flight build) stays
+    // alive — same-tab navigation meant users came back via Back to a remounted
+    // session. The blank tab must be opened synchronously inside the click
+    // gesture; window.open after the fetch resolves gets swallowed by popup
+    // blockers. Falls back to same-tab if the popup was blocked anyway.
+    const tab = window.open('about:blank', '_blank');
     try {
       const res = await fetch('/api/domain/purchase', {
         method: 'POST',
@@ -329,8 +335,21 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Purchase failed');
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        if (tab) {
+          tab.location.href = data.url;
+          // The editor stays open now — release the button so it doesn't sit
+          // on "Starting checkout..." forever while the user pays in the other tab.
+          setBuyDomainStatus('idle');
+        } else {
+          window.location.href = data.url;
+        }
+      } else {
+        tab?.close();
+        setBuyDomainStatus('idle');
+      }
     } catch (err) {
+      tab?.close();
       setBuyDomainStatus('error');
       setBuyDomainError(err instanceof Error ? err.message : 'Purchase failed');
     }
