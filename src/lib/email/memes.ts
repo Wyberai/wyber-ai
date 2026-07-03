@@ -26,7 +26,9 @@ export const MEME_GIFS: Record<string, MemeSlot> = {
   // copy-only until the GIFs land in public/email-memes/.
   'payment-failed':  { file: 'hogan-belt.gif',        alt: 'Hulk Hogan demanding to know whose belt this is', live: false },
   'out-of-credits':  { file: 'wonka-nothing.gif',     alt: 'Willy Wonka: You get nothing! Good day, sir!',    live: false },
-  'upgrade-success': { file: 'khaled-success.gif',    alt: 'DJ Khaled suffering from success',                live: true },
+  // Skipped: the delivered khaled-success.gif is a watermarked (PicMix) fan
+  // edit — too low-fi for the post-payment email. Copy-only until a clean GIF.
+  'upgrade-success': { file: 'khaled-success.gif',    alt: 'DJ Khaled suffering from success',                live: false },
   'nudge-exhausted': { file: 'affleck-smoking.gif',   alt: 'Ben Affleck smoking, completely defeated',        live: true },
   'power-user':      { file: 'homelander-nod.gif',    alt: 'Homelander nodding, deeply satisfied',            live: true },
   // ── Extensions (emails the matrix didn't cover) ──────────────────────────
