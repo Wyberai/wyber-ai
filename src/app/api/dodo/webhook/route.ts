@@ -86,8 +86,12 @@ export async function POST(req: NextRequest) {
   const eventType = String(event.type || '')
   console.log('Dodo event:', eventType)
 
-  // Hoisted so the catch below can release the idempotency claim on failure.
+  // Hoisted so the catch below can release the idempotency claims on failure.
   const dedupeId = headerId || String((event.data as Record<string, unknown> | undefined)?.payment_id || (event as Record<string, unknown>).id || '')
+  // Every processed_webhooks claim taken during this delivery — the catch
+  // releases ALL of them so a retried delivery re-runs the full grant.
+  const claimedKeys: string[] = []
+  if (dedupeId) claimedKeys.push(dedupeId)
 
   try {
     const admin = getAdmin()
@@ -119,7 +123,16 @@ export async function POST(req: NextRequest) {
     )
 
     if (!userId) {
+      // A real payment with no user to credit is a silent money-taken/nothing-
+      // granted black hole — alert a human to reconcile it manually instead of
+      // just logging into the void. Still ack: retries can't fix missing metadata.
       console.warn('No user_id in event metadata for', eventType)
+      if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
+        sendAdminPaymentAlert(
+          'UNKNOWN USER — reconcile manually',
+          `⚠ ${eventType} arrived with NO user_id metadata. product=${productId || 'unknown'} webhook-id=${dedupeId || 'none'} — find the payment in the Dodo dashboard and grant credits by hand.`
+        ).catch(() => {})
+      }
       return NextResponse.json({ received: true, warning: 'no user_id' })
     }
 
@@ -232,16 +245,53 @@ export async function POST(req: NextRequest) {
         console.warn('Dodo webhook: unknown product, no plan change:', productId)
         return NextResponse.json({ received: true, warning: 'unknown product' })
       }
-      const { error: planErr } = await admin.from('profiles').update({
+
+      // Plan credits are ADDED to the existing balance (top-ups "never expire"
+      // — activation must not wipe them). Because payment.succeeded and
+      // subscription.active BOTH fire for the same subscribe (and were harmless
+      // when this was a SET), the grant is deduped across the pair on the
+      // subscription id: whichever event lands first grants, the other only
+      // refreshes the plan fields. A renewal's payment.succeeded reuses the
+      // same subscription id, so it can't re-grant either — renewals are
+      // credited by the subscription.renewed handler below.
+      const evData = event.data as Record<string, unknown> | undefined
+      const subscriptionRef = String(evData?.subscription_id || evData?.payment_id || evData?.id || dedupeId || '')
+      let grantCredits = true
+      if (subscriptionRef) {
+        const grantKey = `plan-grant:${userId}:${subscriptionRef}`
+        const { error: grantDupeErr } = await admin
+          .from('processed_webhooks')
+          .insert({ id: grantKey, source: 'dodo-plan-grant' })
+        if (grantDupeErr?.code === '23505') {
+          grantCredits = false
+        } else if (grantDupeErr) {
+          console.warn('Plan-grant dedupe insert failed (granting anyway):', String(grantDupeErr.message || grantDupeErr))
+        } else {
+          claimedKeys.push(grantKey)
+        }
+      }
+
+      let newBalance: number | null = null
+      if (grantCredits) {
+        const { data: adjusted, error: adjErr } = await admin.rpc('adjust_credits', {
+          p_user_id: userId, p_delta: planConfig.credits,
+        })
+        if (!adjErr && typeof adjusted === 'number') newBalance = adjusted
+      }
+      const planUpdate: Record<string, unknown> = {
         plan: planConfig.plan,
-        credits: planConfig.credits,
         daily_credits: planConfig.dailyCredits,
         subscription_status: 'active',
         updated_at: new Date().toISOString(),
-      }).eq('id', userId)
-      if (planErr) throw planErr // unacked → Dodo retries
-      console.log(`Plan activated: ${planConfig.plan} for ${userId}`)
-      if (userEmail) {
+      }
+      // RPC unavailable (missing grant) → non-atomic fallback add
+      if (grantCredits && newBalance === null) {
+        planUpdate.credits = ((profile?.credits as number) || 0) + planConfig.credits
+      }
+      const { error: planErr } = await admin.from('profiles').update(planUpdate).eq('id', userId)
+      if (planErr) throw planErr // unacked → Dodo retries (all claims released below)
+      console.log(`Plan activated: ${planConfig.plan} for ${userId} (credits ${grantCredits ? `+${planConfig.credits}` : 'already granted'})`)
+      if (userEmail && grantCredits) {
         sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
         sendAdminPaymentAlert(userEmail, `${planConfig.label} plan`).catch(() => {})
       }
@@ -267,13 +317,17 @@ export async function POST(req: NextRequest) {
 
     if (eventType === 'subscription.cancelled') {
       const { data: cancelProfile } = await admin.from('profiles').select('email, plan').eq('id', userId).single()
+      // Keep the credit balance — top-ups never expire and the user paid for
+      // what's left. Only the plan drops to free; daily_credits returns to the
+      // free-tier drip (3) so a cancelled Scale user doesn't keep receiving
+      // 400/day from the add_daily_credits cron.
       await admin.from('profiles').update({
         plan: 'free',
-        credits: 50,
+        daily_credits: 3,
         subscription_status: 'cancelled',
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
-      console.log(`Cancelled for ${userId}`)
+      console.log(`Cancelled for ${userId} (balance kept)`)
       const planLabel = cancelProfile?.plan ?? 'plan'
       if (cancelProfile?.email) sendCancellationEmail(cancelProfile.email, planLabel).catch(() => {})
     }
@@ -283,10 +337,11 @@ export async function POST(req: NextRequest) {
     console.error('Webhook DB error:', String(err))
     // A failed grant must never be acked with 200: the user paid, and the
     // provider's retry — the one chance to fix it — would then be swallowed
-    // as a duplicate by the idempotency claim taken above. Release the claim
-    // and return 500 so Dodo redelivers.
-    if (dedupeId) {
-      try { await getAdmin().from('processed_webhooks').delete().eq('id', dedupeId) } catch { /* best-effort */ }
+    // as a duplicate by the idempotency claims taken above. Release every
+    // claim from this delivery (including the plan-grant key) and return 500
+    // so Dodo redelivers and the grant re-runs.
+    if (claimedKeys.length > 0) {
+      try { await getAdmin().from('processed_webhooks').delete().in('id', claimedKeys) } catch { /* best-effort */ }
     }
     return NextResponse.json({ error: 'Processing failed — retry' }, { status: 500 })
   }

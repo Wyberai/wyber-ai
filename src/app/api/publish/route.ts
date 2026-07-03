@@ -42,12 +42,12 @@ export async function POST(req: NextRequest) {
     const { projectId, override = false } = await req.json()
     const admin = createServiceClient()
 
-    const { data: project } = await admin
-      .from('projects')
-      .select('*')
-      .eq('id', projectId)
-      .eq('user_id', user.id)
-      .single()
+    // Support mode: allowlisted admins can publish on a customer's behalf
+    // after fixing their project remotely.
+    const { isAdminEmail } = await import('@/lib/admin')
+    let projectQuery = admin.from('projects').select('*').eq('id', projectId)
+    if (!isAdminEmail(user.email)) projectQuery = projectQuery.eq('user_id', user.id)
+    const { data: project } = await projectQuery.single()
 
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 

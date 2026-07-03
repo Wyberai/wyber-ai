@@ -325,7 +325,17 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
           catalog (not a hardcoded/stale list). */}
       {(plan.integrations.length > 0 || editing) && (
         <div>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Tools needed</p>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Tools needed
+            {/* Always-visible affordance: users who saw "HubSpot" but use
+                Salesforce never found the global ✎ Edit plan toggle. */}
+            {!editing && (
+              <button onClick={() => setEditing(true)}
+                style={{ marginLeft: 8, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 'normal', padding: '1px 8px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--accent, #0EA5E9)', cursor: 'pointer', fontFamily: 'inherit' }}>
+                ✎ change tools
+              </button>
+            )}
+          </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: editing ? 8 : 0 }}>
             {plan.integrations.map((s, i) => (
               <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: 'var(--accent, #0EA5E9)', background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 20, padding: '4px 10px' }}>

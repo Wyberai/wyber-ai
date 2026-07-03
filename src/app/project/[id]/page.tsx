@@ -1,4 +1,5 @@
-﻿import { createClient } from '@/lib/supabase/server'
+﻿import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import { IDELayout } from '@/components/editor/IDELayout'
 import { AgentCanvas } from '@/components/editor/AgentCanvas'
@@ -32,14 +33,23 @@ export default async function ProjectPage({ params, searchParams }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: project } = await supabase
+  let { data: project } = await supabase
     .from('projects')
     .select('*')
     .eq('id', id)
     .single()
 
+  // Support mode: allowlisted admins can open ANY project (RLS hides private
+  // ones from the session client, so retry with the service client).
+  const admin = isAdminEmail(user.email)
+  if (!project && admin) {
+    const adminDb = await createAdminClient()
+    project = (await adminDb.from('projects').select('*').eq('id', id).single()).data
+  }
+
   if (!project) redirect('/dashboard')
-  if (project.user_id !== user.id && !project.is_public) redirect('/dashboard')
+  const supportMode = admin && project.user_id !== user.id
+  if (project.user_id !== user.id && !project.is_public && !supportMode) redirect('/dashboard')
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -59,10 +69,19 @@ export default async function ProjectPage({ params, searchParams }: Props) {
 
   const watchdog = <script dangerouslySetInnerHTML={{ __html: HYDRATION_WATCHDOG }} />
 
+  // Unmissable strip so an admin never mistakes a customer's project for their
+  // own — every save/publish here lands on the customer's account.
+  const supportBanner = supportMode ? (
+    <div style={{ background: '#7c2d12', color: '#fed7aa', fontSize: 12, fontWeight: 600, textAlign: 'center', padding: '5px 12px', borderBottom: '1px solid rgba(254,215,170,0.3)' }}>
+      🛠 SUPPORT MODE — you are editing a customer&apos;s project ({project.name || id}). Saves and publishes apply to their account.
+    </div>
+  ) : null
+
   if (canvasType === 'mobile') {
     return (
       <>
         {watchdog}
+        {supportBanner}
         <MobileLayout
           initialProject={{ id, name: project.name || 'Untitled', files: project.files, project_type: project.project_type, user_id: user.id }}
           initialProfile={initialProfile}
@@ -86,6 +105,7 @@ export default async function ProjectPage({ params, searchParams }: Props) {
   return (
     <>
       {watchdog}
+      {supportBanner}
       <IDELayout
         initialProject={project}
         initialProfile={initialProfile}
