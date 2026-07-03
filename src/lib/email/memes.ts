@@ -22,22 +22,24 @@ interface MemeSlot {
 
 export const MEME_GIFS: Record<string, MemeSlot> = {
   // ── From the matrix ──────────────────────────────────────────────────────
+  // Still awaiting files: hogan-belt.gif, wonka-nothing.gif — these two stay
+  // copy-only until the GIFs land in public/email-memes/.
   'payment-failed':  { file: 'hogan-belt.gif',        alt: 'Hulk Hogan demanding to know whose belt this is', live: false },
   'out-of-credits':  { file: 'wonka-nothing.gif',     alt: 'Willy Wonka: You get nothing! Good day, sir!',    live: false },
-  'upgrade-success': { file: 'khaled-success.gif',    alt: 'DJ Khaled suffering from success',                live: false },
-  'nudge-exhausted': { file: 'affleck-smoking.gif',   alt: 'Ben Affleck smoking, completely defeated',        live: false },
-  'power-user':      { file: 'homelander-nod.gif',    alt: 'Homelander nodding, deeply satisfied',            live: false },
+  'upgrade-success': { file: 'khaled-success.gif',    alt: 'DJ Khaled suffering from success',                live: true },
+  'nudge-exhausted': { file: 'affleck-smoking.gif',   alt: 'Ben Affleck smoking, completely defeated',        live: true },
+  'power-user':      { file: 'homelander-nod.gif',    alt: 'Homelander nodding, deeply satisfied',            live: true },
   // ── Extensions (emails the matrix didn't cover) ──────────────────────────
-  'welcome':         { file: 'epic-handshake.gif',    alt: 'The epic handshake — you and WyberAi',            live: false },
-  'first-build':     { file: 'success-kid.gif',       alt: 'Success Kid fist pump',                           live: false },
-  'credits-low':     { file: 'this-is-fine.gif',      alt: 'This is fine dog in a burning room',              live: false },
-  'topup':           { file: 'stonks.gif',            alt: 'Stonks: credits going up',                        live: false },
-  'renewal':         { file: 'khaled-another-one.gif', alt: 'DJ Khaled: Another one.',                        live: false },
-  'cancelled':       { file: 'affleck-smoking.gif',   alt: 'Ben Affleck smoking, not mad, just disappointed', live: false },
-  'still-waiting':   { file: 'waiting-skeleton.gif',  alt: 'Skeleton waiting at a computer',                  live: false },
-  'publish-nudge':   { file: 'leo-pointing.gif',      alt: 'Leonardo DiCaprio pointing at the screen',        live: false },
-  'deployed':        { file: 'jonah-hill-hype.gif',   alt: 'Jonah Hill absolutely losing his mind with excitement', live: false },
-  'admin-money':     { file: 'money-printer.gif',     alt: 'Money printer goes brrr',                         live: false },
+  'welcome':         { file: 'epic-handshake.gif',    alt: 'The epic handshake — you and WyberAi',            live: true },
+  'first-build':     { file: 'success-kid.gif',       alt: 'Success Kid fist pump',                           live: true },
+  'credits-low':     { file: 'this-is-fine.gif',      alt: 'This is fine dog in a burning room',              live: true },
+  'topup':           { file: 'stonks.gif',            alt: 'Stonks: credits going up',                        live: true },
+  'renewal':         { file: 'khaled-another-one.gif', alt: 'DJ Khaled: Another one.',                        live: true },
+  'cancelled':       { file: 'affleck-smoking.gif',   alt: 'Ben Affleck smoking, not mad, just disappointed', live: true },
+  'still-waiting':   { file: 'waiting-skeleton.gif',  alt: 'Skeleton waiting at a computer',                  live: true },
+  'publish-nudge':   { file: 'leo-pointing.gif',      alt: 'Leonardo DiCaprio pointing at the screen',        live: true },
+  'deployed':        { file: 'jonah-hill-hype.gif',   alt: 'Jonah Hill absolutely losing his mind with excitement', live: true },
+  'admin-money':     { file: 'money-printer.gif',     alt: 'Money printer goes brrr',                         live: true },
 }
 
 /**
