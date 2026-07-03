@@ -77,6 +77,14 @@ export async function POST(req: NextRequest) {
     if (!delivered) {
       return NextResponse.json({ error: 'Could not reach the support team right now — email hello@wyberai.com directly.' }, { status: 502 })
     }
+
+    // Confirmation to the customer: "we got it, reply lands with a human" —
+    // best-effort, never blocks the escalation itself.
+    try {
+      const { sendSupportAckEmail } = await import('@/lib/email')
+      sendSupportAckEmail(cleanEmail, cleanEmail.split('@')[0], cleanMessage).catch(() => {})
+    } catch { /* ack is a nicety */ }
+
     return NextResponse.json({ ok: true })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

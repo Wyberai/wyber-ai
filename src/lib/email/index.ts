@@ -8,7 +8,7 @@ const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
 
 // ── Design primitives ─────────────────────────────────────────────────────────
 
-function wrap(content: string, preheader = ''): string {
+function wrap(content: string, preheader = '', unsubUrl?: string): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,8 +21,9 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${preheade
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0f;padding:40px 20px">
   <tr><td align="center">
     <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
-      <tr><td style="padding-bottom:32px;text-align:center">
+      <tr><td style="padding-bottom:28px;text-align:center">
         <a href="${APP_URL}" style="text-decoration:none">
+          <img src="${APP_URL}/email-logo.png" width="40" height="40" alt="" style="display:block;margin:0 auto 10px;border-radius:10px"/>
           <span style="font-size:22px;font-weight:700;color:#f0f0f4;letter-spacing:-0.03em">Wyber<span style="color:#0EA5E9">Ai</span></span>
         </a>
       </td></tr>
@@ -34,7 +35,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${preheade
           © ${new Date().getFullYear()} WyberAi &nbsp;·&nbsp;
           <a href="${APP_URL}" style="color:#0EA5E9;text-decoration:none">wyberai.com</a>
           &nbsp;·&nbsp;
-          <a href="${APP_URL}/unsubscribe" style="color:#555566;text-decoration:none">Unsubscribe</a>
+          <a href="${unsubUrl ?? `${APP_URL}/unsubscribe`}" style="color:#555566;text-decoration:none">Unsubscribe</a>
         </p>
       </td></tr>
     </table>
@@ -285,6 +286,88 @@ export async function sendCreditLowEmail(to: string, remaining: number) {
   `, `${remaining} credits remaining`)
 
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `Low credits: ${remaining} remaining on WyberAi`, html })
+}
+
+// ── 7b. Out of credits — recurring drip (cron: /api/cron/email-drip) ─────────
+// sendNumber varies the copy so nudge #3 doesn't read like nudge #1 verbatim.
+// Marketing email → always carries the recipient's signed unsubscribe link.
+export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, unsubUrl: string) {
+  const variants: { subject: string; heading: string; body: string }[] = [
+    {
+      subject: "You're out of credits — here's the fastest way back",
+      heading: "You're out of credits",
+      body: 'Your balance hit zero, so builds and edits are paused. Your projects are saved and exactly where you left them — top up or upgrade and you can pick up mid-thought.',
+    },
+    {
+      subject: 'Your projects are waiting on WyberAi',
+      heading: 'Still there. Still saved.',
+      body: 'Everything you built is safe in your dashboard — it just needs credits to keep evolving. 200 credits is $19 and they never expire.',
+    },
+    {
+      subject: 'The app you started deserves to ship',
+      heading: 'Finish what you started',
+      body: "Most ideas die at 80% done. Yours doesn't have to — one top-up covers roughly 6 full builds or 100 edits, and unused credits never expire.",
+    },
+    {
+      subject: 'Last nudge from us — your credits are still at zero',
+      heading: "We'll stop nudging after this one",
+      body: "This is the last reminder we'll send about your empty balance — no hard feelings either way. If you ever want to finish those projects, they'll be waiting.",
+    },
+  ]
+  const v = variants[Math.min(Math.max(sendNumber - 1, 0), variants.length - 1)]
+  const html = wrap(`
+    ${h1(v.heading)}
+    ${p(v.body)}
+    <div style="display:grid;gap:10px;margin:0 0 28px">
+      ${([
+        ['200 credits', '$19', `${APP_URL}/pricing#topup`],
+        ['600 credits', '$49', `${APP_URL}/pricing#topup`],
+        ['2,000 credits', '$99', `${APP_URL}/pricing#topup`],
+      ] as [string, string, string][]).map(([c, price, url]) => `
+        <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:14px;color:#f0f0f4;font-weight:500">${c}</span>
+          <a href="${url}" style="font-size:14px;font-weight:600;color:#0EA5E9;text-decoration:none">${price} →</a>
+        </div>
+      `).join('')}
+    </div>
+    <div style="text-align:center;margin:0 0 24px">
+      ${btn('Or go monthly — plans from $29 →', `${APP_URL}/pricing`)}
+    </div>
+    ${p('Every plan includes every feature. Unused credits roll over; top-ups never expire.')}
+  `, v.heading, unsubUrl)
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: v.subject, html })
+}
+
+// ── 7c. Never-built nudge (signed up, never generated an app) ────────────────
+export async function sendGettingStartedNudgeEmail(to: string, name: string, unsubUrl: string) {
+  const html = wrap(`
+    ${h1('Your 50 free credits are still unspent')}
+    ${p(`Hey ${name}, you signed up but haven't built anything yet — and building the first one takes about 60 seconds.`)}
+    ${p('Type one sentence, get a working app:')}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“A CRM to track my freelance clients and invoices”</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“A landing page for my bakery with an order form”</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0">“A habit tracker with streaks and charts”</td></tr>
+    </table>
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Build your first app →', `${APP_URL}/dashboard`)}
+    </div>
+    ${p('Stuck or skeptical? Reply to this email and tell us what you want to build — a human reads every reply.')}
+  `, 'Your free credits are waiting', unsubUrl)
+  return resend.emails.send({ from: FROM, to, subject: 'Your 50 free credits are still waiting ⚡', html })
+}
+
+// ── 7d. Built-but-never-published nudge ───────────────────────────────────────
+export async function sendPublishNudgeEmail(to: string, projectName: string, projectId: string, unsubUrl: string) {
+  const html = wrap(`
+    ${h1(`${projectName} is done — but nobody can see it`)}
+    ${p(`You built <strong style="color:#f0f0f4">${projectName}</strong> and it's been sitting unpublished. Publishing is one click and completely free — you get a live link you can share anywhere.`)}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Publish it now →', `${APP_URL}/project/${projectId}`)}
+    </div>
+    ${p('You can also connect your own domain, push to GitHub, or export the full source as a ZIP.')}
+  `, `${projectName} is one click from live`, unsubUrl)
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `${projectName} is one click from being live`, html })
 }
 
 // ── 8. App deployed successfully ──────────────────────────────────────────────

@@ -49,6 +49,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/docs') ||
     path.startsWith('/p/') ||
     path.startsWith('/app/') ||
+    path.startsWith('/unsubscribe') ||
     path === '/' ||
     path.includes('.')
   ) {

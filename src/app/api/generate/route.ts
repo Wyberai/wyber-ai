@@ -1371,6 +1371,29 @@ export async function POST(req: NextRequest) {
       }
 
       if (balance < cost) {
+        // Highest-intent email moment: they just tried to build and were
+        // refused. Send the first "out of credits" email NOW (the daily drip
+        // cron continues from #2) — at most once, tracked in email_events.
+        if (profile?.email) {
+          ;(async () => {
+            try {
+              const { data: ev, error: evErr } = await admin.from('email_events')
+                .select('sent_count').eq('user_id', user.id).eq('kind', 'credits-drip').single()
+              // 42P01 = table missing (migration 20260703110000 not applied yet)
+              // → skip rather than emailing on EVERY refused build untracked.
+              if (evErr && evErr.code === '42P01') return
+              if (!ev) {
+                const { sendCreditsExhaustedEmail } = await import('@/lib/email')
+                const { unsubscribeUrl } = await import('@/lib/email/unsubscribe')
+                const { data: optRow } = await admin.from('profiles').select('email_opt_out').eq('id', user.id).single()
+                if (!optRow?.email_opt_out) {
+                  await sendCreditsExhaustedEmail(profile.email, 1, unsubscribeUrl(profile.email))
+                  await admin.from('email_events').upsert({ user_id: user.id, kind: 'credits-drip', sent_count: 1, last_sent_at: new Date().toISOString() })
+                }
+              }
+            } catch { /* fire-and-forget */ }
+          })()
+        }
         return new Response(JSON.stringify({
           error: `Not enough credits. This action costs ${cost} credit${cost !== 1 ? 's' : ''} and you have ${balance}.`,
           needed: cost,
