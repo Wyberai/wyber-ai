@@ -211,7 +211,9 @@ ${knownDeps.length > 0 ? `\nAlready detected as needed: ${knownDeps.join(', ')}.
     // used to guess "1-3 credits" for a whole app, wildly misquoting the real
     // build cost. Estimate = one from-scratch build + a few expected iterations
     // scaled by complexity.
-    const iterCost = creditCost('small-edit', 'default');
+    // 'fast' = the simple-edit price (2cr). 'default' would quote the 5cr
+    // complex-edit rate for every expected iteration and overstate the estimate.
+    const iterCost = creditCost('small-edit', 'fast');
     const expectedIters = plan.complexity === 'complex' ? 5 : plan.complexity === 'medium' ? 2 : 0;
     plan.estimatedCredits = creditCost('web-build', 'default') + expectedIters * iterCost;
     return NextResponse.json({ ...plan, creditsCharged: deducted });

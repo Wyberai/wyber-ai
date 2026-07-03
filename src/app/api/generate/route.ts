@@ -1099,8 +1099,9 @@ async function isComplexEdit(prompt: string, fileContext?: string): Promise<bool
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 5,
       system: `You rate an edit request to an existing app as LOW or HIGH complexity.
-HIGH = touches multiple files, OR changes auth/routing/state/data-model, OR a large refactor, OR "rebuild/overhaul everything".
-LOW = a single-component tweak: styling, copy, colors, layout, or adding one small feature.
+HIGH = building a new feature MODULE or screen (e.g. "build out the analytics module", "create a data table with scoring/filtering", "add an inline-editing spreadsheet"), OR structural changes to auth/routing/state/data-model, OR a large multi-file refactor, OR "rebuild/overhaul everything".
+LOW = a tweak, even if it touches 2-3 files: styling, copy, colors, spacing, layout shuffles, renaming, toggling visibility, fixing a bug in one behavior, or adding one small self-contained element (a button, a field, a link).
+The bar is WHAT IS BEING BUILT, not how many files exist in the project.
 Reply with EXACTLY one word: LOW or HIGH.`,
       messages: [{ role: 'user', content: `Files in project: ${fileCount}\nRequest: ${prompt.slice(0, 1500)}` }],
     })
@@ -1812,7 +1813,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
         readable = new ReadableStream({
           async start(controller) {
-            const MAX_TOOL_ITERATIONS = 6
+            // Simple Sonnet edits (2cr) get 3 iterations — measured sessions
+            // showed tweak-sized requests ballooning into 6 file-writing turns,
+            // which is what made cheap edits expensive ($15/M output adds up).
+            // Complex edits (Opus, 5cr) and builds keep the full budget.
+            const MAX_TOOL_ITERATIONS = actionType === 'small-edit' && resolvedTier === 'fast' ? 3 : 6
             let assistantSoFar = ''
             let loopMessages: Anthropic.MessageParam[] = [...finalMessages]
             let stream = firstStream
@@ -1934,7 +1939,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
                 const finalMsg = await stream.finalMessage()
                 const u = finalMsg.usage as unknown as Record<string, number>
-                console.log(`[generate cache] tool-iter=${iter} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+                console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
 
                 if (finalMsg.stop_reason === 'max_tokens') {
                   // Sub-phase 3: a tool call cut off mid-JSON can't be replayed as
@@ -2157,7 +2162,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
               const finalMsg = await stream.finalMessage()
               const u = finalMsg.usage as unknown as Record<string, number>
-              console.log(`[generate cache] pass=${pass} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+              console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
 
               // Only continue when the model was cut off by the token ceiling.
               if (finalMsg.stop_reason !== 'max_tokens' || pass === MAX_CONTINUATIONS) break
