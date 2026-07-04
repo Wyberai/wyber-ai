@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'node:crypto'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { VOTER_COOKIE } from '@/lib/challenge'
 
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   let token = req.cookies.get(VOTER_COOKIE)?.value ?? null
   let mintCookie = false
-  if (!token) { token = crypto.randomUUID(); mintCookie = true }
+  if (!token) { token = randomUUID(); mintCookie = true }
   const voterKey = userId ? `u:${userId}` : `c:${token}`
 
   const db = createServiceClient()
