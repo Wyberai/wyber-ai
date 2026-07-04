@@ -21,23 +21,52 @@ function getAdmin() {
 }
 
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_200  || 'TOPUP_UNSET1']: 200,
-  [process.env.DODO_TOPUP_600  || 'TOPUP_UNSET2']: 600,
-  [process.env.DODO_TOPUP_2000 || 'TOPUP_UNSET3']: 2000,
+  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 200,
+  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 600,
+  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 2000,
+  // India (INR) top-ups — same credit packs, separate INR-priced products.
+  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 200,
+  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 600,
+  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 2000,
 }
 
-// Plan config keyed by Dodo product ID env var — matches new 5-tier pricing
-const PLANS: Record<string, { credits: number; dailyCredits: number; plan: string; label: string }> = {
-  [process.env.DODO_PRODUCT_STARTER         || 'UNSET_ST1']: { credits: 150,   dailyCredits: 6,   plan: 'starter',  label: 'Starter'  },
-  [process.env.DODO_PRODUCT_STARTER_ANNUAL  || 'UNSET_ST2']: { credits: 150,   dailyCredits: 6,   plan: 'starter',  label: 'Starter'  },
-  [process.env.DODO_PRODUCT_BUILDER         || 'UNSET_B1']:  { credits: 500,   dailyCredits: 20,  plan: 'builder',  label: 'Builder'  },
-  [process.env.DODO_PRODUCT_BUILDER_ANNUAL  || 'UNSET_B2']:  { credits: 500,   dailyCredits: 20,  plan: 'builder',  label: 'Builder'  },
-  [process.env.DODO_PRODUCT_PRO             || 'UNSET_P1']:  { credits: 1500,  dailyCredits: 60,  plan: 'pro',      label: 'Pro'      },
-  [process.env.DODO_PRODUCT_PRO_ANNUAL      || 'UNSET_P2']:  { credits: 1500,  dailyCredits: 60,  plan: 'pro',      label: 'Pro'      },
-  [process.env.DODO_PRODUCT_GROWTH          || 'UNSET_G1']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
-  [process.env.DODO_PRODUCT_GROWTH_ANNUAL   || 'UNSET_G2']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
-  [process.env.DODO_PRODUCT_SCALE           || 'UNSET_S1']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
-  [process.env.DODO_PRODUCT_SCALE_ANNUAL    || 'UNSET_S2']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
+// Plan config, shared by the USD and INR products (same tier, same credits —
+// only the charge currency differs). Spark is the India-only entry tier.
+type PlanConfig = { credits: number; dailyCredits: number; plan: string; label: string }
+const SPARK:   PlanConfig = { credits: 50,    dailyCredits: 2,   plan: 'spark',   label: 'Spark'   }
+const STARTER: PlanConfig = { credits: 150,   dailyCredits: 6,   plan: 'starter', label: 'Starter' }
+const BUILDER: PlanConfig = { credits: 500,   dailyCredits: 20,  plan: 'builder', label: 'Builder' }
+const PRO:     PlanConfig = { credits: 1500,  dailyCredits: 60,  plan: 'pro',     label: 'Pro'     }
+const GROWTH:  PlanConfig = { credits: 4000,  dailyCredits: 160, plan: 'growth',  label: 'Growth'  }
+const SCALE:   PlanConfig = { credits: 10000, dailyCredits: 400, plan: 'scale',   label: 'Scale'   }
+
+// Keyed by Dodo product ID env var. INR product IDs map to the SAME config, so
+// a rupee checkout grants credits/plan identically — without these the payment
+// would succeed but grant nothing.
+const PLANS: Record<string, PlanConfig> = {
+  // USD
+  [process.env.DODO_PRODUCT_STARTER          || 'UNSET_ST1']: STARTER,
+  [process.env.DODO_PRODUCT_STARTER_ANNUAL   || 'UNSET_ST2']: STARTER,
+  [process.env.DODO_PRODUCT_BUILDER          || 'UNSET_B1']:  BUILDER,
+  [process.env.DODO_PRODUCT_BUILDER_ANNUAL   || 'UNSET_B2']:  BUILDER,
+  [process.env.DODO_PRODUCT_PRO              || 'UNSET_P1']:  PRO,
+  [process.env.DODO_PRODUCT_PRO_ANNUAL       || 'UNSET_P2']:  PRO,
+  [process.env.DODO_PRODUCT_GROWTH           || 'UNSET_G1']:  GROWTH,
+  [process.env.DODO_PRODUCT_GROWTH_ANNUAL    || 'UNSET_G2']:  GROWTH,
+  [process.env.DODO_PRODUCT_SCALE            || 'UNSET_S1']:  SCALE,
+  [process.env.DODO_PRODUCT_SCALE_ANNUAL     || 'UNSET_S2']:  SCALE,
+  // India (INR) — including the Spark entry tier
+  [process.env.DODO_PRODUCT_SPARK_INR        || 'UNSET_SPK1']: SPARK,
+  [process.env.DODO_PRODUCT_SPARK_ANNUAL_INR || 'UNSET_SPK2']: SPARK,
+  [process.env.DODO_PRODUCT_STARTER_INR      || 'UNSET_ST1I']: STARTER,
+  [process.env.DODO_PRODUCT_STARTER_ANNUAL_INR || 'UNSET_ST2I']: STARTER,
+  [process.env.DODO_PRODUCT_BUILDER_INR      || 'UNSET_B1I']:  BUILDER,
+  [process.env.DODO_PRODUCT_BUILDER_ANNUAL_INR || 'UNSET_B2I']: BUILDER,
+  [process.env.DODO_PRODUCT_PRO_INR          || 'UNSET_P1I']:  PRO,
+  [process.env.DODO_PRODUCT_PRO_ANNUAL_INR   || 'UNSET_P2I']:  PRO,
+  // Spark USD (in case it's ever sold in USD — spark_monthly=$6)
+  [process.env.DODO_PRODUCT_SPARK            || 'UNSET_SPK3']: SPARK,
+  [process.env.DODO_PRODUCT_SPARK_ANNUAL     || 'UNSET_SPK4']: SPARK,
 }
 
 // Report a paid conversion to Meta (Conversions API). Server-side is the only
