@@ -345,7 +345,7 @@ export default function HomePage() {
       {/* ── BUILD CHALLENGE BANNER ──────────────────────────────────── */}
       <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 20px', background: 'linear-gradient(90deg, rgba(168,85,247,0.15), rgba(14,165,233,0.15))', borderBottom: '1px solid rgba(168,85,247,0.2)', textDecoration: 'none', color: '#fafafa', fontSize: 13, fontWeight: 600 }}>
         <span style={{ fontSize: 16 }}>🏆</span>
-        <span>Weekly Build Challenge — <span style={{ color: '#a855f7' }}>Submit your idea, win credits</span> — New winners every Sunday</span>
+        <span>Weekly Build Challenge — <span style={{ color: '#a855f7' }}>Build your MVP on Wyber, then enter to win credits</span> — New winners every Sunday</span>
         <span style={{ color: '#a855f7', fontSize: 12 }}>Enter now →</span>
       </Link>
 
@@ -360,9 +360,9 @@ export default function HomePage() {
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
-            The most powerful{' '}<br />
+            Think of an app idea.{' '}<br />
             <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              app builder
+              Bring it to life.
             </span>
           </h1>
 

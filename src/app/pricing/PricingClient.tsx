@@ -452,7 +452,8 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
         </div>
       </section>
 
-      {/* Done-for-you builds */}
+      {/* Done-for-you builds — hidden for India (low intent there) */}
+      {currency !== 'INR' && (
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -518,6 +519,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
           </div>
         </div>
       </section>
+      )}
 
       {/* FAQ */}
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -568,23 +570,25 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       </section>
 
       {/* Community programs */}
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: currency === 'INR' ? 'rgba(14,165,233,0.04)' : 'transparent' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Community</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>Community programs</h2>
-            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>We believe in giving back. These programs reward our community for doing good.</p>
+            <div style={{ fontSize: 11, fontWeight: 700, color: currency === 'INR' ? '#0EA5E9' : '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>{currency === 'INR' ? 'Rewards' : 'Community'}</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,36px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 10 }}>{currency === 'INR' ? 'Earn free credits — and do some good' : 'Community programs'}</h2>
+            <p style={{ color: '#71717a', fontSize: 14, maxWidth: 480, margin: '0 auto' }}>{currency === 'INR' ? 'Refer, share, and give back — stack bonus credits on top of any plan.' : 'We believe in giving back. These programs reward our community for doing good.'}</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px,100%), 1fr))', gap: 14 }}>
             {[
-              { emoji: '📣', title: 'Build in Public', desc: 'Share what you built with WyberAI on Twitter/LinkedIn and get 50 free credits instantly.', color: BRAND, reward: '50 free credits' },
+              { emoji: '🎁', title: 'Refer a friend', desc: 'Invite friends to WyberAi — you both get bonus credits when they start building.', color: BRAND, reward: 'Free credits', href: '/dashboard' },
+              { emoji: '🪙', title: 'Become an affiliate', desc: 'Share WyberAi and earn commission on every paid referral — great for creators.', color: '#22c55e', reward: 'Earn commission', href: '/affiliates' },
+              { emoji: '📣', title: 'Build in Public', desc: 'Share what you built on X, Instagram, or Facebook with #BuiltOnWyber and get 50 free credits.', color: '#a855f7', reward: '50 free credits' },
               { emoji: '💼', title: 'Follow on LinkedIn', desc: 'Follow WyberAI on LinkedIn and get 25 bonus credits added to your account instantly.', color: '#0a66c2', reward: '25 free credits' },
               { emoji: '👽', title: 'Follow on Reddit', desc: 'Join r/WyberAI and get 25 bonus credits instantly. Share builds, get feedback, grow with us.', color: '#ff4500', reward: '25 free credits' },
               { emoji: '⭐', title: 'Review on Product Hunt', desc: 'Leave an honest review on Product Hunt and get 50 bonus credits instantly.', color: '#ff6154', reward: '50 free credits' },
               { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get double credits on your next purchase. Because saving lives should be rewarded.', color: '#ef4444', reward: '2x credits on purchase' },
               { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan for people with disabilities. Reviewed manually — we never ask for medical records.', color: '#a855f7', reward: '50% off any plan' },
             ].map(p => (
-              <Link key={p.title} href="/community-programs" style={{ textDecoration: 'none', background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
+              <Link key={p.title} href={'href' in p && p.href ? p.href : '/community-programs'} style={{ textDecoration: 'none', background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 28 }}>{p.emoji}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{p.title}</div>
                 <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5, flex: 1 }}>{p.desc}</div>

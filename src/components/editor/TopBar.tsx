@@ -3,6 +3,7 @@ import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { SupabaseConnector } from './SupabaseConnector';
+import { SocialShare } from '@/components/shared/SocialShare';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -564,11 +565,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share your app</span>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <a href={`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>X / Twitter</a>
-                    <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>LinkedIn</a>
-                    <a href={`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`} target="_blank" rel="noopener noreferrer" style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12, textDecoration: 'none' }}>WhatsApp</a>
-                  </div>
+                  <SocialShare url={liveUrl} text="Just built this with WyberAi — no code, live in minutes." />
                 </div>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />

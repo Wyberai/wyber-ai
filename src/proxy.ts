@@ -44,6 +44,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/marketers') ||
     path.startsWith('/designers') ||
     path.startsWith('/affiliates') ||
+    path.startsWith('/challenge') ||
+    path.startsWith('/community-programs') ||
     path.startsWith('/about') ||
     path.startsWith('/credits') ||
     path.startsWith('/docs') ||
