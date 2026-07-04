@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { COMMUNITY_PROGRAMS, isProgramId } from '@/lib/community-programs'
+import { sendCommunityApplicationAlert } from '@/lib/email'
 
 // Community programs: Blood Donor Bonus + Build in Public
 // Submissions are stored and manually reviewed via admin panel
@@ -56,7 +57,15 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true, status: 'pending', message: 'Submitted! We review submissions within 24 hours.' })
+  // Alert the founder on every application so nothing sits unseen in the queue.
+  sendCommunityApplicationAlert({
+    programLabel: program.label,
+    userEmail: user.email ?? user.id,
+    proofUrl: body.proof_url ?? null,
+    proofText: body.proof_text ?? null,
+  }).catch(() => {})
+
+  return NextResponse.json({ ok: true, status: 'pending', message: "Submitted! We'll do what's right within 24 hours." })
 }
 
 export async function GET(req: NextRequest) {

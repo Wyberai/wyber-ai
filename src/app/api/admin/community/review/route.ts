@@ -72,10 +72,15 @@ export async function POST(req: NextRequest) {
     .eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Best-effort notification.
+  // Best-effort notification. Discounts carry the single shared coupon code
+  // (COMMUNITY_DISCOUNT_CODE — one code created once in Dodo) so the user can
+  // redeem it at checkout.
   try {
     const { data: profile } = await db.from('profiles').select('email').eq('id', sub.user_id).single()
-    if (profile?.email) await sendCommunityRewardEmail(profile.email, cfg.label, granted, cfg.kind === 'discount' ? cfg.note : undefined)
+    if (profile?.email) {
+      const discountCode = cfg.kind === 'discount' ? (process.env.COMMUNITY_DISCOUNT_CODE || undefined) : undefined
+      await sendCommunityRewardEmail(profile.email, cfg.label, granted, cfg.kind === 'discount' ? cfg.note : undefined, discountCode)
+    }
   } catch { /* email non-critical */ }
 
   return NextResponse.json({ ok: true, status: 'approved', granted })

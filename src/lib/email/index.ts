@@ -150,20 +150,37 @@ export async function sendChallengeWinnerEmail(to: string, placeLabel: string, c
   return resend.emails.send({ from: FROM, to, subject: `🏆 You won ${placeLabel} — ${credits} credits added`, html })
 }
 
-export async function sendCommunityRewardEmail(to: string, programLabel: string, credits: number, discountNote?: string) {
+export async function sendCommunityRewardEmail(to: string, programLabel: string, credits: number, discountNote?: string, discountCode?: string) {
   const reward = credits > 0 ? `${credits.toLocaleString()} credits` : (discountNote || 'your reward')
+  const useIt: [string, string] = credits > 0
+    ? ['Credited', 'Instantly — already in your account']
+    : discountCode
+      ? ['Your code', `Use <strong style="color:#f0f0f4">${discountCode}</strong> at checkout`]
+      : ['How to use it', 'Applied to your next payment — reply if you need a hand']
   const html = wrap(`
     ${h1(`Your ${programLabel} reward is approved ✅`)}
     ${p(`We reviewed your <strong style="color:#f0f0f4">${programLabel}</strong> submission — you're approved. Thanks for being part of the community.`)}
-    ${infoBox([
-      ['Reward', reward],
-      ...(credits > 0
-        ? [['Credited', 'Instantly — already in your account'] as [string, string]]
-        : [['How to use it', 'Applied to your next payment — reply if you need a hand'] as [string, string]]),
-    ], '#0EA5E955')}
+    ${infoBox([['Reward', reward], useIt], '#0EA5E955')}
     <div style="text-align:center;margin:0 0 24px">${btn('Go to your dashboard →', `${APP_URL}/dashboard`)}</div>
   `, `Your ${programLabel} reward is approved`)
   return resend.emails.send({ from: FROM, to, subject: `✅ Your ${programLabel} reward is approved`, html })
+}
+
+export async function sendCommunityApplicationAlert(a: { programLabel: string; userEmail: string; proofUrl?: string | null; proofText?: string | null }) {
+  // Internal-only: every community-program application lands in the founder's
+  // inbox so nothing sits unseen in the queue — click through to /admin/community.
+  const html = wrap(`
+    ${h1('New community application 🎁')}
+    ${p(`Someone applied for <strong style="color:#f0f0f4">${a.programLabel}</strong>.`)}
+    ${infoBox([
+      ['Program', a.programLabel],
+      ['User', a.userEmail],
+      ...(a.proofText && !a.proofUrl ? [['Note', a.proofText] as [string, string]] : []),
+    ], '#0EA5E944')}
+    ${a.proofUrl ? `<div style="text-align:center;margin:0 0 8px">${btn('Open proof ↗', a.proofUrl)}</div>` : ''}
+    <div style="text-align:center;margin:0 0 24px">${btn('Review in admin →', `${APP_URL}/admin/community`)}</div>
+  `, `New application: ${a.programLabel}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎁 ${a.programLabel} application — ${a.userEmail}`, html })
 }
 
 export async function sendChallengeEntryAlert(entry: {

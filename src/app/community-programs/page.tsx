@@ -158,7 +158,7 @@ export default function CommunityProgramsPage() {
             Good people get rewarded
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>
-            We believe in giving back. These programs reward our community for doing good — whether it's saving lives, building in the open, or contributing to open source.
+            We believe in giving back. These programs reward our community for doing good — whether it's saving lives, building in the open, or contributing to open source. Apply below and <strong style={{ color: '#fafafa' }}>we&apos;ll do what&apos;s right within 24 hours</strong>.
           </p>
         </div>
 
@@ -284,7 +284,7 @@ export default function CommunityProgramsPage() {
 
         <div style={{ textAlign: 'center', marginTop: 40, padding: '24px', background: '#111113', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)' }}>
           <p style={{ fontSize: 13, color: '#52525b', margin: 0 }}>
-            Questions? Email us at <a href="mailto:hello@wyberai.com" style={{ color: SKY, textDecoration: 'none' }}>hello@wyberai.com</a>. We review all submissions within 24 hours.
+            Every application is reviewed by a human — we&apos;ll do what&apos;s right within 24 hours. Questions? Email <a href="mailto:hello@wyberai.com" style={{ color: SKY, textDecoration: 'none' }}>hello@wyberai.com</a>.
           </p>
         </div>
       </div>
