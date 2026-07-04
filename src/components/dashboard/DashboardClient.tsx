@@ -128,12 +128,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     }
     if (sp.get('upgraded') === '1' || sp.get('topup') === '1') {
       const value = parseFloat(sp.get('rv') || '0');
-      if (rdt) rdt('track', 'Purchase', value > 0 ? { value, currency: 'USD' } : {});
+      const currency = sp.get('cur') === 'INR' ? 'INR' : 'USD';
+      if (rdt) rdt('track', 'Purchase', value > 0 ? { value, currency } : {});
       // Meta Purchase is reported server-side from the Dodo webhook (CAPI) — the
       // only place with the real payment id + amount, and unblockable. Firing it
       // here too (without the payment id) would risk double-counting revenue, so
       // we deliberately don't.
-      sp.delete('upgraded'); sp.delete('topup'); sp.delete('rv'); dirty = true;
+      sp.delete('upgraded'); sp.delete('topup'); sp.delete('rv'); sp.delete('cur'); dirty = true;
     }
     if (dirty) {
       const qs = sp.toString();

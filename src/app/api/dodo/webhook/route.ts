@@ -10,7 +10,7 @@ import {
   sendAdminPaymentAlert,
 } from '@/lib/email'
 import { sendMetaEvent } from '@/lib/meta-capi'
-import { PLAN_VALUE } from '@/lib/pricing-values'
+import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 
 function getAdmin() {
   return createClient(
@@ -53,7 +53,8 @@ async function reportMetaPurchase(
   dedupeId: string,
 ) {
   const planKey = (metadata.plan as string | undefined) || ''
-  const value = PLAN_VALUE[planKey] ?? 0
+  const currency = (metadata.currency as string | undefined) === 'INR' ? 'INR' : 'USD'
+  const value = (currency === 'INR' ? PLAN_VALUE_INR[planKey] : PLAN_VALUE[planKey]) ?? 0
   const evData = event.data as Record<string, unknown> | undefined
   const paymentId = String(evData?.payment_id || dedupeId || '')
   await sendMetaEvent({
@@ -61,7 +62,7 @@ async function reportMetaPurchase(
     eventId: `purchase_${paymentId}`,
     email: userEmail || null,
     value,
-    currency: 'USD',
+    currency,
     clientIp: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
     userAgent: req.headers.get('user-agent'),
   })

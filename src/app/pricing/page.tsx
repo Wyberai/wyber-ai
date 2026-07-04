@@ -2,17 +2,47 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { type Currency, INR_PRICING_ENABLED, detectCurrency, formatPrice } from '@/lib/currency'
 
 const BRAND = '#0EA5E9'
 
 // ── Plan definitions ──────────────────────────────────────────────────────────
+// USD is the sticker price; INR fields are smart-localized India price points
+// (not an FX conversion). `inrOnly` plans (Spark) show only in the INR view.
 
 const PLANS = [
+  {
+    id: 'spark',
+    name: 'Spark',
+    inrOnly: true,
+    monthlyPrice: 6,
+    annualPrice: 5,
+    monthlyPriceINR: 499,
+    annualPriceINR: 399,
+    planKey: 'spark_monthly',
+    color: '#f59e0b',
+    highlight: false,
+    badge: 'INDIA ENTRY',
+    tagline: 'The cheapest way to start building for real.',
+    credits: 50,
+    perCredit: '₹10',
+    perCreditINR: '₹10',
+    features: [
+      '50 credits/month — never expire',
+      'Web apps + mobile apps — unlimited projects',
+      'AI generates fresh code every time',
+      'Live preview + auto error fix',
+      'One-click deploy to Vercel',
+      'Pay with UPI',
+    ],
+  },
   {
     id: 'starter',
     name: 'Starter',
     monthlyPrice: 29,
     annualPrice: 23,
+    monthlyPriceINR: 1499,
+    annualPriceINR: 1199,
     planKey: 'starter_monthly',
     color: '#22c55e',
     highlight: false,
@@ -20,6 +50,7 @@ const PLANS = [
     tagline: 'Start building. All features included.',
     credits: 150,
     perCredit: '$0.19',
+    perCreditINR: '₹10',
     features: [
       '150 credits/month — never expire',
       'Web apps + mobile apps — unlimited projects',
@@ -35,6 +66,8 @@ const PLANS = [
     name: 'Builder',
     monthlyPrice: 79,
     annualPrice: 63,
+    monthlyPriceINR: 3999,
+    annualPriceINR: 3199,
     planKey: 'builder_monthly',
     color: '#0EA5E9',
     highlight: true,
@@ -42,6 +75,7 @@ const PLANS = [
     tagline: 'Ship real products every week.',
     credits: 500,
     perCredit: '$0.16',
+    perCreditINR: '₹8',
     features: [
       '500 credits/month — never expire',
       'Everything in Starter',
@@ -57,6 +91,8 @@ const PLANS = [
     name: 'Pro',
     monthlyPrice: 199,
     annualPrice: 159,
+    monthlyPriceINR: 9999,
+    annualPriceINR: 7999,
     planKey: 'pro_monthly',
     color: '#8b5cf6',
     highlight: false,
@@ -64,6 +100,7 @@ const PLANS = [
     tagline: 'For teams and agencies shipping at scale.',
     credits: 1500,
     perCredit: '$0.13',
+    perCreditINR: '₹6.7',
     features: [
       '1,500 credits/month — never expire',
       'Everything in Builder',
@@ -79,6 +116,8 @@ const PLANS = [
     name: 'Enterprise',
     monthlyPrice: null,
     annualPrice: null,
+    monthlyPriceINR: null,
+    annualPriceINR: null,
     planKey: null,
     color: '#f59e0b',
     highlight: false,
@@ -86,6 +125,7 @@ const PLANS = [
     tagline: 'For organizations with security, SSO, and audit needs.',
     credits: 0,
     perCredit: null,
+    perCreditINR: null,
     features: [
       'Everything in Pro',
       'Single Sign-On (SAML / OIDC)',
@@ -98,9 +138,9 @@ const PLANS = [
 ]
 
 const TOPUPS = [
-  { credits: 200,  price: 19,  key: 'topup_200',  label: 'Boost',  desc: '~6 web builds' },
-  { credits: 600,  price: 49,  key: 'topup_600',  label: 'Power',  desc: '~20 web builds' },
-  { credits: 2000, price: 99,  key: 'topup_2000', label: 'Studio', desc: '~66 web builds', badge: 'Best value' as string | undefined },
+  { credits: 200,  price: 19,  priceINR: 399,  key: 'topup_200',  label: 'Boost',  desc: '~6 web builds' },
+  { credits: 600,  price: 49,  priceINR: 999,  key: 'topup_600',  label: 'Power',  desc: '~20 web builds' },
+  { credits: 2000, price: 99,  priceINR: 1999, key: 'topup_2000', label: 'Studio', desc: '~66 web builds', badge: 'Best value' as string | undefined },
 ]
 
 const CREDIT_TABLE = [
@@ -128,15 +168,21 @@ const IcoCheck = ({ color = '#22c55e' }: { color?: string }) => (
 function PlanCard({
   plan,
   annual,
+  currency,
   loading,
   onCheckout,
 }: {
   plan: typeof PLANS[0]
   annual: boolean
+  currency: Currency
   loading: string | null
   onCheckout: (key: string) => void
 }) {
-  const price = annual ? plan.annualPrice : plan.monthlyPrice
+  const inr = currency === 'INR'
+  const monthly = inr ? plan.monthlyPriceINR : plan.monthlyPrice
+  const annualUnit = inr ? plan.annualPriceINR : plan.annualPrice
+  const price = annual ? annualUnit : monthly
+  const perCredit = inr ? plan.perCreditINR : plan.perCredit
   const isLoading = loading === plan.planKey || loading === plan.planKey?.replace('monthly', 'annual')
 
   return (
@@ -164,18 +210,18 @@ function PlanCard({
         <div style={{ fontSize: 12, fontWeight: 700, color: plan.color, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{plan.name}</div>
         <div style={{ fontSize: 12, color: '#52525b', marginBottom: 16, lineHeight: 1.5 }}>{plan.tagline}</div>
 
-        {price !== null ? (
+        {price != null ? (
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>${price}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 800, letterSpacing: '-0.04em', color: '#fafafa' }}>{formatPrice(price, currency)}</span>
             <span style={{ fontSize: 13, color: '#52525b' }}>/mo{annual ? ' · billed annually' : ''}</span>
           </div>
         ) : (
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 34, fontWeight: 800, letterSpacing: '-0.03em', color: '#fafafa' }}>Custom</div>
         )}
 
-        {annual && price !== null && (
+        {annual && price != null && monthly != null && annualUnit != null && (
           <div style={{ fontSize: 11, color: '#22c55e', marginTop: 4, fontWeight: 600 }}>
-            Save ${((plan.monthlyPrice! - plan.annualPrice!) * 12).toFixed(0)}/year
+            Save {formatPrice((monthly - annualUnit) * 12, currency)}/year
           </div>
         )}
       </div>
@@ -187,9 +233,9 @@ function PlanCard({
             {plan.credits.toLocaleString()} credits/mo
           </div>
         )}
-        {plan.perCredit && (
+        {perCredit && (
           <div style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20, background: `${plan.color}12`, border: `1px solid ${plan.color}30`, color: plan.color }}>
-            {plan.perCredit}/credit
+            {perCredit}/credit
           </div>
         )}
       </div>
@@ -246,6 +292,7 @@ function PlanCard({
 
 export default function PricingPage() {
   const [annual, setAnnual] = useState(true)
+  const [currency, setCurrency] = useState<Currency>('USD')
   const [loading, setLoading] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string } | null>(null)
 
@@ -254,6 +301,12 @@ export default function PricingPage() {
       createClient().auth.getUser().then(({ data }) => setUser(data.user))
     })
   }, [])
+
+  // Default India visitors to INR (flag-gated); a manual toggle overrides.
+  useEffect(() => { setCurrency(detectCurrency()) }, [])
+
+  // Spark is India-only; hide it (and never show INR) outside the INR view.
+  const visiblePlans = PLANS.filter(p => (currency === 'INR' ? true : !p.inrOnly))
 
   // Checkout opens in a NEW tab so the app (and any in-flight build/session
   // state) stays alive — same-tab navigation meant users came back via the
@@ -269,7 +322,7 @@ export default function PricingPage() {
       const res = await fetch('/api/dodo/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planKey }),
+        body: JSON.stringify({ planKey, currency }),
       })
       const d = await res.json()
       if (d.url) {
@@ -334,13 +387,27 @@ export default function PricingPage() {
             <span style={{ fontSize: 10, fontWeight: 800, background: '#22c55e', color: '#000', padding: '2px 7px', borderRadius: 10 }}>SAVE 20%</span>
           </button>
         </div>
+
+        {/* Currency toggle — India (INR/UPI) vs USD. Only appears once INR
+            pricing is switched on (flag + Dodo INR products live). */}
+        {INR_PRICING_ENABLED && (
+          <div style={{ display: 'block', marginBottom: 48 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 30, padding: '5px 6px' }}>
+              <button onClick={() => setCurrency('USD')} style={{ padding: '6px 16px', borderRadius: 24, background: currency === 'USD' ? '#1a1a22' : 'transparent', border: currency === 'USD' ? '1px solid rgba(255,255,255,0.12)' : 'none', color: currency === 'USD' ? '#fafafa' : '#52525b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>$ USD</button>
+              <button onClick={() => setCurrency('INR')} style={{ padding: '6px 16px', borderRadius: 24, background: currency === 'INR' ? '#1a1a22' : 'transparent', border: currency === 'INR' ? '1px solid rgba(255,255,255,0.12)' : 'none', color: currency === 'INR' ? '#fafafa' : '#52525b', fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
+                ₹ INR
+                <span style={{ fontSize: 9, fontWeight: 800, background: '#f59e0b', color: '#000', padding: '2px 6px', borderRadius: 10 }}>UPI</span>
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Plans grid */}
       <section style={{ padding: '0 clamp(16px,4vw,48px) clamp(60px,8vw,100px)' }}>
-        <div className="wyb-pricing-grid" style={{ maxWidth: 960, margin: '0 auto', display: 'grid', gridTemplateColumns: `repeat(${PLANS.length}, 1fr)`, gap: 16 }}>
-          {PLANS.map(plan => (
-            <PlanCard key={plan.id} plan={plan} annual={annual} loading={loading} onCheckout={handleCheckout} />
+        <div className="wyb-pricing-grid" style={{ maxWidth: currency === 'INR' ? 1180 : 960, margin: '0 auto', display: 'grid', gridTemplateColumns: `repeat(${visiblePlans.length}, 1fr)`, gap: 16 }}>
+          {visiblePlans.map(plan => (
+            <PlanCard key={plan.id} plan={plan} annual={annual} currency={currency} loading={loading} onCheckout={handleCheckout} />
           ))}
         </div>
       </section>
@@ -389,7 +456,7 @@ export default function PricingPage() {
                     onClick={() => handleTopup(t.key)}
                     disabled={loading === t.key}
                     style={{ padding: '9px 18px', borderRadius: 9, background: loading === t.key ? '#1a1a22' : 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', color: loading === t.key ? '#52525b' : '#f59e0b', fontSize: 13, fontWeight: 700, cursor: loading === t.key ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    {loading === t.key ? '…' : `$${t.price}`}
+                    {loading === t.key ? '…' : formatPrice(currency === 'INR' ? t.priceINR : t.price, currency)}
                   </button>
                 </div>
               ))}
