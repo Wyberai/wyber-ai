@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { WyberLogo } from '@/components/shared/WyberLogo';
@@ -14,6 +14,21 @@ export default function SignupPage() {
   const [agreed, setAgreed] = useState(false);
   const supabase = createClient();
 
+  // Capture a referral code from ?ref=CODE so the referrer gets credited when
+  // this person signs up. Stashed in a cookie (survives the OAuth/magic-link
+  // round-trip on the same browser) AND carried on the auth redirect URL (so it
+  // survives even cross-tab). The callback reads whichever is present.
+  const [ref, setRef] = useState('');
+  useEffect(() => {
+    const code = new URLSearchParams(location.search).get('ref');
+    if (code) {
+      const clean = code.trim().toUpperCase().slice(0, 32);
+      setRef(clean);
+      document.cookie = `wyber_ref=${encodeURIComponent(clean)}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    }
+  }, []);
+  const callbackUrl = () => `${location.origin}/auth/callback${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`;
+
   const [termsShake, setTermsShake] = useState(false);
   const nudgeTerms = () => { setError('Please agree to the Terms of Service first'); setTermsShake(true); setTimeout(() => setTermsShake(false), 600); };
 
@@ -24,7 +39,7 @@ export default function SignupPage() {
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl() },
     });
     if (error) setError(error.message);
     else setSent(true);
@@ -36,7 +51,7 @@ export default function SignupPage() {
     setOauthLoading(provider);
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     });
   };
 
