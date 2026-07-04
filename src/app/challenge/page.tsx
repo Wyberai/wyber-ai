@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { SocialShare } from '@/components/shared/SocialShare'
 import { RegionSwitcher } from '@/components/shared/RegionSwitcher'
+import { ChallengeSection } from '@/components/challenge/ChallengeSection'
 import { resolveRegion } from '@/lib/region'
+import { CHALLENGE_GALLERY_ENABLED } from '@/lib/challenge'
 
 export const metadata: Metadata = {
   title: 'Weekly Build Challenge — Win Credits Every Week | WyberAi',
@@ -114,6 +116,9 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
         </div>
         <p style={{ textAlign: 'center', fontSize: 12, color: '#52525b', marginTop: 16 }}>Plus runner-up credits for standout builds we love.</p>
       </section>
+
+      {/* Gallery + submit (dark until the flag is flipped; owner can preview) */}
+      {(CHALLENGE_GALLERY_ENABLED || isAdmin) && <ChallengeSection enabled={CHALLENGE_GALLERY_ENABLED} />}
 
       {/* Rules */}
       <section id="rules" style={{ padding: '40px clamp(20px,4vw,48px)', maxWidth: 800, margin: '0 auto' }}>

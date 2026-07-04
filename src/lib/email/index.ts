@@ -87,7 +87,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Paste a <strong style="color:#f0f0f4">screenshot or Figma file</strong> to clone any UI</td></tr>
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 45 more integrations</td></tr>
     </table>
-    ${p('We\'re also running a <strong style="color:#f0f0f4">Weekly Build Challenge — $500 in prizes every week</strong>. Build the best app, share it with #BuiltWithWyberAi, and win cash. <a href="https://wyberai.com/challenge" style="color:#0EA5E9">Learn more →</a>')}
+    ${p('We\'re also running a <strong style="color:#f0f0f4">Weekly Build Challenge — win credits every week</strong>. Build a real app, share it with #BuiltOnWyber, and our team + the community pick the winners. <a href="https://wyberai.com/challenge" style="color:#0EA5E9">Learn more →</a>')}
     <div style="text-align:center;margin:28px 0">
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
@@ -133,6 +133,31 @@ export async function sendAdminPaymentAlert(userEmail: string, description: stri
     ${infoBox([['Customer', userEmail], ['Purchase', description], ...(amount ? [['Amount', amount] as [string, string]] : []), ['When', new Date().toUTCString()]], '#3dd68c44')}
   `, `Payment from ${userEmail}`)
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `💰 Payment: ${description} — ${userEmail}`, html })
+}
+
+export async function sendChallengeEntryAlert(entry: {
+  userEmail: string
+  title: string
+  description: string
+  handle?: string | null
+  liveUrl?: string | null
+  week: string
+}) {
+  // Internal-only: every contest submission lands in the founder's inbox, so
+  // entries are never a hashtag scavenger hunt — this is the canonical feed.
+  const html = wrap(`
+    ${h1('New challenge entry 🏆')}
+    ${p(`<strong style="color:#f0f0f4">${entry.title}</strong> was just submitted to the Weekly Build Challenge.`)}
+    ${infoBox([
+      ['Builder', entry.userEmail],
+      ['Handle', entry.handle || '—'],
+      ['Week', entry.week],
+      ['Pitch', entry.description],
+      ...(entry.liveUrl ? [['Live', entry.liveUrl] as [string, string]] : [['Live link', 'not shared (screenshot only)'] as [string, string]]),
+    ], '#0EA5E944')}
+    ${entry.liveUrl ? `<div style="text-align:center;margin:0 0 8px">${btn('Open the build ↗', entry.liveUrl)}</div>` : ''}
+  `, `New entry: ${entry.title}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 Challenge entry: ${entry.title} — ${entry.userEmail}`, html })
 }
 
 // ── 2b. Auth emails (Supabase Send Email Hook) ────────────────────────────────
