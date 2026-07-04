@@ -1,5 +1,6 @@
-import { resolveCurrency } from '@/lib/region'
+import { resolveRegion } from '@/lib/region'
 import { PricingClient } from './PricingClient'
+import { RegionSwitcher } from '@/components/shared/RegionSwitcher'
 
 // Rendered per request from the visitor's IP country — never cached, so a
 // India-rendered page can NEVER be served to a US visitor (or vice versa).
@@ -7,9 +8,15 @@ import { PricingClient } from './PricingClient'
 export const dynamic = 'force-dynamic'
 
 // India (IP=IN) → ₹/UPI on first paint; everyone else → the USD US product,
-// with no trace of India. The owner (admin) can preview either with ?region=us
-// or ?region=in — regular visitors can't, so the two storefronts stay separate.
+// with no trace of India. The owner (admin) gets a one-click switcher to
+// preview either — regular visitors can't, so the two storefronts stay separate.
 export default async function PricingPage({ searchParams }: { searchParams: Promise<{ region?: string }> }) {
   const { region } = await searchParams
-  return <PricingClient initialCurrency={await resolveCurrency(region)} />
+  const { currency, isAdmin } = await resolveRegion(region)
+  return (
+    <>
+      <PricingClient initialCurrency={currency} />
+      <RegionSwitcher current={currency} show={isAdmin} />
+    </>
+  )
 }

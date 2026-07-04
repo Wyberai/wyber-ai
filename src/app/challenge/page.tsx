@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { SocialShare } from '@/components/shared/SocialShare'
-import { resolveCurrency } from '@/lib/region'
+import { RegionSwitcher } from '@/components/shared/RegionSwitcher'
+import { resolveRegion } from '@/lib/region'
 
 export const metadata: Metadata = {
   title: 'Weekly Build Challenge — Win Credits Every Week | WyberAi',
@@ -52,7 +53,8 @@ const IDEAS = [
 
 export default async function ChallengePage({ searchParams }: { searchParams: Promise<{ region?: string }> }) {
   const { region } = await searchParams
-  const isIndia = (await resolveCurrency(region)) === 'INR'
+  const { currency, isAdmin } = await resolveRegion(region)
+  const isIndia = currency === 'INR'
   const shareText = "I'm entering the WyberAi Weekly Build Challenge — build a real app, win credits. Come build with me!"
 
   return (
@@ -181,6 +183,8 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
       <footer style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 12, color: '#3f3f46' }}>
         © 2026 WyberAi · <Link href="/terms" style={{ color: '#52525b', textDecoration: 'none' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#52525b', textDecoration: 'none' }}>Privacy</Link>
       </footer>
+
+      <RegionSwitcher current={currency} show={isAdmin} />
     </div>
   )
 }
