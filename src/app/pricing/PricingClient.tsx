@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
-import { type Currency, INR_PRICING_ENABLED, formatPrice } from '@/lib/currency'
+import { type Currency, formatPrice } from '@/lib/currency'
 
 const BRAND = '#0EA5E9'
 
@@ -292,9 +292,10 @@ function PlanCard({
 
 export function PricingClient({ initialCurrency }: { initialCurrency: Currency }) {
   const [annual, setAnnual] = useState(true)
-  // Currency is decided server-side from the visitor's IP country (no flicker).
-  // The subtle switch link below is only an escape hatch for wrong detection.
-  const [currency, setCurrency] = useState<Currency>(initialCurrency)
+  // Currency is fixed by the visitor's IP country, decided server-side. US and
+  // India are FULLY separate: a US visitor sees the USD product with zero trace
+  // of India, and there is no manual switch that could reveal the India entity.
+  const currency = initialCurrency
   const [loading, setLoading] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string } | null>(null)
 
@@ -386,22 +387,6 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
             <span style={{ fontSize: 10, fontWeight: 800, background: '#22c55e', color: '#000', padding: '2px 7px', borderRadius: 10 }}>SAVE 20%</span>
           </button>
         </div>
-
-        {/* Currency is auto-set from the visitor's country. This is just a
-            quiet escape hatch for wrong detection (NRIs, travellers, someone
-            whose only card is international) — not a prominent toggle. */}
-        {INR_PRICING_ENABLED && (
-          <div style={{ marginBottom: 44, fontSize: 12.5, color: '#52525b' }}>
-            {currency === 'INR' ? (
-              <>
-                Prices in ₹ for India · pay via UPI.{' '}
-                <button onClick={() => setCurrency('USD')} style={{ background: 'none', border: 'none', padding: 0, color: BRAND, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5 }}>Not in India? View $ USD →</button>
-              </>
-            ) : (
-              <button onClick={() => setCurrency('INR')} style={{ background: 'none', border: 'none', padding: 0, color: BRAND, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12.5 }}>In India? View ₹ INR pricing (UPI) →</button>
-            )}
-          </div>
-        )}
       </section>
 
       {/* Plans grid */}
