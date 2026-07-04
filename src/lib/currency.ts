@@ -19,19 +19,13 @@ export function formatPrice(amount: number, currency: Currency): string {
 }
 
 /**
- * Best-guess currency for a first-time visitor (client-side). India → INR,
- * everyone else → USD. Timezone is the most reliable signal available without
- * a network round-trip; a manual toggle always lets the user override. Returns
- * USD when the flag is off so nothing INR ever shows until we're ready.
+ * Currency for a visitor, from their IP country (read server-side from Vercel's
+ * x-vercel-ip-country header) — India → INR, everyone else → USD. This runs on
+ * the server so the correct price renders on first paint with no flicker and no
+ * client-side guessing. Returns USD when the flag is off (nothing INR shows) or
+ * when the country is unknown (e.g. localhost, where the header is absent).
  */
-export function detectCurrency(): Currency {
+export function currencyForCountry(country?: string | null): Currency {
   if (!INR_PRICING_ENABLED) return 'USD'
-  if (typeof window === 'undefined') return 'USD'
-  try {
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''
-    if (tz === 'Asia/Kolkata' || tz === 'Asia/Calcutta') return 'INR'
-    const lang = (navigator.language || '').toLowerCase()
-    if (lang === 'en-in' || lang === 'hi' || lang.endsWith('-in')) return 'INR'
-  } catch { /* fall through */ }
-  return 'USD'
+  return country === 'IN' ? 'INR' : 'USD'
 }
