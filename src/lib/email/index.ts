@@ -135,6 +135,21 @@ export async function sendAdminPaymentAlert(userEmail: string, description: stri
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `💰 Payment: ${description} — ${userEmail}`, html })
 }
 
+export async function sendChallengeWinnerEmail(to: string, placeLabel: string, credits: number, newBalance?: number) {
+  const html = wrap(`
+    ${h1(`You won ${placeLabel} 🏆`)}
+    ${p(`Your build took <strong style="color:#f0f0f4">${placeLabel}</strong> in this week's WyberAi Build Challenge. Real app, real win — congratulations.`)}
+    ${infoBox([
+      ['Prize', `${credits.toLocaleString()} credits`],
+      ...(typeof newBalance === 'number' ? [['New balance', newBalance.toLocaleString()] as [string, string]] : []),
+      ['Credited', 'Instantly — already in your account'],
+    ], '#f59e0b55')}
+    <div style="text-align:center;margin:0 0 24px">${btn('Keep building →', `${APP_URL}/dashboard`)}</div>
+    ${p('Enter again next week — new challenge every Monday, winners every Sunday.')}
+  `, `You won ${placeLabel} — ${credits} credits added`)
+  return resend.emails.send({ from: FROM, to, subject: `🏆 You won ${placeLabel} — ${credits} credits added`, html })
+}
+
 export async function sendChallengeEntryAlert(entry: {
   userEmail: string
   title: string

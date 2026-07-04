@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { currentChallengeWeek } from '@/lib/challenge'
+import { currentChallengeWeek, VOTER_COOKIE } from '@/lib/challenge'
 
 // Public: this week's approved gallery entries, ranked by upvotes. If the user
 // is signed in, each entry is tagged with whether they've voted (for the UI
@@ -24,20 +24,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ entries: [], week, votedIds: [] })
   }
 
-  // Which of these has the current viewer already upvoted?
+  // Which of these has the current viewer already upvoted? Match the same
+  // identity the vote route uses: signed-in user id, else the cookie token.
   let votedIds: string[] = []
   try {
-    const auth = await createClient()
-    const { data: { user } } = await auth.auth.getUser()
-    if (user && entries?.length) {
+    let userId: string | null = null
+    try {
+      const auth = await createClient()
+      const { data: { user } } = await auth.auth.getUser()
+      userId = user?.id ?? null
+    } catch { /* anonymous */ }
+    const token = req.cookies.get(VOTER_COOKIE)?.value ?? null
+    const voterKey = userId ? `u:${userId}` : token ? `c:${token}` : null
+    if (voterKey && entries?.length) {
       const { data: votes } = await db
         .from('challenge_votes')
         .select('entry_id')
-        .eq('user_id', user.id)
+        .eq('voter_key', voterKey)
         .in('entry_id', entries.map(e => e.id))
       votedIds = (votes ?? []).map(v => v.entry_id)
     }
-  } catch { /* anonymous viewer */ }
+  } catch { /* no identity yet */ }
 
   return NextResponse.json({ entries: entries ?? [], week, votedIds })
 }

@@ -51,8 +51,7 @@ export function ChallengeSection({ enabled }: { enabled: boolean }) {
     const res = await fetch('/api/challenge/vote', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entryId: id }),
     })
-    if (res.status === 401) { window.location.href = '/login?next=/challenge'; return }
-    if (!res.ok) { load(); return } // reconcile on failure
+    if (!res.ok) { load(); return } // reconcile on failure (voting is open — no login needed)
     const data = await res.json()
     setEntries(prev => prev.map(e => e.id === id ? { ...e, vote_count: data.count } : e))
     setVoted(prev => { const n = new Set(prev); data.voted ? n.add(id) : n.delete(id); return n })

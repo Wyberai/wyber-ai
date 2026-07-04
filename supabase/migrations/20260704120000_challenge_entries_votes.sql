@@ -1,30 +1,39 @@
--- Weekly Build Challenge: opt-in gallery + community upvotes.
+-- Weekly Build Challenge: opt-in gallery + OPEN community upvotes + judging.
 --
 -- Two tables:
 --   challenge_entries  -- one opt-in submission (a build someone chose to show)
---   challenge_votes    -- one community upvote, at most one per user per entry
+--   challenge_votes    -- one community upvote, at most one per voter per entry
 --
 -- Security model mirrors the hardened community_program_submissions pattern:
--- users NEVER write these tables directly from the browser SDK. All writes go
--- through the /api/challenge/* routes using the service_role key (which bypasses
--- RLS). That closes the hole where a client could self-approve, stuff votes, or
--- edit vote_count. RLS here only grants PUBLIC READ of approved entries so the
--- gallery renders; there are deliberately no user INSERT/UPDATE/DELETE policies.
+-- nobody writes these tables directly from the browser SDK. All writes go
+-- through the /api/challenge/* routes using the service_role key (bypasses RLS).
+-- That closes the hole where a client could self-approve, forge vote_count, or
+-- self-award a prize. RLS here only grants PUBLIC READ of approved entries so
+-- the gallery renders; there are deliberately no user INSERT/UPDATE/DELETE
+-- policies.
+--
+-- Voting is OPEN (no login) so shared social links convert: a vote is keyed to
+-- an anonymous per-browser cookie token (voter_key), or the user id when signed
+-- in. One vote per voter per entry. This is Product-Hunt-lite dedup — good
+-- enough for the community (2nd) prize; 1st place is the team's Editor's Pick.
 
 -- ── Entries ───────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS challenge_entries (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id       uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  project_id    uuid REFERENCES projects(id) ON DELETE SET NULL,
-  week          text NOT NULL,                       -- ISO week key, e.g. '2026-W27'
-  title         text NOT NULL,
-  description   text NOT NULL,
-  handle        text,                                -- optional social handle
-  live_url      text,                                -- optional: protective founders can omit
-  thumbnail_url text,                                -- screenshot / preview image
-  status        text NOT NULL DEFAULT 'approved',    -- 'approved' | 'hidden' (owner can hide)
-  vote_count    integer NOT NULL DEFAULT 0,          -- denormalized, maintained by trigger
-  created_at    timestamptz NOT NULL DEFAULT now()
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  project_id     uuid REFERENCES projects(id) ON DELETE SET NULL,
+  week           text NOT NULL,                       -- ISO week key, e.g. '2026-W27'
+  title          text NOT NULL,
+  description    text NOT NULL,
+  handle         text,                                -- optional social handle
+  live_url       text,                                -- optional: protective founders can omit
+  thumbnail_url  text,                                -- screenshot / preview image
+  status         text NOT NULL DEFAULT 'approved',    -- 'approved' | 'hidden' (owner can hide)
+  vote_count     integer NOT NULL DEFAULT 0,          -- denormalized, maintained by trigger
+  award          text CHECK (award IN ('editor', 'upvoted')),  -- prize awarded, if any
+  awarded_credits integer,                            -- credits granted for the award
+  awarded_at     timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now()
 );
 
 -- One active entry per user per week keeps the gallery from being spammed and
@@ -32,6 +41,11 @@ CREATE TABLE IF NOT EXISTS challenge_entries (
 CREATE UNIQUE INDEX IF NOT EXISTS challenge_entries_user_week_uniq
   ON challenge_entries (user_id, week)
   WHERE status <> 'hidden';
+
+-- At most one Editor's Pick and one Most Upvoted winner per week.
+CREATE UNIQUE INDEX IF NOT EXISTS challenge_entries_week_award_uniq
+  ON challenge_entries (week, award)
+  WHERE award IS NOT NULL;
 
 -- Gallery reads: approved entries for a week, ranked by votes.
 CREATE INDEX IF NOT EXISTS challenge_entries_week_rank_idx
@@ -43,16 +57,17 @@ DROP POLICY IF EXISTS "Anyone can view approved entries" ON challenge_entries;
 CREATE POLICY "Anyone can view approved entries" ON challenge_entries
   FOR SELECT USING (status = 'approved');
 
--- ── Votes ─────────────────────────────────────────────────────────────────────
+-- ── Votes (open / anonymous-capable) ──────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS challenge_votes (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entry_id   uuid NOT NULL REFERENCES challenge_entries(id) ON DELETE CASCADE,
-  user_id    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  voter_key  text NOT NULL,                           -- 'u:<uid>' when signed in, else 'c:<cookie>'
+  user_id    uuid REFERENCES auth.users(id) ON DELETE SET NULL,  -- optional, for analytics
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (entry_id, user_id)                         -- one vote per user per entry
+  UNIQUE (entry_id, voter_key)                         -- one vote per voter per entry
 );
 
-CREATE INDEX IF NOT EXISTS challenge_votes_user_idx ON challenge_votes (user_id);
+CREATE INDEX IF NOT EXISTS challenge_votes_voter_idx ON challenge_votes (voter_key);
 
 ALTER TABLE challenge_votes ENABLE ROW LEVEL SECURITY;
 -- No user-facing policies: only the service_role (API route) may read/write.
