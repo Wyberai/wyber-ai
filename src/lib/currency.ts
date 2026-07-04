@@ -1,14 +1,12 @@
-// India localization — currency detection, formatting, and the master flag.
+// India localization — currency detection and formatting.
 //
-// Dark-launched: with NEXT_PUBLIC_INR_PRICING_ENABLED unset/false the whole
-// INR experience is invisible and the site behaves exactly as before (USD
-// only). Flip it to 'true' ONLY after the INR-priced products exist in Dodo
-// (currency=INR is what unlocks UPI) and the DODO_PRODUCT_*_INR env vars are
-// set — otherwise Indian checkouts have nothing to charge.
+// India is LIVE: currency is decided SOLELY by the visitor's IP country, so the
+// US and India storefronts stay fully separate and there is no build-time flag
+// to get wrong. (The old NEXT_PUBLIC_INR_PRICING_ENABLED dark-launch flag was
+// retired at launch — it was a build-time-inlined footgun that could silently
+// leave India on USD even when set in Vercel.)
 
 export type Currency = 'USD' | 'INR'
-
-export const INR_PRICING_ENABLED = process.env.NEXT_PUBLIC_INR_PRICING_ENABLED === 'true'
 
 export const CURRENCY_SYMBOL: Record<Currency, string> = { USD: '$', INR: '₹' }
 
@@ -20,12 +18,10 @@ export function formatPrice(amount: number, currency: Currency): string {
 
 /**
  * Currency for a visitor, from their IP country (read server-side from Vercel's
- * x-vercel-ip-country header) — India → INR, everyone else → USD. This runs on
- * the server so the correct price renders on first paint with no flicker and no
- * client-side guessing. Returns USD when the flag is off (nothing INR shows) or
- * when the country is unknown (e.g. localhost, where the header is absent).
+ * x-vercel-ip-country header) — India → INR, everyone else → USD. Runs on the
+ * server so the correct price renders on first paint with no flicker. Unknown
+ * country (e.g. localhost, where the header is absent) → USD.
  */
 export function currencyForCountry(country?: string | null): Currency {
-  if (!INR_PRICING_ENABLED) return 'USD'
   return country === 'IN' ? 'INR' : 'USD'
 }

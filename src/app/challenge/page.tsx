@@ -2,10 +2,10 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { SocialShare } from '@/components/shared/SocialShare'
-import { RegionSwitcher } from '@/components/shared/RegionSwitcher'
 import { ChallengeSection } from '@/components/challenge/ChallengeSection'
 import { resolveRegion } from '@/lib/region'
 import { CHALLENGE_GALLERY_ENABLED } from '@/lib/challenge'
+
 
 export const metadata: Metadata = {
   title: 'Weekly Build Challenge — Win Credits Every Week | WyberAi',
@@ -53,9 +53,8 @@ const IDEAS = [
   'A restaurant ordering system with menu and cart',
 ]
 
-export default async function ChallengePage({ searchParams }: { searchParams: Promise<{ region?: string }> }) {
-  const { region } = await searchParams
-  const { currency, isAdmin } = await resolveRegion(region)
+export default async function ChallengePage() {
+  const currency = await resolveRegion()
   const isIndia = currency === 'INR'
   const shareText = "I'm entering the WyberAi Weekly Build Challenge — build a real app, win credits. Come build with me!"
 
@@ -117,8 +116,8 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
         <p style={{ textAlign: 'center', fontSize: 12, color: '#52525b', marginTop: 16 }}>Plus runner-up credits for standout builds we love.</p>
       </section>
 
-      {/* Gallery + submit (dark until the flag is flipped; owner can preview) */}
-      {(CHALLENGE_GALLERY_ENABLED || isAdmin) && <ChallengeSection enabled={CHALLENGE_GALLERY_ENABLED} />}
+      {/* Gallery + submit */}
+      {CHALLENGE_GALLERY_ENABLED && <ChallengeSection enabled={CHALLENGE_GALLERY_ENABLED} />}
 
       {/* Rules */}
       <section id="rules" style={{ padding: '40px clamp(20px,4vw,48px)', maxWidth: 800, margin: '0 auto' }}>
@@ -188,8 +187,6 @@ export default async function ChallengePage({ searchParams }: { searchParams: Pr
       <footer style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 12, color: '#3f3f46' }}>
         © 2026 WyberAi · <Link href="/terms" style={{ color: '#52525b', textDecoration: 'none' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#52525b', textDecoration: 'none' }}>Privacy</Link>
       </footer>
-
-      <RegionSwitcher current={currency} show={isAdmin} />
     </div>
   )
 }
