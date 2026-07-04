@@ -1,13 +1,24 @@
 import { createServerClient } from '@supabase/ssr';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 export async function createClient() {
   const cookieStore = await cookies();
+
+  // Bearer bridge for the mobile app: browsers authenticate via session
+  // cookies, but the native app (wyberai-mobile) has no cookies — it sends the
+  // Supabase access token as `Authorization: Bearer <jwt>`. When that header is
+  // present we hand it to the client's global headers so `auth.getUser()`
+  // validates the JWT. Cookie-based (web) requests are unaffected: no header,
+  // no change.
+  const authHeader = (await headers()).get('authorization') ?? '';
+  const bearer = authHeader.toLowerCase().startsWith('bearer ') ? authHeader : '';
+
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      ...(bearer ? { global: { headers: { Authorization: bearer } } } : {}),
       cookies: {
         getAll() { return cookieStore.getAll(); },
         setAll(cookiesToSet) {
