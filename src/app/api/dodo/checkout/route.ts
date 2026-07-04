@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
+import { isAdminEmail } from '@/lib/admin'
 
 // Plan keys sent from pricing page → Dodo product ID env vars (USD products)
 const PRODUCT_IDS: Record<string, string | undefined> = {
@@ -54,10 +55,16 @@ export async function POST(req: NextRequest) {
 
     const { planKey, currency } = await req.json() as { planKey: string; currency?: 'USD' | 'INR' }
 
-    // Route to the INR product only when an INR checkout is requested AND that
-    // product is actually configured; otherwise fall back to the USD product so
-    // a partial Dodo setup can never hand the user a dead checkout.
-    const wantInr = currency === 'INR' && !!PRODUCT_IDS_INR[planKey]
+    // INR is only allowed from an Indian IP (or the owner/admin previewing).
+    // This stops a US visitor from forcing the cheaper India price via a crafted
+    // request or the ?region override.
+    const country = req.headers.get('x-vercel-ip-country')
+    const inrAllowed = country === 'IN' || isAdminEmail(user.email)
+
+    // Route to the INR product only when an INR checkout is requested, allowed,
+    // AND that product is actually configured; otherwise fall back to the USD
+    // product so a partial Dodo setup can never hand the user a dead checkout.
+    const wantInr = currency === 'INR' && inrAllowed && !!PRODUCT_IDS_INR[planKey]
     const productId = wantInr ? PRODUCT_IDS_INR[planKey] : PRODUCT_IDS[planKey]
     if (!productId) {
       return NextResponse.json({ error: `Product not configured: ${planKey}. Add the matching DODO_PRODUCT_* env var.` }, { status: 503 })

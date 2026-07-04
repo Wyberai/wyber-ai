@@ -1,5 +1,4 @@
-import { headers } from 'next/headers'
-import { currencyForCountry } from '@/lib/currency'
+import { resolveCurrency } from '@/lib/region'
 import { PricingClient } from './PricingClient'
 
 // Rendered per request from the visitor's IP country — never cached, so a
@@ -7,12 +6,10 @@ import { PricingClient } from './PricingClient'
 // This is what keeps the US and India experiences fully separate.
 export const dynamic = 'force-dynamic'
 
-// Server component: reads the visitor's country from Vercel's edge geo header
-// and hands the client the right currency. India (IP=IN) → ₹/UPI on first
-// paint; everyone else (incl. unknown/localhost) → the USD US product, with no
-// trace of India. IP is the sole decider — no client-side clock check that
-// could leak the India page to a US browser.
-export default async function PricingPage() {
-  const country = (await headers()).get('x-vercel-ip-country')
-  return <PricingClient initialCurrency={currencyForCountry(country)} />
+// India (IP=IN) → ₹/UPI on first paint; everyone else → the USD US product,
+// with no trace of India. The owner (admin) can preview either with ?region=us
+// or ?region=in — regular visitors can't, so the two storefronts stay separate.
+export default async function PricingPage({ searchParams }: { searchParams: Promise<{ region?: string }> }) {
+  const { region } = await searchParams
+  return <PricingClient initialCurrency={await resolveCurrency(region)} />
 }

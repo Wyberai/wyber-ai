@@ -1,9 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { headers } from 'next/headers'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { SocialShare } from '@/components/shared/SocialShare'
-import { currencyForCountry } from '@/lib/currency'
+import { resolveCurrency } from '@/lib/region'
 
 export const metadata: Metadata = {
   title: 'Weekly Build Challenge — Win Credits Every Week | WyberAi',
@@ -51,9 +50,9 @@ const IDEAS = [
   'A restaurant ordering system with menu and cart',
 ]
 
-export default async function ChallengePage() {
-  const country = (await headers()).get('x-vercel-ip-country')
-  const isIndia = currencyForCountry(country) === 'INR'
+export default async function ChallengePage({ searchParams }: { searchParams: Promise<{ region?: string }> }) {
+  const { region } = await searchParams
+  const isIndia = (await resolveCurrency(region)) === 'INR'
   const shareText = "I'm entering the WyberAi Weekly Build Challenge — build a real app, win credits. Come build with me!"
 
   return (
