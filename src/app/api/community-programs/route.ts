@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { COMMUNITY_PROGRAMS, isProgramId } from '@/lib/community-programs'
 
 // Community programs: Blood Donor Bonus + Build in Public
 // Submissions are stored and manually reviewed via admin panel
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
     proof_text?: string
   }
 
-  if (!body.program) return NextResponse.json({ error: 'program required' }, { status: 400 })
+  if (!body.program || !isProgramId(body.program)) return NextResponse.json({ error: 'Unknown program' }, { status: 400 })
 
   const db = createServiceClient()
 
@@ -37,32 +38,19 @@ export async function POST(req: NextRequest) {
     }, { status: 400 })
   }
 
-  const PROGRAMS: Record<string, { bonus_credits: number; bonus_type: string }> = {
-    blood_donor: { bonus_credits: 0, bonus_type: '50% extra on next top-up' },
-    build_in_public: { bonus_credits: 50, bonus_type: '50 bonus credits' },
-    accessibility: { bonus_credits: 0, bonus_type: '50% discount on plan' },
-    open_source: { bonus_credits: 0, bonus_type: '30% discount on plan' },
-    follow_linkedin: { bonus_credits: 25, bonus_type: '25 bonus credits' },
-    follow_reddit: { bonus_credits: 25, bonus_type: '25 bonus credits' },
-    review_producthunt: { bonus_credits: 50, bonus_type: '50 bonus credits' },
-  }
-
-  const program = PROGRAMS[body.program]
-  if (!program) return NextResponse.json({ error: 'Unknown program' }, { status: 400 })
+  const program = COMMUNITY_PROGRAMS[body.program]
 
   // Every credit-granting program goes to manual review — there is no way to
   // verify a "proof_url" server-side (it used to be trusted just for being a
-  // non-empty string, which meant anyone could self-grant up to 150 credits
-  // by calling this endpoint directly with a fake URL). NOTE: there is
-  // currently no admin UI to approve these and grant the credit — rows land
-  // in community_program_submissions with status='pending' and must be
-  // reviewed/credited manually (Supabase table editor) until one exists.
+  // non-empty string, which meant anyone could self-grant up to 150 credits by
+  // calling this endpoint directly with a fake URL). Reviewers approve/grant in
+  // the admin panel (/admin/community → /api/admin/community/review).
   const { error } = await db.from('community_program_submissions').insert({
     user_id: user.id,
     program: body.program,
     proof_url: body.proof_url ?? null,
     proof_text: body.proof_text ?? null,
-    bonus_type: program.bonus_type,
+    bonus_type: program.note,
     status: 'pending',
   })
 
