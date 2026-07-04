@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { SocialShare } from '@/components/shared/SocialShare'
 import { ChallengeSection } from '@/components/challenge/ChallengeSection'
-import { resolveRegion } from '@/lib/region'
+import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
+import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { CHALLENGE_GALLERY_ENABLED } from '@/lib/challenge'
 
 
@@ -56,6 +57,7 @@ const IDEAS = [
 export default async function ChallengePage() {
   const currency = await resolveRegion()
   const isIndia = currency === 'INR'
+  const owner = await isOwnerPreview()
   const shareText = "I'm entering the WyberAi Weekly Build Challenge — build a real app, win credits. Come build with me!"
 
   return (
@@ -187,6 +189,8 @@ export default async function ChallengePage() {
       <footer style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', fontSize: 12, color: '#3f3f46' }}>
         © 2026 WyberAi · <Link href="/terms" style={{ color: '#52525b', textDecoration: 'none' }}>Terms</Link> · <Link href="/privacy" style={{ color: '#52525b', textDecoration: 'none' }}>Privacy</Link>
       </footer>
+
+      {owner && <OwnerRegionSwitcher current={currency} />}
     </div>
   )
 }
