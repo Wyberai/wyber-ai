@@ -65,6 +65,21 @@ export async function GET(request: Request) {
           const provider = (user.app_metadata?.provider as string | undefined);
           sendWelcomeEmail(user.email, fullName).catch(() => {});
           sendAdminSignupAlert(user.email, provider).catch(() => {});
+
+          // Meta Conversions API — server-side signup conversion. Awaited so it
+          // survives the redirect (once per real account; the helper caps at 5s
+          // and never throws). eventID matches the browser Pixel on /dashboard.
+          const { sendMetaEvent } = await import('@/lib/meta-capi');
+          await sendMetaEvent({
+            eventName: 'CompleteRegistration',
+            eventId: `reg_${user.id}`,
+            email: user.email,
+            eventSourceUrl: `${origin}${next}`,
+            clientIp: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+            userAgent: request.headers.get('user-agent'),
+            fbp: cookieStore.get('_fbp')?.value || null,
+            fbc: cookieStore.get('_fbc')?.value || null,
+          });
         }
       } catch (e) { console.error('welcome/signup-alert failed:', e); }
 

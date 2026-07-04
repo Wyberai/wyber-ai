@@ -9,6 +9,8 @@ import {
   sendRefundEmail,
   sendAdminPaymentAlert,
 } from '@/lib/email'
+import { sendMetaEvent } from '@/lib/meta-capi'
+import { PLAN_VALUE } from '@/lib/pricing-values'
 
 function getAdmin() {
   return createClient(
@@ -36,6 +38,33 @@ const PLANS: Record<string, { credits: number; dailyCredits: number; plan: strin
   [process.env.DODO_PRODUCT_GROWTH_ANNUAL   || 'UNSET_G2']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
   [process.env.DODO_PRODUCT_SCALE           || 'UNSET_S1']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
   [process.env.DODO_PRODUCT_SCALE_ANNUAL    || 'UNSET_S2']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
+}
+
+// Report a paid conversion to Meta (Conversions API). Server-side is the only
+// place with the real payment id + amount and it can't be blocked. Value comes
+// from the plan key stashed in checkout metadata; eventId is the payment id so
+// Meta dedupes retries. Best-effort — sendMetaEvent no-ops without creds and
+// never throws.
+async function reportMetaPurchase(
+  req: NextRequest,
+  event: Record<string, unknown> & { data?: unknown },
+  metadata: Record<string, unknown>,
+  userEmail: string | undefined,
+  dedupeId: string,
+) {
+  const planKey = (metadata.plan as string | undefined) || ''
+  const value = PLAN_VALUE[planKey] ?? 0
+  const evData = event.data as Record<string, unknown> | undefined
+  const paymentId = String(evData?.payment_id || dedupeId || '')
+  await sendMetaEvent({
+    eventName: 'Purchase',
+    eventId: `purchase_${paymentId}`,
+    email: userEmail || null,
+    value,
+    currency: 'USD',
+    clientIp: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+    userAgent: req.headers.get('user-agent'),
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -237,6 +266,7 @@ export async function POST(req: NextRequest) {
           sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
           sendAdminPaymentAlert(userEmail, `Top-up: ${topupCredits} credits`).catch(() => {})
         }
+        await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
         return NextResponse.json({ received: true })
       }
 
@@ -295,6 +325,9 @@ export async function POST(req: NextRequest) {
         sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
         sendAdminPaymentAlert(userEmail, `${planConfig.label} plan`).catch(() => {})
       }
+      // Report the Meta Purchase once — on the event that actually grants (the
+      // payment.succeeded / subscription.active pair fires twice per subscribe).
+      if (grantCredits) await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
     }
 
     if (eventType === 'subscription.renewed') {

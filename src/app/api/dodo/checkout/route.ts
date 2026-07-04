@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { PLAN_VALUE } from '@/lib/pricing-values'
 
 // Plan keys sent from pricing page → Dodo product ID env vars
 const PRODUCT_IDS: Record<string, string | undefined> = {
@@ -21,15 +22,10 @@ const PRODUCT_IDS: Record<string, string | undefined> = {
   'topup_2000': process.env.DODO_TOPUP_2000,
 }
 
-// Charged USD amount per plan — attached to the post-checkout return URL so the
-// client can report a Purchase conversion WITH value (for Reddit/analytics
-// ROAS). Annual = monthly-equivalent × 12. 0 = value unknown/not sold (the
-// conversion still fires, just without a revenue figure).
-const PLAN_VALUE: Record<string, number> = {
-  starter_monthly: 29, builder_monthly: 79, pro_monthly: 199, growth_monthly: 0, scale_monthly: 0,
-  starter_annual: 276, builder_annual: 756, pro_annual: 1908, growth_annual: 0, scale_annual: 0,
-  topup_200: 19, topup_600: 49, topup_2000: 99,
-}
+// Charged USD amount per plan is attached to the post-checkout return URL so
+// the client can report a Purchase conversion WITH value (Reddit/analytics
+// ROAS). Values live in lib/pricing-values.ts (shared with the Dodo webhook,
+// which reports the same revenue to Meta CAPI).
 
 export async function POST(req: NextRequest) {
   try {
