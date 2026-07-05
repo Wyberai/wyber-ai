@@ -284,11 +284,20 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(0);
   const [showDemo, setShowDemo] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
       createClient().auth.getUser().then(({ data }) => setUser(data.user));
     });
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 600px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
   }, []);
 
   const product = PRODUCTS[activeProduct];
@@ -652,10 +661,10 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
       {showDemo && (
         <div onClick={() => setShowDemo(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(12px,4vw,48px)' }}>
-          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: '100%', maxWidth: 1100, aspectRatio: '16 / 9', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? 'auto' : '100%', maxWidth: isMobile ? '94vw' : 1100, height: isMobile ? '84vh' : 'auto', aspectRatio: isMobile ? '9 / 16' : '16 / 9', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
             <button onClick={() => setShowDemo(false)} aria-label="Close"
               style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
-            <iframe src="/demo-intro.html" title="WyberAi demo" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
+            <iframe src={isMobile ? '/demo-intro-mobile.html' : '/demo-intro.html'} title="WyberAi demo" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
           </div>
         </div>
       )}
