@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next'
-import { createAdminClient } from '@/lib/supabase/server'
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://wyberai.com'
   const now = new Date()
 
@@ -47,17 +46,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/changelog`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
   ]
 
-  try {
-    const admin = await createAdminClient()
-    const { data: apps } = await admin.from('prebuilt_apps').select('id, name, category').limit(100)
-    const templateRoutes: MetadataRoute.Sitemap = (apps || []).map(app => ({
-      url: `${base}/templates/${app.id}`,
-      lastModified: now,
-      changeFrequency: 'monthly' as const,
-      priority: 0.7,
-    }))
-    return [...staticRoutes, ...templateRoutes]
-  } catch {
-    return staticRoutes
-  }
+  // NOTE: /templates/[id] pages are intentionally excluded — they are
+  // client-side redirect stubs (spinner → build project → /project or /login)
+  // with no indexable content, which mass-triggered "not indexed" and tanked
+  // sitemap quality. The public content page is /gallery (kept above).
+  return staticRoutes
 }
