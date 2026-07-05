@@ -168,7 +168,7 @@ const PRODUCTS = [
     body: 'Type what you want in plain English. Wyber generates production-ready React code, provisions a database, and deploys to a live URL — in minutes.',
     bullets: ['Fresh code every time — no stale templates', '27 integrations — Supabase, Stripe, OpenAI & more', 'GitHub push · Vercel deploy · custom domains'],
     cta: 'Start building',
-    href: '/gallery',
+    href: '/signup',
     mockup: <WebAppMockup />,
   },
   {
@@ -302,7 +302,7 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/gallery'], ['Mobile Apps', '/templates/mobile'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
@@ -329,7 +329,7 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
       {/* Mobile drawer */}
       {mobileMenuOpen && (
         <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/gallery'], ['Mobile Apps', '/templates/mobile'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
+          {([['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
             <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>

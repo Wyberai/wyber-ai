@@ -561,9 +561,6 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
             <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
               Start building for free →
             </Link>
-            <Link href="/gallery" style={{ padding: '14px 24px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, fontWeight: 500, textDecoration: 'none' }}>
-              Browse templates
-            </Link>
           </div>
           <div style={{ marginTop: 14, fontSize: 12, color: '#3f3f46' }}>50 free credits · No credit card · Cancel anytime</div>
         </div>
