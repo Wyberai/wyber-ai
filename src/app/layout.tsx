@@ -61,12 +61,32 @@ const jsonLd = {
       '@type': 'Organization',
       '@id': `${SITE}/#organization`,
       name: 'SignalPulse Technologies',
-      legalName: 'SignalPulse Technologies',
+      legalName: 'SignalPulse Technologies LLC',
       url: SITE,
       logo: { '@type': 'ImageObject', url: `${SITE}/icon.svg` },
       description: 'SignalPulse Technologies builds WyberAi — an AI platform that turns plain-English prompts into production-ready web and mobile apps.',
+      // HQ must match the D&B / Wyoming LLC registration exactly. Add the exact
+      // registered street address here once confirmed against D&B.
+      foundingDate: '2025',
+      founder: { '@id': `${SITE}/#founder` },
+      address: {
+        '@type': 'PostalAddress',
+        addressRegion: 'WY',
+        addressCountry: 'US',
+      },
       sameAs: [
         'https://www.linkedin.com/company/signalpulse-technologies',
+        'https://signalpulsehq.com',
+      ],
+    },
+    {
+      '@type': 'Person',
+      '@id': `${SITE}/#founder`,
+      name: 'Sumeet Sutar',
+      jobTitle: 'Founder & CEO',
+      worksFor: { '@id': `${SITE}/#organization` },
+      sameAs: [
+        'https://www.linkedin.com/in/sumeetsutar',
       ],
     },
     {
