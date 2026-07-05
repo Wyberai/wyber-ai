@@ -100,7 +100,7 @@ const jsonLd = {
       publisher: { '@id': `${SITE}/#organization` },
     },
     {
-      '@type': 'SoftwareApplication',
+      '@type': ['SoftwareApplication', 'Product'],
       '@id': `${SITE}/#software`,
       name: 'WyberAi',
       url: SITE,
