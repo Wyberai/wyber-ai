@@ -24,7 +24,7 @@ const PROGRAMS = [
     title: 'Build in Public',
     tagline: 'Share what you built with WyberAI on Twitter/LinkedIn. Get 50 bonus credits.',
     color: SKY,
-    how: 'Post about your WyberAI project on Twitter or LinkedIn with #BuiltWithWyber. Paste the post URL below — we review within 24 hours and add the credits.',
+    how: 'Post about your WyberAI project on Twitter or LinkedIn with #BuiltOnWyber. Paste the post URL below — we review within 24 hours and add the credits.',
     reward: '50 bonus credits',
     proofLabel: 'Post URL',
     proofPlaceholder: 'https://twitter.com/you/status/...',
