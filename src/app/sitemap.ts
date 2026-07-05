@@ -24,12 +24,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/use-cases/no-code-web-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/use-cases/ai-app-builder`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/employees`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${base}/gtm`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
-    { url: `${base}/gtm/campaigns`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 },
-    { url: `${base}/gtm/sequences`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 },
-    { url: `${base}/gtm/leads`, lastModified: now, changeFrequency: 'weekly', priority: 0.75 },
-    { url: `${base}/signup`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
-    { url: `${base}/login`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
+    // NOTE: gated app pages (/gtm/*, /dashboard, /project) and thin auth pages
+    // (/login, /signup) are intentionally excluded — they redirect crawlers to
+    // login and get marked "not indexed", which drags down sitemap quality.
     { url: `${base}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${base}/blog/what-are-ai-agents-guide`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/blog/ai-workflow-automation-guide`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
