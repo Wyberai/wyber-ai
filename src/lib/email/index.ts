@@ -85,7 +85,7 @@ export async function sendWelcomeEmail(to: string, name?: string) {
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">web app</strong> — just describe it in plain English</td></tr>
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">mobile app</strong> — preview on your phone via QR code</td></tr>
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Paste a <strong style="color:#f0f0f4">screenshot or Figma file</strong> to clone any UI</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 45 more integrations</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 24 more integrations</td></tr>
     </table>
     ${p('We\'re also running a <strong style="color:#f0f0f4">Weekly Build Challenge — win credits every week</strong>. Build a real app, share it with #BuiltOnWyber, and our team + the community pick the winners. <a href="https://wyberai.com/challenge" style="color:#0EA5E9">Learn more →</a>')}
     <div style="text-align:center;margin:28px 0">
