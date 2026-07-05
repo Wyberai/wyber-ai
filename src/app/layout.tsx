@@ -65,13 +65,16 @@ const jsonLd = {
       url: SITE,
       logo: { '@type': 'ImageObject', url: `${SITE}/icon.svg` },
       description: 'SignalPulse Technologies builds WyberAi — an AI platform that turns plain-English prompts into production-ready web and mobile apps.',
-      // HQ must match the D&B / Wyoming LLC registration exactly. Add the exact
-      // registered street address here once confirmed against D&B.
-      foundingDate: '2025',
+      // HQ matches the Wyoming SoS registration exactly (Filing ID 2026-001962094)
+      // so D&B / Crunchbase / Wikidata all cross-reference cleanly.
+      foundingDate: '2026-04-27',
       founder: { '@id': `${SITE}/#founder` },
       address: {
         '@type': 'PostalAddress',
+        streetAddress: '30 N Gould St, Ste R',
+        addressLocality: 'Sheridan',
         addressRegion: 'WY',
+        postalCode: '82801',
         addressCountry: 'US',
       },
       sameAs: [
