@@ -6,6 +6,7 @@ import { scanForExposedSecrets } from '@/lib/security-scan';
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project';
 import { getDeployEnvVars } from '@/lib/deploy-env';
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url';
+import { rateLimit } from '@/lib/rate-limit';
 
 // Build scaffold files needed for Vercel to build the app
 function getBuildScaffold(framework: string, projectName: string): Record<string, string> {
@@ -128,6 +129,10 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    // Each deploy triggers a full Vercel build on our token — keep loops out.
+    const { allowed } = rateLimit(`deploy:${user.id}`, 10, 600_000)
+    if (!allowed) return NextResponse.json({ error: 'Too many deploys in a short time. Please wait a few minutes.' }, { status: 429 })
 
     const { projectId, userId, files, projectName, framework = 'react-vite', override = false } = await req.json();
 

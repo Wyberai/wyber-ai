@@ -2,12 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sanitizeFiles } from '@/lib/sanitize-files';
 import { scanForExposedSecrets } from '@/lib/security-scan';
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   // Auth: only the project owner may export
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { allowed } = rateLimit(`export:${user.id}`, 20, 600_000)
+  if (!allowed) return NextResponse.json({ error: 'Too many exports in a short time. Please wait a few minutes.' }, { status: 429 })
 
   const { projectId, format } = await req.json();
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })

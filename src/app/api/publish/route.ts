@@ -7,6 +7,7 @@ import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { extractImageDirectives, replaceTokenInFiles, gradientDataUri } from '@/lib/image-directives'
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
+import { rateLimit } from '@/lib/rate-limit'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -38,6 +39,11 @@ export async function POST(req: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Each publish is a 30–45s remote build — a loop here monopolizes builder
+    // capacity. Real users republish a handful of times per session at most.
+    const { allowed } = rateLimit(`publish:${user.id}`, 10, 600_000)
+    if (!allowed) return NextResponse.json({ error: 'Too many publishes in a short time. Please wait a few minutes.' }, { status: 429 })
 
     const { projectId, override = false } = await req.json()
     const admin = createServiceClient()

@@ -215,6 +215,67 @@ describe('sanitizeFiles — runtime-error relay (blank-white-preview fix)', () =
   })
 })
 
+// A render error in generated code must show a recoverable card, not a blank
+// screen: every app gets a WyberErrorBoundary wrapped around <App />, and
+// index.html gets a plain-DOM crash guard for errors before React even mounts.
+describe('sanitizeFiles — error boundary + crash guard', () => {
+  it('creates the boundary file and wraps <App /> in a synthesized entry', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } })
+    expect('src/WyberErrorBoundary.tsx' in out).toBe(true)
+    const boundary = contentOf(out['src/WyberErrorBoundary.tsx'])
+    expect(boundary).toContain('getDerivedStateFromError')
+    expect(boundary).toContain('wyber-runtime-error') // relays so self-heal still sees the error
+    const main = contentOf(out['src/main.tsx'])
+    expect(main).toContain("import WyberErrorBoundary from './WyberErrorBoundary'")
+    expect(main).toContain('<WyberErrorBoundary>')
+    expect(main.indexOf('<WyberErrorBoundary>')).toBeLessThan(main.indexOf('<App />'))
+    expect(main.indexOf('<App />')).toBeLessThan(main.indexOf('</WyberErrorBoundary>'))
+  })
+
+  it('emits an untyped .jsx boundary for a jsx app', () => {
+    const out = sanitizeFiles({ 'src/App.jsx': { content: APP } })
+    expect('src/WyberErrorBoundary.jsx' in out).toBe(true)
+    expect(contentOf(out['src/WyberErrorBoundary.jsx'])).not.toContain(': Error')
+  })
+
+  it('wraps <App /> in a model-written entry (unambiguous self-closing form only)', () => {
+    const customMain = "import App from './App'\nimport './index.css'\ncreateRoot(el).render(<App />)\n"
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'src/main.tsx': { content: customMain } })
+    const main = contentOf(out['src/main.tsx'])
+    expect(main).toContain("import WyberErrorBoundary from './WyberErrorBoundary'")
+    expect(main).toContain('<WyberErrorBoundary><App /></WyberErrorBoundary>')
+  })
+
+  it('leaves a non-standard entry alone and does not double-wrap on re-run', () => {
+    const fancy = "import App from './App'\nimport './index.css'\nrender(<App prop={1}>x</App>)\n"
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'src/main.tsx': { content: fancy } })
+    expect(contentOf(out['src/main.tsx'])).not.toContain('WyberErrorBoundary')
+    const wrapped = sanitizeFiles({ 'src/App.tsx': { content: APP } })
+    const rerun = sanitizeFiles(wrapped)
+    const main = contentOf(rerun['src/main.tsx'])
+    expect(main.split("from './WyberErrorBoundary'").length - 1).toBe(1)
+  })
+
+  it('never overwrites a user file that happens to share the boundary path', () => {
+    const out = sanitizeFiles({
+      'src/App.tsx': { content: APP },
+      'src/WyberErrorBoundary.tsx': { content: '// custom' },
+    })
+    expect(contentOf(out['src/WyberErrorBoundary.tsx'])).toBe('// custom')
+  })
+
+  it('injects the crash guard into index.html exactly once', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } })
+    const html = contentOf(out['index.html'])
+    expect(html).toContain('wyber-crash-guard')
+    // Unlike the relay, the guard must work on PUBLISHED sites (no iframe check
+    // on its show path) — it renders via textContent, never innerHTML.
+    expect(html).not.toContain('innerHTML')
+    const rerun = sanitizeFiles(out)
+    expect(contentOf(rerun['index.html']).split('wyber-crash-guard').length - 1).toBe(1)
+  })
+})
+
 // Imports outside REQUIRED_DEPS fail the remote build ("Cannot find module") —
 // most damagingly @supabase/supabase-js, which every Supabase-wired app needs
 // but which is not in the always-merged set. Known packages get pinned

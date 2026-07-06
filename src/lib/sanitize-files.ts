@@ -160,16 +160,67 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
 
     out['package.json'] = { content: JSON.stringify(pkg, null, 2) + '\n', language: 'json' }
 
+    // 2d. Top-level ErrorBoundary: a render error in generated code must show a
+    // recoverable "something went wrong" card, not a blank white screen. The
+    // boundary also swallows the error before window.onerror can see it, so it
+    // relays to the parent editor itself (same 'wyber-runtime-error' message the
+    // index.html relay sends) — otherwise wrapping App would BLIND the self-heal
+    // loop. Generated apps never name a file this way, so no collision risk.
+    const boundaryPath = `src/WyberErrorBoundary.${appExt}`
+    if (!(boundaryPath in out)) {
+      const types = appExt === 'tsx'
+      out[boundaryPath] = {
+        content: `import React from 'react';
+${types ? '\ntype WyberErrorBoundaryState = { error: Error | null };\n' : ''}
+export default class WyberErrorBoundary extends React.Component${types ? '<{ children?: React.ReactNode }, WyberErrorBoundaryState>' : ''} {
+  state${types ? ': WyberErrorBoundaryState' : ''} = { error: null };
+  static getDerivedStateFromError(error${types ? ': Error' : ''}) {
+    return { error };
+  }
+  componentDidCatch(error${types ? ': Error' : ''}) {
+    try {
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'wyber-runtime-error', message: String(error && error.message ? error.message : error) }, '*');
+      }
+    } catch { /* relay is best-effort */ }
+  }
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', padding: 24 }}>
+        <div style={{ maxWidth: 420, textAlign: 'center' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Something went wrong</h1>
+          <p style={{ fontSize: 14, opacity: 0.7, marginBottom: 16, wordBreak: 'break-word' }}>{String(this.state.error.message || this.state.error)}</p>
+          <button onClick={() => window.location.reload()} style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: '#18181b', color: '#fff', fontSize: 14, cursor: 'pointer' }}>
+            Reload app
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
+`,
+        language: appExt === 'tsx' ? 'typescript' : 'javascript',
+      }
+    }
+
     // 3. an entry that imports the stylesheet, and an index.html that loads it.
     const existingMain = ['src/main.tsx', 'src/main.jsx', 'src/index.tsx', 'src/index.jsx'].find(p => p in out)
     const mainPath = existingMain ?? `src/main.${appExt}`
     if (existingMain) {
       // The compiled CSS only ships if the entry imports it — ensure it does.
       const mc = fileContent(out[existingMain])
-      if (!mc.includes('index.css')) {
+      let nextMain = mc
+      if (!nextMain.includes('index.css')) nextMain = `import './index.css';\n${nextMain}`
+      // Wrap <App /> in the boundary. Only transform the unambiguous self-closing
+      // form — anything fancier the model wrote is left alone (the index.html
+      // crash guard still covers those apps).
+      if (!nextMain.includes('WyberErrorBoundary') && /<App\s*\/>/.test(nextMain)) {
+        nextMain = `import WyberErrorBoundary from './WyberErrorBoundary';\n${nextMain.replace(/<App\s*\/>/, '<WyberErrorBoundary><App /></WyberErrorBoundary>')}`
+      }
+      if (nextMain !== mc) {
         const mv = out[existingMain]
-        const injected = `import './index.css';\n${mc}`
-        out[existingMain] = typeof mv === 'string' ? injected : { ...(mv as object), content: injected }
+        out[existingMain] = typeof mv === 'string' ? nextMain : { ...(mv as object), content: nextMain }
       }
     } else {
       const tsBang = appExt === 'tsx' ? '!' : ''
@@ -177,10 +228,13 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
         content: `import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import WyberErrorBoundary from './WyberErrorBoundary';
 import './index.css';
 ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
   <React.StrictMode>
-    <App />
+    <WyberErrorBoundary>
+      <App />
+    </WyberErrorBoundary>
   </React.StrictMode>
 );`,
         language: appExt === 'tsx' ? 'typescript' : 'javascript',
@@ -217,13 +271,30 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
   // unaffected. Plain non-module inline script: vite build leaves it untouched
   // and it registers before the app bundle executes.
   const ERROR_RELAY = `<script>/* wyber-error-relay */(function(){if(window.parent===window)return;var send=function(m,s,l){try{window.parent.postMessage({type:'wyber-runtime-error',message:String(m||'Script error'),source:s?String(s).split('/').pop():undefined,lineno:l},'*')}catch(e){}};window.addEventListener('error',function(e){send(e.message||e.error,e.filename,e.lineno)});window.addEventListener('unhandledrejection',function(e){send(e.reason&&e.reason.message?e.reason.message:e.reason)})})()</script>`
+  // Crash guard: the React ErrorBoundary only catches errors INSIDE the React
+  // tree — a module-init error or a crash before ReactDOM.render leaves #root
+  // empty forever (white screen). If an uncaught error fires and #root is still
+  // empty shortly after, render a plain-DOM fallback. Runs on published sites
+  // too (unlike the relay, which is iframe-only). Message set via textContent —
+  // error strings can contain user input, never innerHTML them.
+  const CRASH_GUARD = `<script>/* wyber-crash-guard */(function(){var shown=false;function show(msg){if(shown)return;var r=document.getElementById('root');if(!r||r.childElementCount>0)return;shown=true;var wrap=document.createElement('div');wrap.setAttribute('style','min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,sans-serif;padding:24px');var box=document.createElement('div');box.setAttribute('style','max-width:420px;text-align:center');var h=document.createElement('h1');h.setAttribute('style','font-size:20px;font-weight:600;margin-bottom:8px');h.textContent='Something went wrong';var p=document.createElement('p');p.setAttribute('style','font-size:14px;opacity:.7;margin-bottom:16px;word-break:break-word');p.textContent=String(msg||'The app failed to load.');var b=document.createElement('button');b.setAttribute('style','padding:8px 20px;border-radius:8px;border:none;background:#18181b;color:#fff;font-size:14px;cursor:pointer');b.textContent='Reload app';b.onclick=function(){location.reload()};box.appendChild(h);box.appendChild(p);box.appendChild(b);wrap.appendChild(box);r.appendChild(wrap)}window.addEventListener('error',function(e){setTimeout(function(){show(e.message)},100)});window.addEventListener('unhandledrejection',function(e){setTimeout(function(){show(e.reason&&e.reason.message?e.reason.message:e.reason)},100)})})()</script>`
   const idxVal = out['index.html']
   const idxHtml = fileContent(idxVal)
-  if (idxHtml && !idxHtml.includes('wyber-error-relay')) {
-    const injected = idxHtml.includes('<head>')
-      ? idxHtml.replace('<head>', `<head>\n    ${ERROR_RELAY}`)
-      : `${ERROR_RELAY}\n${idxHtml}`
-    out['index.html'] = typeof idxVal === 'string' ? injected : { ...(idxVal as object), content: injected }
+  if (idxHtml) {
+    let nextIdx = idxHtml
+    if (!nextIdx.includes('wyber-error-relay')) {
+      nextIdx = nextIdx.includes('<head>')
+        ? nextIdx.replace('<head>', `<head>\n    ${ERROR_RELAY}`)
+        : `${ERROR_RELAY}\n${nextIdx}`
+    }
+    if (!nextIdx.includes('wyber-crash-guard')) {
+      nextIdx = nextIdx.includes('<head>')
+        ? nextIdx.replace('<head>', `<head>\n    ${CRASH_GUARD}`)
+        : `${CRASH_GUARD}\n${nextIdx}`
+    }
+    if (nextIdx !== idxHtml) {
+      out['index.html'] = typeof idxVal === 'string' ? nextIdx : { ...(idxVal as object), content: nextIdx }
+    }
   }
 
   // Completeness pass: stub any locally-imported file that was never generated

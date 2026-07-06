@@ -19,7 +19,12 @@ const SECRET_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'AWS access key', pattern: /AKIA[0-9A-Z]{16}/ },
   { name: 'Generic private key block', pattern: /-----BEGIN (RSA |EC )?PRIVATE KEY-----/ },
   { name: 'Stripe secret key', pattern: /sk_live_[0-9a-zA-Z]{20,}/ },
+  { name: 'Stripe restricted key', pattern: /rk_live_[0-9a-zA-Z]{20,}/ },
   { name: 'OpenAI/Anthropic-style secret key', pattern: /\b(sk-[a-zA-Z0-9]{20,}|sk-ant-[a-zA-Z0-9-]{20,})\b/ },
+  { name: 'GitHub token', pattern: /\b(ghp_[a-zA-Z0-9]{36}|gho_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{22,})\b/ },
+  { name: 'Google API key', pattern: /\bAIza[0-9A-Za-z_-]{35}\b/ },
+  { name: 'Slack token', pattern: /\bxox[baprs]-[a-zA-Z0-9-]{10,}\b/ },
+  { name: 'SendGrid API key', pattern: /\bSG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}\b/ },
 ]
 
 export interface SecurityScanResult {
