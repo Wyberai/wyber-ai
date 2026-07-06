@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { sendCreditsExhaustedEmail, sendGettingStartedNudgeEmail, sendPublishNudgeEmail } from '@/lib/email'
 import { unsubscribeUrl } from '@/lib/email/unsubscribe'
+import { userCurrency } from '@/lib/user-currency'
 
 export const maxDuration = 120
 
@@ -63,7 +64,7 @@ export async function GET(req: NextRequest) {
       if (ev && ev.sent_count >= DRIP_MAX_SENDS) continue
       if (ev?.last_sent_at && ev.last_sent_at > dueBefore) continue
       try {
-        await sendCreditsExhaustedEmail(u.email, (ev?.sent_count ?? 0) + 1, unsubscribeUrl(u.email))
+        await sendCreditsExhaustedEmail(u.email, (ev?.sent_count ?? 0) + 1, unsubscribeUrl(u.email), await userCurrency(admin, u.id))
         await markSent(u.id, 'credits-drip')
         results.creditsDrip++
       } catch { results.errors++ }

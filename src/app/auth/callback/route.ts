@@ -49,6 +49,15 @@ export async function GET(request: Request) {
         ignoreDuplicates: true,
       });
 
+      // Persist the login/signup country (Vercel edge geo header) so lifecycle
+      // emails sent later from cron — which have no request IP — can localize
+      // currency (India → ₹, else $). Best-effort: the column comes from a
+      // pending migration, so a missing-column error is harmless and ignored.
+      const ipCountry = request.headers.get('x-vercel-ip-country');
+      if (ipCountry) {
+        try { await supabase.from('profiles').update({ country: ipCountry }).eq('id', user.id); } catch { /* column may not exist yet */ }
+      }
+
       // Referral code this signup arrived with — from ?ref= on the callback URL
       // (survives OAuth cross-tab) or the cookie stashed on the signup page.
       const refCode = (searchParams.get('ref') || cookieStore.get('wyber_ref')?.value || '')

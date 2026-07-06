@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
 
@@ -1388,7 +1389,7 @@ export async function POST(req: NextRequest) {
                 const { unsubscribeUrl } = await import('@/lib/email/unsubscribe')
                 const { data: optRow } = await admin.from('profiles').select('email_opt_out').eq('id', user.id).single()
                 if (!optRow?.email_opt_out) {
-                  await sendCreditsExhaustedEmail(profile.email, 1, unsubscribeUrl(profile.email))
+                  await sendCreditsExhaustedEmail(profile.email, 1, unsubscribeUrl(profile.email), await userCurrency(admin, user.id))
                   await admin.from('email_events').upsert({ user_id: user.id, kind: 'credits-drip', sent_count: 1, last_sent_at: new Date().toISOString() })
                 }
               }
@@ -1438,7 +1439,7 @@ export async function POST(req: NextRequest) {
         // Low-credit warning — only at the moment the balance crosses the threshold
         const LOW = 20
         if (balance > LOW && after <= LOW && after > 0) {
-          sendCreditLowEmail(email, after).catch(() => {})
+          userCurrency(admin, user.id).then(c => sendCreditLowEmail(email, after, c)).catch(() => {})
         }
       }
     }

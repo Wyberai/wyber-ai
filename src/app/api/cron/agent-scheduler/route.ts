@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { creditCost } from '@/lib/credits'
 import { sendCreditLowEmail } from '@/lib/email'
+import { userCurrency } from '@/lib/user-currency'
 import { notifyPush } from '@/lib/push'
 
 const ITER_COST = creditCost('execution', 'default') // 2 credits
@@ -99,7 +100,7 @@ export async function GET(req: NextRequest) {
 
       // Notify via email + in-app notification
       try {
-        await sendCreditLowEmail(profile.email, profile.credits)
+        await sendCreditLowEmail(profile.email, profile.credits, await userCurrency(admin, schedule.user_id))
       } catch (emailErr) {
         console.error(`${tag} email send failed:`, emailErr)
       }

@@ -1,5 +1,7 @@
 import { Resend } from 'resend'
 import { memeImg } from './memes'
+import { formatPrice, type Currency } from '@/lib/currency'
+import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
@@ -48,6 +50,28 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${preheade
 
 function btn(label: string, url: string, color = '#0EA5E9'): string {
   return `<a href="${url}" style="display:inline-block;background:${color};color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:9px;letter-spacing:-0.01em">${label}</a>`
+}
+
+// Top-up options block. TABLE-based (not flex/grid — Gmail/Outlook strip those,
+// which collapsed the card spacing). Currency-aware: pass 'INR' to show rupee
+// price points to Indian users; defaults to USD so existing callers are unchanged.
+const TOPUPS: [label: string, key: string][] = [
+  ['200 credits', 'topup_200'],
+  ['600 credits', 'topup_600'],
+  ['2,000 credits', 'topup_2000'],
+]
+function topUpBlock(currency: Currency = 'USD'): string {
+  const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
+  const rows = TOPUPS.map(([label, key]) => `
+      <tr><td style="padding-bottom:10px">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:8px">
+          <tr>
+            <td style="padding:14px 16px;font-size:14px;color:#f0f0f4;font-weight:500">${label}</td>
+            <td align="right" style="padding:14px 16px"><a href="${APP_URL}/pricing#topup" style="font-size:14px;font-weight:600;color:#0EA5E9;text-decoration:none">${formatPrice(prices[key], currency)} →</a></td>
+          </tr>
+        </table>
+      </td></tr>`).join('')
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 28px">${rows}</table>`
 }
 
 function h1(text: string): string {
@@ -355,25 +379,15 @@ export async function sendRefundEmail(to: string, amount?: string) {
 
 // ── 7. Running low on credits ─────────────────────────────────────────────────
 // "This is fine." — dog, burning room. The balance is the room.
-export async function sendCreditLowEmail(to: string, remaining: number) {
+export async function sendCreditLowEmail(to: string, remaining: number, currency: Currency = 'USD') {
+  const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
   const html = wrap(`
     ${memeImg('credits-low')}
     ${h1('This is fine. 🔥')}
     ${p(`Everything is fine. Totally fine. You have <strong style="color:#f0a429">${remaining} credits</strong> left, which is roughly ${remaining >= 30 ? 'one build' : 'a few edits'} before the room is fully on fire.`)}
     ${p('Top up before the flames reach the desk — top-up credits never expire and are yours forever.')}
-    <div style="display:grid;gap:10px;margin:0 0 28px">
-      ${([
-        ['200 credits', '$19', `${APP_URL}/pricing#topup`],
-        ['600 credits', '$49', `${APP_URL}/pricing#topup`],
-        ['2,000 credits', '$99', `${APP_URL}/pricing#topup`],
-      ] as [string, string, string][]).map(([c, price, url]) => `
-        <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:14px;color:#f0f0f4;font-weight:500">${c}</span>
-          <a href="${url}" style="font-size:14px;font-weight:600;color:#0EA5E9;text-decoration:none">${price} →</a>
-        </div>
-      `).join('')}
-    </div>
-    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at $79.')}
+    ${topUpBlock(currency)}
+    ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at ' + formatPrice(prices.builder_monthly, currency) + '.')}
   `, `${remaining} credits remaining`)
 
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `This is fine — ${remaining} credits remaining 🔥`, html })
@@ -382,10 +396,11 @@ export async function sendCreditLowEmail(to: string, remaining: number) {
 // ── 7b. Out of credits — recurring drip (cron: /api/cron/email-drip) ─────────
 // sendNumber varies the copy so nudge #3 doesn't read like nudge #1 verbatim.
 // Marketing email → always carries the recipient's signed unsubscribe link.
-export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, unsubUrl: string) {
+export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, unsubUrl: string, currency: Currency = 'USD') {
   // Meme matrix: nudge 1 = Wonka "You get nothing!", nudge 3 = Ben Affleck
   // smoking (peak exhaustion). Nudge 4 stays meme-free — a respectful goodbye
   // reads wrong with a GIF on top.
+  const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
   const variants: { subject: string; heading: string; body: string; meme?: Parameters<typeof memeImg>[0] }[] = [
     {
       subject: "You lose! Good day, sir! 🍫 (You're out of credits)",
@@ -396,7 +411,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     {
       subject: 'Your projects are waiting on WyberAi',
       heading: 'Still there. Still saved.',
-      body: 'Everything you built is safe in your dashboard — it just needs credits to keep evolving. 200 credits is $19 and they never expire.',
+      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. 200 credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
     },
     {
       subject: 'Your credits are still at zero and honestly... same 🚬',
@@ -415,20 +430,9 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     ${v.meme ? memeImg(v.meme) : ''}
     ${h1(v.heading)}
     ${p(v.body)}
-    <div style="display:grid;gap:10px;margin:0 0 28px">
-      ${([
-        ['200 credits', '$19', `${APP_URL}/pricing#topup`],
-        ['600 credits', '$49', `${APP_URL}/pricing#topup`],
-        ['2,000 credits', '$99', `${APP_URL}/pricing#topup`],
-      ] as [string, string, string][]).map(([c, price, url]) => `
-        <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:8px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:14px;color:#f0f0f4;font-weight:500">${c}</span>
-          <a href="${url}" style="font-size:14px;font-weight:600;color:#0EA5E9;text-decoration:none">${price} →</a>
-        </div>
-      `).join('')}
-    </div>
+    ${topUpBlock(currency)}
     <div style="text-align:center;margin:0 0 24px">
-      ${btn('Or go monthly — plans from $29 →', `${APP_URL}/pricing`)}
+      ${btn('Or go monthly — plans from ' + formatPrice(prices.starter_monthly, currency) + ' →', `${APP_URL}/pricing`)}
     </div>
     ${p('Every plan includes every feature. Unused credits roll over; top-ups never expire.')}
   `, v.heading, unsubUrl)

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Composio } from '@composio/core'
 import { creditCost } from '@/lib/credits'
 import { sendCreditLowEmail } from '@/lib/email'
+import { userCurrency } from '@/lib/user-currency'
 import { notifyPush } from '@/lib/push'
 
 const ITER_COST    = creditCost('execution', 'default') // 2 credits
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
   if (profile.credits < MAX_RUN_COST) {
     console.log(`${tag} SKIP — insufficient credits (${profile.credits} < ${MAX_RUN_COST})`)
 
-    try { await sendCreditLowEmail(profile.email, profile.credits) } catch {}
+    try { await sendCreditLowEmail(profile.email, profile.credits, await userCurrency(admin, sub.user_id)) } catch {}
 
     await admin.from('notifications').insert({
       user_id: sub.user_id,
