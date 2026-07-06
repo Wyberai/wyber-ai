@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node -e \"process.env.VERCEL_ENV==='production'&&require('child_process').execSync('node scripts/indexnow.mjs',{stdio:'inherit'})\"",
+    "indexnow": "node scripts/indexnow.mjs",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
