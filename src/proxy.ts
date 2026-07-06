@@ -33,11 +33,18 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/terms') ||
     path.startsWith('/status') ||
     path.startsWith('/vs') ||
+    path.startsWith('/use-cases') ||
+    path.startsWith('/employees') ||
     path.startsWith('/blog') ||
+    path.startsWith('/contact') ||
+    path.startsWith('/cookies') ||
     path.startsWith('/security') ||
     path.startsWith('/changelog') ||
     path.startsWith('/setup-call') ||
     path.startsWith('/complexity-guide') ||
+    path.startsWith('/learn') ||
+    path.startsWith('/coming-soon') ||
+    path.startsWith('/org-landing') ||
     path.startsWith('/pay') ||
     path.startsWith('/connectors') ||
     path.startsWith('/founders') ||

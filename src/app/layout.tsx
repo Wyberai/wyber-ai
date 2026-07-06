@@ -128,6 +128,7 @@ const jsonLd = {
         price: '29.00',
         priceCurrency: 'USD',
         priceValidUntil: '2027-12-31',
+        availability: 'https://schema.org/InStock',
         url: `${SITE}/pricing`,
       },
     },
