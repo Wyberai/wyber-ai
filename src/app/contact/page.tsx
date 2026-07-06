@@ -1,5 +1,5 @@
-'use client'
 import Link from 'next/link'
+import { resolveRegion } from '@/lib/region'
 
 function WyberLogo() {
   return (
@@ -11,7 +11,10 @@ function WyberLogo() {
   )
 }
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  // The build consultation is a US-only offering — India has no INR consultation
+  // option, so the whole card is hidden for Indian (IP-detected) visitors.
+  const isUS = (await resolveRegion()) === 'USD'
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', display: 'flex', flexDirection: 'column' }}>
       <style>{`
@@ -80,7 +83,8 @@ export default function ContactPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#52525b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
 
-            {/* Setup call */}
+            {/* Setup call — US-only; hidden for India */}
+            {isUS && (
             <a href="/setup-call" className="contact-card-cta"
               style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 24px', borderRadius: 14, background: 'rgba(14,165,233,0.05)', border: '1px solid rgba(14,165,233,0.15)', textDecoration: 'none', textAlign: 'left' }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(14,165,233,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -94,10 +98,11 @@ export default function ContactPage() {
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </a>
+            )}
           </div>
 
           <p style={{ fontSize: 13, color: '#3f3f46' }}>
-            Built by <a href="https://signalpulsehq.com" target="_blank" rel="noopener noreferrer" style={{ color: '#52525b', textDecoration: 'none' }}>SignalPulse Technologies</a> · Bengaluru, India
+            Built by <a href="https://signalpulsehq.com" target="_blank" rel="noopener noreferrer" style={{ color: '#52525b', textDecoration: 'none' }}>SignalPulse Technologies LLC</a> · Sheridan, Wyoming, USA
           </p>
         </div>
       </main>
