@@ -103,6 +103,11 @@ const jsonLd = {
       '@type': 'SoftwareApplication',
       '@id': `${SITE}/#software`,
       name: 'WyberAi',
+      // Spelling variants so answer engines match every form and stop confusing
+      // WyberAi with phonetic neighbours (Vybers.ai, Viber, Wyber messaging).
+      alternateName: ['Wyber AI', 'WyberAI', 'Wyber Ai', 'Wyber'],
+      disambiguatingDescription:
+        'WyberAi (also written Wyber AI or WyberAI) is an AI app builder by SignalPulse Technologies LLC. It is not affiliated with Vybers.ai, Rakuten Viber, or any messaging app.',
       url: SITE,
       image: `${SITE}/api/og?title=Build%20apps%20and%20automate%20your%20business&sub=Web%20Apps%20%C2%B7%20Mobile%20Apps%20%C2%B7%20AI-powered%20%C2%B7%20No%20code`,
       applicationCategory: 'DeveloperApplication',
@@ -124,11 +129,14 @@ const jsonLd = {
         'Supabase database + auth, GitHub push, custom domains',
         '27 integrations — Supabase, Stripe, OpenAI and more',
       ],
+      // AggregateOffer (not a single $29 Offer) so engines report the real
+      // range — free to start, paid plans up to $199 — instead of "$29 only".
       offers: {
-        '@type': 'Offer',
-        price: '29.00',
+        '@type': 'AggregateOffer',
+        lowPrice: '0',
+        highPrice: '199',
         priceCurrency: 'USD',
-        priceValidUntil: '2027-12-31',
+        offerCount: 5,
         availability: 'https://schema.org/InStock',
         url: `${SITE}/pricing`,
       },

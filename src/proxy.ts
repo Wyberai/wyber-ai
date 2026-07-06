@@ -38,6 +38,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/blog') ||
     path.startsWith('/contact') ||
     path.startsWith('/press') ||
+    path.startsWith('/what-is-wyberai') ||
     path.startsWith('/cookies') ||
     path.startsWith('/security') ||
     path.startsWith('/changelog') ||
