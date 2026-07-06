@@ -100,10 +100,11 @@ const jsonLd = {
       publisher: { '@id': `${SITE}/#organization` },
     },
     {
-      '@type': ['SoftwareApplication', 'Product'],
+      '@type': 'SoftwareApplication',
       '@id': `${SITE}/#software`,
       name: 'WyberAi',
       url: SITE,
+      image: `${SITE}/api/og?title=Build%20apps%20and%20automate%20your%20business&sub=Web%20Apps%20%C2%B7%20Mobile%20Apps%20%C2%B7%20AI-powered%20%C2%B7%20No%20code`,
       applicationCategory: 'DeveloperApplication',
       operatingSystem: 'Web',
       brand: { '@type': 'Brand', name: 'WyberAi' },
