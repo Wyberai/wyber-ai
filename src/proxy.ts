@@ -37,6 +37,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/employees') ||
     path.startsWith('/blog') ||
     path.startsWith('/contact') ||
+    path.startsWith('/press') ||
     path.startsWith('/cookies') ||
     path.startsWith('/security') ||
     path.startsWith('/changelog') ||
