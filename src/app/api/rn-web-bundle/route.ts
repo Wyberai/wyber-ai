@@ -55,6 +55,50 @@ function esmUrl(spec: string): string {
   return `${ESM}/${spec}?${DEP_QUERY}`
 }
 
+// Native-only Expo/RN modules crash react-native-web AT IMPORT — they reach for
+// native APIs that don't exist in a WebView, which took down the ENTIRE preview
+// before React could mount ("Preview unavailable"). We resolve them to an inlined
+// no-op proxy instead: any import / call / property access returns a chainable
+// no-op, so the app boots and renders and the native feature is simply inert in
+// the preview (and works in a real build). Not thenable, so `await`s resolve
+// immediately rather than hanging.
+const STUB_SOURCE = `
+var makeStub = function () {
+  var proxy;
+  var fn = function () { return proxy; };
+  proxy = new Proxy(fn, {
+    get: function (t, prop) {
+      if (prop === 'then') return undefined;
+      if (prop === '__esModule') return true;
+      if (prop === Symbol.toPrimitive) return function () { return 0; };
+      if (prop === 'toString' || prop === 'valueOf') return function () { return ''; };
+      return proxy;
+    },
+    apply: function () { return proxy; },
+  });
+  return proxy;
+};
+module.exports = makeStub();
+`
+
+// Explicit allowlist — ONLY modules that genuinely can't run in a WebView. Web-safe
+// expo-* (status-bar, constants, linking, font, blur) are deliberately absent so
+// their real behaviour is kept, and navigation / safe-area / gesture libs stay real
+// (they render in RN-web with the singleton React).
+const NATIVE_STUBS = new Set([
+  'expo-notifications', 'expo-device', 'expo-haptics', 'expo-location',
+  'expo-sensors', 'expo-camera', 'expo-battery', 'expo-brightness',
+  'expo-media-library', 'expo-contacts', 'expo-local-authentication',
+  'expo-secure-store', 'expo-file-system', 'expo-av', 'expo-image-picker',
+  'expo-barcode-scanner', 'expo-speech', 'expo-network', 'expo-cellular',
+])
+
+function isNativeStub(spec: string): boolean {
+  if (NATIVE_STUBS.has(spec)) return true
+  for (const m of NATIVE_STUBS) if (spec.startsWith(m + '/')) return true
+  return false
+}
+
 function normalise(p: string): string {
   if (!p.startsWith('/')) p = '/' + p
   if (!p.match(/\.[a-z]+$/i)) p += '.tsx'
@@ -136,6 +180,8 @@ export async function POST(req: NextRequest) {
               }
               // Singletons resolve via the import map (bare specifier kept as-is).
               if (SINGLETONS.has(args.path)) return { path: args.path, external: true }
+              // Native-only modules → inlined no-op stub so they can't crash boot.
+              if (isNativeStub(args.path)) return { path: args.path, namespace: 'stub' }
               // Every other dependency → esm.sh with shared React + RNW singletons.
               return { path: esmUrl(args.path), external: true }
             })
@@ -146,6 +192,9 @@ export async function POST(req: NextRequest) {
               const loader = ext === 'ts' ? 'ts' : ext === 'js' || ext === 'jsx' ? 'jsx' : 'tsx'
               return { contents: content, loader }
             })
+            // Native-only modules resolve here → an inlined no-op so a native
+            // import can never crash the whole preview.
+            build.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: STUB_SOURCE, loader: 'js' }))
           },
         },
       ],
