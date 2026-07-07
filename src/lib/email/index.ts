@@ -159,6 +159,30 @@ export async function sendAdminPaymentAlert(userEmail: string, description: stri
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `💰 Payment: ${description} — ${userEmail}`, html })
 }
 
+export async function sendAdminContentReport(opts: {
+  slug: string
+  reason: string
+  details?: string
+  projectId?: string
+}) {
+  // A viewer flagged a published app. Goes to the founder so it can be triaged
+  // (and unpublished if needed) within the 24h window both app stores require.
+  const appUrl = `${APP_URL}/app/${opts.slug}`
+  const html = wrap(`
+    ${h1('⚠️ Content reported')}
+    ${p(`A published app was reported by a viewer. Review it and take it offline if it violates policy.`)}
+    ${infoBox([
+      ['App', opts.slug],
+      ['Reason', opts.reason],
+      ...(opts.details ? [['Details', opts.details] as [string, string]] : []),
+      ...(opts.projectId ? [['Project ID', opts.projectId] as [string, string]] : []),
+      ['When', new Date().toUTCString()],
+    ], '#ef444455')}
+    <div style="text-align:center;margin:24px 0 0">${btn('View reported app →', appUrl)}</div>
+  `, `Content reported: ${opts.slug}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚠️ Content reported: ${opts.slug}`, html })
+}
+
 export async function sendChallengeWinnerEmail(to: string, placeLabel: string, credits: number, newBalance?: number) {
   const html = wrap(`
     ${h1(`You won ${placeLabel} 🏆`)}

@@ -1,6 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
+import ReportButton from './ReportButton'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -145,6 +145,8 @@ export default async function PublishedAppPage({ params }: Props) {
         style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }}
         title={name}
       />
+      {/* UGC abuse-report control — required on every published app regardless of plan. */}
+      <ReportButton slug={slug} />
     </>
   )
 }
