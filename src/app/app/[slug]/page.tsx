@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
@@ -39,7 +39,13 @@ function extractSeo(html: string): AppSeo {
 }
 
 async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string } | null> {
-  const supabase = await createClient()
+  // Service client, not the session client: this is a PUBLIC page (anonymous
+  // visitors, shared links, the mobile app's in-app browser). The `projects`
+  // RLS policy doesn't grant anon SELECT on is_public rows, so the session
+  // client returned null for everyone but the logged-in owner — the app then
+  // showed the "Building your app…" fallback forever. Still filtered to
+  // is_public=true, so no private project is ever readable here.
+  const supabase = await createServiceClient()
   const { data: project } = await supabase
     .from('projects')
     .select('id, name, user_id')
@@ -56,8 +62,7 @@ async function loadHtml(slug: string): Promise<{ name: string; html: string; own
   // showing, never toward silently removing a free-tier attribution.
   let ownerPlan = 'free'
   try {
-    const { createServiceClient } = await import('@/lib/supabase/server')
-    const { data: owner } = await createServiceClient()
+    const { data: owner } = await supabase
       .from('profiles').select('plan').eq('id', project.user_id).single()
     if (owner?.plan) ownerPlan = String(owner.plan)
   } catch { /* fall back to free */ }
