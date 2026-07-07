@@ -83,8 +83,8 @@ module.exports = makeStub();
 
 // Explicit allowlist — ONLY modules that genuinely can't run in a WebView. Web-safe
 // expo-* (status-bar, constants, linking, font, blur) are deliberately absent so
-// their real behaviour is kept, and navigation / safe-area / gesture libs stay real
-// (they render in RN-web with the singleton React).
+// their real behaviour is kept. (react-navigation + safe-area are handled
+// separately below via an inlined shim, because they 404 through esm.sh.)
 const NATIVE_STUBS = new Set([
   'expo-notifications', 'expo-device', 'expo-haptics', 'expo-location',
   'expo-sensors', 'expo-camera', 'expo-battery', 'expo-brightness',
@@ -97,6 +97,111 @@ function isNativeStub(spec: string): boolean {
   if (NATIVE_STUBS.has(spec)) return true
   for (const m of NATIVE_STUBS) if (spec.startsWith(m + '/')) return true
   return false
+}
+
+// react-navigation does NOT resolve through esm.sh: its internal modules
+// (TabsHost, TabsScreen, …) come back as bare 404s, so ANY navigation app died
+// with "Preview unavailable". Rather than fight the CDN, we alias the whole
+// navigation family (+ safe-area-context, which it depends on) to a tiny inlined
+// shim. The shim renders the REAL screens the app defines and gives multi-screen
+// navigators a working tab bar, so the preview shows the actual app. Gestures /
+// deep-link routing are inert in-preview but the screens render — and everything
+// stays real in a full native build. This is the single biggest source of blank
+// mobile previews, so the shim is deliberately generous with the API surface it
+// exports (every hook / factory react-navigation apps commonly import).
+const NAV_SHIM_SOURCE = `import React from 'react'
+import { View, Text, Pressable } from 'react-native'
+export function NavigationContainer(p){ return React.createElement(React.Fragment, null, p.children) }
+export const NavigationIndependentTree = NavigationContainer
+export function useNavigation(){ return { navigate(){}, goBack(){}, push(){}, pop(){}, popToTop(){}, replace(){}, setOptions(){}, setParams(){}, reset(){}, dispatch(){}, addListener(){ return function(){} }, removeListener(){}, isFocused(){ return true }, canGoBack(){ return false }, getParent(){ return undefined }, getState(){ return { routes: [], index: 0 } } } }
+export function useRoute(){ return { params: {}, name: '', key: '' } }
+export function useFocusEffect(cb){ React.useEffect(function(){ var c = typeof cb === 'function' ? cb() : undefined; return typeof c === 'function' ? c : undefined }, []) }
+export function useIsFocused(){ return true }
+export function useNavigationState(sel){ var s = { routes: [], index: 0 }; return sel ? sel(s) : s }
+export function useScrollToTop(){}
+export function useLinkTo(){ return function(){} }
+export function useLinkProps(){ return { onPress: function(){}, href: '#' } }
+export const DefaultTheme = { dark: false, colors: { primary: '#0EA5E9', background: '#ffffff', card: '#ffffff', text: '#111111', border: '#e5e5e5', notification: '#0EA5E9' } }
+export const DarkTheme = { dark: true, colors: { primary: '#0EA5E9', background: '#0A0A0B', card: '#111114', text: '#F5F5F7', border: '#2A2A2E', notification: '#0EA5E9' } }
+export function createNavigationContainerRef(){ return { current: null, navigate(){}, isReady(){ return true }, addListener(){ return function(){} } } }
+export const CommonActions = {}, StackActions = {}, TabActions = {}, DrawerActions = {}
+export function useTheme(){ return DefaultTheme }
+export function useNavigationContainerRef(){ return createNavigationContainerRef() }
+function makeNavigator(){
+  function Navigator(props){
+    var screens = []
+    var walk = function(children){
+      React.Children.toArray(children).forEach(function(c){
+        if (!c || !c.props) return
+        if (c.props.component || c.props.children || c.props.getComponent) screens.push(c.props)
+        else if (c.props.children) walk(c.props.children)
+      })
+    }
+    walk(props.children)
+    var st = React.useState(0); var idx = st[0], setIdx = st[1]
+    if (idx >= screens.length) idx = 0
+    var cur = screens[idx]
+    var nav = useNavigation()
+    var body = null
+    if (cur) {
+      if (cur.component) body = React.createElement(cur.component, { navigation: nav, route: { params: cur.initialParams || {}, name: cur.name, key: cur.name } })
+      else if (cur.children) body = cur.children({ navigation: nav })
+    }
+    return React.createElement(View, { style: { flex: 1, backgroundColor: '#ffffff' } },
+      React.createElement(View, { style: { flex: 1 } }, body),
+      screens.length > 1 ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#e5e5e5', backgroundColor: '#fafafa' } },
+        screens.map(function(s, i){
+          return React.createElement(Pressable, { key: s.name || i, onPress: function(){ setIdx(i) }, style: { flex: 1, paddingVertical: 10, alignItems: 'center' } },
+            React.createElement(Text, { numberOfLines: 1, style: { fontSize: 12, color: (i === idx ? '#0EA5E9' : '#9AA0A6'), fontWeight: (i === idx ? '700' : '400') } }, s.name || ('Tab ' + (i + 1))))
+        })) : null)
+  }
+  function Screen(){ return null }
+  function Group(p){ return React.createElement(React.Fragment, null, p.children) }
+  return { Navigator: Navigator, Screen: Screen, Group: Group }
+}
+export const createBottomTabNavigator = makeNavigator
+export const createNativeStackNavigator = makeNavigator
+export const createStackNavigator = makeNavigator
+export const createDrawerNavigator = makeNavigator
+export const createMaterialTopTabNavigator = makeNavigator
+export const createMaterialBottomTabNavigator = makeNavigator
+export default { NavigationContainer: NavigationContainer, useNavigation: useNavigation, useRoute: useRoute, useFocusEffect: useFocusEffect, DefaultTheme: DefaultTheme, DarkTheme: DarkTheme, createBottomTabNavigator: makeNavigator, createNativeStackNavigator: makeNavigator, createStackNavigator: makeNavigator, createDrawerNavigator: makeNavigator }`
+
+// safe-area-context ships a web build, but it resolves erratically through
+// esm.sh alongside the aliased react-native. Since navigation apps almost always
+// pull it in, a zero-inset shim keeps them rendering.
+const SAFE_AREA_SHIM_SOURCE = `import React from 'react'
+import { View } from 'react-native'
+export function SafeAreaProvider(p){ return React.createElement(React.Fragment, null, p.children) }
+export function SafeAreaView(p){ return React.createElement(View, p, p.children) }
+export function useSafeAreaInsets(){ return { top: 0, bottom: 0, left: 0, right: 0 } }
+export function useSafeAreaFrame(){ return { x: 0, y: 0, width: 390, height: 844 } }
+export const SafeAreaInsetsContext = React.createContext({ top: 0, bottom: 0, left: 0, right: 0 })
+export const SafeAreaFrameContext = React.createContext({ x: 0, y: 0, width: 390, height: 844 })
+export const SafeAreaConsumer = SafeAreaInsetsContext.Consumer
+export const initialWindowMetrics = { insets: { top: 0, bottom: 0, left: 0, right: 0 }, frame: { x: 0, y: 0, width: 390, height: 844 } }
+export const initialWindowSafeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 }
+export function withSafeAreaInsets(C){ return C }
+export default { SafeAreaProvider: SafeAreaProvider, SafeAreaView: SafeAreaView, useSafeAreaInsets: useSafeAreaInsets }`
+
+// Specifier prefixes that resolve to an inlined nav/safe-area shim instead of
+// esm.sh. Prefix match so subpaths (e.g. `@react-navigation/native/lib/...`)
+// also route to the shim.
+const SHIM_MODULES: Record<string, string> = {
+  '@react-navigation/native': NAV_SHIM_SOURCE,
+  '@react-navigation/bottom-tabs': NAV_SHIM_SOURCE,
+  '@react-navigation/native-stack': NAV_SHIM_SOURCE,
+  '@react-navigation/stack': NAV_SHIM_SOURCE,
+  '@react-navigation/drawer': NAV_SHIM_SOURCE,
+  '@react-navigation/material-top-tabs': NAV_SHIM_SOURCE,
+  '@react-navigation/material-bottom-tabs': NAV_SHIM_SOURCE,
+  'react-native-safe-area-context': SAFE_AREA_SHIM_SOURCE,
+}
+
+function shimSourceFor(spec: string): string | null {
+  if (SHIM_MODULES[spec]) return SHIM_MODULES[spec]
+  for (const k of Object.keys(SHIM_MODULES)) if (spec.startsWith(k + '/')) return SHIM_MODULES[k]
+  return null
 }
 
 function normalise(p: string): string {
@@ -182,6 +287,9 @@ export async function POST(req: NextRequest) {
               if (SINGLETONS.has(args.path)) return { path: args.path, external: true }
               // Native-only modules → inlined no-op stub so they can't crash boot.
               if (isNativeStub(args.path)) return { path: args.path, namespace: 'stub' }
+              // react-navigation family + safe-area → inlined shim (esm.sh 404s on
+              // react-navigation internals, so the real lib can never load here).
+              if (shimSourceFor(args.path)) return { path: args.path, namespace: 'nav-shim' }
               // Every other dependency → esm.sh with shared React + RNW singletons.
               return { path: esmUrl(args.path), external: true }
             })
@@ -195,6 +303,12 @@ export async function POST(req: NextRequest) {
             // Native-only modules resolve here → an inlined no-op so a native
             // import can never crash the whole preview.
             build.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({ contents: STUB_SOURCE, loader: 'js' }))
+            // react-navigation / safe-area resolve here → the inlined shim that
+            // renders the app's real screens with a working tab bar.
+            build.onLoad({ filter: /.*/, namespace: 'nav-shim' }, (args) => ({
+              contents: shimSourceFor(args.path) ?? '',
+              loader: 'jsx',
+            }))
           },
         },
       ],
