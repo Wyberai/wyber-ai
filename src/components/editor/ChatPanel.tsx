@@ -406,7 +406,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean }) => Promise<void>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean }) => Promise<void>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -542,7 +542,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
         return
       }
       autofixCountRef.current += 1
-      executeGenerationRef.current?.(detail.prompt, null, { silent: true })
+      // continuation: this is the user's own build still in flight (cut stream,
+      // missing entry file, failed patches) → visible bubble + persisted receipt.
+      // Untagged events (runtime-error self-heals from the preview) stay silent.
+      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
     // Connector/theme panels send prompts via this event
@@ -743,7 +746,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; echoedUser?: boolean; displayContent?: string }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -784,11 +787,22 @@ const storeProjectId = useEditorStore.getState().project?.id;
     return;
   }
     const assistantId = uid();
-    // Silent (autofix/self-heal) runs produce no visible assistant bubble — files are applied invisibly
-    if (!opts?.silent) {
+    // Continuation runs (batch 2+ of a build whose stream was cut, a missing
+    // entry file, patches that didn't apply) are the user's own build still in
+    // flight — they MUST stay visible: a streaming bubble while they run and a
+    // persisted completion receipt when they land. Before this, they ran fully
+    // silent: the preview changed minutes later with nothing in the chat, and
+    // "is it done?" answered from a history that ended mid-build. Only pure
+    // self-heals (runtime-error repairs fired from the preview) stay invisible.
+    const isVisible = !opts?.silent || !!opts?.continuation;
+    if (isVisible) {
       addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
+      // isGenerating drives the Stop button, the elapsed timer, the TopBar
+      // "Building…" pill, the double-send guard, and the preview's rebuild-on-
+      // finish. It was left permanently false when the staged-build path was
+      // removed, so builds were unstoppable and showed no timer.
+      setIsGenerating(true);
     }
-    setIsGenerating(false);
     clearStreamingContent();
     setLastCreditCost(null);
     setLastModel(null);
@@ -988,7 +1002,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const cutPath = cm ? cm[1] : 'the last file';
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { prompt: `Your previous output was cut off before finishing. Output the COMPLETE <file> block (full contents, not a diff) for: ${cutPath}. Then output any other files from your plan that were never emitted, each as a complete <file> block.` }
+            detail: { continuation: true, prompt: `Your previous output was cut off before finishing. Output the COMPLETE <file> block (full contents, not a diff) for: ${cutPath}. Then output any other files from your plan that were never emitted, each as a complete <file> block.` }
           }));
         }, 600);
       }
@@ -1042,7 +1056,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const entry = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { prompt: `The build finished but ${entry} was never written (or is still the empty placeholder), so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist. Do not rewrite other files.` }
+            detail: { continuation: true, prompt: `The build finished but ${entry} was never written (or is still the empty placeholder), so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist. Do not rewrite other files.` }
           }));
         }, 600);
       }
@@ -1091,7 +1105,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (failedPaths.length > 0) {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}` }
+            detail: { continuation: true, prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}` }
           }));
         }, 400);
       }
@@ -1130,25 +1144,39 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // refund (see generate/route.ts), so this case is never silently charged either.
       const hasRealChange = newFiles.length > 0 || editBlocks.length > 0;
       if (!hasRealChange) {
-        if (!opts?.silent) {
+        if (isVisible) {
           const emittedNothing = full.trim().length === 0;
-          const errMsg = emittedNothing
+          const errMsg = (fileCut || editCut)
+            ? "⏳ **The response was cut off before any file finished.** Continuing automatically below — the changes land in the next message."
+            : emittedNothing
             ? "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again."
             : "**Nothing was actually changed** — the model responded but didn't produce any file changes, so the app is unmodified. You weren't charged for this. If your message included a large paste (a big table, a long document), try splitting it into smaller pieces and asking again.";
-          updateMessage(assistantId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+          updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : 'error', retryPrompt: userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
         }
         setLiveReasoning('');
         return;
       }
 
-      // Always run through cleanMessage so stored content is already scrubbed
-      const finalContent = cleanMessage(chatText) || 'Done.';
+      // Always run through cleanMessage so stored content is already scrubbed.
+      // cleanMessage never returns empty (it has its own generic fallback) —
+      // swap that fallback for a continuation-specific receipt when this run
+      // was finishing a cut build, so the chat says what actually happened.
+      let finalContent = cleanMessage(chatText);
+      if (opts?.continuation && finalContent === 'Done — check the preview.') {
+        finalContent = '✓ Finished applying the remaining files — the build is complete. Check the preview.';
+      }
+      // A cut stream means the turn ends mid-work — say so, or the preamble
+      // reads as a finished summary ("…Let me look at App.tsx:") and the user
+      // waits on nothing. The continuation that follows is a visible bubble.
+      if (fileCut || editCut) {
+        finalContent += '\n\n⏳ **Hit the output limit mid-file — continuing automatically below.** The rest of this build lands in the next message (no extra charge).';
+      }
       // Extended-thinking output (opt-in, new-build full generation only) — kept
       // client-side only for this session's collapsible display, not persisted
       // to project_messages (no schema for it yet, and it's not needed on reload).
       const finalReasoning = extractReasoning(full);
-      if (!opts?.silent) {
+      if (isVisible) {
         updateMessage(assistantId, {
           content: finalContent,
           status:'done',
@@ -1193,7 +1221,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       }
 
     } catch (err: unknown) {
-      if (!opts?.silent) {
+      if (isVisible) {
         const isAbort = err instanceof Error && err.name === 'AbortError';
         // fetch() surfaces a dropped connection (sleep/suspend, wifi drop, VPN
         // blip) as a bare TypeError — the build usually FINISHES on the server
@@ -1213,7 +1241,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       clearTimeout(genTimeout);
       wakeLock?.release().catch(() => {});
       if (abortControllerRef.current === genController) abortControllerRef.current = null;
-      setIsGenerating(false);
+      // Only the run that set isGenerating clears it — an invisible self-heal
+      // finishing in the background must not flip a visible build's state off.
+      if (isVisible) setIsGenerating(false);
       clearStreamingContent();
       setProgressSteps([]);
     }
