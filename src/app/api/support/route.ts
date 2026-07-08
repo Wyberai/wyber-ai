@@ -42,11 +42,15 @@ export async function POST(req: NextRequest) {
 
     const stream = await client.messages.stream({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
+      // 400 cut multi-step troubleshooting answers off mid-sentence.
+      max_tokens: 1500,
       system: SYSTEM,
-      messages: messages.slice(-6).map((m: any) => ({
+      // 500 chars silently amputated anything real a user pasted (an error
+      // message, a stack trace) — Wyberman routes through here, so the help
+      // agent was answering from the first two sentences of the problem.
+      messages: messages.slice(-10).map((m: any) => ({
         role: m.role,
-        content: String(m.content).slice(0, 500),
+        content: String(m.content).slice(0, 4000),
       })),
     })
 

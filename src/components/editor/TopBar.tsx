@@ -91,14 +91,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   // Close + reset so the next open starts without a stale "done" state.
   const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
 
-  // Republish: show the "✓ Done" state briefly, then dismiss the modal on its
-  // own. Only for RE-publishes — a first publish keeps the modal open so the
-  // user can copy/share their new live URL.
-  useEffect(() => {
-    if (!republished) return;
-    const t = setTimeout(() => { setShowShareModal(false); setRepublished(false); }, 2000);
-    return () => clearTimeout(t);
-  }, [republished]);
+  // No auto-dismiss on republish. The old behavior (pop the modal pre-set to
+  // "✓ Done", then close it by itself 2s later) read as "the save box appeared
+  // already done and vanished on its own" — a modal the user opened or that
+  // shows a result must stay until THEY close it. The "✓ Done" state persists
+  // and resets when the files change (below) or the modal is closed.
 
   // Any edit after a publish makes the live site stale again — drop the
   // "✓ Done" state so the button reads "Re-publish with latest changes".
@@ -241,8 +238,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       const url = data.publishedUrl || data.url;
       if (url) {
         setDeployUrl(url);
-        setShowShareModal(true);
-        if (wasLive) setRepublished(true);
+        // First publish: open the modal so the user can copy/share their new
+        // live URL. Re-publish: no popup — the top-bar button itself flips to
+        // "✓ Updated" (and the in-modal button shows Done if it's already open).
+        if (!wasLive) setShowShareModal(true);
+        else setRepublished(true);
         setPostPublishScan(null);
         fetch('/api/security/rls-scan', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -250,7 +250,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         }).then(r => r.ok ? r.json() : null).then((d: { score?: number; findings?: Array<{ severity?: string }> } | null) => {
           if (!d || !Array.isArray(d.findings)) return; // no Supabase connected / scan unavailable
           const criticals = d.findings.filter(f => f.severity === 'critical').length;
-          if (criticals > 0) setPostPublishScan({ score: d.score ?? 0, criticals });
+          if (criticals > 0) {
+            setPostPublishScan({ score: d.score ?? 0, criticals });
+            // A live data leak is worth a popup — the warning only renders
+            // inside the modal, so make sure the modal is on screen.
+            setShowShareModal(true);
+          }
         }).catch(() => {});
       } else {
         alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
@@ -471,8 +476,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
           </button>
         )}
-        <button onClick={() => handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
-          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying{deploySecs ? ` ${deploySecs}s` : ''}…</> : deployUrl ? 'Live' : 'Publish'}
+        {/* Already live → open the Publish & Share modal (URL, share, re-publish
+            live inside it). Publishing again should be an explicit click in
+            there, not a side effect of wanting to see your URL. */}
+        <button onClick={() => deployUrl ? setShowShareModal(true) : handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
+          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying{deploySecs ? ` ${deploySecs}s` : ''}…</> : republished ? '✓ Updated' : deployUrl ? 'Live' : 'Publish'}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}

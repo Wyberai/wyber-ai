@@ -2,12 +2,19 @@ import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
-export const maxDuration = 60
+// 120s: a full-length streamed answer (4k tokens) over a large cached context
+// can brush past 60s — getting killed mid-stream reads as another truncation.
+export const maxDuration = 120
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// Cheap, fast model for both the (optional) classification step and the chat reply.
-const CHAT_MODEL = 'claude-haiku-4-5-20251001'
+// Haiku stays for the one-token classification (it's a coin-flip task).
+// Replies use Sonnet: Haiku kept hallucinating state ("Done with photo
+// upload") and asking users for things it already had — the chat lane is the
+// product's voice, and with prompt caching on the file context the real cost
+// per turn is cents, not dollars.
+const CLASSIFY_MODEL = 'claude-haiku-4-5-20251001'
+const REPLY_MODEL = 'claude-sonnet-4-6'
 
 /**
  * Conversational assist endpoint for the builder.
@@ -88,16 +95,24 @@ export async function POST(req: NextRequest) {
     const messages: Anthropic.MessageParam[] = [
       ...history
         .filter(m => m.role === 'user' || m.role === 'assistant')
-        .slice(-6)
+        .slice(-10)
         .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       { role: 'user', content: prompt },
     ]
 
     const encoder = new TextEncoder()
     const stream = await client.messages.stream({
-      model: CHAT_MODEL,
-      max_tokens: 800,
-      system,
+      model: REPLY_MODEL,
+      // 800 was enough for chat answers but silently truncated the one thing
+      // this lane is explicitly allowed to emit in full: runnable SQL/CLI
+      // blocks. A 6-table schema is ~2.5k tokens — users got scripts cut off
+      // mid-`create table` and pasted broken SQL into Supabase over and over.
+      max_tokens: 4096,
+      // Cache breakpoint on the system prompt: it carries the (large) file
+      // context, which barely changes between chat turns in the same session —
+      // cached reads cost ~10% of fresh input, which is what makes Sonnet
+      // affordable on a free lane.
+      system: [{ type: 'text' as const, text: system, cache_control: { type: 'ephemeral' as const } }],
       messages,
     })
 
@@ -150,7 +165,7 @@ async function classifyWithHaiku(prompt: string, hasFiles: boolean, history: Arr
       { role: 'user', content: prompt },
     ]
     const res = await client.messages.create({
-      model: CHAT_MODEL,
+      model: CLASSIFY_MODEL,
       max_tokens: 5,
       system: `You are an intent classifier for an AI app builder. The user ${hasFiles ? 'already has an app with code' : 'has no app yet'}. Given the conversation so far, decide if the user's LATEST message is:
 - ACTION: a request to build, create, change, add, remove, fix, or otherwise modify the app's code — including a short confirmation ("go ahead", "yes please", "do it") when the assistant's immediately preceding message proposed a specific change and asked the user to confirm it.
@@ -178,5 +193,6 @@ You are in CONVERSATION mode, not build mode. Rules:
 - Be warm, plain-spoken, and direct. No preamble like "Great question!".
 ${connectedServices.length ? `\nAlready connected for this project: ${connectedServices.join(', ')}. Treat these as live — never say they're not connected, and never ask the user to paste credentials for a service already in this list (point them to the Connectors/Database tab instead of chat if a key needs to change).` : ''}
 - If the user needs to connect Supabase (or any service) and it's NOT already in the connected list above, do NOT ask them to paste the URL/API key into chat — that panel already has a clear "Find these in Project Settings → API" walkthrough and stores the key securely. Tell them to open the Database (or Connectors) tab in the left sidebar and either auto-provision or paste their own project URL + anon key there.
-${fileContext ? `\nHere is the current project so you can answer accurately:\n${fileContext.slice(0, 8000)}` : ''}`
+- You have the COMPLETE project below: a full path manifest, every file's contents (only the very largest projects fall back to signature outlines for the overflow). You built these files — checking them is YOUR job, done silently from what's below. NEVER ask the user to paste, share, copy, open, or "mention" a file, and never imply you can't see the code; most users never open the code view and cannot do any of that. If a file appears only as an <outline>, answer from its signatures and the files that import it. If they ask for an audit/review, do it directly and report findings.
+${fileContext ? `\nHere is the current project:\n${fileContext.slice(0, 300000)}` : ''}`
 }

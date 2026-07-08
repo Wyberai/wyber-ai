@@ -157,7 +157,10 @@ export const useEditorStore = create<EditorState>()(
     previewUrl: null,
     previewMode: 'preview',
     leftPanelWidth: 220,
-    rightPanelWidth: 360,
+    // 460 (was 360): the chat is the primary way users drive the product —
+    // at 360 it read as a cramped sidebar next to competitors' ~570px panels.
+    // Still user-resizable (320–700) via the divider.
+    rightPanelWidth: 460,
     showFileTree: true,
     credits: 100,
     previewError: null,

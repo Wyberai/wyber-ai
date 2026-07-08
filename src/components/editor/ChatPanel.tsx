@@ -1,7 +1,7 @@
 'use client'
 import { creditCost } from '@/lib/credits';
 import { useEditorStore } from '@/store/editor';
-import { useRef, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useRef, useEffect, useState, useCallback, memo, type ReactNode } from 'react';
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { STARTER_TEMPLATES, isPlaceholderApp } from '@/lib/starter-templates';
@@ -221,7 +221,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
       <SyntaxHighlighter
         language={lang || 'text'}
         style={oneDark}
-        customStyle={{ margin:0, padding:'8px 10px', overflowX:'auto', background:'transparent', fontSize:11, lineHeight:1.5 }}
+        customStyle={{ margin:0, padding:'8px 10px', overflowX:'auto', background:'transparent', fontSize:12, lineHeight:1.5 }}
         codeTagProps={{ style: { fontFamily:'monospace' } }}
       >
         {code}
@@ -252,7 +252,7 @@ const markdownComponents: Components = {
   th: ({ children }) => <th style={{ border:'1px solid var(--ide-border)', padding:'4px 8px', textAlign:'left', background:'var(--bg-overlay)', fontWeight:600 }}>{children}</th>,
   td: ({ children }) => <td style={{ border:'1px solid var(--ide-border)', padding:'4px 8px' }}>{children}</td>,
   code: ({ className, children }) => (
-    <code style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:11 }} className={className}>
+    <code style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:12 }} className={className}>
       {children}
     </code>
   ),
@@ -263,7 +263,10 @@ const markdownComponents: Components = {
     const codeEl = Array.isArray(children) ? children[0] : children;
     const props = (codeEl as { props?: { className?: string; children?: ReactNode } })?.props;
     const match = /language-(\w+)/.exec(props?.className || '');
-    const codeText = String(props?.children ?? '').replace(/\n$/, '');
+    // children can be an array of text nodes — String() would comma-join them
+    // and corrupt copied code, so join('') explicitly.
+    const raw = props?.children;
+    const codeText = (Array.isArray(raw) ? raw.join('') : String(raw ?? '')).replace(/\n$/, '');
     return <CodeBlock lang={match?.[1] || ''} code={codeText} />;
   },
 };
@@ -280,6 +283,28 @@ function renderMessage(text: string) {
       {cleaned}
     </ReactMarkdown>
   );
+}
+
+// Memoized message body: markdown parsing + Prism highlighting are the most
+// expensive render work in the panel, and messages are immutable once done —
+// without this, EVERY keystroke in the input box re-parsed and re-highlighted
+// every message in the thread (typing became visibly laggy once the chat held
+// a few large SQL blocks).
+const MessageBody = memo(function MessageBody({ content }: { content: string }) {
+  return <>{renderMessage(content)}</>;
+});
+
+// What the message-level Copy button should put on the clipboard. When a
+// message is mostly one big fenced block (the "run this SQL" case), users
+// paste the copy STRAIGHT into the Supabase SQL editor — copying the raw
+// markdown (```sql fences, surrounding prose) hands them a guaranteed syntax
+// error. Mostly-code messages copy just the runnable code; prose messages
+// still copy in full, minus the fence markers.
+function copyableMessageText(content: string): string {
+  const blocks = [...content.matchAll(/```[\w-]*\n?([\s\S]*?)```/g)].map(m => m[1]);
+  const codeLen = blocks.reduce((n, b) => n + b.length, 0);
+  if (blocks.length > 0 && codeLen / content.length > 0.5) return blocks.join('\n\n').trim();
+  return content.replace(/^```[\w-]*\s*$/gm, '').trim();
 }
 
 interface AttachedImage { dataUrl: string; base64: string; mimeType: string; name: string; }
@@ -1034,7 +1059,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // instead of the chat comment block — only files written THIS turn
       // count, so old schema files never re-trigger on unrelated edits.
       const sqlFileThisTurn = newFiles.find(f => f.path.endsWith('.sql'))
-      const schemaSql = (sqlMatch?.[1] ?? sqlFileThisTurn?.content ?? '').trim()
+      // The model sometimes leaks markdown fences (```sql / ```) INSIDE the
+      // schema comment block — even mid-line — and unsanitized they break both
+      // the Management-API auto-apply and the SQL the user copies into the
+      // Supabase editor (ERROR 42601: syntax error at or near "```").
+      // Backticks are never valid Postgres SQL, so stripping the token
+      // anywhere is safe.
+      const schemaSql = (sqlMatch?.[1] ?? sqlFileThisTurn?.content ?? '')
+        .replace(/```[\w-]*/g, '')
+        .trim()
       if (schemaSql && resolvedProjectId) {
         fetch('/api/connectors/supabase/apply-schema', {
           method: 'POST',
@@ -1243,19 +1276,50 @@ const storeProjectId = useEditorStore.getState().project?.id;
       persistMessage('user', userMsg, undefined, userMsgId);
     }
 
-    // Lightweight context: full file manifest so replies are accurate.
+    // The WHOLE project, not a selection. The AI wrote these files — it must
+    // never have to ask the user to find or paste one (most users never even
+    // open the code view). Generated apps almost always fit a modern context
+    // window whole; files are sent full (most relevant first) until the char
+    // budget is spent, and anything past it ships as a signature outline so
+    // the model still KNOWS the file and its API rather than being blind to it.
     const allPaths = Object.keys(files ?? {});
     const manifest = allPaths.length
       ? `EXISTING FILES:\n${allPaths.map(p => `- ${p}`).join('\n')}`
       : '';
-    const history = messages.filter(m => m.status === 'done').slice(-6).map(m => ({ role: m.role, content: m.content }));
+    const CHAT_CORE = ['app.tsx', 'app.vue', 'index.html', 'index.css', 'app.css', 'main.tsx'];
+    const chatPromptLower = userMsg.toLowerCase();
+    const chatScored = Object.entries(files ?? {})
+      .map(([path, f]) => {
+        const pathLower = path.toLowerCase();
+        let score = CHAT_CORE.some(c => pathLower.endsWith(c)) ? 100 : 0;
+        chatPromptLower.split(/\s+/).filter(w => w.length > 3).forEach(w => { if (pathLower.includes(w)) score += 20; });
+        return { path, content: ((f as any).content ?? '') as string, score };
+      })
+      .sort((a, b) => b.score - a.score);
+    const CHAT_CONTEXT_BUDGET = 200_000; // chars ≈ 50k tokens — cached after turn 1
+    let chatBudgetUsed = 0;
+    const chatFullFiles: string[] = [];
+    const chatOutlines: string[] = [];
+    for (const { path, content } of chatScored) {
+      const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
+      if (chatBudgetUsed + body.length <= CHAT_CONTEXT_BUDGET) {
+        chatFullFiles.push(`<file path="${path}">\n${body}\n</file>`);
+        chatBudgetUsed += body.length;
+      } else {
+        chatOutlines.push(`<outline path="${path}">\n${extractSignatures(content)}\n</outline>`);
+      }
+    }
+    const chatFileContext = manifest
+      + (chatFullFiles.length ? '\n\n' + chatFullFiles.join('\n\n') : '')
+      + (chatOutlines.length ? '\n\nFILE OUTLINES (content omitted for size — exported signatures only):\n' + chatOutlines.join('\n') : '');
+    const history = messages.filter(m => m.status === 'done').slice(-10).map(m => ({ role: m.role, content: m.content }));
 
     setChatThinking(true);
     try {
       const res = await fetch('/api/assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMsg, fileContext: manifest, history, hasFiles, forceChat, projectId: resolvedProjectId }),
+        body: JSON.stringify({ prompt: userMsg, fileContext: chatFileContext, history, hasFiles, forceChat, projectId: resolvedProjectId }),
       });
 
       if (!res.ok) throw new Error(await res.text());
@@ -1425,7 +1489,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
   }, []);
 
   const handleCopyMessage = useCallback((id: string, content: string) => {
-    navigator.clipboard.writeText(content).then(() => {
+    navigator.clipboard.writeText(copyableMessageText(content)).then(() => {
       setCopiedMessageId(id);
       setTimeout(() => setCopiedMessageId(prev => (prev === id ? null : prev)), 1500);
     });
@@ -1820,7 +1884,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
                     </button>
                   )}
-                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:12, lineHeight:1.55, color:'#fff', maxWidth:'85%', letterSpacing:'-0.01em' }}>
+                  <div style={{ background:'var(--accent)', borderRadius:'12px 12px 3px 12px', padding:'9px 13px', fontSize:13, lineHeight:1.55, color:'#fff', maxWidth:'85%', letterSpacing:'-0.01em' }}>
                     {msg.content.startsWith('[Image:') ? (
                       <div style={{ display:'flex', alignItems:'center', gap:5 }}>
                         <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" style={{opacity:0.8}}><rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" fill="none"/><circle cx="5.5" cy="5.5" r="1.5"/><path d="M1 11l4-4 3 3 2-2 5 5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1836,7 +1900,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   <svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontSize:12, lineHeight:1.65, color: msg.status === 'error' ? 'var(--ide-red)' : 'var(--ide-text2)', letterSpacing:'-0.01em' }}>
+                  <div style={{ fontSize:13, lineHeight:1.65, color: msg.status === 'error' ? 'var(--ide-red)' : 'var(--ide-text2)', letterSpacing:'-0.01em' }}>
                     {msg.status === 'streaming'
                       ? <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                           {liveReasoning && (
@@ -1887,7 +1951,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                               )}
                             </div>
                           )}
-                          {renderMessage(msg.content)}
+                          <MessageBody content={msg.content} />
                         </>
                     }
                   </div>
@@ -2026,7 +2090,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             placeholder={credits <= 0 ? 'No credits — questions are free; top up to build' : planMode ? 'Plan mode active — describe what to build...' : pendingGenArgs ? 'Add your keys above, or click "Build without backend"' : 'Ask anything or describe what you want to build...'}
             disabled={isGenerating || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer}
             rows={1}
-            style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:12, color:'var(--ide-text)', lineHeight:1.55, minHeight:40, maxHeight:140, overflowY:'auto', letterSpacing:'-0.01em' }}
+            style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:13, color:'var(--ide-text)', lineHeight:1.55, minHeight:44, maxHeight:160, overflowY:'auto', letterSpacing:'-0.01em' }}
           />
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px', gap: 6 }}>
             <div style={{ display:'flex', gap:4, alignItems:'center', flex: 1 }}>
