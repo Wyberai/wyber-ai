@@ -185,16 +185,16 @@ function cleanMessage(text: string): string {
     if (/^(here(?:'s| are)|the following files|these files|i(?:'m| will| am) (?:now |going to )?(?:build|creat|generat|output|provid))/i.test(l)) return false;
     return true;
   });
-  const builtLine = lines.find(l => l.startsWith('Built:'));
-  if (builtLine) return builtLine;
   let result = lines.join('\n').trim();
-  // Keep responses short — take first 2 sentences max
-  const sentences = result.split(/(?<=[.!])\s+/).filter(s => s.length > 5);
-  if (sentences.length > 2) result = sentences.slice(0, 2).join(' ');
-  // Strip technical jargon patterns
-  result = result.replace(/\b(I'll|I will|I've|I have|I am|I'm going to|Let me|Here's what I did|Here's the)\b/gi, '').trim();
-  result = result.replace(/^\s*[-—–]\s*/gm, '');
-  result = result.replace(/\s{2,}/g, ' ').trim();
+  // No more 2-sentence guillotine. A build summary that lists what changed
+  // (Lovable-style) is the receipt for the credits just charged — and history
+  // threading depends on it: truncating an audit's findings list to two
+  // sentences deleted the very list the user's NEXT message ("fix all 6")
+  // referred to, leaving the model with nothing to fix. The line filters
+  // above already strip code/manifest noise; keep structure (bullets,
+  // paragraphs) and just cap runaway length.
+  result = result.replace(/[ \t]{2,}/g, ' ').trim();
+  if (result.length > 2500) result = result.slice(0, 2500).trimEnd() + '…';
   if (!result || result.length < 3) result = 'Done — check the preview.';
   return result;
 }
@@ -1324,10 +1324,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       if (!res.ok) throw new Error(await res.text());
 
-      // The server reclassified this as a real build/edit → hand to the build lane.
+      // The server reclassified this as a real build/edit → hand to the build
+      // lane. Two paths land here: the pre-reply Haiku classification (empty
+      // body) and the reply model's own <<BUILD>> handoff, whose body is a
+      // restatement of the work (e.g. the full list of issues it proposed) —
+      // a far better build prompt than a bare "fix all 6 now".
       if (res.headers.get('X-Assist-Intent') === 'action') {
         setChatThinking(false);
-        await executeGeneration(userMsg, img, { echoedUser: true });
+        const handoff = (await res.text()).trim();
+        await executeGeneration(handoff || userMsg, img, { echoedUser: true });
         return;
       }
 
