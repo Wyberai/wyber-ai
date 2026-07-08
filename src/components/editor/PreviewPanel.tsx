@@ -546,17 +546,14 @@ Find this element in the code and apply the change.`
         {/* Full-screen "writing" state ONLY when there is no previous preview
             to show. Once a build exists it STAYS VISIBLE while the AI works —
             hiding a working app behind a spinner for a whole generation read
-            as "the preview disappeared while it worked on Supabase". */}
+            as "the preview disappeared while it worked on Supabase". No
+            floating pill over an existing preview: build state already shows
+            in the chat bubble and the status strip above — a real user saw
+            FOUR simultaneous "building" indicators and rightly called it out. */}
         {isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Writing your app...</div>
-          </div>
-        )}
-        {isGenerating && html && (
-          <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
-            <div style={{ width: 12, height: 12, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ fontSize: 11, color: '#e4e4e7', fontWeight: 600 }}>Writing your app — preview updates when it&apos;s done…</span>
           </div>
         )}
 

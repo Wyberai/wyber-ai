@@ -443,7 +443,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               {project.name}
             </span>
           ) : null}
-          {isGenerating && <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#0EA5E9', fontSize: 11, fontWeight: 600, marginLeft: 8 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease-in-out infinite' }} />Building...</div>}
+          {/* No "Building..." pill here — build state already shows in the chat
+              bubble (progress + timer) and the preview status strip; a third
+              indicator was pure noise (user counted four at once). */}
         </div>
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />

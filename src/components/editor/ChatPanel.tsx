@@ -183,6 +183,15 @@ function cleanMessage(text: string): string {
     if (/^(i notice|i see that|i'll continue|let me continue|continuing|previous output|your previous|it seems|it looks like)/i.test(l)) return false;
     // file-list headers
     if (/^(here(?:'s| are)|the following files|these files|i(?:'m| will| am) (?:now |going to )?(?:build|creat|generat|output|provid))/i.test(l)) return false;
+    // Working narration between blocks ("Now fix Dashboard.tsx — wrap the
+    // chart:", "Let me tighten the button row:"). The code blocks it framed
+    // are stripped above, so these read as rambling that trails off
+    // mid-thought — a real user called the result "shit responses". A line
+    // ending in ":" is narration INTO a now-removed block; the openers below
+    // are step-by-step commentary, never a finished-result recap. If
+    // everything is narration, the caller falls back to "Done" + file chips.
+    if (/:$/.test(l) && !l.startsWith('- ') && !/^#{1,4} /.test(l)) return false;
+    if (/^(now |let me |i'll (?:go|now|start|then|also)|looking at|checking |verifying |first,? |next,? )/i.test(l)) return false;
     return true;
   });
   let result = lines.join('\n').trim();
