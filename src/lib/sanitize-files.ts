@@ -6,6 +6,7 @@
 
 import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
+import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -56,6 +57,15 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
 
   const appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
   if (appExt) {
+    // 0. Wyber UI kit — premium pre-built components every app can import
+    //    (`import { Button } from './wyber-ui'`). Injected like the tailwind
+    //    config: transient, never persisted, user files win. Vite tree-shakes
+    //    it entirely when the app doesn't import it. Must land before the
+    //    stub pass so a kit import is never stubbed as "missing".
+    for (const [kitPath, kitContent] of Object.entries(WYBER_UI_KIT_FILES)) {
+      if (!(kitPath in out)) out[kitPath] = { content: kitContent, language: 'typescript' }
+    }
+
     // 1. index.css must carry the @tailwind directives AND the design-system
     //    tokens. Apps style themselves with semantic classes (bg-primary,
     //    text-foreground, …) whose values come from per-app HSL tokens; if the
@@ -139,6 +149,7 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
       'react-icons': '^5.2.1', '@heroicons/react': '^2.1.4',
       'react-select': '^5.8.0', 'react-datepicker': '^7.3.0',
       'emoji-picker-react': '^4.11.1', 'canvas-confetti': '^1.9.3',
+      gsap: '^3.12.5', lenis: '^1.1.14',
     }
     const importRe = /(?:import|export)\s+(?:[\w*{}\s,]+?from\s+)?['"]([^'"]+)['"]|(?:import|require)\s*\(\s*['"]([^'"]+)['"]/g
     const bareImports = new Set<string>()

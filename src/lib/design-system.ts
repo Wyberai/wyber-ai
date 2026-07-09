@@ -119,12 +119,18 @@ const THEME_EXTEND = `{
         'scale-in': { from: { opacity: '0', transform: 'scale(0.97)' }, to: { opacity: '1', transform: 'scale(1)' } },
         'accordion-down': { from: { height: '0' }, to: { height: 'var(--radix-accordion-content-height)' } },
         'accordion-up': { from: { height: 'var(--radix-accordion-content-height)' }, to: { height: '0' } },
+        'marquee': { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
+        'aurora': { '0%': { transform: 'translate(0, 0) scale(1)' }, '50%': { transform: 'translate(5%, -8%) scale(1.15)' }, '100%': { transform: 'translate(-5%, 6%) scale(0.95)' } },
+        'gradient-spin': { to: { transform: 'rotate(360deg)' } },
       },
       animation: {
         'fade-in': 'fade-in 0.5s ease-out both',
         'scale-in': 'scale-in 0.2s ease-out both',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'marquee': 'marquee 30s linear infinite',
+        'aurora': 'aurora 16s ease-in-out infinite alternate',
+        'gradient-spin': 'gradient-spin 6s linear infinite',
       },
     }`
 

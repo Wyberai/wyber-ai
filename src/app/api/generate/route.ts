@@ -7,6 +7,7 @@ import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
+import { WYBER_UI_KIT_PROMPT } from '@/lib/wyber-ui-kit'
 
 // A build/edit turn only did something real if it produced an actual <file> or
 // <edit> block — not just because the model streamed text. Without this check,
@@ -646,13 +647,14 @@ THE DESIGN SYSTEM — how you stay cohesive AND fresh:
 CRAFT — what makes it look senior, not AI-generated:
 - Strong type hierarchy: large display/headline (use font-display), calm readable body, small uppercase tracked labels (text-xs uppercase tracking-wider text-muted-foreground).
 - Consistent spacing on a 4/6/8 rhythm. Generous whitespace. Align everything to a grid.
-- Hover AND focus-visible states on EVERY interactive element (focus-visible:ring-2 focus-visible:ring-ring). Smooth transition-colors. Tasteful entrance motion (animate-fade-in / framer-motion) — subtle, never gratuitous.
+- Hover AND focus-visible states on EVERY interactive element (focus-visible:ring-2 focus-visible:ring-ring). Smooth transition-colors.
+- ALIVE BY DEFAULT — static UI is forbidden: every landing/marketing section enters with <Reveal> (grids/lists with <Stagger>+<StaggerItem>) from the Wyber UI Kit; big numbers use <AnimatedNumber>; kit Buttons already carry spring hover/press physics. Subtle and physical, never gratuitous — no bouncing logos.
 - Real depth: thin borders (border-border) + soft shadows, rounded via the --radius scale. Avoid heavy boxy outlines.
 - Always include: empty states, loading skeletons (animate-pulse bg-muted rounded), and toasts for user actions.
 - NO placeholder image boxes, EVER. For hero/feature visuals, use a tasteful CSS gradient or geometric SVG — primarily className="bg-[image:var(--gradient-hero)]" (the per-app brand gradient), layered with text and soft shadows. Use an uploaded asset if the user provided a matching one. Never a gray "image" rectangle, via.placeholder, or unsplash URL. (Real AI-generated photos are a publish-time feature, not needed in the build.)
 - Charts (Recharts): theme them with tokens — tooltip contentStyle background hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic curved data with dips, never flat lines.
 
-COMPONENT PATTERNS (semantic — colors come from YOUR tokens):
+COMPONENT PATTERNS (for CUSTOM UI the Wyber UI Kit doesn't cover — for buttons/cards/inputs/modals/nav/pricing/FAQ, import the kit instead of hand-writing):
 Button primary:   "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 Button secondary: "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground border border-border text-sm font-medium hover:bg-accent transition"
 Button ghost:     "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent text-sm transition"
@@ -665,8 +667,15 @@ Modal:            backdrop "fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50
 
 VARIETY MANDATE: vary LAYOUT to the request, not just color — a marketing site = top nav + full-bleed sections + hero; a dashboard = sidebar + data; a tool = focused single-column. A rice-export site and a crypto dashboard must share NOTHING visually.
 
+COMPOSITION (websites/landing pages) — structure is what separates 2026 design from 2020:
+- HERO: pick ONE archetype and commit: (a) centered aurora — <AuroraBackground/> behind an oversized font-display headline + subcopy + dual CTA; (b) split — copy left, product visual right (a <GlassPanel> mock UI, never a placeholder image); (c) editorial — huge left-aligned display type over <BackgroundGrid/>, minimal chrome; (d) cinematic dark — <GradientBorder>-framed product shot with glow. Hero headline: clamp to 2 lines, benefit-first, no "Welcome to".
+- SECTION RHYTHM: alternate density and background treatment — hero (full-bleed) → logo strip (<Marquee>) → features (<BentoGrid> or 3-col <FeatureCard>s in <Stagger>) → deep-dive (split layout w/ <StatBlock>s) → testimonials (<TestimonialCard>s) → pricing (<PricingCard>s) → FAQ (<Accordion>) → <CTASection> → <Footer>. Skip sections that don't fit the product; NEVER two adjacent sections with identical layout or background.
+- ONE display-type moment per viewport (an oversized font-display headline or stat) — everything else stays calm and readable.
+
 RESPONSIVE:
 - Sidebar collapses on mobile (hidden lg:flex). Stats grid: grid-cols-1 sm:grid-cols-2 lg:grid-cols-4. Tables wrapped in overflow-x-auto. Modals max-w-lg w-full mx-4.
+
+${WYBER_UI_KIT_PROMPT}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 APP GENERATION RULES
@@ -1724,6 +1733,23 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // colors/brand.
       const { pickPalette, renderDesignBrief } = await import('@/lib/design-palettes')
       perRequestParts.push(renderDesignBrief(pickPalette(prompt)))
+
+      // LAYOUT & MOTION SEED — the palette brief handles color freshness; this
+      // handles STRUCTURAL freshness so two builds with similar palettes still
+      // compose differently. References Wyber UI Kit components so the seed is
+      // directly actionable. Yields to explicit user layout requests.
+      const LAYOUT_SEEDS = [
+        'Website: centered aurora hero (AuroraBackground, oversized display headline), features as a 3-col FeatureCard Stagger grid, logos in a Marquee. Dashboard: airy top-nav shell (no sidebar), stat row of StatBlocks, generous whitespace. Motion: calm and slow (Reveal delays 0.1-0.3).',
+        'Website: split hero — copy left, GlassPanel product mock right; BentoGrid feature showcase with one 2x2 hero cell. Dashboard: classic slim sidebar + dense data tables, tight spacing. Motion: brisk, minimal — Stagger interval 0.05.',
+        'Website: editorial hero — huge left-aligned display type over BackgroundGrid lines, long-form sections, pull-quote TestimonialCards. Dashboard: content-first, near-invisible chrome, hairline dividers. Motion: fade-only Reveals (y=0), no slides.',
+        'Website: cinematic dark hero — GradientBorder-framed visual with glow, SpotlightCards throughout, stats band with AnimatedNumbers. Dashboard: dark cockpit with glowing primary accents, GlassPanel cards. Motion: pronounced spring physics.',
+        'Website: minimal luxury — vast negative space, single-column narrative sections, thin-weight display type, restrained CTASection. Dashboard: spacious cards, oversized numbers, few borders. Motion: slow elegant Reveals (duration feel ~0.8).',
+        'Website: product-led — sticky Navbar, hero with dual CTA + social-proof strip immediately under it, alternating split sections (image/copy, copy/image). Dashboard: two-pane master-detail. Motion: standard Reveal/Stagger, delta arrows on stats.',
+        'Website: bold geometric — BackgroundGrid dots everywhere, chunky Badge eyebrows, BentoGrid as the ENTIRE page body after the hero. Dashboard: bento-style widget grid instead of uniform card rows. Motion: staggered grid entrances.',
+        'Website: warm organic — soft rounded radius (--radius 1rem+), pastel-tinted section backgrounds alternating with white, hand-crafted feel. Dashboard: friendly rounded cards, pill Tabs navigation. Motion: gentle y=12 Reveals, playful AnimatedNumbers.',
+      ]
+      const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
+      perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
     }
 
     if (stage === 'plan') {
