@@ -10,6 +10,7 @@ import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/Pro
 import { ImportModal } from '@/components/dashboard/ImportModal';
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
+import { creditsLine } from '@/lib/plans';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -405,7 +406,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
               <IconBolt />
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Starter</div>
-                <div style={{ fontSize: 10, color: DIM }}>500 credits/month</div>
+                <div style={{ fontSize: 10, color: DIM }}>{creditsLine('starter')}</div>
               </div>
             </Link>
           </div>

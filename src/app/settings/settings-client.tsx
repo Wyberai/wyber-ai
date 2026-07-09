@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { MODEL_META, MODEL_MULTIPLIERS, estimateCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits';
 import { WyberLogo } from '@/components/shared/WyberLogo';
+import { PLAN_FACTS, creditsLine } from '@/lib/plans';
 
 type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'integrations' | 'github' | 'notifications' | 'danger';
 
@@ -20,12 +21,22 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'danger',        label: 'Danger Zone',          icon: '⚠️' },
 ];
 
-const PLANS = [
-  { id: 'free',     name: 'Free',     price: '$0',    credits: 50,   color: '#52525b', features: ['50 credits/month', '3 projects', 'Community support'] },
-  { id: 'starter',  name: 'Starter',  price: '$29',   credits: 150,  color: '#22c55e', features: ['150 credits/month', 'Unlimited projects', 'Community support'] },
-  { id: 'builder',  name: 'Builder',  price: '$79',   credits: 500,  color: '#0EA5E9', features: ['500 credits/month', 'Supabase + custom domains', 'Priority support'] },
-  { id: 'pro',      name: 'Pro',      price: '$199',  credits: 1500, color: '#8b5cf6', features: ['1,500 credits/month', 'Multi-user orgs', 'Priority support + Slack'] },
-];
+// Prices/credits/colors come from the canonical PLAN_FACTS (lib/plans.ts);
+// only the marketing bullets are local to this page.
+const PLANS = ([
+  ['free',    ['3 projects', 'Community support']],
+  ['starter', ['Unlimited projects', 'Community support']],
+  ['builder', ['Supabase + custom domains', 'Priority support']],
+  ['pro',     ['Multi-user orgs', 'Priority support + Slack']],
+] as const).map(([id, extras]) => {
+  const f = PLAN_FACTS[id];
+  return {
+    id: f.id, name: f.name,
+    price: f.monthlyPrice === null ? '$0' : `$${f.monthlyPrice}`,
+    credits: f.credits, color: f.color,
+    features: [creditsLine(f.id), ...extras],
+  };
+});
 
 interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }
 
