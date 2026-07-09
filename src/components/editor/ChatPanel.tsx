@@ -345,7 +345,6 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
-  const [buildMsgIdx, setBuildMsgIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const isFirstBuild = !hasGeneratedFiles;
   const BUILD_MSGS = isFirstBuild
@@ -353,16 +352,21 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     : ['Applying your changes...', 'Updating components...', 'Refining the code...', 'Almost done...'];
 
   useEffect(() => {
-    if (!isGenerating) { setBuildMsgIdx(0); setElapsed(0); return; }
+    if (!isGenerating) { setElapsed(0); return; }
     setProgressSteps([]);
     const startTime = Date.now();
     const t = setInterval(() => {
-      setBuildMsgIdx(i => (i + 1) % BUILD_MSGS.length);
       setElapsed(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
     return () => clearInterval(t);
   }, [isGenerating]);
-  const buildMsg = BUILD_MSGS[buildMsgIdx];
+  // Phase label derived from elapsed time: one phase per ~10s, CLAMPED at the
+  // last entry. The old version advanced every second and wrapped with %, so
+  // the label cycled the whole list every few seconds — users watched builds
+  // go "Almost there..." → back to "Planning your app...", which read as the
+  // build restarting. Real [progress:] markers replace this fallback entirely
+  // once they start arriving.
+  const buildMsg = BUILD_MSGS[Math.min(Math.floor(elapsed / 10), BUILD_MSGS.length - 1)];
 
   const [hasInit, setHasInit] = useState(false);
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
@@ -2033,7 +2037,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         ))}
 
-        {isGenerating && progressSteps.length === 0 && (
+        {/* Fallback build indicator — ONLY when no streaming bubble exists yet
+            (before the first token arrives). A streaming assistant message
+            renders this same ticker inside its own bubble, so showing both
+            duplicated the "Setting up the design system... (15s)" row. ONE
+            canonical progress surface, always. */}
+        {isGenerating && progressSteps.length === 0 && !messages.some(m => m.status === 'streaming') && (
           <div style={{ padding:'4px 12px' }}>
             <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
               <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
