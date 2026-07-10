@@ -273,7 +273,7 @@ function PlanCard({
       )}
 
       {/* Divider */}
-      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', marginBottom: 18 }} />
+      <div style={{ borderTop: '1px solid var(--brand-border)', marginBottom: 18 }} />
 
       {/* Features */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -344,10 +344,10 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
   const handleTopup = startCheckout
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--brand-border)' }}>
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
@@ -380,7 +380,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
         </p>
 
         {/* Annual toggle */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 30, padding: '5px 6px', marginBottom: 56 }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'var(--brand-bg-raised)', border: '1px solid var(--brand-border)', borderRadius: 30, padding: '5px 6px', marginBottom: 56 }}>
           <button onClick={() => setAnnual(false)} style={{ padding: '7px 18px', borderRadius: 24, background: !annual ? '#1a1a22' : 'transparent', border: !annual ? '1px solid rgba(255,255,255,0.12)' : 'none', color: !annual ? '#fafafa' : '#52525b', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>Monthly</button>
           <button onClick={() => setAnnual(true)} style={{ padding: '7px 18px', borderRadius: 24, background: annual ? '#1a1a22' : 'transparent', border: annual ? '1px solid rgba(255,255,255,0.12)' : 'none', color: annual ? '#fafafa' : '#52525b', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 7 }}>
             Annual
@@ -399,7 +399,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       </section>
 
       {/* What does a credit buy? */}
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px,100%),1fr))', gap: 40, alignItems: 'start' }}>
           {/* Credit table */}
           <div>
@@ -407,7 +407,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>Credits work across everything</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {CREDIT_TABLE.map(row => (
-                <div key={row.action} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: '#111113', borderRadius: 9, gap: 12 }}>
+                <div key={row.action} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--brand-bg-raised)', borderRadius: 9, gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 16 }}>{row.icon}</span>
                     <span style={{ fontSize: 13, color: '#a1a1aa' }}>{row.action}</span>
@@ -427,7 +427,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>One-time credit packs</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {TOPUPS.map(t => (
-                <div key={t.key} style={{ position: 'relative', background: '#111113', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <div key={t.key} style={{ position: 'relative', background: 'var(--brand-bg-raised)', border: '1px solid var(--brand-border)', borderRadius: 12, padding: '18px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
                   {t.badge && (
                     <div style={{ position: 'absolute', top: -10, right: 16, background: '#f59e0b', color: '#000', fontSize: 9, fontWeight: 800, padding: '2px 9px', borderRadius: 20 }}>{t.badge}</div>
                   )}
@@ -454,7 +454,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
 
       {/* Done-for-you builds — hidden for India (low intent there) */}
       {currency !== 'INR' && (
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#f59e0b', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Done For You</div>
@@ -490,7 +490,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
               { name: 'Medium Build', price: '$399', delivery: '3 working days', color: BRAND, icon: '🔧', badge: 'Most common', items: ['SaaS MVP with auth + database', '3–6 screens, real user accounts', 'GitHub repo + Vercel deploy', '14-day support'] },
               { name: 'Complex Build', price: '$799', delivery: '1 week', color: '#8b5cf6', icon: '🏗️', items: ['Full SaaS with payments + multi-roles', '6+ screens, integrations', 'GitHub repo + Vercel deploy', '30-day support'] },
             ].map(b => (
-              <div key={b.name} style={{ position: 'relative', background: '#111113', border: `1px solid ${b.badge ? b.color + '40' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '20px', borderTop: `3px solid ${b.color}` }}>
+              <div key={b.name} style={{ position: 'relative', background: 'var(--brand-bg-raised)', border: `1px solid ${b.badge ? b.color + '40' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '20px', borderTop: `3px solid ${b.color}` }}>
                 {b.badge && <div style={{ position: 'absolute', top: -11, right: 14, background: b.color, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20 }}>{b.badge}</div>}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <span style={{ fontSize: 20 }}>{b.icon}</span>
@@ -522,7 +522,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       )}
 
       {/* FAQ */}
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 680, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>Common questions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -534,7 +534,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
               ['Can I use my own domain for employees?', 'Yes. On any paid plan you can map a custom domain (netenrich.com/ai-sdr) via a simple CNAME record.'],
               ['What happens if I cancel?', 'You keep access until the end of your billing period. Your employees, KPI data, and app builds are retained for 30 days so you can export everything.'],
             ].map(([q, a], i) => (
-              <details key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '18px 0' }}>
+              <details key={i} style={{ borderBottom: '1px solid var(--brand-border)', padding: '18px 0' }}>
                 <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#e4e4e7', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                   {q}
                   <span style={{ color: '#52525b', fontSize: 18, flexShrink: 0 }}>+</span>
@@ -547,7 +547,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       </section>
 
       {/* Bottom CTA */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', textAlign: 'center', borderTop: '1px solid var(--brand-border)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 100%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{ position: 'relative', maxWidth: 560, margin: '0 auto' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px,4vw,52px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 16 }}>
@@ -567,7 +567,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       </section>
 
       {/* Community programs */}
-      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: currency === 'INR' ? 'rgba(14,165,233,0.04)' : 'transparent' }}>
+      <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', background: currency === 'INR' ? 'rgba(14,165,233,0.04)' : 'transparent' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: currency === 'INR' ? '#0EA5E9' : '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>{currency === 'INR' ? 'Rewards' : 'Community'}</div>
@@ -585,7 +585,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
               { emoji: '🩸', title: 'Blood Donor Bonus', desc: 'Donated blood in the last 90 days? Get double credits on your next purchase. Because saving lives should be rewarded.', color: '#ef4444', reward: '2x credits on purchase' },
               { emoji: '♿', title: 'Accessibility Program', desc: '50% off any plan for people with disabilities. Reviewed manually — we never ask for medical records.', color: '#a855f7', reward: '50% off any plan' },
             ].map(p => (
-              <Link key={p.title} href={'href' in p && p.href ? p.href : '/community-programs'} style={{ textDecoration: 'none', background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
+              <Link key={p.title} href={'href' in p && p.href ? p.href : '/community-programs'} style={{ textDecoration: 'none', background: 'var(--brand-bg-raised)', border: '1px solid var(--brand-border)', borderRadius: 14, padding: '20px', display: 'flex', flexDirection: 'column', gap: 10, transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 28 }}>{p.emoji}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#fafafa' }}>{p.title}</div>
                 <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.5, flex: 1 }}>{p.desc}</div>
@@ -597,7 +597,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       </section>
 
       {/* Payment trust strip */}
-      <section style={{ padding: '24px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0d0d10' }}>
+      <section style={{ padding: '24px clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', background: 'var(--brand-bg-raised)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
@@ -619,7 +619,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
       </section>
 
       {/* Footer */}
-      <footer style={{ padding: '28px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      <footer style={{ padding: '28px clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <WyberLogo markSize={20} wordmarkSize={13} />
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
           {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Community Programs', '/community-programs'], ['Blog', '/blog']].map(([l, h]) => (

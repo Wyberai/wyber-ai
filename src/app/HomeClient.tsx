@@ -1,47 +1,70 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useReducedMotion } from 'framer-motion';
 import { WyberLogo } from '@/components/shared/WyberLogo';
 import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
 
 const BRAND = '#0EA5E9';
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+/* ————— shared atoms ————— */
 
 const IcoCheck = ({ color = '#22c55e' }: { color?: string }) => (
-  <svg width="10" height="10" viewBox="0 0 12 12" style={{ flexShrink: 0, marginTop: 1 }}>
+  <svg width="10" height="10" viewBox="0 0 12 12" style={{ flexShrink: 0, marginTop: 4 }}>
     <path d="M2 6l3 3 5-5" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none" />
   </svg>
 );
 
+function Eyebrow({ children }: { children: React.ReactNode }) {
+  return <div className="mk-eyebrow" style={{ marginBottom: 18 }}>{children}</div>;
+}
+
+function Reveal({ children, delay = 0, y = 24 }: { children: React.ReactNode; delay?: number; y?: number }) {
+  const reduce = useReducedMotion();
+  if (reduce) return <>{children}</>;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.7, delay, ease: EASE }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function WindowChrome({ title }: { title: string }) {
   return (
-    <div style={{ display: 'flex', gap: 5, marginBottom: 12, alignItems: 'center' }}>
-      <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#ff5f57' }} />
-      <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#febc2e' }} />
-      <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#28c840' }} />
-      <span style={{ marginLeft: 8, color: '#52525b', fontSize: 10 }}>{title}</span>
+    <div style={{ display: 'flex', gap: 6, marginBottom: 14, alignItems: 'center' }}>
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(56,189,248,0.5)' }} />
+      <span className="mk-mono" style={{ marginLeft: 8, fontSize: 10 }}>{title}</span>
     </div>
   );
 }
 
-function WebAppMockup() {
+/* Build console — the truthful product depiction (what a live build looks like) */
+function BuildConsole({ rows, accent = BRAND, title }: {
+  rows: { done: boolean; active: boolean; label: string; detail: string }[];
+  accent?: string;
+  title: string;
+}) {
   return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'monospace', fontSize: 11 }}>
-      <WindowChrome title="wyberai.com — Live Build" />
-      {[
-        { done: true,  active: false, label: 'Prompt received',       detail: '"Build a CRM with pipeline view"' },
-        { done: true,  active: false, label: 'Generating React code', detail: '14 files · Supabase schema' },
-        { done: true,  active: false, label: 'Pushing to GitHub',     detail: 'wyberai/crm-abc123' },
-        { done: false, active: true,  label: 'Deployed to Vercel',    detail: 'crm-abc123.vercel.app' },
-      ].map((s, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.active ? BRAND : s.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${s.active ? BRAND : s.done ? '#22c55e' : 'rgba(255,255,255,0.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-            {s.done && !s.active && <IcoCheck />}
+    <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
+      <WindowChrome title={title} />
+      {rows.map((s, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < rows.length - 1 ? 12 : 0 }}>
+          <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.active ? accent : s.done ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${s.active ? accent : s.done ? 'rgba(34,197,94,0.6)' : 'var(--brand-border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, boxShadow: s.active ? '0 0 14px var(--brand-glow)' : 'none' }}>
+            {s.done && !s.active && <svg width="10" height="10" viewBox="0 0 12 12"><path d="M2 6l3 3 5-5" stroke="#22c55e" strokeWidth="1.8" strokeLinecap="round" fill="none" /></svg>}
             {s.active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }} />}
           </div>
           <div>
-            <div style={{ color: s.active ? '#fafafa' : s.done ? '#a1a1aa' : '#52525b', fontWeight: s.active ? 700 : 500, fontSize: 11 }}>{s.label}</div>
-            <div style={{ color: '#3f3f46', fontSize: 10, marginTop: 2 }}>{s.detail}</div>
+            <div style={{ color: s.active ? 'var(--brand-text)' : s.done ? 'var(--brand-text-dim)' : 'var(--brand-text-faint)', fontWeight: s.active ? 600 : 400, fontSize: 11, letterSpacing: '0.02em' }}>{s.label}</div>
+            <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 2 }}>{s.detail}</div>
           </div>
         </div>
       ))}
@@ -49,222 +72,72 @@ function WebAppMockup() {
   );
 }
 
-function MobileMockup() {
+const WEB_BUILD_ROWS = [
+  { done: true,  active: false, label: 'PROMPT RECEIVED',       detail: '"Build a CRM with pipeline view"' },
+  { done: true,  active: false, label: 'GENERATING REACT CODE', detail: '14 files · Supabase schema' },
+  { done: true,  active: false, label: 'PUSHING TO GITHUB',     detail: 'wyberai/crm-abc123' },
+  { done: false, active: true,  label: 'DEPLOYING TO VERCEL',   detail: 'crm-abc123.vercel.app' },
+];
+
+const MOBILE_BUILD_ROWS = [
+  { done: true,  active: false, label: 'SCAFFOLD EXPO PROJECT', detail: 'TypeScript · React Native' },
+  { done: true,  active: false, label: 'GENERATE 9 SCREENS',    detail: 'Auth, home, profile, cart…' },
+  { done: false, active: true,  label: 'LIVE PREVIEW READY',    detail: 'scan QR to open on device' },
+  { done: false, active: false, label: 'EXPORT FOR APP STORE',  detail: 'EAS Build · IPA / APK' },
+];
+
+/* RLS scan readout — the security differentiator, shown as the real product output */
+function ScanReadout() {
   return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'monospace', fontSize: 11 }}>
-      <WindowChrome title="wyberai.com — Mobile Build" />
+    <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
+      <WindowChrome title="wyberai.com — live RLS trust scan" />
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 10, letterSpacing: '0.06em' }}>
+        $ probing live database with anon key (attacker&apos;s view)…
+      </div>
       {[
-        { done: true,  active: false, label: 'Scaffold Expo project',   detail: 'TypeScript · React Native' },
-        { done: true,  active: false, label: 'Generate 9 screens',       detail: 'Auth, home, profile, cart…' },
-        { done: false, active: true,  label: 'Live preview ready',       detail: 'scan QR to open on device' },
-        { done: false, active: false, label: 'Export for App Store',     detail: 'EAS Build · IPA / APK' },
-      ].map((s, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: s.active ? '#f97316' : s.done ? 'rgba(34,197,94,0.15)' : 'rgba(255,255,255,0.05)', border: `1px solid ${s.active ? '#f97316' : s.done ? '#22c55e' : 'rgba(255,255,255,0.08)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-            {s.done && !s.active && <IcoCheck />}
-            {s.active && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', animation: 'pulse 1.5s infinite' }} />}
-          </div>
-          <div>
-            <div style={{ color: s.active ? '#fafafa' : s.done ? '#a1a1aa' : '#52525b', fontWeight: s.active ? 700 : 500, fontSize: 11 }}>{s.label}</div>
-            <div style={{ color: '#3f3f46', fontSize: 10, marginTop: 2 }}>{s.detail}</div>
-          </div>
+        { table: 'profiles',  status: 'LOCKED',  ok: true,  note: 'RLS enforced · 0 rows leaked' },
+        { table: 'orders',    status: 'LOCKED',  ok: true,  note: 'RLS enforced · 0 rows leaked' },
+        { table: 'invoices',  status: 'EXPOSED', ok: false, note: '312 rows readable — publish blocked' },
+      ].map(r => (
+        <div key={r.table} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--brand-border)' }}>
+          <span style={{ color: 'var(--brand-text-dim)', width: 76, flexShrink: 0 }}>{r.table}</span>
+          <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '0.1em', padding: '2px 8px', borderRadius: 4, flexShrink: 0, color: r.ok ? '#22c55e' : '#ef4444', border: `1px solid ${r.ok ? 'rgba(34,197,94,0.35)' : 'rgba(239,68,68,0.4)'}`, background: r.ok ? 'rgba(34,197,94,0.07)' : 'rgba(239,68,68,0.08)' }}>{r.status}</span>
+          <span style={{ color: 'var(--brand-text-faint)', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.note}</span>
         </div>
       ))}
-    </div>
-  );
-}
-
-function EmployeeMockup() {
-  return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'var(--font-display)', fontSize: 11 }}>
-      <WindowChrome title="wyberai.com — AI Employees" />
-      {[
-        { emoji: '📣', name: 'Marketing Manager', dept: 'Marketing · daily 09:00', status: 'Active', color: '#22c55e', detail: 'Drafted competitor analysis and 3 blog outlines' },
-        { emoji: '🎯', name: 'Sales Manager', dept: 'Sales · daily 08:00', status: 'Active', color: '#22c55e', detail: 'Qualified 12 inbound leads, updated CRM pipeline' },
-        { emoji: '📊', name: 'Finance Manager', dept: 'Finance · weekly Mon', status: 'Running', color: BRAND, detail: 'Building monthly P&L report…' },
-      ].map(a => (
-        <div key={a.name} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <span style={{ fontSize: 18 }}>{a.emoji}</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, color: '#fafafa', fontSize: 11 }}>{a.name}</div>
-            <div style={{ color: '#52525b', fontSize: 10, marginTop: 1 }}>{a.dept}</div>
-            <div style={{ color: '#71717a', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.detail}</div>
-          </div>
-          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 10, background: `${a.color}15`, color: a.color, border: `1px solid ${a.color}30`, flexShrink: 0 }}>{a.status}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function WorkflowMockup() {
-  return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'var(--font-display)', fontSize: 11 }}>
-      <WindowChrome title="wyberai.com — Workflows" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {[
-          { label: 'Trigger', detail: 'New form submission', color: '#a855f7', icon: '⚡' },
-          { label: 'AI Step', detail: 'Classify lead quality', color: BRAND, icon: '🤖' },
-          { label: 'Branch', detail: 'Score ≥ 7 → notify sales', color: '#22c55e', icon: '🔀' },
-          { label: 'Action', detail: 'Post to #leads in Slack', color: '#f59e0b', icon: '📢' },
-        ].map((n, i, arr) => (
-          <div key={n.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'rgba(255,255,255,0.03)', border: `1px solid ${n.color}22`, borderRadius: 8, width: '100%' }}>
-              <span>{n.icon}</span>
-              <div>
-                <span style={{ fontSize: 9, fontWeight: 700, color: n.color, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{n.label}</span>
-                <div style={{ color: '#a1a1aa', fontSize: 10 }}>{n.detail}</div>
-              </div>
-            </div>
-            {i < arr.length - 1 && <div style={{ width: 1, height: 12, background: 'rgba(255,255,255,0.1)', marginLeft: 22 }} />}
-          </div>
-        ))}
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 10 }}>
+        → real queries against your live DB. Not a linter.
       </div>
     </div>
   );
 }
 
-function GTMMockup() {
-  return (
-    <div style={{ background: '#0d0d10', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 16, fontFamily: 'var(--font-display)', fontSize: 11 }}>
-      <WindowChrome title="wyberai.com — GTM Engine" />
-      <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>ICP Match · 142 leads found</div>
-        {[
-          { label: 'Title', value: 'VP Engineering, CTO' },
-          { label: 'Company', value: 'SaaS · 50–500 employees' },
-          { label: 'Signal', value: 'Raised Series A in last 6mo' },
-        ].map(r => (
-          <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-            <span style={{ color: '#52525b' }}>{r.label}</span>
-            <span style={{ color: '#a1a1aa', fontWeight: 600 }}>{r.value}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {[
-          { day: 'Day 0', type: '✉️ Email', detail: 'Personalised cold intro sent', color: '#10b981' },
-          { day: 'Day 3', type: '⏳ Wait', detail: 'Watching for reply / open', color: '#52525b' },
-          { day: 'Day 4', type: '✉️ Email', detail: 'Case study follow-up queued', color: '#10b981' },
-        ].map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 7 }}>
-            <span style={{ fontSize: 9, color: '#3f3f46', width: 30, flexShrink: 0 }}>{s.day}</span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: s.color, flexShrink: 0 }}>{s.type}</span>
-            <span style={{ fontSize: 10, color: '#52525b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.detail}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+/* ————— data ————— */
 
 const PRODUCTS = [
   {
     key: 'web',
-    label: 'Web Apps',
-    emoji: '🌐',
+    label: 'WEB APPS',
     accent: BRAND,
     heading: 'Describe it. It builds.',
     body: 'Type what you want in plain English. Wyber generates production-ready React code, provisions a database, and deploys to a live URL — in minutes.',
     bullets: ['Fresh code every time — no stale templates', '27 integrations — Supabase, Stripe, OpenAI & more', 'GitHub push · Vercel deploy · custom domains'],
     cta: 'Start building',
     href: '/signup',
-    mockup: <WebAppMockup />,
+    mockup: <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />,
   },
   {
     key: 'mobile',
-    label: 'Mobile Apps',
-    emoji: '📱',
+    label: 'MOBILE APPS',
     accent: '#f97316',
     heading: 'Describe it. Ship to iOS.',
     body: 'Generate a real React Native app with Expo. Preview on your phone via QR code. Export a ready-to-publish project.',
     bullets: ['React Native + Expo · camera, GPS, biometrics', 'Push notifications · in-app purchases', 'App Store submission guide included'],
     cta: 'Start building',
     href: '/templates/mobile',
-    mockup: <MobileMockup />,
+    mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent="#f97316" title="wyberai.com — mobile build" />,
   },
 ] as const;
-
-// ── AI Employee launch spotlight — carousel hyping the Marketing Manager ──────
-const MM_SLIDES = [
-  {
-    tag: 'Launching Mon · Jul 6',
-    title: 'Meet your new AI employee',
-    sub: 'The Marketing Manager — the first of a new AI employee every Monday.',
-    bullets: ['Onboards in minutes, then runs on its own schedule', 'Reports back to you after every shift', 'Works while you sleep'],
-    accent: '#a855f7',
-  },
-  {
-    tag: 'Not an agent',
-    title: 'An employee commands an army of agents',
-    sub: 'Don\'t mistake it for a single agent. Each WyberAI employee orchestrates 200+ specialized agents to get real work done.',
-    bullets: ['1 employee → 200+ agents on tap', 'Delegates the right agent to each task', 'You manage one colleague, not 200 tools'],
-    accent: BRAND,
-  },
-  {
-    tag: 'What it does',
-    title: 'A full marketing department in one hire',
-    sub: 'The Marketing Manager plans and ships across your whole funnel.',
-    bullets: ['Content engine — blogs, social, email, landing copy', 'Competitor & market intel on a schedule', 'Campaign planning + multi-channel publishing', 'Weekly performance digest in your inbox'],
-    accent: '#22c55e',
-  },
-  {
-    tag: 'How it thinks',
-    title: 'Plan → delegate → execute → report',
-    sub: 'It breaks a goal into a plan, assigns each step to the best agent, runs the tools, reviews the output, and sends you the result.',
-    bullets: ['Connects 30+ tools (Gmail, Slack, LinkedIn, HubSpot…)', 'Self-checks its own work before it ships', 'Escalates to you only when it matters'],
-    accent: '#f59e0b',
-  },
-] as const;
-
-function AIEmployeeSpotlight() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI(p => (p + 1) % MM_SLIDES.length), 5000);
-    return () => clearInterval(t);
-  }, []);
-  const s = MM_SLIDES[i];
-  return (
-    <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e', position: 'relative', overflow: 'hidden' }}>
-      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 50% 0%, ${s.accent}14 0%, transparent 65%)`, pointerEvents: 'none', transition: 'background 0.5s' }} />
-      <div style={{ maxWidth: 920, margin: '0 auto', position: 'relative' }}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 14px', borderRadius: 20, background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.25)', fontSize: 12, fontWeight: 700, color: '#c4b5fd', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#a855f7', animation: 'pulse 2s infinite' }} />
-            New every Monday
-          </div>
-        </div>
-
-        <div style={{ background: '#111113', border: `1px solid ${s.accent}30`, borderRadius: 20, padding: 'clamp(28px,4vw,48px)', minHeight: 280, display: 'grid', gridTemplateColumns: '1fr', gap: 8, transition: 'border-color 0.5s' }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: s.accent, marginBottom: 4, transition: 'color 0.5s' }}>{s.tag}</div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1, marginBottom: 8 }}>{s.title}</h2>
-          <p style={{ fontSize: 'clamp(14px,1.6vw,17px)', color: '#a1a1aa', lineHeight: 1.6, maxWidth: 620, marginBottom: 12 }}>{s.sub}</p>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px,100%), 1fr))', gap: 10 }}>
-            {s.bullets.map(b => (
-              <li key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontSize: 14, color: '#d4d4d8' }}>
-                <IcoCheck color={s.accent} /><span>{b}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Dots */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 24 }}>
-          {MM_SLIDES.map((sl, idx) => (
-            <button key={idx} onClick={() => setI(idx)} aria-label={`Slide ${idx + 1}`}
-              style={{ width: idx === i ? 28 : 8, height: 8, borderRadius: 8, border: 'none', background: idx === i ? sl.accent : 'rgba(255,255,255,0.15)', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
-          ))}
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: 28 }}>
-          <Link href="/coming-soon?product=AI+Employees" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '13px 28px', borderRadius: 11, background: '#a855f7', color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(168,85,247,0.35)' }}>
-            Get notified when it drops →
-          </Link>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // Homepage FAQ — visible accordion + matching FAQPage schema (AEO). The
 // "Who makes WyberAi?" answer explicitly names SignalPulse Technologies to
@@ -276,7 +149,123 @@ const HOME_FAQS: [string, string][] = [
   ['Do I need to know how to code?', 'No. You describe your app in plain English. WyberAi writes the code, wires up auth, database, and APIs, and deploys it. You can still push to GitHub and own the code if you want.'],
   ['How is WyberAi different from template builders?', 'WyberAi generates fresh code from scratch every time — never stale templates. Builds self-heal their own errors, ship full-stack (auth, database, APIs), and you own the code via GitHub with zero lock-in.'],
   ['How much does WyberAi cost?', 'You can start free with 50 credits, no credit card required. Paid plans are affordable and one-time credit top-ups never expire — see the pricing page for the current plans.'],
-]
+];
+
+/* The six proof points — editorial numbered rows, not an icon grid */
+const PROOF = [
+  { n: '01', title: 'Fresh code, every time', desc: 'No drag-and-drop. No stale templates. AI writes real React + Tailwind from scratch for every project.' },
+  { n: '02', title: 'Self-healing builds', desc: 'A broken import or a truncated file doesn\'t stop the build. WyberAi detects the failure and repairs itself in the same run — no red screen, no manual debugging.' },
+  { n: '03', title: 'Live security scanning', desc: 'We probe your live database with the same anonymous key an attacker would use — real Row-Level Security testing, not a static linter guessing at your schema.' },
+  { n: '04', title: 'Full-stack out of the box', desc: 'Auth, database, API routes, file uploads — generated and wired up. Not just a pretty frontend.' },
+  { n: '05', title: 'GitHub integration', desc: 'Push to your own repo. Own your code. Fork it, extend it, hire devs later if you want. Zero lock-in.' },
+  { n: '06', title: 'Smart model routing', desc: 'Opus for builds, Sonnet for edits, Haiku when speed matters. WyberAi picks the right AI model for every task — automatically.' },
+];
+
+/* Mission sequence — the single pinned scroll-storytelling moment */
+const STAGES = [
+  {
+    tag: 'T-MINUS · DESCRIBE',
+    title: 'Describe your app',
+    desc: 'Tell Wyber what you want in plain English — or drop in screenshots, Figma files, or docs.',
+    visual: (
+      <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 12 }}>
+        <WindowChrome title="wyberai.com — new project" />
+        <div style={{ padding: '14px 16px', border: '1px solid var(--brand-border-strong)', borderRadius: 10, background: 'rgba(255,255,255,0.02)', color: 'var(--brand-text)', lineHeight: 1.7 }}>
+          Build a CRM for my agency with a kanban pipeline,<br />client notes, and an invoices page
+          <span style={{ display: 'inline-block', width: 7, height: 15, background: 'var(--brand-accent-hot)', marginLeft: 3, verticalAlign: 'text-bottom', animation: 'blink 1.1s steps(1) infinite' }} />
+        </div>
+        <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="mk-mono" style={{ fontSize: 10 }}>EST. 30 CREDITS · OPUS SELECTED</span>
+          <span style={{ padding: '6px 14px', borderRadius: 7, background: 'var(--brand-accent)', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-display)' }}>Build →</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    tag: 'IGNITION · BUILD',
+    title: 'AI builds it live',
+    desc: 'Watch production-ready code generate in real time. Fresh code every run — and if something breaks mid-build, it heals itself before you ever see an error.',
+    visual: <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />,
+  },
+  {
+    tag: 'ORBIT · SHIP',
+    title: 'Ship it',
+    desc: 'Deploy to a live URL with one click. Connect your domain, push to GitHub, iterate with plain-English feedback.',
+    visual: (
+      <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18 }}>
+        <WindowChrome title="crm-abc123.vercel.app" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--brand-border)', background: 'rgba(255,255,255,0.02)', marginBottom: 14 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.8)' }} />
+          <span className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-dim)' }}>https://crm-abc123.vercel.app — LIVE</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {['Pipeline', 'Clients', 'Invoices', 'Settings'].map((x, i) => (
+              <div key={x} style={{ padding: '7px 10px', borderRadius: 6, fontSize: 10, fontFamily: 'var(--brand-mono)', color: i === 0 ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', background: i === 0 ? 'rgba(14,165,233,0.08)' : 'transparent', border: i === 0 ? '1px solid rgba(14,165,233,0.25)' : '1px solid transparent' }}>{x}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+            {['LEAD', 'ACTIVE', 'WON'].map(col => (
+              <div key={col} style={{ border: '1px solid var(--brand-border)', borderRadius: 6, padding: 6 }}>
+                <div className="mk-mono" style={{ fontSize: 8, marginBottom: 6 }}>{col}</div>
+                {[0, 1].map(i => <div key={i} style={{ height: 18, borderRadius: 4, background: 'rgba(255,255,255,0.04)', border: '1px solid var(--brand-border)', marginBottom: 4 }} />)}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    ),
+  },
+];
+
+/* Pinned mission sequence — own component so useScroll's target ref is
+   guaranteed mounted (it only renders when pinning is active). */
+function PinnedSequence() {
+  const seqRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({ target: seqRef, offset: ['start start', 'end end'] });
+  const [stage, setStage] = useState(0);
+  useEffect(() => scrollYProgress.on('change', v => {
+    setStage(Math.max(0, Math.min(STAGES.length - 1, Math.floor(v * STAGES.length))));
+  }), [scrollYProgress]);
+
+  return (
+    <section ref={seqRef} style={{ position: 'relative', height: `${STAGES.length * 120}vh` }}>
+      <div style={{ position: 'sticky', top: 0, height: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
+        <div className="mk-stars" aria-hidden style={{ opacity: 0.5 }} />
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 clamp(20px,5vw,48px)', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 'clamp(40px,6vw,88px)', alignItems: 'center', position: 'relative' }}>
+          <div>
+            <div className="mk-eyebrow" style={{ marginBottom: 22 }}>MISSION SEQUENCE</div>
+            <AnimatePresence mode="wait">
+              <motion.div key={stage}
+                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 0.45, ease: EASE }}>
+                <div className="mk-mono" style={{ color: 'var(--brand-accent-hot)', marginBottom: 14 }}>{STAGES[stage].tag}</div>
+                <h2 className="mk-h2" style={{ marginBottom: 16 }}>{STAGES[stage].title}</h2>
+                <p className="mk-lead" style={{ maxWidth: 420 }}>{STAGES[stage].desc}</p>
+              </motion.div>
+            </AnimatePresence>
+            <div style={{ display: 'flex', gap: 8, marginTop: 40 }}>
+              {STAGES.map((_, i) => (
+                <div key={i} style={{ width: i === stage ? 32 : 12, height: 2, background: i === stage ? 'var(--brand-accent)' : 'var(--brand-border-strong)', transition: 'all 0.4s var(--brand-ease)', boxShadow: i === stage ? '0 0 8px var(--brand-glow)' : 'none' }} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <AnimatePresence mode="wait">
+              <motion.div key={stage}
+                initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.45, ease: EASE }}>
+                {STAGES[stage].visual}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ————— page ————— */
 
 export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Currency }) {
   const inr = initialCurrency === 'INR';
@@ -285,6 +274,8 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
   const [activeProduct, setActiveProduct] = useState(0);
   const [showDemo, setShowDemo] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [canPin, setCanPin] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
@@ -297,56 +288,63 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
     const update = () => setIsMobile(mq.matches);
     update();
     mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
+    const mqPin = window.matchMedia('(min-width: 861px)');
+    const updatePin = () => setCanPin(mqPin.matches);
+    updatePin();
+    mqPin.addEventListener('change', updatePin);
+    return () => { mq.removeEventListener('change', update); mqPin.removeEventListener('change', updatePin); };
   }, []);
 
   const product = PRODUCTS[activeProduct];
+  const pinned = canPin && !reduce;
+
+  const navLinks: [string, string][] = [['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Journey', '/space-journey'], ['Pricing', '/pricing']];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)', overflowX: 'hidden' }}>
+    <div className="mk-page" data-theme="dark">
 
       {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(5,6,10,0.8)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--brand-border)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
         <div className="wyb-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {([['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
-            <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: '#71717a', textDecoration: 'none', fontWeight: 500 }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#fafafa'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = '#71717a'}>
-              {l}
+          {navLinks.map(([l, h]) => (
+            <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--brand-text)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--brand-text-dim)'}>
+              {l === 'Journey' ? <>✦ {l}</> : l}
             </Link>
           ))}
-          <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 6px' }} />
+          <div style={{ width: 1, height: 16, background: 'var(--brand-border-strong)', margin: '0 6px' }} />
           {user
-            ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Dashboard →</Link>
+            ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>Dashboard →</Link>
             : <>
-                <Link href="/login" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, color: '#a1a1aa', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
-                <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 20px rgba(14,165,233,0.25)' }}>Start free →</Link>
+                <Link href="/login" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
+                <Link href="/signup" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>Start free →</Link>
               </>
           }
         </div>
         <button className="wyb-nav-hamburger" onClick={() => setMobileMenuOpen(o => !o)} aria-label="Toggle menu"
           style={{ display: 'none', flexDirection: 'column', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 8, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: 22, height: 2, background: '#a1a1aa', borderRadius: 1, transition: 'all 0.2s', transform: mobileMenuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none' }} />
-          <div style={{ width: 22, height: 2, background: mobileMenuOpen ? 'transparent' : '#a1a1aa', borderRadius: 1 }} />
-          <div style={{ width: 22, height: 2, background: '#a1a1aa', borderRadius: 1, transition: 'all 0.2s', transform: mobileMenuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none' }} />
+          <div style={{ width: 22, height: 2, background: 'var(--brand-text-dim)', borderRadius: 1, transition: 'all 0.2s', transform: mobileMenuOpen ? 'rotate(45deg) translate(5px,5px)' : 'none' }} />
+          <div style={{ width: 22, height: 2, background: mobileMenuOpen ? 'transparent' : 'var(--brand-text-dim)', borderRadius: 1 }} />
+          <div style={{ width: 22, height: 2, background: 'var(--brand-text-dim)', borderRadius: 1, transition: 'all 0.2s', transform: mobileMenuOpen ? 'rotate(-45deg) translate(5px,-5px)' : 'none' }} />
         </button>
       </nav>
 
       {/* Mobile drawer */}
       {mobileMenuOpen && (
-        <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(9,9,11,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {([['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Pricing', '/pricing']] as [string, string][]).map(([l, h]) => (
-            <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: '#a1a1aa', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'block', minHeight: 44 }}>{l}</Link>
+        <div style={{ position: 'fixed', top: 60, left: 0, right: 0, zIndex: 99, background: 'rgba(5,6,10,0.98)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--brand-border-strong)', padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {navLinks.map(([l, h]) => (
+            <Link key={l} href={h} onClick={() => setMobileMenuOpen(false)} style={{ padding: '12px 4px', fontSize: 16, fontWeight: 600, color: 'var(--brand-text-dim)', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', display: 'block', minHeight: 44 }}>{l}</Link>
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {user
-              ? <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} style={{ padding: '13px 0', textAlign: 'center', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'block' }}>Dashboard →</Link>
+              ? <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>Dashboard →</Link>
               : <>
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{ padding: '13px 0', textAlign: 'center', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 15, textDecoration: 'none', display: 'block' }}>Sign in</Link>
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} style={{ padding: '13px 0', textAlign: 'center', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', display: 'block' }}>Start free →</Link>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="mk-btn-ghost" style={{ justifyContent: 'center' }}>Sign in</Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>Start free →</Link>
                 </>
             }
           </div>
@@ -354,71 +352,83 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
       )}
 
       {/* ── BUILD CHALLENGE BANNER ──────────────────────────────────── */}
-      <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 20px', background: 'linear-gradient(90deg, rgba(168,85,247,0.15), rgba(14,165,233,0.15))', borderBottom: '1px solid rgba(168,85,247,0.2)', textDecoration: 'none', color: '#fafafa', fontSize: 13, fontWeight: 600 }}>
-        <span style={{ fontSize: 16 }}>🏆</span>
-        <span>Weekly Build Challenge — <span style={{ color: '#a855f7' }}>Build your MVP on Wyber, then enter to win credits</span> — New winners every Sunday</span>
-        <span style={{ color: '#a855f7', fontSize: 12 }}>Enter now →</span>
+      <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '9px 20px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid var(--brand-border)', textDecoration: 'none', color: 'var(--brand-text)', fontSize: 12.5, fontWeight: 500 }}>
+        <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>WEEKLY BUILD CHALLENGE</span>
+        <span style={{ color: 'var(--brand-text-dim)' }}>Build your MVP on Wyber, enter to win credits — new winners every Sunday</span>
+        <span style={{ color: 'var(--brand-accent-hot)', fontSize: 12 }}>Enter →</span>
       </Link>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 'clamp(80px,12vw,160px) clamp(20px,4vw,48px) clamp(60px,8vw,100px)', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(14,165,233,0.08) 0%, transparent 60%)', pointerEvents: 'none' }} />
-
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 800 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, fontWeight: 600, color: BRAND, marginBottom: 24 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', animation: 'pulse 2s infinite' }} />
-            Now live — Web Apps & Mobile Apps
+      <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
+        <div className="mk-stars" aria-hidden />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 55% at 68% 20%, rgba(14,165,233,0.10) 0%, transparent 62%)', pointerEvents: 'none' }} />
+        <div className="mk-section" style={{ position: 'relative', display: 'grid', gridTemplateColumns: canPin ? '1.1fr 0.9fr' : '1fr', gap: 'clamp(32px,5vw,72px)', alignItems: 'center', paddingTop: 'clamp(72px,10vw,128px)', paddingBottom: 'clamp(64px,9vw,112px)' }}>
+          <div>
+            <Reveal y={16}>
+              <div className="mk-eyebrow" style={{ marginBottom: 26 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px rgba(34,197,94,0.9)', animation: 'pulse 2s infinite' }} />
+                SYSTEMS LIVE — WEB + MOBILE
+              </div>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <h1 className="mk-display" style={{ marginBottom: 26 }}>
+                Think of an app idea.<br />
+                <span className="mk-serif">Bring it to life.</span>
+              </h1>
+            </Reveal>
+            <Reveal delay={0.16}>
+              <p className="mk-lead" style={{ maxWidth: 520, marginBottom: 36 }}>
+                Self-healing builds. Live database security scans. The right AI model chosen for every task — automatically. Other builders generate code and hope. WyberAi engineers it.
+              </p>
+            </Reveal>
+            <Reveal delay={0.24}>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 22 }}>
+                <Link href="/signup" className="mk-btn" style={{ padding: '15px 34px', fontSize: 16 }}>Start building — it&apos;s free →</Link>
+                <button onClick={() => setShowDemo(true)} className="mk-btn-ghost" style={{ fontSize: 16 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', background: 'var(--brand-accent)', boxShadow: '0 0 12px var(--brand-glow)' }}>
+                    <svg width="9" height="9" viewBox="0 0 12 12" fill="#fff"><path d="M3 2l7 4-7 4z" /></svg>
+                  </span>
+                  Watch the demo
+                </button>
+              </div>
+              <p className="mk-mono" style={{ fontSize: 11, marginBottom: 0 }}>
+                NO CREDIT CARD · FROM {inr ? '₹499/MO' : '$29/MO'} · CANCEL ANYTIME
+              </p>
+              {inr && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>🛡 A US-registered company · SignalPulse Technologies, Wyoming</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>📱 Pay with UPI</span>
+                </div>
+              )}
+            </Reveal>
           </div>
-
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(40px,7vw,80px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.0, marginBottom: 20 }}>
-            Think of an app idea.{' '}<br />
-            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Bring it to life.
-            </span>
-          </h1>
-
-          <p style={{ fontSize: 'clamp(16px,2vw,22px)', color: '#a1a1aa', lineHeight: 1.6, maxWidth: 560, margin: '0 auto 40px' }}>
-            Self-healing builds. Live database security scans. The right AI model chosen for every task — automatically. Other builders generate code and hope. WyberAi engineers it.
-          </p>
-
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 20 }}>
-            <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '16px 36px', borderRadius: 12, background: BRAND, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(14,165,233,0.35)', transition: 'all 0.2s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'none'}>
-              Start building — it's free →
-            </Link>
-            <button onClick={() => setShowDemo(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.14)', background: 'rgba(255,255,255,0.03)', color: '#e4e4e7', fontSize: 16, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.3)'; (e.currentTarget as HTMLElement).style.color = '#fafafa' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.14)'; (e.currentTarget as HTMLElement).style.color = '#e4e4e7' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: '50%', background: BRAND }}>
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="#fff"><path d="M3 2l7 4-7 4z" /></svg>
-              </span>
-              Watch the demo
-            </button>
-          </div>
-
-          <p style={{ fontSize: 13, color: '#52525b' }}>No credit card required · Starts at {inr ? '₹499/mo' : '$29/mo'} · Cancel anytime</p>
-          {inr && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#a1a1aa', fontWeight: 600 }}>🛡 A US-registered company · SignalPulse Technologies, Wyoming</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#a1a1aa', fontWeight: 600 }}>📱 Pay with UPI</span>
-            </div>
+          {canPin && (
+            <Reveal delay={0.2} y={32}>
+              <motion.div
+                animate={reduce ? undefined : { y: [0, -8, 0] }}
+                transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ position: 'relative' }}
+              >
+                <div style={{ position: 'absolute', inset: -24, background: 'radial-gradient(ellipse at center, rgba(14,165,233,0.10), transparent 70%)', pointerEvents: 'none' }} />
+                <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />
+              </motion.div>
+            </Reveal>
           )}
         </div>
       </section>
 
-      {/* ── SOCIAL PROOF BAR ─────────────────────────────────────────── */}
-      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', justifyContent: 'center', gap: 'clamp(24px,5vw,64px)', flexWrap: 'wrap' }}>
+      {/* ── TELEMETRY STRIP ──────────────────────────────────────────── */}
+      <section style={{ borderBottom: '1px solid var(--brand-border)' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
-            { value: '2,400+', label: 'apps built' },
-            { value: '30s', label: 'avg build time' },
-            { value: '4.9/5', label: 'user rating' },
-            { value: '99.9%', label: 'uptime target', href: '/status' },
+            { value: '2,400+', label: 'APPS BUILT' },
+            { value: '30s', label: 'AVG BUILD TIME' },
+            { value: '4.9/5', label: 'USER RATING' },
+            { value: '99.9%', label: 'UPTIME TARGET', href: '/status' },
           ].map(s => (
-            <div key={s.label} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, color: '#fafafa', fontFamily: 'var(--font-display)' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>
+            <div key={s.label}>
+              <div className="mk-stat">{s.value}</div>
+              <div className="mk-stat-label" style={{ marginTop: 4 }}>
                 {s.href ? <a href={s.href} style={{ color: 'inherit', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>{s.label}</a> : s.label}
               </div>
             </div>
@@ -426,204 +436,213 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
         </div>
       </section>
 
-      {/* AI Employee spotlight hidden until launch */}
-
-      {/* ── HOW IT WORKS — 3 steps ──────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: '#0b0b0e' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 56 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>How it works</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em' }}>From idea to live app in 3 steps</h2>
-          </div>
-          <div className="wyb-steps" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40 }}>
-            {[
-              { step: '01', title: 'Describe your app', desc: 'Tell Wyber what you want in plain English — or drop in screenshots, Figma files, or docs.', color: BRAND },
-              { step: '02', title: 'AI builds it live', desc: 'Watch as AI generates production-ready code in real-time. Fresh code every time — never stale templates.', color: '#a855f7' },
-              { step: '03', title: 'Ship it', desc: 'Deploy to a live URL with one click. Connect your domain, push to GitHub, iterate with simple feedback.', color: '#22c55e' },
-            ].map(s => (
-              <div key={s.step} style={{ textAlign: 'center' }}>
-                <div style={{ width: 56, height: 56, borderRadius: 16, background: s.color + '12', border: `1px solid ${s.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 22, fontWeight: 800, color: s.color, fontFamily: 'var(--font-display)' }}>{s.step}</div>
-                <div style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', marginBottom: 8, fontFamily: 'var(--font-display)' }}>{s.title}</div>
-                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.65, margin: 0 }}>{s.desc}</p>
+      {/* ── MISSION SEQUENCE — the one pinned scroll moment ─────────── */}
+      {pinned ? (
+        <PinnedSequence />
+      ) : (
+        <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+          <div className="mk-eyebrow" style={{ marginBottom: 40 }}>MISSION SEQUENCE</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
+            {STAGES.map(s => (
+              <div key={s.tag}>
+                <div className="mk-mono" style={{ color: 'var(--brand-accent-hot)', marginBottom: 10 }}>{s.tag}</div>
+                <h2 className="mk-h2" style={{ fontSize: 'clamp(24px,6vw,32px)', marginBottom: 10 }}>{s.title}</h2>
+                <p className="mk-lead" style={{ marginBottom: 20, fontSize: 15 }}>{s.desc}</p>
+                {s.visual}
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* ── PRODUCTS — interactive tabs with mockups ────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Products</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>
-              Web apps & mobile apps, one platform
-            </h2>
-            <p style={{ fontSize: 15, color: '#71717a', marginTop: 8 }}>Everything you need to build, launch, and grow — in one place.</p>
-          </div>
+      {/* ── PRODUCTS ─────────────────────────────────────────────────── */}
+      <section className="mk-section">
+        <Reveal>
+          <Eyebrow>PRODUCTS</Eyebrow>
+          <h2 className="mk-h2" style={{ marginBottom: 10 }}>Web apps &amp; mobile apps, <span className="mk-serif">one platform</span></h2>
+          <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 560 }}>Everything you need to build, launch, and grow — in one place.</p>
+        </Reveal>
 
-          {/* Product pills */}
-          <div className="wyb-product-pills" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 40, flexWrap: 'wrap' }}>
+        <Reveal delay={0.1}>
+          <div className="wyb-product-pills" style={{ display: 'flex', gap: 8, marginBottom: 36, flexWrap: 'wrap' }}>
             {PRODUCTS.map((p, i) => (
               <button key={p.key} onClick={() => setActiveProduct(i)}
-                style={{ padding: '8px 18px', borderRadius: 20, border: `1px solid ${i === activeProduct ? p.accent + '50' : 'rgba(255,255,255,0.08)'}`, background: i === activeProduct ? p.accent + '15' : 'transparent', color: i === activeProduct ? p.accent : '#71717a', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>{p.emoji}</span> {p.label}
-                {(p as any).soon && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: 'rgba(255,255,255,0.06)', color: '#52525b', fontWeight: 700 }}>SOON</span>}
+                style={{ padding: '8px 18px', borderRadius: 8, border: `1px solid ${i === activeProduct ? 'var(--brand-border-accent)' : 'var(--brand-border)'}`, background: i === activeProduct ? 'rgba(14,165,233,0.08)' : 'transparent', color: i === activeProduct ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--brand-mono)', letterSpacing: '0.12em', transition: 'all 0.2s var(--brand-ease)', boxShadow: i === activeProduct ? '0 0 20px var(--brand-glow-soft)' : 'none' }}>
+                {p.label}
               </button>
             ))}
           </div>
 
-          {/* Active product detail */}
-          <div className="wyb-product-detail" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'center' }}>
+          <div className="wyb-product-detail" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(28px,4vw,56px)', alignItems: 'center' }}>
             <div>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 12, color: '#fafafa', lineHeight: 1.15 }}>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3vw,32px)', fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 12, color: 'var(--brand-text)', lineHeight: 1.12 }}>
                 {product.heading}
               </h3>
-              <p style={{ fontSize: 15, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 24 }}>
+              <p style={{ fontSize: 15, color: 'var(--brand-text-dim)', lineHeight: 1.7, marginBottom: 24 }}>
                 {product.body}
               </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {product.bullets.map((b, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: '#a1a1aa' }}>
+                  <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 14, color: 'var(--brand-text-dim)' }}>
                     <IcoCheck color={product.accent} />
                     <span>{b}</span>
                   </li>
                 ))}
               </ul>
-              <Link href={product.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', borderRadius: 10, background: product.accent, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: `0 4px 20px ${product.accent}30` }}>
+              <Link href={product.href} className="mk-btn" style={{ background: product.accent, boxShadow: `0 0 24px ${product.accent}50` }}>
                 {product.cta} →
               </Link>
             </div>
             <div>{product.mockup}</div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* ── WHY WYBER ────────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', background: '#0b0b0e', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#a855f7', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Why WyberAi</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12 }}>
-              Not another template marketplace
-            </h2>
-            <p style={{ fontSize: 15, color: '#71717a', maxWidth: 560, margin: '0 auto' }}>
+      {/* ── PROOF — editorial numbered rows + live scan readout ─────── */}
+      <section style={{ borderTop: '1px solid var(--brand-border)', background: 'var(--brand-bg-raised)' }}>
+        <div className="mk-section">
+          <Reveal>
+            <Eyebrow>WHY WYBER</Eyebrow>
+            <h2 className="mk-h2" style={{ marginBottom: 10 }}>Not another <span className="mk-serif">template marketplace</span></h2>
+            <p className="mk-lead" style={{ marginBottom: 52, maxWidth: 560 }}>
               Every other AI builder generates code and hopes it holds. WyberAi checks its own work — automatically.
             </p>
-          </div>
-          <div className="wyb-why-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {[
-              { icon: '⚡', title: 'Fresh code, every time', desc: 'No drag-and-drop. No stale templates. AI writes real React + Tailwind CSS from scratch for every project.', color: BRAND },
-              { icon: '🔄', title: 'Self-healing builds', desc: 'A broken import or a truncated file doesn\'t stop the build. WyberAi detects the failure and repairs itself in the same run — no red screen, no manual debugging.', color: '#22c55e' },
-              { icon: '🛡️', title: 'Live security scanning', desc: 'We probe your live database with the same anonymous key an attacker would use — real Row-Level Security testing, not a static linter guessing at your schema.', color: '#ef4444' },
-              { icon: '📦', title: 'Full-stack out of the box', desc: 'Auth, database, API routes, file uploads — generated and wired up. Not just a pretty frontend.', color: '#a855f7' },
-              { icon: '🔗', title: 'GitHub integration', desc: 'Push to your own repo. Own your code. Fork it, extend it, hire devs later if you want. Zero lock-in.', color: '#10b981' },
-              { icon: '🧠', title: 'Smart model routing', desc: 'Opus for builds, Sonnet for edits, Haiku when speed matters. WyberAi picks the right AI model for every task — automatically, no picker required.', color: '#eab308' },
-            ].map(f => (
-              <div key={f.title} style={{ padding: '24px', background: '#111113', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, transition: 'all 0.2s' }}
-                onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = f.color + '30'}
-                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#fafafa', marginBottom: 6, fontFamily: 'var(--font-display)' }}>{f.title}</div>
-                <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
+          </Reveal>
+
+          <div className="wyb-proof-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 'clamp(32px,5vw,64px)', alignItems: 'start' }}>
+            <div>
+              {PROOF.map((f, i) => (
+                <Reveal key={f.n} delay={i * 0.05}>
+                  <div style={{ display: 'flex', gap: 20, padding: '22px 0', borderTop: '1px solid var(--brand-border)', borderBottom: i === PROOF.length - 1 ? '1px solid var(--brand-border)' : 'none' }}>
+                    <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 12, paddingTop: 3, flexShrink: 0 }}>{f.n}</span>
+                    <div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 6, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>{f.title}</div>
+                      <p style={{ fontSize: 13.5, color: 'var(--brand-text-dim)', lineHeight: 1.65, margin: 0, maxWidth: 480 }}>{f.desc}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+            <Reveal delay={0.15}>
+              <div style={{ position: 'sticky', top: 90 }}>
+                <div className="mk-mono" style={{ marginBottom: 12, color: 'var(--brand-accent-hot)' }}>LIVE FROM THE PRODUCT</div>
+                <ScanReadout />
+                <p style={{ fontSize: 12, color: 'var(--brand-text-faint)', lineHeight: 1.6, marginTop: 12 }}>
+                  The RLS trust scan runs before every publish. Critical leaks block the release until you fix them — or consciously override.
+                </p>
               </div>
-            ))}
+            </Reveal>
           </div>
         </div>
       </section>
 
       {/* ── PRICING PREVIEW ─────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Pricing</div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 14 }}>
-            Simple, transparent pricing
-          </h2>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto 44px' }}>Start free. Upgrade when you need more builds. All features included on every plan.</p>
+      <section className="mk-section">
+        <Reveal>
+          <Eyebrow>PRICING</Eyebrow>
+          <h2 className="mk-h2" style={{ marginBottom: 10 }}>Simple, transparent pricing</h2>
+          <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 520 }}>Start free. Upgrade when you need more builds. All features included on every plan.</p>
+        </Reveal>
 
-          <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 48 }}>
+        <Reveal delay={0.1}>
+          <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 44 }}>
             {(inr
               ? [
-                  { name: 'Spark', price: '₹499', credits: '50', color: '#f59e0b', highlight: false, badge: 'INDIA ENTRY' },
-                  { name: 'Starter', price: '₹1,499', credits: '150', color: '#22c55e', highlight: false },
-                  { name: 'Builder', price: '₹3,999', credits: '500', color: BRAND, highlight: true, badge: 'MOST POPULAR' },
+                  { name: 'SPARK', price: '₹499', credits: '50', highlight: false, badge: 'INDIA ENTRY' },
+                  { name: 'STARTER', price: '₹1,499', credits: '150', highlight: false },
+                  { name: 'BUILDER', price: '₹3,999', credits: '500', highlight: true, badge: 'MOST POPULAR' },
                 ]
               : [
-                  { name: 'Starter', price: '$29', credits: '150', color: '#22c55e', highlight: false },
-                  { name: 'Builder', price: '$79', credits: '500', color: BRAND, highlight: true, badge: 'MOST POPULAR' },
-                  { name: 'Pro', price: '$199', credits: '1,500', color: '#8b5cf6', highlight: false, badge: 'BEST VALUE' },
+                  { name: 'STARTER', price: '$29', credits: '150', highlight: false },
+                  { name: 'BUILDER', price: '$79', credits: '500', highlight: true, badge: 'MOST POPULAR' },
+                  { name: 'PRO', price: '$199', credits: '1,500', highlight: false, badge: 'BEST VALUE' },
                 ]
             ).map(p => (
-              <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(160deg,#0d1a26,#0d1218)' : '#111113', border: `1px solid ${p.highlight ? 'rgba(14,165,233,0.3)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 14, padding: '24px 20px', position: 'relative' }}>
-                {(p as any).badge && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: p.highlight ? BRAND : '#8b5cf6', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', letterSpacing: '0.06em' }}>{(p as any).badge}</div>}
-                <div style={{ fontSize: 12, fontWeight: 700, color: p.color, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>{p.name}</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, justifyContent: 'center', marginBottom: 14 }}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 36, fontWeight: 800, color: '#fafafa' }}>{p.price}</span>
-                  <span style={{ fontSize: 12, color: '#52525b' }}>/mo</span>
+              <div key={p.name} className="mk-card" style={{ padding: '26px 22px', position: 'relative', borderColor: p.highlight ? 'var(--brand-border-accent)' : undefined, boxShadow: p.highlight ? '0 0 40px var(--brand-glow-soft)' : undefined }}>
+                {p.badge && <div className="mk-mono" style={{ position: 'absolute', top: -9, left: 20, background: p.highlight ? 'var(--brand-accent)' : 'var(--brand-bg-overlay)', color: p.highlight ? '#fff' : 'var(--brand-text-dim)', fontSize: 9, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', border: p.highlight ? 'none' : '1px solid var(--brand-border-strong)' }}>{p.badge}</div>}
+                <div className="mk-mono" style={{ color: p.highlight ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', marginBottom: 12 }}>{p.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 14 }}>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: 'var(--brand-text)', letterSpacing: '-0.03em' }}>{p.price}</span>
+                  <span className="mk-mono" style={{ fontSize: 11 }}>/MO</span>
                 </div>
-                <div style={{ fontSize: 12, color: '#22c55e', fontWeight: 600 }}>{p.credits} credits</div>
-                <div style={{ fontSize: 11, color: '#52525b', marginTop: 3 }}>All features unlocked</div>
+                <div className="mk-mono" style={{ color: '#22c55e', fontSize: 11 }}>{p.credits} CREDITS</div>
+                <div style={{ fontSize: 12, color: 'var(--brand-text-faint)', marginTop: 4 }}>All features unlocked</div>
               </div>
             ))}
           </div>
+        </Reveal>
 
-          {!inr && (
-          <div style={{ textAlign: 'left', background: '#0d0d10', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '28px 28px 24px', marginBottom: 12 }}>
+        {!inr && (
+        <Reveal delay={0.15}>
+          <div className="mk-frame" style={{ padding: '28px 28px 24px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#f97316', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Done-for-you</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800, color: '#fafafa', marginBottom: 4 }}>We build it for you</div>
-                <div style={{ fontSize: 13, color: '#71717a', maxWidth: 420 }}>Prefer to hand it off? Book a $99 scoping call — the fee is credited toward your build.</div>
+                <div className="mk-eyebrow" style={{ marginBottom: 10, color: '#f97316' }}>DONE-FOR-YOU</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 4 }}>We build it for you</div>
+                <div style={{ fontSize: 13, color: 'var(--brand-text-dim)', maxWidth: 420 }}>Prefer to hand it off? Book a $99 scoping call — the fee is credited toward your build.</div>
               </div>
-              <a href="/setup-call" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: '#f97316', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
+              <a href="/setup-call" className="mk-btn" style={{ background: '#f97316', boxShadow: '0 0 24px rgba(249,115,22,0.35)', padding: '10px 20px', fontSize: 13, flexShrink: 0 }}>
                 Book $99 consultation →
               </a>
             </div>
             <div className="wyb-builds-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
-                { name: 'Simple Build', price: '$199', delivery: '24 hours', color: '#22c55e', icon: '⚡', desc: 'Landing pages, portfolios, tools. No auth or database.' },
-                { name: 'Medium Build', price: '$399', delivery: '3 working days', color: BRAND, icon: '🔧', desc: 'SaaS MVP with auth + database. 3–6 screens, real accounts.', badge: 'Most common' },
-                { name: 'Complex Build', price: '$799', delivery: '1 week', color: '#8b5cf6', icon: '🏗️', desc: 'Full SaaS with payments, multi-roles, integrations.' },
+                { name: 'SIMPLE BUILD', price: '$199', delivery: '24 HOURS', desc: 'Landing pages, portfolios, tools. No auth or database.' },
+                { name: 'MEDIUM BUILD', price: '$399', delivery: '3 WORKING DAYS', desc: 'SaaS MVP with auth + database. 3–6 screens, real accounts.', badge: 'MOST COMMON' },
+                { name: 'COMPLEX BUILD', price: '$799', delivery: '1 WEEK', desc: 'Full SaaS with payments, multi-roles, integrations.' },
               ].map(b => (
-                <div key={b.name} style={{ background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: '16px', position: 'relative' }}>
-                  {(b as any).badge && <div style={{ position: 'absolute', top: -10, left: 14, background: BRAND, color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20, letterSpacing: '0.06em' }}>{(b as any).badge}</div>}
-                  <div style={{ fontSize: 18, marginBottom: 8 }}>{b.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: b.color, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 4 }}>{b.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 6 }}>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 800, color: '#fafafa' }}>{b.price}</span>
-                    <span style={{ fontSize: 11, color: '#52525b' }}>{b.delivery}</span>
+                <div key={b.name} className="mk-card" style={{ padding: 16, position: 'relative', borderRadius: 12 }}>
+                  {b.badge && <div className="mk-mono" style={{ position: 'absolute', top: -9, left: 14, background: 'var(--brand-accent)', color: '#fff', fontSize: 9, padding: '2px 8px', borderRadius: 20 }}>{b.badge}</div>}
+                  <div className="mk-mono" style={{ color: 'var(--brand-text-dim)', marginBottom: 8 }}>{b.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 26, fontWeight: 700, color: 'var(--brand-text)' }}>{b.price}</span>
+                    <span className="mk-mono" style={{ fontSize: 9 }}>{b.delivery}</span>
                   </div>
-                  <div style={{ fontSize: 11.5, color: '#71717a', lineHeight: 1.5 }}>{b.desc}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--brand-text-dim)', lineHeight: 1.5 }}>{b.desc}</div>
                 </div>
               ))}
             </div>
           </div>
-          )}
+        </Reveal>
+        )}
 
-          <Link href="/pricing" style={{ display: 'inline-block', marginTop: 16, padding: '12px 28px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.25)' }}>
-            See full pricing →
-          </Link>
-        </div>
+        <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 14 }}>See full pricing →</Link>
+      </section>
+
+      {/* ── SPACE JOURNEY INVITE ────────────────────────────────────── */}
+      <section style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', borderBottom: '1px solid var(--brand-border)' }}>
+        <div className="mk-stars" aria-hidden />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 70% at 50% 100%, rgba(14,165,233,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <Link href="/space-journey" style={{ display: 'block', textDecoration: 'none', color: 'inherit', position: 'relative' }}>
+          <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(48px,7vw,88px) clamp(20px,5vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
+            <div>
+              <div className="mk-eyebrow" style={{ marginBottom: 14 }}>✦ THE JOURNEY</div>
+              <div className="mk-h2" style={{ fontSize: 'clamp(26px,3.5vw,42px)' }}>See the whole system, <span className="mk-serif">in flight</span></div>
+              <p className="mk-lead" style={{ marginTop: 10, fontSize: 15 }}>A cinematic tour of WyberAi — piloted by you, one scroll at a time.</p>
+            </div>
+            <span className="mk-btn-ghost" style={{ flexShrink: 0 }}>Begin the journey →</span>
+          </div>
+        </Link>
       </section>
 
       {/* ── FAQ (with FAQPage schema for AEO) ───────────────────────── */}
-      <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', background: '#0b0b0e' }}>
-        <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 40 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>FAQ</div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em' }}>Questions, answered</h2>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <section className="mk-section" style={{ maxWidth: 820 }}>
+        <Reveal>
+          <Eyebrow>FAQ</Eyebrow>
+          <h2 className="mk-h2" style={{ marginBottom: 40 }}>Questions, answered</h2>
+        </Reveal>
+        <Reveal delay={0.1}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
             {HOME_FAQS.map(([q, a], i) => (
-              <details key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '18px 0' }}>
-                <summary style={{ cursor: 'pointer', fontSize: 15, fontWeight: 700, color: '#e4e4e7', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                  {q}<span style={{ color: '#52525b', fontSize: 18, flexShrink: 0 }}>+</span>
+              <details key={i} style={{ borderTop: '1px solid var(--brand-border)', borderBottom: i === HOME_FAQS.length - 1 ? '1px solid var(--brand-border)' : 'none', padding: '18px 0' }}>
+                <summary style={{ cursor: 'pointer', fontSize: 15, fontWeight: 600, color: 'var(--brand-text)', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, fontFamily: 'var(--font-display)' }}>
+                  {q}<span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 16, flexShrink: 0, transition: 'transform 0.2s var(--brand-ease)' }}>+</span>
                 </summary>
-                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.7, marginTop: 12, marginBottom: 0 }}>{a}</p>
+                <p style={{ fontSize: 14, color: 'var(--brand-text-dim)', lineHeight: 1.7, marginTop: 12, marginBottom: 0, maxWidth: 640 }}>{a}</p>
               </details>
             ))}
           </div>
-        </div>
+        </Reveal>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
@@ -635,25 +654,22 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
       </section>
 
       {/* ── FINAL CTA ───────────────────────────────────────────────── */}
-      <section style={{ padding: 'clamp(80px,10vw,140px) clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 600, margin: '0 auto' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,5vw,60px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.05 }}>
-            Stop dreaming.<br />
-            <span style={{ background: `linear-gradient(135deg, ${BRAND}, #a855f7)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Start shipping.</span>
-          </h2>
-          <p style={{ fontSize: 16, color: '#71717a', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 32px' }}>
-            Your next app is one prompt away. Describe it, watch it build, ship it today.
-          </p>
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/signup" style={{ display: 'inline-block', padding: '16px 40px', borderRadius: 12, background: BRAND, color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none', boxShadow: '0 8px 32px rgba(14,165,233,0.35)' }}>
-              Start for free →
-            </Link>
-            <Link href="/pricing" style={{ display: 'inline-block', padding: '16px 28px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa', fontSize: 16, fontWeight: 500, textDecoration: 'none' }}>
-              View pricing →
-            </Link>
-          </div>
-          <div style={{ marginTop: 16, fontSize: 12, color: '#3f3f46' }}>No credit card required · 50 free credits on signup · Cancel anytime</div>
+      <section style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', textAlign: 'center' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div className="mk-section" style={{ position: 'relative', maxWidth: 720, paddingTop: 'clamp(80px,10vw,140px)', paddingBottom: 'clamp(80px,10vw,140px)' }}>
+          <Reveal>
+            <h2 className="mk-display" style={{ fontSize: 'clamp(36px,6vw,72px)', marginBottom: 20 }}>
+              Stop dreaming.<br /><span className="mk-serif">Start shipping.</span>
+            </h2>
+            <p className="mk-lead" style={{ maxWidth: 480, margin: '0 auto 36px' }}>
+              Your next app is one prompt away. Describe it, watch it build, ship it today.
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/signup" className="mk-btn" style={{ padding: '16px 40px', fontSize: 16 }}>Start for free →</Link>
+              <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 16 }}>View pricing →</Link>
+            </div>
+            <div className="mk-mono" style={{ marginTop: 20, fontSize: 10 }}>NO CREDIT CARD · 50 FREE CREDITS ON SIGNUP · CANCEL ANYTIME</div>
+          </Reveal>
         </div>
       </section>
 
@@ -661,7 +677,7 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
       {showDemo && (
         <div onClick={() => setShowDemo(false)}
           style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(12px,4vw,48px)' }}>
-          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? 'auto' : '100%', maxWidth: isMobile ? '94vw' : 1100, height: isMobile ? '84vh' : 'auto', aspectRatio: isMobile ? '9 / 16' : '16 / 9', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}>
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? 'auto' : '100%', maxWidth: isMobile ? '94vw' : 1100, height: isMobile ? '84vh' : 'auto', aspectRatio: isMobile ? '9 / 16' : '16 / 9', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--brand-border-strong)', boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 60px var(--brand-glow-soft)' }}>
             <button onClick={() => setShowDemo(false)} aria-label="Close"
               style={{ position: 'absolute', top: 10, right: 10, zIndex: 2, width: 34, height: 34, borderRadius: '50%', border: 'none', background: 'rgba(0,0,0,0.55)', color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
             <iframe src={isMobile ? '/demo-intro-mobile.html' : '/demo-intro.html'} title="WyberAi demo" style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
@@ -670,32 +686,28 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
       )}
 
       {/* Featured on Product Hunt */}
-      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'center' }}>
+      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', display: 'flex', justifyContent: 'center' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <a href="https://www.producthunt.com/products/wyberai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyberai" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', lineHeight: 0 }}>
-          <img width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1180538&theme=light" alt="WyberAi - From idea to live app — no code, just one prompt. | Product Hunt" />
+        <a href="https://www.producthunt.com/products/wyberai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyberai" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', lineHeight: 0, opacity: 0.85 }}>
+          <img width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1180538&theme=dark" alt="WyberAi - From idea to live app — no code, just one prompt. | Product Hunt" />
         </a>
       </section>
 
       <Footer />
 
       <style>{`
-        
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        details summary::-webkit-details-marker { display: none; }
+        details[open] summary span { transform: rotate(45deg); }
         @media (max-width: 768px) {
           .wyb-nav-desktop { display: none !important; }
           .wyb-nav-hamburger { display: flex !important; }
           .wyb-plans-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
-          .wyb-steps { grid-template-columns: 1fr !important; gap: 32px !important; }
           .wyb-product-pills { gap: 6px !important; }
-          .wyb-product-pills button { font-size: 11px !important; padding: 5px 10px !important; }
           .wyb-builds-grid { grid-template-columns: 1fr !important; }
-          .wyb-why-grid { grid-template-columns: 1fr !important; }
           .wyb-product-detail { grid-template-columns: 1fr !important; }
-        }
-        @media (min-width: 769px) and (max-width: 1024px) {
-          .wyb-plans-grid { grid-template-columns: repeat(3, 1fr) !important; }
-          .wyb-why-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .wyb-proof-grid { grid-template-columns: 1fr !important; }
         }
         @media (min-width: 769px) {
           .wyb-nav-hamburger { display: none !important; }

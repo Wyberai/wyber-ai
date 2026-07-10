@@ -7,7 +7,10 @@
 // It also cached authenticated pages under a never-versioned cache name that
 // survived deploys. A service worker for this app must NEVER touch
 // navigations, HTML, or RSC — hashed immutable build assets + icons only.
-const CACHE = 'wyberai-v2';
+// v3 — cache-name bump purges v2 caches that may hold dev-mode chunks (dev
+// chunk names are path-stable, so v2 could pin stale CSS/JS; registration is
+// now production-only, see PlatformChrome).
+const CACHE = 'wyberai-v3';
 const STATIC_ASSETS = ['/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/manifest.json'];
 
 self.addEventListener('install', e => {
