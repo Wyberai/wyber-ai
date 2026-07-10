@@ -34,7 +34,7 @@ export const WYBER_UI_KIT_SOURCE = String.raw`// Wyber UI Kit — premium primit
 // hand-rolling cards/buttons/heroes. All colors come from the app's design
 // tokens (src/index.css), so everything below matches this app's palette.
 import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion'
+import { motion, AnimatePresence, useInView, useScroll, useTransform, useReducedMotion } from 'framer-motion'
 import clsx from 'clsx'
 import { Menu, X, Check, ChevronDown, Star, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
@@ -864,6 +864,157 @@ export function CTASection({ title, description, primaryCta = 'Get started', sec
     </Reveal>
   )
 }
+
+/* ===================== EDITORIAL PRECISION (2026) ====================== */
+/* Mono microlabels, hairline structure, oversized editorial type — the
+   "engineered precision" layer. Compose with the palette's display serif. */
+
+export function MonoLabel({ children, accent = false, className }: {
+  children?: React.ReactNode; accent?: boolean; className?: string
+}) {
+  return (
+    <span className={cn(
+      'font-mono text-[10px] font-medium uppercase tracking-[0.2em]',
+      accent ? 'text-primary' : 'text-muted-foreground',
+      className,
+    )}>
+      {children}
+    </span>
+  )
+}
+
+export function SectionNumber({ n, label, className }: {
+  n: number | string; label?: string; className?: string
+}) {
+  const num = typeof n === 'number' ? (n < 10 ? '0' + String(n) : String(n)) : n
+  return (
+    <div className={cn('flex items-center gap-3', className)}>
+      <span className="font-mono text-xs font-medium tracking-widest text-primary">{num}</span>
+      <span aria-hidden="true" className="h-px w-10 bg-border" />
+      {label && <MonoLabel>{label}</MonoLabel>}
+    </div>
+  )
+}
+
+export function EditorialHeadline({ eyebrow, children, align = 'left', as = 'h2', className }: {
+  eyebrow?: string; children?: React.ReactNode; align?: 'left' | 'center'; as?: 'h1' | 'h2' | 'h3'; className?: string
+}) {
+  const Tag = as
+  return (
+    <div className={cn(align === 'center' ? 'text-center' : 'text-left', className)}>
+      {eyebrow && <div className="mb-4"><MonoLabel accent>{eyebrow}</MonoLabel></div>}
+      <Tag className="font-display font-medium tracking-tight text-foreground text-[clamp(2.25rem,5.5vw,4.75rem)] leading-[1.02] [&_em]:italic [&_em]:text-primary">
+        {children}
+      </Tag>
+    </div>
+  )
+}
+
+export function HairlineFrame({ children, ticks = true, padded = true, className }: {
+  children?: React.ReactNode; ticks?: boolean; padded?: boolean; className?: string
+}) {
+  return (
+    <div className={cn('relative border border-border', padded && 'p-6 md:p-10', className)}>
+      {ticks && (
+        <>
+          <span aria-hidden="true" className="absolute -left-px -top-px h-3 w-3 border-l-2 border-t-2 border-primary" />
+          <span aria-hidden="true" className="absolute -right-px -top-px h-3 w-3 border-r-2 border-t-2 border-primary" />
+          <span aria-hidden="true" className="absolute -bottom-px -left-px h-3 w-3 border-b-2 border-l-2 border-primary" />
+          <span aria-hidden="true" className="absolute -bottom-px -right-px h-3 w-3 border-b-2 border-r-2 border-primary" />
+        </>
+      )}
+      {children}
+    </div>
+  )
+}
+
+export function MediaFrame({ src, alt, caption, index, ratio = '16/9', className }: {
+  src: string; alt: string; caption?: string; index?: string; ratio?: string; className?: string
+}) {
+  return (
+    <figure className={cn('group overflow-hidden border border-border bg-card', className)}>
+      <div className="overflow-hidden" style={{ aspectRatio: ratio }}>
+        <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" />
+      </div>
+      {(caption || index) && (
+        <figcaption className="flex items-center justify-between gap-3 border-t border-border px-4 py-2.5">
+          {caption && <MonoLabel>{caption}</MonoLabel>}
+          {index && <span className="font-mono text-[10px] tracking-widest text-primary">{index}</span>}
+        </figcaption>
+      )}
+    </figure>
+  )
+}
+
+export function PinnedStory({ steps, visual, flip = false, className }: {
+  steps: { title: string; description: string }[]; visual: React.ReactNode; flip?: boolean; className?: string
+}) {
+  return (
+    <div className={cn('grid gap-10 md:grid-cols-2 md:gap-16', className)}>
+      <div className={cn('order-1', flip && 'md:order-2')}>
+        <div className="flex flex-col gap-16 md:gap-28 md:py-24">
+          {steps.map((s, i) => (
+            <Reveal key={s.title}>
+              <SectionNumber n={i + 1} />
+              <h3 className="mt-4 font-display text-2xl font-semibold tracking-tight text-foreground md:text-3xl">{s.title}</h3>
+              <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">{s.description}</p>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+      <div className={cn('order-2', flip && 'md:order-1')}>
+        <div className="md:sticky md:top-24">{visual}</div>
+      </div>
+    </div>
+  )
+}
+
+export function DataRow({ label, value, sub, className }: {
+  label: string; value: React.ReactNode; sub?: string; className?: string
+}) {
+  return (
+    <div className={cn('flex items-baseline justify-between gap-6 border-b border-border py-3.5', className)}>
+      <MonoLabel>{label}</MonoLabel>
+      <span className="text-right">
+        <span className="font-mono text-sm font-medium tabular-nums text-foreground">{value}</span>
+        {sub && <span className="ml-2 font-mono text-[11px] text-muted-foreground">{sub}</span>}
+      </span>
+    </div>
+  )
+}
+
+export function CursorGlow({ size = 480, opacity = 0.14, className }: {
+  size?: number; opacity?: number; className?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const reduced = useReducedMotion()
+  useEffect(() => {
+    const el = ref.current ? ref.current.parentElement : null
+    if (!el || reduced) return
+    const move = (e: MouseEvent) => {
+      const r = el.getBoundingClientRect()
+      setPos({ x: e.clientX - r.left, y: e.clientY - r.top })
+    }
+    const leave = () => setPos(null)
+    el.addEventListener('mousemove', move)
+    el.addEventListener('mouseleave', leave)
+    return () => { el.removeEventListener('mousemove', move); el.removeEventListener('mouseleave', leave) }
+  }, [reduced])
+  return (
+    <div ref={ref} aria-hidden="true" className={cn('pointer-events-none absolute inset-0 overflow-hidden', className)}>
+      {pos && (
+        <div
+          className="absolute rounded-full"
+          style={{
+            left: pos.x - size / 2, top: pos.y - size / 2, width: size, height: size,
+            background: 'radial-gradient(circle, hsl(var(--primary) / ' + String(opacity) + '), transparent 65%)',
+          }}
+        />
+      )}
+    </div>
+  )
+}
 `
 
 // Map merged into both build pipelines (user files always win).
@@ -878,10 +1029,10 @@ export const WYBER_UI_KIT_FILES: Record<string, string> = {
 export const WYBER_UI_KIT_PROMPT = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WYBER UI KIT — PRE-BUILT PREMIUM COMPONENTS (USE THESE — do NOT hand-write equivalents)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The platform injects src/wyber-ui.tsx into every build: ~30 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
+The platform injects src/wyber-ui.tsx into every build: ~40 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
 
 Import (relative — from src/App.tsx use './wyber-ui', from src/components/* use '../wyber-ui'):
-import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, StickyShowcase, ScrollStack, Parallax, SplitTextReveal, ScrollProgress, TiltCard, LiquidUnderline, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, cn } from './wyber-ui'
+import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, StickyShowcase, ScrollStack, Parallax, SplitTextReveal, ScrollProgress, TiltCard, LiquidUnderline, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, MonoLabel, SectionNumber, EditorialHeadline, HairlineFrame, MediaFrame, PinnedStory, DataRow, CursorGlow, cn } from './wyber-ui'
 
 MOTION (wrap content — everything animates in on scroll):
 - <Reveal delay={0.1} y={24}>…</Reveal> — fade+rise on scroll into view.
@@ -913,6 +1064,16 @@ SCROLL STORYTELLING (the layer that makes a page PERFORM, not just scroll):
 - <ScrollProgress /> — thin top scroll-progress bar; add once on long landing pages.
 - <TiltCard maxTilt={8}> — pointer-tracking 3D tilt (featured pricing tier, product highlight).
 - <LiquidUnderline href="#"> — animated underline links (inline/footer links).
+
+EDITORIAL PRECISION (the 2026 layer — mono microlabels + hairline structure + oversized editorial type):
+- <MonoLabel accent>Est. 2026</MonoLabel> — 10px uppercase tracked JetBrains Mono microlabel; THE eyebrow/caption/meta treatment (replaces plain text-xs labels).
+- <SectionNumber n={1} label="The problem" /> — editorial 01/02/03 section marker with hairline rule; open numbered sections with it.
+- <EditorialHeadline eyebrow="Manifesto" as="h2">Design is <em>the</em> product</EditorialHeadline> — oversized editorial display heading (section-scale sibling of HeroHeadline); <em> renders as an italic primary-colored serif accent — use it on ONE word.
+- <HairlineFrame ticks> — 1px-precision bordered frame with corner ticks; frame a figure, spec panel, or manifesto block ("engineered" look).
+- <MediaFrame src="{{wyber-image: …}}" alt caption="Fig. 01 — Process" index="01" ratio="16/9" /> — image in a 1px frame with a mono caption bar; the editorial way to place {{wyber-image}} shots.
+- <PinnedStory steps={[{title, description}]} visual={<MediaFrame …/>} flip /> — sticky visual + numbered scrolling steps; calmer sibling of StickyShowcase for process/how-it-works.
+- <DataRow label="Latency" value="42ms" sub="p99" /> — spec-sheet key/value row with hairline divider; stack for specs, facts, pricing details.
+- <CursorGlow /> — pointer-following primary glow inside a relative dark hero/section; subtle, disabled for reduced-motion users.
 
 SECTIONS (compose full pages fast):
 - <Navbar brand={<>logo</>} links={[{label,href}]} cta={<Button/>} /> — fixed, glass-on-scroll, mobile menu. Add pt-16 to page content.
