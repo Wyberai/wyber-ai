@@ -20,34 +20,11 @@
 
 @import "tailwindcss";
 
-/* ─── BRAND TOKENS (space-journey language) ───
-   MIRROR of src/styles/brand.css from the Session-C Phase-0 coordination
-   commit (frozen). Values must stay byte-identical; once that commit merges
-   into this branch, layout.tsx imports brand.css and this block can be
-   deleted — until then it keeps the marketing surface self-sufficient. */
+/* ─── BRAND TOKENS ───
+   --brand-* vars come from src/styles/brand.css (frozen, imported in
+   layout.tsx — the shared source of truth with the editor). Only the
+   marketing-exclusive editorial face lives here. */
 :root {
-  --brand-bg: #05060a;
-  --brand-bg-raised: #0a0c14;
-  --brand-bg-overlay: #10131f;
-  --brand-accent: #0ea5e9;
-  --brand-accent-hot: #38bdf8;
-  --brand-accent-dim: #0369a1;
-  --brand-glow: rgba(14, 165, 233, 0.35);
-  --brand-glow-soft: rgba(14, 165, 233, 0.15);
-  --brand-text: #e6edf6;
-  --brand-text-dim: #8b94a7;
-  --brand-text-faint: #545c6e;
-  --brand-border: rgba(255, 255, 255, 0.08);
-  --brand-border-strong: rgba(255, 255, 255, 0.14);
-  --brand-border-accent: rgba(14, 165, 233, 0.4);
-  --brand-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
-  --brand-dur-fast: 150ms;
-  --brand-dur-base: 240ms;
-  --brand-dur-slow: 420ms;
-  --brand-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --brand-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --brand-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-  /* Marketing-only extension (NOT in brand.css): editorial serif accent */
   --font-editorial: 'Instrument Serif', Georgia, 'Times New Roman', serif;
 }
 
