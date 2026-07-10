@@ -66,6 +66,30 @@ describe('sanitizeFiles — strips root-href <link> tags that crash vite (EISDIR
   })
 })
 
+// The remote builder renders the live preview; raw {{wyber-image}} tokens in
+// <img src> showed as broken images there ("images not generated"). Sanitize
+// resolves leftovers to gradient data URIs. Publish substitutes REAL image
+// URLs before sanitizing, so no tokens remain on that path.
+describe('sanitizeFiles — resolves {{wyber-image}} tokens to gradient placeholders', () => {
+  it('replaces tokens in code files with a data URI', () => {
+    const withImg = `export default function App() {
+  return <img src="{{wyber-image: mountain sunrise | 16:9}}" alt="peak" />
+}`
+    const out = sanitizeFiles({ 'src/App.tsx': { content: withImg } })
+    const app = contentOf(out['src/App.tsx'])
+    expect(app).not.toContain('{{wyber-image')
+    expect(app).toContain('data:image/svg+xml')
+  })
+
+  it('leaves already-resolved real URLs alone', () => {
+    const withUrl = `export default function App() {
+  return <img src="https://cdn.example.com/x.png" alt="x" />
+}`
+    const out = sanitizeFiles({ 'src/App.tsx': { content: withUrl } })
+    expect(contentOf(out['src/App.tsx'])).toContain('https://cdn.example.com/x.png')
+  })
+})
+
 // The remote builder runs `vite build`, which strips a Tailwind Play CDN script
 // but DOES compile @tailwind directives via PostCSS. So styling depends on the
 // compile inputs (index.css directives + tailwind/postcss config) being present.

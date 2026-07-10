@@ -1418,6 +1418,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
           updateMessage(assistantId, { content: full });
         }
       }
+      // Safety net: if a <<BUILD>> handoff slipped past the server's detection
+      // window (marker buried deeper than its scan), never render or persist
+      // raw protocol text — keep only the prose before the marker.
+      if (created && full.includes('<<BUILD>>')) {
+        full = full.slice(0, full.indexOf('<<BUILD>>')).trim()
+          || 'That change needs a build — say "go ahead" and I\'ll run it.';
+        updateMessage(assistantId, { content: full });
+      }
       if (!created) {
         // Empty reply — degrade gracefully, still no charge.
         setChatThinking(false);

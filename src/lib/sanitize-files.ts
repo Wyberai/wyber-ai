@@ -7,6 +7,7 @@
 import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
+import { resolveDirectivesForPreview } from './image-directives'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -325,6 +326,25 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
   const stubs = collectMissingStubs(out)
   for (const [path, val] of Object.entries(stubs)) {
     if (!(path in out)) out[path] = val
+  }
+
+  // Image directives → gradient placeholders. The saved source keeps the raw
+  // {{wyber-image: …}} tokens, but the REMOTE builder (which renders the live
+  // preview) shipped them verbatim inside <img src>, so previews showed broken
+  // image icons — users read that as "images not generated" and burned edits
+  // trying to fix it. Resolve every leftover token to the same deterministic
+  // brand-gradient data URI the in-browser engine uses. The PUBLISH path is
+  // unaffected: it substitutes REAL generated image URLs before calling this,
+  // so no tokens remain there. Transient like everything else here — the
+  // stored project keeps its tokens for publish-time generation.
+  for (const [path, val] of Object.entries(out)) {
+    if (!/\.(tsx?|jsx?|html?|css)$/i.test(path)) continue
+    const content = fileContent(val)
+    if (!content.includes('{{')) continue
+    const resolved = resolveDirectivesForPreview(content)
+    if (resolved !== content) {
+      out[path] = typeof val === 'string' ? resolved : { ...(val as object), content: resolved }
+    }
   }
 
   return out as T

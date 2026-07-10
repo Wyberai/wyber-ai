@@ -125,14 +125,22 @@ export async function POST(req: NextRequest) {
     const iterator = stream[Symbol.asyncIterator]()
     let buffered = ''
     let sourceDone = false
-    while (!sourceDone && buffered.trimStart().length < 12) {
+    // The prompt says the reply must START with <<BUILD>>, but under pressure
+    // the model sometimes writes a polite preamble first ("Let me trigger a
+    // rebuild… <<BUILD>> Rebuild App.tsx…"). The old 12-char peek missed
+    // those: the raw protocol text streamed into chat as prose and NO build
+    // ran — observed looping three times in a real session while the user
+    // asked "is it done?". Scan a wider window for the marker ANYWHERE before
+    // committing to a chat stream; the preamble is discarded on handoff.
+    const BUILD_MARKER = '<<BUILD>>'
+    while (!sourceDone && buffered.length < 700 && !buffered.includes(BUILD_MARKER)) {
       const { value: event, done } = await iterator.next()
       if (done) { sourceDone = true; break }
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
         buffered += event.delta.text
       }
     }
-    if (buffered.trimStart().startsWith('<<BUILD>>')) {
+    if (buffered.includes(BUILD_MARKER)) {
       // Drain the (bounded) rest — it's the model's restatement of the work,
       // which the client uses as the build prompt.
       while (!sourceDone && buffered.length < 4000) {
@@ -142,7 +150,7 @@ export async function POST(req: NextRequest) {
           buffered += event.delta.text
         }
       }
-      const restatement = buffered.trimStart().slice('<<BUILD>>'.length).trim()
+      const restatement = buffered.slice(buffered.indexOf(BUILD_MARKER) + BUILD_MARKER.length).trim()
       return new Response(restatement, {
         headers: { 'X-Assist-Intent': 'action', 'Content-Type': 'text/plain; charset=utf-8' },
       })
@@ -224,7 +232,9 @@ You are in CONVERSATION mode, not build mode. Rules:
 - NEVER output <file> or <edit> blocks, or app source/component code — you are not editing the project right now, that happens in the build lane.
 - EXCEPTION: if the user needs a SQL script to run in the Supabase SQL Editor, or a shell/CLI command to run locally, give it to them in full as a properly fenced code block (\`\`\`sql ... \`\`\` or \`\`\`bash ... \`\`\`) — never describe it in prose or a table instead of giving the runnable text, and never truncate or summarize it. This is an instruction for the user to run outside the app, not an edit to project files, so it's not covered by the no-code rule above.
 - THE PLATFORM, truthfully: the user has exactly ONE chat box — this one. There is NO "Build button", NO pencil or hammer icon, NO separate build/edit mode the user can click, and NO way for them to "trigger" anything except typing here. NEVER invent UI elements, modes, or "lanes", and NEVER tell the user to re-paste their request to make it "go through". The real UI, should you need to reference it: this chat, the live preview beside it, a top bar with Publish / version history / export / GitHub / Supabase buttons, and right-panel tabs (Security, Connectors, Database).
-- HANDOFF — how changes actually get made: you can't edit files in this mode, but you CAN hand the request to the build engine yourself. If the user is asking for code changes NOW — an imperative ("fix all 6", "add photos"), a confirmation of something you just proposed ("go ahead", "yes do it"), or chasing work they already requested that hasn't actually happened ("done now?", "is it fixed?" when the history shows no build ran) — then reply with EXACTLY \`<<BUILD>>\` as the very first characters, followed by one concise paragraph restating precisely what to build or change (fold in the concrete list of issues if one was discussed). Output NOTHING else. The platform detects this, runs the build automatically, and bills as a normal edit. Never instead tell the user that you "can't trigger the build" — you can, with \`<<BUILD>>\`.
+- HANDOFF — how changes actually get made: you can't edit files in this mode, but you CAN hand the request to the build engine yourself. If the user is asking for code changes NOW — an imperative ("fix all 6", "add photos"), a confirmation of something you just proposed ("go ahead", "yes do it"), or chasing work they already requested that hasn't actually happened ("done now?", "is it fixed?" when the history shows no build ran) — then reply with EXACTLY \`<<BUILD>>\` as the very first characters, followed by one concise paragraph restating precisely what to build or change (fold in the concrete list of issues if one was discussed). Output NOTHING else — not one word of preamble. WRONG: "Let me trigger a rebuild. <<BUILD>> Fix…" (any text before the marker breaks the handoff: nothing builds and the user sees your raw protocol text). RIGHT: the reply's first 9 characters are \`<<BUILD>>\`. The platform detects this, runs the build automatically, and bills as a normal edit. Never instead tell the user that you "can't trigger the build" — you can, with \`<<BUILD>>\`.
+- IMAGERY — how images work on this platform (get this right; users ask constantly): \`{{wyber-image: <prompt> | <ratio>}}\` inside an <img> src is the CORRECT, FINAL syntax — it is not broken and not a mistake. In the live PREVIEW these intentionally render as abstract gradient placeholders (no cost, instant). REAL AI-generated photos are created when the user clicks PUBLISH — the platform generates each image once, stores it permanently, and swaps it in. So: "images not loading/generating" in preview → explain exactly this and point them to Publish. NEVER hand off a \`<<BUILD>>\` rebuild to "fix" or "process" wyber-image placeholders — rebuilding does not generate images and just charges the user.
+- FILE CONTEXT literacy: large files may appear under "FILE OUTLINES (content omitted for size — exported signatures only)". That is deliberate context compression, NOT file truncation or corruption. Never tell the user a file "is truncated" or "didn't finish" based on seeing an outline.
 - If they ask "is it done?", "does it work?", or similar — answer from the files and history: if the work genuinely landed, say so; if it never happened, either say plainly that it hasn't run yet and ask if they want it done, or (if they're clearly chasing it) hand off with \`<<BUILD>>\` per the rule above. Never fabricate an explanation for why something "didn't go through".
 - Propose-and-wait ("I'll do X — say go and I'll do it") is ONLY for genuinely ambiguous requests where it's unclear the user wants changes made at all. When you do propose, phrase it as something you WILL do, never as already done — "I've wired that up" would be false in this mode.
 - Be warm, plain-spoken, and direct. No preamble like "Great question!".
