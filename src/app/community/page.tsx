@@ -17,17 +17,17 @@ export default async function CommunityPage() {
   const categories = ['All', 'Dashboard', 'CRM', 'E-commerce', 'Analytics', 'Portfolio', 'SaaS', 'Tool']
 
   return (
-    <div style={{ minHeight:'100vh', background:'#0a0a0f', color:'#f0f0f5', fontFamily: 'var(--font-sans)' }}>
+    <div style={{ minHeight:'100vh', background:'var(--brand-bg)', color:'var(--brand-text)', fontFamily: 'var(--font-sans)' }}>
       {/* Header */}
-      <div style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 32px' }}>
+      <div style={{ borderBottom:'1px solid var(--brand-border)', padding:'0 32px' }}>
         <div style={{ maxWidth:1200, margin:'0 auto', display:'flex', alignItems:'center', height:60, gap:24 }}>
-          <Link href="/" style={{ fontSize:18, fontWeight:700, color:'#f0f0f5', textDecoration:'none' }}>WyberAi</Link>
+          <Link href="/" style={{ fontSize:18, fontWeight:700, color:'var(--brand-text)', textDecoration:'none' }}>WyberAi</Link>
           <span style={{ color:'rgba(255,255,255,0.15)' }}>|</span>
-          <span style={{ fontSize:14, color:'#8b8b9a' }}>Community Gallery</span>
+          <span style={{ fontSize:14, color:'var(--brand-text-dim)' }}>Community Gallery</span>
           <div style={{ marginLeft:'auto', display:'flex', gap:12 }}>
-            <Link href="/agents" style={{ fontSize:13, color:'#8b8b9a', textDecoration:'none' }}>Agents</Link>
-            <Link href="/gallery" style={{ fontSize:13, color:'#8b8b9a', textDecoration:'none' }}>Templates</Link>
-            <Link href="/dashboard" style={{ fontSize:13, fontWeight:600, color:'#6366f1', textDecoration:'none' }}>Build yours →</Link>
+            <Link href="/agents" style={{ fontSize:13, color:'var(--brand-text-dim)', textDecoration:'none' }}>Agents</Link>
+            <Link href="/gallery" style={{ fontSize:13, color:'var(--brand-text-dim)', textDecoration:'none' }}>Templates</Link>
+            <Link href="/dashboard" style={{ fontSize:13, fontWeight:600, color:'var(--brand-accent)', textDecoration:'none' }}>Build yours →</Link>
           </div>
         </div>
       </div>
@@ -35,14 +35,14 @@ export default async function CommunityPage() {
       <div style={{ maxWidth:1200, margin:'0 auto', padding:'40px 32px' }}>
         {/* Hero */}
         <div style={{ textAlign:'center', marginBottom:48 }}>
-          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'#6366f1', marginBottom:16 }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.25)', borderRadius:20, padding:'4px 14px', fontSize:12, color:'var(--brand-accent)', marginBottom:16 }}>
             ⚡ {apps?.length || 0} community apps — all cloneable
           </div>
           <h1 style={{ fontSize:44, fontWeight:800, margin:'0 0 12px', letterSpacing:'-0.02em' }}>
             Real apps.<br/>
-            <span style={{ color:'#6366f1' }}>Clone any of them.</span>
+            <span style={{ color:'var(--brand-accent)' }}>Clone any of them.</span>
           </h1>
-          <p style={{ fontSize:16, color:'#8b8b9a', maxWidth:540, margin:'0 auto' }}>
+          <p style={{ fontSize:16, color:'var(--brand-text-dim)', maxWidth:540, margin:'0 auto' }}>
             Built by the WyberAi community. Browse, clone, and make it yours in seconds.
           </p>
         </div>
@@ -52,15 +52,15 @@ export default async function CommunityPage() {
           <div style={{ textAlign:'center', padding:'80px 0' }}>
             <div style={{ fontSize:48, marginBottom:16 }}>🚀</div>
             <div style={{ fontSize:18, fontWeight:700, marginBottom:8 }}>Be the first to share</div>
-            <div style={{ fontSize:14, color:'#52526a', marginBottom:24 }}>Build something amazing and make it public from the editor</div>
-            <Link href="/dashboard" style={{ padding:'10px 24px', borderRadius:8, background:'#6366f1', color:'white', fontWeight:700, fontSize:14, textDecoration:'none' }}>
+            <div style={{ fontSize:14, color:'var(--brand-text-faint)', marginBottom:24 }}>Build something amazing and make it public from the editor</div>
+            <Link href="/dashboard" style={{ padding:'10px 24px', borderRadius:8, background:'var(--brand-accent)', color:'white', fontWeight:700, fontSize:14, textDecoration:'none' }}>
               Start Building →
             </Link>
           </div>
         ) : (
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(340px,1fr))', gap:20 }}>
             {apps.map(app => (
-              <div key={app.id} style={{ background:'#111118', border:'1px solid rgba(255,255,255,0.06)', borderRadius:14, overflow:'hidden', transition:'border-color 0.15s' }}>
+              <div key={app.id} style={{ background:'var(--brand-bg-raised)', border:'1px solid var(--brand-border)', borderRadius:14, overflow:'hidden', transition:'border-color 0.15s' }}>
                 {/* Thumbnail */}
                 <div style={{ height:180, background:'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
                   {app.thumbnail_url
@@ -74,19 +74,19 @@ export default async function CommunityPage() {
 
                 <div style={{ padding:18 }}>
                   <div style={{ fontSize:15, fontWeight:700, marginBottom:4 }}>{app.name}</div>
-                  <div style={{ fontSize:12, color:'#52526a', marginBottom:14 }}>
+                  <div style={{ fontSize:12, color:'var(--brand-text-faint)', marginBottom:14 }}>
                     {app.description || 'Built with WyberAi'}
                   </div>
 
                   <div style={{ display:'flex', gap:8 }}>
                     {app.published_url && (
                       <a href={app.published_url} target="_blank" rel="noreferrer"
-                        style={{ flex:1, padding:'7px 0', borderRadius:7, border:'1px solid rgba(255,255,255,0.08)', background:'transparent', color:'#8b8b9a', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'center', textDecoration:'none' }}>
+                        style={{ flex:1, padding:'7px 0', borderRadius:7, border:'1px solid var(--brand-border)', background:'transparent', color:'var(--brand-text-dim)', fontSize:12, fontWeight:600, cursor:'pointer', textAlign:'center', textDecoration:'none' }}>
                         Preview →
                       </a>
                     )}
                     <Link href={`/dashboard?clone=${app.id}`}
-                      style={{ flex:2, padding:'7px 0', borderRadius:7, border:'none', background:'#6366f1', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', textAlign:'center', textDecoration:'none', display:'block' }}>
+                      style={{ flex:2, padding:'7px 0', borderRadius:7, border:'none', background:'var(--brand-accent)', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', textAlign:'center', textDecoration:'none', display:'block' }}>
                       ⎘ Clone this app
                     </Link>
                   </div>

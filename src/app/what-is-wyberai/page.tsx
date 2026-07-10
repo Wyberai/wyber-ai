@@ -63,7 +63,7 @@ export default function WhatIsWyberAiPage() {
 
       {/* Hero */}
       <div style={{ maxWidth: 760, margin: '0 auto', padding: 'clamp(64px,10vw,100px) clamp(16px,4vw,40px) 0' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>Overview</div>
+        <div className="mk-eyebrow" style={{ marginBottom: 14 }}>OVERVIEW</div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(34px,5vw,52px)', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--text)', margin: '0 0 20px', lineHeight: 1.12 }}>
           What is <em style={{ color: 'var(--sky)' }}>WyberAi</em>?
         </h1>

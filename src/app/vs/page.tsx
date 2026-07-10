@@ -60,7 +60,8 @@ const COMPARISONS = [
   },
 ]
 
-const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.08)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9' }
+/* Space-journey brand surfaces (see globals.css --brand-*) */
+const s = { bg: 'var(--brand-bg)', card: 'var(--brand-bg-raised)', border: 'var(--brand-border)', text: 'var(--brand-text)', muted: 'var(--brand-text-dim)', dim: 'var(--brand-text-faint)', sky: 'var(--brand-accent)' }
 
 export default function VsIndex() {
   return (
@@ -76,7 +77,7 @@ export default function VsIndex() {
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <header style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Verified June 2026</div>
+          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>VERIFIED JUNE 2026</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
             WyberAi vs Every Alternative
           </h1>
