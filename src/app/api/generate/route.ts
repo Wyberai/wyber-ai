@@ -1282,7 +1282,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     // NOTE: modelTier is no longer read from the client — the server picks the
     // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -1737,8 +1737,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // build starts from a beautiful, accessible, distinct palette; freshness
       // comes from picking a different one each build. Yields to explicit user
       // colors/brand.
-      const { pickPalette, renderDesignBrief } = await import('@/lib/design-palettes')
-      perRequestParts.push(renderDesignBrief(pickPalette(prompt)))
+      const { pickPalette, getPaletteById, renderDesignBrief } = await import('@/lib/design-palettes')
+      // An explicit paletteId (user picked a direction in Plan Mode / theme UI)
+      // wins; unknown or absent ids fall back to the prompt-matched random pick.
+      const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
+      perRequestParts.push(renderDesignBrief(palette))
 
       // LAYOUT & MOTION SEED — the palette brief handles color freshness; this
       // handles STRUCTURAL freshness so two builds with similar palettes still
