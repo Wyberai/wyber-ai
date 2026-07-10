@@ -9,6 +9,7 @@ import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '
 import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
 import { PlanMode } from './PlanMode';
+import { DirectionCards } from './DirectionCards';
 import { FileMentionDropdown } from './FileMentionDropdown';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -404,6 +405,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // most once per project (planOfferShownRef), regardless of outcome.
   const [pendingPlanOffer, setPendingPlanOffer] = useState<{ prompt: string; img: AttachedImage | null; hasAttachments: boolean } | null>(null);
   const planOfferShownRef = useRef(false);
+  // Design direction picked on the offer card's palette cards (null = server
+  // prompt-matches one). PlanMode shows its own cards, so this only feeds the
+  // "Just build it" path.
+  const [offerPaletteId, setOfferPaletteId] = useState<string | null>(null);
   const [lastCreditCost, setLastCreditCost] = useState<number | null>(null);
   const [lastModel, setLastModel] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -780,7 +785,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -950,6 +955,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // edit (wrong price, Sonnet instead of Opus, no naming pass). Sent
           // explicitly from the store's per-project flag instead.
           isFirstBuild: !useEditorStore.getState().hasGeneratedFiles,
+          // Design direction the user picked on the plan/offer cards — the
+          // server silently falls back to its prompt-matched pick when absent.
+          paletteId: opts?.paletteId || undefined,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
           attachedText: attachedTextPayload.length ? attachedTextPayload : undefined,
@@ -1448,7 +1456,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
   // points don't have to re-run handleSend's input-box-specific gates above
   // this point (plan mode, regulated-domain notice, pre-gen dep gate) — those
   // only make sense for a message freshly typed into the box.
-  const dispatchTurn = useCallback(async (content: string, img: AttachedImage | null, hasAttachments = false) => {
+  const dispatchTurn = useCallback(async (content: string, img: AttachedImage | null, hasAttachments = false, paletteId?: string | null) => {
     const isNewBuild = Object.keys(files ?? {}).length === 0;
     if (!img && !hasAttachments) {
       const intent = classifyIntent(content, !isNewBuild);
@@ -1457,7 +1465,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         return;
       }
     }
-    await executeGeneration(content, img);
+    await executeGeneration(content, img, paletteId ? { paletteId } : undefined);
   }, [files, handleConversational, executeGeneration]);
 
   // Everything that runs once the user has settled on "just build it" —
@@ -1465,7 +1473,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
   // out of handleSend so the plan-offer gate's "Just build it" button can run
   // the exact same path without duplicating it a third time (pendingRegulated
   // already duplicates it once, for its own "continue" button).
-  const proceedPastPlanOffer = useCallback(async (userMsg: string, img: AttachedImage | null, hasAttachments: boolean) => {
+  const proceedPastPlanOffer = useCallback(async (userMsg: string, img: AttachedImage | null, hasAttachments: boolean, paletteId?: string | null) => {
     // ── Regulated-domain notice (non-blocking) ──────────────────────────
     // Only on new builds; skip if user already acknowledged this prompt.
     const isNewBuild = Object.keys(files ?? {}).length === 0;
@@ -1521,7 +1529,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Images always build (screenshot-to-app). Otherwise classify: CHAT and
     // AMBIGUOUS go to the conversational lane (no credits, no build loader);
     // EDIT/BUILD go straight to generation.
-    await dispatchTurn(userMsg, img, hasAttachments);
+    await dispatchTurn(userMsg, img, hasAttachments, paletteId);
   }, [files, dispatchTurn]);
 
   const handleSend = useCallback(async () => {
@@ -1674,14 +1682,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
             framework={framework}
             fileContext={Object.entries(files).slice(0,10).map(([p,f]) => `<file path="${p}">\n${(f as any).content.slice(0,1500)}\n</file>`).join('\n\n')}
             projectId={projectId}
-            onApprove={(planSpec) => {
+            onApprove={(planSpec, paletteId) => {
               const { image, prompt: originalPrompt } = pendingPlan;
               setPendingPlan(null);
               // The model gets the full plan spec (title/approach/steps/Q&A);
               // the chat bubble shows the user's own original words instead —
               // a giant technical spec dumped into the thread would look
               // nothing like a normal message.
-              executeGeneration(planSpec, image, { displayContent: originalPrompt });
+              executeGeneration(planSpec, image, { displayContent: originalPrompt, paletteId });
             }}
             onCancel={() => setPendingPlan(null)}
           />
@@ -1702,6 +1710,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
               </div>
             </div>
           </div>
+          {/* Free design-direction pick — applies to both buttons' builds */}
+          <DirectionCards prompt={pendingPlanOffer.prompt} selectedId={offerPaletteId} onPick={setOfferPaletteId} />
           <div style={{ display:'flex', gap:7 }}>
             <button
               onClick={() => {
@@ -1716,8 +1726,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <button
               onClick={async () => {
                 const { prompt, img, hasAttachments } = pendingPlanOffer;
+                const picked = offerPaletteId;
                 setPendingPlanOffer(null);
-                await proceedPastPlanOffer(prompt, img, hasAttachments);
+                setOfferPaletteId(null);
+                await proceedPastPlanOffer(prompt, img, hasAttachments, picked);
               }}
               style={{ padding:'7px 14px', borderRadius:7, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text2)', fontSize:12, fontWeight:600, cursor:'pointer' }}
             >
