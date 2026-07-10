@@ -22,6 +22,7 @@
 import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/lib/design-system'
 import { resolveDirectivesForPreview } from '@/lib/image-directives'
 import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
+import { injectWyberLoc, WYBER_BRIDGE_SCRIPT } from '@/lib/wyber-preview/bridge'
 
 export interface PreviewFile {
   content: string
@@ -138,8 +139,11 @@ export async function bundleFiles(
     // Normalize all file paths, and resolve any image directives to a gradient
     // data URI so the preview shows a tasteful placeholder (never a broken image
     // or literal {{wyber-image}} text). Real images are generated at publish.
+    // Also tag JSX DOM elements with data-wyber-loc for the selection bridge
+    // (transient — the stored project never carries these attributes).
+    const locTagged = injectWyberLoc(files)
     const normalizedFiles: Record<string, string> = {}
-    for (const [path, content] of Object.entries(files)) {
+    for (const [path, content] of Object.entries(locTagged)) {
       normalizedFiles[normalizeFilePath(path)] = resolveDirectivesForPreview(content)
     }
 
@@ -364,6 +368,7 @@ ${js}
       }
     });
   </script>
+  ${WYBER_BRIDGE_SCRIPT}
 </body>
 </html>`
 }

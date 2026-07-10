@@ -5,6 +5,7 @@ import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
 import { isPlaceholderApp } from '@/lib/starter-templates'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
+import { injectWyberLoc, injectPreviewBridge } from '@/lib/wyber-preview/bridge'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -130,10 +131,15 @@ export function PreviewPanel() {
         } catch { /* gradients remain — never block the build on imagery */ }
       }
 
+      // Selection bridge (transient, build-request only — saved source stays
+      // clean, publish is untouched): tag JSX with data-wyber-loc BEFORE
+      // sanitize (only the user's real files get tagged), append the bridge
+      // <script> AFTER sanitize (index.html is guaranteed to exist by then).
+      // Both transforms fall back to the untouched map on any error.
       const res = await fetch(`${BUILDER_URL}/build`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: sanitizeFiles(buildFiles), projectId: project?.id }),
+        body: JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles))), projectId: project?.id }),
       })
 
       const data = await res.json()
