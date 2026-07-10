@@ -34,7 +34,7 @@ export const WYBER_UI_KIT_SOURCE = String.raw`// Wyber UI Kit — premium primit
 // hand-rolling cards/buttons/heroes. All colors come from the app's design
 // tokens (src/index.css), so everything below matches this app's palette.
 import React, { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence, useInView } from 'framer-motion'
+import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion'
 import clsx from 'clsx'
 import { Menu, X, Check, ChevronDown, Star, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
@@ -125,6 +125,153 @@ export function Marquee({ children, speed = 30, reverse = false, pauseOnHover = 
         <div className="flex shrink-0 items-center gap-6" aria-hidden="true">{children}</div>
       </div>
     </div>
+  )
+}
+
+/* ========================== SCROLL STORYTELLING ========================== */
+
+export function ScrollProgress({ className }: { className?: string }) {
+  const { scrollYProgress } = useScroll()
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ scaleX: scrollYProgress }}
+      className={cn('fixed inset-x-0 top-0 z-50 h-0.5 origin-left bg-primary', className)}
+    />
+  )
+}
+
+export function Parallax({ children, speed = 0.3, className }: {
+  children?: React.ReactNode; speed?: number; className?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
+  const y = useTransform(scrollYProgress, [0, 1], [speed * -80, speed * 80])
+  return (
+    <motion.div ref={ref} style={{ y }} className={className}>
+      {children}
+    </motion.div>
+  )
+}
+
+export function SplitTextReveal({ text, delay = 0, className }: {
+  text: string; delay?: number; className?: string
+}) {
+  const words = text.split(' ')
+  return (
+    <motion.span
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: '-60px' }}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: delay } } }}
+      aria-label={text}
+      className={cn('inline-block', className)}
+    >
+      {words.map((w, i) => (
+        <span key={i} className="inline-block overflow-hidden align-bottom">
+          <motion.span
+            className="inline-block"
+            variants={{ hidden: { y: '110%' }, show: { y: '0%', transition: { duration: 0.5, ease: easeOut } } }}
+          >
+            {w}
+            {i < words.length - 1 ? ' ' : ''}
+          </motion.span>
+        </span>
+      ))}
+    </motion.span>
+  )
+}
+
+// Apple-style pinned walkthrough: the section pins for items.length viewports
+// and crossfades through each item as the user scrolls. THE cinematic moment
+// for product feature stories — use once per page, 3-4 items.
+export function StickyShowcase({ items, className }: {
+  items: { title: string; description?: string; visual?: React.ReactNode }[]; className?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
+  const [active, setActive] = useState(0)
+  useEffect(() => {
+    const unsub = scrollYProgress.on('change', v => {
+      setActive(Math.min(items.length - 1, Math.max(0, Math.floor(v * items.length))))
+    })
+    return unsub
+  }, [scrollYProgress, items.length])
+  return (
+    <div ref={ref} className={cn('relative', className)} style={{ height: (items.length * 100) + 'vh' }}>
+      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
+        {items.map((item, i) => (
+          <motion.div
+            key={i}
+            initial={false}
+            animate={{ opacity: active === i ? 1 : 0, y: active === i ? 0 : 28, scale: active === i ? 1 : 0.97 }}
+            transition={{ duration: 0.45, ease: easeOut }}
+            style={{ pointerEvents: active === i ? 'auto' : 'none' }}
+            className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
+          >
+            {item.visual && <div className="mb-8 w-full max-w-2xl">{item.visual}</div>}
+            <h3 className="font-display text-3xl font-bold tracking-tight text-foreground md:text-5xl">{item.title}</h3>
+            {item.description && <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">{item.description}</p>}
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// Cards pin under the header and stack with a slight offset as you scroll —
+// pure CSS sticky, no scroll math, works everywhere.
+export function ScrollStack({ items, className }: { items: React.ReactNode[]; className?: string }) {
+  return (
+    <div className={cn('flex flex-col gap-6', className)}>
+      {items.map((item, i) => (
+        <div key={i} className="sticky" style={{ top: 88 + i * 26 }}>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_16px_48px_hsl(var(--foreground)/0.1)]">
+            {item}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function TiltCard({ children, maxTilt = 8, className }: {
+  children?: React.ReactNode; maxTilt?: number; className?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 })
+  return (
+    <div
+      ref={ref}
+      onMouseMove={e => {
+        const r = ref.current ? ref.current.getBoundingClientRect() : null
+        if (!r) return
+        const px = (e.clientX - r.left) / r.width - 0.5
+        const py = (e.clientY - r.top) / r.height - 0.5
+        setTilt({ rx: -py * maxTilt, ry: px * maxTilt })
+      }}
+      onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
+      style={{ perspective: '900px' }}
+      className={className}
+    >
+      <div
+        className="rounded-xl border border-border bg-card p-6 transition-transform duration-150 will-change-transform"
+        style={{ transform: 'rotateX(' + tilt.rx + 'deg) rotateY(' + tilt.ry + 'deg)' }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+export function LiquidUnderline({ children, href, className, ...rest }: {
+  children?: React.ReactNode; href?: string; className?: string
+} & React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return (
+    <a href={href} className={cn('group relative inline-block text-sm font-medium text-foreground', className)} {...rest}>
+      {children}
+      <span aria-hidden="true" className="absolute -bottom-0.5 left-0 h-px w-full origin-left scale-x-0 bg-primary transition-transform duration-300 ease-out group-hover:scale-x-100" />
+    </a>
   )
 }
 
@@ -734,7 +881,7 @@ WYBER UI KIT — PRE-BUILT PREMIUM COMPONENTS (USE THESE — do NOT hand-write e
 The platform injects src/wyber-ui.tsx into every build: ~30 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
 
 Import (relative — from src/App.tsx use './wyber-ui', from src/components/* use '../wyber-ui'):
-import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, cn } from './wyber-ui'
+import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, StickyShowcase, ScrollStack, Parallax, SplitTextReveal, ScrollProgress, TiltCard, LiquidUnderline, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, cn } from './wyber-ui'
 
 MOTION (wrap content — everything animates in on scroll):
 - <Reveal delay={0.1} y={24}>…</Reveal> — fade+rise on scroll into view.
@@ -757,6 +904,15 @@ PREMIUM SURFACES & BACKDROPS:
 - <BackgroundGrid variant="dots|lines" /> — subtle pattern overlay for heroes/sections.
 - <NoiseOverlay opacity={0.05} /> — film-grain texture; add to gradient panels/dark sections so surfaces feel physical, not synthetic.
 - <HeroHeadline>Ship <em>beautiful</em> apps</HeroHeadline> — fluid oversized display type (up to ~6.5rem); <em> renders as an italic primary-colored accent. Use for hero H1s instead of text-5xl.
+
+SCROLL STORYTELLING (the layer that makes a page PERFORM, not just scroll):
+- <StickyShowcase items={[{title, description, visual}]} /> — Apple-style pinned walkthrough: section pins and crossfades through 3-4 items as the user scrolls. THE cinematic centerpiece; use exactly once per landing page.
+- <ScrollStack items={[<div className="p-8">…</div>, …]} /> — cards pin and stack with offset while scrolling (process steps, case studies).
+- <Parallax speed={0.3}>…</Parallax> — subtle scroll depth; wrap hero images/visuals.
+- <SplitTextReveal text="Crafted for modern teams" /> — per-word rise reveal; use inside section titles.
+- <ScrollProgress /> — thin top scroll-progress bar; add once on long landing pages.
+- <TiltCard maxTilt={8}> — pointer-tracking 3D tilt (featured pricing tier, product highlight).
+- <LiquidUnderline href="#"> — animated underline links (inline/footer links).
 
 SECTIONS (compose full pages fast):
 - <Navbar brand={<>logo</>} links={[{label,href}]} cta={<Button/>} /> — fixed, glass-on-scroll, mobile menu. Add pt-16 to page content.
