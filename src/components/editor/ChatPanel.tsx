@@ -179,6 +179,14 @@ function cleanMessage(text: string): string {
     if (l.match(/^[a-z]+: ['"\[{]/)) return false;
     // file-manifest list items: "- path/to/File.tsx" or "- File.tsx: description"
     if (l.startsWith('- ') && /\.\w{2,4}/.test(l)) return false;
+    // Pre-build PLAN block ("Building: X / Sections: ... / Files: ...") — it's
+    // process narration the prompt asks for BEFORE files; persisting it next to
+    // the "Built:" recap made every receipt read twice as long and confused
+    // users ("Building" and "Built" for the same app in one message). The live
+    // ticker already showed it; only the recap is the receipt.
+    if (/^building:\s/i.test(l)) return false;
+    if (/^sections?:\s/i.test(l)) return false;
+    if (/^files?:\s/i.test(l)) return false;
     // continuation/self-heal reasoning openers
     if (/^(i notice|i see that|i'll continue|let me continue|continuing|previous output|your previous|it seems|it looks like)/i.test(l)) return false;
     // file-list headers
@@ -206,6 +214,15 @@ function cleanMessage(text: string): string {
   if (result.length > 2500) result = result.slice(0, 2500).trimEnd() + '…';
   if (!result || result.length < 3) result = 'Done — check the preview.';
   return result;
+}
+
+// A build receipt renders its first line as the visible lead; everything after
+// collapses behind "Show details". Split-only helper — never mutates content.
+function splitReceipt(content: string): { lead: string; rest: string } {
+  const t = content.trim();
+  const nl = t.indexOf('\n');
+  if (nl === -1) return { lead: t, rest: '' };
+  return { lead: t.slice(0, nl).trim(), rest: t.slice(nl + 1).trim() };
 }
 
 // A real fenced code block (```sql ... ``` etc.) with a copy button AND real
@@ -408,6 +425,10 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // streaming, plus which finished messages have their stored reasoning expanded.
   const [liveReasoning, setLiveReasoning] = useState('');
   const [expandedReasoning, setExpandedReasoning] = useState<Set<string>>(new Set());
+  // Build receipts render collapsed (first line + "Show details") — Lovable's
+  // progressive disclosure. FULL text stays in message content/history so the
+  // model never loses referents (the Jul 8 lesson); only the RENDER collapses.
+  const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
 
   const [recording, setRecording] = useState(false);
   const connectors = useEditorStore(s => s.connectors);
@@ -1999,7 +2020,35 @@ const storeProjectId = useEditorStore.getState().project?.id;
                               )}
                             </div>
                           )}
-                          <MessageBody content={msg.content} />
+                          {(() => {
+                            // Build receipts (messages that changed files) collapse
+                            // to their first line; prose answers render in full.
+                            if (!msg.filesChanged?.length) return <MessageBody content={msg.content} />;
+                            const { lead, rest } = splitReceipt(msg.content);
+                            if (!rest) return <MessageBody content={msg.content} />;
+                            const detailsOpen = expandedDetails.has(msg.id);
+                            return (
+                              <>
+                                <MessageBody content={lead} />
+                                <button
+                                  onClick={() => setExpandedDetails(prev => {
+                                    const next = new Set(prev);
+                                    if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
+                                    return next;
+                                  })}
+                                  style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0, marginTop:4 }}
+                                >
+                                  {detailsOpen ? 'Hide details' : 'Show details'}
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: detailsOpen ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
+                                </button>
+                                {detailsOpen && (
+                                  <div style={{ marginTop:5 }}>
+                                    <MessageBody content={rest} />
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </>
                     }
                   </div>
