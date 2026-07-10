@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "@/styles/brand.css";
 import { ThemeProvider } from '@/lib/theme';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';

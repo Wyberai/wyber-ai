@@ -1,0 +1,48 @@
+/**
+ * WyberAi brand tokens — extracted from the space-journey visual language.
+ *
+ * FROZEN after the Phase-0 coordination commit (July 2026 overhaul).
+ * Session A (marketing site) and Session C (editor) both consume these vars;
+ * do NOT edit values here without cross-session signoff. JS mirror lives in
+ * src/lib/brand-tokens.ts and must stay in sync.
+ *
+ * Imported from src/app/layout.tsx — never from globals.css.
+ */
+
+:root {
+  /* ---- Surfaces ---- */
+  --brand-bg: #05060a;
+  --brand-bg-raised: #0a0c14;
+  --brand-bg-overlay: #10131f;
+
+  /* ---- Accent (WyberAi sky) ---- */
+  --brand-accent: #0ea5e9;
+  --brand-accent-hot: #38bdf8;
+  --brand-accent-dim: #0369a1;
+  --brand-glow: rgba(14, 165, 233, 0.35);
+  --brand-glow-soft: rgba(14, 165, 233, 0.15);
+
+  /* ---- Text ---- */
+  --brand-text: #e6edf6;
+  --brand-text-dim: #8b94a7;
+  --brand-text-faint: #545c6e;
+
+  /* ---- 1px hairlines ---- */
+  --brand-border: rgba(255, 255, 255, 0.08);
+  --brand-border-strong: rgba(255, 255, 255, 0.14);
+  --brand-border-accent: rgba(14, 165, 233, 0.4);
+
+  /* ---- Type ---- */
+  --brand-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
+  --brand-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /* ---- Motion ---- */
+  --brand-dur-fast: 150ms;
+  --brand-dur-base: 240ms;
+  --brand-dur-slow: 420ms;
+  --brand-ease: cubic-bezier(0.22, 1, 0.36, 1); /* easeOutQuint-ish, space-journey camera feel */
+  --brand-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot for tab/underline snaps */
+
+  /* ---- Film-grain noise (SVG fractal turbulence, tile 160px) ---- */
+  --brand-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}

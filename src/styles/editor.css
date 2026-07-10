@@ -1,0 +1,8 @@
+/**
+ * Editor cockpit chrome — Session C owns this file.
+ *
+ * All IDE-only styling lives here (or inline on the components); we never
+ * touch src/app/globals.css. NOTE: globals.css ships an un-layered
+ * `* { margin:0; padding:0 }` reset that beats Tailwind utilities, so rules
+ * here must be explicit selectors, not bare utility-class expectations.
+ */
