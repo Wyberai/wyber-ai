@@ -47,6 +47,7 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
   { id: 'knowledge',  label: 'Knowledge',  desc: 'Your project brain — sent with every prompt' },
   { id: 'database',   label: 'Database',   desc: 'Connect Supabase' },
   { id: 'security',   label: 'Security',   desc: 'Real RLS scan — proves nobody can read your users’ data' },
+  { id: 'themes',     label: 'Themes',     desc: 'Retheme your app instantly — colors, fonts, radius. Free' },
   { id: 'connectors', label: 'Connectors', desc: 'Stripe, Resend & more' },
   { id: 'history',    label: 'History',    desc: 'Save & restore versions' },
 ];

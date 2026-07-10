@@ -364,6 +364,19 @@ export function PreviewPanel() {
     }
   }, [html, editMode])
 
+  // ThemePanel's instant retheme: forward the override CSS into the iframe
+  // (the bridge upserts <style id="wyber-theme-override"> — no rebuild).
+  // Purely additive; touches nothing in the build/heal state machine.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { css?: string } | undefined
+      if (typeof detail?.css !== 'string') return
+      iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-apply-theme', css: detail.css }, '*')
+    }
+    window.addEventListener('wyber-apply-theme', handler)
+    return () => window.removeEventListener('wyber-apply-theme', handler)
+  }, [])
+
   // Total auto-heal attempts spent on the CURRENT user generation. Bounded so the
   // loop always converges — see the auto-heal effect below.
   const healTotal = useRef(0)
