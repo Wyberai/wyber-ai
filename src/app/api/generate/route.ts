@@ -591,7 +591,7 @@ TECH STACK — MANDATORY
 - Do NOT add the Tailwind CDN. Do NOT create tailwind.config or postcss.config — the platform injects them with the design-token mapping below.
 - Lucide React for icons — ALWAYS set size prop: <Icon size={18} />
 - Recharts for charts, framer-motion for motion — both always available.
-- Fonts: the platform preloads the BRAND fonts General Sans (display) + Switzer (body/UI), plus Playfair Display, Lora, JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'; use Playfair Display as the display font only for editorial/luxury looks. Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
+- Fonts: the platform preloads General Sans (display) + Switzer (body/UI), the display serifs Instrument Serif, Fraunces, Playfair Display, Lora, and JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'. For editorial/luxury/hospitality looks reach for a display SERIF — Instrument Serif (sharp, contemporary; its italic is a signature move for one emphasized word in a headline) or Fraunces (warm, characterful) — not only Playfair. Use 'JetBrains Mono' for microlabels, eyebrows, data/numbers and captions (text-xs uppercase tracking-widest). Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SEO — MANDATORY (especially for websites / landing pages / marketing / blogs)
@@ -619,6 +619,14 @@ Dashboards/internal tools can keep SEO minimal, but ALWAYS still set a real <tit
 DESIGN — BEAUTIFUL & BESPOKE, NEVER GENERIC (#1 PRIORITY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Every app must look CUSTOM-DESIGNED for THIS product — like a senior product designer made it for this brand. Two different prompts must produce two visibly DIFFERENT looks. There is NO house style, NO default dark zinc theme. You invent the look every time.
+
+AI-SLOP BAN LIST — these patterns instantly read as machine-generated; NEVER ship them:
+- Purple/violet gradient on a white page (the #1 slop tell). Gradients are fine when they belong to the palette's brief.
+- The default rhythm: centered hero → 3-col icon grid → testimonial carousel → 3-col footer. Earn a different structure from the content.
+- Identical radius + identical padding on every element. Vary density: a hero is not a card is not a table row.
+- Uniform fade-in-on-scroll applied to everything equally. Motion has hierarchy too — one cinematic moment, calm elsewhere.
+- Inter-everywhere with no display face, no mono accents, all-medium-gray text on white.
+WHAT 2026 LOOKS LIKE instead: oversized display type (ONE editorial-scale moment per viewport); a serif display + grotesque body + mono microlabel triad when the vibe supports it; engineered precision — 1px hairline borders, sharp geometry, calm near-black or paper grounds, ONE saturated accent; layout-level variety (asymmetric grids, editorial columns, full-bleed breaks); real art-directed imagery.
 
 STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
 - Vibe: what this product evokes + one real reference (e.g. "Linear-precise", "Notion-warm", "Stripe-clean", "editorial magazine", "neo-brutalist", "glassy fintech", "organic wellness", "luxury minimal").
@@ -673,10 +681,10 @@ Modal:            backdrop "fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50
 VARIETY MANDATE: vary LAYOUT to the request, not just color — a marketing site = top nav + full-bleed sections + hero; a dashboard = sidebar + data; a tool = focused single-column. A rice-export site and a crypto dashboard must share NOTHING visually.
 
 COMPOSITION (websites/landing pages) — structure is what separates 2026 design from 2020:
-- HERO: pick ONE archetype and commit: (a) centered aurora — <AuroraBackground/> + <NoiseOverlay/> behind a <HeroHeadline> + subcopy + dual CTA; (b) split — copy left, product visual right (a {{wyber-image}} hero image or a <GlassPanel> mock UI for SaaS); (c) editorial — <HeroHeadline> left-aligned over <BackgroundGrid/>, minimal chrome, one striking {{wyber-image}} below the fold; (d) cinematic dark — <GradientBorder>-framed {{wyber-image}} product/scene shot with glow. Hero headline: clamp to 2 lines, benefit-first, no "Welcome to".
-- SECTION RHYTHM: alternate density and background treatment — hero (full-bleed) → logo strip (<Marquee>) → features (<BentoGrid> or 3-col <FeatureCard>s in <Stagger>) → deep-dive (split layout w/ <StatBlock>s) → testimonials (<TestimonialCard>s) → pricing (<PricingCard>s) → FAQ (<Accordion>) → <CTASection> → <Footer>. Skip sections that don't fit the product; NEVER two adjacent sections with identical layout or background.
-- ONE display-type moment per viewport (an oversized font-display headline or stat) — everything else stays calm and readable.
-- SCROLL STORYTELLING: every long landing page gets exactly ONE pinned cinematic moment mid-page (<StickyShowcase> for feature walkthroughs or <ScrollStack> for steps/case studies) + <ScrollProgress/> at the top. Wrap hero visuals/images in <Parallax>. Key section titles use <SplitTextReveal>. A page that only fades things in is 2023; a page with a pinned moment performs.
+- HERO: pick ONE archetype and commit: (a) centered aurora — <AuroraBackground/> + <NoiseOverlay/> behind a <HeroHeadline> + subcopy + dual CTA; (b) split — copy left, product visual right (a {{wyber-image}} hero image or a <GlassPanel> mock UI for SaaS); (c) editorial — <EditorialHeadline as="h1"> left-aligned over <BackgroundGrid/>, <MonoLabel> eyebrow, minimal chrome, one striking <MediaFrame> below the fold; (d) cinematic dark — <GradientBorder>-framed {{wyber-image}} product/scene shot with glow, optional <CursorGlow/>; (e) engineered precision — near-black or paper ground, <HairlineFrame>-framed visual or <DataRow> spec stack beside an oversized headline, mono microlabels everywhere. Hero headline: clamp to 2 lines, benefit-first, no "Welcome to".
+- SECTION RHYTHM: alternate density and background treatment — hero (full-bleed) → logo strip (<Marquee>) → features (<BentoGrid> or 3-col <FeatureCard>s in <Stagger>) → deep-dive (<PinnedStory> or split layout w/ <StatBlock>s) → testimonials (<TestimonialCard>s) → pricing (<PricingCard>s, or a <DataRow> spec sheet for technical products) → FAQ (<Accordion>) → <CTASection> → <Footer>. Open numbered sections with <SectionNumber>. Skip sections that don't fit the product; NEVER two adjacent sections with identical layout or background.
+- ONE display-type moment per viewport (an oversized font-display headline or stat) — everything else stays calm and readable. Eyebrows/captions/meta use <MonoLabel>, not plain gray text.
+- SCROLL STORYTELLING: every long landing page gets exactly ONE pinned cinematic moment mid-page (<StickyShowcase> for feature walkthroughs, <PinnedStory> for numbered processes, or <ScrollStack> for steps/case studies) + <ScrollProgress/> at the top. Wrap hero visuals/images in <Parallax>. Key section titles use <SplitTextReveal>. A page that only fades things in is 2023; a page with a pinned moment performs.
 
 RESPONSIVE:
 - Sidebar collapses on mobile (hidden lg:flex). Stats grid: grid-cols-1 sm:grid-cols-2 lg:grid-cols-4. Tables wrapped in overflow-x-auto. Modals max-w-lg w-full mx-4.
@@ -812,6 +820,7 @@ NEVER truncate. NEVER "// ... rest". NEVER stop before all files output.
 QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 □ Does it look BESPOKE for this product — a custom palette + font pairing, not a generic dark dashboard?
+□ Zero AI-slop patterns? No purple-gradient-on-white, no centered-hero→icon-grid→testimonials→footer default rhythm, no identical radius/padding everywhere, no uniform fade-ins?
 □ Did you define real tokens in index.css and use ONLY semantic classes? ZERO literal colors (no zinc/slate/indigo/white/black/#hex) in any className?
 □ Contrast checked — every foreground legible on its surface? No white-on-white / dark-on-dark?
 □ Real imagery (gradient/SVG/asset) — zero placeholder boxes?
@@ -1282,7 +1291,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     // NOTE: modelTier is no longer read from the client — the server picks the
     // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId } = body
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -1737,8 +1746,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // build starts from a beautiful, accessible, distinct palette; freshness
       // comes from picking a different one each build. Yields to explicit user
       // colors/brand.
-      const { pickPalette, renderDesignBrief } = await import('@/lib/design-palettes')
-      perRequestParts.push(renderDesignBrief(pickPalette(prompt)))
+      const { pickPalette, getPaletteById, renderDesignBrief } = await import('@/lib/design-palettes')
+      // An explicit paletteId (user picked a direction in Plan Mode / theme UI)
+      // wins; unknown or absent ids fall back to the prompt-matched random pick.
+      const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
+      perRequestParts.push(renderDesignBrief(palette))
 
       // LAYOUT & MOTION SEED — the palette brief handles color freshness; this
       // handles STRUCTURAL freshness so two builds with similar palettes still
@@ -1753,6 +1765,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         'Website: product-led — sticky Navbar, hero with dual CTA + social-proof strip immediately under it, alternating split sections (image/copy, copy/image). Dashboard: two-pane master-detail. Motion: standard Reveal/Stagger, delta arrows on stats.',
         'Website: bold geometric — BackgroundGrid dots everywhere, chunky Badge eyebrows, BentoGrid as the ENTIRE page body after the hero. Dashboard: bento-style widget grid instead of uniform card rows. Motion: staggered grid entrances.',
         'Website: warm organic — soft rounded radius (--radius 1rem+), pastel-tinted section backgrounds alternating with white, hand-crafted feel. Dashboard: friendly rounded cards, pill Tabs navigation. Motion: gentle y=12 Reveals, playful AnimatedNumbers.',
+        'Website: editorial magazine — EditorialHeadline hero with a serif <em> accent, MonoLabel eyebrows on every section, SectionNumber-opened numbered chapters, MediaFrame images with Fig. captions. Dashboard: reading-first list views, hairline dividers, mono metadata. Motion: fade-only Reveals, one SplitTextReveal.',
+        'Website: engineered precision — near-black or paper ground, HairlineFrame-framed hero visual, a DataRow spec sheet instead of a feature grid, 1px borders everywhere, mono microlabels. Dashboard: dense tabular, tabular-nums, zero decoration. Motion: minimal — Stagger interval 0.04, no floating.',
+        'Website: numbered process story — hero, then a PinnedStory (sticky MediaFrame visual + 3-4 SectionNumber steps) as the page centerpiece, DataRow facts band, restrained CTASection. Dashboard: wizard/stepper-first. Motion: calm, the PinnedStory carries it.',
+        'Website: cinematic dark precision — CursorGlow hero with an oversized EditorialHeadline, HairlineFrame stats band, SpotlightCards for features, mono captions. Dashboard: dark cockpit, glowing accents, hairline grid. Motion: pronounced but few — hero glow + one pinned moment.',
+        'Website: gallery minimal — vast white space, EditorialHeadline with ONE italic word, full-bleed MediaFrame images separated by nothing but whitespace, MonoLabel captions, no cards at all. Dashboard: content-grid gallery views. Motion: slow fade-only Reveals (duration feel ~0.9).',
+        'Website: split manifesto — sticky left column (EditorialHeadline + MonoLabel meta), right column scrolls long-form sections with SectionNumbers; a DataRow specification block near the end. Dashboard: master-detail with a fixed summary rail. Motion: right column Reveals only.',
+        'Website: asymmetric editorial grid — 12-col grid used unevenly (7/5, 8/4 splits), BentoGrid with one 2x2 MediaFrame cell, pull-quote TestimonialCard offset from center, footnote-style MonoLabels. Dashboard: mixed-density bento widgets. Motion: staggered grid entrances, nothing else.',
+        'Website: brutalist statement — zero radius, thick borders, oversized ALL-CAPS display hero, accent-block sections, Marquee ticker between sections, raw DataRow lists. Dashboard: spreadsheet-honest tables, visible grid. Motion: instant hovers, one Marquee, NO scroll fades.',
       ]
       const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
       perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
