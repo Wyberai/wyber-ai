@@ -17,20 +17,71 @@ export function imageKey(scope: string, prompt: string, ratio: string): string {
   return `${scope}/${(h >>> 0).toString(36)}.png`
 }
 
-/** Call DALL·E and return raw base64 PNG (no temp URL). null if unavailable. */
+// gpt-image-1 supports a different size set than DALL·E-3 did — map our
+// ratio sizes onto the nearest supported one.
+const GPT_IMAGE_SIZES: Record<string, string> = {
+  '1792x1024': '1536x1024',
+  '1024x1792': '1024x1536',
+  '1024x1024': '1024x1024',
+}
+
+/** Generate an image and return raw base64 PNG. null if unavailable.
+ *
+ * Primary: gpt-image-1 (returns b64 by default; the old `response_format`
+ * parameter is REJECTED with a 400 "Unknown parameter" — this is why image
+ * generation silently failed and every publish fell back to gradients).
+ * Fallback: dall-e-3 without response_format (returns a ~1h temp URL, which
+ * we download immediately). Failures are LOGGED, never thrown. */
 export async function generateImageB64(prompt: string, size: string): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
-  if (!key) return null
+  if (!key) { console.error('[image-gen] OPENAI_API_KEY not set'); return null }
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }
+
   try {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size, response_format: 'b64_json' }),
+      headers,
+      body: JSON.stringify({
+        model: 'gpt-image-1',
+        prompt,
+        n: 1,
+        size: GPT_IMAGE_SIZES[size] || '1536x1024',
+        quality: 'medium',
+      }),
     })
-    if (!res.ok) return null
+    if (res.ok) {
+      const data = await res.json()
+      const b64 = data?.data?.[0]?.b64_json
+      if (b64) return b64
+      console.error('[image-gen] gpt-image-1 returned no b64_json')
+    } else {
+      console.error('[image-gen] gpt-image-1 failed:', res.status, (await res.text()).slice(0, 300))
+    }
+  } catch (e) {
+    console.error('[image-gen] gpt-image-1 threw:', e)
+  }
+
+  // Fallback: dall-e-3, url format (response_format is no longer accepted),
+  // download the temp URL right away.
+  try {
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size }),
+    })
+    if (!res.ok) {
+      console.error('[image-gen] dall-e-3 fallback failed:', res.status, (await res.text()).slice(0, 300))
+      return null
+    }
     const data = await res.json()
-    return data?.data?.[0]?.b64_json ?? null
-  } catch {
+    if (data?.data?.[0]?.b64_json) return data.data[0].b64_json
+    const url = data?.data?.[0]?.url
+    if (!url) { console.error('[image-gen] dall-e-3 returned neither b64 nor url'); return null }
+    const img = await fetch(url)
+    if (!img.ok) { console.error('[image-gen] temp-url download failed:', img.status); return null }
+    return Buffer.from(await img.arrayBuffer()).toString('base64')
+  } catch (e) {
+    console.error('[image-gen] dall-e-3 fallback threw:', e)
     return null
   }
 }

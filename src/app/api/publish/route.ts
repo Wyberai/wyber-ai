@@ -4,7 +4,7 @@ import { sanitizeFiles } from '@/lib/sanitize-files'
 import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
-import { extractImageDirectives, replaceTokenInFiles, gradientDataUri } from '@/lib/image-directives'
+import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { rateLimit } from '@/lib/rate-limit'
@@ -71,12 +71,22 @@ export async function POST(req: NextRequest) {
     let projectFiles = project.files || {}
     const directives = extractImageDirectives(projectFiles)
     if (directives.length > 0) {
+      let generated = 0
       for (const d of directives) {
         let url: string | null = null
-        try { url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId) } catch { /* fall back */ }
-        projectFiles = replaceTokenInFiles(projectFiles, d.token, url || gradientDataUri(d.prompt, d.ratio))
+        try { url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId) } catch (e) { console.error('[publish] image generation threw:', d.prompt.slice(0, 60), e) }
+        // Success → substitute the permanent URL and persist it (re-publishing
+        // won't regenerate). FAILURE → leave the token in the saved source:
+        // sanitizeFiles resolves it to a gradient for THIS publish's build, and
+        // the NEXT publish retries generation. (Previously the gradient was
+        // baked into the saved files on failure, so a transient OpenAI error
+        // permanently destroyed the directive — republish could never recover.)
+        if (url) { projectFiles = replaceTokenInFiles(projectFiles, d.token, url); generated++ }
+        else console.error('[publish] image generation failed, keeping token for retry:', d.prompt.slice(0, 60))
       }
-      try { await admin.from('projects').update({ files: projectFiles }).eq('id', projectId) } catch { /* non-critical */ }
+      if (generated > 0) {
+        try { await admin.from('projects').update({ files: projectFiles }).eq('id', projectId) } catch { /* non-critical */ }
+      }
     }
 
     const sanitized = sanitizeFiles(projectFiles)
