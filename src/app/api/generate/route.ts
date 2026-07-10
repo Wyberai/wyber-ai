@@ -600,7 +600,7 @@ Every public-facing site MUST be search-engine-ready. Treat this as required, no
 1. <html lang="en"> and in index.html <head> include, filled with REAL content about THIS site:
    - <title> — unique, descriptive, ≤60 chars (e.g. "Raj Agro Global — Sona Masuri Rice Exporters")
    - <meta name="description"> — compelling, 140–160 chars
-   - <link rel="canonical" href="..."> (use the site's intended URL or "/" if unknown)
+   - <link rel="canonical" href="..."> — MUST be a full absolute https URL (invent a plausible domain from the brand, e.g. https://summitandstone.com/). NEVER "/" or a relative path — a root/relative link href makes the vite build read a directory and CRASHES the entire build.
    - <meta name="viewport" content="width=device-width, initial-scale=1">
    - <meta name="theme-color">
    - Open Graph: og:title, og:description, og:type, og:image, og:url

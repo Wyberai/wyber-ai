@@ -293,6 +293,15 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
   const idxHtml = fileContent(idxVal)
   if (idxHtml) {
     let nextIdx = idxHtml
+    // vite:build-html treats every <link href> as an asset and READS the file;
+    // href="/" resolves to the project ROOT DIRECTORY → "EISDIR: illegal
+    // operation on a directory" and the ENTIRE build fails (verified against
+    // the live builder — removing only this tag fixed an otherwise-identical
+    // build). Models write <link rel="canonical" href="/"> because the SEO
+    // rules offered "/" as the unknown-domain fallback. Strip any <link> whose
+    // href is root/empty/dot — the published page hoists real canonical
+    // metadata anyway (app/[slug] generateMetadata), so nothing is lost.
+    nextIdx = nextIdx.replace(/<link\b[^>]*\bhref=["'](?:\/|\.\/?)?["'][^>]*\/?>[ \t]*(\r?\n)?/gi, '')
     if (!nextIdx.includes('wyber-error-relay')) {
       nextIdx = nextIdx.includes('<head>')
         ? nextIdx.replace('<head>', `<head>\n    ${ERROR_RELAY}`)

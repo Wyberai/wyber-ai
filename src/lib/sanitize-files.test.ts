@@ -38,6 +38,34 @@ describe('sanitizeFiles — path normalization', () => {
   })
 })
 
+// vite:build-html reads every <link href> as an asset file; href="/" resolves
+// to the project root DIRECTORY → EISDIR and the entire remote build fails.
+// (Verified against the live builder: removing only the canonical tag turned
+// the identical build green.) Models wrote it because the SEO prompt offered
+// "/" as the unknown-domain canonical fallback.
+describe('sanitizeFiles — strips root-href <link> tags that crash vite (EISDIR)', () => {
+  const HTML = `<!DOCTYPE html><html><head>
+    <link rel="canonical" href="/" />
+    <link rel="stylesheet" href="/src/real.css" />
+    <link rel="canonical" href="https://example.com/" />
+  </head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>`
+
+  it('removes href="/" links but keeps real hrefs', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'index.html': { content: HTML } })
+    const html = contentOf(out['index.html'])
+    expect(html).not.toContain('href="/"')
+    expect(html).toContain('href="/src/real.css"')
+    expect(html).toContain('href="https://example.com/"')
+  })
+
+  it('removes empty and dot hrefs too', () => {
+    const bad = '<head><link rel="canonical" href="" /><link rel="canonical" href="./" /></head>'
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP }, 'index.html': { content: bad } })
+    const html = contentOf(out['index.html'])
+    expect(html).not.toContain('rel="canonical"')
+  })
+})
+
 // The remote builder runs `vite build`, which strips a Tailwind Play CDN script
 // but DOES compile @tailwind directives via PostCSS. So styling depends on the
 // compile inputs (index.css directives + tailwind/postcss config) being present.
