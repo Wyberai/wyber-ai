@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PALETTES, pickPalette, getPaletteById, pickPaletteOptions, renderDesignBrief } from './design-palettes'
+import { GOOGLE_FONTS_LINKS } from './design-system'
 
 const REQUIRED_TOKENS = [
   'background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground',
@@ -26,6 +27,24 @@ describe('design-palettes — every palette is complete + well-formed', () => {
       expect(pal.gradientHero).toContain('hsl(')
       expect(['light', 'dark']).toContain(pal.mode)
     }
+  })
+
+  it('only uses fonts that the platform actually preloads (GOOGLE_FONTS_LINKS)', () => {
+    const loaded = (name: string) =>
+      GOOGLE_FONTS_LINKS.includes(name.replace(/ /g, '+')) || // Google CSS2 form
+      GOOGLE_FONTS_LINKS.toLowerCase().includes(name.toLowerCase().replace(/ /g, '-')) || // Fontshare form
+      GOOGLE_FONTS_LINKS.includes(name) // single-word families
+    for (const pal of PALETTES) {
+      expect(loaded(pal.fontSans), `${pal.id} fontSans '${pal.fontSans}' not preloaded`).toBe(true)
+      expect(loaded(pal.fontDisplay), `${pal.id} fontDisplay '${pal.fontDisplay}' not preloaded`).toBe(true)
+    }
+  })
+
+  it('offers a broad library with both modes well represented', () => {
+    expect(PALETTES.length).toBeGreaterThanOrEqual(28)
+    const dark = PALETTES.filter((p) => p.mode === 'dark').length
+    expect(dark).toBeGreaterThanOrEqual(8)
+    expect(PALETTES.length - dark).toBeGreaterThanOrEqual(12)
   })
 
   it('keeps foreground visibly distinct from background (basic contrast guard)', () => {
