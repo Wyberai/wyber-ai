@@ -3,6 +3,10 @@
    ITF Free Font License (commercial use + self-hosting explicitly permitted) — see
    public/fonts/. JetBrains Mono still loads from Google Fonts (no self-hosted copy yet). */
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Instrument Serif — single italic accent face for editorial display moments
+   (one highlighted word per headline, never body copy). The 2026 editorial
+   counterpoint to General Sans. */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');
 
 @font-face { font-family: 'General Sans'; src: url('/fonts/GeneralSans-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: 'General Sans'; src: url('/fonts/GeneralSans-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
@@ -15,6 +19,37 @@
 @font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
 
 @import "tailwindcss";
+
+/* ─── BRAND TOKENS (space-journey language) ───
+   MIRROR of src/styles/brand.css from the Session-C Phase-0 coordination
+   commit (frozen). Values must stay byte-identical; once that commit merges
+   into this branch, layout.tsx imports brand.css and this block can be
+   deleted — until then it keeps the marketing surface self-sufficient. */
+:root {
+  --brand-bg: #05060a;
+  --brand-bg-raised: #0a0c14;
+  --brand-bg-overlay: #10131f;
+  --brand-accent: #0ea5e9;
+  --brand-accent-hot: #38bdf8;
+  --brand-accent-dim: #0369a1;
+  --brand-glow: rgba(14, 165, 233, 0.35);
+  --brand-glow-soft: rgba(14, 165, 233, 0.15);
+  --brand-text: #e6edf6;
+  --brand-text-dim: #8b94a7;
+  --brand-text-faint: #545c6e;
+  --brand-border: rgba(255, 255, 255, 0.08);
+  --brand-border-strong: rgba(255, 255, 255, 0.14);
+  --brand-border-accent: rgba(14, 165, 233, 0.4);
+  --brand-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
+  --brand-dur-fast: 150ms;
+  --brand-dur-base: 240ms;
+  --brand-dur-slow: 420ms;
+  --brand-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --brand-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --brand-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  /* Marketing-only extension (NOT in brand.css): editorial serif accent */
+  --font-editorial: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+}
 
 /* ─── LIGHT THEME ─── */
 :root {
@@ -461,9 +496,11 @@ input, textarea, select { font-family: var(--font-sans); }
   border: 1px solid rgba(255,255,255,0.06);
 }
 
-/* ─── GRADIENT ACCENTS ─── */
+/* ─── GRADIENT ACCENTS ───
+   Sky-only ramp. The old sky→indigo (and the hero's sky→purple) gradient is
+   the canonical "AI-generated site" tell in 2026 — banned brand-wide. */
 .wy-gradient-text {
-  background: linear-gradient(135deg, var(--sky), #6366f1);
+  background: linear-gradient(135deg, var(--brand-accent-dim), var(--brand-accent-hot));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -512,3 +549,211 @@ input, textarea, select { font-family: var(--font-sans); }
 .turbo0-badge-light { display: none; }
 [data-theme="light"] .turbo0-badge-dark  { display: none; }
 [data-theme="light"] .turbo0-badge-light { display: inline; }
+
+/* ═══ MK — MARKETING PRIMITIVES (space-journey brand, July 2026) ═══
+   Dark-first, consume --brand-* tokens. All spacing is explicit (the
+   un-layered reset above keeps Tailwind spacing utilities inert). */
+
+.mk-page {
+  min-height: 100vh;
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  font-family: var(--font-display);
+  overflow-x: hidden;
+}
+
+/* Starfield — two layered dot fields, pure CSS, no WebGL. */
+.mk-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 12% 24%, rgba(230,237,246,0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 71%, rgba(230,237,246,0.35) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 56% 12%, rgba(56,189,248,0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 48%, rgba(230,237,246,0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 82%, rgba(230,237,246,0.3) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 8% 88%, rgba(56,189,248,0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 42%, rgba(230,237,246,0.25) 50%, transparent 51%),
+    radial-gradient(1px 1px at 94% 18%, rgba(230,237,246,0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 55%, rgba(230,237,246,0.2) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 64% 92%, rgba(230,237,246,0.35) 50%, transparent 51%);
+  background-size: 720px 720px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35));
+}
+
+/* Film grain overlay */
+.mk-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--brand-noise);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.mk-section {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(64px, 9vw, 128px) clamp(20px, 5vw, 48px);
+}
+
+/* Mono eyebrow — "01 · TELEMETRY" style microlabel */
+.mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--brand-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brand-accent);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.mk-eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--brand-border-accent);
+}
+
+/* Oversized editorial display headline */
+.mk-display {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 7.5vw, 96px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  color: var(--brand-text);
+  margin: 0;
+}
+.mk-h2 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.5vw, 54px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+  color: var(--brand-text);
+  margin: 0;
+}
+/* Single serif-italic accent word inside a headline */
+.mk-serif {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--brand-accent-hot);
+}
+
+.mk-lead {
+  font-size: clamp(16px, 1.9vw, 19px);
+  color: var(--brand-text-dim);
+  line-height: 1.7;
+  margin: 0;
+}
+.mk-mono {
+  font-family: var(--brand-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--brand-text-faint);
+}
+
+/* Hairline surfaces */
+.mk-card {
+  background: var(--brand-bg-raised);
+  border: 1px solid var(--brand-border);
+  border-radius: 14px;
+  transition: border-color var(--brand-dur-base) var(--brand-ease),
+              box-shadow var(--brand-dur-base) var(--brand-ease),
+              transform var(--brand-dur-base) var(--brand-ease);
+}
+.mk-card:hover {
+  border-color: var(--brand-border-accent);
+  box-shadow: 0 0 0 1px var(--brand-glow-soft), 0 8px 40px rgba(0,0,0,0.5), 0 0 32px var(--brand-glow-soft);
+}
+.mk-frame {
+  background: var(--brand-bg-raised);
+  border: 1px solid var(--brand-border);
+  border-radius: 14px;
+}
+
+/* Buttons */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 30px;
+  border-radius: 10px;
+  background: var(--brand-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 0 24px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+  transition: transform var(--brand-dur-fast) var(--brand-ease),
+              box-shadow var(--brand-dur-base) var(--brand-ease),
+              background var(--brand-dur-fast) var(--brand-ease);
+}
+.mk-btn:hover {
+  background: var(--brand-accent-hot);
+  transform: translateY(-1px);
+  box-shadow: 0 0 40px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.mk-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  color: var(--brand-text-dim);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--font-display);
+  text-decoration: none;
+  border: 1px solid var(--brand-border-strong);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color var(--brand-dur-fast) var(--brand-ease),
+              color var(--brand-dur-fast) var(--brand-ease),
+              background var(--brand-dur-fast) var(--brand-ease);
+}
+.mk-btn-ghost:hover {
+  border-color: var(--brand-border-accent);
+  color: var(--brand-text);
+  background: rgba(14,165,233,0.05);
+}
+
+/* Data row — mono telemetry strip entries */
+.mk-stat {
+  font-family: var(--brand-mono);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 600;
+  color: var(--brand-text);
+  letter-spacing: -0.02em;
+}
+.mk-stat-label {
+  font-family: var(--brand-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-text-faint);
+}
+
+/* Reduced motion: kill transforms/animation on mk primitives */
+@media (prefers-reduced-motion: reduce) {
+  .mk-card, .mk-btn, .mk-btn-ghost { transition: none; }
+  .mk-card:hover, .mk-btn:hover { transform: none; }
+}
+
+@media (max-width: 768px) {
+  .mk-section { padding: 56px 20px; }
+  .mk-display { font-size: clamp(38px, 11vw, 52px); }
+  .mk-h2 { font-size: clamp(27px, 8vw, 36px); }
+}
