@@ -559,7 +559,9 @@ input, textarea, select { font-family: var(--font-sans); }
   background: var(--brand-bg);
   color: var(--brand-text);
   font-family: var(--font-display);
-  overflow-x: hidden;
+  /* clip, not hidden — hidden creates a scroll container and silently
+     breaks every position:sticky descendant (the pinned scroll moment) */
+  overflow-x: clip;
 }
 
 /* Starfield — two layered dot fields, pure CSS, no WebGL. */
