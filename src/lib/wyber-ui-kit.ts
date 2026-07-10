@@ -399,7 +399,39 @@ export function GradientBorder({ children, className, contentClassName }: {
   )
 }
 
-export function AuroraBackground({ className, intensity = 0.16 }: { className?: string; intensity?: number }) {
+// Film-grain texture — the cheapest "not AI-generated" signature. Perfectly
+// smooth gradients read synthetic; a whisper of monochrome noise over heroes,
+// gradient panels and dark sections makes surfaces feel physical.
+const NOISE_URI = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"
+
+export function NoiseOverlay({ opacity = 0.05, className }: { opacity?: number; className?: string }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn('pointer-events-none absolute inset-0', className)}
+      style={{ backgroundImage: 'url("' + NOISE_URI + '")', backgroundRepeat: 'repeat', opacity, mixBlendMode: 'overlay' }}
+    />
+  )
+}
+
+// Oversized fluid display type — 2026 heroes run 3-7rem+ scaled to viewport.
+// Wrap an accent word in <em> for an italic, primary-colored moment:
+// <HeroHeadline>Ship <em>beautiful</em> apps</HeroHeadline>
+export function HeroHeadline({ children, as = 'h1', className }: {
+  children?: React.ReactNode; as?: 'h1' | 'h2'; className?: string
+}) {
+  const Tag = as
+  return (
+    <Tag className={cn(
+      'font-display font-bold tracking-tight text-foreground text-[clamp(2.75rem,6.5vw,6.5rem)] leading-[0.98] [&_em]:italic [&_em]:text-primary',
+      className,
+    )}>
+      {children}
+    </Tag>
+  )
+}
+
+export function AuroraBackground({ className, intensity = 0.16, grain = true }: { className?: string; intensity?: number; grain?: boolean }) {
   return (
     <div aria-hidden="true" className={cn('pointer-events-none absolute inset-0 overflow-hidden', className)}>
       <div
@@ -414,6 +446,7 @@ export function AuroraBackground({ className, intensity = 0.16 }: { className?: 
         className="absolute top-[20%] right-[25%] h-[22rem] w-[22rem] rounded-full blur-3xl animate-aurora"
         style={{ background: 'hsl(var(--accent-foreground) / ' + intensity * 0.35 + ')', animationDuration: '28s', animationDelay: '-12s' }}
       />
+      {grain && <NoiseOverlay />}
     </div>
   )
 }
@@ -667,6 +700,7 @@ export function CTASection({ title, description, primaryCta = 'Get started', sec
         style={{ backgroundImage: 'var(--gradient-hero, linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.75)))' }}
       >
         <BackgroundGrid variant="dots" fade={false} className="opacity-20" />
+        <NoiseOverlay opacity={0.07} />
         <div className="relative mx-auto max-w-2xl">
           <h2 className="font-display text-3xl font-bold tracking-tight text-primary-foreground md:text-5xl">{title}</h2>
           {description && <p className="mt-4 text-base leading-relaxed text-primary-foreground/80 md:text-lg">{description}</p>}
@@ -700,7 +734,7 @@ WYBER UI KIT — PRE-BUILT PREMIUM COMPONENTS (USE THESE — do NOT hand-write e
 The platform injects src/wyber-ui.tsx into every build: ~30 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
 
 Import (relative — from src/App.tsx use './wyber-ui', from src/components/* use '../wyber-ui'):
-import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, cn } from './wyber-ui'
+import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, cn } from './wyber-ui'
 
 MOTION (wrap content — everything animates in on scroll):
 - <Reveal delay={0.1} y={24}>…</Reveal> — fade+rise on scroll into view.
@@ -719,8 +753,10 @@ PRIMITIVES:
 PREMIUM SURFACES & BACKDROPS:
 - <SpotlightCard> — mouse-tracking spotlight card (hero feature cards).
 - <GradientBorder contentClassName="p-8"> — animated rotating gradient border.
-- <AuroraBackground /> — animated aurora blobs; put inside a relative hero section.
+- <AuroraBackground /> — animated aurora blobs + built-in film grain; put inside a relative hero section.
 - <BackgroundGrid variant="dots|lines" /> — subtle pattern overlay for heroes/sections.
+- <NoiseOverlay opacity={0.05} /> — film-grain texture; add to gradient panels/dark sections so surfaces feel physical, not synthetic.
+- <HeroHeadline>Ship <em>beautiful</em> apps</HeroHeadline> — fluid oversized display type (up to ~6.5rem); <em> renders as an italic primary-colored accent. Use for hero H1s instead of text-5xl.
 
 SECTIONS (compose full pages fast):
 - <Navbar brand={<>logo</>} links={[{label,href}]} cta={<Button/>} /> — fixed, glass-on-scroll, mobile menu. Add pt-16 to page content.
