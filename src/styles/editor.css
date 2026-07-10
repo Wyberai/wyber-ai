@@ -90,10 +90,35 @@
   animation: ide-fade-up var(--brand-dur-base) var(--brand-ease) both;
 }
 
+/* Code-tab underline — springs in under the active tab (the .tab/.active
+   classes come from globals.css; only the indicator is added here). */
+.ide-root .tab {
+  position: relative;
+}
+.ide-root .tab::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand-accent);
+  box-shadow: 0 0 8px var(--brand-glow);
+  transform: scaleX(0);
+  transition: transform var(--brand-dur-base) var(--brand-ease-spring);
+}
+.ide-root .tab.active::after {
+  transform: scaleX(1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ide-skeleton,
   .ide-shimmer-text,
   .ide-panel-enter {
     animation: none;
+  }
+  .ide-root .tab::after {
+    transition: none;
   }
 }
