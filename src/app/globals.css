@@ -193,6 +193,13 @@
 
 /* ─── RESET ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* The un-layered reset above beats Tailwind's @layer utilities, so padding and
+   margin utility classes are inert site-wide. Pages that need them opt in via
+   .wy-journey: revert-layer rolls the reset back to the cascade layers. */
+.wy-journey *, .wy-journey *::before, .wy-journey *::after { margin: revert-layer; padding: revert-layer; }
+.wy-journey { font-family: var(--font-sans); }
+.wy-journey .font-mono { font-family: var(--font-mono); }
+.wy-journey .wy-display { font-family: var(--font-display); }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 body { font-family: var(--font-sans); background: var(--bg); color: var(--text); line-height: 1.6; }
 a { text-decoration: none; color: inherit; }
