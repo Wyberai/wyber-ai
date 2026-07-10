@@ -51,6 +51,49 @@ describe('wyber-ui-kit — source validity', () => {
     }
   })
 
+  it('a fixture app importing the editorial-precision layer bundles against the kit', async () => {
+    const { build } = await import('esbuild')
+    const APP = `import { MonoLabel, SectionNumber, EditorialHeadline, HairlineFrame, MediaFrame, PinnedStory, DataRow, CursorGlow } from './wyber-ui'
+export default function App() {
+  return (
+    <div className="relative">
+      <CursorGlow />
+      <MonoLabel accent>Est. 2026</MonoLabel>
+      <SectionNumber n={1} label="The problem" />
+      <EditorialHeadline eyebrow="Manifesto" as="h1">Design is <em>the</em> product</EditorialHeadline>
+      <HairlineFrame><DataRow label="Latency" value="42ms" sub="p99" /></HairlineFrame>
+      <PinnedStory steps={[{ title: 'One', description: 'First' }]} visual={<MediaFrame src="/x.png" alt="x" caption="Fig. 01" index="01" />} />
+    </div>
+  )
+}`
+    const files: Record<string, string> = { 'src/App.tsx': APP, [WYBER_UI_KIT_PATH]: WYBER_UI_KIT_SOURCE }
+    const result = await build({
+      entryPoints: ['src/App.tsx'],
+      bundle: true,
+      write: false,
+      format: 'esm',
+      jsx: 'automatic',
+      external: ['react', 'react/jsx-runtime', 'framer-motion', 'clsx', 'lucide-react'],
+      plugins: [{
+        name: 'virtual-fs',
+        setup(b) {
+          b.onResolve({ filter: /^\./ }, (args) => {
+            const base = args.path.replace(/^\.\//, 'src/').replace(/\.tsx?$/, '')
+            return { path: base + '.tsx', namespace: 'v' }
+          })
+          b.onResolve({ filter: /^src\// }, (args) => ({ path: args.path, namespace: 'v' }))
+          b.onLoad({ filter: /.*/, namespace: 'v' }, (args) => {
+            const content = files[args.path]
+            return content != null ? { contents: content, loader: 'tsx' } : undefined
+          })
+        },
+      }],
+    })
+    // esbuild throws on unresolved named exports when bundling; reaching here
+    // with output means every new component resolved against the kit source.
+    expect(result.outputFiles[0].text.length).toBeGreaterThan(0)
+  })
+
   it('kit animations exist in the shared tailwind theme', async () => {
     const { TAILWIND_CONFIG_FILE, PREVIEW_TAILWIND_CONFIG } = await import('./design-system')
     for (const anim of ['marquee', 'aurora', 'gradient-spin']) {
