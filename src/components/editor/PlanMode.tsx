@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { creditCost } from '@/lib/credits';
 import { useEditorStore } from '@/store/editor';
+import { getPaletteById, renderDesignBrief } from '@/lib/design-palettes';
+import { DirectionCards } from './DirectionCards';
 
 type IconKey = 'auth' | 'dashboard' | 'list' | 'board' | 'payment' | 'settings' | 'search' | 'chat' | 'calendar' | 'profile' | 'notification' | 'upload' | 'map' | 'analytics' | 'landing' | 'other';
 
@@ -40,8 +42,9 @@ interface Props {
   framework: string;
   fileContext: string;
   projectId?: string;
-  // Passes the assembled, possibly-edited plan spec back to the caller
-  onApprove: (planSpec: string) => void;
+  // Passes the assembled, possibly-edited plan spec back to the caller,
+  // plus the picked design direction (undefined = server prompt-matches one)
+  onApprove: (planSpec: string, paletteId?: string) => void;
   onCancel: () => void;
 }
 
@@ -214,9 +217,15 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
     setPlan({ ...plan, features: next });
   };
 
+  // Design direction picked on the cards (null = "surprise me": the server
+  // prompt-matches a palette on its own).
+  const [paletteId, setPaletteId] = useState<string | null>(null);
+
   const approve = () => {
     if (!plan || plan.features.length === 0) return;
-    const spec = planToSpec(plan, prompt, answers);
+    let spec = planToSpec(plan, prompt, answers);
+    const pal = paletteId ? getPaletteById(paletteId) : undefined;
+    if (pal) spec += `\n\n${renderDesignBrief(pal)}`;
     if (projectId) {
       fetch('/api/projects/plan', {
         method: 'POST',
@@ -224,7 +233,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
         body: JSON.stringify({ projectId, plan, answers }),
       }).catch(() => {});
     }
-    onApprove(spec);
+    onApprove(spec, pal?.id);
   };
 
   if (error) return (
@@ -447,6 +456,9 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
           )}
         </div>
       </div>
+
+      {/* Design direction — pure CSS from the curated palettes, free */}
+      <DirectionCards prompt={prompt} selectedId={paletteId} onPick={setPaletteId} />
 
       {/* Warnings */}
       {plan.warnings.length > 0 && !editing && (

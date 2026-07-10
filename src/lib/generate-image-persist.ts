@@ -9,10 +9,22 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export const GENERATED_IMAGES_BUCKET = 'generated-images'
 
-/** Stable storage key so re-publishing the same prompt reuses one object. */
-export function imageKey(scope: string, prompt: string, ratio: string): string {
+export interface ImageGenOpts {
+  /** gpt-image-1 transparent background (skipped on the dall-e-3 fallback) */
+  transparent?: boolean
+  /** skip the cache-hit check — always call the model */
+  force?: boolean
+  /** extra key discriminator (regen nonce / 'transparent') so a regenerate can
+   *  never collide with the cached original and hand back the same image */
+  variant?: string
+}
+
+/** Stable storage key so re-publishing the same prompt reuses one object.
+ *  `variant` folds regen nonces / transparency into the hash — REGENERATE MUST
+ *  VARY IT or the idempotent cache returns the old image. */
+export function imageKey(scope: string, prompt: string, ratio: string, variant = ''): string {
   let h = 0
-  const s = `${prompt}|${ratio}`
+  const s = `${prompt}|${ratio}${variant ? `|${variant}` : ''}`
   for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
   return `${scope}/${(h >>> 0).toString(36)}.png`
 }
@@ -32,7 +44,7 @@ const GPT_IMAGE_SIZES: Record<string, string> = {
  * generation silently failed and every publish fell back to gradients).
  * Fallback: dall-e-3 without response_format (returns a ~1h temp URL, which
  * we download immediately). Failures are LOGGED, never thrown. */
-export async function generateImageB64(prompt: string, size: string): Promise<string | null> {
+export async function generateImageB64(prompt: string, size: string, opts?: ImageGenOpts): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
   if (!key) { console.error('[image-gen] OPENAI_API_KEY not set'); return null }
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }
@@ -47,6 +59,9 @@ export async function generateImageB64(prompt: string, size: string): Promise<st
         n: 1,
         size: GPT_IMAGE_SIZES[size] || '1536x1024',
         quality: 'medium',
+        // Transparent background is a gpt-image-1-only feature; the dall-e-3
+        // fallback below silently ignores the request (opaque image beats none).
+        ...(opts?.transparent ? { background: 'transparent' } : {}),
       }),
     })
     if (res.ok) {
@@ -118,19 +133,25 @@ export async function generateAndPersistImage(
   prompt: string,
   size: string,
   scope: string,
+  opts?: ImageGenOpts,
 ): Promise<string | null> {
-  const key = imageKey(scope, prompt, size)
+  const variant = [opts?.variant, opts?.transparent ? 'transparent' : ''].filter(Boolean).join('|')
+  const key = imageKey(scope, prompt, size, variant)
 
-  // Cache hit → permanent URL already exists, zero cost.
-  try {
-    const { data } = admin.storage.from(GENERATED_IMAGES_BUCKET).getPublicUrl(key)
-    if (data?.publicUrl) {
-      const head = await fetch(data.publicUrl, { method: 'HEAD' })
-      if (head.ok) return data.publicUrl
-    }
-  } catch { /* fall through to generation */ }
+  // Cache hit → permanent URL already exists, zero cost. `force` (regenerate)
+  // skips this — combined with a fresh variant nonce it guarantees a NEW image
+  // at a NEW URL instead of the cached original.
+  if (!opts?.force) {
+    try {
+      const { data } = admin.storage.from(GENERATED_IMAGES_BUCKET).getPublicUrl(key)
+      if (data?.publicUrl) {
+        const head = await fetch(data.publicUrl, { method: 'HEAD' })
+        if (head.ok) return data.publicUrl
+      }
+    } catch { /* fall through to generation */ }
+  }
 
-  const b64 = await generateImageB64(prompt, size)
+  const b64 = await generateImageB64(prompt, size, opts)
   if (!b64) return null
   return persistImage(admin, b64, key)
 }

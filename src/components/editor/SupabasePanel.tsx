@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { SkeletonList } from './ui'
 
 interface ConnectorRow {
   id: string
@@ -142,11 +143,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
   }
 
   if (loading) {
-    return (
-      <div style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ide-text3)', fontSize: 12 }}>
-        <Spinner /> Loading...
-      </div>
-    )
+    return <SkeletonList rows={3} rowHeight={64} />
   }
 
   // ── Connected state ──
