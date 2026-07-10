@@ -6,6 +6,9 @@ import { sanitizeFiles } from '@/lib/sanitize-files'
 import { isPlaceholderApp } from '@/lib/starter-templates'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { injectWyberLoc, injectPreviewBridge } from '@/lib/wyber-preview/bridge'
+import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
+import { creditCost } from '@/lib/credits'
+import { MicroLabel } from './ui'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -24,6 +27,10 @@ interface SelectedEl {
   tag: string
   text: string
   classes: string
+  /** data-wyber-loc of the element (or nearest tagged ancestor): "path:line" */
+  loc: string | null
+  /** the tagged ancestor's own text — used when the clicked node itself is untagged */
+  locText: string | null
 }
 
 // Cheap, stable content hash (djb2). Used to detect when a file actually changed
@@ -296,6 +303,8 @@ export function PreviewPanel() {
           tag: e.data.tag || '',
           text: e.data.text || '',
           classes: e.data.classes || '',
+          loc: e.data.loc || null,
+          locText: e.data.locText || null,
         }
         // Route the pick to whichever feature currently owns selection mode —
         // Wyberman's "point and ask" reuses this same channel but explains the
@@ -304,6 +313,22 @@ export function PreviewPanel() {
           window.dispatchEvent(new CustomEvent('wyberman-element-selected', { detail: picked }))
         } else {
           setSelectedEl(picked)
+        }
+      }
+      // In-preview inline text edit committed (bridge's contentEditable path).
+      // Fresh state via getState() — this handler's closure would otherwise
+      // hold stale files.
+      if (e.data.type === 'wyber-text-committed' && typeof e.data.newText === 'string' && e.data.oldText) {
+        const st = useEditorStore.getState()
+        const r = applyTextEdit(st.files, e.data.loc, e.data.oldText, e.data.newText)
+        if (r.ok) {
+          st.setFiles(r.files as typeof st.files)
+          if (st.project?.id) {
+            fetch('/api/projects', {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projectId: st.project.id, files: r.files, userId: (st.project as { userId?: string }).userId || 'auto' }),
+            }).catch(() => {})
+          }
         }
       }
       // Capture runtime errors from inside the iframe. Only errors within a
@@ -466,20 +491,71 @@ export function PreviewPanel() {
   // on the file changes that auto-fix itself makes (that was the infinite loop).
   useEffect(() => { if (isGenerating) { healTotal.current = 0; setHealFailed(false) } }, [isGenerating])
 
-  const sendVisualEdit = () => {
+  // ── Visual Edits: LLM-free primary path ─────────────────────────────────
+  // Text/color/size/spacing/radius edits write the SOURCE directly via
+  // lib/visual-edit-apply (loc-based, unique-string fallback) — 0 credits.
+  // The bridge live-patches the DOM for instant feedback while the normal
+  // debounced rebuild catches up. Structural asks fall back to the normal
+  // paid chat lane (real billing — never the free self-heal channel).
+  const [textDraft, setTextDraft] = useState('')
+  const [workingClasses, setWorkingClasses] = useState('')
+  const [editStatus, setEditStatus] = useState<'idle' | 'applied' | 'notfound'>('idle')
+  useEffect(() => {
+    setTextDraft(selectedEl?.text ?? '')
+    setWorkingClasses(selectedEl?.classes ?? '')
+    setEditStatus('idle')
+    setEditInstruction('')
+  }, [selectedEl])
+
+  const persistFiles = (updated: typeof files) => {
+    setFiles(updated)
+    if (project?.id) {
+      fetch('/api/projects', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.id, files: updated, userId: (project as { userId?: string }).userId || 'auto' }),
+      }).catch(() => { /* next chat-lane save also carries these files */ })
+    }
+  }
+
+  const applyText = () => {
+    if (!selectedEl) return
+    const next = textDraft
+    const r = applyTextEdit(files, selectedEl.loc, selectedEl.text || selectedEl.locText || '', next)
+    if (!r.ok) { setEditStatus('notfound'); return }
+    persistFiles(r.files as typeof files)
+    iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-set-text', selector: selectedEl.selector, text: next }, '*')
+    setSelectedEl({ ...selectedEl, text: next })
+    setEditStatus('applied')
+  }
+
+  const applyClasses = (nextClasses: string) => {
+    if (!selectedEl || nextClasses === workingClasses) return
+    const r = applyClassEdit(files, selectedEl.loc, workingClasses, nextClasses)
+    if (!r.ok) { setEditStatus('notfound'); return }
+    persistFiles(r.files as typeof files)
+    iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-set-class', selector: selectedEl.selector, className: nextClasses }, '*')
+    setWorkingClasses(nextClasses)
+    setEditStatus('applied')
+  }
+
+  const applyStep = (family: StepFamily, dir: 1 | -1) => applyClasses(stepClass(workingClasses, family, dir))
+  const applyColor = (prop: 'text' | 'bg', token: string) => applyClasses(setColorClass(workingClasses, prop, token))
+
+  // Structural fallback — routes through the NORMAL chat dispatch (classify →
+  // edit lane, standard credit charge), never the free self-heal channel.
+  const sendAiEdit = () => {
     if (!selectedEl || !editInstruction.trim()) return
-    const desc = `Visual edit request. The user clicked on this element in the preview:
-- Element: <${selectedEl.tag}>${selectedEl.classes ? ' with classes "' + selectedEl.classes + '"' : ''}
+    const desc = `Edit this exact element (the user clicked it in the preview):
+- Element: <${selectedEl.tag}>${selectedEl.classes ? ' with classes "' + selectedEl.classes + '"' : ''}${selectedEl.loc ? `\n- Source location: ${selectedEl.loc}` : ''}
 - Text content: "${selectedEl.text}"
 - CSS path: ${selectedEl.selector}
 
-Change requested: ${editInstruction.trim()}
-
-Find this element in the code and apply the change.`
-    window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt: desc } }))
+Change requested: ${editInstruction.trim()}`
+    window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: desc }))
     setEditInstruction('')
     setSelectedEl(null)
     setEditMode(false)
+    setSelectionConsumer(null)
     iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: false }, '*')
   }
 
@@ -548,26 +624,74 @@ Find this element in the code and apply the change.`
         )
       })()}
 
-      {/* Visual edit instruction bar */}
+      {/* Visual-edit inspector card — direct source edits, 0 credits */}
       {editMode && selectedEl && (
-        <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-          <div style={{ fontSize: 11, color: '#0EA5E9', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 700 }}>Selected:</span>
+        <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.05)', borderBottom: '1px solid var(--brand-border-accent, rgba(14,165,233,0.2))', display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0, maxHeight: 260, overflowY: 'auto' }}>
+          <div style={{ fontSize: 11, color: 'var(--brand-accent, #0EA5E9)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>&lt;{selectedEl.tag}&gt;</code>
-            {selectedEl.text && <span style={{ color: '#71717a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>"{selectedEl.text}"</span>}
+            <MicroLabel style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none' }}>
+              {selectedEl.loc ?? selectedEl.selector}
+            </MicroLabel>
+            {editStatus === 'applied' && <MicroLabel color="var(--ide-green, #22c55e)">✓ saved · free</MicroLabel>}
+            {editStatus === 'notfound' && <MicroLabel color="var(--ide-amber, #f59e0b)">can&apos;t match source — use AI edit below</MicroLabel>}
+            <button onClick={() => setSelectedEl(null)} title="Deselect" style={{ background: 'none', border: 'none', color: 'var(--ide-text3, #71717a)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>×</button>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+
+          {/* Text */}
+          {(selectedEl.text || selectedEl.locText) && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                value={textDraft}
+                onChange={e => setTextDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyText() }}
+                placeholder="Edit the text…"
+                style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
+              />
+              <button onClick={applyText} disabled={textDraft === selectedEl.text}
+                style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
+                Set text
+              </button>
+            </div>
+          )}
+
+          {/* Color chips + steppers */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 7 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MicroLabel>Text</MicroLabel>
+              {(['foreground', 'muted-foreground', 'primary', 'accent-foreground', 'destructive'] as const).map(t => (
+                <button key={t} onClick={() => applyColor('text', t)} title={`text-${t}`}
+                  style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${t}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
+              ))}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MicroLabel>Bg</MicroLabel>
+              {(['background', 'card', 'muted', 'primary', 'secondary', 'accent'] as const).map(t => (
+                <button key={t} onClick={() => applyColor('bg', t)} title={`bg-${t}`}
+                  style={{ width: 16, height: 16, borderRadius: 4, border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${t}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
+              ))}
+            </span>
+            {([['text-size', 'Size'], ['p', 'Pad'], ['rounded', 'Radius']] as const).map(([family, label]) => (
+              <span key={family} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <MicroLabel>{label}</MicroLabel>
+                <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>−</button>
+                <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>+</button>
+              </span>
+            ))}
+          </div>
+
+          {/* Structural fallback → normal paid edit lane, honestly labeled */}
+          <div style={{ display: 'flex', gap: 6 }}>
             <input
-              autoFocus
               value={editInstruction}
               onChange={e => setEditInstruction(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') sendVisualEdit() }}
-              placeholder="Describe the change (e.g. make this bigger and blue)"
-              style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, padding: '7px 11px', outline: 'none' }}
+              onKeyDown={e => { if (e.key === 'Enter') sendAiEdit() }}
+              placeholder="Bigger change? Describe it (e.g. turn this into a 3-column grid)"
+              style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
             />
-            <button onClick={sendVisualEdit} disabled={!editInstruction.trim()}
-              style={{ background: editInstruction.trim() ? '#0EA5E9' : '#27272a', color: 'white', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed' }}>
-              Apply
+            <button onClick={sendAiEdit} disabled={!editInstruction.trim()}
+              title="Runs a normal AI edit — charged at the standard edit rate"
+              style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+              AI edit · from {creditCost('small-edit', 'fast')}cr
             </button>
           </div>
         </div>

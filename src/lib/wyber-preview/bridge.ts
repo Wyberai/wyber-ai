@@ -18,6 +18,8 @@
 //     { type: 'wyber-edit-mode', on: boolean }        toggle click-to-select
 //     { type: 'wyber-apply-theme', css: string }      upsert #wyber-theme-override <style>
 //     { type: 'wyber-inline-text' }                   make selected element contentEditable
+//     { type: 'wyber-set-class', selector?, className } live DOM class swap (optimistic)
+//     { type: 'wyber-set-text', selector?, text }       live DOM text swap (optimistic)
 //   iframe → parent:
 //     { type: 'wyber-element-selected', selector, tag, text, classes, loc }
 //     { type: 'wyber-text-committed', loc, selector, oldText, newText }
@@ -143,6 +145,8 @@ window.addEventListener('message',function(e){var d=e.data;if(!d||typeof d!=='ob
 if(d.type==='wyber-edit-mode')setSelecting(!!d.on);
 else if(d.type==='wyber-apply-theme')applyTheme(d.css);
 else if(d.type==='wyber-inline-text')startEdit();
+else if(d.type==='wyber-set-class'){var el2=null;try{el2=d.selector?document.querySelector(d.selector):selEl}catch(qe){el2=selEl}if(el2)el2.className=String(d.className||'');if(el2&&selecting&&el2===selEl)place(el2)}
+else if(d.type==='wyber-set-text'){var el3=null;try{el3=d.selector?document.querySelector(d.selector):selEl}catch(qe2){el3=selEl}if(el3)el3.innerText=String(d.text==null?'':d.text)}
 }catch(err){}});
 })()`
 
