@@ -2003,7 +2003,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                               </div>
                             : <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)', fontSize:11 }}>
                                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                                {buildMsg} {elapsed > 0 && `(${elapsed}s)`}
+                                <span className="ide-shimmer-text">{buildMsg}</span> {elapsed > 0 && `(${elapsed}s)`}
                               </span>
                           }
                         </div>
@@ -2107,7 +2107,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                {buildMsg} {elapsed > 0 && `(${elapsed}s)`}
+                <span className="ide-shimmer-text">{buildMsg}</span> {elapsed > 0 && `(${elapsed}s)`}
               </div>
             </div>
           </div>
@@ -2121,7 +2121,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                Thinking…
+                <span className="ide-shimmer-text">Thinking…</span>
               </div>
             </div>
           </div>
@@ -2232,7 +2232,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 background: isGenerating ? 'var(--ide-red)' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--bg-overlay)' : 'var(--accent)',
                 color: isGenerating ? 'white' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--ide-text3)' : 'white',
                 cursor: isGenerating ? 'pointer' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s',
+                boxShadow: !isGenerating && (input.trim() || attachedImage || attachedFiles.length > 0) ? '0 0 12px var(--brand-glow, rgba(14,165,233,0.35))' : 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background var(--brand-dur-fast, 0.15s) var(--brand-ease, ease), box-shadow var(--brand-dur-base, 0.24s) var(--brand-ease, ease), transform var(--brand-dur-fast, 0.15s) var(--brand-ease-spring, ease)',
+                transform: !isGenerating && (input.trim() || attachedImage || attachedFiles.length > 0) ? 'scale(1.05)' : 'scale(1)',
               }}
             >
               {isGenerating

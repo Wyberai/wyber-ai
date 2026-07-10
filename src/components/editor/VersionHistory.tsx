@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { SkeletonList, EmptyState } from './ui'
 
 interface Version {
   id: string
@@ -11,6 +12,7 @@ interface Version {
 
 export function VersionHistory({ projectId }: { projectId: string }) {
   const [versions, setVersions] = useState<Version[]>([])
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [restoring, setRestoring] = useState<string | null>(null)
   const [naming, setNaming] = useState(false)
@@ -25,6 +27,7 @@ export function VersionHistory({ projectId }: { projectId: string }) {
       const data = await res.json()
       if (data.versions) setVersions(data.versions)
     } catch {}
+    setLoading(false)
   }
 
   const saveVersion = async () => {
@@ -91,11 +94,14 @@ export function VersionHistory({ projectId }: { projectId: string }) {
       )}
 
       <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
-        {versions.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-muted)', fontSize: 12 }}>
-            <div style={{ fontSize: 24, marginBottom: 8 }}>🕐</div>
-            No snapshots yet.<br />Click &ldquo;Save snapshot&rdquo; to preserve your current state.
-          </div>
+        {loading ? (
+          <SkeletonList rows={4} rowHeight={72} />
+        ) : versions.length === 0 ? (
+          <EmptyState
+            icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>}
+            title="No snapshots yet"
+            hint="Save a snapshot before big changes so you can always roll back."
+          />
         ) : versions.map(v => (
           <div key={v.id} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', marginBottom: 6 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{v.label}</div>
