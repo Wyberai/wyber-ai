@@ -107,14 +107,30 @@ export async function persistImage(
   }
 }
 
-/** Generate + persist in one step. Returns a permanent URL or null on any failure. */
+/** Generate + persist in one step. Returns a permanent URL or null on any failure.
+ *
+ * IDEMPOTENT: the storage key is a stable hash of scope+prompt+ratio, and an
+ * existing object is reused without calling OpenAI — so the preview, a rebuild,
+ * and publish all share ONE generation per unique image. This is what makes
+ * real images in the live preview affordable. */
 export async function generateAndPersistImage(
   admin: SupabaseClient,
   prompt: string,
   size: string,
   scope: string,
 ): Promise<string | null> {
+  const key = imageKey(scope, prompt, size)
+
+  // Cache hit → permanent URL already exists, zero cost.
+  try {
+    const { data } = admin.storage.from(GENERATED_IMAGES_BUCKET).getPublicUrl(key)
+    if (data?.publicUrl) {
+      const head = await fetch(data.publicUrl, { method: 'HEAD' })
+      if (head.ok) return data.publicUrl
+    }
+  } catch { /* fall through to generation */ }
+
   const b64 = await generateImageB64(prompt, size)
   if (!b64) return null
-  return persistImage(admin, b64, imageKey(scope, prompt, size))
+  return persistImage(admin, b64, key)
 }

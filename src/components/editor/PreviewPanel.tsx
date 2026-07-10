@@ -4,6 +4,7 @@ import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
 import { isPlaceholderApp } from '@/lib/starter-templates'
+import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -104,10 +105,35 @@ export function PreviewPanel() {
     }, 1800)
 
     try {
+      // Real images in the PREVIEW: resolve {{wyber-image}} directives into
+      // permanent generated-image URLs before building. Server-side generation
+      // is idempotent (one ~$0.06 generation per unique image, cached in
+      // storage; publish reuses the same cache), so rebuilds resolve in <1s.
+      // Substitution happens on the BUILD REQUEST only — the saved source
+      // keeps its tokens. Any failure falls back to sanitize's gradient
+      // placeholders; the build itself is never blocked by imagery.
+      let buildFiles = files as Record<string, { content?: string; language?: string }>
+      const directives = extractImageDirectives(buildFiles)
+      if (directives.length > 0 && project?.id) {
+        try {
+          const imgRes = await fetch('/api/images/resolve-directives', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id, directives }),
+          })
+          const { urls } = await imgRes.json()
+          if (urls && typeof urls === 'object') {
+            for (const [token, url] of Object.entries(urls)) {
+              if (typeof url === 'string' && url) buildFiles = replaceTokenInFiles(buildFiles, token, url)
+            }
+          }
+        } catch { /* gradients remain — never block the build on imagery */ }
+      }
+
       const res = await fetch(`${BUILDER_URL}/build`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: sanitizeFiles(files as Record<string, { content?: string; language?: string }>), projectId: project?.id }),
+        body: JSON.stringify({ files: sanitizeFiles(buildFiles), projectId: project?.id }),
       })
 
       const data = await res.json()
