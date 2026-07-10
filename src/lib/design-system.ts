@@ -15,15 +15,17 @@
 // build-breaking @import. Keep this list and the token defaults in sync.
 // Brand fonts (General Sans + Switzer) come from Fontshare's CDN — cross-origin
 // friendly like Google Fonts, so they load in every generated/published app, not
-// just on wyberai.com. Playfair Display + Lora (editorial/luxury display) and
-// JetBrains Mono come from Google. This keeps generated apps ON-BRAND with the
-// same premium typography as the platform, instead of the generic Inter/Sora
-// "AI-SaaS" pairing.
+// just on wyberai.com. The editorial display serifs — Instrument Serif + Fraunces
+// (the 2026 pairing), Playfair Display + Lora (classic luxury) — and JetBrains
+// Mono (microlabels/data) come from Google. This keeps generated apps ON-BRAND
+// with the same premium typography as the platform, instead of the generic
+// Inter/Sora "AI-SaaS" pairing. Weights are kept minimal: these links ship with
+// EVERY preview and published app.
 export const GOOGLE_FONTS_LINKS = `<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700,800&f[]=switzer@400,500,600,700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">`
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Lora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght@9..144,400..700&display=swap" rel="stylesheet">`
 
 // Default token values — a dark theme (+ matching light) used only as a
 // SAFETY NET when an app forgets to define tokens, so nothing ever ships

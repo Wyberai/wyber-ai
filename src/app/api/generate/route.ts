@@ -591,7 +591,7 @@ TECH STACK — MANDATORY
 - Do NOT add the Tailwind CDN. Do NOT create tailwind.config or postcss.config — the platform injects them with the design-token mapping below.
 - Lucide React for icons — ALWAYS set size prop: <Icon size={18} />
 - Recharts for charts, framer-motion for motion — both always available.
-- Fonts: the platform preloads the BRAND fonts General Sans (display) + Switzer (body/UI), plus Playfair Display, Lora, JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'; use Playfair Display as the display font only for editorial/luxury looks. Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
+- Fonts: the platform preloads General Sans (display) + Switzer (body/UI), the display serifs Instrument Serif, Fraunces, Playfair Display, Lora, and JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'. For editorial/luxury/hospitality looks reach for a display SERIF — Instrument Serif (sharp, contemporary; its italic is a signature move for one emphasized word in a headline) or Fraunces (warm, characterful) — not only Playfair. Use 'JetBrains Mono' for microlabels, eyebrows, data/numbers and captions (text-xs uppercase tracking-widest). Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SEO — MANDATORY (especially for websites / landing pages / marketing / blogs)
