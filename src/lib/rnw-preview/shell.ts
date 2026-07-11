@@ -76,11 +76,11 @@ body{background:#0A0A0B;-webkit-font-smoothing:antialiased;overflow:hidden}
   window.__WYBER_PLATFORM__ = g.platform;
   window.__WYBER_INSETS__ = g.insets;
   var shown=false;
-  function calm(msg){ if(shown)return; shown=true; var el=document.getElementById('wyber-fallback'); if(el)el.style.display='flex';
-    try{ (window.parent||window).postMessage({type:'wyber-preview-error',message:String(msg||'load')}, '*'); }catch(e){}
-    try{ window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'preview-error',message:String(msg||'load')})); }catch(e){} }
-  window.addEventListener('error', function(ev){ calm(ev && ev.message); });
-  window.addEventListener('unhandledrejection', function(ev){ calm(ev && ev.reason && (ev.reason.message||ev.reason)); });
+  function calm(msg, detail){ if(shown)return; shown=true; var el=document.getElementById('wyber-fallback'); if(el)el.style.display='flex';
+    try{ (window.parent||window).postMessage({type:'wyber-preview-error',message:String(msg||'load'),detail:String(detail||'')}, '*'); }catch(e){}
+    try{ window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'preview-error',message:String(msg||'load'),detail:String(detail||'')})); }catch(e){} }
+  window.addEventListener('error', function(ev){ var loc = ev && ev.filename ? (String(ev.filename).split('/').pop()+':'+ev.lineno) : ''; calm(ev && ev.message, (ev && ev.error && ev.error.stack) || loc); });
+  window.addEventListener('unhandledrejection', function(ev){ var r = ev && ev.reason; calm(r && (r.message||r), r && r.stack); });
   // Blank-screen watchdog: nothing mounted after 8s → calm card.
   setTimeout(function(){ var r=document.getElementById('root'); if(r && r.childElementCount===0) calm('timeout'); }, 8000);
 })();

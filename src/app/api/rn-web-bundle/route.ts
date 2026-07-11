@@ -65,6 +65,14 @@ var makeStub = function () {
       return proxy;
     },
     apply: function () { return proxy; },
+    construct: function () { return proxy; },
+    // CRITICAL for namespace imports: \`import * as X from 'expo-foo'\` compiles
+    // to \`X = __toESM(require(...))\` = Object.create(getPrototypeOf(stub)). By
+    // returning the proxy as its own prototype, ANY property access on the
+    // namespace object (X.setNotificationHandler, X.AndroidImportance, …)
+    // resolves through the proxy to a callable no-op — instead of undefined,
+    // which threw at module top-level and blanked the whole preview.
+    getPrototypeOf: function () { return proxy; },
   });
   return proxy;
 };
@@ -122,6 +130,17 @@ export function createNavigationContainerRef(){ return { current: null, navigate
 export const CommonActions = {}, StackActions = {}, TabActions = {}, DrawerActions = {}
 export function useTheme(){ return DefaultTheme }
 export function useNavigationContainerRef(){ return createNavigationContainerRef() }
+class ScreenErrorBoundary extends React.Component {
+  constructor(p){ super(p); this.state = { failed: false, msg: '' } }
+  static getDerivedStateFromError(e){ return { failed: true, msg: String((e && e.message) || e) } }
+  componentDidCatch(e){ try { (window.parent||window).postMessage({ type:'wyber-preview-error', message: String((e&&e.message)||e), detail: (e&&e.stack)?String(e.stack).split('\\n').slice(0,3).join(' | '):'' }, '*') } catch(_){} }
+  render(){
+    if (this.state.failed) return React.createElement(View, { style: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#0A0A0B' } },
+      React.createElement(Text, { style: { color: '#F5F5F7', fontSize: 15, fontWeight: '600', marginBottom: 6 } }, 'This screen can’t render in preview'),
+      React.createElement(Text, { style: { color: '#9A9AA5', fontSize: 12, textAlign: 'center' } }, this.state.msg))
+    return this.props.children
+  }
+}
 function makeNavigator(){
   function Navigator(props){
     var screens = []
@@ -143,7 +162,7 @@ function makeNavigator(){
       else if (cur.children) body = cur.children({ navigation: nav })
     }
     return React.createElement(View, { style: { flex: 1, backgroundColor: '#ffffff' } },
-      React.createElement(View, { style: { flex: 1 } }, body),
+      React.createElement(View, { style: { flex: 1 } }, React.createElement(ScreenErrorBoundary, { key: idx }, body)),
       screens.length > 1 ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#e5e5e5', backgroundColor: '#fafafa' } },
         screens.map(function(s, i){
           return React.createElement(Pressable, { key: s.name || i, onPress: function(){ setIdx(i) }, style: { flex: 1, paddingVertical: 10, alignItems: 'center' } },
@@ -439,7 +458,10 @@ class WyberBoundary extends React.Component {
   constructor(p){ super(p); this.state = { failed: false } }
   static getDerivedStateFromError(){ return { failed: true } }
   componentDidCatch(err){
-    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'preview-error', message: String((err && err.message) || err) })) } catch(e){}
+    var detail = (err && err.stack) ? String(err.stack).split('\\n').slice(0,4).join(' | ') : ''
+    var payload = { type: 'preview-error', message: String((err && err.message) || err), detail: detail }
+    try { (window.parent || window).postMessage({ type: 'wyber-preview-error', message: payload.message, detail: detail }, '*') } catch(e){}
+    try { window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify(payload)) } catch(e){}
   }
   render(){
     if (this.state.failed) {

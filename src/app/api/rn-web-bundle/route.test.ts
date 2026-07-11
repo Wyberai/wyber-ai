@@ -67,6 +67,26 @@ export default function App(){ return <View><Ionicons name="home" size={24} colo
     expect(body.js).not.toContain('esm.sh/@expo/vector-icons')
   }, 30000)
 
+  it('namespace import of a native stub works at module top-level (import * as X)', async () => {
+    // This is the exact shape that blanked Life Tracker: `import * as X` from a
+    // stubbed native module, then calling X.someMethod() at the top level. The
+    // stub must resolve namespace property access to a callable, or the module
+    // throws before React mounts.
+    const nsApp = `import React from 'react'
+import { View, Text } from 'react-native'
+import * as Notifications from 'expo-notifications'
+import * as Device from 'expo-device'
+Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowAlert: true }) })
+const chan = Notifications.AndroidImportance.MAX
+export default function App(){ return <View><Text>{Device.isDevice ? 'dev' : 'no'}{String(chan)}</Text></View> }`
+    const res = await POST(reqWith({ 'App.tsx': { content: nsApp } }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.js.length).toBeGreaterThan(0)
+    // The stub must expose getPrototypeOf so __toESM namespaces stay callable.
+    expect(body.js).toContain('getPrototypeOf')
+  }, 30000)
+
   it('returns kind:compile (422) for a syntax error, not a 500', async () => {
     const broken = `import React from 'react'
 export default function App(){ return <View> unclosed `

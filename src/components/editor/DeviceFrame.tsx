@@ -79,11 +79,13 @@ export function DeviceFrame({ device, js, platform }: Props) {
 
   // Surface a runtime failure INSIDE the bezel instead of a black void. The
   // shell postMessages { type:'wyber-preview-error' } on any boot/async error.
-  const [runtimeError, setRuntimeError] = useState<string | null>(null)
+  const [runtimeError, setRuntimeError] = useState<{ message: string; detail: string } | null>(null)
   useEffect(() => {
     setRuntimeError(null) // reset when the app rebuilds / device changes
     const onMsg = (e: MessageEvent) => {
-      if (e.data && e.data.type === 'wyber-preview-error') setRuntimeError(String(e.data.message || 'error'))
+      if (e.data && e.data.type === 'wyber-preview-error') {
+        setRuntimeError({ message: String(e.data.message || 'error'), detail: String(e.data.detail || '') })
+      }
     }
     window.addEventListener('message', onMsg)
     return () => window.removeEventListener('message', onMsg)
@@ -108,9 +110,15 @@ export function DeviceFrame({ device, js, platform }: Props) {
           <div style={{ position: 'relative', width: device.width, height: device.height, borderRadius: device.radius, overflow: 'hidden', background: '#0f0f14' }}>
             {/* App surface — always renders SOMETHING (app, spinner, or error) */}
             {runtimeError ? (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', gap: 8 }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', gap: 8, overflow: 'auto' }}>
                 <div style={{ fontSize: 15, fontWeight: 600, color: '#F5F5F7' }}>Preview unavailable</div>
                 <div style={{ fontSize: 12, color: '#9A9AA5', lineHeight: 1.5, maxWidth: 240 }}>This screen uses something we can’t render in the in-app preview yet. It still works in a full build.</div>
+                {runtimeError.message && (
+                  <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(0,0,0,0.35)', borderRadius: 8, maxWidth: 260, textAlign: 'left' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff8a8a', wordBreak: 'break-word', lineHeight: 1.5 }}>{runtimeError.message}</div>
+                    {runtimeError.detail && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#6b7280', marginTop: 4, wordBreak: 'break-word', maxHeight: 80, overflow: 'hidden' }}>{runtimeError.detail}</div>}
+                  </div>
+                )}
               </div>
             ) : blobUrl ? (
               <iframe
