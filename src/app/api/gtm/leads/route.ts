@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     .from('gtm_leads')
     .select('*', { count: 'exact' })
     .eq('user_id', user.id)
-    .order('icp_score', { ascending: false })
+    .order('icp_fit_score', { ascending: false })
     .range(offset, offset + limit - 1)
 
   if (status) query = query.eq('status', status)
@@ -55,7 +55,7 @@ export async function PATCH(req: NextRequest) {
   const { id, ...updates } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  const allowed = ['status', 'icp_score', 'notes', 'list_id', 'title', 'company_name']
+  const allowed = ['status', 'icp_fit_score', 'list_id', 'title', 'company_name']
   const filtered = Object.fromEntries(Object.entries(updates).filter(([k]) => allowed.includes(k)))
 
   await supabase.from('gtm_leads').update(filtered).eq('id', id).eq('user_id', user.id)

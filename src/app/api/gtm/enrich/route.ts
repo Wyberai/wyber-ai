@@ -80,14 +80,14 @@ export async function POST(req: NextRequest) {
 
       await db.from('gtm_leads').update({
         enrichment_data: enriched,
-        icp_score,
+        icp_fit_score: icp_score,
         status: lead.status === 'new' ? 'enriched' : lead.status,
         updated_at: new Date().toISOString(),
       }).eq('id', lead.id).eq('user_id', user.id)
 
       results.push({ id: lead.id, enriched: true, icp_score })
     } catch {
-      results.push({ id: lead.id, enriched: false, icp_score: lead.icp_score ?? 0 })
+      results.push({ id: lead.id, enriched: false, icp_score: lead.icp_fit_score ?? 0 })
     }
   }
 
