@@ -98,5 +98,71 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ imported: rows.length, credits_used: creditCost })
   }
 
+  if (action === 'csv') {
+    // Own-data import: no credit charge. Client parses the file and sends
+    // batches of already-mapped rows; this branch validates, dedupes, upserts.
+    const { rows, listName, listId } = body
+    if (!Array.isArray(rows) || rows.length === 0) return NextResponse.json({ error: 'No rows' }, { status: 400 })
+    if (rows.length > 500) return NextResponse.json({ error: 'Max 500 rows per batch' }, { status: 400 })
+
+    let list: { id: string } | null = null
+    if (listId) {
+      const { data } = await supabase.from('gtm_lead_lists').select('id').eq('user_id', user.id).eq('id', listId).single()
+      list = data
+    }
+    if (!list) {
+      const name = (typeof listName === 'string' && listName.trim()) ? listName.trim().slice(0, 120) : 'CSV import'
+      const { data: existing } = await supabase.from('gtm_lead_lists').select('id').eq('user_id', user.id).eq('name', name).limit(1).maybeSingle()
+      list = existing
+      if (!list) {
+        const { data: created, error: listErr } = await supabase.from('gtm_lead_lists').insert({ user_id: user.id, name }).select('id').single()
+        if (listErr) return NextResponse.json({ error: listErr.message }, { status: 500 })
+        list = created
+      }
+    }
+
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const seen = new Set<string>()
+    let invalid = 0
+    const clean = []
+    for (const r of rows) {
+      const email = String(r.email || '').trim().toLowerCase()
+      if (!emailRe.test(email) || seen.has(email)) { invalid++; continue }
+      seen.add(email)
+      clean.push({
+        user_id: user.id,
+        list_id: list!.id,
+        first_name: String(r.first_name || '').trim().slice(0, 120),
+        last_name: String(r.last_name || '').trim().slice(0, 120),
+        email,
+        phone: String(r.phone || '').trim().slice(0, 40) || null,
+        title: String(r.title || '').trim().slice(0, 200) || null,
+        company_name: String(r.company_name || '').trim().slice(0, 200) || null,
+        company_domain: String(r.company_domain || '').trim().slice(0, 200) || null,
+        company_location: String(r.company_location || '').trim().slice(0, 200) || null,
+        linkedin_url: String(r.linkedin_url || '').trim().slice(0, 300) || null,
+        email_verified: r.email_verified === true || String(r.email_verified || '').toLowerCase() === 'true',
+        status: 'new',
+        source: 'csv',
+      })
+    }
+    if (clean.length === 0) return NextResponse.json({ imported: 0, duplicates: 0, invalid, list_id: list!.id })
+
+    // ignoreDuplicates + select returns only the rows actually inserted
+    const { data: inserted, error: upErr } = await supabase
+      .from('gtm_leads')
+      .upsert(clean, { onConflict: 'user_id,email', ignoreDuplicates: true })
+      .select('id')
+    if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 })
+
+    const importedCount = inserted?.length || 0
+    if (importedCount > 0) {
+      const { data: lc } = await supabase.from('gtm_lead_lists').select('lead_count').eq('id', list!.id).single()
+      await supabase.from('gtm_lead_lists').update({ lead_count: (lc?.lead_count || 0) + importedCount }).eq('id', list!.id)
+    }
+
+    return NextResponse.json({ imported: importedCount, duplicates: clean.length - importedCount, invalid, list_id: list!.id })
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
