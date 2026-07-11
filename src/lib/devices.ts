@@ -19,12 +19,18 @@ export interface Device {
 }
 
 export const DEVICES: Device[] = [
-  // iOS — iPhone 17 line (all Dynamic Island), plus 16e + iPad mini
+  // iOS — full iPhone 15 → 17 range (all Dynamic Island), plus 16e + iPad mini
   { id: 'iphone-17-pro-max', name: 'iPhone 17 Pro Max', os: 'ios', width: 440, height: 956, radius: 55, notch: 'island', insets: { top: 62, bottom: 34 }, statusBar: 'dark' },
   { id: 'iphone-17-pro',     name: 'iPhone 17 Pro',     os: 'ios', width: 402, height: 874, radius: 55, notch: 'island', insets: { top: 62, bottom: 34 }, statusBar: 'dark' },
-  { id: 'iphone-17',         name: 'iPhone 17',         os: 'ios', width: 393, height: 852, radius: 50, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
   { id: 'iphone-17-air',     name: 'iPhone 17 Air',     os: 'ios', width: 420, height: 912, radius: 58, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-17',         name: 'iPhone 17',         os: 'ios', width: 393, height: 852, radius: 50, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-16-pro-max', name: 'iPhone 16 Pro Max', os: 'ios', width: 440, height: 956, radius: 55, notch: 'island', insets: { top: 62, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-16-pro',     name: 'iPhone 16 Pro',     os: 'ios', width: 402, height: 874, radius: 55, notch: 'island', insets: { top: 62, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-16',         name: 'iPhone 16',         os: 'ios', width: 393, height: 852, radius: 50, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
   { id: 'iphone-16e',        name: 'iPhone 16e',        os: 'ios', width: 390, height: 844, radius: 47, notch: 'notch',  insets: { top: 47, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-15-pro-max', name: 'iPhone 15 Pro Max', os: 'ios', width: 430, height: 932, radius: 55, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-15-pro',     name: 'iPhone 15 Pro',     os: 'ios', width: 393, height: 852, radius: 55, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
+  { id: 'iphone-15',         name: 'iPhone 15',         os: 'ios', width: 393, height: 852, radius: 50, notch: 'island', insets: { top: 59, bottom: 34 }, statusBar: 'dark' },
   { id: 'ipad-mini',         name: 'iPad mini',         os: 'ios', width: 744, height: 1133, radius: 34, notch: 'none',  insets: { top: 24, bottom: 20 }, statusBar: 'dark' },
 
   // Android — Galaxy S26 + Pixel 10 line

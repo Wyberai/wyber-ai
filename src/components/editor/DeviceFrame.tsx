@@ -39,14 +39,26 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
   const frameH = device.height + BEZEL * 2
   const scale = Math.min(1, (vh - 24) / frameH, (vw - 24) / frameW)
 
-  const srcDoc = useMemo(
+  const html = useMemo(
     () => (js ? buildPreviewHtml(js, { platform, insets: device.insets }) : null),
     [js, platform, device.insets],
   )
 
-  // Remount the iframe whenever the wrapped doc changes so platform/device
-  // switches take effect cleanly (globals are read once at boot).
-  const iframeKey = `${device.id}:${platform}:${js ? js.length : 0}`
+  // Deliver via a blob URL (not srcDoc) with an allow-same-origin sandbox —
+  // exactly like the web preview (WyberPreview.tsx). A srcDoc frame WITHOUT
+  // allow-same-origin runs as an opaque origin, where react-native-web /
+  // react-dom throw on storage access during boot → the whole preview blanks.
+  // A same-origin blob document lets the RN-web runtime + esm.sh imports run.
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const prevBlob = useRef<string | null>(null)
+  useEffect(() => {
+    if (!html) { setBlobUrl(null); return }
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
+    if (prevBlob.current) URL.revokeObjectURL(prevBlob.current)
+    prevBlob.current = url
+    setBlobUrl(url)
+    return () => { URL.revokeObjectURL(url); if (prevBlob.current === url) prevBlob.current = null }
+  }, [html])
 
   const isDark = device.statusBar === 'light'
   const statusColor = isDark ? '#fff' : '#0A0A0B'
@@ -67,11 +79,11 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
         >
           <div style={{ position: 'relative', width: device.width, height: device.height, borderRadius: device.radius, overflow: 'hidden', background: '#000' }}>
             {/* App surface */}
-            {srcDoc ? (
+            {blobUrl ? (
               <iframe
-                key={iframeKey}
-                srcDoc={srcDoc}
-                sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                key={blobUrl}
+                src={blobUrl}
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                 style={{ width: '100%', height: '100%', border: 'none', display: 'block', background: '#0A0A0B' }}
                 title={`${device.name} preview`}
               />
