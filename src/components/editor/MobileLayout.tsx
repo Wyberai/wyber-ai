@@ -153,7 +153,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
               <ChatPanel projectId={initialProject?.id} userId={initialProfile?.id} projectType="mobile" />
             </Suspense>
           </div>
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'block' : 'none' }}>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', flexDirection: 'column', display: mobileView === 'preview' ? 'flex' : 'none' }}>
             <MobilePreviewPanel />
           </div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'store' ? 'block' : 'none' }}>
@@ -188,7 +188,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
         </div>
 
         {/* Center: Preview */}
-        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <MobilePreviewPanel />
         </div>
 

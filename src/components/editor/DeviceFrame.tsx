@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { useMemo, useRef, useState, useEffect, useLayoutEffect } from 'react'
 import type { Device } from '@/lib/devices'
 import { buildPreviewHtml, type PreviewPlatform } from '@/lib/rnw-preview/shell'
 
@@ -7,37 +7,55 @@ interface Props {
   device: Device
   js: string | null            // compiled RN-web bundle; null = nothing to show yet
   platform: PreviewPlatform
-  availableHeight?: number     // panel height for scale-to-fit (px)
-  availableWidth?: number
 }
 
-// Renders a generated RN-web app inside a to-scale phone/tablet bezel.
-// The bundle (`js`) is platform-agnostic; we wrap it here with per-device
-// globals (platform + insets) so switching device/platform is a pure client
-// re-render — no server round-trip. Sandboxed iframe keeps a crashing app fully
-// isolated from the editor.
-export function DeviceFrame({ device, js, platform, availableHeight, availableWidth }: Props) {
-  const [vh, setVh] = useState(availableHeight ?? 700)
-  const [vw, setVw] = useState(availableWidth ?? 420)
-  const wrapRef = useRef<HTMLDivElement>(null)
+const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n))
 
-  useEffect(() => {
-    if (availableHeight && availableWidth) { setVh(availableHeight); setVw(availableWidth); return }
+// Renders a generated RN-web app inside a to-scale phone/tablet bezel.
+// The bundle (`js`) is platform-agnostic; we wrap it with per-device globals
+// (platform + insets) so switching device/platform is a pure client re-render —
+// no server round-trip. A sandboxed blob iframe keeps a crashing app isolated.
+//
+// SIZING (why this is defensive): the panel's flex container can momentarily
+// report ~0 height in the editor layout, which previously drove `scale` to 0/
+// negative and collapsed the whole frame to a black void. We derive the
+// available box from BOTH the measured container AND a window-based floor, and
+// clamp scale to a positive range, so the bezel is ALWAYS visible.
+export function DeviceFrame({ device, js, platform }: Props) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState<{ h: number; w: number }>(() => ({
+    h: typeof window !== 'undefined' ? window.innerHeight - 120 : 720,
+    w: typeof window !== 'undefined' ? Math.min(520, window.innerWidth) : 420,
+  }))
+
+  // Measure the real container, but never trust a near-zero value — floor it to
+  // a window-derived size (mirrors the proven Expo bezel, which never blanked).
+  useLayoutEffect(() => {
     const measure = () => {
       const el = wrapRef.current
-      if (el) { setVh(el.clientHeight); setVw(el.clientWidth) }
+      const winH = typeof window !== 'undefined' ? window.innerHeight : 720
+      const winW = typeof window !== 'undefined' ? window.innerWidth : 420
+      const cH = el?.clientHeight ?? 0
+      const cW = el?.clientWidth ?? 0
+      setBox({
+        h: Math.max(cH, winH - 120, 360),
+        w: Math.max(cW, Math.min(winW, 480) - 20, 280),
+      })
     }
     measure()
-    const ro = new ResizeObserver(measure)
-    if (wrapRef.current) ro.observe(wrapRef.current)
-    return () => ro.disconnect()
-  }, [availableHeight, availableWidth])
+    let ro: ResizeObserver | undefined
+    if (typeof ResizeObserver !== 'undefined' && wrapRef.current) {
+      ro = new ResizeObserver(measure)
+      ro.observe(wrapRef.current)
+    }
+    window.addEventListener('resize', measure)
+    return () => { ro?.disconnect(); window.removeEventListener('resize', measure) }
+  }, [])
 
-  // Bezel is ~10px thick each side; leave breathing room in the panel.
   const BEZEL = 10
   const frameW = device.width + BEZEL * 2
   const frameH = device.height + BEZEL * 2
-  const scale = Math.min(1, (vh - 24) / frameH, (vw - 24) / frameW)
+  const scale = clamp(Math.min((box.h - 20) / frameH, (box.w - 20) / frameW), 0.2, 1)
 
   const html = useMemo(
     () => (js ? buildPreviewHtml(js, { platform, insets: device.insets }) : null),
@@ -48,7 +66,6 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
   // exactly like the web preview (WyberPreview.tsx). A srcDoc frame WITHOUT
   // allow-same-origin runs as an opaque origin, where react-native-web /
   // react-dom throw on storage access during boot → the whole preview blanks.
-  // A same-origin blob document lets the RN-web runtime + esm.sh imports run.
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const prevBlob = useRef<string | null>(null)
   useEffect(() => {
@@ -60,12 +77,23 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
     return () => { URL.revokeObjectURL(url); if (prevBlob.current === url) prevBlob.current = null }
   }, [html])
 
-  const isDark = device.statusBar === 'light'
-  const statusColor = isDark ? '#fff' : '#0A0A0B'
+  // Surface a runtime failure INSIDE the bezel instead of a black void. The
+  // shell postMessages { type:'wyber-preview-error' } on any boot/async error.
+  const [runtimeError, setRuntimeError] = useState<string | null>(null)
+  useEffect(() => {
+    setRuntimeError(null) // reset when the app rebuilds / device changes
+    const onMsg = (e: MessageEvent) => {
+      if (e.data && e.data.type === 'wyber-preview-error') setRuntimeError(String(e.data.message || 'error'))
+    }
+    window.addEventListener('message', onMsg)
+    return () => window.removeEventListener('message', onMsg)
+  }, [blobUrl])
+
+  const statusColor = device.statusBar === 'light' ? '#fff' : '#0A0A0B'
 
   return (
-    <div ref={wrapRef} style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-      <div style={{ width: frameW * scale, height: frameH * scale, position: 'relative' }}>
+    <div ref={wrapRef} style={{ width: '100%', height: '100%', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <div style={{ width: frameW * scale, height: frameH * scale, position: 'relative', flexShrink: 0 }}>
         <div
           style={{
             width: frameW, height: frameH,
@@ -77,9 +105,14 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
             position: 'absolute', top: 0, left: 0,
           }}
         >
-          <div style={{ position: 'relative', width: device.width, height: device.height, borderRadius: device.radius, overflow: 'hidden', background: '#000' }}>
-            {/* App surface */}
-            {blobUrl ? (
+          <div style={{ position: 'relative', width: device.width, height: device.height, borderRadius: device.radius, overflow: 'hidden', background: '#0f0f14' }}>
+            {/* App surface — always renders SOMETHING (app, spinner, or error) */}
+            {runtimeError ? (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center', gap: 8 }}>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#F5F5F7' }}>Preview unavailable</div>
+                <div style={{ fontSize: 12, color: '#9A9AA5', lineHeight: 1.5, maxWidth: 240 }}>This screen uses something we can’t render in the in-app preview yet. It still works in a full build.</div>
+              </div>
+            ) : blobUrl ? (
               <iframe
                 key={blobUrl}
                 src={blobUrl}
@@ -88,7 +121,10 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
                 title={`${device.name} preview`}
               />
             ) : (
-              <div style={{ width: '100%', height: '100%', background: '#0f0f14' }} />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+                <div style={{ width: 24, height: 24, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                <div style={{ fontSize: 11, color: '#52525b' }}>Loading preview…</div>
+              </div>
             )}
 
             {/* Faux status bar (time + signal/battery) sitting in the top inset */}
@@ -131,6 +167,7 @@ export function DeviceFrame({ device, js, platform, availableHeight, availableWi
           </div>
         </div>
       </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   )
 }

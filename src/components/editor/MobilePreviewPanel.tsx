@@ -189,17 +189,19 @@ export function MobilePreviewPanel() {
           </div>
         )}
 
-        {/* In-app preview (RN-web) */}
+        {/* In-app preview (RN-web). Wrapper is an explicit full-size flex box so
+            DeviceFrame always has a real height to scale against (a bare flex:1
+            container can resolve to ~0 in this layout → previously black). */}
         {!isGenerating && shouldBuildPreview && mode === 'inapp' && (
-          <ErrorBoundary fallbackMessage="The mobile preview hit an error — your app and editor are unaffected">
-            {error ? (
-              <PreviewError error={error} onRetry={refresh} />
-            ) : bundleLoading && !bundleJs ? (
-              <Centered><Spinner /><span style={{ fontSize: 11, color: '#52525b' }}>Building preview…</span></Centered>
-            ) : (
-              <DeviceFrame device={device} js={bundleJs} platform={platform} />
-            )}
-          </ErrorBoundary>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            <ErrorBoundary fallbackMessage="The mobile preview hit an error — your app and editor are unaffected">
+              {error ? (
+                <PreviewError error={error} onRetry={refresh} />
+              ) : (
+                <DeviceFrame device={device} js={bundleJs} platform={platform} />
+              )}
+            </ErrorBoundary>
+          </div>
         )}
 
         {/* Expo Snack path (test on a real device) */}
