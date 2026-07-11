@@ -17,6 +17,31 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [displayName, setDisplayName] = useState(initialProject?.name || 'Mobile App')
+  const [exporting, setExporting] = useState(false)
+
+  // Download the full Expo/React Native source as a ZIP — the "own your code"
+  // path. Reuses /api/export (format:'zip'), which sanitizes + secret-scans
+  // and now ships Expo-specific run instructions for react-native projects.
+  const exportCode = async () => {
+    if (exporting || !initialProject?.id) return
+    setExporting(true)
+    try {
+      const res = await fetch('/api/export', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: initialProject.id, format: 'zip' }),
+      })
+      if (res.ok) {
+        const url = URL.createObjectURL(await res.blob())
+        const a = document.createElement('a')
+        a.href = url; a.download = `${(displayName || 'wyber-app').replace(/[^a-z0-9]/gi, '-')}.zip`; a.click()
+        URL.revokeObjectURL(url)
+      } else {
+        const d = await res.json().catch(() => ({}))
+        alert(d.error || 'Export failed. Please try again.')
+      }
+    } catch { alert('Export failed. Please try again.') }
+    setExporting(false)
+  }
 
   // Narrow-screen handling: the 3-column layout (chat + preview + store) overflows
   // a phone, leaving only the chat reachable. Below the breakpoint show one panel
@@ -138,6 +163,15 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
           >{displayName}</span>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={exportCode}
+            disabled={exporting || !initialProject?.id}
+            title="Download the full Expo / React Native source code"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#d4d4d8', cursor: exporting ? 'wait' : 'pointer', fontFamily: 'inherit' }}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            {exporting ? 'Exporting…' : 'Export code'}
+          </button>
           <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', letterSpacing: '0.04em' }}>MOBILE</span>
           {initialProfile && (
             <span style={{ fontSize: 11, color: '#52525b' }}>{initialProfile.credits} credits</span>

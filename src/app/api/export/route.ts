@@ -73,29 +73,59 @@ export async function POST(req: NextRequest) {
     }
 
     const hasSupabaseEnv = Object.keys(files).some(p => /supabase/i.test(p));
+    // Mobile projects are stored with project_type='mobile' (framework is often
+    // still 'react-vite'), so key off project_type — with a framework/App.tsx
+    // fallback — to decide Expo vs web run instructions.
+    const isMobile = project.project_type === 'mobile'
+      || /react-native|expo/i.test(String(project.framework ?? ''))
+      || Object.keys(files).some(p => /^(src\/)?screens\//i.test(p));
 
-    // Add a README
+    // README — the run instructions differ by framework. A React Native / Expo
+    // project uses the Expo CLI + EAS, not Vite, and reads EXPO_PUBLIC_* env
+    // vars; a web project uses Vite + VITE_* vars. Shipping the wrong steps
+    // (the old web-only README) sent mobile users down a dead end.
+    const setupLine = hasSupabaseEnv
+      ? (isMobile
+          ? '- This project uses Supabase. Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` (check `lib/supabase*` for values to move into a `.env` / app config) before running.'
+          : '- This project uses Supabase. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (or check `src/lib/supabase.ts` for hardcoded values to move into env vars) before running.')
+      : '- No external services required.';
+
+    const running = isMobile
+      ? `\`\`\`bash
+npm install
+npx expo start        # opens Expo Dev Tools — scan the QR with Expo Go, or press i / a for a simulator
+\`\`\`
+
+## Building a production app (App Store / Play Store)
+\`\`\`bash
+npm install -g eas-cli
+eas login
+eas build:configure
+eas build --platform ios      # or --platform android
+eas submit --platform ios     # upload the build to the store
+\`\`\`
+Requires a free Expo account. See https://docs.expo.dev/build/introduction/ .`
+      : `\`\`\`bash
+npm install
+npm run build   # verifies the project builds cleanly
+npm run dev
+\`\`\``;
+
     zip.file('WYBER_EXPORT.md', `# ${project.name}
 
 Exported from WyberAi on ${new Date().toLocaleDateString()}
 
 ## Framework
-${project.framework}
+${isMobile ? 'Expo / React Native' : project.framework}
 
 ## Files
 ${Object.keys(files).join('\n')}
 
 ## Required setup
-${hasSupabaseEnv
-  ? '- This project uses Supabase. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (or check `src/lib/supabase.ts` for hardcoded values to move into env vars) before running.'
-  : '- No external services required.'}
+${setupLine}
 
 ## Running locally
-\`\`\`bash
-npm install
-npm run build   # verifies the project builds cleanly
-npm run dev
-\`\`\`
+${running}
 
 Your code belongs to you. No WyberAi dependency required to run this app.
 `);
