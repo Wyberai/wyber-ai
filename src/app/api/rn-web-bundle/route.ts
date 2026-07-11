@@ -214,6 +214,40 @@ export function GestureDetector(p){ return React.createElement(React.Fragment, n
 export { ScrollView, FlatList, Pressable, TouchableOpacity, TouchableWithoutFeedback, TouchableHighlight }
 export default { GestureHandlerRootView: GestureHandlerRootView, RectButton: RectButton, BaseButton: BaseButton, Swipeable: Swipeable, State: State, Directions: Directions, Gesture: Gesture, GestureDetector: GestureDetector, ScrollView: ScrollView, FlatList: FlatList }`
 
+// @expo/vector-icons (and react-native-vector-icons) are icon-FONT packages:
+// esm.sh 500s on them and tries to serve the .ttf/.png glyph assets as JS
+// modules ("MIME type image/png is not executable"), which crashed EVERY app
+// that renders an icon — and the mobile system prompt mandates @expo/vector-icons
+// for all generated apps, so real apps blanked while icon-less ones rendered.
+// The shim renders each icon as a colour-accurate placeholder glyph (respecting
+// size + color so active/inactive tab states still read correctly), mapping the
+// most common icon names to a monochrome symbol and falling back to a dot. Every
+// icon family (Ionicons, MaterialCommunityIcons, …) and the createIconSet
+// factories map to the same component; default export covers subpath imports
+// (`import Ionicons from '@expo/vector-icons/Ionicons'`).
+const ICON_SHIM_SOURCE = `import React from 'react'
+import { Text, Pressable } from 'react-native'
+var MAP = { home:'⌂', house:'⌂', search:'⌕', settings:'⚙', gear:'⚙', cog:'⚙', add:'＋', plus:'＋', create:'＋', close:'✕', times:'✕', remove:'✕', check:'✓', checkmark:'✓', done:'✓', heart:'♥', favorite:'♥', like:'♥', bookmark:'⚑', star:'★', menu:'☰', list:'☰', filter:'≡', back:'‹', chevronleft:'‹', arrowback:'‹', forward:'›', chevronright:'›', arrowforward:'›', up:'↑', down:'↓', play:'▶', pause:'‖', person:'●', profile:'●', user:'●', account:'●', people:'●', calendar:'▦', chart:'▤', stats:'▤', analytics:'▤', bar:'▤', bell:'○', notification:'○', trash:'␡', delete:'␡', edit:'✎', pencil:'✎', mail:'✉', email:'✉', send:'➤', location:'◉', map:'◉', pin:'◉', navigate:'◉', time:'◴', clock:'◴', timer:'◴', lock:'▮', camera:'▣', image:'▧', cart:'◎', bag:'◎', wallet:'▭', card:'▭', chat:'▬', message:'▬', comment:'▬', info:'ⓘ', help:'?', warning:'⚠', flame:'▲', fire:'▲', water:'○', moon:'☽', sun:'☀', music:'♪', book:'□', flag:'⚑', gift:'▩', share:'➦', download:'↓', upload:'↑', refresh:'↻', sync:'↻', eye:'◉', grid:'▦', apps:'▦' }
+function glyphFor(name){ var n = String(name||'').toLowerCase().replace(/[^a-z]/g,''); for (var k in MAP){ if (n.indexOf(k) !== -1) return MAP[k] } return '●' }
+function Icon(props){
+  var size = (props && props.size) || 24
+  var color = (props && props.color) || '#4B5563'
+  return React.createElement(Text, { allowFontScaling: false, style: { fontSize: size * 0.92, lineHeight: size, width: size, height: size, textAlign: 'center', color: color } }, glyphFor(props && props.name))
+}
+Icon.Button = function(p){ return React.createElement(Pressable, { onPress: p && p.onPress, style: p && p.style }, React.createElement(Icon, p), (p && p.children) ? React.createElement(Text, { style: { color: p.color, marginLeft: 8 } }, p.children) : null) }
+Icon.getImageSource = function(){ return Promise.resolve(null) }
+Icon.getImageSourceSync = function(){ return null }
+Icon.loadFont = function(){ return Promise.resolve() }
+Icon.hasIcon = function(){ return true }
+Icon.font = {}
+Icon.glyphMap = {}
+export function createIconSet(){ return Icon }
+export function createIconSetFromFontello(){ return Icon }
+export function createIconSetFromIcoMoon(){ return Icon }
+export function createMultiStyleIconSet(){ return Icon }
+export var Ionicons = Icon, MaterialIcons = Icon, MaterialCommunityIcons = Icon, FontAwesome = Icon, FontAwesome5 = Icon, FontAwesome6 = Icon, Feather = Icon, AntDesign = Icon, Entypo = Icon, EvilIcons = Icon, Foundation = Icon, Octicons = Icon, SimpleLineIcons = Icon, Zocial = Icon, Fontisto = Icon
+export default Icon`
+
 // Specifier prefixes that resolve to an inlined nav/safe-area shim instead of
 // esm.sh. Prefix match so subpaths (e.g. `@react-navigation/native/lib/...`)
 // also route to the shim.
@@ -227,6 +261,8 @@ const SHIM_MODULES: Record<string, string> = {
   '@react-navigation/material-bottom-tabs': NAV_SHIM_SOURCE,
   'react-native-safe-area-context': SAFE_AREA_SHIM_SOURCE,
   'react-native-gesture-handler': GESTURE_SHIM_SOURCE,
+  '@expo/vector-icons': ICON_SHIM_SOURCE,
+  'react-native-vector-icons': ICON_SHIM_SOURCE,
 }
 
 function shimSourceFor(spec: string): string | null {

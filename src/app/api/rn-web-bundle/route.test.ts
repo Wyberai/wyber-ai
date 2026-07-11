@@ -53,6 +53,20 @@ export default function App(){ return <GestureHandlerRootView style={{flex:1}}><
     expect(body.js.length).toBeGreaterThan(0)
   }, 30000)
 
+  it('shims @expo/vector-icons (named + subpath) so icon apps do not blank', async () => {
+    const withIcons = `import React from 'react'
+import { View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
+export default function App(){ return <View><Ionicons name="home" size={24} color="#fff" /><MaterialCommunityIcons name="chart-bar" size={24} color="#000" /></View> }`
+    const res = await POST(reqWith({ 'App.tsx': { content: withIcons } }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.js.length).toBeGreaterThan(0)
+    // The bundle must NOT reference esm.sh for the icon package (that 500s).
+    expect(body.js).not.toContain('esm.sh/@expo/vector-icons')
+  }, 30000)
+
   it('returns kind:compile (422) for a syntax error, not a 500', async () => {
     const broken = `import React from 'react'
 export default function App(){ return <View> unclosed `
