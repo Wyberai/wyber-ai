@@ -2,11 +2,13 @@ export const runtime = 'nodejs'
 export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
+import { buildPreviewHtml, REACT_VERSION, RNW_VERSION } from '@/lib/rnw-preview/shell'
 
 // In-app mobile preview runtime (react-native-web). Bundles a generated RN app
-// and returns an HTML document loaded directly in the WyberAi app's WebView, so
-// the app renders INSIDE WyberAi — no Expo Go, no Snack handoff. This is the
-// "RN-web now" half of the preview runtime; a true-native host comes later.
+// and returns the raw ESM bundle (`js`) — the client wraps it with per-device
+// globals (platform + insets) so iOS/Android + device-model toggles re-render
+// instantly with no re-bundle. Also returns a default `html` for any direct
+// WebView consumer. The app renders INSIDE WyberAi — no Expo Go, no Snack.
 //
 // Hardening principles (we cannot render on-device from here, so failures must
 // degrade gracefully):
@@ -21,11 +23,11 @@ import { NextRequest, NextResponse } from 'next/server'
 //      blank-screen watchdog guarantee a calm "Preview unavailable" state
 //      instead of a red stack, a white blank, or an esbuild dump.
 
-const RNW = 'https://esm.sh/react-native-web@0.19.13?external=react,react-dom'
 const ESM = 'https://esm.sh'
 // Shared query for every third-party dependency: reuse the singleton React +
 // react-native-web, and rewrite any `react-native` import to the web build.
-const DEP_QUERY = 'external=react,react-dom,react-native-web&alias=react-native:react-native-web&deps=react@18.3.1,react-native-web@0.19.13'
+// Versions come from the shell so the import map and the bundle can't drift.
+const DEP_QUERY = `external=react,react-dom,react-native-web&alias=react-native:react-native-web&deps=react@${REACT_VERSION},react-native-web@${RNW_VERSION}`
 
 // Bare specifiers that resolve via the import map (the singletons). Everything
 // else is routed to esm.sh with DEP_QUERY.
@@ -38,18 +40,6 @@ const SINGLETONS = new Set([
   'react-native',
   'react-native-web',
 ])
-
-const IMPORT_MAP = {
-  imports: {
-    react: `${ESM}/react@18.3.1`,
-    'react-dom': `${ESM}/react-dom@18.3.1?external=react`,
-    'react-dom/client': `${ESM}/react-dom@18.3.1/client?external=react`,
-    'react/jsx-runtime': `${ESM}/react@18.3.1/jsx-runtime`,
-    'react/jsx-dev-runtime': `${ESM}/react@18.3.1/jsx-dev-runtime`,
-    'react-native': RNW,
-    'react-native-web': RNW,
-  },
-}
 
 function esmUrl(spec: string): string {
   return `${ESM}/${spec}?${DEP_QUERY}`
@@ -91,6 +81,11 @@ const NATIVE_STUBS = new Set([
   'expo-media-library', 'expo-contacts', 'expo-local-authentication',
   'expo-secure-store', 'expo-file-system', 'expo-av', 'expo-image-picker',
   'expo-barcode-scanner', 'expo-speech', 'expo-network', 'expo-cellular',
+  // Injected by the generator (RevenueCat paywall, maps, OTA, animations) but
+  // with no WebView equivalent — stub so they can't crash boot. reanimated is a
+  // frequent RN-web trouble spot; the no-op keeps the screen rendering.
+  'expo-updates', 'react-native-purchases', 'react-native-maps',
+  'react-native-reanimated',
 ])
 
 function isNativeStub(spec: string): boolean {
@@ -172,17 +167,52 @@ export default { NavigationContainer: NavigationContainer, useNavigation: useNav
 // pull it in, a zero-inset shim keeps them rendering.
 const SAFE_AREA_SHIM_SOURCE = `import React from 'react'
 import { View } from 'react-native'
+var INS = (typeof window !== 'undefined' && window.__WYBER_INSETS__) || { top: 0, bottom: 0 }
+var insets = { top: INS.top || 0, bottom: INS.bottom || 0, left: 0, right: 0 }
 export function SafeAreaProvider(p){ return React.createElement(React.Fragment, null, p.children) }
-export function SafeAreaView(p){ return React.createElement(View, p, p.children) }
-export function useSafeAreaInsets(){ return { top: 0, bottom: 0, left: 0, right: 0 } }
+export function SafeAreaView(p){
+  var extra = { paddingTop: insets.top, paddingBottom: insets.bottom }
+  var style = Array.isArray(p.style) ? [extra].concat(p.style) : [extra, p.style]
+  return React.createElement(View, Object.assign({}, p, { style: style }), p.children)
+}
+export function useSafeAreaInsets(){ return insets }
 export function useSafeAreaFrame(){ return { x: 0, y: 0, width: 390, height: 844 } }
-export const SafeAreaInsetsContext = React.createContext({ top: 0, bottom: 0, left: 0, right: 0 })
+export const SafeAreaInsetsContext = React.createContext(insets)
 export const SafeAreaFrameContext = React.createContext({ x: 0, y: 0, width: 390, height: 844 })
 export const SafeAreaConsumer = SafeAreaInsetsContext.Consumer
-export const initialWindowMetrics = { insets: { top: 0, bottom: 0, left: 0, right: 0 }, frame: { x: 0, y: 0, width: 390, height: 844 } }
-export const initialWindowSafeAreaInsets = { top: 0, bottom: 0, left: 0, right: 0 }
+export const initialWindowMetrics = { insets: insets, frame: { x: 0, y: 0, width: 390, height: 844 } }
+export const initialWindowSafeAreaInsets = insets
 export function withSafeAreaInsets(C){ return C }
 export default { SafeAreaProvider: SafeAreaProvider, SafeAreaView: SafeAreaView, useSafeAreaInsets: useSafeAreaInsets }`
+
+// react-native-gesture-handler must be shimmed, NOT stubbed: apps wrap their
+// whole tree in <GestureHandlerRootView> (and use RectButton/Swipeable), so a
+// no-op stub renders nothing → blank screen. The shim renders containers as
+// Views and the button family as the RN-web Pressable/Touchable so the UI stays
+// interactive; gesture recognition itself is inert in-preview (fine — real
+// builds keep the native lib).
+const GESTURE_SHIM_SOURCE = `import React from 'react'
+import { View, ScrollView, FlatList, Pressable, TouchableOpacity, TouchableWithoutFeedback, TouchableHighlight } from 'react-native'
+export function GestureHandlerRootView(p){ return React.createElement(View, p, p.children) }
+export const RectButton = function(p){ return React.createElement(Pressable, p, p.children) }
+export const BaseButton = RectButton
+export const BorderlessButton = RectButton
+export function Swipeable(p){ return React.createElement(View, p, p.children) }
+export function DrawerLayout(p){ return React.createElement(View, p, p.children) }
+export const PanGestureHandler = function(p){ return React.createElement(React.Fragment, null, p.children) }
+export const TapGestureHandler = PanGestureHandler
+export const LongPressGestureHandler = PanGestureHandler
+export const FlingGestureHandler = PanGestureHandler
+export const PinchGestureHandler = PanGestureHandler
+export const RotationGestureHandler = PanGestureHandler
+export const NativeViewGestureHandler = PanGestureHandler
+export const State = { UNDETERMINED: 0, FAILED: 1, BEGAN: 2, CANCELLED: 3, ACTIVE: 4, END: 5 }
+export const Directions = { RIGHT: 1, LEFT: 2, UP: 4, DOWN: 8 }
+var chain = new Proxy(function(){ return chain }, { get: function(){ return chain }, apply: function(){ return chain } })
+export const Gesture = new Proxy({}, { get: function(){ return function(){ return chain } } })
+export function GestureDetector(p){ return React.createElement(React.Fragment, null, p.children) }
+export { ScrollView, FlatList, Pressable, TouchableOpacity, TouchableWithoutFeedback, TouchableHighlight }
+export default { GestureHandlerRootView: GestureHandlerRootView, RectButton: RectButton, BaseButton: BaseButton, Swipeable: Swipeable, State: State, Directions: Directions, Gesture: Gesture, GestureDetector: GestureDetector, ScrollView: ScrollView, FlatList: FlatList }`
 
 // Specifier prefixes that resolve to an inlined nav/safe-area shim instead of
 // esm.sh. Prefix match so subpaths (e.g. `@react-navigation/native/lib/...`)
@@ -196,6 +226,7 @@ const SHIM_MODULES: Record<string, string> = {
   '@react-navigation/material-top-tabs': NAV_SHIM_SOURCE,
   '@react-navigation/material-bottom-tabs': NAV_SHIM_SOURCE,
   'react-native-safe-area-context': SAFE_AREA_SHIM_SOURCE,
+  'react-native-gesture-handler': GESTURE_SHIM_SOURCE,
 }
 
 function shimSourceFor(spec: string): string | null {
@@ -251,7 +282,9 @@ export async function POST(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const esbuild = require('esbuild')
 
-    const result = await esbuild.build({
+    let result: { errors?: { text: string; location?: { file: string; line: number } }[]; outputFiles?: { text: string }[] }
+    try {
+      result = await esbuild.build({
       entryPoints: [BOOT],
       bundle: true,
       format: 'esm',
@@ -312,21 +345,29 @@ export async function POST(req: NextRequest) {
           },
         },
       ],
-    })
+      })
+    } catch (buildErr) {
+      // esbuild REJECTS on a build failure (it doesn't resolve with errors), so
+      // a syntax error in the generated app lands here. Categorise it as a
+      // compile problem (422) the client shows calmly — never a raw 500.
+      const errs = (buildErr as { errors?: { text: string; location?: { file: string; line: number } }[] }).errors
+      const msg = Array.isArray(errs) && errs.length
+        ? errs.map(e => `${e.text}${e.location ? ` (${e.location.file}:${e.location.line})` : ''}`).join('\n')
+        : String(buildErr)
+      return NextResponse.json({ error: msg, kind: 'compile' }, { status: 422 })
+    }
 
-    if (result.errors?.length > 0) {
+    if (result.errors && result.errors.length > 0) {
       const msg = result.errors
-        .map((e: { text: string; location?: { file: string; line: number } }) =>
-          `${e.text}${e.location ? ` (${e.location.file}:${e.location.line})` : ''}`,
-        )
+        .map((e) => `${e.text}${e.location ? ` (${e.location.file}:${e.location.line})` : ''}`)
         .join('\n')
-      // A code/compile problem in the generated app. Surfaced as a clean,
-      // categorised error the client shows calmly (not a raw dump).
       return NextResponse.json({ error: msg, kind: 'compile' }, { status: 422 })
     }
 
     const js = result.outputFiles?.[0]?.text ?? ''
-    return NextResponse.json({ html: PREVIEW_HTML(js) })
+    // Return the raw bundle (client wraps it per-device via buildPreviewHtml)
+    // AND a default-iOS html for any direct WebView consumer.
+    return NextResponse.json({ js, html: buildPreviewHtml(js) })
   } catch (err) {
     return NextResponse.json({ error: String(err), kind: 'server' }, { status: 500 })
   }
@@ -336,8 +377,27 @@ export async function POST(req: NextRequest) {
 // calm, on-brand fallback (rendered with RN primitives) instead of a red crash.
 function BOOT_SOURCE(appEntry: string): string {
   return `import React from 'react'
-import { AppRegistry, View, Text } from 'react-native'
+import { AppRegistry, View, Text, Platform } from 'react-native'
 import App from '${appEntry}'
+
+// Honor the platform the user toggled (iOS/Android). react-native-web reports
+// Platform.OS === 'web'; override it so the generated app's Platform.OS checks
+// and Platform.select() render the chosen platform's styling/shadows/fonts.
+// Platform.OS may be a non-writable getter in RNW, so defineProperty first,
+// then fall back to assignment, then (worst case) still fix select() below.
+(function(){
+  try {
+    var os = (typeof window !== 'undefined' && window.__WYBER_PLATFORM__) || 'ios'
+    try { Object.defineProperty(Platform, 'OS', { value: os, configurable: true, writable: true }) }
+    catch (e) { try { Platform.OS = os } catch (e2) {} }
+    Platform.select = function(spec){
+      if (!spec || typeof spec !== 'object') return undefined
+      if (os in spec) return spec[os]
+      if ('native' in spec) return spec.native
+      return spec.default
+    }
+  } catch (e) {}
+})()
 
 class WyberBoundary extends React.Component {
   constructor(p){ super(p); this.state = { failed: false } }
@@ -359,44 +419,4 @@ class WyberBoundary extends React.Component {
 function Root(){ return React.createElement(WyberBoundary, null, React.createElement(App, null)) }
 AppRegistry.registerComponent('WyberApp', () => Root)
 AppRegistry.runApplication('WyberApp', { rootTag: document.getElementById('root') })`
-}
-
-// The HTML shell. Module-load / async failures and blank screens all resolve to
-// the same calm DOM fallback card — the user never sees a stack trace.
-function PREVIEW_HTML(js: string): string {
-  const importmap = JSON.stringify(IMPORT_MAP)
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Preview</title>
-<script type="importmap">${importmap}</script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body,#root{height:100%;width:100%}
-body{background:#0A0A0B;-webkit-font-smoothing:antialiased;overflow:hidden}
-#root{display:flex}
-#wyber-fallback{display:none;position:fixed;inset:0;background:#0A0A0B;color:#F5F5F7;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
-#wyber-fallback .t{font-size:16px;font-weight:600;margin-bottom:6px}
-#wyber-fallback .s{font-size:13px;color:#9A9AA5;max-width:280px;line-height:1.5}
-</style>
-</head>
-<body>
-<div id="root"></div>
-<div id="wyber-fallback"><div class="t">Preview unavailable</div><div class="s">This app uses a feature we can’t render in the in-app preview yet. It will still work in a full build.</div></div>
-<script>
-(function(){
-  var shown=false;
-  function calm(msg){ if(shown)return; shown=true; var el=document.getElementById('wyber-fallback'); if(el)el.style.display='flex';
-    try{ window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({type:'preview-error',message:String(msg||'load')})); }catch(e){} }
-  window.addEventListener('error', function(ev){ calm(ev && ev.message); });
-  window.addEventListener('unhandledrejection', function(ev){ calm(ev && ev.reason && (ev.reason.message||ev.reason)); });
-  // Blank-screen watchdog: if nothing mounted after 8s, show the calm card.
-  setTimeout(function(){ var r=document.getElementById('root'); if(r && r.childElementCount===0) calm('timeout'); }, 8000);
-})();
-</script>
-<script type="module">
-${js}
-</script>
-</body></html>`
 }
