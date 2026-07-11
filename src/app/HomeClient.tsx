@@ -115,6 +115,34 @@ function ScanReadout() {
 
 /* ————— data ————— */
 
+/* MCP console — the developer differentiator: drive WyberAi from your AI editor */
+function McpConsole() {
+  return (
+    <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
+      <WindowChrome title="claude code — wyberai mcp" />
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 4, letterSpacing: '0.04em' }}>
+        $ claude mcp add --transport http wyberai \
+      </div>
+      <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginBottom: 8, paddingLeft: 12, wordBreak: 'break-all' }}>
+        https://wyberai.com/api/mcp --header &quot;x-api-key: wyb_•••&quot;
+      </div>
+      <div style={{ color: '#22c55e', fontSize: 10, marginBottom: 14 }}>✓ connected · 6 tools available</div>
+      <div style={{ color: 'var(--brand-text-dim)', fontSize: 10, marginBottom: 8 }}>&gt; &quot;spin up a waitlist app and publish it&quot;</div>
+      {[
+        { t: 'create_project',  d: 'waitlist-app · react-vite' },
+        { t: 'send_message',    d: 'building… 12 files generated' },
+        { t: 'publish_project', d: 'live at waitlist-x1.wyber.app' },
+      ].map((r, i) => (
+        <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--brand-border)' }}>
+          <span style={{ color: 'var(--brand-accent)', fontSize: 10, width: 128, flexShrink: 0 }}>{r.t}</span>
+          <span style={{ color: 'var(--brand-text-faint)', fontSize: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.d}</span>
+        </div>
+      ))}
+      <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 10 }}>→ your workspace, driven from your editor.</div>
+    </div>
+  );
+}
+
 const PRODUCTS = [
   {
     key: 'web',
@@ -522,6 +550,46 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
                   The RLS trust scan runs before every publish. Critical leaks block the release until you fix them — or consciously override.
                 </p>
               </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ── MCP / DEVELOPERS ─────────────────────────────────────────── */}
+      <section style={{ borderTop: '1px solid var(--brand-border)' }}>
+        <div className="mk-section">
+          <Reveal>
+            <Eyebrow>MCP SERVER</Eyebrow>
+            <h2 className="mk-h2" style={{ marginBottom: 10 }}>Drive it from <span className="mk-serif">Claude, Cursor &amp; Claude Code</span></h2>
+            <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 600 }}>
+              WyberAi ships a real MCP server. Connect it once, then create projects, run builds, and publish live apps — without leaving your AI editor. No other app builder lets you do this.
+            </p>
+          </Reveal>
+          <div className="wyb-product-detail" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(28px,4vw,56px)', alignItems: 'center' }}>
+            <Reveal delay={0.1}>
+              <div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px' }}>
+                  {([
+                    ['list_projects', 'See your workspace'],
+                    ['create_project', 'Start a new app'],
+                    ['get_project', 'Inspect any project'],
+                    ['send_message', 'Kick off a build'],
+                    ['get_message_status', 'Track progress'],
+                    ['publish_project', 'Ship it live'],
+                  ] as [string, string][]).map(([t, d]) => (
+                    <li key={t} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 11 }}>{t}</span>
+                      <span style={{ fontSize: 13, color: 'var(--brand-text-dim)' }}>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/api-keys" className="mk-btn" style={{ background: 'var(--brand-accent)', boxShadow: '0 0 24px var(--brand-glow-soft)' }}>
+                  Get your MCP key →
+                </Link>
+              </div>
+            </Reveal>
+            <Reveal delay={0.15}>
+              <McpConsole />
             </Reveal>
           </div>
         </div>

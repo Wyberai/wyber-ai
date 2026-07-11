@@ -39,8 +39,21 @@ async function ensureUniqueSlug(base: string, admin: any): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    // Internal callers (the MCP `publish_project` tool) have no browser session —
+    // they authenticate with X-Scheduler-Secret + X-Scheduler-User-Id, the same
+    // internal-bypass convention used by /api/agents/run and /api/generate.
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isInternalCall = !!schedulerUserId && schedulerSecret === process.env.CRON_SECRET
+
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    let user: { id: string; email?: string } | null
+    if (isInternalCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const { data: { user: cookieUser } } = await supabase.auth.getUser()
+      user = cookieUser
+    }
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // Each publish is a 30–45s remote build — a loop here monopolizes builder

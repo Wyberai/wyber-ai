@@ -1,103 +1,215 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createMcpHandler, withMcpAuth } from 'mcp-handler'
+import { z } from 'zod'
+import { createServiceClient } from '@/lib/supabase/server'
+import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 
-const MCP_MANIFEST = {
-  name: 'wyber-ai',
-  version: '1.0.0',
-  description: 'Build full-stack apps from plain English using WyberAi',
-  tools: [
-    {
-      name: 'create_project',
-      description: 'Create a new WyberAi project',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: 'Project name' },
-          framework: { type: 'string', enum: ['next', 'react-vite', 'vue', 'vanilla'], description: 'Framework (default: next)' },
-          description: { type: 'string', description: 'What you want to build' },
-        },
-        required: ['name'],
-      },
-    },
-    {
-      name: 'send_message',
-      description: 'Send a build message to a WyberAi project',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          project_id: { type: 'string', description: 'Project ID' },
-          message: { type: 'string', description: 'What to build or change' },
-        },
-        required: ['project_id', 'message'],
-      },
-    },
-    {
-      name: 'list_projects',
-      description: 'List all projects in your WyberAi workspace',
-      inputSchema: { type: 'object', properties: {} },
-    },
-    {
-      name: 'get_project',
-      description: 'Get details of a specific project',
-      inputSchema: {
-        type: 'object',
-        properties: { project_id: { type: 'string' } },
-        required: ['project_id'],
-      },
-    },
-    {
-      name: 'publish_project',
-      description: 'Publish a project to projectname.wyberai.app',
-      inputSchema: {
-        type: 'object',
-        properties: { project_id: { type: 'string' } },
-        required: ['project_id'],
-      },
-    },
-  ],
-};
+// The MCP route itself only does fast DB work (create/list/get/queue) — the
+// heavy builds run in /api/cron/mcp-consumer, so a short ceiling is fine.
+export const maxDuration = 60
 
-export async function GET() {
-  return NextResponse.json(MCP_MANIFEST);
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
+
+/** Wrap any JSON payload in the MCP text-content envelope. */
+function jsonResult(payload: unknown) {
+  return { content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }] }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const apiKey = req.headers.get('x-api-key') || req.headers.get('authorization')?.replace('Bearer ', '');
-    if (!apiKey) return NextResponse.json({ error: 'API key required. Get yours at wyberai.com/api-keys' }, { status: 401 });
-
-    const supabase = await createClient();
-    const { data: keyData } = await supabase.from('api_keys').select('user_id, active').eq('key', apiKey).single();
-    if (!keyData?.active) return NextResponse.json({ error: 'Invalid or inactive API key' }, { status: 401 });
-
-    const { tool, input } = await req.json();
-
-    switch (tool) {
-      case 'list_projects': {
-        const { data } = await supabase.from('projects').select('id, name, framework, published_url, deployed_url, updated_at').eq('user_id', keyData.user_id).order('updated_at', { ascending: false }).limit(20);
-        return NextResponse.json({ projects: data || [] });
-      }
-      case 'create_project': {
-        const { data } = await supabase.from('projects').insert({ name: input.name, framework: input.framework || 'next', description: input.description, user_id: keyData.user_id }).select('id, name, framework').single();
-        return NextResponse.json({ project: data, message: `Project "${input.name}" created. Use send_message to start building.` });
-      }
-      case 'get_project': {
-        const { data } = await supabase.from('projects').select('*').eq('id', input.project_id).eq('user_id', keyData.user_id).single();
-        if (!data) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-        return NextResponse.json({ project: { id: data.id, name: data.name, framework: data.framework, published_url: data.published_url, file_count: Object.keys(data.files || {}).length, updated_at: data.updated_at } });
-      }
-      case 'send_message': {
-        const { data } = await supabase.from('mcp_messages').insert({ project_id: input.project_id, user_id: keyData.user_id, message: input.message, status: 'queued' }).select('id').single();
-        return NextResponse.json({ message_id: data?.id, status: 'queued', note: 'Message queued. Open wyberai.com to see the result.' });
-      }
-      case 'publish_project': {
-        const res = await fetch(`${req.nextUrl.origin}/api/publish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: input.project_id }) });
-        return NextResponse.json(await res.json());
-      }
-      default:
-        return NextResponse.json({ error: `Unknown tool: ${tool}` }, { status: 400 });
-    }
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
-  }
+function errorResult(message: string) {
+  return { content: [{ type: 'text' as const, text: message }], isError: true }
 }
+
+const handler = createMcpHandler(
+  (server) => {
+    server.tool(
+      'list_projects',
+      'List the projects in your WyberAi workspace (most recently updated first).',
+      {},
+      { title: 'List projects', readOnlyHint: true, openWorldHint: false },
+      async (_args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('id, name, framework, published_url, deployed_url, updated_at')
+          .eq('user_id', userId)
+          .order('updated_at', { ascending: false })
+          .limit(20)
+        return jsonResult({ projects: data ?? [] })
+      },
+    )
+
+    server.tool(
+      'create_project',
+      'Create a new WyberAi project. After creating it, call send_message to build the app.',
+      {
+        name: z.string().describe('Project name'),
+        framework: z
+          .enum(['next', 'react-vite', 'vue', 'vanilla'])
+          .optional()
+          .describe('Framework (default: react-vite)'),
+        description: z.string().optional().describe('What you want to build'),
+      },
+      { title: 'Create project', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data, error } = await db
+          .from('projects')
+          .insert({
+            name: args.name,
+            framework: args.framework ?? 'react-vite',
+            description: args.description,
+            user_id: userId,
+          })
+          .select('id, name, framework')
+          .single()
+        if (error) return errorResult(`Could not create project: ${error.message}`)
+        return jsonResult({
+          project: data,
+          message: `Project "${args.name}" created. Use send_message with project_id "${data?.id}" to start building.`,
+        })
+      },
+    )
+
+    server.tool(
+      'get_project',
+      'Get details of a specific project, including how many files it has.',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Get project details', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('*')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        return jsonResult({
+          project: {
+            id: data.id,
+            name: data.name,
+            framework: data.framework,
+            published_url: data.published_url,
+            file_count: Object.keys(data.files ?? {}).length,
+            updated_at: data.updated_at,
+          },
+        })
+      },
+    )
+
+    server.tool(
+      'send_message',
+      'Queue a build/change for a project. Returns a message_id immediately; the build runs asynchronously — poll get_message_status until it is "done".',
+      {
+        project_id: z.string().describe('Project ID'),
+        message: z.string().describe('What to build or change'),
+      },
+      // destructiveHint: a build can rewrite the project's existing files. Each
+      // queued build also consumes WyberAi credits from the connected account.
+      { title: 'Build or edit the app', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+
+        // Verify ownership before queueing so a bad project_id fails fast.
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        const { data, error } = await db
+          .from('mcp_messages')
+          .insert({
+            project_id: args.project_id,
+            user_id: userId,
+            message: args.message,
+            status: 'queued',
+          })
+          .select('id')
+          .single()
+        if (error) return errorResult(`Could not queue message: ${error.message}`)
+
+        return jsonResult({
+          message_id: data?.id,
+          status: 'queued',
+          note: 'Build queued. Poll get_message_status with this message_id until status is "done" (usually under 2 minutes), then get_project to see the result.',
+        })
+      },
+    )
+
+    server.tool(
+      'get_message_status',
+      'Check the status of a queued build (from send_message): queued | processing | done | error.',
+      { message_id: z.string().describe('The message_id returned by send_message') },
+      { title: 'Check build status', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('mcp_messages')
+          .select('id, status, response, error, created_at, processed_at')
+          .eq('id', args.message_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Message not found')
+        return jsonResult({
+          message_id: data.id,
+          status: data.status,
+          response: data.response,
+          error: data.error,
+        })
+      },
+    )
+
+    server.tool(
+      'publish_project',
+      'Publish a project to a live URL (projectname on wyberai.com/app).',
+      { project_id: z.string().describe('Project ID') },
+      // destructiveHint: republishing replaces the currently live version.
+      // openWorldHint: the result is a publicly reachable URL.
+      { title: 'Publish to a live URL', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const res = await fetch(`${APP_URL}/api/publish`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Scheduler-User-Id': userId,
+            'X-Scheduler-Secret': process.env.CRON_SECRET!,
+          },
+          body: JSON.stringify({ projectId: args.project_id }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) return errorResult(data.error || `Publish failed (${res.status})`)
+        return jsonResult(data)
+      },
+    )
+  },
+  { serverInfo: { name: 'wyber-ai', version: '2.0.0' } },
+  {
+    // The handler matches the request path against this endpoint. Our route
+    // lives at /api/mcp, so the full path must be configured here (basePath
+    // '/api' derives streamableHttpEndpoint '/api/mcp').
+    basePath: '/api',
+    // SSE is dropped from the MCP spec (2025-03-26); we only serve the stateless
+    // Streamable HTTP transport, so no Redis is needed.
+    disableSse: true,
+    maxDuration: 60,
+  },
+)
+
+const authed = withMcpAuth(handler, verifyToken, { required: true })
+
+export { authed as GET, authed as POST, authed as DELETE }

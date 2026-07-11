@@ -1299,8 +1299,21 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Auth + credit pre-flight ──────────────────────────────────────
+    // Internal callers (the MCP build consumer, /api/cron/mcp-consumer) have no
+    // browser session — they authenticate with X-Scheduler-Secret and pass the
+    // target user's id via X-Scheduler-User-Id, exactly like /api/agents/run.
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isInternalCall = !!schedulerUserId && schedulerSecret === process.env.CRON_SECRET
+
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    let user: { id: string } | null
+    if (isInternalCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const { data: { user: cookieUser } } = await supabase.auth.getUser()
+      user = cookieUser
+    }
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }

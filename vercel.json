@@ -9,6 +9,10 @@
       "schedule": "* * * * *"
     },
     {
+      "path": "/api/cron/mcp-consumer",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/employee-scheduler",
       "schedule": "*/15 * * * *"
     },
