@@ -711,10 +711,10 @@ function Hud({ currency }: { currency: Currency }) {
             Start building — it&apos;s free →
           </a>
           <a
-            href="/gallery"
+            href="/use-cases"
             className="rounded-full border border-white/15 px-7 py-4 text-base font-medium text-slate-200 backdrop-blur-sm transition hover:border-sky-400/50 hover:text-white"
           >
-            See live apps
+            See what you can build
           </a>
         </div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce font-mono text-[11px] tracking-[0.3em] text-slate-500 uppercase">
