@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Profile, Project } from '@/lib/supabase/types';
+import { track } from '@/lib/track';
 import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
@@ -125,6 +126,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       // Meta CompleteRegistration — same eventID the auth callback sends via
       // CAPI (reg_<userId>), so Meta de-duplicates the browser + server pair.
       if (fbq && profile?.id) fbq('track', 'CompleteRegistration', {}, { eventID: `reg_${profile.id}` });
+      track('signup_completed', { provider: 'unknown' });
       sp.delete('signup'); dirty = true;
     }
     if (sp.get('upgraded') === '1' || sp.get('topup') === '1') {
@@ -161,6 +163,21 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       setShowTypePicker(true);
     }
   }, []);
+
+  // Homepage prompt box hand-off: the visitor's idea was stashed in
+  // localStorage before signup (survives the OAuth round-trip) — consume it
+  // exactly once and turn it into their first project. Key is removed BEFORE
+  // starting so a StrictMode double-invoke or reload can't create twice.
+  useEffect(() => {
+    if (!profile?.id) return;
+    let pending: string | null = null;
+    try {
+      pending = localStorage.getItem('wyber-pending-prompt');
+      if (pending) localStorage.removeItem('wyber-pending-prompt');
+    } catch { /* storage blocked */ }
+    if (pending?.trim()) openChooser(pending.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.id]);
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault(); e.stopPropagation();
@@ -219,6 +236,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       if (error) throw error;
       if (data?.[0]?.id) {
         if (prompt) sessionStorage.setItem(`wyber_prompt_${data[0].id}`, prompt);
+        track('project_created', { type, has_prompt: !!prompt, project_count: projects.length + 1 });
         router.push(`/project/${data[0].id}?type=${type}`);
       }
     } catch (err) {

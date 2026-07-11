@@ -85,6 +85,9 @@ export default function SignupPage() {
               <p style={{ fontSize: 16, fontWeight: 700, color: '#065F46', marginBottom: 8 }}>Check your email</p>
               <p style={{ fontSize: 14, color: '#059669', margin: 0 }}>We sent a sign-in link to <strong>{email}</strong></p>
               <p style={{ fontSize: 12, color: '#6EE7B7', marginTop: 16 }}>The link expires in 10 minutes</p>
+              <p style={{ fontSize: 12, color: '#059669', marginTop: 8 }}>
+                Nothing after a minute? Check spam — or go back and use <strong>Google/GitHub</strong> for instant access.
+              </p>
             </div>
           ) : (
             <div style={{ background: '#FFFFFF', border: '1px solid #DCE4F0', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(11,22,39,0.06)' }}>

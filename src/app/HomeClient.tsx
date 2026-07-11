@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useScroll, useReducedMotion } from 'framer-mot
 import { WyberLogo } from '@/components/shared/WyberLogo';
 import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
+import { track } from '@/lib/track';
 
 const BRAND = '#0EA5E9';
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -278,6 +279,22 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
   const [isMobile, setIsMobile] = useState(false);
   const [canPin, setCanPin] = useState(false);
   const reduce = useReducedMotion();
+  const [heroPrompt, setHeroPrompt] = useState('');
+
+  // Stash the idea and route through auth — DashboardClient consumes
+  // wyber-pending-prompt on mount and turns it into the first project.
+  // Read the DOM value, not state: autofill/paste can commit text without
+  // React's onChange having run by submit time.
+  const heroPromptRef = useRef<HTMLTextAreaElement | null>(null);
+  const submitHeroPrompt = (e: React.FormEvent) => {
+    e.preventDefault();
+    const p = (heroPromptRef.current?.value ?? heroPrompt).trim();
+    if (p) {
+      try { localStorage.setItem('wyber-pending-prompt', p.slice(0, 2000)); } catch { /* private mode */ }
+      track('homepage_prompt_submitted', { length: p.length });
+    }
+    window.location.href = user ? '/dashboard' : '/signup';
+  };
 
   useEffect(() => {
     import('@/lib/supabase/client').then(({ createClient }) => {
@@ -384,18 +401,37 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
               </p>
             </Reveal>
             <Reveal delay={0.24}>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 22 }}>
-                <Link href="/signup" className="mk-btn" style={{ padding: '15px 34px', fontSize: 16 }}>Start building — it&apos;s free →</Link>
-                <button onClick={() => setShowDemo(true)} className="mk-btn-ghost" style={{ fontSize: 16 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, borderRadius: '50%', background: 'var(--brand-accent)', boxShadow: '0 0 12px var(--brand-glow)' }}>
-                    <svg width="9" height="9" viewBox="0 0 12 12" fill="#fff"><path d="M3 2l7 4-7 4z" /></svg>
+              {/* The prompt box IS the primary CTA: the visitor's idea rides
+                  localStorage through signup/OAuth and becomes their first
+                  project (DashboardClient consumes wyber-pending-prompt). */}
+              <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 10, marginBottom: 14, borderColor: 'var(--brand-border-strong)' }}>
+                <textarea
+                  ref={heroPromptRef}
+                  value={heroPrompt}
+                  onChange={e => setHeroPrompt(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitHeroPrompt(e); } }}
+                  placeholder="Describe your app… e.g. an expense tracker for freelancers with invoices"
+                  rows={2}
+                  style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--brand-text)', fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--font-sans)', padding: '8px 10px' }}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTop: '1px solid var(--brand-border)' }}>
+                  <span className="mk-mono" style={{ fontSize: 10, paddingLeft: 10 }}>50 FREE CREDITS · NO CARD</span>
+                  <button type="submit" className="mk-btn" style={{ padding: '10px 22px', fontSize: 14 }}>
+                    Build it — free →
+                  </button>
+                </div>
+              </form>
+              <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>
+                <button onClick={() => setShowDemo(true)} className="mk-btn-ghost" style={{ fontSize: 14, padding: '10px 20px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', background: 'var(--brand-accent)', boxShadow: '0 0 12px var(--brand-glow)' }}>
+                    <svg width="8" height="8" viewBox="0 0 12 12" fill="#fff"><path d="M3 2l7 4-7 4z" /></svg>
                   </span>
                   Watch the demo
                 </button>
+                <p className="mk-mono" style={{ fontSize: 11, marginBottom: 0 }}>
+                  FROM {inr ? '₹499/MO' : '$29/MO'} · CANCEL ANYTIME
+                </p>
               </div>
-              <p className="mk-mono" style={{ fontSize: 11, marginBottom: 0 }}>
-                NO CREDIT CARD · FROM {inr ? '₹499/MO' : '$29/MO'} · CANCEL ANYTIME
-              </p>
               {inr && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>🛡 A US-registered company · SignalPulse Technologies, Wyoming</span>

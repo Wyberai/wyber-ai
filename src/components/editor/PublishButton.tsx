@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { track } from '@/lib/track';
 
 interface Props {
   projectId: string;
@@ -38,7 +39,7 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
           .filter((f: { severity: string }) => f.severity === 'critical')
           .map((f: { table: string }) => f.table);
         setBlock({ message: data.message || 'Publish blocked by a security check.', tables });
-      } else if (data.publishedUrl) { setUrl(data.publishedUrl); onPublish?.(data.publishedUrl); }
+      } else if (data.publishedUrl) { setUrl(data.publishedUrl); onPublish?.(data.publishedUrl); track('app_published', { projectId }); }
       else setError(data.error || 'Failed to publish');
     } catch (e: any) {
       clearTimeout(timeout);

@@ -143,7 +143,9 @@ export default async function PublishedAppPage({ params }: Props) {
       {ownerPlan === 'free' && (
         <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
-          <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
+          {/* Attributed link — every free published app is an acquisition
+              channel; utm+ref make it measurable in GA/PostHog. */}
+          <a href={`https://wyberai.com/?utm_source=made-with-badge&utm_medium=badge&utm_campaign=${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
         </div>
       )}
       {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
