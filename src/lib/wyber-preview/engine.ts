@@ -22,6 +22,7 @@
 import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/lib/design-system'
 import { resolveDirectivesForPreview } from '@/lib/image-directives'
 import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
+import { WYBER_STORE_FILES } from '@/lib/wyber-store'
 import { injectWyberLoc, WYBER_BRIDGE_SCRIPT } from '@/lib/wyber-preview/bridge'
 
 export interface PreviewFile {
@@ -163,6 +164,14 @@ export async function bundleFiles(
     for (const [kitPath, kitContent] of Object.entries(WYBER_UI_KIT_FILES)) {
       const np = normalizeFilePath(kitPath)
       if (!normalizedFiles[np]) normalizedFiles[np] = kitContent
+    }
+
+    // Same for the Wyber Store (local-first persistence,
+    // `import { useCollection } from './wyber-store'`). generateHTML already
+    // sets window.__WYBER_PROJECT_ID__, which the store uses for namespacing.
+    for (const [storePath, storeContent] of Object.entries(WYBER_STORE_FILES)) {
+      const np = normalizeFilePath(storePath)
+      if (!normalizedFiles[np]) normalizedFiles[np] = storeContent
     }
 
     // Phase 3: Check if any files changed

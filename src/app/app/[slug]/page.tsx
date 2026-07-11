@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { Metadata } from 'next'
 import ReportButton from './ReportButton'
+import InstallPrompt from './InstallPrompt'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -83,6 +84,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical },
+    // Each published app is its own PWA. Without these overrides the root
+    // layout's metadata leaks here and this page advertises the PLATFORM's
+    // manifest + icons — Chrome would offer to install "WyberAi" on top of a
+    // user's app.
+    manifest: `/app/${slug}/manifest.webmanifest`,
+    icons: { icon: `/app/${slug}/pwa-icon-192.png`, apple: `/app/${slug}/pwa-icon-192.png` },
+    appleWebApp: { capable: true, title: loaded.name, statusBarStyle: 'black-translucent' },
     openGraph: {
       title: seo.ogTitle || title,
       description: seo.ogDescription || description,
@@ -147,6 +155,9 @@ export default async function PublishedAppPage({ params }: Props) {
       />
       {/* UGC abuse-report control — required on every published app regardless of plan. */}
       <ReportButton slug={slug} />
+      {/* Install pill — the shell is the top-level document Chrome reads the
+          manifest from; the app HTML's own runtime is inert inside the iframe. */}
+      <InstallPrompt />
     </>
   )
 }

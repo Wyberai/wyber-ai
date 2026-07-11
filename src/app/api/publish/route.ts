@@ -8,6 +8,9 @@ import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directi
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { rateLimit } from '@/lib/rate-limit'
+import { injectPwa } from '@/lib/pwa/install-snippet'
+import { extractThemeColor, BRAND_THEME_COLOR } from '@/lib/pwa/manifest'
+import { warmPwaIcons } from '@/lib/pwa/icon'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -89,7 +92,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const sanitized = sanitizeFiles(projectFiles)
+    const sanitized = sanitizeFiles(projectFiles, { appId: projectId })
 
     const secretScan = scanForExposedSecrets(sanitized)
     if (!secretScan.ok) {
@@ -136,10 +139,17 @@ export async function POST(req: NextRequest) {
 
     // Fix asset paths to be absolute (pointing to Railway CDN)
     const baseUrl = buildData.url.replace('/index.html', '')
-    const fixedHtml = html
+    let fixedHtml = html
       .replace(/src="\.\/assets\//g, `src="${baseUrl}/assets/`)
       .replace(/href="\.\/assets\//g, `href="${baseUrl}/assets/`)
       .replace(/from "\.\/assets\//g, `from "${baseUrl}/assets/`)
+
+    // Make the published app an installable PWA: manifest link + apple metas +
+    // the install-pill runtime. The runtime is inert inside the shell iframe /
+    // editor previews (window.top check) — it only activates on the app's own
+    // origin. The manifest/icons themselves are served per-request by
+    // serve-custom-domain (subdomains) and /app/[slug]/* (main domain).
+    fixedHtml = injectPwa(fixedHtml, { themeColor: extractThemeColor(fixedHtml) || BRAND_THEME_COLOR })
 
     // Reject builds that "succeeded" (got a URL) but ship a blank page or
     // unhandled runtime error — buildData.url alone doesn't guarantee that.
@@ -178,6 +188,10 @@ export async function POST(req: NextRequest) {
     // published URL — see deploy/route.ts for why. Best-effort.
     syncSupabaseAuthUrl(projectId, publishedUrl).catch(() => {})
 
+    // Warm the PWA icons (regenerates on republish so a fresh thumbnail is
+    // picked up). Best-effort — the icon routes lazily generate on a miss.
+    warmPwaIcons(admin, { id: projectId, name: project.name, thumbnail_url: project.thumbnail_url }).catch(() => {})
+
     return NextResponse.json({ subdomain, publishedUrl })
   } catch (err: any) {
     console.error('Publish error:', err)
@@ -194,7 +208,11 @@ export async function DELETE(req: NextRequest) {
     const { projectId } = await req.json()
     const admin = createServiceClient()
 
-    await admin.storage.from('published-apps').remove([`${projectId}/index.html`])
+    await admin.storage.from('published-apps').remove([
+      `${projectId}/index.html`,
+      `${projectId}/icon-192.png`,
+      `${projectId}/icon-512.png`,
+    ])
     await admin.from('projects')
       .update({ published_url: null, is_public: false })
       .eq('id', projectId)

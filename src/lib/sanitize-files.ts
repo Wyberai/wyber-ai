@@ -7,13 +7,14 @@
 import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
+import { WYBER_STORE_FILES } from './wyber-store'
 import { resolveDirectivesForPreview } from './image-directives'
 
 type FileVal = { content?: string; language?: string } | string
 
 const hasExtension = (p: string) => /\.[a-z0-9]+$/i.test(p)
 
-export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
+export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?: { appId?: string }): T {
   if (!files || typeof files !== 'object') return files
 
   const out: Record<string, FileVal> = {}
@@ -65,6 +66,13 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T): T {
     //    stub pass so a kit import is never stubbed as "missing".
     for (const [kitPath, kitContent] of Object.entries(WYBER_UI_KIT_FILES)) {
       if (!(kitPath in out)) out[kitPath] = { content: kitContent, language: 'typescript' }
+    }
+
+    // 0b. Wyber Store — local-first persistence (`import { useCollection } from
+    //     './wyber-store'`). Same rules as the kit: transient, user files win,
+    //     tree-shaken when unused, must land before the stub pass.
+    for (const [storePath, storeContent] of Object.entries(WYBER_STORE_FILES)) {
+      if (!(storePath in out)) out[storePath] = { content: storeContent, language: 'typescript' }
     }
 
     // 1. index.css must carry the @tailwind directives AND the design-system
@@ -312,6 +320,17 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
       nextIdx = nextIdx.includes('<head>')
         ? nextIdx.replace('<head>', `<head>\n    ${CRASH_GUARD}`)
         : `${CRASH_GUARD}\n${nextIdx}`
+    }
+    // App identity for wyber-store namespacing: previews and the main-domain
+    // shell iframe share an origin across DIFFERENT apps, so persisted data
+    // must be keyed by project id, not origin. Inline non-module script —
+    // survives the vite build, registers before the bundle (like the relay).
+    if (opts?.appId && !nextIdx.includes('wyber-app-id')) {
+      const safeId = String(opts.appId).replace(/[^a-zA-Z0-9-]/g, '')
+      const APP_ID_TAG = `<script>/* wyber-app-id */window.__WYBER_PROJECT_ID__='${safeId}'</script>`
+      nextIdx = nextIdx.includes('<head>')
+        ? nextIdx.replace('<head>', `<head>\n    ${APP_ID_TAG}`)
+        : `${APP_ID_TAG}\n${nextIdx}`
     }
     if (nextIdx !== idxHtml) {
       out['index.html'] = typeof idxVal === 'string' ? nextIdx : { ...(idxVal as object), content: nextIdx }

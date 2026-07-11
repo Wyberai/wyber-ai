@@ -73,6 +73,9 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
             {copied ? '✓ Copied' : 'Copy'}
           </button>
         </div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+          📱 Installable as an app — open the link on your phone and tap <strong style={{ color: 'var(--text2)' }}>Install app</strong>
+        </div>
         <button onClick={unpublish} disabled={loading} style={{ fontSize: 11, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', textAlign: 'left', fontFamily: 'inherit' }}>
           {loading ? 'Unpublishing...' : 'Unpublish'}
         </button>

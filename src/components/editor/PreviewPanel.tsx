@@ -146,7 +146,7 @@ export function PreviewPanel() {
       const res = await fetch(`${BUILDER_URL}/build`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles))), projectId: project?.id }),
+        body: JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id }),
       })
 
       const data = await res.json()

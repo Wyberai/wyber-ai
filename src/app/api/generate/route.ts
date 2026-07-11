@@ -8,6 +8,7 @@ import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
 import { WYBER_UI_KIT_PROMPT } from '@/lib/wyber-ui-kit'
+import { WYBER_STORE_PROMPT } from '@/lib/wyber-store'
 
 // A build/edit turn only did something real if it produced an actual <file> or
 // <edit> block — not just because the model streamed text. Without this check,
@@ -1714,7 +1715,14 @@ ${code}
     // These vary per project/prompt — keep them out of the system prompt so the cache breakpoint stays byte-stable
     if (supabaseContext) {
       perRequestParts.push(supabaseContext)
+    } else if (projectType !== 'mobile') {
+      // Web, no backend: local-first persistence via the injected wyber-store
+      // helper (sanitize-files/engine inject src/wyber-store.ts into every
+      // build) — personal apps keep their data across reloads without Supabase.
+      perRequestParts.push(WYBER_STORE_PROMPT)
     } else {
+      // Mobile (React Native): no wyber-store injection there — keep the
+      // in-memory default until an AsyncStorage equivalent ships.
       perRequestParts.push(`\n\n=== STORAGE CONTEXT (no backend connected) ===
 Use useState with inline mock data for all persistent data. Do NOT import or reference Supabase.
 Do NOT add any storage-notice banner or warning about data persistence — the platform handles that externally.`)
