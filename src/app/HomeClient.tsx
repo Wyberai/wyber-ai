@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { WyberLogo } from '@/components/shared/WyberLogo';
 import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
@@ -162,7 +162,7 @@ const PROOF = [
   { n: '06', title: 'Smart model routing', desc: 'Opus for builds, Sonnet for edits, Haiku when speed matters. WyberAi picks the right AI model for every task — automatically.' },
 ];
 
-/* Mission sequence — the single pinned scroll-storytelling moment */
+/* Mission sequence — Describe → Build → Ship, rendered in normal flow */
 const STAGES = [
   {
     tag: 'T-MINUS · DESCRIBE',
@@ -219,55 +219,6 @@ const STAGES = [
   },
 ];
 
-/* Pinned mission sequence — own component so useScroll's target ref is
-   guaranteed mounted (it only renders when pinning is active). */
-function PinnedSequence() {
-  const seqRef = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({ target: seqRef, offset: ['start start', 'end end'] });
-  const [stage, setStage] = useState(0);
-  useEffect(() => scrollYProgress.on('change', v => {
-    setStage(Math.max(0, Math.min(STAGES.length - 1, Math.floor(v * STAGES.length))));
-  }), [scrollYProgress]);
-
-  // 55vh of scroll per stage ≈ 4 arrow-presses per transition. 120vh felt
-  // like molasses, 80vh was still ~8 presses per stage (user-tuned Jul 11).
-  return (
-    <section ref={seqRef} style={{ position: 'relative', height: `${STAGES.length * 55}vh` }}>
-      <div style={{ position: 'sticky', top: 0, height: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
-        <div className="mk-stars" aria-hidden style={{ opacity: 0.5 }} />
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 clamp(20px,5vw,48px)', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 'clamp(40px,6vw,88px)', alignItems: 'center', position: 'relative' }}>
-          <div>
-            <div className="mk-eyebrow" style={{ marginBottom: 22 }}>MISSION SEQUENCE</div>
-            <AnimatePresence mode="wait">
-              <motion.div key={stage}
-                initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -18 }}
-                transition={{ duration: 0.45, ease: EASE }}>
-                <div className="mk-mono" style={{ color: 'var(--brand-accent-hot)', marginBottom: 14 }}>{STAGES[stage].tag}</div>
-                <h2 className="mk-h2" style={{ marginBottom: 16 }}>{STAGES[stage].title}</h2>
-                <p className="mk-lead" style={{ maxWidth: 420 }}>{STAGES[stage].desc}</p>
-              </motion.div>
-            </AnimatePresence>
-            <div style={{ display: 'flex', gap: 8, marginTop: 40 }}>
-              {STAGES.map((_, i) => (
-                <div key={i} style={{ width: i === stage ? 32 : 12, height: 2, background: i === stage ? 'var(--brand-accent)' : 'var(--brand-border-strong)', transition: 'all 0.4s var(--brand-ease)', boxShadow: i === stage ? '0 0 8px var(--brand-glow)' : 'none' }} />
-              ))}
-            </div>
-          </div>
-          <div>
-            <AnimatePresence mode="wait">
-              <motion.div key={stage}
-                initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.45, ease: EASE }}>
-                {STAGES[stage].visual}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ————— page ————— */
 
 export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Currency }) {
@@ -315,7 +266,6 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
   }, []);
 
   const product = PRODUCTS[activeProduct];
-  const pinned = canPin && !reduce;
 
   const navLinks: [string, string][] = [['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Journey', '/space-journey'], ['Pricing', '/pricing']];
 
@@ -474,24 +424,27 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
         </div>
       </section>
 
-      {/* ── MISSION SEQUENCE — the one pinned scroll moment ─────────── */}
-      {pinned ? (
-        <PinnedSequence />
-      ) : (
-        <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
-          <div className="mk-eyebrow" style={{ marginBottom: 40 }}>MISSION SEQUENCE</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-            {STAGES.map(s => (
-              <div key={s.tag}>
-                <div className="mk-mono" style={{ color: 'var(--brand-accent-hot)', marginBottom: 10 }}>{s.tag}</div>
-                <h2 className="mk-h2" style={{ fontSize: 'clamp(24px,6vw,32px)', marginBottom: 10 }}>{s.title}</h2>
-                <p className="mk-lead" style={{ marginBottom: 20, fontSize: 15 }}>{s.desc}</p>
-                {s.visual}
+      {/* ── MISSION SEQUENCE — normal flow (scroll-pinning removed Jul 11:
+             even 4 presses of hijacked scroll read as "the page is stuck") */}
+      <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+        <Reveal>
+          <div className="mk-eyebrow" style={{ marginBottom: 48 }}>MISSION SEQUENCE</div>
+        </Reveal>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(48px,6vw,88px)' }}>
+          {STAGES.map(s => (
+            <Reveal key={s.tag} delay={0.05}>
+              <div className="wyb-seq-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 'clamp(28px,5vw,72px)', alignItems: 'center' }}>
+                <div>
+                  <div className="mk-mono" style={{ color: 'var(--brand-accent-hot)', marginBottom: 12 }}>{s.tag}</div>
+                  <h2 className="mk-h2" style={{ fontSize: 'clamp(26px,3.5vw,40px)', marginBottom: 12 }}>{s.title}</h2>
+                  <p className="mk-lead" style={{ maxWidth: 420 }}>{s.desc}</p>
+                </div>
+                <div>{s.visual}</div>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </Reveal>
+          ))}
+        </div>
+      </section>
 
       {/* ── PRODUCTS ─────────────────────────────────────────────────── */}
       <section className="mk-section">
@@ -746,6 +699,7 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
           .wyb-builds-grid { grid-template-columns: 1fr !important; }
           .wyb-product-detail { grid-template-columns: 1fr !important; }
           .wyb-proof-grid { grid-template-columns: 1fr !important; }
+          .wyb-seq-row { grid-template-columns: 1fr !important; }
         }
         @media (min-width: 769px) {
           .wyb-nav-hamburger { display: none !important; }
