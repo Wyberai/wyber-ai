@@ -228,8 +228,10 @@ function PinnedSequence() {
     setStage(Math.max(0, Math.min(STAGES.length - 1, Math.floor(v * STAGES.length))));
   }), [scrollYProgress]);
 
+  // 80vh of scroll per stage — 120vh made the pin feel like molasses:
+  // 2.6 screen-heights of "stuck" scrolling before the page released.
   return (
-    <section ref={seqRef} style={{ position: 'relative', height: `${STAGES.length * 120}vh` }}>
+    <section ref={seqRef} style={{ position: 'relative', height: `${STAGES.length * 80}vh` }}>
       <div style={{ position: 'sticky', top: 0, height: '100vh', display: 'flex', alignItems: 'center', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
         <div className="mk-stars" aria-hidden style={{ opacity: 0.5 }} />
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 clamp(20px,5vw,48px)', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: 'clamp(40px,6vw,88px)', alignItems: 'center', position: 'relative' }}>
