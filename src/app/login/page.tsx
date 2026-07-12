@@ -13,12 +13,20 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const supabase = createClient();
 
+  // Preserve ?next= so a deep link (e.g. "Get your MCP key" → /api-keys) returns
+  // the user to where they were headed instead of dumping them on /dashboard.
+  // The auth callback already honors ?next; the login page just has to forward it.
+  const callbackUrl = () => {
+    const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
+    return `${location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+  };
+
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl() },
     });
     if (error) setError(error.message);
     else setSent(true);
@@ -29,7 +37,7 @@ export default function LoginPage() {
     setOauthLoading(provider);
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     });
   };
 

@@ -27,7 +27,14 @@ export default function SignupPage() {
       document.cookie = `wyber_ref=${encodeURIComponent(clean)}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
     }
   }, []);
-  const callbackUrl = () => `${location.origin}/auth/callback${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`;
+  const callbackUrl = () => {
+    const params = new URLSearchParams();
+    if (ref) params.set('ref', ref);
+    const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
+    if (next) params.set('next', next);
+    const qs = params.toString();
+    return `${location.origin}/auth/callback${qs ? `?${qs}` : ''}`;
+  };
 
   const [termsShake, setTermsShake] = useState(false);
   const nudgeTerms = () => { setError('Please agree to the Terms of Service first'); setTermsShake(true); setTimeout(() => setTermsShake(false), 600); };
