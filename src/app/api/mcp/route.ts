@@ -4,6 +4,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
 import { getProjectSupabase } from '@/lib/mcp/project-db'
 import { runSql } from '@/lib/supabase-management'
+import { runProjectRlsScan } from '@/lib/rls-scan-project'
+import { Composio } from '@composio/core'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 
 // The MCP route itself only does fast DB work (create/list/get/queue) — the
@@ -320,8 +322,202 @@ const handler = createMcpHandler(
         return jsonResult({ ok: true, message: 'Project knowledge updated.' })
       },
     )
+
+    server.tool(
+      'get_account',
+      'Get the connected WyberAi account: remaining credits and plan. Check this before queueing builds — each build spends credits.',
+      {},
+      { title: 'Get account & credits', readOnlyHint: true, openWorldHint: false },
+      async (_args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db.from('profiles').select('email, credits, plan').eq('id', userId).single()
+        if (!data) return errorResult('Account not found')
+        return jsonResult({ email: data.email, credits: data.credits, plan: data.plan })
+      },
+    )
+
+    server.tool(
+      'rename_project',
+      'Rename a project.',
+      {
+        project_id: z.string().describe('Project ID'),
+        name: z.string().describe('New project name'),
+      },
+      { title: 'Rename project', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { error } = await db.from('projects').update({ name: args.name.slice(0, 120) }).eq('id', args.project_id).eq('user_id', userId)
+        if (error) return errorResult(error.message)
+        return jsonResult({ ok: true, name: args.name })
+      },
+    )
+
+    server.tool(
+      'duplicate_project',
+      'Duplicate a project (copies its files into a new project). Returns the new project id.',
+      { project_id: z.string().describe('Project ID to copy') },
+      { title: 'Duplicate project', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: original } = await db.from('projects').select('name, description, framework, files').eq('id', args.project_id).eq('user_id', userId).single()
+        if (!original) return errorResult('Project not found')
+        const { data: fork, error } = await db.from('projects').insert({
+          user_id: userId,
+          name: `${original.name} (copy)`,
+          description: original.description,
+          framework: original.framework,
+          files: original.files,
+          is_public: false,
+        }).select('id, name').single()
+        if (error) return errorResult(error.message)
+        return jsonResult({ project: fork })
+      },
+    )
+
+    server.tool(
+      'delete_project',
+      'Permanently delete a project and all its data. This cannot be undone.',
+      { project_id: z.string().describe('Project ID to delete') },
+      { title: 'Delete project', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: proj } = await db.from('projects').select('id').eq('id', args.project_id).eq('user_id', userId).single()
+        if (!proj) return errorResult('Project not found')
+        const { error } = await db.from('projects').delete().eq('id', args.project_id).eq('user_id', userId)
+        if (error) return errorResult(error.message)
+        return jsonResult({ ok: true, deleted: args.project_id })
+      },
+    )
+
+    server.tool(
+      'get_database_status',
+      "Check whether a project has a Supabase database connected (needed for execute_sql and security scans).",
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Get database status', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: rows } = await db
+          .from('project_connectors')
+          .select('service, config')
+          .eq('project_id', args.project_id)
+          .eq('user_id', userId)
+          .in('service', ['supabase', 'supabase-oauth'])
+        const dataPlane = rows?.find(r => r.service === 'supabase')
+        const mgmt = rows?.find(r => r.service === 'supabase-oauth')
+        return jsonResult({
+          connected: !!dataPlane,
+          ref: (dataPlane?.config as { ref?: string })?.ref ?? null,
+          management_api_connected: !!mgmt, // required for execute_sql + security scans
+          hint: dataPlane ? undefined : 'Connect Supabase in the WyberAi editor (Connect Supabase) to enable SQL and security scans.',
+        })
+      },
+    )
+
+    server.tool(
+      'run_security_scan',
+      "Run a real RLS security scan on the project's connected Supabase — probes every table with the public anon key (an attacker's view) and reports which tables leak data. Read-only.",
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Run security (RLS) scan', readOnlyHint: true, openWorldHint: true },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        try {
+          const { connected, blockedRef, report } = await runProjectRlsScan(db, args.project_id, userId)
+          if (blockedRef) return errorResult('That project cannot be scanned.')
+          if (!connected) return errorResult('No Supabase connected for this project. Connect it in the WyberAi editor first.')
+          return jsonResult(report)
+        } catch (e) {
+          return errorResult(`Scan failed: ${String(e).slice(0, 300)}`)
+        }
+      },
+    )
+
+    server.tool(
+      'list_versions',
+      'List saved versions (snapshots) of a project, newest first. Use restore_version to roll back.',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'List project versions', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('project_versions')
+          .select('id, label, created_at')
+          .eq('project_id', args.project_id)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20)
+        return jsonResult({ versions: data ?? [] })
+      },
+    )
+
+    server.tool(
+      'restore_version',
+      'Roll a project back to a saved version (from list_versions). Overwrites the current files.',
+      {
+        project_id: z.string().describe('Project ID'),
+        version_id: z.string().describe('Version ID from list_versions'),
+      },
+      // destructiveHint: overwrites the current working files with the snapshot.
+      { title: 'Restore a project version', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: version } = await db
+          .from('project_versions')
+          .select('files')
+          .eq('id', args.version_id)
+          .eq('project_id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!version) return errorResult('Version not found')
+        const { error } = await db
+          .from('projects')
+          .update({ files: version.files })
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+        if (error) return errorResult(error.message)
+        const count = Object.keys((version.files as Record<string, unknown>) ?? {}).length
+        return jsonResult({ ok: true, restored_files: count })
+      },
+    )
+
+    server.tool(
+      'list_connectors',
+      'Browse the connector catalog (Gmail, Notion, Linear, Slack, and 250+ others) available to wire into your app. Optionally filter with a search term.',
+      { search: z.string().optional().describe('Filter by name/keyword, e.g. "gmail"') },
+      { title: 'Browse connectors', readOnlyHint: true, openWorldHint: true },
+      async (args) => {
+        const apiKey = process.env.COMPOSIO_API_KEY
+        if (!apiKey) return errorResult('Connectors are not configured on this server.')
+        try {
+          const composio = new Composio({ apiKey })
+          const all = await composio.toolkits.get({ limit: 250 })
+          const q = (args.search || '').toLowerCase()
+          const list = all
+            .map(t => ({ slug: t.slug, name: t.name, description: t.meta?.description ?? '', categories: (t.meta?.categories ?? []).map((c: { name: string }) => c.name) }))
+            .filter(t => !q || t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+          return jsonResult({ total: list.length, connectors: list.slice(0, 60) })
+        } catch (e) {
+          return errorResult(`Could not load connectors: ${String(e).slice(0, 200)}`)
+        }
+      },
+    )
   },
-  { serverInfo: { name: 'wyber-ai', version: '2.1.0' } },
+  { serverInfo: { name: 'wyber-ai', version: '2.3.0' } },
   {
     // The handler matches the request path against this endpoint. Our route
     // lives at /api/mcp, so the full path must be configured here (basePath
