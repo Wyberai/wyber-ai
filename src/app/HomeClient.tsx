@@ -126,7 +126,7 @@ function McpConsole() {
       <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginBottom: 8, paddingLeft: 12, wordBreak: 'break-all' }}>
         https://wyberai.com/api/mcp --header &quot;x-api-key: wyb_•••&quot;
       </div>
-      <div style={{ color: '#22c55e', fontSize: 10, marginBottom: 14 }}>✓ connected · 11 tools available</div>
+      <div style={{ color: '#22c55e', fontSize: 10, marginBottom: 14 }}>✓ connected · 20 tools available</div>
       <div style={{ color: 'var(--brand-text-dim)', fontSize: 10, marginBottom: 8 }}>&gt; &quot;spin up a waitlist app and publish it&quot;</div>
       {[
         { t: 'create_project',  d: 'waitlist-app · react-vite' },

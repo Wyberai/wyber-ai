@@ -15,16 +15,25 @@ const p: React.CSSProperties = { fontSize: 14, color: 'rgba(255,255,255,0.7)', l
 const inlineCode: React.CSSProperties = { background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12, fontFamily: 'monospace' }
 
 const TOOLS = [
+  { name: 'get_account', kind: 'Read-only', desc: 'Your remaining credits and plan.' },
   { name: 'list_projects', kind: 'Read-only', desc: 'List the projects in your workspace.' },
   { name: 'get_project', kind: 'Read-only', desc: 'Details of one project, including file count and published URL.' },
   { name: 'list_files', kind: 'Read-only', desc: 'List the file paths in a project.' },
   { name: 'read_file', kind: 'Read-only', desc: 'Read the source of one file in a project.' },
   { name: 'get_message_status', kind: 'Read-only', desc: 'Poll a queued build: queued → processing → done | error.' },
   { name: 'get_project_knowledge', kind: 'Read-only', desc: 'Read a project’s persistent knowledge (brand, standards, patterns).' },
+  { name: 'get_database_status', kind: 'Read-only', desc: 'Whether the project has a Supabase database connected.' },
+  { name: 'list_versions', kind: 'Read-only', desc: 'List saved project versions (snapshots).' },
+  { name: 'run_security_scan', kind: 'Read-only · security', desc: 'RLS attacker-view scan of the connected database — finds tables that leak data.' },
+  { name: 'list_connectors', kind: 'Read-only', desc: 'Browse 250+ connectors (Gmail, Notion, Linear, Slack…) to wire in.' },
   { name: 'create_project', kind: 'Write', desc: 'Create a new project (react-vite, next, vue, or vanilla).' },
   { name: 'send_message', kind: 'Write · uses credits', desc: 'Queue a build or change. Runs asynchronously; can rewrite existing project files.' },
   { name: 'set_project_knowledge', kind: 'Write', desc: 'Set persistent knowledge the builder applies on every future build.' },
+  { name: 'rename_project', kind: 'Write', desc: 'Rename a project.' },
+  { name: 'duplicate_project', kind: 'Write', desc: 'Copy a project’s files into a new project.' },
+  { name: 'restore_version', kind: 'Write', desc: 'Roll a project back to a saved version.' },
   { name: 'execute_sql', kind: 'Write · database', desc: 'Run SQL on the project’s connected Supabase (reads, writes, schema).' },
+  { name: 'delete_project', kind: 'Write · destructive', desc: 'Permanently delete a project. Cannot be undone.' },
   { name: 'publish_project', kind: 'Write · public', desc: 'Publish the project to a live public URL. Republishing replaces the live version.' },
 ]
 
