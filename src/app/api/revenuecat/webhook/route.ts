@@ -1,27 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
+import { subPlanForProduct, subGrant, FREE_ON_CANCEL } from '@/lib/plan-grants';
 
-// RevenueCat webhook → grant credits for a mobile IAP. Mirrors the Stripe
-// webhook's model (see webhooks/stripe): map the purchased product to a plan
-// and SET the plan's credit allotment. Set-based (not incremented) so resent
-// events are naturally idempotent — no processed-events table needed.
-
-// Product identifier → plan grant. Product IDs come from App Store Connect /
-// Play Console once created; wire them via env. Allotments match Stripe so web
-// and mobile stay consistent.
-function planForProduct(productId: string):
-  | { plan: string; credits: number; dailyCredits: number }
-  | null {
-  const MAP: Record<string, { plan: string; credits: number; dailyCredits: number }> = {
-    [process.env.REVENUECAT_PRODUCT_PRO_MONTHLY ?? '']: { plan: 'pro', credits: 250, dailyCredits: 10 },
-    [process.env.REVENUECAT_PRODUCT_PRO_YEARLY ?? '']: { plan: 'pro', credits: 250, dailyCredits: 10 },
-    [process.env.REVENUECAT_PRODUCT_TEAMS_MONTHLY ?? '']: { plan: 'business', credits: 500, dailyCredits: 20 },
-  };
-  // The empty-string key (an env var that isn't set) must never match a real,
-  // possibly-empty productId — guard it.
-  if (!productId) return null;
-  return MAP[productId] ?? null;
-}
+// RevenueCat webhook → grant credits for a mobile IAP (consumable credit packs
+// AND subscription tiers). Grants mirror the Dodo webhook exactly (see
+// api/dodo/webhook) so web and mobile hand out the same credits/plan/daily-drip
+// for the same tier — the difference is only which store took the payment.
+//
+// Both paths ADD credits (never SET), so a subscribe never wipes a user's
+// top-up balance. Because adds aren't idempotent on their own, every grant
+// claims the event id in processed_webhooks first (a PK conflict = already
+// handled → skip), matching the pack path below.
 
 // Consumable credit packs (one-time purchases) → credits to ADD. Mirrors the
 // web Dodo top-ups (200/600/2000). Product IDs are the Play Console managed-
@@ -128,31 +117,84 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const config = planForProduct(event.product_id ?? '');
-    if (!config) {
+    // ── Subscription tiers (spark/starter/builder/pro) ───────────────────────
+    // ADD the monthly allotment (mirrors Dodo) and set plan + daily drip +
+    // status. INITIAL_PURCHASE, RENEWAL, etc. each carry a distinct event.id,
+    // so the processed_webhooks claim both dedupes retries AND lets a genuine
+    // renewal grant again. On any failure, release the claim + 500 so RevenueCat
+    // retries the grant.
+    const subPlan = subPlanForProduct(event.product_id ?? '');
+    if (!subPlan) {
       console.warn('[revenuecat] unmapped product', event.product_id, 'for', userId);
       return NextResponse.json({ ok: true });
     }
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        plan: config.plan,
-        credits: config.credits,
-        daily_credits: config.dailyCredits,
-        subscription_status: config.plan,
-      })
-      .eq('id', userId);
-    if (error) {
-      console.error('[revenuecat] grant failed', error);
-      return NextResponse.json({ error: 'grant failed' }, { status: 500 });
+    const grant = subGrant(subPlan);
+    const subEventId = String(event.id ?? event.transaction_id ?? '');
+    if (!subEventId) return NextResponse.json({ ok: true }); // can't dedupe → skip rather than risk double-credit
+
+    const { error: subDupeErr } = await supabase
+      .from('processed_webhooks')
+      .insert({ id: subEventId, source: 'revenuecat' });
+    if (subDupeErr?.code === '23505') {
+      return NextResponse.json({ ok: true, duplicate: true });
     }
-    return NextResponse.json({ ok: true, granted: config.plan });
+    try {
+      // Atomic add, with a read-then-write fallback (mirrors the pack path).
+      let newBalance: number | null = null;
+      const { data: adjusted, error: adjErr } = await supabase.rpc('adjust_credits', {
+        p_user_id: userId,
+        p_delta: grant.credits,
+      });
+      if (!adjErr && typeof adjusted === 'number') newBalance = adjusted;
+
+      const update: Record<string, unknown> = {
+        plan: grant.plan,
+        daily_credits: grant.dailyCredits,
+        subscription_status: 'active',
+        updated_at: new Date().toISOString(),
+      };
+      if (newBalance === null) {
+        // RPC unavailable → non-atomic fallback add in the same write.
+        const { data: prof } = await supabase.from('profiles').select('credits').eq('id', userId).maybeSingle();
+        const before = Number((prof as { credits?: number } | null)?.credits ?? 0);
+        newBalance = before + grant.credits;
+        update.credits = newBalance;
+      }
+      const { error: updErr } = await supabase.from('profiles').update(update).eq('id', userId);
+      if (updErr) throw updErr;
+
+      // Positive-grant audit row (best-effort; consistent with credit_usage shape).
+      try {
+        await supabase.from('credit_usage').insert({
+          user_id: userId,
+          amount: grant.credits,
+          reason: `sub:play:${grant.plan}:${subEventId}`,
+          credits_before: newBalance - grant.credits,
+          credits_after: newBalance,
+        });
+      } catch {
+        /* audit is best-effort — never fail the grant on a log write */
+      }
+      return NextResponse.json({ ok: true, granted: grant.plan, balance: newBalance });
+    } catch (e) {
+      // Release the idempotency claim so the retry re-runs the grant.
+      try {
+        await supabase.from('processed_webhooks').delete().eq('id', subEventId);
+      } catch {
+        /* claim release is best-effort */
+      }
+      console.error('[revenuecat] subscription grant failed', e);
+      return NextResponse.json({ error: 'grant failed — retry' }, { status: 500 });
+    }
   }
 
   if (REVOKE_EVENTS.has(event.type)) {
+    // Subscription lapsed → drop plan + daily drip to free, but KEEP the credit
+    // balance (mirrors the Dodo cancellation branch — the user paid for what's
+    // left, and top-ups never expire).
     await supabase
       .from('profiles')
-      .update({ plan: 'free', credits: 50, subscription_status: 'free' })
+      .update({ ...FREE_ON_CANCEL, updated_at: new Date().toISOString() })
       .eq('id', userId);
     return NextResponse.json({ ok: true, revoked: true });
   }
