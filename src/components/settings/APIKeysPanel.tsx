@@ -47,7 +47,7 @@ export function APIKeysPanel() {
         <code style={{ display: 'block', padding: '8px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 11, color: 'var(--sky)', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
           claude mcp add --transport http wyberai https://wyberai.com/api/mcp --header &quot;x-api-key: YOUR_KEY&quot;
         </code>
-        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>Tools: create_project, send_message, get_message_status, list_projects, get_project, publish_project.</div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>11 tools: create_project, send_message, get_message_status, list_projects, get_project, list_files, read_file, execute_sql, get_project_knowledge, set_project_knowledge, publish_project.</div>
       </div>
 
       {newKey && (

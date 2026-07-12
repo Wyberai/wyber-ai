@@ -2,6 +2,8 @@ import { createMcpHandler, withMcpAuth } from 'mcp-handler'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
+import { getProjectSupabase } from '@/lib/mcp/project-db'
+import { runSql } from '@/lib/supabase-management'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 
 // The MCP route itself only does fast DB work (create/list/get/queue) — the
@@ -196,8 +198,130 @@ const handler = createMcpHandler(
         return jsonResult(data)
       },
     )
+
+    server.tool(
+      'list_files',
+      'List the file paths in a project (the app source tree).',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'List project files', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('files')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        const paths = Object.keys((data.files as Record<string, unknown>) ?? {}).sort()
+        return jsonResult({ file_count: paths.length, files: paths })
+      },
+    )
+
+    server.tool(
+      'read_file',
+      'Read the source of one file in a project. Use list_files first to see available paths.',
+      {
+        project_id: z.string().describe('Project ID'),
+        path: z.string().describe('File path, e.g. src/App.tsx'),
+      },
+      { title: 'Read a project file', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('files')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        const files = (data.files as Record<string, { content?: string }>) ?? {}
+        const file = files[args.path]
+        if (!file) return errorResult(`File not found: ${args.path}. Call list_files to see available paths.`)
+        return jsonResult({ path: args.path, content: file.content ?? '' })
+      },
+    )
+
+    server.tool(
+      'execute_sql',
+      "Run SQL against the project's connected Supabase database (the user must have connected Supabase in the editor first). Handles reads, writes, and schema changes.",
+      {
+        project_id: z.string().describe('Project ID'),
+        query: z.string().describe('SQL to execute'),
+      },
+      // destructiveHint: SQL can drop/alter/delete. openWorldHint: hits an
+      // external database the connector does not control.
+      { title: 'Run SQL on the project database', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        const conn = await getProjectSupabase(userId, args.project_id)
+        if (!conn) return errorResult('No Supabase connected for this project. Connect it in the WyberAi editor (Connect Supabase) first.')
+        try {
+          const rows = await runSql(conn.token, conn.ref, args.query)
+          return jsonResult({ rows })
+        } catch (e) {
+          return errorResult(`SQL failed: ${String(e).slice(0, 400)}`)
+        }
+      },
+    )
+
+    server.tool(
+      'get_project_knowledge',
+      'Get the persistent knowledge for a project — standards, brand, and patterns the builder follows on every run.',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Get project knowledge', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('knowledge')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        return jsonResult({ knowledge: data.knowledge ?? '' })
+      },
+    )
+
+    server.tool(
+      'set_project_knowledge',
+      'Set persistent knowledge for a project (brand, coding standards, API patterns). The builder applies it on every future build. Replaces any existing knowledge.',
+      {
+        project_id: z.string().describe('Project ID'),
+        knowledge: z.string().describe('The knowledge text (plain language). Pass an empty string to clear it.'),
+      },
+      { title: 'Set project knowledge', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { error } = await db
+          .from('projects')
+          .update({ knowledge: args.knowledge.slice(0, 8000) })
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+        if (error) return errorResult(`Could not save knowledge: ${error.message}`)
+        return jsonResult({ ok: true, message: 'Project knowledge updated.' })
+      },
+    )
   },
-  { serverInfo: { name: 'wyber-ai', version: '2.0.0' } },
+  { serverInfo: { name: 'wyber-ai', version: '2.1.0' } },
   {
     // The handler matches the request path against this endpoint. Our route
     // lives at /api/mcp, so the full path must be configured here (basePath

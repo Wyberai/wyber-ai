@@ -17,9 +17,14 @@ const inlineCode: React.CSSProperties = { background: 'rgba(255,255,255,0.08)', 
 const TOOLS = [
   { name: 'list_projects', kind: 'Read-only', desc: 'List the projects in your workspace.' },
   { name: 'get_project', kind: 'Read-only', desc: 'Details of one project, including file count and published URL.' },
+  { name: 'list_files', kind: 'Read-only', desc: 'List the file paths in a project.' },
+  { name: 'read_file', kind: 'Read-only', desc: 'Read the source of one file in a project.' },
   { name: 'get_message_status', kind: 'Read-only', desc: 'Poll a queued build: queued → processing → done | error.' },
+  { name: 'get_project_knowledge', kind: 'Read-only', desc: 'Read a project’s persistent knowledge (brand, standards, patterns).' },
   { name: 'create_project', kind: 'Write', desc: 'Create a new project (react-vite, next, vue, or vanilla).' },
   { name: 'send_message', kind: 'Write · uses credits', desc: 'Queue a build or change. Runs asynchronously; can rewrite existing project files.' },
+  { name: 'set_project_knowledge', kind: 'Write', desc: 'Set persistent knowledge the builder applies on every future build.' },
+  { name: 'execute_sql', kind: 'Write · database', desc: 'Run SQL on the project’s connected Supabase (reads, writes, schema).' },
   { name: 'publish_project', kind: 'Write · public', desc: 'Publish the project to a live public URL. Republishing replaces the live version.' },
 ]
 

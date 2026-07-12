@@ -1157,6 +1157,21 @@ async function loadProjectMemory(projectId: string): Promise<string> {
   } catch { return '' }
 }
 
+// Persistent, user-authored project knowledge (brand, standards, API patterns).
+// Settable in-editor and via the MCP set_project_knowledge tool. Applied on
+// EVERY build (editor or MCP), so it's read here rather than trusted from the
+// request body. No-op until migration 20260712090000 adds the column.
+async function loadProjectKnowledge(projectId: string): Promise<string> {
+  if (!projectId) return ''
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    const { data, error } = await db.from('projects').select('knowledge').eq('id', projectId).single()
+    if (error) return ''
+    return ((data?.knowledge as string | null) ?? '').trim()
+  } catch { return '' }
+}
+
 /**
  * Distill the just-finished turn into the rolling memory (cheap Haiku pass).
  * Runs via next/server `after()` so it never adds latency to the build stream.
@@ -1668,7 +1683,11 @@ ${code}
     const supabaseStatus = supabaseResult.status
     // Durable rolling memory of this project (no-op until migration 034 is applied).
     const projectMemory = projectId ? await loadProjectMemory(projectId) : ''
-    const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
+    // Merge request-body knowledge (editor) with the persistent stored column
+    // (settable via MCP) so both apply on every build.
+    const storedKnowledge = projectId ? await loadProjectKnowledge(projectId) : ''
+    const mergedKnowledge = [String(knowledge ?? '').trim(), storedKnowledge].filter(Boolean).join('\n\n')
+    const knowledgeContext = mergedKnowledge ? `\n\n${mergedKnowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach. EXCEPTION — complex builds: if this build spans MORE than ~5 files, your one opening sentence must set expectations instead, e.g. "This is a complex build across multiple files — I\'m generating them in batches; the preview updates when the last file lands." (still one sentence, still followed immediately by the file output).\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with a recap of WHAT you changed and ONE suggested next step. For 1-2 file changes: 1-2 friendly sentences, e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". For changes spanning 3+ files: a short bullet list — one line per meaningful change, stating the OUTCOME ("Dashboard chart now scrolls horizontally on narrow screens"), not the action taken — then the next-step sentence. When you make no code change, still close with a helpful next step.\n10. NEVER NARRATE BETWEEN BLOCKS. After the opening sentence, output the <file>/<edit> blocks back-to-back with ZERO prose between them. Everything you write outside the blocks is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" or "Let me tighten the button row:" turns that answer into unreadable rambling that trails off mid-thought. If you want to signal progress, use [progress: short label] markers (they render as a live ticker, never as chat text). ALL explanation belongs in the closing recap (rule 9), written AFTER the last block, in past tense, describing the finished result.'
 
