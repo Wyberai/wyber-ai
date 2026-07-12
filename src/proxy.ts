@@ -50,6 +50,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/org-landing') ||
     path.startsWith('/pay') ||
     path.startsWith('/connectors') ||
+    path.startsWith('/mcp') ||
     path.startsWith('/founders') ||
     path.startsWith('/marketers') ||
     path.startsWith('/designers') ||

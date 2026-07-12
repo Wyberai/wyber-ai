@@ -562,7 +562,7 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
             <Eyebrow>MCP SERVER</Eyebrow>
             <h2 className="mk-h2" style={{ marginBottom: 10 }}>Drive it from <span className="mk-serif">Claude, Cursor &amp; Claude Code</span></h2>
             <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 600 }}>
-              WyberAi ships a real MCP server. Connect it once, then create projects, run builds, and publish live apps — without leaving your AI editor. No other app builder lets you do this.
+              WyberAi ships a real MCP server — 20 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps — without leaving your AI editor. No other app builder lets you do this.
             </p>
           </Reveal>
           <div className="wyb-product-detail" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(28px,4vw,56px)', alignItems: 'center' }}>
@@ -570,11 +570,11 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
               <div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px' }}>
                   {([
-                    ['list_projects', 'See your workspace'],
                     ['create_project', 'Start a new app'],
-                    ['get_project', 'Inspect any project'],
                     ['send_message', 'Kick off a build'],
-                    ['get_message_status', 'Track progress'],
+                    ['execute_sql', 'Query the database'],
+                    ['run_security_scan', 'Audit for data leaks'],
+                    ['set_project_knowledge', 'Set your standards'],
                     ['publish_project', 'Ship it live'],
                   ] as [string, string][]).map(([t, d]) => (
                     <li key={t} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -583,9 +583,12 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
                     </li>
                   ))}
                 </ul>
-                <Link href="/api-keys" className="mk-btn" style={{ background: 'var(--brand-accent)', boxShadow: '0 0 24px var(--brand-glow-soft)' }}>
-                  Get your MCP key →
-                </Link>
+                <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <Link href="/api-keys" className="mk-btn" style={{ background: 'var(--brand-accent)', boxShadow: '0 0 24px var(--brand-glow-soft)' }}>
+                    Get your MCP key →
+                  </Link>
+                  <Link href="/mcp" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-accent)' }}>See all 20 tools →</Link>
+                </div>
               </div>
             </Reveal>
             <Reveal delay={0.15}>

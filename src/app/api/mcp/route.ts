@@ -46,7 +46,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'create_project',
-      'Create a new WyberAi project. After creating it, call send_message to build the app.',
+      'Create a new WyberAi project. Returns a project id that send_message uses to build the app.',
       {
         name: z.string().describe('Project name'),
         framework: z
@@ -250,7 +250,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'execute_sql',
-      "Run SQL against the project's connected Supabase database (the user must have connected Supabase in the editor first). Handles reads, writes, and schema changes.",
+      "Run a SQL statement against the project's own connected Supabase Postgres database (Supabase must be connected to the project first). Accepts freeform SQL — reads, writes, and schema changes. Target: the user's Supabase project, https://supabase.com/docs.",
       {
         project_id: z.string().describe('Project ID'),
         query: z.string().describe('SQL to execute'),
@@ -325,7 +325,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'get_account',
-      'Get the connected WyberAi account: remaining credits and plan. Check this before queueing builds — each build spends credits.',
+      'Get the connected WyberAi account: remaining credits and plan. Builds spend credits from this balance.',
       {},
       { title: 'Get account & credits', readOnlyHint: true, openWorldHint: false },
       async (_args, extra) => {
@@ -517,7 +517,7 @@ const handler = createMcpHandler(
       },
     )
   },
-  { serverInfo: { name: 'wyber-ai', version: '2.3.0' } },
+  { serverInfo: { name: 'wyber-ai', version: '2.3.1' } },
   {
     // The handler matches the request path against this endpoint. Our route
     // lives at /api/mcp, so the full path must be configured here (basePath
