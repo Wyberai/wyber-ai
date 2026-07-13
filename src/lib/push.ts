@@ -30,6 +30,20 @@ function copyFor(type: string, payload?: Record<string, unknown> | null): { titl
       return { title: 'Published 🎉', body: 'Your project is live.' }
     case 'referral':
       return { title: 'Referral reward', body: 'You earned credits from a referral.' }
+    case 'credits_low': {
+      const bal = payload && typeof payload.balance === 'number' ? (payload.balance as number) : null
+      return {
+        title: 'Running low on credits',
+        body:
+          bal !== null
+            ? `You have ${bal} credits left. Tap to top up and keep building.`
+            : 'You’re running low on credits. Tap to top up and keep building.',
+      }
+    }
+    case 'weekly_digest': {
+      const msg = payload && typeof payload.message === 'string' ? (payload.message as string) : 'See what you can build this week.'
+      return { title: 'Your week on WyberAi', body: msg }
+    }
     default: {
       const msg = payload && typeof payload.message === 'string' ? (payload.message as string) : 'You have a new update.'
       return { title: 'WyberAi', body: msg }
@@ -87,4 +101,26 @@ export async function notifyPush(
   } catch (e) {
     console.error('[push] notifyPush failed:', e)
   }
+}
+
+/**
+ * Record an event in ONE call: persist the in-app `notifications` row (what the
+ * mobile Activity feed reads) AND fan out a push. Use this at every event
+ * touchpoint so the feed and the push stay in sync. Fully best-effort — a failed
+ * row insert or push must never break the caller (a build, a credit deduction),
+ * so this never throws and should not be awaited in a latency-critical path
+ * (or await + ignore).
+ */
+export async function notify(
+  admin: SupabaseClient,
+  userId: string,
+  type: string,
+  payload?: Record<string, unknown> | null,
+): Promise<void> {
+  try {
+    await admin.from('notifications').insert({ user_id: userId, type, payload: payload ?? null })
+  } catch (e) {
+    console.error('[notify] row insert failed:', e)
+  }
+  await notifyPush(admin, userId, type, payload)
 }

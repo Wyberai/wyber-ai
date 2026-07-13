@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
@@ -1495,6 +1496,11 @@ export async function POST(req: NextRequest) {
           userCurrency(admin, user.id).then(c => sendCreditLowEmail(email, after, c)).catch(() => {})
         }
       }
+      // Low-credit PUSH + in-app row — same crossing threshold as the email, but
+      // push needs no email address. Best-effort; never blocks the build response.
+      if (balance > 20 && after <= 20 && after > 0) {
+        notify(admin, user.id, 'credits_low', { balance: after }).catch(() => {})
+      }
     }
 
     // ── TEMPLATE MATCHING DISABLED ──────────────────────────────────
@@ -2374,6 +2380,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           if (isNewBuild) await nameNewProject(projectId, prompt)
         })(),
       ])
+      // "Build complete" push + in-app row — only for full new builds (web or
+      // mobile), never tiny edits, to avoid push spam. Best-effort.
+      if (isNewBuild) {
+        await notify(admin, user.id, 'build_complete', { projectId }).catch(() => {})
+      }
     })
 
     return new Response(readable, {

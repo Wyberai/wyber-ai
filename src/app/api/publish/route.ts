@@ -7,6 +7,7 @@ import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
+import { notify } from '@/lib/push'
 import { rateLimit } from '@/lib/rate-limit'
 import { injectPwa } from '@/lib/pwa/install-snippet'
 import { extractThemeColor, BRAND_THEME_COLOR } from '@/lib/pwa/manifest'
@@ -204,6 +205,9 @@ export async function POST(req: NextRequest) {
     // Warm the PWA icons (regenerates on republish so a fresh thumbnail is
     // picked up). Best-effort — the icon routes lazily generate on a miss.
     warmPwaIcons(admin, { id: projectId, name: project.name, thumbnail_url: project.thumbnail_url }).catch(() => {})
+
+    // Notify: project published (in-app Activity row + push). Best-effort.
+    notify(admin, user.id, 'published', { projectId, url: publishedUrl }).catch(() => {})
 
     return NextResponse.json({ subdomain, publishedUrl })
   } catch (err: any) {
