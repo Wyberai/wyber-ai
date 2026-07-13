@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
+import { notify } from '@/lib/push';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -136,6 +137,8 @@ export async function GET(request: Request) {
                   referral_credits_earned: (referrer.referral_credits_earned ?? 0) + 50,
                 }).eq('id', referrer.id);
                 if (user.email) sendAdminSignupAlert(user.email, `referred by ${refCode}`).catch(() => {});
+                // Notify the referrer (in-app Activity row + push). Best-effort.
+                notify(admin, referrer.id, 'referral', { credits: 50 }).catch(() => {})
               }
             }
           } catch (e) { console.error('signup perks (referral/student) failed:', e); }

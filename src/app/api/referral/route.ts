@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { notify } from '@/lib/push'
 
 // GET - get user's referral code and stats
 export async function GET() {
@@ -68,6 +69,8 @@ export async function POST(req: NextRequest) {
       referral_count: (referrer.referral_count ?? 0) + 1,
       referral_credits_earned: (referrer.referral_credits_earned ?? 0) + 50,
     }).eq('id', referrer.id)
+
+    notify(admin, referrer.id, 'referral', { credits: 50 }).catch(() => {})
 
     return NextResponse.json({ success: true, bonusCredits: 20 })
   } catch (err) {
