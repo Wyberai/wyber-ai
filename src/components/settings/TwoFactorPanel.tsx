@@ -1,30 +1,13 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import QRCode from 'qrcode'
 
 // TOTP two-factor via Supabase Auth MFA. Supabase manages the factor + secret;
 // this component drives enroll → verify → unenroll. Enrolling is opt-in and does
 // not change login on its own — the step-up is enforced where it matters (the
 // MCP connector authorization screen). See src/components/oauth/TwoFactorGate.
 interface Factor { id: string; friendly_name?: string; status: string; factor_type: string; created_at?: string }
-
-// Supabase's mfa.enroll returns totp.qr_code as a data: URI
-// (data:image/svg+xml;utf-8,<svg…> — unencoded). Extract the raw SVG so we can
-// render it inline: an <img> with an unencoded data URI renders unreliably when
-// the SVG contains '#' fill colors. Handles base64 and already-raw <svg> too.
-function svgMarkup(qr: string): string {
-  const raw = (qr || '').trim()
-  if (raw.startsWith('<svg') || raw.startsWith('<?xml')) return raw
-  if (raw.startsWith('data:')) {
-    const comma = raw.indexOf(',')
-    if (comma === -1) return ''
-    const meta = raw.slice(0, comma)
-    const content = raw.slice(comma + 1)
-    if (meta.includes('base64')) { try { return atob(content) } catch { return '' } }
-    try { return decodeURIComponent(content) } catch { return content }
-  }
-  return raw
-}
 
 export function TwoFactorPanel() {
   const supabase = createClient()
@@ -48,9 +31,14 @@ export function TwoFactorPanel() {
   const startEnroll = async () => {
     setError(''); setBusy(true)
     const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: `Authenticator ${new Date().toISOString()}` })
+    if (error) { setBusy(false); setError(error.message); return }
+    // Render our OWN crisp QR from the otpauth:// URI. Supabase's qr_code is a
+    // 300KB unencoded-SVG blob that scales blurry and scanners reject; a clean
+    // PNG with a proper quiet zone scans reliably.
+    let qr = ''
+    try { qr = await QRCode.toDataURL(data.totp.uri, { width: 220, margin: 2, errorCorrectionLevel: 'M' }) } catch { /* manual key still works */ }
     setBusy(false)
-    if (error) { setError(error.message); return }
-    setEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret })
+    setEnroll({ id: data.id, qr, secret: data.totp.secret })
   }
 
   const confirmEnroll = async () => {
@@ -132,8 +120,11 @@ export function TwoFactorPanel() {
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Scan this QR code</div>
           <div style={{ fontSize: 12, color: '#71717a', marginBottom: 14 }}>Open your authenticator app and scan, or enter the key manually. Then type the 6-digit code it shows.</div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <div style={{ background: '#fff', padding: 10, borderRadius: 10, width: 168, height: 168, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              dangerouslySetInnerHTML={{ __html: svgMarkup(enroll.qr) }} />
+            <div style={{ background: '#fff', padding: 12, borderRadius: 12, width: 184, height: 184, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {enroll.qr
+                ? <img src={enroll.qr} alt="Scan with your authenticator app" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <span style={{ fontSize: 12, color: '#71717a', textAlign: 'center', padding: 8 }}>Use the manual key →</span>}
+            </div>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontSize: 11, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Manual key</div>
               <code style={{ display: 'block', wordBreak: 'break-all', fontSize: 12, color: '#a1a1aa', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', marginBottom: 16 }}>{enroll.secret}</code>
