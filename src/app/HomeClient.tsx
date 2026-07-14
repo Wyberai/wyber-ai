@@ -6,6 +6,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo';
 import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
 import { track } from '@/lib/track';
+import { VoiceButton } from '@/components/editor/VoiceButton';
 
 const BRAND = '#0EA5E9';
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -394,9 +395,17 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
                 />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTop: '1px solid var(--brand-border)' }}>
                   <span className="mk-mono" style={{ fontSize: 10, paddingLeft: 10 }}>50 FREE CREDITS · NO CARD</span>
-                  <button type="submit" className="mk-btn" style={{ padding: '10px 22px', fontSize: 14 }}>
-                    Build it — free →
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-text-dim)' }}>
+                    <VoiceButton
+                      onTranscript={t => {
+                        setHeroPrompt(prev => (prev ? prev + ' ' + t : t));
+                        track('homepage_voice_used', { length: t.length });
+                      }}
+                    />
+                    <button type="submit" className="mk-btn" style={{ padding: '10px 22px', fontSize: 14 }}>
+                      Build it — free →
+                    </button>
+                  </div>
                 </div>
               </form>
               <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginBottom: 4 }}>

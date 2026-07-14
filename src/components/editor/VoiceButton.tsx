@@ -1,15 +1,25 @@
 'use client'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 
 interface Props {
   onTranscript: (text: string) => void
+  /** Streams partial transcripts while the user is still speaking. */
+  onInterim?: (text: string) => void
   disabled?: boolean
+  size?: number
 }
 
-export function VoiceButton({ onTranscript, disabled }: Props) {
+export function VoiceButton({ onTranscript, onInterim, disabled, size = 30 }: Props) {
   const [listening, setListening] = useState(false)
-  const [supported] = useState(() => typeof window !== 'undefined' && 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  // Detect support in an effect, not the initial render: SSR renders null
+  // (no window), so the client's first render must match or hydration drops
+  // the button entirely. After mount it appears where supported.
+  const [supported, setSupported] = useState(false)
   const recRef = useRef<any>(null)
+
+  useEffect(() => {
+    setSupported('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
+  }, [])
 
   const toggle = useCallback(() => {
     if (!supported) return
@@ -23,13 +33,22 @@ export function VoiceButton({ onTranscript, disabled }: Props) {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     const rec = new SpeechRecognition()
     rec.continuous = false
-    rec.interimResults = false
+    rec.interimResults = !!onInterim
     rec.lang = 'en-US'
 
     rec.onresult = (e: any) => {
-      const transcript = e.results[0][0].transcript
-      onTranscript(transcript)
-      setListening(false)
+      let interim = ''
+      let final = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript
+        if (e.results[i].isFinal) final += t
+        else interim += t
+      }
+      if (interim && onInterim) onInterim(interim)
+      if (final) {
+        onTranscript(final)
+        setListening(false)
+      }
     }
     rec.onerror = () => setListening(false)
     rec.onend = () => setListening(false)
@@ -37,24 +56,25 @@ export function VoiceButton({ onTranscript, disabled }: Props) {
     rec.start()
     recRef.current = rec
     setListening(true)
-  }, [listening, supported, onTranscript])
+  }, [listening, supported, onTranscript, onInterim])
 
   if (!supported) return null
 
+  const icon = Math.round(size * 0.47)
   return (
     <button
       onClick={toggle}
       disabled={disabled}
       title={listening ? 'Stop recording' : 'Speak your idea'}
       style={{
-        width: 30, height: 30, borderRadius: '50%', border: 'none', flexShrink: 0,
+        width: size, height: size, borderRadius: '50%', border: 'none', flexShrink: 0,
         background: listening ? 'rgba(239,68,68,0.15)' : 'transparent',
-        color: listening ? '#ef4444' : 'var(--ide-text3)',
+        color: listening ? '#ef4444' : 'var(--ide-text3, currentColor)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         cursor: 'pointer', transition: 'all 0.15s', position: 'relative',
       }}
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg width={icon} height={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
         <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
         <line x1="12" y1="19" x2="12" y2="23"/>

@@ -12,6 +12,7 @@ import { ImportModal } from '@/components/dashboard/ImportModal';
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { creditsLine } from '@/lib/plans';
+import { VoiceButton } from '@/components/editor/VoiceButton';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -105,6 +106,21 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [view, setView] = useState<'all' | 'web' | 'mobile'>('all');
   const searchParams = useSearchParams();
+  // "Today's ideas" — personalized quick prompts from /api/suggestions.
+  // null = still loading (render QUICK_PROMPTS); fail-soft to QUICK_PROMPTS.
+  const [suggestions, setSuggestions] = useState<{ title: string; prompt: string }[] | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/suggestions')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!alive || !data?.suggestions?.length) return;
+        setSuggestions(data.suggestions.filter((s: any) => s?.title && s?.prompt));
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   // Reddit conversion events — fire ONLY on the real moments, then strip the
   // marker param so a refresh never double-counts.
@@ -455,6 +471,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 </div>
                 <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} credits</span>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
+                <VoiceButton size={26} disabled={creating}
+                  onTranscript={t => { setPromptInput(prev => (prev ? prev + ' ' + t : t)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: t.length }); }} />
                 <button onClick={() => buildMode === 'mobile' ? startProject(promptInput.trim() || undefined, 'mobile') : openChooser(promptInput.trim() || undefined)} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
@@ -466,12 +484,16 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             </div>
 
             <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: isMobile ? undefined : 'wrap', flexDirection: isMobile ? 'column' : 'row', justifyContent: isMobile ? undefined : 'center', alignItems: isMobile ? 'stretch' : undefined }}>
-              {QUICK_PROMPTS.slice(0, isMobile ? 3 : 4).map(p => (
-                <button key={p} onClick={() => { setPromptInput(p); textareaRef.current?.focus() }}
+              {(suggestions
+                ? suggestions.slice(0, isMobile ? 3 : 4).map(s => ({ key: s.prompt, label: s.title, prompt: s.prompt }))
+                : QUICK_PROMPTS.slice(0, isMobile ? 3 : 4).map(p => ({ key: p, label: p.replace('Build a ', '').replace('Create a ', ''), prompt: p }))
+              ).map(c => (
+                <button key={c.key} onClick={() => { setPromptInput(c.prompt); textareaRef.current?.focus() }}
+                  title={c.prompt}
                   style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEXT; (e.currentTarget as HTMLElement).style.borderColor = `rgba(14,165,233,0.4)` }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = DIM; (e.currentTarget as HTMLElement).style.borderColor = BORDER }}>
-                  {p.replace('Build a ', '').replace('Create a ', '')}
+                  {suggestions ? <>✦ {c.label}</> : c.label}
                 </button>
               ))}
             </div>

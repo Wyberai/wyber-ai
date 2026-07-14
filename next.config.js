@@ -35,7 +35,9 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
+          // microphone=(self): voice prompting (Web Speech API) needs the page's
+          // own mic; still denied to all embedded third-party frames.
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), interest-cohort=()' },
           { key: 'X-Permitted-Cross-Domain-Policies', value: 'none' },
         ],
       },

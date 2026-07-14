@@ -10,6 +10,7 @@ import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
+import { VoiceButton } from './VoiceButton';
 import { FileMentionDropdown } from './FileMentionDropdown';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -435,12 +436,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // model never loses referents (the Jul 8 lesson); only the RENDER collapses.
   const [expandedDetails, setExpandedDetails] = useState<Set<string>>(new Set());
 
-  const [recording, setRecording] = useState(false);
   const connectors = useEditorStore(s => s.connectors);
   const supabaseConnected = connectors.some(c => c.service === 'supabase');
   const [pendingRegulated, setPendingRegulated] = useState<{ prompt: string; img: AttachedImage | null; domains: RegulatedDomain[] } | null>(null);
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const audioChunks = useRef<Blob[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -473,31 +471,6 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       body: JSON.stringify({ projectId: resolvedProjectId, role, content, filesChanged: filesChanged || [], clientId }),
     }).catch(() => {});
   }, [resolvedProjectId]);
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream);
-      audioChunks.current = [];
-      mr.ondataavailable = e => audioChunks.current.push(e.data);
-      mr.onstop = async () => {
-        const blob = new Blob(audioChunks.current, { type: 'audio/webm' });
-        const fd = new FormData();
-        fd.append('audio', blob, 'audio.webm');
-        try {
-          const res = await fetch('/api/voice', { method: 'POST', body: fd });
-          const data = await res.json();
-          if (data.text) setInput(prev => prev ? prev + ' ' + data.text : data.text);
-        } catch {}
-        stream.getTracks().forEach(t => t.stop());
-      };
-      mr.start();
-      mediaRecorder.current = mr;
-      setRecording(true);
-    } catch { console.error('Mic access denied'); }
-  };
-
-  const stopRecording = () => { mediaRecorder.current?.stop(); setRecording(false); };
 
   // Init ONLY for brand-new projects — wait for hydration, only seed if truly empty
   useEffect(() => {
@@ -2221,10 +2194,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               </button>
-              <button onClick={recording ? stopRecording : startRecording} title={recording ? 'Stop recording' : 'Voice input'}
-                style={{ background: recording ? 'rgba(239,68,68,0.1)' : 'none', border:'none', color: recording ? 'var(--ide-red)' : 'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
-                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="1" width="6" height="9" rx="3"/><path d="M1 8a7 7 0 0014 0M8 15v-2"/></svg>
-              </button>
+              <VoiceButton
+                size={24}
+                disabled={isGenerating}
+                onTranscript={t => setInput(prev => prev ? prev + ' ' + t : t)}
+              />
               {/* Automatic model routing — system picks the best model per task */}
               <span
                 title="WyberAi automatically picks the best model: top-tier for new builds, a fast model for quick edits. You only pay for what each change needs."
