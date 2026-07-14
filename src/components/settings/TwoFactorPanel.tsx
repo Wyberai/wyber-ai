@@ -16,6 +16,7 @@ export function TwoFactorPanel() {
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [recovery, setRecovery] = useState<string[] | null>(null)
 
   const load = async () => {
     const { data } = await supabase.auth.mfa.listFactors()
@@ -38,9 +39,23 @@ export function TwoFactorPanel() {
     if (!enroll) return
     setError(''); setBusy(true)
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: enroll.id, code: code.trim() })
+    if (error) { setBusy(false); setError(error.message); return }
+    // Hand the user single-use backup codes (shown once).
+    try {
+      const res = await fetch('/api/mfa/recovery', { method: 'POST' })
+      const data = await res.json()
+      if (data.codes) setRecovery(data.codes)
+    } catch { /* codes can be regenerated later from the panel */ }
     setBusy(false)
-    if (error) { setError(error.message); return }
     setEnroll(null); setCode(''); load()
+  }
+
+  const regenerate = async () => {
+    setBusy(true); setError('')
+    const res = await fetch('/api/mfa/recovery', { method: 'POST' })
+    const data = await res.json()
+    setBusy(false)
+    if (data.codes) setRecovery(data.codes); else setError(data.error || 'Could not regenerate codes')
   }
 
   const cancelEnroll = async () => {
@@ -51,10 +66,14 @@ export function TwoFactorPanel() {
   const remove = async (id: string) => {
     setBusy(true)
     const { error } = await supabase.auth.mfa.unenroll({ factorId: id })
+    if (error) { setBusy(false); setError(error.message); return }
+    await fetch('/api/mfa/disable', { method: 'POST' }).catch(() => {})
     setBusy(false)
-    if (error) { setError(error.message); return }
+    setRecovery(null)
     load()
   }
+
+  const copyCodes = () => { if (recovery) navigator.clipboard.writeText(recovery.join('\n')).catch(() => {}) }
 
   const S = {
     card: { background: '#111113', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 12, padding: 20, marginBottom: 16 } as const,
@@ -69,6 +88,24 @@ export function TwoFactorPanel() {
       <p style={{ fontSize: 13, color: '#71717a', marginBottom: 24, lineHeight: 1.5 }}>
         Add an authenticator app (Google Authenticator, Authy, 1Password) as a second factor. When enabled, you'll confirm a 6-digit code before authorizing an MCP connector to act on your account.
       </p>
+
+      {recovery && (
+        <div style={{ ...S.card, border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.05)' }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>Save your recovery codes</div>
+          <div style={{ fontSize: 12.5, color: '#a1a1aa', marginBottom: 14, lineHeight: 1.5 }}>
+            Each code works once. Store them somewhere safe — if you lose your authenticator, a recovery code is the only way back in (and using one turns 2FA off so you can re-enroll). They won't be shown again.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
+            {recovery.map(c => (
+              <code key={c} style={{ fontFamily: 'monospace', fontSize: 13, color: '#fafafa', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, padding: '7px 10px', textAlign: 'center', letterSpacing: '0.06em' }}>{c}</code>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={copyCodes} style={S.btn()}>Copy codes</button>
+            <button onClick={() => setRecovery(null)} style={S.ghost}>I've saved them</button>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ fontSize: 13, color: '#52525b' }}>Loading…</div>
@@ -99,6 +136,7 @@ export function TwoFactorPanel() {
             </div>
             <button onClick={() => remove(verified[0].id)} disabled={busy} style={{ ...S.ghost, color: '#ef4444', borderColor: 'rgba(239,68,68,0.3)', fontSize: 12 }}>{busy ? '…' : 'Remove'}</button>
           </div>
+          <button onClick={regenerate} disabled={busy} style={{ marginTop: 12, fontSize: 12, color: '#0EA5E9', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'underline', padding: 0 }}>Regenerate recovery codes</button>
           {error && <div style={{ fontSize: 12, color: '#ef4444', marginTop: 10 }}>{error}</div>}
         </div>
       ) : (

@@ -55,6 +55,9 @@ export async function proxy(request: NextRequest) {
     // the FULL authorization query in `next`. The generic gate below would strip
     // those params (next=pathname only), breaking the consent flow.
     path.startsWith('/oauth') ||
+    // /mfa is the 2FA step-up page itself — must be reachable at aal1, or the
+    // enforcement below would redirect it to itself forever.
+    path.startsWith('/mfa') ||
     path.startsWith('/founders') ||
     path.startsWith('/marketers') ||
     path.startsWith('/designers') ||
@@ -104,6 +107,26 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set('next', path)
       return NextResponse.redirect(url)
     }
+
+    // 2FA login gate. Keyed on the mfa_enabled flag, which is set ONLY once a
+    // user has BOTH a verified factor AND recovery codes — so enforcement can
+    // never apply to someone without a way back in. If the flag/column is absent
+    // (migration not applied) the read yields false and the gate stays off.
+    // Everything here is fail-open: an MFA hiccup must never lock out the app.
+    try {
+      const { data: prof } = await supabase.from('profiles').select('mfa_enabled').eq('id', user.id).single()
+      if (prof?.mfa_enabled) {
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') {
+          const url = request.nextUrl.clone()
+          const dest = path + (request.nextUrl.search || '')
+          url.pathname = '/mfa'
+          url.search = ''
+          url.searchParams.set('next', dest)
+          return NextResponse.redirect(url)
+        }
+      }
+    } catch { /* fail open — never block the app on an MFA check error */ }
 
     return response
   } catch (err) {
