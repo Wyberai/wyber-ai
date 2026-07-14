@@ -5,6 +5,17 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async rewrites() {
+    return [
+      // OAuth discovery documents must live at these well-known paths. Next
+      // App Router doesn't route dotfolders reliably, so serve them from API
+      // route handlers and map the canonical URLs here.
+      { source: '/.well-known/oauth-authorization-server', destination: '/api/oauth/well-known/authorization-server' },
+      { source: '/.well-known/oauth-protected-resource', destination: '/api/oauth/well-known/protected-resource' },
+      // Some clients probe the path-suffixed form (RFC 9728) — map it too.
+      { source: '/.well-known/oauth-protected-resource/api/mcp', destination: '/api/oauth/well-known/protected-resource' },
+    ]
+  },
   async redirects() {
     return [
       { source: '/contact-us', destination: '/contact', permanent: true },

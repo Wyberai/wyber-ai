@@ -1,18 +1,20 @@
 import { createHash } from 'crypto'
 import { createServiceClient } from '@/lib/supabase/server'
+import { verifyAccessToken } from '@/lib/oauth/tokens'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 
 /**
- * Verifies a WyberAi API key for the MCP server.
+ * Authenticates an MCP request. Two credential types are accepted, tried in
+ * order:
  *
- * Keys are issued by /api/wyber-api as `wyb_<hex>` and stored SHA-256 HASHED
- * (see that route). So we hash the incoming key and look it up by hash — the
- * previous /api/mcp implementation compared the raw key against the hash column,
- * which could never match, silently rejecting every legitimately-issued key.
- *
- * Accepts the key from either `Authorization: Bearer wyb_...` (MCP standard,
- * passed to us as `bearerToken`) or a raw `x-api-key: wyb_...` header (what the
- * API Keys UI historically told users to send).
+ * 1. **OAuth 2.0 access token** (`Authorization: Bearer <jwt>`) — issued by our
+ *    OAuth server (/api/oauth/token) after a user consents. This is the path the
+ *    Claude Connectors Directory requires (per-user consent). Verified
+ *    statelessly via HMAC signature + expiry.
+ * 2. **Legacy API key** (`wyb_<hex>`) via `Authorization: Bearer` or `x-api-key`
+ *    — issued by /api/wyber-api and stored SHA-256 hashed. Kept for existing
+ *    Claude Code custom-connector users. (The original bug compared the raw key
+ *    against the hash column, rejecting every key — fixed by hashing here.)
  *
  * Returns an AuthInfo whose `extra.userId` scopes every tool call, or undefined
  * to reject (401) — the shape `withMcpAuth` expects.
@@ -24,6 +26,19 @@ export async function verifyToken(
   const raw = (bearerToken || req.headers.get('x-api-key') || '').trim()
   if (!raw) return undefined
 
+  // 1. OAuth access token (JWT-shaped). A `wyb_` key won't parse, so this is a
+  //    cheap no-op for legacy keys.
+  const claims = verifyAccessToken(raw)
+  if (claims) {
+    return {
+      token: raw,
+      clientId: 'wyber-mcp-oauth',
+      scopes: claims.scope ? claims.scope.split(' ') : [],
+      extra: { userId: claims.sub },
+    }
+  }
+
+  // 2. Legacy API key — hash then look up.
   const keyHash = createHash('sha256').update(raw).digest('hex')
 
   const db = createServiceClient()

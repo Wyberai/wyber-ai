@@ -51,6 +51,10 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/pay') ||
     path.startsWith('/connectors') ||
     path.startsWith('/mcp') ||
+    // OAuth consent page handles its own auth: it redirects to /login preserving
+    // the FULL authorization query in `next`. The generic gate below would strip
+    // those params (next=pathname only), breaking the consent flow.
+    path.startsWith('/oauth') ||
     path.startsWith('/founders') ||
     path.startsWith('/marketers') ||
     path.startsWith('/designers') ||
