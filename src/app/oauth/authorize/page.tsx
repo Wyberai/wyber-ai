@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getClient } from '@/lib/oauth/store'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { TwoFactorGate } from '@/components/oauth/TwoFactorGate'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,17 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
   }
 
   const appName = client.client_name || 'An MCP client'
+
+  // Step-up 2FA: if the user enabled an authenticator but this session is only
+  // aal1, require a TOTP challenge before authorizing a connector (a powerful
+  // grant). Fail open on any error so a transient MFA lookup can never strand a
+  // user at the consent screen.
+  try {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    if (aal && aal.nextLevel === 'aal2' && aal.currentLevel === 'aal1') {
+      return <TwoFactorGate appName={appName} />
+    }
+  } catch { /* fail open */ }
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F8FB', fontFamily: 'var(--font-sans)', padding: 24 }}>

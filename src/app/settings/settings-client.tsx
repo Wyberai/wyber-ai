@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation';
 import { MODEL_META, MODEL_MULTIPLIERS, estimateCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits';
 import { WyberLogo } from '@/components/shared/WyberLogo';
 import { PLAN_FACTS, creditsLine } from '@/lib/plans';
+import { TwoFactorPanel } from '@/components/settings/TwoFactorPanel';
 
-type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'integrations' | 'github' | 'notifications' | 'danger';
+type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'integrations' | 'github' | 'notifications' | 'security' | 'danger';
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'profile',       label: 'Profile',             icon: '👤' },
@@ -18,6 +19,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'integrations',  label: 'Integrations',         icon: '🔌' },
   { id: 'github',        label: 'GitHub',               icon: '⌥' },
   { id: 'notifications', label: 'Notifications',        icon: '🔔' },
+  { id: 'security',      label: 'Security',             icon: '🛡️' },
   { id: 'danger',        label: 'Danger Zone',          icon: '⚠️' },
 ];
 
@@ -262,7 +264,7 @@ export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
-      if (p && ['profile','billing','models','api-keys','secrets','integrations','github','notifications','danger'].includes(p)) return p
+      if (p && ['profile','billing','models','api-keys','secrets','integrations','github','notifications','security','danger'].includes(p)) return p
     }
     return 'profile'
   });
@@ -784,6 +786,9 @@ export default function SettingsPage() {
 
         {/* INTEGRATIONS */}
         {tab === 'integrations' && <IntegrationsTab />}
+
+        {/* SECURITY */}
+        {tab === 'security' && <TwoFactorPanel />}
 
         {/* DANGER ZONE */}
         {tab === 'danger' && <>
