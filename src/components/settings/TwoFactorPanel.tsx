@@ -8,6 +8,24 @@ import { createClient } from '@/lib/supabase/client'
 // MCP connector authorization screen). See src/components/oauth/TwoFactorGate.
 interface Factor { id: string; friendly_name?: string; status: string; factor_type: string; created_at?: string }
 
+// Supabase's mfa.enroll returns totp.qr_code as a data: URI
+// (data:image/svg+xml;utf-8,<svg…> — unencoded). Extract the raw SVG so we can
+// render it inline: an <img> with an unencoded data URI renders unreliably when
+// the SVG contains '#' fill colors. Handles base64 and already-raw <svg> too.
+function svgMarkup(qr: string): string {
+  const raw = (qr || '').trim()
+  if (raw.startsWith('<svg') || raw.startsWith('<?xml')) return raw
+  if (raw.startsWith('data:')) {
+    const comma = raw.indexOf(',')
+    if (comma === -1) return ''
+    const meta = raw.slice(0, comma)
+    const content = raw.slice(comma + 1)
+    if (meta.includes('base64')) { try { return atob(content) } catch { return '' } }
+    try { return decodeURIComponent(content) } catch { return content }
+  }
+  return raw
+}
+
 export function TwoFactorPanel() {
   const supabase = createClient()
   const [factors, setFactors] = useState<Factor[]>([])
@@ -114,7 +132,8 @@ export function TwoFactorPanel() {
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Scan this QR code</div>
           <div style={{ fontSize: 12, color: '#71717a', marginBottom: 14 }}>Open your authenticator app and scan, or enter the key manually. Then type the 6-digit code it shows.</div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <div style={{ background: '#fff', padding: 10, borderRadius: 10, width: 168, height: 168, display: 'flex', alignItems: 'center', justifyContent: 'center' }} dangerouslySetInnerHTML={{ __html: enroll.qr }} />
+            <div style={{ background: '#fff', padding: 10, borderRadius: 10, width: 168, height: 168, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              dangerouslySetInnerHTML={{ __html: svgMarkup(enroll.qr) }} />
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontSize: 11, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Manual key</div>
               <code style={{ display: 'block', wordBreak: 'break-all', fontSize: 12, color: '#a1a1aa', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', marginBottom: 16 }}>{enroll.secret}</code>
