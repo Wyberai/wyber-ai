@@ -2382,8 +2382,13 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       ])
       // "Build complete" push + in-app row — only for full new builds (web or
       // mobile), never tiny edits, to avoid push spam. Best-effort.
-      if (isNewBuild) {
-        await notify(admin, user.id, 'build_complete', { projectId }).catch(() => {})
+      // NOTE: `admin`/`user` aren't in scope inside after(); use a fresh
+      // cookie-free service client + the handler-scoped `userId` (body param).
+      // The old `notify(admin, user.id, …)` threw ReferenceError: admin is not
+      // defined on every new build, silently killing the build-complete push.
+      if (isNewBuild && userId) {
+        const { createServiceClient } = await import('@/lib/supabase/server')
+        await notify(createServiceClient(), userId, 'build_complete', { projectId }).catch(() => {})
       }
     })
 

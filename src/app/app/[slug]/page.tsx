@@ -22,8 +22,20 @@ interface AppSeo {
   ogTitle?: string
   ogDescription?: string
   ogImage?: string
-  ogType?: string
+  ogType?: OgType
   jsonLd?: string
+}
+
+// Next.js validates openGraph.type against a fixed union and THROWS during
+// metadata resolution on anything else — a generated restaurant app emitting
+// og:type="restaurant.restaurant" crashed the whole published page (SSR throw →
+// global error boundary). Scrape freely, but only ever hand Next a value it
+// accepts; everything else falls back to 'website'.
+type OgType = 'website' | 'article' | 'book' | 'profile'
+const ALLOWED_OG_TYPES = new Set<OgType>(['website', 'article', 'book', 'profile'])
+function safeOgType(raw?: string): OgType {
+  const t = (raw ?? '').trim().toLowerCase()
+  return ALLOWED_OG_TYPES.has(t as OgType) ? (t as OgType) : 'website'
 }
 
 function extractSeo(html: string): AppSeo {
@@ -34,12 +46,23 @@ function extractSeo(html: string): AppSeo {
     ogTitle: decode(metaContent(html, 'property', 'og:title')),
     ogDescription: decode(metaContent(html, 'property', 'og:description')),
     ogImage: decode(metaContent(html, 'property', 'og:image')),
-    ogType: decode(metaContent(html, 'property', 'og:type')) || 'website',
+    ogType: safeOgType(decode(metaContent(html, 'property', 'og:type'))),
     jsonLd: html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i)?.[1]?.trim(),
   }
 }
 
 async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string } | null> {
+  try {
+    return await loadHtmlInner(slug)
+  } catch {
+    // A Supabase/storage failure must never crash the public page into the
+    // platform error boundary (which bounces visitors to /login). Fall through
+    // to the calm "Building your app…" state instead.
+    return null
+  }
+}
+
+async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string } | null> {
   // Service client, not the session client: this is a PUBLIC page (anonymous
   // visitors, shared links, the mobile app's in-app browser). The `projects`
   // RLS policy doesn't grant anon SELECT on is_public rows, so the session
@@ -95,7 +118,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: seo.ogTitle || title,
       description: seo.ogDescription || description,
       url: canonical,
-      type: (seo.ogType as 'website') || 'website',
+      type: seo.ogType ?? 'website',
       images: seo.ogImage ? [seo.ogImage] : undefined,
     },
     twitter: {
