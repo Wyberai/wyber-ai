@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const to = searchParams.get('to') || '/'
 
   const hasValidKey = keyMatches(key)
-  const isOwner = hasValidKey || isOwnerToken(req.cookies.get(OWNER_COOKIE)?.value)
+  const isOwner = hasValidKey || await isOwnerToken(req.cookies.get(OWNER_COOKIE)?.value)
 
   // Never confirm the feature exists to non-owners — behave like an unknown
   // route and just send them home. No cookies set, no hint leaked.
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     maxAge: 60 * 60 * 24 * 365, // 1 year
   }
 
-  if (hasValidKey) res.cookies.set(OWNER_COOKIE, ownerToken(), cookieOpts)
+  if (hasValidKey) res.cookies.set(OWNER_COOKIE, await ownerToken(), cookieOpts)
 
   if (searchParams.get('logout') === '1') {
     res.cookies.delete(OWNER_COOKIE)

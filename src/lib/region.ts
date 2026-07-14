@@ -13,7 +13,7 @@ import { OWNER_COOKIE, REGION_COOKIE, isOwnerToken } from '@/lib/owner-preview'
 // unreachable by, normal visitors and crawlers — see lib/owner-preview.ts.
 export async function resolveRegion(): Promise<Currency> {
   const jar = await cookies()
-  if (isOwnerToken(jar.get(OWNER_COOKIE)?.value)) {
+  if (await isOwnerToken(jar.get(OWNER_COOKIE)?.value)) {
     const override = jar.get(REGION_COOKIE)?.value
     if (override === 'IN') return 'INR'
     if (override === 'US') return 'USD'

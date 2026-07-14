@@ -6,7 +6,11 @@ import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 // India-rendered page can NEVER be served to a US visitor (or vice versa).
 // India (IP=IN) → ₹/UPI on first paint; everyone else → the USD US product.
 // The owner switcher only renders on a browser unlocked via /api/owner-preview.
+//
+// Edge runtime so this executes at the PoP nearest the visitor instead of a
+// single Node region — see src/app/page.tsx for why.
 export const dynamic = 'force-dynamic'
+export const runtime = 'edge'
 
 export default async function PricingPage() {
   const currency = await resolveRegion()
