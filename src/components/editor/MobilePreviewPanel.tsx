@@ -7,12 +7,13 @@ import { DEVICES, DEFAULT_DEVICE_ID, devicesForOS, getDevice, type DeviceOS } fr
 
 type PreviewMode = 'snack' | 'inapp'
 
-// Default preview mode. Ships 'snack' (the proven Expo path); flip prod-wide to
-// the in-house react-native-web preview by setting NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=inapp
-// once the in-app render rate is validated. A per-user localStorage choice
-// overrides this default so anyone can opt in/out to test in production.
+// Default preview mode. Now ships 'inapp' — the in-house react-native-web preview
+// renders the app live and interactive in the editor (the Gesture-API + reanimated
+// shims were fixed so generated games/apps are actually tappable). Set
+// NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=snack to revert prod-wide to the Expo link-out.
+// A per-user localStorage choice overrides this default either way.
 const DEFAULT_MODE: PreviewMode =
-  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'inapp' ? 'inapp' : 'snack'
+  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'snack' ? 'snack' : 'inapp'
 
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
