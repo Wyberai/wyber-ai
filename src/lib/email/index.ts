@@ -8,6 +8,8 @@ const resend = new Resend(process.env.RESEND_API_KEY!)
 const FROM       = 'WyberAi <hello@wyberai.com>'
 const FROM_NOTIF = 'WyberAi <hello@wyberai.com>'
 const APP_URL    = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
+const FOUNDER_X_URL        = 'https://x.com/sumeet259'
+const FOUNDER_LINKEDIN_URL = 'https://www.linkedin.com/in/sumeetsutar/'
 
 // ── Design primitives ─────────────────────────────────────────────────────────
 
@@ -111,11 +113,14 @@ export async function sendWelcomeEmail(to: string, name?: string) {
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Paste a <strong style="color:#f0f0f4">screenshot or Figma file</strong> to clone any UI</td></tr>
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 24 more integrations</td></tr>
     </table>
-    ${p('We\'re also running a <strong style="color:#f0f0f4">Weekly Build Challenge — win credits every week</strong>. Build a real app, share it with #BuiltOnWyber, and our team + the community pick the winners. <a href="https://wyberai.com/challenge" style="color:#0EA5E9">Learn more →</a>')}
     <div style="text-align:center;margin:28px 0">
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
-    ${p('Questions? Just reply — hello@wyberai.com goes straight to the team.')}
+    ${divider()}
+    ${p('<strong style="color:#f0f0f4">Bring a friend, you both win</strong> — share your invite link from Settings → Referrals. You get 50 credits per signup, they start with 50 free too.')}
+    ${p(`I'm building WyberAi in the open — every feature, every number, real. <a href="${FOUNDER_X_URL}" style="color:#0EA5E9">Follow along on X</a> or <a href="${FOUNDER_LINKEDIN_URL}" style="color:#0EA5E9">LinkedIn</a> if that's useful to you.`)}
+    ${p('Questions? Just reply — this goes straight to me.')}
+    ${p('— Sumeet, founder')}
   `, 'Your 50 free credits are ready')
 
   return resend.emails.send({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
