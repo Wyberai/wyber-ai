@@ -115,20 +115,29 @@ function isNativeStub(spec: string): boolean {
 // exports (every hook / factory react-navigation apps commonly import).
 const NAV_SHIM_SOURCE = `import React from 'react'
 import { View, Text, Pressable } from 'react-native'
+// A real navigation controller shared via context so useNavigation().navigate()
+// ACTUALLY switches screens. Previously useNavigation() returned disconnected
+// no-ops, so multi-screen apps/games (a "New Game" button, custom tab bars,
+// stack pushes) rendered the first screen then went dead on every tap.
+var NavContext = React.createContext(null)
 export function NavigationContainer(p){ return React.createElement(React.Fragment, null, p.children) }
 export const NavigationIndependentTree = NavigationContainer
-export function useNavigation(){ return { navigate(){}, goBack(){}, push(){}, pop(){}, popToTop(){}, replace(){}, setOptions(){}, setParams(){}, reset(){}, dispatch(){}, addListener(){ return function(){} }, removeListener(){}, isFocused(){ return true }, canGoBack(){ return false }, getParent(){ return undefined }, getState(){ return { routes: [], index: 0 } } } }
-export function useRoute(){ return { params: {}, name: '', key: '' } }
+var NOOP_NAV = { navigate(){}, goBack(){}, push(){}, pop(){}, popToTop(){}, replace(){}, setOptions(){}, setParams(){}, reset(){}, dispatch(){}, addListener(){ return function(){} }, removeListener(){}, isFocused(){ return true }, canGoBack(){ return false }, getParent(){ return undefined }, getState(){ return { routes: [], index: 0 } } }
+export function useNavigation(){ return React.useContext(NavContext) || NOOP_NAV }
+export function useRoute(){ var c = React.useContext(NavContext); return (c && c.__route) || { params: {}, name: '', key: '' } }
 export function useFocusEffect(cb){ React.useEffect(function(){ var c = typeof cb === 'function' ? cb() : undefined; return typeof c === 'function' ? c : undefined }, []) }
 export function useIsFocused(){ return true }
-export function useNavigationState(sel){ var s = { routes: [], index: 0 }; return sel ? sel(s) : s }
+export function useNavigationState(sel){ var c = React.useContext(NavContext); var s = c ? c.getState() : { routes: [], index: 0 }; return sel ? sel(s) : s }
 export function useScrollToTop(){}
-export function useLinkTo(){ return function(){} }
+export function useLinkTo(){ var c = React.useContext(NavContext); return function(to){ if (c && to) c.navigate(String(typeof to === 'object' ? (to.screen || '') : to).replace(/^\\//, '')) } }
 export function useLinkProps(){ return { onPress: function(){}, href: '#' } }
 export const DefaultTheme = { dark: false, colors: { primary: '#0EA5E9', background: '#ffffff', card: '#ffffff', text: '#111111', border: '#e5e5e5', notification: '#0EA5E9' } }
 export const DarkTheme = { dark: true, colors: { primary: '#0EA5E9', background: '#0A0A0B', card: '#111114', text: '#F5F5F7', border: '#2A2A2E', notification: '#0EA5E9' } }
 export function createNavigationContainerRef(){ return { current: null, navigate(){}, isReady(){ return true }, addListener(){ return function(){} } } }
-export const CommonActions = {}, StackActions = {}, TabActions = {}, DrawerActions = {}
+export const CommonActions = { navigate: function(n){ return { type: 'NAVIGATE', payload: (typeof n === 'object' ? n : { name: n }) } }, goBack: function(){ return { type: 'GO_BACK' } }, reset: function(){ return { type: 'RESET' } } }
+export const StackActions = { push: function(name, params){ return { type: 'PUSH', payload: { name: name, params: params } } }, pop: function(){ return { type: 'POP' } }, popToTop: function(){ return { type: 'POP_TO_TOP' } }, replace: function(name, params){ return { type: 'REPLACE', payload: { name: name, params: params } } } }
+export const TabActions = { jumpTo: function(name, params){ return { type: 'JUMP_TO', payload: { name: name, params: params } } } }
+export const DrawerActions = { openDrawer: function(){ return { type: 'OPEN_DRAWER' } }, closeDrawer: function(){ return { type: 'CLOSE_DRAWER' } }, toggleDrawer: function(){ return { type: 'TOGGLE_DRAWER' } } }
 export function useTheme(){ return DefaultTheme }
 export function useNavigationContainerRef(){ return createNavigationContainerRef() }
 class ScreenErrorBoundary extends React.Component {
@@ -142,8 +151,10 @@ class ScreenErrorBoundary extends React.Component {
     return this.props.children
   }
 }
-function makeNavigator(){
+function makeNavigator(kind){
+  return function(){
   function Navigator(props){
+    var parent = React.useContext(NavContext)
     var screens = []
     var walk = function(children){
       React.Children.toArray(children).forEach(function(c){
@@ -153,34 +164,64 @@ function makeNavigator(){
       })
     }
     walk(props.children)
-    var st = React.useState(0); var idx = st[0], setIdx = st[1]
+    var nameToIndex = function(name){ for (var i = 0; i < screens.length; i++){ if (screens[i].name === name) return i } return -1 }
+    var initialIdx = Math.max(0, nameToIndex(props.initialRouteName))
+    var st = React.useState(initialIdx); var idx = st[0], setIdx = st[1]
+    var histRef = React.useRef([initialIdx])
+    var paramsRef = React.useRef({})
     if (idx >= screens.length) idx = 0
-    var cur = screens[idx]
-    var nav = useNavigation()
-    var body = null
-    if (cur) {
-      if (cur.component) body = React.createElement(cur.component, { navigation: nav, route: { params: cur.initialParams || {}, name: cur.name, key: cur.name } })
-      else if (cur.children) body = cur.children({ navigation: nav })
+    var cur = screens[idx] || {}
+
+    var go = function(target, params){
+      var name = (target && typeof target === 'object') ? target.name : target
+      var pr = (target && typeof target === 'object') ? target.params : params
+      var i = nameToIndex(name)
+      if (i >= 0){ if (pr) paramsRef.current[name] = pr; histRef.current.push(i); setIdx(i) }
+      else if (parent && parent.navigate) parent.navigate(name, pr)
     }
-    return React.createElement(View, { style: { flex: 1, backgroundColor: '#ffffff' } },
-      React.createElement(View, { style: { flex: 1 } }, React.createElement(ScreenErrorBoundary, { key: idx }, body)),
-      screens.length > 1 ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#e5e5e5', backgroundColor: '#fafafa' } },
-        screens.map(function(s, i){
-          return React.createElement(Pressable, { key: s.name || i, onPress: function(){ setIdx(i) }, style: { flex: 1, paddingVertical: 10, alignItems: 'center' } },
-            React.createElement(Text, { numberOfLines: 1, style: { fontSize: 12, color: (i === idx ? '#0EA5E9' : '#9AA0A6'), fontWeight: (i === idx ? '700' : '400') } }, s.name || ('Tab ' + (i + 1))))
-        })) : null)
+    var controller = {
+      navigate: go, push: go, jumpTo: go,
+      replace: function(name, params){ var nm = (name && typeof name === 'object') ? name.name : name; var i = nameToIndex(nm); if (i >= 0){ if (params) paramsRef.current[nm] = params; histRef.current[histRef.current.length - 1] = i; setIdx(i) } else if (parent && parent.navigate) parent.navigate(nm, params) },
+      goBack: function(){ var h = histRef.current; if (h.length > 1){ h.pop(); setIdx(h[h.length - 1]) } else if (parent && parent.goBack) parent.goBack() },
+      pop: function(){ var h = histRef.current; if (h.length > 1){ h.pop(); setIdx(h[h.length - 1]) } else if (parent && parent.goBack) parent.goBack() },
+      popToTop: function(){ histRef.current = [initialIdx]; setIdx(initialIdx) },
+      reset: function(){ histRef.current = [initialIdx]; setIdx(initialIdx) },
+      setOptions: function(){}, setParams: function(p){ if (p) paramsRef.current[cur.name] = Object.assign({}, paramsRef.current[cur.name], p) },
+      dispatch: function(){}, addListener: function(){ return function(){} }, removeListener: function(){},
+      openDrawer: function(){}, closeDrawer: function(){}, toggleDrawer: function(){},
+      isFocused: function(){ return true }, canGoBack: function(){ return histRef.current.length > 1 || !!parent },
+      getParent: function(){ return parent || undefined },
+      getState: function(){ return { routes: screens.map(function(s){ return { name: s.name, key: s.name } }), index: idx, type: kind } },
+    }
+    controller.__route = { params: paramsRef.current[cur.name] || cur.initialParams || {}, name: cur.name, key: cur.name }
+
+    var body = null
+    if (cur.component) body = React.createElement(cur.component, { navigation: controller, route: controller.__route })
+    else if (cur.children) body = cur.children({ navigation: controller, route: controller.__route })
+
+    // Tab navigators get a working bottom bar; stack/drawer move via calls only.
+    var showTabs = (kind === 'tab') && screens.length > 1
+    return React.createElement(NavContext.Provider, { value: controller },
+      React.createElement(View, { style: { flex: 1, backgroundColor: '#ffffff' } },
+        React.createElement(View, { style: { flex: 1 } }, React.createElement(ScreenErrorBoundary, { key: idx }, body)),
+        showTabs ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#e5e5e5', backgroundColor: '#fafafa' } },
+          screens.map(function(s, i){
+            return React.createElement(Pressable, { key: s.name || i, onPress: function(){ go(s.name) }, style: { flex: 1, paddingVertical: 10, alignItems: 'center' } },
+              React.createElement(Text, { numberOfLines: 1, style: { fontSize: 12, color: (i === idx ? '#0EA5E9' : '#9AA0A6'), fontWeight: (i === idx ? '700' : '400') } }, s.name || ('Tab ' + (i + 1))))
+          })) : null))
   }
   function Screen(){ return null }
   function Group(p){ return React.createElement(React.Fragment, null, p.children) }
   return { Navigator: Navigator, Screen: Screen, Group: Group }
+  }
 }
-export const createBottomTabNavigator = makeNavigator
-export const createNativeStackNavigator = makeNavigator
-export const createStackNavigator = makeNavigator
-export const createDrawerNavigator = makeNavigator
-export const createMaterialTopTabNavigator = makeNavigator
-export const createMaterialBottomTabNavigator = makeNavigator
-export default { NavigationContainer: NavigationContainer, useNavigation: useNavigation, useRoute: useRoute, useFocusEffect: useFocusEffect, DefaultTheme: DefaultTheme, DarkTheme: DarkTheme, createBottomTabNavigator: makeNavigator, createNativeStackNavigator: makeNavigator, createStackNavigator: makeNavigator, createDrawerNavigator: makeNavigator }`
+export const createBottomTabNavigator = makeNavigator('tab')
+export const createMaterialTopTabNavigator = makeNavigator('tab')
+export const createMaterialBottomTabNavigator = makeNavigator('tab')
+export const createNativeStackNavigator = makeNavigator('stack')
+export const createStackNavigator = makeNavigator('stack')
+export const createDrawerNavigator = makeNavigator('drawer')
+export default { NavigationContainer: NavigationContainer, useNavigation: useNavigation, useRoute: useRoute, useFocusEffect: useFocusEffect, DefaultTheme: DefaultTheme, DarkTheme: DarkTheme, createBottomTabNavigator: createBottomTabNavigator, createNativeStackNavigator: createNativeStackNavigator, createStackNavigator: createStackNavigator, createDrawerNavigator: createDrawerNavigator }`
 
 // safe-area-context ships a web build, but it resolves erratically through
 // esm.sh alongside the aliased react-native. Since navigation apps almost always
