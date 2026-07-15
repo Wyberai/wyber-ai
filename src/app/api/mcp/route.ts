@@ -224,7 +224,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'read_file',
-      'Read the source of one file in a project. Use list_files first to see available paths.',
+      'Read the source of one file from the project\'s own generated codebase (stored in WyberAi, not an external API). Use list_files first to see available paths.',
       {
         project_id: z.string().describe('Project ID'),
         path: z.string().describe('File path, e.g. src/App.tsx'),
