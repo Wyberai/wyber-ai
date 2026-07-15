@@ -256,6 +256,65 @@ export async function sendChallengeEntryAlert(entry: {
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 Challenge entry: ${entry.title} — ${entry.userEmail}`, html })
 }
 
+// ── 2a. Free-scanner lead magnet (/tools) ─────────────────────────────────────
+// Visitor ran a security/SEO scan and asked us to email the full report. This is
+// the lead-magnet delivery — it honours the "email me the report" promise AND
+// drops them into the funnel with a CTA to build the fixed app on WyberAi.
+export async function sendScannerReport(to: string, opts: {
+  tool: 'security' | 'seo'
+  domain: string
+  score: number
+  findingsCount: number
+  topSeverity?: string
+}) {
+  const isSec = opts.tool === 'security'
+  const label = isSec ? 'Security scan' : 'SEO audit'
+  const verdict = opts.score >= 80 ? 'Strong' : opts.score >= 50 ? 'Needs work' : 'At risk'
+  const issueWord = isSec ? 'leak' : 'issue'
+  const issues = `${opts.findingsCount} ${issueWord}${opts.findingsCount === 1 ? '' : 's'}`
+  const cta = isSec
+    ? 'Every app you build on WyberAi is scanned for these leaks before it can publish. Build the fixed version — web + mobile — in minutes.'
+    : 'Apps built on WyberAi ship SEO-ready out of the box. Rebuild it findable — web + mobile — in minutes.'
+  const html = wrap(`
+    ${h1(`Your ${label} results`)}
+    ${p(`Here's the summary for <strong style="color:#f0f0f4">${opts.domain}</strong>. Keep this email — it's your snapshot.`)}
+    ${infoBox([
+      ['Score', `${opts.score} / 100 · ${verdict}`],
+      [isSec ? 'Leaks found' : 'Issues found', issues],
+      ...(opts.topSeverity && opts.topSeverity !== 'good' ? [['Most serious', opts.topSeverity] as [string, string]] : []),
+    ], opts.score >= 80 ? '#10b98155' : opts.score >= 50 ? '#f59e0b55' : '#ef444455')}
+    ${p(cta)}
+    <div style="text-align:center;margin:8px 0 24px">${btn('Build a safe app free →', `${APP_URL}/?utm_source=scanner_email&utm_campaign=${opts.tool}`)}</div>
+    ${p(`<span style="color:#555566">Run it again anytime at ${APP_URL}/tools</span>`)}
+  `, `Your ${label}: ${opts.score}/100 (${issues})`)
+  return resend.emails.send({ from: FROM, to, subject: `Your ${label} — ${opts.score}/100`, html })
+}
+
+export async function sendScannerLeadAlert(opts: {
+  email: string
+  tool: 'security' | 'seo'
+  domain: string
+  score: number
+  findingsCount: number
+}) {
+  // Internal-only: every scanner lead lands in the founder's inbox so inbound
+  // interest is followed up fast — this is the wedge-tool → outbound handoff.
+  const label = opts.tool === 'security' ? 'security scan' : 'SEO audit'
+  const html = wrap(`
+    ${h1('New scanner lead 🎯')}
+    ${p(`<strong style="color:#f0f0f4">${opts.email}</strong> ran a ${label} and asked for the report.`)}
+    ${infoBox([
+      ['Email', opts.email],
+      ['Tool', label],
+      ['Scanned', opts.domain],
+      ['Score', `${opts.score} / 100`],
+      ['Findings', String(opts.findingsCount)],
+      ['When', new Date().toUTCString()],
+    ], '#0EA5E944')}
+  `, `New scanner lead: ${opts.email}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎯 Scanner lead: ${opts.email} (${label})`, html })
+}
+
 // ── 2b. Auth emails (Supabase Send Email Hook) ────────────────────────────────
 // One branded template for every auth action so login/signup/reset match the
 // rest of WyberAi instead of Supabase's default look.

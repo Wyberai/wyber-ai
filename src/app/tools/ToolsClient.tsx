@@ -84,6 +84,60 @@ const cardStyle: React.CSSProperties = {
   padding: 20, borderRadius: 14, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
 }
 
+const SEV_RANK: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1, good: 0 }
+function worstSev(list: string[]): string | undefined {
+  let worst: string | undefined
+  for (const s of list) if (worst === undefined || (SEV_RANK[s] ?? 0) > (SEV_RANK[worst] ?? 0)) worst = s
+  return worst
+}
+
+// Lead magnet: after a scan, let the visitor get the full report by email. This
+// honours the "email me the report" promise AND drops them into the funnel — the
+// capture posts to /api/tools/lead, which stores the lead + emails the report.
+function LeadCapture(props: { tool: Tab; url: string; score: number; findingsCount: number; topSeverity?: string }) {
+  const [email, setEmail] = useState('')
+  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
+
+  const submit = async () => {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setState('error'); return }
+    setState('sending')
+    track('tools_lead_captured', { tool: props.tool })
+    try {
+      const res = await fetch('/api/tools/lead', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, tool: props.tool, url: props.url, score: props.score, findingsCount: props.findingsCount, topSeverity: props.topSeverity }),
+      })
+      setState(res.ok ? 'done' : 'error')
+    } catch { setState('error') }
+  }
+
+  if (state === 'done') {
+    return (
+      <div style={{ marginTop: 16, padding: 16, borderRadius: 12, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#10B981' }}>✓ Sent — check your inbox for the full report.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ marginTop: 16, padding: 16, borderRadius: 12, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)' }}>
+      <p style={{ margin: '0 0 10px', fontSize: 13.5, fontWeight: 700 }}>📩 Email me the full report + how to fix each finding</p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <input
+          style={{ ...inputStyle, flex: 1, minWidth: 180, padding: '11px 13px' }}
+          placeholder="you@company.com" type="email" value={email}
+          onChange={(e) => { setEmail(e.target.value); if (state === 'error') setState('idle') }}
+          onKeyDown={(e) => e.key === 'Enter' && submit()}
+        />
+        <button style={{ ...btnStyle, padding: '11px 20px', opacity: state === 'sending' ? 0.6 : 1 }} disabled={state === 'sending'} onClick={submit}>
+          {state === 'sending' ? 'Sending…' : 'Send report'}
+        </button>
+      </div>
+      {state === 'error' && <p style={{ color: '#EF4444', fontSize: 12, margin: '8px 0 0' }}>Enter a valid email and try again.</p>}
+    </div>
+  )
+}
+
 function ScoreDial({ score }: { score: number }) {
   const color = score >= 80 ? '#10B981' : score >= 50 ? '#F59E0B' : '#EF4444'
   return (
@@ -159,6 +213,9 @@ function SecurityTool() {
           )}
         </div>
       )}
+      {report && (
+        <LeadCapture tool="security" url={url} score={report.score ?? 0} findingsCount={report.findings?.length ?? 0} topSeverity={worstSev((report.findings ?? []).map((f) => f.severity))} />
+      )}
     </div>
   )
 }
@@ -213,6 +270,9 @@ function SeoTool() {
             </div>
           ))}
         </div>
+      )}
+      {report && (
+        <LeadCapture tool="seo" url={url} score={report.score ?? 0} findingsCount={(report.total ?? 0) - (report.passed ?? 0)} topSeverity={worstSev((report.checks ?? []).filter((c) => c.severity !== 'good').map((c) => c.severity))} />
       )}
     </div>
   )
