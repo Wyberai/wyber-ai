@@ -70,6 +70,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/docs') ||
     path.startsWith('/p/') ||
     path.startsWith('/app/') ||
+    // Shareable, phone-framed mobile preview (/m/<projectId>) — public by design
+    // so a link can be opened/tested by anyone, like a published app.
+    path.startsWith('/m/') ||
     path.startsWith('/unsubscribe') ||
     path.startsWith('/space-journey') ||
     path === '/' ||

@@ -415,13 +415,17 @@ function resolveImport(from: string, to: string): string {
   return out.join('/')
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const { files } = await req.json()
-    if (!files || Object.keys(files).length === 0) {
-      return NextResponse.json({ error: 'No files', kind: 'empty' }, { status: 400 })
-    }
+export type BundleResult =
+  | { ok: true; js: string }
+  | { ok: false; error: string; kind: 'empty' | 'no-entry' | 'compile' | 'server' }
 
+// Core bundler, shared by the POST API (in-app WebView / web editor) and the
+// hosted phone-framed preview page (/m/[id]). Takes a file map ({ path: {content} }
+// or { path: string }) and returns the compiled react-native-web ESM bundle, or a
+// categorised failure the caller renders calmly. Never throws.
+export async function bundleRnApp(files: Record<string, unknown> | null | undefined): Promise<BundleResult> {
+  if (!files || Object.keys(files).length === 0) return { ok: false, error: 'No files', kind: 'empty' }
+  try {
     const fileMap: Record<string, string> = {}
     for (const [path, file] of Object.entries(files)) {
       const np = normalise(path)
@@ -433,9 +437,7 @@ export async function POST(req: NextRequest) {
       ['/App.tsx', '/App.jsx', '/App.js', '/src/App.tsx'].find((e) => fileMap[e]) ||
       Object.keys(fileMap).find((k) => /App\.(tsx|jsx|js)$/.test(k)) ||
       ''
-    if (!appEntry) {
-      return NextResponse.json({ error: 'No App entry found', kind: 'no-entry' }, { status: 400 })
-    }
+    if (!appEntry) return { ok: false, error: 'No App entry found', kind: 'no-entry' }
 
     // Virtual boot module: wrap the app in an error boundary, then register + run
     // through AppRegistry so react-native-web injects styles and mounts into #root.
@@ -512,28 +514,37 @@ export async function POST(req: NextRequest) {
     } catch (buildErr) {
       // esbuild REJECTS on a build failure (it doesn't resolve with errors), so
       // a syntax error in the generated app lands here. Categorise it as a
-      // compile problem (422) the client shows calmly — never a raw 500.
+      // compile problem the client shows calmly — never a raw 500.
       const errs = (buildErr as { errors?: { text: string; location?: { file: string; line: number } }[] }).errors
       const msg = Array.isArray(errs) && errs.length
         ? errs.map(e => `${e.text}${e.location ? ` (${e.location.file}:${e.location.line})` : ''}`).join('\n')
         : String(buildErr)
-      return NextResponse.json({ error: msg, kind: 'compile' }, { status: 422 })
+      return { ok: false, error: msg, kind: 'compile' }
     }
 
     if (result.errors && result.errors.length > 0) {
       const msg = result.errors
         .map((e) => `${e.text}${e.location ? ` (${e.location.file}:${e.location.line})` : ''}`)
         .join('\n')
-      return NextResponse.json({ error: msg, kind: 'compile' }, { status: 422 })
+      return { ok: false, error: msg, kind: 'compile' }
     }
 
-    const js = result.outputFiles?.[0]?.text ?? ''
-    // Return the raw bundle (client wraps it per-device via buildPreviewHtml)
-    // AND a default-iOS html for any direct WebView consumer.
-    return NextResponse.json({ js, html: buildPreviewHtml(js) })
+    return { ok: true, js: result.outputFiles?.[0]?.text ?? '' }
   } catch (err) {
-    return NextResponse.json({ error: String(err), kind: 'server' }, { status: 500 })
+    return { ok: false, error: String(err), kind: 'server' }
   }
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({})) as { files?: Record<string, unknown> }
+  const r = await bundleRnApp(body.files)
+  if (!r.ok) {
+    const status = r.kind === 'empty' || r.kind === 'no-entry' ? 400 : r.kind === 'compile' ? 422 : 500
+    return NextResponse.json({ error: r.error, kind: r.kind }, { status })
+  }
+  // Return the raw bundle (client wraps it per-device via buildPreviewHtml)
+  // AND a default-iOS html for any direct WebView consumer.
+  return NextResponse.json({ js: r.js, html: buildPreviewHtml(r.js) })
 }
 
 // The boot module. An error boundary catches render-time failures and shows a
