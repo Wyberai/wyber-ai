@@ -65,7 +65,7 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F6F8FB', fontFamily: 'var(--font-sans)', padding: 24 }}>
       <div style={{ maxWidth: 440, width: '100%', background: '#fff', border: '1px solid #E5E9F0', borderRadius: 16, padding: '36px 32px', boxShadow: '0 8px 40px rgba(11,22,39,0.06)' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><WyberLogo /></div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}><WyberLogo theme="onLight" /></div>
         <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: '#0B1627', textAlign: 'center', margin: '0 0 6px' }}>Connect to WyberAi</h1>
         <p style={{ fontSize: 14, color: '#5A6472', textAlign: 'center', margin: '0 0 24px', lineHeight: 1.6 }}>
           <strong style={{ color: '#0B1627' }}>{appName}</strong> wants to build and manage apps in your WyberAi account.
