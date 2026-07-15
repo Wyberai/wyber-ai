@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 // POST /api/projects/from-template
 // Creates a new project pre-loaded with a prebuilt template's files,
@@ -118,10 +118,17 @@ export default defineConfig({
 
 export async function POST(req: NextRequest) {
   try {
-    const { templateId, userId } = await req.json();
-    if (!templateId || !userId) {
-      return NextResponse.json({ error: 'Missing templateId or userId' }, { status: 400 });
+    const { templateId } = await req.json();
+    if (!templateId) {
+      return NextResponse.json({ error: 'Missing templateId' }, { status: 400 });
     }
+
+    // The caller — never a client-supplied userId — owns the new project.
+    // Previously this trusted `userId` off the request body, so anyone could
+    // spawn projects inside any other account they named.
+    const auth = await createClient();
+    const { data: { user } } = await auth.auth.getUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const supabase = createServiceClient();
 
@@ -190,7 +197,7 @@ export async function POST(req: NextRequest) {
       .insert({
         name: template.name || 'Untitled',
         framework: 'react-vite',
-        user_id: userId,
+        user_id: user.id,
         project_type: 'app',
         files: normalized,
         initial_prompt: '',

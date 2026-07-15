@@ -1,5 +1,6 @@
 'use client'
 import { creditCost } from '@/lib/credits';
+import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, memo, type ReactNode } from 'react';
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
@@ -771,6 +772,13 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
       addMessage({ id: uid(), role: 'assistant', content: "You're out of credits, so I can't build or edit right now — but questions are still free. Top up to keep building.", timestamp: Date.now(), status: 'done' });
       return;
+    }
+
+    // The funnel's missing middle event (project_created → app_published had no
+    // signal in between): fires only for a real, user-initiated first build on a
+    // brand-new project — never on edits or silent self-heal reruns.
+    if (!opts?.silent && !opts?.continuation && Object.keys(files ?? {}).length === 0) {
+      track('first_generation_started', { has_image: !!img });
     }
 
     // Snapshot current files for undo BEFORE generation
