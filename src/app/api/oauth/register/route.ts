@@ -29,6 +29,27 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  // OAuth 2.1 security BCP: redirect URIs must be HTTPS, except loopback
+  // (127.0.0.1/localhost) for native/CLI clients. Blocks DCR from registering
+  // plain-HTTP callbacks to arbitrary hosts, which would carry auth codes in
+  // the clear if a user is ever tricked into authorizing a malicious client.
+  for (const uri of redirectUris as string[]) {
+    let parsed: URL
+    try {
+      parsed = new URL(uri)
+    } catch {
+      return NextResponse.json({ error: 'invalid_redirect_uri', error_description: `Not a valid URI: ${uri}` }, { status: 400 })
+    }
+    const isLoopback = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '::1'
+    const isHttps = parsed.protocol === 'https:'
+    if (!isHttps && !(parsed.protocol === 'http:' && isLoopback)) {
+      return NextResponse.json(
+        { error: 'invalid_redirect_uri', error_description: `redirect_uris must be https, or http on localhost/127.0.0.1: ${uri}` },
+        { status: 400 },
+      )
+    }
+  }
+
   try {
     const client = await registerClient({ client_name: body?.client_name, redirect_uris: redirectUris as string[] })
     return NextResponse.json(
