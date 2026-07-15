@@ -60,8 +60,13 @@ export function buildPreviewHtml(js: string, opts: PreviewShellOpts = {}): strin
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{height:100%;width:100%}
-body{background:#0A0A0B;-webkit-font-smoothing:antialiased;overflow:hidden}
-#root{display:flex}
+/* touch-action:manipulation stops the WebView/browser from treating taps as
+   pan/zoom candidates (which swallowed presses and made the app feel dead);
+   the tap-highlight + callout resets remove the grey flash / long-press menu so
+   it feels like a native app, not a web page. */
+html{touch-action:manipulation;-webkit-text-size-adjust:100%}
+body{background:#0A0A0B;-webkit-font-smoothing:antialiased;overflow:hidden;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+#root{display:flex;touch-action:manipulation}
 #wyber-fallback{display:none;position:fixed;inset:0;background:#0A0A0B;color:#F5F5F7;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
 #wyber-fallback .t{font-size:16px;font-weight:600;margin-bottom:6px}
 #wyber-fallback .s{font-size:13px;color:#9A9AA5;max-width:280px;line-height:1.5}

@@ -89,11 +89,12 @@ const NATIVE_STUBS = new Set([
   'expo-media-library', 'expo-contacts', 'expo-local-authentication',
   'expo-secure-store', 'expo-file-system', 'expo-av', 'expo-image-picker',
   'expo-barcode-scanner', 'expo-speech', 'expo-network', 'expo-cellular',
-  // Injected by the generator (RevenueCat paywall, maps, OTA, animations) but
-  // with no WebView equivalent — stub so they can't crash boot. reanimated is a
-  // frequent RN-web trouble spot; the no-op keeps the screen rendering.
+  // Injected by the generator (RevenueCat paywall, maps, OTA) but with no WebView
+  // equivalent — stub so they can't crash boot.
+  // NOTE: react-native-reanimated is deliberately NOT here — a no-op stub made
+  // its Animated.View eat all children (blank/frozen UI). It gets a real shim
+  // (REANIMATED_SHIM_SOURCE) that renders children + gives working hooks instead.
   'expo-updates', 'react-native-purchases', 'react-native-maps',
-  'react-native-reanimated',
 ])
 
 function isNativeStub(spec: string): boolean {
@@ -218,20 +219,126 @@ export const BaseButton = RectButton
 export const BorderlessButton = RectButton
 export function Swipeable(p){ return React.createElement(View, p, p.children) }
 export function DrawerLayout(p){ return React.createElement(View, p, p.children) }
-export const PanGestureHandler = function(p){ return React.createElement(React.Fragment, null, p.children) }
-export const TapGestureHandler = PanGestureHandler
-export const LongPressGestureHandler = PanGestureHandler
-export const FlingGestureHandler = PanGestureHandler
-export const PinchGestureHandler = PanGestureHandler
-export const RotationGestureHandler = PanGestureHandler
-export const NativeViewGestureHandler = PanGestureHandler
 export const State = { UNDETERMINED: 0, FAILED: 1, BEGAN: 2, CANCELLED: 3, ACTIVE: 4, END: 5 }
 export const Directions = { RIGHT: 1, LEFT: 2, UP: 4, DOWN: 8 }
-var chain = new Proxy(function(){ return chain }, { get: function(){ return chain }, apply: function(){ return chain } })
-export const Gesture = new Proxy({}, { get: function(){ return function(){ return chain } } })
-export function GestureDetector(p){ return React.createElement(React.Fragment, null, p.children) }
+
+// The modern gesture API is a builder: Gesture.Tap().onStart(fn).onEnd(fn).
+// A no-op previously DISCARDED those callbacks and GestureDetector ignored its
+// gesture prop entirely — so every tap-to-act interaction (dice rolls, board
+// cells, buttons) was dead while the UI still rendered. We now RECORD the
+// handlers on the builder and let GestureDetector fire the tap lifecycle on a
+// real press. Continuous gestures (pan/pinch) still can't be reproduced from a
+// click, but the tap case that apps overwhelmingly rely on works.
+var TAP_HANDLERS = ['onBegin','onStart','onActivate','onEnd','onFinalize']
+function makeGesture(type){
+  var g = { __gesture: true, type: type, handlers: {} }
+  var proxy = new Proxy(g, {
+    get: function(t, prop){
+      if (prop in t) return t[prop]
+      return function(){
+        var arg = arguments[0]
+        if (typeof prop === 'string' && prop.indexOf('on') === 0 && typeof arg === 'function') t.handlers[prop] = arg
+        return proxy
+      }
+    }
+  })
+  return proxy
+}
+function composed(list){ return { __gesture: true, type: 'composed', list: list, handlers: {} } }
+export var Gesture = new Proxy({
+  Race: function(){ return composed([].slice.call(arguments)) },
+  Simultaneous: function(){ return composed([].slice.call(arguments)) },
+  Exclusive: function(){ return composed([].slice.call(arguments)) },
+}, { get: function(t, prop){ if (prop in t) return t[prop]; return function(){ return makeGesture(String(prop).toLowerCase()) } } })
+
+function collectHandlers(g){
+  if (!g) return {}
+  if (g.type === 'composed' && g.list){ var m = {}; g.list.forEach(function(s){ var h = collectHandlers(s); for (var k in h) m[k] = h[k] }); return m }
+  return g.handlers || {}
+}
+export function GestureDetector(p){
+  var h = collectHandlers(p.gesture)
+  var fire = function(){
+    var ev = { nativeEvent: {}, x: 0, y: 0, absoluteX: 0, absoluteY: 0, translationX: 0, translationY: 0, velocityX: 0, velocityY: 0, state: State.END }
+    for (var i = 0; i < TAP_HANDLERS.length; i++){ var fn = h[TAP_HANDLERS[i]]; if (fn) { try { fn(ev, true) } catch(e){} } }
+  }
+  var hasTap = TAP_HANDLERS.some(function(k){ return typeof h[k] === 'function' })
+  if (hasTap) return React.createElement(Pressable, { onPress: fire }, p.children)
+  return React.createElement(React.Fragment, null, p.children)
+}
+
+// Legacy component-based handlers (onHandlerStateChange / onGestureEvent) —
+// fire on press where a callback is present so tap-style handlers still work.
+function legacyHandler(p){
+  var cb = p.onHandlerStateChange || p.onGestureEvent
+  if (cb) return React.createElement(Pressable, { onPress: function(){ try { cb({ nativeEvent: { state: State.END, oldState: State.ACTIVE, x: 0, y: 0, translationX: 0, translationY: 0 } }) } catch(e){} } }, p.children)
+  return React.createElement(React.Fragment, null, p.children)
+}
+export const PanGestureHandler = legacyHandler
+export const TapGestureHandler = legacyHandler
+export const LongPressGestureHandler = legacyHandler
+export const FlingGestureHandler = legacyHandler
+export const PinchGestureHandler = function(p){ return React.createElement(React.Fragment, null, p.children) }
+export const RotationGestureHandler = PinchGestureHandler
+export const NativeViewGestureHandler = function(p){ return React.createElement(React.Fragment, null, p.children) }
 export { ScrollView, FlatList, Pressable, TouchableOpacity, TouchableWithoutFeedback, TouchableHighlight }
-export default { GestureHandlerRootView: GestureHandlerRootView, RectButton: RectButton, BaseButton: BaseButton, Swipeable: Swipeable, State: State, Directions: Directions, Gesture: Gesture, GestureDetector: GestureDetector, ScrollView: ScrollView, FlatList: FlatList }`
+export default { GestureHandlerRootView: GestureHandlerRootView, RectButton: RectButton, BaseButton: BaseButton, BorderlessButton: BorderlessButton, Swipeable: Swipeable, DrawerLayout: DrawerLayout, State: State, Directions: Directions, Gesture: Gesture, GestureDetector: GestureDetector, PanGestureHandler: PanGestureHandler, TapGestureHandler: TapGestureHandler, ScrollView: ScrollView, FlatList: FlatList, Pressable: Pressable, TouchableOpacity: TouchableOpacity }`
+
+// react-native-reanimated can't run its worklets / native driver in a WebView,
+// but a no-op stub was DESTRUCTIVE: <Animated.View> rendered the proxy as a
+// component and returned the proxy → all children inside it vanished (blank /
+// frozen screens), and useSharedValue / useAnimatedStyle returned junk that
+// crashed on `.value`. This shim maps Animated.* to plain RN components (so
+// children render) and gives every hook a sane, non-crashing value. Animations
+// settle to their FINAL state instantly instead of tweening — inert in preview,
+// fully real in a native build.
+const REANIMATED_SHIM_SOURCE = `import React from 'react'
+import { View, Text, ScrollView, Image, FlatList, Animated as RNAnimated, Easing as RNEasing } from 'react-native'
+function passthrough(Comp){ return React.forwardRef(function(p, ref){ return React.createElement(Comp, Object.assign({}, p, { ref: ref }), p.children) }) }
+var AView = passthrough(View), AText = passthrough(Text), AScrollView = passthrough(ScrollView), AImage = passthrough(Image), AFlatList = passthrough(FlatList)
+export function createAnimatedComponent(Comp){ return passthrough(Comp) }
+var Animated = { View: AView, Text: AText, ScrollView: AScrollView, Image: AImage, FlatList: AFlatList, createAnimatedComponent: createAnimatedComponent }
+export function useSharedValue(init){ var r = React.useRef(null); if (r.current === null) r.current = { value: init }; return r.current }
+export function useDerivedValue(fn){ var r = React.useRef({ value: undefined }); try { r.current.value = fn() } catch(e){}; return r.current }
+export function useAnimatedStyle(fn){ try { return fn() || {} } catch(e){ return {} } }
+export function useAnimatedProps(fn){ try { return fn() || {} } catch(e){ return {} } }
+export function useAnimatedRef(){ return React.useRef(null) }
+export function useAnimatedScrollHandler(){ return function(){} }
+export function useAnimatedGestureHandler(){ return function(){} }
+export function useAnimatedReaction(){}
+export function useFrameCallback(){ return { setActive: function(){}, isActive: false } }
+export function useReducedMotion(){ return false }
+export const ReduceMotion = { System: 'system', Never: 'never', Always: 'always' }
+function toValue(v){ return (v && typeof v === 'object' && 'value' in v) ? v.value : v }
+export function withTiming(v){ return toValue(v) }
+export function withSpring(v){ return toValue(v) }
+export function withDecay(v){ return toValue(v) }
+export function withDelay(_d, v){ return toValue(v) }
+export function withSequence(){ var a = arguments; return a.length ? toValue(a[a.length-1]) : undefined }
+export function withRepeat(v){ return toValue(v) }
+export function cancelAnimation(){}
+export function runOnJS(fn){ return function(){ if (typeof fn === 'function') return fn.apply(null, arguments) } }
+export function runOnUI(fn){ return function(){ if (typeof fn === 'function') { try { return fn.apply(null, arguments) } catch(e){} } } }
+export function measure(){ return { x: 0, y: 0, width: 0, height: 0, pageX: 0, pageY: 0 } }
+export function scrollTo(){}
+export function interpolate(x, inR, outR){
+  if (!inR || !outR || inR.length < 2) return x
+  var last = inR.length - 1
+  if (x <= inR[0]) return outR[0]
+  if (x >= inR[last]) return outR[last]
+  for (var i = 1; i <= last; i++){ if (x <= inR[i]){ var t = (x - inR[i-1]) / (inR[i] - inR[i-1]); return outR[i-1] + t * (outR[i] - outR[i-1]) } }
+  return outR[0]
+}
+export function interpolateColor(x, inR, outR){ return (outR && outR.length) ? outR[outR.length-1] : 'transparent' }
+export var Extrapolate = { CLAMP: 'clamp', EXTEND: 'extend', IDENTITY: 'identity' }
+export var Extrapolation = Extrapolate
+export var Easing = RNEasing || { linear: function(t){ return t }, ease: function(t){ return t }, quad: function(t){ return t }, cubic: function(t){ return t }, bezier: function(){ return function(t){ return t } }, in: function(f){ return f || function(t){ return t } }, out: function(f){ return f || function(t){ return t } }, inOut: function(f){ return f || function(t){ return t } } }
+var EMPTY = {}
+export var FadeIn = EMPTY, FadeInDown = EMPTY, FadeInUp = EMPTY, FadeInLeft = EMPTY, FadeInRight = EMPTY, FadeOut = EMPTY, FadeOutDown = EMPTY, FadeOutUp = EMPTY, SlideInDown = EMPTY, SlideOutDown = EMPTY, SlideInUp = EMPTY, SlideOutUp = EMPTY, SlideInLeft = EMPTY, SlideInRight = EMPTY, SlideOutLeft = EMPTY, SlideOutRight = EMPTY, ZoomIn = EMPTY, ZoomOut = EMPTY, BounceIn = EMPTY, BounceOut = EMPTY, Layout = EMPTY, LinearTransition = EMPTY, FadingTransition = EMPTY
+Animated.Value = RNAnimated ? RNAnimated.Value : function(){}
+Animated.timing = RNAnimated ? RNAnimated.timing : function(){ return { start: function(cb){ if (cb) cb({ finished: true }) } } }
+Animated.spring = RNAnimated ? RNAnimated.spring : Animated.timing
+export default Animated`
 
 // @expo/vector-icons (and react-native-vector-icons) are icon-FONT packages:
 // esm.sh 500s on them and tries to serve the .ttf/.png glyph assets as JS
@@ -280,6 +387,7 @@ const SHIM_MODULES: Record<string, string> = {
   '@react-navigation/material-bottom-tabs': NAV_SHIM_SOURCE,
   'react-native-safe-area-context': SAFE_AREA_SHIM_SOURCE,
   'react-native-gesture-handler': GESTURE_SHIM_SOURCE,
+  'react-native-reanimated': REANIMATED_SHIM_SOURCE,
   '@expo/vector-icons': ICON_SHIM_SOURCE,
   'react-native-vector-icons': ICON_SHIM_SOURCE,
 }

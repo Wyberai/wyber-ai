@@ -87,6 +87,48 @@ export default function App(){ return <View><Text>{Device.isDevice ? 'dev' : 'no
     expect(body.js).toContain('getPrototypeOf')
   }, 30000)
 
+  it('wires the modern Gesture API so GestureDetector taps fire (not dead)', async () => {
+    // The exact shape that made the user's Snake & Ladders untappable:
+    // Gesture.Tap().onEnd(fn) + <GestureDetector>. The shim must RECORD the
+    // handler and route it through a Pressable, not discard it.
+    const tapApp = `import React, { useState } from 'react'
+import { View, Text } from 'react-native'
+import { GestureDetector, Gesture } from 'react-native-gesture-handler'
+export default function App(){
+  const [n, setN] = useState(0)
+  const tap = Gesture.Tap().onEnd(() => setN((p) => p + 1))
+  return <GestureDetector gesture={tap}><View><Text>{n}</Text></View></GestureDetector>
+}`
+    const res = await POST(reqWith({ 'App.tsx': { content: tapApp } }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.js.length).toBeGreaterThan(0)
+    // The handler-recording shim must be present (minify is off, so names survive).
+    expect(body.js).toContain('collectHandlers')
+  }, 30000)
+
+  it('shims react-native-reanimated (renders children + working hooks), not a no-op stub', async () => {
+    // A no-op stub made <Animated.View> eat its children and useSharedValue/
+    // useAnimatedStyle return junk → blank/frozen. The shim renders children and
+    // gives hooks sane values.
+    const animApp = `import React from 'react'
+import { View, Text } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated'
+export default function App(){
+  const s = useSharedValue(1)
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }))
+  return <Animated.View style={style}><Text>inside</Text></Animated.View>
+}`
+    const res = await POST(reqWith({ 'App.tsx': { content: animApp } }))
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.js.length).toBeGreaterThan(0)
+    // reanimated must resolve to the inlined shim, NOT esm.sh and NOT the no-op stub.
+    expect(body.js).not.toContain('esm.sh/react-native-reanimated')
+    // The shim's passthrough wrapper is a stable marker of the real shim.
+    expect(body.js).toContain('passthrough')
+  }, 30000)
+
   it('returns kind:compile (422) for a syntax error, not a 500', async () => {
     const broken = `import React from 'react'
 export default function App(){ return <View> unclosed `
