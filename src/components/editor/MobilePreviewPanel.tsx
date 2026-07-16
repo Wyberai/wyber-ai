@@ -7,13 +7,14 @@ import { DEVICES, DEFAULT_DEVICE_ID, devicesForOS, getDevice, type DeviceOS } fr
 
 type PreviewMode = 'snack' | 'inapp'
 
-// Default preview mode. Now ships 'inapp' — the in-house react-native-web preview
-// renders the app live and interactive in the editor (the Gesture-API + reanimated
-// shims were fixed so generated games/apps are actually tappable). Set
-// NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=snack to revert prod-wide to the Expo link-out.
-// A per-user localStorage choice overrides this default either way.
+// Default preview mode. Ships 'snack' — the Expo Snack web player runs the REAL
+// React Native runtime (real navigation/reanimated/gesture), so generated apps
+// are genuinely interactive, not the static/screenshot-like output the in-house
+// react-native-web shim layer produces. The in-house engine stays available as a
+// fallback via the toggle. Set NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=inapp to default
+// back to it prod-wide. A per-user localStorage choice overrides either way.
 const DEFAULT_MODE: PreviewMode =
-  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'snack' ? 'snack' : 'inapp'
+  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'inapp' ? 'inapp' : 'snack'
 
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
@@ -22,8 +23,10 @@ export function MobilePreviewPanel() {
   const [platform, setPlatform] = useState<DeviceOS>('ios')
   const [deviceId, setDeviceId] = useState<string>(DEFAULT_DEVICE_ID)
 
-  // Snack path state
+  // Snack (Expo) path state — embedUrl is the interactive web player we iframe;
+  // snackUrl is the full editor / QR for testing on a real device.
   const [snackUrl, setSnackUrl] = useState<string | null>(null)
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null)
   const [snackLoading, setSnackLoading] = useState(false)
 
   // In-app (RN-web) path state
@@ -69,15 +72,19 @@ export function MobilePreviewPanel() {
     if (!shouldBuildPreview) return
     const f = plainFiles()
     const key = filesKey(f)
-    if (!force && key === lastKeyRef.current.snack && snackUrl) return
+    if (!force && key === lastKeyRef.current.snack && embedUrl) return
     lastKeyRef.current.snack = key
     setError(null); setSnackLoading(true)
     fetch('/api/snack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files: f }) })
       .then(r => r.json())
-      .then(d => { if (d.error) setError(d.error); else if (d.snackUrl) setSnackUrl(d.snackUrl) })
+      .then(d => {
+        if (d.error) { setError(d.error); return }
+        if (d.snackUrl) setSnackUrl(d.snackUrl)
+        if (d.embedUrl) setEmbedUrl(d.embedUrl)
+      })
       .catch(e => setError(String(e)))
       .finally(() => setSnackLoading(false))
-  }, [shouldBuildPreview, plainFiles, filesKey, snackUrl])
+  }, [shouldBuildPreview, plainFiles, filesKey, embedUrl])
 
   // In-app: compile the RN app to a react-native-web bundle we render inline.
   // Re-bundles ONLY when files change — platform/device toggles are pure client
@@ -108,18 +115,18 @@ export function MobilePreviewPanel() {
   }, [files, isGenerating, hasGeneratedFiles, mode])
 
   const refresh = () => {
-    if (mode === 'snack') { setSnackUrl(null); buildSnack(true) }
+    if (mode === 'snack') { setSnackUrl(null); setEmbedUrl(null); buildSnack(true) }
     else { setBundleJs(null); buildInApp(true) }
   }
 
   const loading = mode === 'snack' ? snackLoading : bundleLoading
-  const ready = mode === 'snack' ? !!snackUrl : !!bundleJs
+  const ready = mode === 'snack' ? !!embedUrl : !!bundleJs
   const device = getDevice(deviceId)
 
   const statusText = isGenerating
     ? 'Writing your app…'
     : loading
-      ? (mode === 'snack' ? 'Uploading to Expo Snack…' : 'Building preview…')
+      ? (mode === 'snack' ? 'Starting live preview…' : 'Building preview…')
       : ready
         ? 'Preview ready'
         : 'Describe your app to get started'
@@ -134,7 +141,7 @@ export function MobilePreviewPanel() {
         <Segmented
           value={mode}
           onChange={v => chooseMode(v as PreviewMode)}
-          options={[{ v: 'inapp', label: 'In‑app' }, { v: 'snack', label: 'Expo' }]}
+          options={[{ v: 'snack', label: 'Live (Expo)' }, { v: 'inapp', label: 'In‑app (beta)' }]}
         />
 
         {/* In-app: platform toggle + device dropdown */}
@@ -161,6 +168,11 @@ export function MobilePreviewPanel() {
         )}
 
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace', minWidth: 80, textAlign: 'right' }}>{statusText}</span>
+
+        {/* Test on a real phone (QR / Expo Go) — the live embed already runs inline. */}
+        {mode === 'snack' && snackUrl && !loading && (
+          <a href={snackUrl} target="_blank" rel="noopener noreferrer" title="Open in Expo Go on your phone" style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#a1a1aa', textDecoration: 'none', padding: '2px 8px', fontSize: 11 }}>📱 On device ↗</a>
+        )}
 
         {shouldBuildPreview && !isGenerating && !loading && (
           <button onClick={refresh} title="Rebuild preview" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>⟳</button>
@@ -213,22 +225,18 @@ export function MobilePreviewPanel() {
                 <div style={{ width: 90, height: 20, background: '#0a0a0a', borderRadius: 10 }} />
               </div>
               <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                {snackLoading && <Centered dark><Spinner small /><span style={{ fontSize: 11, color: '#52525b' }}>Uploading to Expo Snack…</span></Centered>}
+                {snackLoading && <Centered dark><Spinner small /><span style={{ fontSize: 11, color: '#52525b' }}>Starting live preview…</span></Centered>}
                 {error && !snackLoading && <PreviewError error={error} onRetry={refresh} />}
-                {snackUrl && !snackLoading && !error && (
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, background: '#0c0c12', padding: 24 }}>
-                    <div style={{ width: 60, height: 60, borderRadius: 18, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="30" height="30" viewBox="0 0 48 48" fill="none"><rect x="12" y="2" width="24" height="44" rx="5" stroke="#0EA5E9" strokeWidth="2" fill="rgba(14,165,233,0.08)" /><rect x="20" y="6" width="8" height="2" rx="1" fill="#0EA5E9" opacity="0.7" /><circle cx="24" cy="42" r="2" fill="#0EA5E9" opacity="0.7" /></svg>
-                    </div>
-                    <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#e4e4e7' }}>Test on a real device</div>
-                      <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.6, maxWidth: 240 }}>Install <strong style={{ color: '#a1a1aa' }}>Expo Go</strong> (<a href="https://apps.apple.com/app/expo-go/id982107779" target="_blank" rel="noopener" style={{ color: '#0EA5E9' }}>iOS</a> / <a href="https://play.google.com/store/apps/details?id=host.exp.exponent" target="_blank" rel="noopener" style={{ color: '#0EA5E9' }}>Android</a>), open the link and scan the QR to run live on your phone.</div>
-                    </div>
-                    <a href={snackUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', borderRadius: 12, background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 24px rgba(14,165,233,0.35)' }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-                      Open in Expo Snack ↗
-                    </a>
-                  </div>
+                {/* Interactive live preview — the Expo Snack web player runs the real
+                    RN runtime inline, so the app is genuinely tappable/animated. */}
+                {embedUrl && !snackLoading && !error && (
+                  <iframe
+                    src={embedUrl}
+                    title="Live mobile preview"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', background: '#000' }}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                    allow="accelerometer; gyroscope; clipboard-write"
+                  />
                 )}
               </div>
             </div>
