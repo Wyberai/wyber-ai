@@ -1,7 +1,8 @@
 import { DashboardClient } from '@/components/dashboard/DashboardClient';
 import { OnboardingTour } from '@/components/shared/OnboardingTour';
-import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient, createServiceClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
+import { claimDemosForEmail } from '@/lib/gtm/claim';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
@@ -38,6 +39,14 @@ export default async function DashboardPage() {
         sendAdminSignupAlert(user.email ?? profile.email, provider).catch(() => {});
       }
     } catch (e) { console.error('welcome email (dashboard) failed:', e); }
+  }
+
+  // GTM: if we built a personalized demo dashboard for this email during a cold
+  // campaign, transfer it to their account now so it shows up as their own
+  // project (same slug/live URL) on this very first load. No-op otherwise.
+  if (user.email) {
+    try { await claimDemosForEmail(createServiceClient(), user.id, user.email); }
+    catch (e) { console.error('gtm demo claim failed:', e); }
   }
 
   const { data: projects } = await supabase

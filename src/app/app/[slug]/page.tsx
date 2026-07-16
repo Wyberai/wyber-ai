@@ -51,7 +51,7 @@ function extractSeo(html: string): AppSeo {
   }
 }
 
-async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string } | null> {
+async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean } | null> {
   try {
     return await loadHtmlInner(slug)
   } catch {
@@ -62,7 +62,7 @@ async function loadHtml(slug: string): Promise<{ name: string; html: string; own
   }
 }
 
-async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string } | null> {
+async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean } | null> {
   // Service client, not the session client: this is a PUBLIC page (anonymous
   // visitors, shared links, the mobile app's in-app browser). The `projects`
   // RLS policy doesn't grant anon SELECT on is_public rows, so the session
@@ -72,7 +72,7 @@ async function loadHtmlInner(slug: string): Promise<{ name: string; html: string
   const supabase = await createServiceClient()
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name, user_id')
+    .select('id, name, user_id, is_demo')
     .eq('subdomain', slug)
     .eq('is_public', true)
     .single()
@@ -90,7 +90,7 @@ async function loadHtmlInner(slug: string): Promise<{ name: string; html: string
       .from('profiles').select('plan').eq('id', project.user_id).single()
     if (owner?.plan) ownerPlan = String(owner.plan)
   } catch { /* fall back to free */ }
-  return { name: project.name, html: await fileData.text(), ownerPlan }
+  return { name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -106,6 +106,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    // Campaign demos are ~100 near-duplicate pages carrying real company names
+    // with placeholder data — must never be indexed (thin/duplicate content +
+    // brand-exposure risk). Cleared to a normal page once the founder claims it.
+    ...(loaded.isDemo ? { robots: { index: false, follow: false } } : {}),
     alternates: { canonical },
     // Each published app is its own PWA. Without these overrides the root
     // layout's metadata leaks here and this page advertises the PLATFORM's
