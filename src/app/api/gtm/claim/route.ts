@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { claimDemosForEmail } from '@/lib/gtm/claim'
+import { claimDemos } from '@/lib/gtm/claim'
 
 /**
  * Claim any campaign demo(s) built for the signed-in user's email.
@@ -20,6 +21,7 @@ export async function POST() {
   if (!user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const admin = createServiceClient()
-  const claimed = await claimDemosForEmail(admin, user.id, user.email)
+  const token = (await cookies()).get('gtm_claim')?.value
+  const claimed = await claimDemos(admin, user.id, { email: user.email, token })
   return NextResponse.json({ claimed })
 }

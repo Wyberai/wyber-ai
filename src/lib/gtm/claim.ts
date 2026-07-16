@@ -7,34 +7,41 @@ type AdminClient = { from: (t: string) => any }
 export interface ClaimedDemo { id: string; name: string; url: string | null }
 
 /**
- * Reassign any unclaimed demo projects built for `email` to `userId`, clearing
- * the demo flags. Case-insensitive email match. Idempotent: a no-op once the
- * user has no matching unclaimed demos. Never throws — returns [] on error so a
- * claim attempt can't break the dashboard render.
+ * Reassign unclaimed demo projects to `userId`, matching EITHER a claim token
+ * (from the outreach link — works regardless of which email they signed up
+ * with) OR the target email (case-insensitive fallback). Clears the demo flags.
+ * Idempotent and never throws — returns [] on error so a claim attempt can't
+ * break the dashboard render.
  */
-export async function claimDemosForEmail(
+export async function claimDemos(
   admin: AdminClient,
   userId: string,
-  email: string,
+  opts: { email?: string | null; token?: string | null },
 ): Promise<ClaimedDemo[]> {
-  const e = (email || '').trim().toLowerCase()
-  if (!e) return []
+  const email = (opts.email || '').trim().toLowerCase()
+  const token = (opts.token || '').trim()
+  if (!email && !token) return []
   try {
-    const { data: demos } = await admin
-      .from('projects')
-      .select('id, name, published_url')
-      .eq('is_demo', true)
-      .ilike('target_email', e)
-    if (!demos || demos.length === 0) return []
+    // Collect matches by token and by email, then de-dupe.
+    const found = new Map<string, any>()
+    if (token) {
+      const { data } = await admin.from('projects').select('id, name, published_url').eq('is_demo', true).eq('claim_token', token)
+      for (const d of data || []) found.set(d.id, d)
+    }
+    if (email) {
+      const { data } = await admin.from('projects').select('id, name, published_url').eq('is_demo', true).ilike('target_email', email)
+      for (const d of data || []) found.set(d.id, d)
+    }
+    const demos = [...found.values()]
+    if (demos.length === 0) return []
 
-    const ids = demos.map((d: any) => d.id)
     const { error } = await admin
       .from('projects')
-      .update({ user_id: userId, is_demo: false, target_email: null, updated_at: new Date().toISOString() })
-      .in('id', ids)
+      .update({ user_id: userId, is_demo: false, target_email: null, claim_token: null, updated_at: new Date().toISOString() })
+      .in('id', demos.map((d) => d.id))
     if (error) return []
 
-    return demos.map((d: any) => ({ id: d.id, name: d.name, url: d.published_url ?? null }))
+    return demos.map((d) => ({ id: d.id, name: d.name, url: d.published_url ?? null }))
   } catch {
     return []
   }

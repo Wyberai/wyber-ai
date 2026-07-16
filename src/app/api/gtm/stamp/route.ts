@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { isAdminEmail } from '@/lib/admin'
+import { randomBytes } from 'crypto'
 import { replaceTokenInFiles } from '@/lib/image-directives'
-import { DEVSHOP_COCKPIT_FILES } from '@/lib/templates/gtm/devshop-cockpit'
+import { SECURITY_COCKPIT_FILES } from '@/lib/templates/gtm/security-cockpit'
 
 // Publishing runs a full remote build per company (~30–45s). A single
 // invocation publishes a small batch and returns what's left; the caller
@@ -74,10 +75,15 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
     if (existing) { skipped.push({ company, reason: 'demo already exists' }); continue }
 
-    let files: Record<string, string> = { ...DEVSHOP_COCKPIT_FILES }
+    const claimToken = randomBytes(16).toString('hex')
+    const origin = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
+    const claimUrl = `${origin}/api/gtm/start-claim?token=${claimToken}`
+
+    let files: Record<string, string> = { ...SECURITY_COCKPIT_FILES }
     files = replaceTokenInFiles(files, '{{COMPANY_NAME}}', company)
     files = replaceTokenInFiles(files, '{{FIRST_NAME}}', firstName)
     files = replaceTokenInFiles(files, '{{BRAND_INITIAL}}', brandInitial)
+    files = replaceTokenInFiles(files, '{{CLAIM_URL}}', claimUrl)
 
     const { data, error } = await admin
       .from('projects')
@@ -88,6 +94,7 @@ export async function POST(req: NextRequest) {
         user_id: outreachUserId,
         is_demo: true,
         target_email: targetEmail || null,
+        claim_token: claimToken,
       })
       .select('id')
       .single()
