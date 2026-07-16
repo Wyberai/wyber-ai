@@ -92,7 +92,7 @@ export async function runProjectRlsScan(
   supabase: SupabaseClient,
   projectId: string,
   userId: string,
-  source: 'manual' | 'publish-gate' = 'manual',
+  source: 'manual' | 'publish-gate' | 'scheduled' = 'manual',
 ): Promise<ProjectScanResult> {
   const conn = await getAnonConnector(supabase, projectId, userId)
   if (!conn) return { connected: false }

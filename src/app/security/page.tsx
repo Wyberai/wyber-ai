@@ -1,5 +1,6 @@
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
+import { getScanStats } from '@/lib/security-stats';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Security — WyberAi', description: 'How WyberAi protects your code, credentials, and data at every layer.' };
 const CHECKS = [
@@ -29,14 +30,28 @@ const COMPLIANCE = [
   { label: 'SOC 2 Type II', ok: false, note: 'On our roadmap' },
   { label: 'ISO 27001', ok: false, note: 'On our roadmap' },
 ];
-export default function SecurityPage() {
+export default async function SecurityPage() {
+  const stats = await getScanStats();
   return (
     <div style={{ minHeight:'100vh', background:'var(--bg)', fontFamily:'var(--font-sans)' }}>
       <Navbar />
       <div className="wy-section">
         <div className="wy-sec-tag">Security</div>
         <h1 className="wy-h2">Secure by <em>design</em></h1>
-        <p style={{ fontSize:16, color:'var(--text2)', maxWidth:520, lineHeight:1.75, marginBottom:52 }}>Your code, credentials, and data are protected at every layer. Here's exactly what we do — and don't do.</p>
+        <p style={{ fontSize:16, color:'var(--text2)', maxWidth:520, lineHeight:1.75, marginBottom:32 }}>Your code, credentials, and data are protected at every layer. Here's exactly what we do — and don't do.</p>
+
+        {/* Lead callout — the RLS Trust Scanner is the one thing competitors don't
+            have, so it leads the page with a real number, not just a checklist row. */}
+        <div style={{ maxWidth:640, padding:'28px 32px', borderRadius:16, background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.2)', marginBottom:52 }}>
+          <div style={{ fontSize:13, fontWeight:700, color:'var(--amber)', marginBottom:10 }}>RLS Trust Scanner</div>
+          <p style={{ fontSize:14, color:'var(--text2)', lineHeight:1.8, margin:0 }}>Most app builders generate database access rules and hope they're right. We scan every project's live database the same way an attacker would — using the public anon key — and flag tables that are readable or writable without proper Row Level Security, before you ship. It's built into every project's Security tab, not a one-time audit you have to remember to run.</p>
+          {stats && (
+            <p style={{ fontSize:13, color:'var(--amber)', fontWeight:600, marginTop:14, marginBottom:0 }}>
+              {stats.totalScans.toLocaleString()} real scans run so far · {stats.cleanPct}% came back clean on the first try
+            </p>
+          )}
+        </div>
+
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:12, marginBottom:52 }}>
           {CHECKS.map(c=>(
             <div key={c.title} className="wy-card" style={{ padding:'24px' }}>
@@ -57,10 +72,6 @@ export default function SecurityPage() {
               {c.note && <span style={{ fontSize:11, color:'var(--text3)' }}>{c.note}</span>}
             </div>
           ))}
-        </div>
-        <div style={{ maxWidth:640, padding:'28px 32px', borderRadius:16, background:'rgba(245,158,11,0.06)', border:'1px solid rgba(245,158,11,0.2)', marginBottom:24 }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'var(--amber)', marginBottom:10 }}>RLS Trust Scanner</div>
-          <p style={{ fontSize:14, color:'var(--text2)', lineHeight:1.8, margin:0 }}>Most app builders generate database access rules and hope they're right. We scan every project's live database the same way an attacker would — using the public anon key — and flag tables that are readable or writable without proper Row Level Security, before you ship. It's built into every project's Security tab, not a one-time audit you have to remember to run.</p>
         </div>
         <div style={{ maxWidth:640, padding:'28px 32px', borderRadius:16, background:'var(--sky3)', border:'1px solid rgba(14,165,233,0.2)' }}>
           <div style={{ fontSize:13, fontWeight:700, color:'var(--sky)', marginBottom:10 }}>Our commitment</div>

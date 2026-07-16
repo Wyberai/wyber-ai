@@ -240,6 +240,32 @@ describe('sanitizeFiles — entry + index.html', () => {
   })
 })
 
+describe('sanitizeFiles — security badge (opt-in, publish-time only)', () => {
+  it('injects the badge when securityBadge + appId are both passed', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } }, { appId: 'proj-123', securityBadge: { score: 92 } })
+    const html = contentOf(out['index.html'])
+    expect(html).toContain('wyber-security-badge')
+    expect(html).toContain('/verify/proj-123')
+  })
+
+  it('does not inject a badge when securityBadge is omitted (the default, non-publish path)', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } }, { appId: 'proj-123' })
+    expect(contentOf(out['index.html'])).not.toContain('wyber-security-badge')
+  })
+
+  it('does not inject a badge without an appId, even if securityBadge is passed', () => {
+    const out = sanitizeFiles({ 'src/App.tsx': { content: APP } }, { securityBadge: { score: 92 } })
+    expect(contentOf(out['index.html'])).not.toContain('wyber-security-badge')
+  })
+
+  it('does not double-inject on a second sanitize pass', () => {
+    const once = sanitizeFiles({ 'src/App.tsx': { content: APP } }, { appId: 'proj-123', securityBadge: { score: 92 } })
+    const twice = sanitizeFiles(once, { appId: 'proj-123', securityBadge: { score: 92 } })
+    const html = contentOf(twice['index.html'])
+    expect(html.split('wyber-security-badge').length - 1).toBe(1)
+  })
+})
+
 // Cross-origin preview iframes can't have window.onerror attached from the
 // editor side, so every index.html must carry its own error relay that
 // postMessages runtime crashes ('wyber-runtime-error') to the parent editor.

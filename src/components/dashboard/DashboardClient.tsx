@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createClient } from '@/lib/supabase/client';
 import { Profile, Project } from '@/lib/supabase/types';
 import { track } from '@/lib/track';
@@ -9,6 +10,9 @@ import Link from 'next/link';
 import { ReferralCard } from '@/components/shared/ReferralCard';
 import { ProjectTypeChooser, type ProjectType } from '@/components/dashboard/ProjectTypeChooser';
 import { ImportModal } from '@/components/dashboard/ImportModal';
+import { DeleteProjectDialog } from '@/components/dashboard/DeleteProjectDialog';
+import { ProjectSecurityBadge, type ProjectSecurityInfo } from '@/components/dashboard/ProjectSecurityBadge';
+import { SecurityChrome } from '@/components/dashboard/SecurityChrome';
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { creditsLine } from '@/lib/plans';
@@ -27,7 +31,11 @@ function fmtDate(iso?: string | null): string {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}`;
 }
 
-interface Props { profile: Profile | null; projects: Partial<Project>[]; }
+interface Props {
+  profile: Profile | null;
+  projects: Partial<Project>[];
+  securityByProject?: Record<string, ProjectSecurityInfo>;
+}
 
 // SVG icons — no emojis
 const IconHome = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>;
@@ -77,22 +85,26 @@ const QUICK_PROMPTS = [
   'Create a B2B sales CRM for my early-stage startup',
 ];
 
-// Colors
-const BG = '#15171f';
-const SIDEBAR_BG = '#10121a';
-const BORDER = '#262a36';
-const TEXT = '#f4f4f5';
-const MUTED = '#a1a1aa';
-const DIM = '#52525b';
-const CARD_BG = '#1a1d28';
-const BRAND = '#0EA5E9';
+// Colors — the same IDE-dark tokens the editor already uses (globals.css),
+// not a third ad hoc palette. Keeping these as named constants (rather than
+// inlining var(...) everywhere) preserves every call site below unchanged.
+const BG = 'var(--bg-base)';
+const SIDEBAR_BG = 'var(--bg-surface)';
+const BORDER = 'var(--ide-border)';
+const TEXT = 'var(--ide-text)';
+const MUTED = 'var(--ide-text2)';
+const DIM = 'var(--ide-text3)';
+const CARD_BG = 'var(--bg-elevated)';
+const BRAND = 'var(--accent)';
 
-export function DashboardClient({ profile, projects: initialProjects }: Props) {
+export function DashboardClient({ profile, projects: initialProjects, securityByProject = {} }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const [projects, setProjects] = useState(initialProjects);
   const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [showTypePicker, setShowTypePicker] = useState(false);
@@ -195,9 +207,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
+  const requestDelete = (e: React.MouseEvent, id: string, name?: string) => {
     e.preventDefault(); e.stopPropagation();
-    if (!window.confirm('Delete this project? This cannot be undone.')) return;
+    setPendingDelete({ id, name: name || 'Untitled' });
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const id = pendingDelete.id;
     setDeletingId(id);
     try {
       const res = await fetch('/api/projects', {
@@ -207,7 +224,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       });
       if (res.ok) setProjects(prev => prev.filter(p => p.id !== id));
     } catch (err) { console.error('Delete failed', err); }
-    finally { setDeletingId(null); }
+    finally { setDeletingId(null); setPendingDelete(null); }
   };
 
   const handleRename = async (id: string, name: string) => {
@@ -241,6 +258,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
   const startProject = async (prompt?: string, type: ProjectType = 'app') => {
     if (!profile?.id || creating) return;
     setCreating(true);
+    setCreateError(null);
     try {
       const projectName = prompt
         ? prompt.slice(0, 40).trim()
@@ -257,7 +275,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       }
     } catch (err) {
       console.error('Project creation failed:', err);
-      alert('Failed to create project. Please try logging out and back in.');
+      setCreateError('Failed to create project. Please try logging out and back in.');
       setCreating(false);
     }
   };
@@ -382,13 +400,11 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         <nav style={{ padding: '8px', flex: 1, overflow: 'auto' }}>
           {NAV.map((n: any) => {
             const isActive = n.view !== undefined && n.view === view;
-            const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: isActive ? TEXT : MUTED, fontSize: 13, fontWeight: isActive ? 600 : 400, textDecoration: 'none', marginBottom: 1, transition: 'all 0.15s', opacity: n.soon ? 0.6 : 1, background: isActive ? 'rgba(14,165,233,0.12)' : 'transparent', width: '100%', border: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' };
-            const hoverIn = (e: any) => { if (!isActive) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = TEXT } };
-            const hoverOut = (e: any) => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = MUTED } };
+            const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', borderRadius: 8, color: isActive ? TEXT : MUTED, fontSize: 13, fontWeight: isActive ? 600 : 400, textDecoration: 'none', marginBottom: 1, opacity: n.soon ? 0.6 : 1, width: '100%', border: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' };
             // View-switcher items (Home / Web Apps / Mobile Apps) filter the grid in-place.
             if (n.view !== undefined) {
               return (
-                <button key={n.label} style={rowStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}
+                <button key={n.label} className="dash-nav-row" data-active={isActive} style={rowStyle}
                   onClick={() => { setView(n.view); if (isMobile) setSidebarOpen(false); }}>
                   {n.icon}{n.label}
                 </button>
@@ -396,7 +412,7 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
             }
             return (
               <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
-                style={rowStyle} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+                className="dash-nav-row" data-active={isActive} style={rowStyle}>
                 {n.icon}{n.label}
                 {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>SOON</span>}
               </Link>
@@ -418,10 +434,8 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           {projects.length > 0 && <>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>Recent</div>
             {projects.slice(0, 4).map(p => (
-              <Link key={p.id} href={`/project/${p.id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'all 0.15s', marginBottom: 1 }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = TEXT }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = DIM }}>
+              <Link key={p.id} href={`/project/${p.id}`} className="dash-recent-link"
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
                 <IconDot />
                 {p.name || 'Untitled'}
               </Link>
@@ -429,14 +443,14 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
           </>}
         </nav>
 
+        <SecurityChrome securityByProject={securityByProject} />
+
         <ReferralCard />
 
         {plan === 'free' && (
           <div style={{ padding: '10px', borderTop: `1px solid ${BORDER}` }}>
-            <Link href="/pricing"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: `rgba(14,165,233,0.1)`, border: `1px solid rgba(14,165,233,0.2)`, textDecoration: 'none', transition: 'all 0.15s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.15)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'rgba(14,165,233,0.1)'}>
+            <Link href="/pricing" className="dash-upgrade-card"
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: `rgba(14,165,233,0.1)`, border: `1px solid rgba(14,165,233,0.2)`, textDecoration: 'none' }}>
               <IconBolt />
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Starter</div>
@@ -450,14 +464,29 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
       {/* Main */}
       <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', marginTop: isMobile ? 52 : 0, paddingBottom: isMobile ? 56 : 0, width: isMobile ? '100%' : undefined }}>
 
-        {/* Hero / prompt area */}
-        <div style={{ position: 'relative', minHeight: isMobile ? 260 : 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '28px 16px 20px' : '40px 24px', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 80% 60% at 20% 40%, rgba(14,165,233,0.18) 0%, transparent 60%), radial-gradient(ellipse 60% 80% at 80% 60%, rgba(139,92,246,0.14) 0%, transparent 60%)`, pointerEvents: 'none' }} />
+        {/* Hero / prompt area — single-hue sky glow + noise texture. No sky→purple
+            gradient: globals.css bans that exact family brand-wide ("the canonical
+            AI-generated site tell in 2026"), and the dashboard was breaking its own rule. */}
+        <div className="wy-noise" style={{ position: 'relative', minHeight: isMobile ? 260 : 320, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: isMobile ? '28px 16px 20px' : '40px 24px', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 70% 55% at 50% 30%, rgba(14,165,233,0.16) 0%, transparent 65%)`, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
             What are we building, {name.split(' ')[0]}?
           </h1>
+
+          <AnimatePresence>
+            {createError && (
+              <motion.div
+                initial={{ opacity: 0, y: -6, height: 0 }} animate={{ opacity: 1, y: 0, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative', marginBottom: 14, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 9, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', fontSize: 13, color: '#f87171' }}>
+                  <span style={{ flex: 1 }}>{createError}</span>
+                  <button onClick={() => setCreateError(null)} style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0 }}>&times;</button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div data-tour="build" style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
             <div style={{ background: 'rgba(16,18,26,0.9)', backdropFilter: 'blur(20px)', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
@@ -488,11 +517,9 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 ? suggestions.slice(0, isMobile ? 3 : 4).map(s => ({ key: s.prompt, label: s.title, prompt: s.prompt }))
                 : QUICK_PROMPTS.slice(0, isMobile ? 3 : 4).map(p => ({ key: p, label: p.replace('Build a ', '').replace('Create a ', ''), prompt: p }))
               ).map(c => (
-                <button key={c.key} onClick={() => { setPromptInput(c.prompt); textareaRef.current?.focus() }}
+                <button key={c.key} className="dash-chip" onClick={() => { setPromptInput(c.prompt); textareaRef.current?.focus() }}
                   title={c.prompt}
-                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEXT; (e.currentTarget as HTMLElement).style.borderColor = `rgba(14,165,233,0.4)` }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = DIM; (e.currentTarget as HTMLElement).style.borderColor = BORDER }}>
+                  style={{ padding: isMobile ? '8px 14px' : '4px 12px', borderRadius: 20, border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', color: DIM, fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {suggestions ? <>✦ {c.label}</> : c.label}
                 </button>
               ))}
@@ -519,16 +546,15 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+              <motion.div layout style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                 {visibleProjects.slice(0, 11).map(p => (
-                  <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                    <div style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.35)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 12px 32px rgba(0,0,0,0.5)' }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER; (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                  <motion.div key={p.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+                  <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                    <div className="dash-project-card" style={{ height: 168, borderRadius: 12, border: `1px solid ${BORDER}`, background: CARD_BG, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
 
                       {/* Action buttons */}
                       {p.id && <>
-                        <button onClick={e => handleDelete(e, p.id!)} disabled={deletingId === p.id} title="Delete"
+                        <button onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title="Delete"
                           style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {deletingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconTrash />}
                         </button>
@@ -558,12 +584,16 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
                           )}
                           <TypeBadge type={(p as any).project_type} />
                         </div>
-                        <div style={{ fontSize: 10, color: DIM }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 10, color: DIM, flex: 1 }}>{p.framework || 'react'} · {fmtDate(p.updated_at)}</span>
+                          {p.id && <ProjectSecurityBadge info={securityByProject[p.id]} />}
+                        </div>
                       </div>
                     </div>
                   </Link>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </>
           ) : view !== 'all' ? (
             /* Filtered view (Web/Mobile) with no matching projects — no templates, just a build CTA */
@@ -607,6 +637,13 @@ export function DashboardClient({ profile, projects: initialProjects }: Props) {
         onPick={(type) => { setShowTypePicker(false); startProject(pendingPrompt, type); }}
       />
       <ImportModal open={showImport} onClose={() => setShowImport(false)} />
+      <DeleteProjectDialog
+        open={!!pendingDelete}
+        projectName={pendingDelete?.name}
+        deleting={!!deletingId}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

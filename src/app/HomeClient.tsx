@@ -88,11 +88,16 @@ const MOBILE_BUILD_ROWS = [
   { done: false, active: false, label: 'EXPORT FOR APP STORE',  detail: 'EAS Build · IPA / APK' },
 ];
 
-/* RLS scan readout — the security differentiator, shown as the real product output */
-function ScanReadout() {
+/* RLS scan readout — an illustrative example of what the scanner finds (not a
+   live probe of the visitor's own data — that would require them to be
+   authenticated, which a homepage visitor isn't). The window title says
+   "example" rather than "live" for that reason. The one number that IS real —
+   how many times this scanner has actually run, and what fraction came back
+   clean — is fetched server-side in page.tsx and passed in as `stats`. */
+function ScanReadout({ stats }: { stats?: { totalScans: number; cleanPct: number } | null }) {
   return (
     <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
-      <WindowChrome title="wyberai.com — live RLS trust scan" />
+      <WindowChrome title="example scan — what the RLS trust scanner finds" />
       <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 10, letterSpacing: '0.06em' }}>
         $ probing live database with anon key (attacker&apos;s view)…
       </div>
@@ -110,6 +115,11 @@ function ScanReadout() {
       <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 10 }}>
         → real queries against your live DB. Not a linter.
       </div>
+      {stats && (
+        <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brand-border)' }}>
+          ✓ {stats.totalScans.toLocaleString()} real scans run · {stats.cleanPct}% came back clean on the first try
+        </div>
+      )}
     </div>
   );
 }
@@ -250,7 +260,7 @@ const STAGES = [
 
 /* ————— page ————— */
 
-export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Currency }) {
+export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null }) {
   const inr = initialCurrency === 'INR';
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -365,7 +375,8 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
             <Reveal y={16}>
               <div className="mk-eyebrow" style={{ marginBottom: 26 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px rgba(34,197,94,0.9)', animation: 'pulse 2s infinite' }} />
-                SYSTEMS LIVE — WEB + MOBILE
+                <span style={{ textDecoration: 'line-through', color: 'var(--brand-text-faint)', opacity: 0.7 }}>THE FASTEST</span>
+                {' '}THE MOST SECURE APP BUILDER
               </div>
             </Reveal>
             <Reveal delay={0.08}>
@@ -553,8 +564,8 @@ export function HomeClient({ initialCurrency = 'USD' }: { initialCurrency?: Curr
             </div>
             <Reveal delay={0.15}>
               <div style={{ position: 'sticky', top: 90 }}>
-                <div className="mk-mono" style={{ marginBottom: 12, color: 'var(--brand-accent-hot)' }}>LIVE FROM THE PRODUCT</div>
-                <ScanReadout />
+                <div className="mk-mono" style={{ marginBottom: 12, color: 'var(--brand-accent-hot)' }}>HOW THE SCANNER WORKS</div>
+                <ScanReadout stats={scanStats} />
                 <p style={{ fontSize: 12, color: 'var(--brand-text-faint)', lineHeight: 1.6, marginTop: 12 }}>
                   The RLS trust scan runs before every publish. Critical leaks block the release until you fix them — or consciously override.
                 </p>

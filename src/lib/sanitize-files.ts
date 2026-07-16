@@ -14,7 +14,7 @@ type FileVal = { content?: string; language?: string } | string
 
 const hasExtension = (p: string) => /\.[a-z0-9]+$/i.test(p)
 
-export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?: { appId?: string }): T {
+export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?: { appId?: string; securityBadge?: { score: number } }): T {
   if (!files || typeof files !== 'object') return files
 
   const out: Record<string, FileVal> = {}
@@ -331,6 +331,17 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
       nextIdx = nextIdx.includes('<head>')
         ? nextIdx.replace('<head>', `<head>\n    ${APP_ID_TAG}`)
         : `${APP_ID_TAG}\n${nextIdx}`
+    }
+    // Security badge — opt-in per project (opts.securityBadge is only ever
+    // passed by the publish route when the owner enabled it AND the latest
+    // scan came back clean). Links to the public verify page, never exposes
+    // findings. Plain fixed-position markup, no JS beyond the click-through.
+    if (opts?.securityBadge && opts?.appId && !nextIdx.includes('wyber-security-badge')) {
+      const safeId = String(opts.appId).replace(/[^a-zA-Z0-9-]/g, '')
+      const BADGE = `<a href="https://wyberai.com/verify/${safeId}" target="_blank" rel="noopener noreferrer" id="wyber-security-badge" style="position:fixed;left:14px;bottom:14px;z-index:2147483000;display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:rgba(12,12,16,0.85);color:#fff;font:600 11px/1 -apple-system,system-ui,sans-serif;text-decoration:none;backdrop-filter:blur(6px);box-shadow:0 4px 16px rgba(0,0,0,0.3)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z"/></svg>Scanned by WyberAi</a>`
+      nextIdx = nextIdx.includes('</body>')
+        ? nextIdx.replace('</body>', `    ${BADGE}\n  </body>`)
+        : `${nextIdx}\n${BADGE}`
     }
     if (nextIdx !== idxHtml) {
       out['index.html'] = typeof idxVal === 'string' ? nextIdx : { ...(idxVal as object), content: nextIdx }

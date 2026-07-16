@@ -106,18 +106,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const sanitized = sanitizeFiles(projectFiles, { appId: projectId })
-
-    const secretScan = scanForExposedSecrets(sanitized)
-    if (!secretScan.ok) {
-      const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ')
-      return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
-    }
-
     // RLS gate: if the connected database leaks private data to the public anon
     // key (the CVE-2025-48757 failure mode), block on CRITICAL findings unless
     // the user explicitly chose to publish anyway. Never block on scanner errors
-    // (fail-open — the gate is a safety net, not a wall).
+    // (fail-open — the gate is a safety net, not a wall). Also the source of the
+    // score for the security badge below — an overridden publish (known
+    // criticals) never gets a "scanned clean" badge, since the scan is skipped.
+    let rlsScore: number | undefined
     if (!override) {
       try {
         const { connected, report } = await runProjectRlsScan(supabase, projectId, user.id, 'publish-gate')
@@ -129,9 +124,21 @@ export async function POST(req: NextRequest) {
             report,
           }, { status: 409 })
         }
+        if (connected && report) rlsScore = report.score
       } catch (e) {
         console.warn('[publish] RLS gate skipped (scan failed):', String(e))
       }
+    }
+
+    const sanitized = sanitizeFiles(projectFiles, {
+      appId: projectId,
+      securityBadge: (project.show_security_badge && rlsScore !== undefined) ? { score: rlsScore } : undefined,
+    })
+
+    const secretScan = scanForExposedSecrets(sanitized)
+    if (!secretScan.ok) {
+      const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ')
+      return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
     }
 
     // Build the app via Railway
@@ -195,6 +202,7 @@ export async function POST(req: NextRequest) {
         published_url: publishedUrl,
         is_public: true,
         updated_at: new Date().toISOString(),
+        ...(rlsScore !== undefined ? { last_security_score: rlsScore, last_security_scanned_at: new Date().toISOString() } : {}),
       })
       .eq('id', projectId)
 

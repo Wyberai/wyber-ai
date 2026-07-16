@@ -58,6 +58,26 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
 
+  // Latest security scan per project, for the dashboard's security chrome.
+  // Reads only our own security_scans table — never live-probes a customer's
+  // Supabase on page load (that only happens via the manual "scan now" action
+  // or the daily /api/cron/security-rescan job).
+  const { data: scans } = await supabase
+    .from('security_scans')
+    .select('project_id,score,critical_count,reachable,created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+  const securityByProject: Record<string, { score: number; criticalCount: number; reachable: boolean; scannedAt: string }> = {};
+  for (const s of scans ?? []) {
+    if (securityByProject[s.project_id]) continue; // already have the newest (query is desc)
+    securityByProject[s.project_id] = {
+      score: s.score,
+      criticalCount: s.critical_count,
+      reachable: s.reachable,
+      scannedAt: s.created_at,
+    };
+  }
+
   // `profile` here still holds the value fetched at the top of this request —
   // the atomic claim above updates the DB but never mutates this local object.
   // So `welcome_sent === false` is true on exactly one request per account: the
@@ -70,7 +90,7 @@ export default async function DashboardPage() {
   return (
     <>
       <OnboardingTour isNewUser={isNewUser} />
-      <DashboardClient profile={profile} projects={projects ?? []} />
+      <DashboardClient profile={profile} projects={projects ?? []} securityByProject={securityByProject} />
     </>
   );
 }

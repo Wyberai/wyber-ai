@@ -52,6 +52,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/connectors') ||
     path.startsWith('/mcp') ||
     path.startsWith('/tools') ||
+    // Public verify page a published app's security badge links to — anonymous
+    // visitors clicking it must never be bounced to /login.
+    path.startsWith('/verify') ||
     // OAuth consent page handles its own auth: it redirects to /login preserving
     // the FULL authorization query in `next`. The generic gate below would strip
     // those params (next=pathname only), breaking the consent flow.
