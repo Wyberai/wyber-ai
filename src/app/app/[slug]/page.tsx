@@ -1,4 +1,6 @@
 import { createServiceClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
+import { logDemoEvent } from '@/lib/gtm/events'
 import { Metadata } from 'next'
 import ReportButton from './ReportButton'
 import InstallPrompt from './InstallPrompt'
@@ -150,6 +152,13 @@ export default async function PublishedAppPage({ params }: Props) {
   }
 
   const { name, html, ownerPlan } = loaded
+
+  // GTM funnel: record that this campaign demo was opened (fire-and-forget,
+  // is_demo pages only so we don't log every published app).
+  if (loaded.isDemo) {
+    const h = await headers()
+    logDemoEvent(createServiceClient(), { event: 'view', slug, ua: h.get('user-agent'), ref: h.get('referer') })
+  }
   // Hoist the app's JSON-LD up to the real document so crawlers + rich results
   // see it (iframe/srcdoc structured data is not attributed to the page).
   // SECURITY: this runs in the wyberai.com origin (not the sandboxed iframe), so

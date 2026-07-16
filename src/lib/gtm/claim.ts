@@ -2,6 +2,8 @@
 // and the dashboard server component so a founder's personalized demo becomes
 // theirs on their first authenticated load.
 
+import { logDemoEvent } from '@/lib/gtm/events'
+
 type AdminClient = { from: (t: string) => any }
 
 export interface ClaimedDemo { id: string; name: string; url: string | null }
@@ -25,11 +27,11 @@ export async function claimDemos(
     // Collect matches by token and by email, then de-dupe.
     const found = new Map<string, any>()
     if (token) {
-      const { data } = await admin.from('projects').select('id, name, published_url').eq('is_demo', true).eq('claim_token', token)
+      const { data } = await admin.from('projects').select('id, name, published_url, subdomain').eq('is_demo', true).eq('claim_token', token)
       for (const d of data || []) found.set(d.id, d)
     }
     if (email) {
-      const { data } = await admin.from('projects').select('id, name, published_url').eq('is_demo', true).ilike('target_email', email)
+      const { data } = await admin.from('projects').select('id, name, published_url, subdomain').eq('is_demo', true).ilike('target_email', email)
       for (const d of data || []) found.set(d.id, d)
     }
     const demos = [...found.values()]
@@ -40,6 +42,9 @@ export async function claimDemos(
       .update({ user_id: userId, is_demo: false, target_email: null, claim_token: null, updated_at: new Date().toISOString() })
       .in('id', demos.map((d) => d.id))
     if (error) return []
+
+    // GTM funnel: record the conversion (fire-and-forget).
+    for (const d of demos) logDemoEvent(admin, { event: 'claimed', slug: d.subdomain ?? null })
 
     return demos.map((d) => ({ id: d.id, name: d.name, url: d.published_url ?? null }))
   } catch {
