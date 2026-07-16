@@ -11,7 +11,6 @@ export default function SignupPage() {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [agreed, setAgreed] = useState(false);
   const supabase = createClient();
 
   // Capture a referral code from ?ref=CODE so the referrer gets credited when
@@ -36,12 +35,8 @@ export default function SignupPage() {
     return `${location.origin}/auth/callback${qs ? `?${qs}` : ''}`;
   };
 
-  const [termsShake, setTermsShake] = useState(false);
-  const nudgeTerms = () => { setError('Please agree to the Terms of Service first'); setTermsShake(true); setTimeout(() => setTermsShake(false), 600); };
-
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreed) { nudgeTerms(); return; }
     if (!email.trim()) { setError('Please enter your email address'); return; }
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
@@ -54,7 +49,6 @@ export default function SignupPage() {
   };
 
   const handleOAuth = async (provider: 'google' | 'github') => {
-    if (!agreed) { nudgeTerms(); return; }
     setOauthLoading(provider);
     await supabase.auth.signInWithOAuth({
       provider,
@@ -98,17 +92,6 @@ export default function SignupPage() {
             </div>
           ) : (
             <div style={{ background: '#FFFFFF', border: '1px solid #DCE4F0', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(11,22,39,0.06)' }}>
-
-              {/* Terms checkbox — top, before anything */}
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20, padding: '12px 14px', background: termsShake ? '#FEF2F2' : '#F6F8FB', borderRadius: 10, border: `1px solid ${termsShake ? '#FCA5A5' : '#DCE4F0'}`, animation: termsShake ? 'shake 0.4s ease' : 'none', transition: 'background 0.3s, border-color 0.3s' }}>
-                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 2, flexShrink: 0, accentColor: '#0EA5E9', width: 15, height: 15 }} />
-                <span style={{ fontSize: 12, color: '#7A9BBE', lineHeight: 1.6 }}>
-                  I agree to the{' '}
-                  <a href="/terms" target="_blank" style={{ color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</a>
-                  {' '}and{' '}
-                  <a href="/privacy" target="_blank" style={{ color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</a>
-                </span>
-              </label>
 
               {/* OAuth buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -156,7 +139,15 @@ export default function SignupPage() {
                 </button>
               </form>
 
-              <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 20, marginBottom: 0 }}>
+              {/* Implicit consent (clickwrap) — no hard gate that silently blocks the buttons */}
+              <p style={{ textAlign: 'center', color: '#9CB2CC', fontSize: 11.5, lineHeight: 1.6, marginTop: 18, marginBottom: 0 }}>
+                By continuing, you agree to our{' '}
+                <a href="/terms" target="_blank" style={{ color: '#7A9BBE', fontWeight: 600, textDecoration: 'none' }}>Terms</a>
+                {' '}&amp;{' '}
+                <a href="/privacy" target="_blank" style={{ color: '#7A9BBE', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</a>
+              </p>
+
+              <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 16, marginBottom: 0 }}>
                 Already have an account? <Link href="/login" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
               </p>
             </div>
