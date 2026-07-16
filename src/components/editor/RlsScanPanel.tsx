@@ -39,6 +39,9 @@ export function RlsScanPanel({ projectId }: { projectId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [applying, setApplying] = useState<string | null>(null);
   const [history, setHistory] = useState<ScanHistory[]>([]);
+  const [badgeEnabled, setBadgeEnabled] = useState(false);
+  const [badgeSaving, setBadgeSaving] = useState(false);
+  const [badgeLoaded, setBadgeLoaded] = useState(false);
 
   const loadHistory = useCallback(async () => {
     if (!projectId) return;
@@ -50,6 +53,33 @@ export function RlsScanPanel({ projectId }: { projectId: string }) {
   }, [projectId]);
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    (async () => {
+      try {
+        const res = await fetch(`/api/projects/security-badge?projectId=${encodeURIComponent(projectId)}`);
+        const json = await res.json();
+        setBadgeEnabled(!!json.showSecurityBadge);
+      } catch { /* best-effort, defaults to off */ }
+      setBadgeLoaded(true);
+    })();
+  }, [projectId]);
+
+  const toggleBadge = async (next: boolean) => {
+    setBadgeEnabled(next); // optimistic — the toggle should feel instant
+    setBadgeSaving(true);
+    try {
+      const res = await fetch('/api/projects/security-badge', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, enabled: next }),
+      });
+      if (!res.ok) setBadgeEnabled(!next); // revert on failure
+    } catch {
+      setBadgeEnabled(!next);
+    }
+    setBadgeSaving(false);
+  };
 
   const scan = async () => {
     if (!projectId) { setError('Open a saved project first.'); return; }
@@ -88,6 +118,25 @@ export function RlsScanPanel({ projectId }: { projectId: string }) {
       <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--ide-text2, #9aa)', lineHeight: 1.6 }}>
         🔐 <strong>Real RLS scan.</strong> We take your app&apos;s public key and actually try to read every table as an anonymous visitor — the exact thing an attacker does. Anything that comes back is a proven data leak, not an AI guess.
       </div>
+
+      {/* Security badge — off by default; this is the real per-project choice,
+          not a silent toggle-on for everyone. Only actually appears on the
+          NEXT publish where the scan comes back clean (no criticals). */}
+      {badgeLoaded && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface, #16181d)' }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ide-text)' }}>Show &quot;Scanned by WyberAi&quot; badge</div>
+            <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2, lineHeight: 1.5 }}>
+              A small, dismissable badge on your published app linking to a public verification page — visible proof for your users, not just a claim on our site. Only appears when the latest scan is clean. Off by default.
+            </div>
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', flexShrink: 0, marginTop: 2, cursor: badgeSaving ? 'wait' : 'pointer' }}>
+            <input type="checkbox" checked={badgeEnabled} disabled={badgeSaving}
+              onChange={e => toggleBadge(e.target.checked)}
+              style={{ accentColor: '#0EA5E9', width: 15, height: 15 }} />
+          </label>
+        </div>
+      )}
 
       <button onClick={scan} disabled={scanning}
         style={{ justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 600, cursor: scanning ? 'default' : 'pointer', opacity: scanning ? 0.7 : 1 }}>

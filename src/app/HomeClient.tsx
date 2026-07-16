@@ -387,7 +387,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
             </Reveal>
             <Reveal delay={0.16}>
               <p className="mk-lead" style={{ maxWidth: 520, marginBottom: 36 }}>
-                Self-healing builds. Live database security scans. The right AI model chosen for every task — automatically. Other builders generate code and hope. WyberAi engineers it.
+                Web or mobile — same prompt, you pick the target. Self-healing builds. Live database security scans. The right AI model chosen for every task — automatically. Other builders generate code and hope. WyberAi engineers it.
               </p>
             </Reveal>
             <Reveal delay={0.24}>

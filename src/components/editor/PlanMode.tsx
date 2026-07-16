@@ -91,7 +91,9 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
   // 'plan-loading': phase-1 done (or skipped), waiting on the actual plan.
   // 'plan': plan loaded and ready to review/approve.
   const [stage, setStage] = useState<'questions' | 'plan-loading' | 'plan'>('questions');
-  const [questions, setQuestions] = useState<string[]>([]);
+  const [questions, setQuestions] = useState<{ question: string; suggestions: string[] }[]>([]);
+  // Keyed by question text (not index) — stable across a question list that
+  // never reorders once loaded, and this is what planToSpec's Q/A lines use.
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [plan, setPlan] = useState<Plan | null>(null);
   const [error, setError] = useState('');
@@ -150,7 +152,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const qs: string[] = data.clarifyingQuestions ?? [];
+      const qs: { question: string; suggestions: string[] }[] = data.clarifyingQuestions ?? [];
       if (qs.length === 0) {
         setStage('plan-loading');
         await loadPlan({});
@@ -193,7 +195,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
 
   useEffect(() => { loadQuestions(); /* eslint-disable-next-line */ }, []);
 
-  const allQuestionsAnswered = questions.every(q => (answers[q] ?? '').trim().length > 0);
+  const allQuestionsAnswered = questions.every(q => (answers[q.question] ?? '').trim().length > 0);
 
   // ---- feature editing helpers ----
   const updateFeature = (id: string, patch: Partial<Feature>) => {
@@ -270,11 +272,33 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       </div>
       {questions.map((q, i) => (
         <div key={i}>
-          <label style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: 4 }}>{q}</label>
+          <label style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600, display: 'block', marginBottom: 4 }}>{q.question}</label>
+          {q.suggestions.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 6 }}>
+              {/* Schema can no longer enforce the count (Anthropic's
+                  structured-output validator rejects array minItems/maxItems
+                  outside 0/1), so defensively cap the render even though the
+                  prompt asks for 2-4. */}
+              {q.suggestions.slice(0, 4).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setAnswers(a => ({ ...a, [q.question]: s }))}
+                  style={{
+                    fontSize: 11, padding: '4px 10px', borderRadius: 20, fontFamily: 'inherit', cursor: 'pointer',
+                    border: `1px solid ${answers[q.question] === s ? 'var(--accent, #0EA5E9)' : 'var(--border)'}`,
+                    background: answers[q.question] === s ? 'var(--accent-glow, rgba(14,165,233,0.1))' : 'transparent',
+                    color: answers[q.question] === s ? 'var(--accent, #0EA5E9)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
           <input
-            value={answers[q] ?? ''}
-            onChange={e => setAnswers(a => ({ ...a, [q]: e.target.value }))}
-            placeholder="Your answer…"
+            value={answers[q.question] ?? ''}
+            onChange={e => setAnswers(a => ({ ...a, [q.question]: e.target.value }))}
+            placeholder="Or type your own answer…"
             style={{ fontSize: 12, width: '100%', background: 'var(--bg-overlay, rgba(255,255,255,0.05))', border: '1px solid var(--border)', borderRadius: 6, padding: '7px 9px', outline: 'none', fontFamily: 'inherit', color: 'var(--text-primary)' }}
           />
         </div>

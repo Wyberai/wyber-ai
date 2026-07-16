@@ -9,6 +9,7 @@ import { STARTER_TEMPLATES, isPlaceholderApp } from '@/lib/starter-templates';
 import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
 import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
+import { assessDesignFreshness } from '@/lib/design-quality-check';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
 import { VoiceButton } from './VoiceButton';
@@ -363,6 +364,9 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  // Locally-dismissed design-quality suggestion chips — component-local only,
+  // no store/DB change (the suggestion itself is already non-persisted).
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -1207,6 +1211,23 @@ const storeProjectId = useEditorStore.getState().project?.id;
           reasoning: finalReasoning || undefined,
         });
         persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+      }
+      // Design-quality advisory — heuristic-only, non-blocking, never
+      // persisted (same treatment as `reasoning` above). !isSelfHeal and
+      // !hasGeneratedFiles mirror the exact gates already used for the
+      // first-build rename below, so this can only ever fire on a genuine
+      // fresh build's own success — never on a self-heal/autofix/
+      // continuation pass. See design-quality-check.ts for the safety
+      // argument (it never imports sanitize-files.ts or stub-missing-imports.ts).
+      if (isVisible && !isSelfHeal && !hasGeneratedFiles) {
+        const suggestion = assessDesignFreshness(updatedFiles, projectType);
+        if (suggestion) {
+          addMessage({
+            id: uid(), role: 'assistant', timestamp: Date.now(), status: 'done',
+            content: suggestion.note,
+            designSuggestion: { prompt: suggestion.prompt, label: suggestion.label },
+          });
+        }
       }
       setLiveReasoning('');
 
@@ -2079,6 +2100,26 @@ const storeProjectId = useEditorStore.getState().project?.id;
                           Retry
                         </button>
                       )}
+                    </div>
+                  )}
+                  {msg.designSuggestion && !dismissedSuggestions.has(msg.id) && (
+                    <div style={{ marginTop:6, display:'flex', alignItems:'center', gap:6 }}>
+                      <button
+                        onClick={() => { setInput(msg.designSuggestion!.prompt); textareaRef.current?.focus(); }}
+                        title="Fill the input with a follow-up prompt — you still need to press Send"
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'; }}
+                      >
+                        {msg.designSuggestion.label}
+                      </button>
+                      <button
+                        onClick={() => setDismissedSuggestions(prev => new Set(prev).add(msg.id))}
+                        title="Dismiss"
+                        style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:14, lineHeight:1, padding:0 }}
+                      >
+                        ×
+                      </button>
                     </div>
                   )}
                 </div>

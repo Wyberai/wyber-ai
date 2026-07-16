@@ -24,6 +24,11 @@ export interface ChatMessage {
   // Real extended-thinking output (opt-in, new-build full generation only —
   // see generate/route.ts's useThinking). Shown collapsed under the message.
   reasoning?: string;
+  // Design-quality advisory (heuristic-only, client-side, non-persisted) —
+  // see design-quality-check.ts. Renders as a dismissible suggestion chip;
+  // clicking only populates the input box, it never auto-sends or
+  // auto-regenerates.
+  designSuggestion?: { prompt: string; label: string };
 }
 
 export interface Checkpoint {

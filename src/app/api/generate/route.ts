@@ -1785,6 +1785,24 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       ]
       const seed = MOBILE_DIRECTIONS[Math.floor(Math.random() * MOBILE_DIRECTIONS.length)]
       perRequestParts.push(`\n\n━━━ DESIGN SEED (fresh build — make it bespoke) ━━━\nUnless the user named a specific style, brand, or colors, take THIS as your starting aesthetic and commit to it in theme.ts (choose a light or dark base + accent to match): ${seed}\nDo not default to a generic dark indigo app.`)
+
+      // LAYOUT SEED — mobile's equivalent of the web LAYOUT_SEEDS below: the
+      // DESIGN SEED above only covers color/vibe, so two mobile builds with
+      // similar palettes still ended up with the same tab-bar-plus-card-feed
+      // shape every time. This handles structural freshness (nav pattern,
+      // home-screen shape, onboarding style) so they compose differently too.
+      const MOBILE_LAYOUT_SEEDS = [
+        'Tab bar (4-5 icons) home = a vertical feed of cards; detail screens push full-screen with a large back-swipe area.',
+        'Bottom-sheet nav (single FAB opens a sheet of destinations) home = a 2-col grid of tiles; details open as a modal sheet, not a push.',
+        'Tab bar home = dashboard-style stat cards + a horizontal scroller of recent items; onboarding is a 3-slide swipeable carousel with dot indicators.',
+        'Segmented top tabs (no bottom bar) home = a dense list (rows, not cards); onboarding is a single animated welcome screen with one CTA, no carousel.',
+        'Bottom tab bar + a persistent search bar pinned under the header; home = grid of category tiles; onboarding: permission-request screens one at a time (notifications, then location).',
+        'Drawer nav (hamburger) + no bottom bar; home = list grouped by section headers; onboarding: a single value-prop screen + sign-in, no carousel.',
+        'Tab bar home = a masonry/staggered grid (Pinterest-style); onboarding: full-bleed swipeable image carousel with overlaid copy.',
+        'Bottom tab bar home = a single hero card + stacked list below it (superapp pattern); onboarding: skippable 2-slide carousel, minimal copy.',
+      ]
+      const mobileLayoutSeed = MOBILE_LAYOUT_SEEDS[Math.floor(Math.random() * MOBILE_LAYOUT_SEEDS.length)]
+      perRequestParts.push(`\n\n━━━ LAYOUT SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific navigation or home-screen layout, take THIS as your structural starting point: ${mobileLayoutSeed}`)
     }
     if (!hasExisting && projectType !== 'mobile' && stage !== 'plan') {
       // Inject a complete, hand-tuned, domain-matched HSL token palette as a

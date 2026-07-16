@@ -14,7 +14,26 @@ const ICONS = ['auth', 'dashboard', 'list', 'board', 'payment', 'settings', 'sea
 const QUESTIONS_SCHEMA = {
   type: 'object' as const,
   properties: {
-    clarifyingQuestions: { type: 'array' as const, items: { type: 'string' as const } },
+    clarifyingQuestions: {
+      type: 'array' as const,
+      items: {
+        type: 'object' as const,
+        properties: {
+          question: { type: 'string' as const },
+          // 2-4 short, concrete answer options — so the user can pick instead
+          // of always typing free text (mirrors how a good AskUserQuestion-
+          // style option list is written: mutually distinct, no vague catch-alls).
+          // The count itself is enforced only via the prompt below, NOT
+          // minItems/maxItems here — Anthropic's structured-output schema
+          // validator rejects any array minItems/maxItems other than 0 or 1
+          // (confirmed live: "minItems values other than 0 or 1 are not
+          // supported (got: [2, 5])"), so a numeric range here 400s every call.
+          suggestions: { type: 'array' as const, items: { type: 'string' as const } },
+        },
+        required: ['question', 'suggestions'],
+        additionalProperties: false,
+      },
+    },
   },
   required: ['clarifyingQuestions'],
   additionalProperties: false,
@@ -158,7 +177,9 @@ Scale how many questions to the ACTUAL scope of the request, not a fixed number 
 - A request with some real ambiguity (e.g. "a CRM"): 1-3 questions covering the dimensions that would most change the build (who it's for, which feature matters most, scale).
 - A large or enterprise-scale request (multiple departments/roles, integrations with existing systems, complex workflows): up to 5-6 questions is appropriate — a request this size deserves real discovery, not the same shallow pass as a weekend project. Prioritize the questions that would most reshape the plan (existing systems to integrate with, user roles/permissions, workflow depth, scale/volume) over generic ones.
 
-Never exceed 6. If truly nothing needs clarifying, return an empty array.`;
+Never exceed 6. If truly nothing needs clarifying, return an empty array.
+
+For every question, also give EXACTLY 2 to 4 short, concrete, real-world answer options in "suggestions" (never 0, never more than 4) — mutually distinct, no vague catch-alls like "other" or "not sure" (the UI already offers a free-text field alongside your suggestions for anything that doesn't fit). Ground them in what's actually common for that domain, e.g. for "Who is this CRM for?": ["Real estate agents", "Freelance consultants", "B2B sales teams", "Recruiters"].`;
       const msg = await client.messages.create({
         model: MODEL_IDS.fast,
         max_tokens: 1024,

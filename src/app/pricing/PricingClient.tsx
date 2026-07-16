@@ -376,7 +376,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
           </span>
         </h1>
         <p style={{ fontSize: 'clamp(15px,1.5vw,18px)', color: '#71717a', maxWidth: 520, margin: '0 auto 36px', lineHeight: 1.65 }}>
-          Every plan unlocks ALL features. The only difference is credit count. No project limits, no feature gates. 50 free credits on signup.
+          Every plan unlocks ALL features — web apps AND mobile apps, same credits, same workspace. No project limits, no feature gates. 50 free credits on signup.
         </p>
 
         {/* Annual toggle */}
