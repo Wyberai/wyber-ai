@@ -250,10 +250,17 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
   const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;
+  // A typed prompt ALWAYS builds directly — the type picker is only for the
+  // empty "+ New Project" path. Short prompts used to fall into the picker
+  // (length gate) which read as a wall of coming-soon tiles mid-flow.
   const openChooser = (prompt?: string) => {
-    if (prompt && MOBILE_KEYWORDS.test(prompt)) { startProject(prompt, 'mobile'); return; }
-    if (prompt && prompt.length > 15) { startProject(prompt, 'app'); return; }
+    if (prompt) { startProject(prompt, MOBILE_KEYWORDS.test(prompt) ? 'mobile' : 'app'); return; }
     setPendingPrompt(prompt); setShowTypePicker(true);
+  };
+  const submitPrompt = () => {
+    const p = promptInput.trim();
+    if (!p) { openChooser(); return; }
+    startProject(p, MOBILE_KEYWORDS.test(p) || buildMode === 'mobile' ? 'mobile' : 'app');
   };
   const startProject = async (prompt?: string, type: ProjectType = 'app') => {
     if (!profile?.id || creating) return;
@@ -290,7 +297,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      openChooser(promptInput.trim() || undefined);
+      submitPrompt();
     }
   };
 
@@ -502,7 +509,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
                 <VoiceButton size={26} disabled={creating}
                   onTranscript={t => { setPromptInput(prev => (prev ? prev + ' ' + t : t)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: t.length }); }} />
-                <button onClick={() => buildMode === 'mobile' ? startProject(promptInput.trim() || undefined, 'mobile') : openChooser(promptInput.trim() || undefined)} disabled={creating}
+                <button onClick={submitPrompt} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
