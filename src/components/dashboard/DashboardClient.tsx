@@ -501,9 +501,17 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 placeholder="Describe the app you want to build..." rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '2px 3px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
-                  <button onClick={() => setBuildMode('app')} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: buildMode === 'app' ? 'rgba(14,165,233,0.15)' : 'transparent', color: buildMode === 'app' ? BRAND : '#52525b', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>Web</button>
-                  <button onClick={() => setBuildMode('mobile')} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: buildMode === 'mobile' ? 'rgba(168,85,247,0.15)' : 'transparent', color: buildMode === 'mobile' ? '#a855f7' : '#52525b', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s' }}>Mobile</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
+                  <button onClick={() => setBuildMode('app')} aria-pressed={buildMode === 'app'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 6, border: buildMode === 'app' ? '1px solid rgba(14,165,233,0.45)' : '1px solid transparent', background: buildMode === 'app' ? 'rgba(14,165,233,0.18)' : 'transparent', color: buildMode === 'app' ? BRAND : '#9a9fad', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                    Web app
+                  </button>
+                  <button onClick={() => setBuildMode('mobile')} aria-pressed={buildMode === 'mobile'}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 6, border: buildMode === 'mobile' ? '1px solid rgba(168,85,247,0.45)' : '1px solid transparent', background: buildMode === 'mobile' ? 'rgba(168,85,247,0.18)' : 'transparent', color: buildMode === 'mobile' ? '#a855f7' : '#9a9fad', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                    Mobile app
+                  </button>
                 </div>
                 <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} credits</span>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
