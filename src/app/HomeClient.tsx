@@ -276,12 +276,16 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
   // Read the DOM value, not state: autofill/paste can commit text without
   // React's onChange having run by submit time.
   const heroPromptRef = useRef<HTMLTextAreaElement | null>(null);
+  const [heroTarget, setHeroTarget] = useState<'app' | 'mobile'>('app');
   const submitHeroPrompt = (e: React.FormEvent) => {
     e.preventDefault();
     const p = (heroPromptRef.current?.value ?? heroPrompt).trim();
     if (p) {
-      try { localStorage.setItem('wyber-pending-prompt', p.slice(0, 2000)); } catch { /* private mode */ }
-      track('homepage_prompt_submitted', { length: p.length });
+      try {
+        localStorage.setItem('wyber-pending-prompt', p.slice(0, 2000));
+        localStorage.setItem('wyber-pending-type', heroTarget);
+      } catch { /* private mode */ }
+      track('homepage_prompt_submitted', { length: p.length, target: heroTarget });
     }
     window.location.href = user ? '/dashboard' : '/signup';
   };
@@ -404,8 +408,19 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
                   rows={2}
                   style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--brand-text)', fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--font-sans)', padding: '8px 10px' }}
                 />
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTop: '1px solid var(--brand-border)' }}>
-                  <span className="mk-mono" style={{ fontSize: 10, paddingLeft: 10 }}>50 FREE CREDITS · NO CARD</span>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTop: '1px solid var(--brand-border)', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--brand-border)' }}>
+                    <button type="button" onClick={() => setHeroTarget('app')} aria-pressed={heroTarget === 'app'}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: heroTarget === 'app' ? '1px solid rgba(14,165,233,0.45)' : '1px solid transparent', background: heroTarget === 'app' ? 'rgba(14,165,233,0.18)' : 'transparent', color: heroTarget === 'app' ? 'var(--brand-accent)' : 'var(--brand-text-dim)', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                      Web app
+                    </button>
+                    <button type="button" onClick={() => setHeroTarget('mobile')} aria-pressed={heroTarget === 'mobile'}
+                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: heroTarget === 'mobile' ? '1px solid rgba(168,85,247,0.45)' : '1px solid transparent', background: heroTarget === 'mobile' ? 'rgba(168,85,247,0.18)' : 'transparent', color: heroTarget === 'mobile' ? '#a855f7' : 'var(--brand-text-dim)', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+                      Mobile app
+                    </button>
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-text-dim)' }}>
                     <VoiceButton
                       onTranscript={t => {
@@ -427,7 +442,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
                   Watch the demo
                 </button>
                 <p className="mk-mono" style={{ fontSize: 11, marginBottom: 0 }}>
-                  FROM {inr ? '₹499/MO' : '$29/MO'} · CANCEL ANYTIME
+                  50 FREE CREDITS · NO CARD · FROM {inr ? '₹499/MO' : '$29/MO'}
                 </p>
               </div>
               {inr && (

@@ -199,11 +199,18 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   useEffect(() => {
     if (!profile?.id) return;
     let pending: string | null = null;
+    let pendingType: string | null = null;
     try {
       pending = localStorage.getItem('wyber-pending-prompt');
+      pendingType = localStorage.getItem('wyber-pending-type');
       if (pending) localStorage.removeItem('wyber-pending-prompt');
+      if (pendingType) localStorage.removeItem('wyber-pending-type');
     } catch { /* storage blocked */ }
-    if (pending?.trim()) openChooser(pending.trim());
+    if (pending?.trim()) {
+      // Honor the homepage hero's Web/Mobile toggle; fall back to keyword detection.
+      if (pendingType === 'mobile') startProject(pending.trim(), 'mobile');
+      else openChooser(pending.trim());
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
 
