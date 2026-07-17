@@ -13,6 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/vs/v0`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/vs/replit`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/vs/cursor`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/vs/softr`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${base}/lovable-alternatives`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${base}/vs`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/use-cases`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/use-cases/build-mobile-app-with-ai`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },

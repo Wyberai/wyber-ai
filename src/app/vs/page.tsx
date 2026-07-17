@@ -58,6 +58,14 @@ const COMPARISONS = [
     summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.',
     wyberWins: ['Zero coding required', 'App in A few minutes', 'Live preview + one-click deploy', 'Mobile + agents + workflows'],
   },
+  {
+    slug: 'softr',
+    name: 'Softr',
+    url: 'softr.io',
+    tag: 'No-code platform',
+    summary: 'Softr hosts your app on their platform from $269/mo for Business. WyberAi generates real React code you own — web + mobile — from $29/mo.',
+    wyberWins: ['Real code, GitHub export, zero lock-in', 'Native mobile apps (React Native)', 'Live database security scan', 'A tenth of the price for solo founders'],
+  },
 ]
 
 /* Space-journey brand surfaces (see globals.css --brand-*) */

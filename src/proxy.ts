@@ -34,6 +34,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/delete-account') ||
     path.startsWith('/status') ||
     path.startsWith('/vs') ||
+    path.startsWith('/lovable-alternatives') ||
     path.startsWith('/use-cases') ||
     path.startsWith('/employees') ||
     path.startsWith('/blog') ||
