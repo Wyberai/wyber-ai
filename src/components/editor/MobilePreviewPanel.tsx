@@ -36,17 +36,23 @@ export function MobilePreviewPanel() {
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<Record<PreviewMode, string>>({ snack: '', inapp: '' })
 
-  // Restore the user's saved mode (prod opt-in), once mounted.
+  // Restore the user's saved mode (prod opt-in), once mounted. Namespaced
+  // ":v2" — the unversioned key briefly defaulted to 'inapp' for one day
+  // (Jul 15, reverted Jul 16); any browser that touched the panel that day
+  // got 'inapp' permanently pinned in localStorage, silently overriding every
+  // later fix to the in-house engine's interactivity and the default flip
+  // back to Snack. Bumping the key resets everyone to the current default
+  // once; a fresh explicit choice still persists normally after that.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('wyber:mobile-preview-mode')
+      const saved = localStorage.getItem('wyber:mobile-preview-mode:v2')
       if (saved === 'snack' || saved === 'inapp') setMode(saved)
     } catch { /* private mode */ }
   }, [])
 
   const chooseMode = (m: PreviewMode) => {
     setMode(m)
-    try { localStorage.setItem('wyber:mobile-preview-mode', m) } catch { /* private mode */ }
+    try { localStorage.setItem('wyber:mobile-preview-mode:v2', m) } catch { /* private mode */ }
   }
 
   const hasApp = Object.keys(files ?? {}).some(p =>
