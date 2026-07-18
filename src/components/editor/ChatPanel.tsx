@@ -10,6 +10,18 @@ import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '
 import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
 import { assessDesignFreshness } from '@/lib/design-quality-check';
+import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/agents/events';
+import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
+import { LoopGuard } from '@/lib/agents/loop-guard';
+import { runQaChecks } from '@/lib/agents/qa-checks';
+import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
+import { useAgentTurnStore } from '@/store/agent-turn';
+import type { ChatMessage } from '@/store/editor';
+import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
+import { TurnReceipt } from './agent-team/TurnReceipt';
+import { SecurityReportCard } from './agent-team/SecurityReportCard';
+import { LoopStopCard } from './agent-team/LoopStopCard';
+import { FixOfferCard } from './agent-team/FixOfferCard';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
 import { VoiceButton } from './VoiceButton';
@@ -55,6 +67,30 @@ SyntaxHighlighter.registerLanguage('markdown', markdownLang);
 SyntaxHighlighter.registerLanguage('md', markdownLang);
 
 function uid() { return Math.random().toString(36).slice(2, 9); }
+
+// Fold a turn's agent events into the per-message receipt shape
+// (ChatMessage.agentReport) — one summary line per agent + the findings list.
+function buildAgentReport(events: AgentEvent[], passesUsed: number, credits?: number): NonNullable<ChatMessage['agentReport']> {
+  const lanes = deriveAgentLanes(events);
+  const agents = lanes.map(l => {
+    let summary = l.lastStatus || (l.state === 'done' ? 'done' : 'worked this turn');
+    if (l.agent === 'security') {
+      const fixed = l.findings.filter(f => f.resolution === 'fixed').length;
+      const flagged = l.findings.filter(f => f.resolution === 'flagged').length;
+      summary = l.findings.length === 0
+        ? 'reviewed every file — no security issues'
+        : `${fixed} issue${fixed === 1 ? '' : 's'} fixed before landing${flagged ? `, ${flagged} flagged` : ''}`;
+    }
+    return { id: l.agent, summary };
+  });
+  const findings = lanes.flatMap(l => l.findings).map(f => ({
+    findingId: f.findingId,
+    severity: f.severity,
+    title: f.detail,
+    status: (f.resolution === 'fixed' ? 'fixed' : 'flagged') as 'fixed' | 'flagged',
+  }));
+  return { agents, findings, passesUsed, credits };
+}
 
 // Resolve a local import specifier (relative, `@/`, or `src/`) to an existing
 // file path. Bare module specifiers (node_modules) return null.
@@ -439,10 +475,30 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean }) => Promise<void>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => Promise<void>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
+  // Futility detection on top of the volume cap: the SAME error signature
+  // twice means the fix strategy is failing — stop and show LoopStopCard
+  // instead of burning the remaining budget (see lib/agents/loop-guard.ts).
+  const loopGuardRef = useRef(new LoopGuard());
+  // ── Agent team (flag-gated, see src/lib/agents) ─────────────────────────
+  // Accumulated agent events for the CURRENT turn across all its passes (plan
+  // → scaffold → fills + client-synthesized events). The streaming pass's live
+  // events render on top; the agent-turn store is what the feed reads.
+  const turnAgentEventsRef = useRef<AgentEvent[]>([]);
+  // Internal passes used this turn (fills, fixes) — the anti-runaway budget.
+  const agentPassCountRef = useRef(0);
+  const MAX_INTERNAL_PASSES = 8;
+  // Credits actually charged this turn across passes (fills report 0).
+  const turnCreditsRef = useRef(0);
+  const agentEvents = useAgentTurnStore(s => s.events);
+  const pushAgentEvents = useCallback((...evs: AgentEvent[]) => {
+    if (!AGENT_TEAM_ENABLED) return;
+    turnAgentEventsRef.current = [...turnAgentEventsRef.current, ...evs];
+    useAgentTurnStore.getState().setEvents(turnAgentEventsRef.current);
+  }, []);
   // Lifted out of executeGeneration's local scope so a user-facing "Stop" button
   // can abort an in-flight generation from outside that closure.
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -544,12 +600,58 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     const autofixHandler = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (!detail?.prompt) return
+      // Autonomy dial (ask-first): optional fix passes — runtime-error
+      // self-heals from the preview — are OFFERED, not run. Build-completion
+      // passes (continuation: cut streams, failed patches, QA structural
+      // fixes) and user-approved offers always run. This gate comes BEFORE
+      // the futility guard so offering doesn't record the error — only an
+      // actually-attempted fix counts toward the repeat limit.
+      if (AGENT_TEAM_ENABLED && !detail.continuation && !detail.approved
+          && useAgentTurnStore.getState().autonomy === 'ask') {
+        useEditorStore.getState().addMessage({
+          id: uid(), role: 'assistant', content: '', timestamp: Date.now(), status: 'done',
+          fixOffer: {
+            prompt: detail.prompt,
+            error: detail.error ? String(detail.error).slice(0, 300) : undefined,
+            label: 'The preview hit an error — run a free auto-fix?',
+          },
+        })
+        return
+      }
+      // Futility guard: the SAME runtime error twice means the fix strategy
+      // isn't working — stop, show what keeps failing, and hand the user the
+      // wheel instead of spending the remaining self-heal budget on it.
+      if (detail.error) {
+        const seen = loopGuardRef.current.record(detail.error)
+        if (seen >= 2) {
+          if (AGENT_TEAM_ENABLED) {
+            turnAgentEventsRef.current = [...turnAgentEventsRef.current, { agent: 'qa', status: 'stuck', detail: 'same error came back after a fix — stopping auto-fix' }]
+            useAgentTurnStore.getState().setEvents(turnAgentEventsRef.current)
+          }
+          useEditorStore.getState().addMessage({
+            id: uid(), role: 'assistant', content: '', timestamp: Date.now(), status: 'done',
+            loopStop: {
+              errorSummary: String(detail.error).slice(0, 300),
+              attempts: seen,
+              retryPrompt: `The app keeps hitting this error even after an auto-fix attempt: "${String(detail.error).slice(0, 180)}". Take a DIFFERENT approach: identify the component responsible and rewrite it from scratch as a complete <file> block instead of patching the failing line.`,
+            },
+          })
+          return
+        }
+      }
       // Stop runaway self-heal: cap consecutive autofix passes per user turn.
       if (autofixCountRef.current >= MAX_AUTOFIX) {
         console.warn('[wyber] self-heal retry cap reached — stopping to protect credits')
         return
       }
       autofixCountRef.current += 1
+      // Verity (QA) narration: a runtime-error self-heal is the QA agent at
+      // work — synthesize its event into the feed (the server stays silent on
+      // selfHeal passes by design).
+      if (AGENT_TEAM_ENABLED && !detail.continuation) {
+        turnAgentEventsRef.current = [...turnAgentEventsRef.current, { agent: 'qa', status: 'fixing', detail: 'preview error detected — fixing automatically' }]
+        useAgentTurnStore.getState().setEvents(turnAgentEventsRef.current)
+      }
       // continuation: this is the user's own build still in flight (cut stream,
       // missing entry file, failed patches) → visible bubble + persisted receipt.
       // Untagged events (runtime-error self-heals from the preview) stay silent.
@@ -568,6 +670,17 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       }
     }
     window.addEventListener('wyber:chat-prompt', chatPromptHandler)
+    // Agent-team steerability: fill the input WITHOUT sending (designSuggestion
+    // contract) — used by SecurityReportCard's "Ask to fix" and future agent
+    // action chips. Distinct from wyber:chat-prompt, which auto-sends.
+    const fillInputHandler = (e: Event) => {
+      const prompt = (e as CustomEvent).detail
+      if (typeof prompt === 'string' && prompt.trim()) {
+        setInput(prompt)
+        textareaRef.current?.focus()
+      }
+    }
+    window.addEventListener('wyber-fill-input', fillInputHandler)
     // ConnectorsPanel sends this when a service needs a key we don't have yet —
     // opens the same inline vault-capture gate used for Supabase/Stripe, just
     // with the exact field names for that one connector instead of a keyword guess.
@@ -584,6 +697,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       window.removeEventListener('wyber_auto_generate', handler as EventListener)
       window.removeEventListener('wyber-autofix', autofixHandler)
       window.removeEventListener('wyber:chat-prompt', chatPromptHandler)
+      window.removeEventListener('wyber-fill-input', fillInputHandler)
       window.removeEventListener('wyber:request-secrets', requestSecretsHandler)
     }
   }, []);
@@ -754,12 +868,21 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent) autofixCountRef.current = 0;
+    if (!opts?.silent) { autofixCountRef.current = 0; loopGuardRef.current.reset(); }
+    // A genuinely fresh visible turn resets the agent-team feed. Orchestrated
+    // passes (stage set) and runAgenticBuild's fallback (preserveAgentTurn)
+    // keep the turn's accumulated events — the planner already spoke.
+    if (AGENT_TEAM_ENABLED && !opts?.silent && !opts?.continuation && !opts?.stage && !opts?.preserveAgentTurn) {
+      turnAgentEventsRef.current = [];
+      agentPassCountRef.current = 0;
+      turnCreditsRef.current = 0;
+      useAgentTurnStore.getState().resetTurn();
+    }
 
     // Out of credits → block builds/edits (self-heal is free, so let it through).
     // Conversational messages never reach here; they go through handleConversational.
@@ -934,6 +1057,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // Design direction the user picked on the plan/offer cards — the
           // server silently falls back to its prompt-matched pick when absent.
           paletteId: opts?.paletteId || undefined,
+          // Agentic staged passes (flag-gated): scaffold/fill batch scoping +
+          // the internal-pass free-lane marker (honored server-side only for
+          // fill/agentFix, counted by the hourly free-pass guard).
+          stage: opts?.stage || undefined,
+          stageFiles: opts?.stageFiles?.length ? opts.stageFiles : undefined,
+          internalPass: opts?.internalPass || undefined,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
           attachedText: attachedTextPayload.length ? attachedTextPayload : undefined,
@@ -961,6 +1090,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // of letting the app silently build with no working database.
       const supabaseStatus = res.headers.get('X-Supabase-Status');
       if (creditsUsed) setLastCreditCost(parseInt(creditsUsed));
+      if (creditsUsed) turnCreditsRef.current += parseInt(creditsUsed) || 0;
       if (modelUsed) setLastModel(modelUsed);
 
       // Server already deducted credits before streaming. Refresh balance from API.
@@ -999,6 +1129,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const reasoningSoFar = extractReasoning(full);
         if (reasoningSoFar) setLiveReasoning(reasoningSoFar);
 
+        // Agent-team feed: server-authored [agent:{...}] events render live on
+        // top of the turn's accumulated events (see agent-turn store).
+        if (AGENT_TEAM_ENABLED) {
+          const liveAgentEvents = extractAgentEvents(full);
+          if (liveAgentEvents.length || turnAgentEventsRef.current.length) {
+            useAgentTurnStore.getState().setEvents([...turnAgentEventsRef.current, ...liveAgentEvents]);
+          }
+        }
+
         const cleanedFull = cleanStreamingDisplay(full)
           .replace(/<agent>[\s\S]*?<\/agent>/g, '')
           .replace(/<flow>[\s\S]*?<\/flow>/g, '')
@@ -1009,6 +1148,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
       }
       const { files: newFiles, chatText } = parseGenerationOutput(full);
       const editBlocks = parseEditBlocks(full);
+      // Fold this pass's agent events into the turn's accumulated list so they
+      // survive into the next pass / the final receipt.
+      if (AGENT_TEAM_ENABLED) {
+        const passAgentEvents = extractAgentEvents(full);
+        if (passAgentEvents.length) pushAgentEvents(...passAgentEvents);
+      }
       // Self-heal: if the stream was cut off mid-file or mid-edit, request the rest
       const lastFileOpen = full.lastIndexOf('<file path="');
       const lastEditOpen = full.lastIndexOf('<edit path="');
@@ -1077,6 +1222,36 @@ const storeProjectId = useEditorStore.getState().project?.id;
             detail: { continuation: true, prompt: `The build finished but ${entry} was never written (or is still the empty placeholder), so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist. Do not rewrite other files.` }
           }));
         }, 600);
+      }
+
+      // 4b². Verity's deterministic QA pass (flag-gated): structural checks
+      // the preview can't surface as runtime errors — sanitize-files stubs
+      // broken imports at build time, so those features die SILENTLY instead
+      // of erroring. Final pass only: mid-staging batches legitimately import
+      // files a later batch will write. missing-entry is filtered because the
+      // placeholder check above (and the server's forced follow-up) own that.
+      // Runs on non-silent passes AND the final staged fill (which is silent
+      // by design) — but never on the QA fix pass itself (silent, no stage),
+      // so a failed fix can't loop.
+      const qaEligible = !isSelfHeal || (opts?.stage === 'fill' && !!opts?.finalPass)
+      if (AGENT_TEAM_ENABLED && qaEligible && !fileCut && !editCut
+          && (!opts?.stage || opts?.finalPass)
+          && (newFiles.length > 0 || editBlocks.length > 0)) {
+        const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
+        if (qaIssues.length > 0) {
+          pushAgentEvents(
+            ...qaIssues.slice(0, 3).map((i): AgentEvent => ({ agent: 'qa', status: 'finding', detail: i.detail, severity: 'medium' })),
+            { agent: 'qa', status: 'fixing', detail: `${qaIssues.length} structural issue${qaIssues.length === 1 ? '' : 's'} found — fixing in a free pass` },
+          )
+          const combined = qaIssues.slice(0, 4).map(i => i.fixPrompt).join('\n')
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('wyber-autofix', {
+              detail: { continuation: true, prompt: combined }
+            }))
+          }, 700)
+        } else {
+          pushAgentEvents({ agent: 'qa', status: 'done', detail: 'structural checks passed — all imports resolve' })
+        }
       }
 
       // 4c. Auto-apply the generated database schema. Supabase builds end with
@@ -1194,12 +1369,27 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // client-side only for this session's collapsible display, not persisted
       // to project_messages (no schema for it yet, and it's not needed on reload).
       const finalReasoning = extractReasoning(full);
+      // QA narration: a successful runtime-error self-heal is Verity's work —
+      // synthesize its event so the feed/receipt reflect it (the server stays
+      // silent on selfHeal passes by design).
+      if (AGENT_TEAM_ENABLED && isSelfHeal && !opts?.continuation) {
+        pushAgentEvents({ agent: 'qa', status: 'fixed', detail: 'auto-fixed a preview error' });
+      }
+      // Turn receipt: attached once per turn — on the last orchestrated pass,
+      // or on any non-orchestrated visible pass that produced agent events.
+      const attachReport = AGENT_TEAM_ENABLED && isVisible
+        && turnAgentEventsRef.current.length > 0
+        && (!opts?.stage || opts?.finalPass);
+      const agentReport = attachReport
+        ? buildAgentReport(turnAgentEventsRef.current, agentPassCountRef.current, turnCreditsRef.current || undefined)
+        : undefined;
       if (isVisible) {
         updateMessage(assistantId, {
           content: finalContent,
           status:'done',
           filesChanged: newFiles.map(f => f.path),
           reasoning: finalReasoning || undefined,
+          agentReport,
         });
         persistMessage('assistant', finalContent, newFiles.map(f => f.path));
       }
@@ -1212,6 +1402,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // argument (it never imports sanitize-files.ts or stub-missing-imports.ts).
       if (isVisible && !isSelfHeal && !hasGeneratedFiles) {
         const suggestion = assessDesignFreshness(updatedFiles, projectType);
+        // Prism's turn in the feed: the design check IS the design agent's
+        // deterministic pass — narrate its outcome either way.
+        if (AGENT_TEAM_ENABLED) {
+          pushAgentEvents(suggestion
+            ? { agent: 'design', status: 'finding', detail: suggestion.label, severity: 'low' }
+            : { agent: 'design', status: 'done', detail: 'design check passed' });
+        }
         if (suggestion) {
           addMessage({
             id: uid(), role: 'assistant', timestamp: Date.now(), status: 'done',
@@ -1282,10 +1479,79 @@ const storeProjectId = useEditorStore.getState().project?.id;
       clearStreamingContent();
       setProgressSteps([]);
     }
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject]);
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
+
+  // ── Agentic staged build: Atlas plans → Forge scaffolds (the one charged
+  // pass) → Forge fills in free internal batches, Sentinel reviewing every
+  // pass server-side. Falls back to the classic one-shot build whenever the
+  // plan is missing or small — the fallback still shows the team feed via the
+  // server's coder/security events. Flag-gated by NEXT_PUBLIC_AGENT_TEAM.
+  const runAgenticBuild = useCallback(async (userMsg: string, img: AttachedImage | null, paletteId?: string | null) => {
+    turnAgentEventsRef.current = [];
+    agentPassCountRef.current = 0;
+    turnCreditsRef.current = 0;
+    useAgentTurnStore.getState().resetTurn();
+    pushAgentEvents({ agent: 'planner', status: 'start', detail: 'mapping the build' });
+
+    // Atlas: the plan pass — a JSON file manifest, free (stage:'plan' skips
+    // billing server-side). Best-effort: any failure falls back to one-shot.
+    let staged: ReturnType<typeof buildStagedPlan> | null = null;
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: userMsg, stage: 'plan', projectType,
+          userId: resolvedUserId, projectId: resolvedProjectId,
+          isFirstBuild: true,
+        }),
+      });
+      if (res.ok) {
+        const manifest = parsePlanManifest(await res.text());
+        if (manifest.length) staged = buildStagedPlan(manifest);
+      }
+    } catch { /* plan pass is best-effort */ }
+
+    if (!staged || !staged.shouldStage) {
+      pushAgentEvents({ agent: 'planner', status: 'done', detail: staged ? 'compact build — one pass' : 'building in one pass' });
+      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true });
+      return;
+    }
+    pushAgentEvents({ agent: 'planner', status: 'done', detail: `${staged.files.length} files planned` });
+
+    // Forge: scaffold — the single charged pass; shell/theme/nav so the
+    // preview renders a skeleton right away.
+    agentPassCountRef.current += 1;
+    useAgentTurnStore.getState().setPasses(agentPassCountRef.current, MAX_INTERNAL_PASSES);
+    const hasFills = staged.fillBatches.length > 0;
+    await executeGenerationRef.current?.(userMsg, img, {
+      paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, finalPass: !hasFills,
+    });
+
+    // Forge: fill batches — free internal passes, visible as continuation
+    // bubbles (the established multi-part-build UX). Budget-capped.
+    for (let i = 0; i < staged.fillBatches.length; i++) {
+      if (agentPassCountRef.current >= MAX_INTERNAL_PASSES) {
+        pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: 'pass budget reached — some features may be missing; ask me to continue and I\'ll finish them' });
+        break;
+      }
+      const batch = staged.fillBatches[i];
+      agentPassCountRef.current += 1;
+      useAgentTurnStore.getState().setPasses(agentPassCountRef.current, MAX_INTERNAL_PASSES);
+      pushAgentEvents({ agent: 'coder', status: 'progress', detail: forgeLine(batch, 'fill'), pass: agentPassCountRef.current });
+      // Let React flush the previous pass's setFiles so the ref-latest closure
+      // sees the newest files as fileContext (same reason autofix delays).
+      await new Promise(r => setTimeout(r, 300));
+      await executeGenerationRef.current?.(userMsg, null, {
+        silent: true, continuation: true,
+        stage: 'fill', stageFiles: batch.map(f => f.path), internalPass: true,
+        finalPass: i === staged.fillBatches.length - 1,
+      });
+    }
+  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents]);
 
   const handleUndo = useCallback(() => {
     if (checkpoints.length === 0) return;
@@ -1458,8 +1724,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
         return;
       }
     }
+    // Agentic staged build (flag-gated): first builds only — edits keep
+    // today's single-request fast path (Sentinel still reviews them
+    // server-side). Screenshot/attachment builds skip staging: the plan pass
+    // can't see the image, so its manifest would be a blind guess.
+    if (AGENT_TEAM_ENABLED && !img && !hasAttachments && !useEditorStore.getState().hasGeneratedFiles) {
+      await runAgenticBuild(content, img, paletteId);
+      return;
+    }
     await executeGeneration(content, img, paletteId ? { paletteId } : undefined);
-  }, [files, handleConversational, executeGeneration]);
+  }, [files, handleConversational, executeGeneration, runAgenticBuild]);
 
   // Everything that runs once the user has settled on "just build it" —
   // regulated-domain notice, pre-gen dep gate, then the intent router. Pulled
@@ -1990,7 +2264,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
                               🧠 {liveReasoning.slice(-260)}
                             </div>
                           )}
-                          {progressSteps.length > 0
+                          {AGENT_TEAM_ENABLED && agentEvents.length > 0
+                            ? <AgentFeedBoundary>
+                                <AgentTeamFeed elapsed={elapsed} progressSteps={progressSteps} />
+                              </AgentFeedBoundary>
+                            : progressSteps.length > 0
                             ? <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
                                 {progressSteps.map((step, i) => {
                                   const isLast = i === progressSteps.length - 1;
@@ -2072,6 +2350,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       ))}
                     </div>
                   )}
+                  {msg.agentReport && (
+                    <AgentFeedBoundary>
+                      {msg.agentReport.agents.some(a => a.id === 'security') && (
+                        <SecurityReportCard report={msg.agentReport} />
+                      )}
+                      <TurnReceipt report={msg.agentReport} />
+                    </AgentFeedBoundary>
+                  )}
                   {(msg.status === 'done' || msg.status === 'error') && (
                     <div style={{ marginTop:5, display:'flex', gap:4 }}>
                       <button
@@ -2112,6 +2398,30 @@ const storeProjectId = useEditorStore.getState().project?.id;
                         ×
                       </button>
                     </div>
+                  )}
+                  {msg.loopStop && (
+                    <AgentFeedBoundary>
+                      <LoopStopCard
+                        loopStop={msg.loopStop}
+                        onRetry={(p) => { setInput(p); textareaRef.current?.focus(); }}
+                        onDismiss={() => updateMessage(msg.id, { loopStop: undefined })}
+                      />
+                    </AgentFeedBoundary>
+                  )}
+                  {msg.fixOffer && (
+                    <AgentFeedBoundary>
+                      <FixOfferCard
+                        fixOffer={msg.fixOffer}
+                        onFix={() => {
+                          const offer = msg.fixOffer!
+                          updateMessage(msg.id, { fixOffer: undefined })
+                          window.dispatchEvent(new CustomEvent('wyber-autofix', {
+                            detail: { prompt: offer.prompt, error: offer.error, approved: true },
+                          }))
+                        }}
+                        onDismiss={() => updateMessage(msg.id, { fixOffer: undefined })}
+                      />
+                    </AgentFeedBoundary>
                   )}
                 </div>
               </div>

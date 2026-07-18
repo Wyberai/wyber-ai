@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useEditorStore } from '@/store/editor';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
@@ -59,6 +59,18 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
   const { files, setFiles } = useEditorStore();
+
+  // Deep-link into a specific tab from elsewhere in the editor (e.g. the
+  // SecurityReportCard's "Open full security scan" → 'security'). Same
+  // CustomEvent pattern as wyber-request-mobile-view.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (typeof tab === 'string' && TABS.some(t => t.id === tab)) setActive(tab as Tab);
+    };
+    window.addEventListener('wyber-open-panel-tab', handler);
+    return () => window.removeEventListener('wyber-open-panel-tab', handler);
+  }, []);
 
   // FigmaImportPanel callback — add the imported component to the editor store and switch to chat
   const handleFigmaImport = (code: string, fileName: string) => {

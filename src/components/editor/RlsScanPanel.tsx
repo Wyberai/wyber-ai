@@ -1,5 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
+import { AgentFeedBoundary } from './agent-team/AgentTeamFeed';
+import { ThreatModelCard } from './agent-team/ThreatModelCard';
 
 // Live database security scan. Calls /api/security/rls-scan, which uses the
 // project's PUBLIC anon key to actually try reading every table with no user
@@ -118,6 +121,14 @@ export function RlsScanPanel({ projectId }: { projectId: string }) {
       <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--ide-text2, #9aa)', lineHeight: 1.6 }}>
         🔐 <strong>Real RLS scan.</strong> We take your app&apos;s public key and actually try to read every table as an anonymous visitor — the exact thing an attacker does. Anything that comes back is a proven data leak, not an AI guess.
       </div>
+
+      {/* Sentinel's static threat model (flag-gated with the agent team):
+          the MAP of the code's attack surface; the scan below is the PROBE. */}
+      {AGENT_TEAM_ENABLED && (
+        <AgentFeedBoundary>
+          <ThreatModelCard />
+        </AgentFeedBoundary>
+      )}
 
       {/* Security badge — off by default; this is the real per-project choice,
           not a silent toggle-on for everyone. Only actually appears on the

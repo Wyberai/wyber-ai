@@ -29,6 +29,27 @@ export interface ChatMessage {
   // clicking only populates the input box, it never auto-sends or
   // auto-regenerates.
   designSuggestion?: { prompt: string; label: string };
+  // Agent-team turn receipt (client-session only, same treatment as
+  // `reasoning`): what each agent did this turn, the security findings, and
+  // the single charge. Built from the turn's [agent:{...}] stream events —
+  // see src/lib/agents/events.ts. Renders as TurnReceipt + SecurityReportCard.
+  agentReport?: {
+    agents: { id: string; summary: string }[];
+    findings: {
+      findingId?: string;
+      severity: 'critical' | 'high' | 'medium' | 'low';
+      title: string;
+      status: 'fixed' | 'flagged' | 'dismissed';
+    }[];
+    passesUsed?: number;
+    credits?: number;
+  };
+  // Loop-stop card: self-heal hit the same error twice — surface what was
+  // tried instead of silently burning more passes (see loop-guard.ts).
+  loopStop?: { errorSummary: string; attempts: number; retryPrompt: string };
+  // Ask-first autonomy: a free fix pass OFFERED instead of auto-run (see
+  // agent-turn store `autonomy`). Fix dispatches the self-heal; Dismiss clears.
+  fixOffer?: { prompt: string; error?: string; label: string };
 }
 
 export interface Checkpoint {
