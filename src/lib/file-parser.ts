@@ -57,6 +57,9 @@ export function parseGenerationOutput(raw: string): ParseResult {
   chatText = chatText.replace(/```[\s\S]*?```/g, '');
   // Strip [progress: ...] markers — these are surfaced as the live checklist, never as chat text
   chatText = chatText.replace(/\[progress:[^\]]+\]/gi, '');
+  // Strip [agent:{...}] team-event markers — surfaced via extractAgentEvents
+  // (src/lib/agents/events.ts) as the agent feed, never as chat text.
+  chatText = chatText.replace(/\[agent:\{[^\n\]]*\}\]/g, '');
   // Clean up extra whitespace and blank lines
   chatText = chatText
     .split('\n')
@@ -118,6 +121,11 @@ export function cleanStreamingDisplay(raw: string): string {
   out = out.replace(/<<<<<<<\s*SEARCH[\s\S]*?>>>>>>>\s*REPLACE/g, '');
   const openSearch = out.search(/<<<<<<<\s*SEARCH/);
   if (openSearch !== -1) out = out.slice(0, openSearch);
+  // [agent:{...}] team-event markers render via the agent feed, never as text.
+  // Also cut a partial marker at the buffer tail (stream ended mid-marker).
+  out = out.replace(/\[agent:\{[^\n\]]*\}\]/g, '');
+  const openAgent = out.search(/\[agent:\{[^\n\]]*$/);
+  if (openAgent !== -1) out = out.slice(0, openAgent);
   return out.trim();
 }
 

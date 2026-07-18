@@ -32,13 +32,21 @@ export interface SecurityScanResult {
   findings: { file: string; name: string }[]
 }
 
+/** Scan a single file's content; returns the names of matched secret patterns. */
+export function scanFileForSecrets(content: string): string[] {
+  if (!content) return []
+  const names: string[] = []
+  for (const { name, pattern } of SECRET_PATTERNS) {
+    if (pattern.test(content)) names.push(name)
+  }
+  return names
+}
+
 export function scanForExposedSecrets(files: Record<string, FileVal>): SecurityScanResult {
   const findings: { file: string; name: string }[] = []
   for (const [path, val] of Object.entries(files || {})) {
-    const content = fileContent(val)
-    if (!content) continue
-    for (const { name, pattern } of SECRET_PATTERNS) {
-      if (pattern.test(content)) findings.push({ file: path, name })
+    for (const name of scanFileForSecrets(fileContent(val))) {
+      findings.push({ file: path, name })
     }
   }
   return { ok: findings.length === 0, findings }
