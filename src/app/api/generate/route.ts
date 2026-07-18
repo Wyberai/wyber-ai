@@ -10,6 +10,8 @@ import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
 import { WYBER_UI_KIT_PROMPT } from '@/lib/wyber-ui-kit'
 import { WYBER_STORE_PROMPT } from '@/lib/wyber-store'
+import { formatAgentEvent, type AgentEvent } from '@/lib/agents/events'
+import { reviewEmittedFile, createFindingIdGenerator, type SecurityRuleFinding } from '@/lib/agents/security-rules'
 
 // A build/edit turn only did something real if it produced an actual <file> or
 // <edit> block — not just because the model streamed text. Without this check,
@@ -1106,6 +1108,8 @@ async function resolveModelTier(opts: {
 }): Promise<ModelTier> {
   const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext } = opts
   if (stage === 'plan' || selfHeal) return 'fast'
+  // Targeted agent-fix passes (free, internal) are small scoped edits → Sonnet.
+  if (stage === 'agentFix') return 'fast'
   // Staged build passes (scaffold/fill) are part of an initial build → keep Opus.
   if (stage === 'scaffold' || stage === 'fill') return 'default'
   // From-scratch builds get the best model for a strong first impression.
@@ -1308,7 +1312,27 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     // NOTE: modelTier is no longer read from the client — the server picks the
     // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false } = body
+
+    // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
+    // WYBER_AGENT_TEAM=true turns on: [agent:{json}] event emission in the
+    // stream, Sentinel's in-stream security review, and the internal-pass
+    // billing lane. Off = byte-identical current behavior.
+    const agentTeamOn = process.env.WYBER_AGENT_TEAM === 'true'
+    // `internalPass` marks a follow-up pass of an already-charged turn (fill
+    // batches after a charged scaffold, or a targeted agent fix). Honored ONLY
+    // for those two bounded stages so a crafted request can never get a full
+    // build for free — and every internal pass is counted by the free-lane
+    // hourly guard below.
+    const isInternalPass = agentTeamOn && internalPass === true && (stage === 'fill' || stage === 'agentFix')
+    // Internal fills are batch-bounded by design (buildStagedPlan batches of 2);
+    // reject oversized lists so "fill" can't be abused as a free full build.
+    if (isInternalPass && stage === 'fill') {
+      const nFiles = Array.isArray(stageFiles) ? stageFiles.length : 0
+      if (nFiles === 0 || nFiles > 3) {
+        return new Response(JSON.stringify({ error: 'Invalid fill batch.' }), { status: 400 })
+      }
+    }
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
@@ -1343,8 +1367,10 @@ export async function POST(req: NextRequest) {
     // credit_usage (amount 0) so the limit holds across serverless instances;
     // the insert is awaited because a fire-and-forget row could miss the very
     // burst it's supposed to count.
-    if (selfHeal || stage === 'plan') {
-      const FREE_PASSES_PER_HOUR = 30
+    if (selfHeal || stage === 'plan' || isInternalPass) {
+      // Raised 30 → 60 for the agent team: a staged build adds ~2-4 free fill
+      // passes per turn on top of self-heals, all riding this same meter.
+      const FREE_PASSES_PER_HOUR = 60
       const guardAdmin = await createAdminClient()
       const hourAgo = new Date(Date.now() - 3600_000).toISOString()
       const { count } = await guardAdmin
@@ -1406,7 +1432,9 @@ export async function POST(req: NextRequest) {
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
     // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
     // skip deduction entirely — honoring the "self-healing is always free" promise.
-    if (stage !== 'plan' && !selfHeal) {
+    // Internal agent passes (fill / agentFix) are likewise free: the turn was
+    // charged once on its first pass ("your whole AI team, one price").
+    if (stage !== 'plan' && !selfHeal && !isInternalPass) {
       const admin = await createAdminClient()
       const { data: profile } = await admin
         .from('profiles')
@@ -1855,6 +1883,13 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       } else if (stage === 'fill') {
         const list = (stageFiles as string[]).join(', ')
         perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.`)
+      } else if (stage === 'agentFix') {
+        perRequestParts.push(`\n\n=== TARGETED FIX PASS ===\nApply ONLY the specific fix described in the request, using <edit> blocks (or a full <file> rewrite only if the file is small). Do not restyle, refactor, or touch anything else.`)
+      }
+      // Internal passes are free to the user — clamp their output budget so a
+      // forged request can't extract a large free generation.
+      if (isInternalPass) {
+        stageMaxTokens = Math.min(stageMaxTokens, stage === 'fill' ? 24000 : 8000)
       }
       if (stage === 'full') {
         staticSystemPrompt += '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
@@ -1905,6 +1940,75 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // budget_tokens is deprecated/rejected on these models.
     const thinkingParam = useThinking ? { thinking: { type: 'adaptive' as const, display: 'summarized' as const } } : {}
 
+    // ── Sentinel: in-stream security review (flag-gated, deterministic) ──
+    // Reviews every file the coder emits, DURING the generation. Blocking
+    // findings are handed back as failed tool_results (tool-use path) or a
+    // veto continuation turn (legacy path) so the coder re-emits a corrected
+    // file before it ever lands — capped at MAX_SECURITY_FIX_ITERATIONS extra
+    // passes; anything still unresolved lands, stays recorded in the event
+    // stream, and the publish gate remains the hard backstop.
+    const emitAgent = (controller: ReadableStreamDefaultController<Uint8Array>, e: AgentEvent) => {
+      if (!agentTeamOn) return
+      try { controller.enqueue(encoder.encode(formatAgentEvent(e))) } catch { /* stream closing */ }
+    }
+    const MAX_SECURITY_FIX_ITERATIONS = 2
+    let securityFixesUsed = 0
+    const nextFindingId = createFindingIdGenerator()
+    const openFindingsByPath = new Map<string, SecurityRuleFinding[]>()
+    const allFindings: SecurityRuleFinding[] = []
+    let emittedSql = ''
+    // On edits (fast path) only the always-critical rules may block — the rest
+    // stay advisory so small edits never slow down. New builds get full vetoes.
+    const vetoEligible = (f: SecurityRuleFinding) =>
+      f.blocking && (isNewBuild || stage === 'scaffold' || stage === 'fill'
+        || f.ruleId === 'secret-literal' || f.ruleId === 'service-role-client')
+    /** Review one emitted file/patch: emits finding/fixed events, tracks state,
+     * returns the findings that are eligible to veto (block) this pass. */
+    const sentinelReview = (
+      controller: ReadableStreamDefaultController<Uint8Array>,
+      path: string,
+      content: string,
+      patch = false,
+    ): SecurityRuleFinding[] => {
+      if (!agentTeamOn || selfHeal) return []
+      const prior = openFindingsByPath.get(path) ?? []
+      const findings = reviewEmittedFile(path, content, emittedSql, { patch, nextId: nextFindingId })
+      if (/create\s+table|create\s+policy|alter\s+table/i.test(content)) emittedSql += `\n${content}`
+      // A re-emitted file that no longer trips a rule → the earlier finding is fixed.
+      const openRules = new Set(findings.map(f => f.ruleId))
+      for (const p of prior) {
+        if (!openRules.has(p.ruleId)) {
+          emitAgent(controller, { agent: 'security', status: 'fixed', detail: `${p.detail} — fixed before it landed`, severity: p.severity, findingId: p.findingId })
+        }
+      }
+      const open: SecurityRuleFinding[] = []
+      for (const f of findings) {
+        const dup = prior.find(p => p.ruleId === f.ruleId)
+        if (dup) { open.push(dup); continue } // already reported, still open
+        allFindings.push(f)
+        emitAgent(controller, { agent: 'security', status: 'finding', detail: f.detail, severity: f.severity, findingId: f.findingId })
+        open.push(f)
+      }
+      openFindingsByPath.set(path, open)
+      return open.filter(vetoEligible)
+    }
+    /** Extract the schema comment block (or trailing raw SQL) from stream text
+     * so Sentinel can review SQL the model emitted as prose, not as a file. */
+    const extractSqlBlock = (text: string): string => {
+      // Last match wins — a corrected re-emitted block supersedes the vetoed one.
+      const matches = text.match(/\/\*\s*SQL TO RUN IN SUPABASE[\s\S]*?\*\//gi)
+      return matches ? matches[matches.length - 1] : ''
+    }
+    const sentinelDone = (controller: ReadableStreamDefaultController<Uint8Array>) => {
+      if (!agentTeamOn || selfHeal || stage === 'plan') return
+      const fixed = allFindings.filter(f => ![...openFindingsByPath.values()].flat().some(o => o.findingId === f.findingId)).length
+      const open = allFindings.length - fixed
+      const detail = allFindings.length === 0
+        ? 'no security issues found'
+        : `${fixed} issue${fixed === 1 ? '' : 's'} fixed before landing${open ? `, ${open} flagged` : ''}`
+      emitAgent(controller, { agent: 'security', status: 'done', detail })
+    }
+
     try {
       if (useToolUse) {
         // ── Tool-use prototype (Phase 5 sub-phase 1) ──────────────────────
@@ -1935,6 +2039,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // which is what made cheap edits expensive ($15/M output adds up).
             // Complex edits (Opus, 5cr) and builds keep the full budget.
             const MAX_TOOL_ITERATIONS = actionType === 'small-edit' && resolvedTier === 'fast' ? 3 : 6
+            emitAgent(controller, { agent: 'coder', status: 'start', detail: isNewBuild ? 'building your app' : 'making the change' })
+            emitAgent(controller, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+            // Blocking findings per path, pending hand-back as failed tool_results.
+            const vetoByPath = new Map<string, SecurityRuleFinding[]>()
             let assistantSoFar = ''
             let loopMessages: Anthropic.MessageParam[] = [...finalMessages]
             let stream = firstStream
@@ -1963,8 +2071,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               // entry-file guarantee: even when the continuation budget is
               // spent, a new build must never end without src/App.tsx (that is
               // a guaranteed-blank preview, strictly worse than a build that
-              // is merely missing one feature file).
-              for (let iter = 0; iter <= MAX_TOOL_ITERATIONS; iter++) {
+              // is merely missing one feature file). Sentinel vetoes extend the
+              // budget by the corrective iterations they consume (capped at
+              // MAX_SECURITY_FIX_ITERATIONS) so a veto never eats a build pass.
+              for (let iter = 0; iter <= MAX_TOOL_ITERATIONS + securityFixesUsed; iter++) {
                 for await (const event of stream) {
                   if (event.type === 'content_block_start') {
                     if (event.content_block.type === 'thinking') {
@@ -2029,6 +2139,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                             assistantSoFar += closeChunk
                             controller.enqueue(encoder.encode(closeChunk))
                           }
+                          // Sentinel reviews the file the moment it lands.
+                          const vetoes = sentinelReview(controller, parsed.path, parsed.content)
+                          if (vetoes.length) vetoByPath.set(parsed.path, vetoes)
+                          else vetoByPath.delete(parsed.path)
                         }
                       } catch (e) { console.error('[generate tool-use] bad write_file JSON:', e) }
                       toolJson = ''
@@ -2046,6 +2160,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                           const chunk = `<edit path="${parsed.path.replace(/"/g, '&quot;')}">\n<<<<<<< SEARCH\n${parsed.search}\n=======\n${parsed.replace}\n>>>>>>> REPLACE\n</edit>\n[progress: Edited ${parsed.path}]\n`
                           assistantSoFar += chunk
                           controller.enqueue(encoder.encode(chunk))
+                          // Patch mode: only the always-critical rules (secrets /
+                          // service-role) run on a fragment — see ReviewOptions.
+                          const vetoes = sentinelReview(controller, parsed.path, parsed.replace, true)
+                          if (vetoes.length) vetoByPath.set(parsed.path, vetoes)
                         }
                       } catch (e) { console.error('[generate tool-use] bad edit_file JSON:', e) }
                       toolJson = ''
@@ -2192,22 +2310,71 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                     })
                     continue
                   }
+                  // Sentinel: the schema SQL usually arrives as a trailing comment
+                  // block in the recap text (tool-use rule 9), not as a file —
+                  // review it now, and spend one corrective turn if it creates
+                  // tables without RLS.
+                  const sqlBlock = extractSqlBlock(assistantSoFar)
+                  if (sqlBlock && securityFixesUsed < MAX_SECURITY_FIX_ITERATIONS && finalMsg.content.length > 0) {
+                    const sqlVetoes = sentinelReview(controller, 'supabase-schema.sql', sqlBlock)
+                    if (sqlVetoes.length) {
+                      securityFixesUsed++
+                      emitAgent(controller, { agent: 'security', status: 'fixing', detail: 'requesting corrected SQL from the coder' })
+                      loopMessages = [
+                        ...loopMessages,
+                        { role: 'assistant', content: finalMsg.content },
+                        { role: 'user', content: `${sqlVetoes.map(v => v.fixInstruction).join('\n')}\nRe-emit ONLY the corrected "SQL TO RUN IN SUPABASE" comment block, complete — do not repeat anything else and do not call any tools.` },
+                      ]
+                      stream = await client.messages.stream({
+                        model,
+                        max_tokens: stageMaxTokens,
+                        system: systemBlocks,
+                        messages: withCacheBreakpoint(loopMessages),
+                        tools: [writeFileTool, editFileTool],
+                        ...thinkingParam,
+                      })
+                      continue
+                    }
+                  }
                   break // end_turn / refusal — done
                 }
 
                 const toolUseBlocks = finalMsg.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
                 if (toolUseBlocks.length === 0) break
+                // Sentinel veto: a blocking finding on a file written this turn is
+                // handed back as a FAILED tool_result, so the model's next
+                // iteration re-emits that file corrected — "fixed before it
+                // landed". Bounded by MAX_SECURITY_FIX_ITERATIONS; past the
+                // budget the file lands as-is (recorded; publish gate backstops).
+                const canVeto = securityFixesUsed < MAX_SECURITY_FIX_ITERATIONS
+                let vetoedThisTurn = false
+                const toolResults = toolUseBlocks.map(b => {
+                  const vetoPath = (b.input as { path?: string })?.path
+                  const vetoes = canVeto && vetoPath ? vetoByPath.get(vetoPath) : undefined
+                  if (vetoes?.length) {
+                    vetoedThisTurn = true
+                    return {
+                      type: 'tool_result' as const,
+                      tool_use_id: b.id,
+                      is_error: true,
+                      content: vetoes.map(v => v.fixInstruction).join('\n'),
+                    }
+                  }
+                  return {
+                    type: 'tool_result' as const,
+                    tool_use_id: b.id,
+                    content: b.name === 'write_file' ? 'File written.' : b.name === 'edit_file' ? 'File edited.' : 'Unknown tool.',
+                  }
+                })
+                vetoByPath.clear()
+                if (vetoedThisTurn) {
+                  securityFixesUsed++
+                  emitAgent(controller, { agent: 'security', status: 'fixing', detail: 'sent back to the coder for a corrected version' })
+                }
                 loopMessages = [
                   ...loopMessages,
                   { role: 'assistant', content: finalMsg.content },
-                  {
-                    role: 'user',
-                    content: toolUseBlocks.map(b => ({
-                      type: 'tool_result' as const,
-                      tool_use_id: b.id,
-                      content: b.name === 'write_file' ? 'File written.' : b.name === 'edit_file' ? 'File edited.' : 'Unknown tool.',
-                    })),
-                  },
+                  { role: 'user', content: toolResults },
                 ]
                 stream = await client.messages.stream({
                   model,
@@ -2220,6 +2387,8 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               }
             } catch (err) { console.error('Tool-use stream error:', err) }
             finally {
+              emitAgent(controller, { agent: 'coder', status: 'done' })
+              sentinelDone(controller)
               generatedText = assistantSoFar
               controller.close()
               if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
@@ -2258,8 +2427,48 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           // feeds parseGenerationOutput/continuation and must stay pure of
           // reasoning prose.
           let inThinkingBlock = false
+          // No agent events on the 'plan' stage — the client parses that stream
+          // as a raw JSON manifest, so markers would corrupt it; ChatPanel
+          // synthesizes the Planner's events itself. Self-heal likewise stays
+          // silent here (the client narrates it as the QA agent).
+          const emitLegacyAgents = stage !== 'plan' && !selfHeal
+          if (emitLegacyAgents) {
+            emitAgent(controller, {
+              agent: 'coder', status: 'start',
+              detail: stage === 'scaffold' ? 'building the app shell'
+                : stage === 'fill' ? 'building feature files'
+                : stage === 'agentFix' ? 'applying a targeted fix'
+                : isNewBuild ? 'building your app' : 'making the change',
+            })
+            emitAgent(controller, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+          }
+          // End-of-pass Sentinel review for the text-tag path: parse the files
+          // accumulated so far, review anything new, return eligible vetoes.
+          const reviewedKeys = new Set<string>()
+          const legacyReview = (): SecurityRuleFinding[] => {
+            if (!agentTeamOn || !emitLegacyAgents) return []
+            const vetoes: SecurityRuleFinding[] = []
+            try {
+              const { files } = parseGenerationOutput(assistantSoFar)
+              for (const f of files) {
+                const key = `${f.path}:${f.content.length}`
+                if (reviewedKeys.has(key)) continue
+                reviewedKeys.add(key)
+                vetoes.push(...sentinelReview(controller, f.path, f.content))
+              }
+              const sqlBlock = extractSqlBlock(assistantSoFar)
+              if (sqlBlock) {
+                const key = `sql:${sqlBlock.length}`
+                if (!reviewedKeys.has(key)) {
+                  reviewedKeys.add(key)
+                  vetoes.push(...sentinelReview(controller, 'supabase-schema.sql', sqlBlock))
+                }
+              }
+            } catch (e) { console.error('[sentinel] legacy review failed', e) }
+            return vetoes
+          }
           try {
-            for (let pass = 0; pass <= MAX_CONTINUATIONS; pass++) {
+            for (let pass = 0; pass <= MAX_CONTINUATIONS + securityFixesUsed; pass++) {
               for await (const event of stream) {
                 if (event.type === 'content_block_start' && event.content_block.type === 'thinking') {
                   inThinkingBlock = true
@@ -2281,8 +2490,32 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               const u = finalMsg.usage as unknown as Record<string, number>
               console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
 
-              // Only continue when the model was cut off by the token ceiling.
-              if (finalMsg.stop_reason !== 'max_tokens' || pass === MAX_CONTINUATIONS) break
+              // Pass finished cleanly → Sentinel end-of-pass review. A blocking
+              // finding spends a bounded corrective turn (the text-tag path has
+              // no tool_results to fail, so the veto rides a continuation turn);
+              // otherwise we're done.
+              if (finalMsg.stop_reason !== 'max_tokens') {
+                const vetoes = legacyReview()
+                if (vetoes.length && securityFixesUsed < MAX_SECURITY_FIX_ITERATIONS && assistantSoFar.trim()) {
+                  securityFixesUsed++
+                  emitAgent(controller, { agent: 'security', status: 'fixing', detail: 'requesting a corrected version from the coder' })
+                  stream = await client.messages.stream({
+                    model,
+                    max_tokens: stageMaxTokens,
+                    system: systemBlocks,
+                    messages: withCacheBreakpoint([
+                      ...finalMessages,
+                      { role: 'assistant' as const, content: assistantSoFar },
+                      { role: 'user' as const, content: `${vetoes.map(v => v.fixInstruction).join('\n')}\nRe-emit ONLY the affected file(s) or SQL block, corrected and complete, in the same output format. Do not repeat anything else.` },
+                    ]),
+                    ...thinkingParam,
+                  })
+                  continue
+                }
+                break
+              }
+              // Cut off by the token ceiling — continue, unless the budget is spent.
+              if (pass >= MAX_CONTINUATIONS + securityFixesUsed) break
               if (!assistantSoFar.trim()) break
               console.log(`[generate] pass ${pass} hit max_tokens — continuing (${assistantSoFar.length} chars so far)`)
               const cutoffTail = assistantSoFar.slice(-200)
@@ -2305,6 +2538,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             }
           } catch (err) { console.error('Stream error:', err) }
           finally {
+            if (emitLegacyAgents) {
+              legacyReview() // advisory sweep for anything not yet reviewed (e.g. max_tokens exit)
+              emitAgent(controller, { agent: 'coder', status: 'done' })
+              sentinelDone(controller)
+            }
             generatedText = assistantSoFar
             controller.close()
             // No real file/edit block produced → generation failed (whether or not
@@ -2388,6 +2626,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         // client's own save and stands down (see helper above).
         persistGeneratedFiles(projectId, generatedText),
         (async () => {
+          // Internal agent passes (fills / targeted fixes) still rescue-persist
+          // above, but only the charged pass distills memory / names / pushes —
+          // one turn, one distillation.
+          if (isInternalPass) return
           await updateProjectMemory({
             projectId,
             userPrompt: prompt,
@@ -2404,7 +2646,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // cookie-free service client + the handler-scoped `userId` (body param).
       // The old `notify(admin, user.id, …)` threw ReferenceError: admin is not
       // defined on every new build, silently killing the build-complete push.
-      if (isNewBuild && userId) {
+      if (isNewBuild && userId && !isInternalPass) {
         const { createServiceClient } = await import('@/lib/supabase/server')
         await notify(createServiceClient(), userId, 'build_complete', { projectId }).catch(() => {})
       }
@@ -2415,7 +2657,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'X-Model-Used': usedModel,
-        'X-Credits-Used': String(selfHeal ? 0 : cost),
+        'X-Credits-Used': String(selfHeal || isInternalPass ? 0 : cost),
         'X-Credits-Tier': resolvedTier,
         'X-Supabase-Status': supabaseStatus,
       },
