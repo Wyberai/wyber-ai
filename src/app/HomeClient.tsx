@@ -7,6 +7,10 @@ import { Footer } from '@/components/shared/FooterClient';
 import { type Currency } from '@/lib/currency';
 import { track } from '@/lib/track';
 import { VoiceButton } from '@/components/editor/VoiceButton';
+import { LanguageToggle } from '@/components/shared/LanguageToggle';
+import { LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
+import { HOME_STRINGS } from '@/lib/i18n/home-translations';
+import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
 
 const BRAND = '#0EA5E9';
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -260,8 +264,38 @@ const STAGES = [
 
 /* ————— page ————— */
 
-export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null }) {
+export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null }) {
   const inr = initialCurrency === 'INR';
+  // India-only locale switch — never rendered or read for non-India visitors.
+  // Starts 'en' on every render (server and first client paint match, so no
+  // hydration mismatch) and only adopts a saved preference after mount.
+  const [locale, setLocale] = useState<Locale>('en');
+  useEffect(() => {
+    if (!inr) return;
+    try {
+      const saved = localStorage.getItem(LOCALE_STORAGE_KEY) as Locale | null;
+      if (saved && (LOCALES as readonly string[]).includes(saved)) setLocale(saved);
+    } catch { /* private mode */ }
+  }, [inr]);
+  // Adaptive hero segment: server-resolved on tagged/referred visits (in the
+  // first paint — no flash), then remembered so the same visitor coming back
+  // via a bare URL still sees "their" hero. Post-mount adoption only, same
+  // hydration-safe pattern as the locale switch above.
+  const [segment, setSegment] = useState<HeroSegment | null>(initialSegment);
+  useEffect(() => {
+    try {
+      if (initialSegment) {
+        localStorage.setItem('wyber-hero-seg', initialSegment);
+      } else {
+        const saved = localStorage.getItem('wyber-hero-seg') as HeroSegment | null;
+        if (saved && saved in HERO_SEGMENT_STRINGS) setSegment(saved);
+      }
+    } catch { /* private mode */ }
+    if (initialSegment) track('homepage_segment_shown', { segment: initialSegment });
+  }, [initialSegment]);
+  // English-only override: India's local-language heroes are already adapted.
+  const base = HOME_STRINGS[locale];
+  const t = segment && locale === 'en' ? { ...base, ...HERO_SEGMENT_STRINGS[segment] } : base;
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(0);
@@ -285,7 +319,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
         localStorage.setItem('wyber-pending-prompt', p.slice(0, 2000));
         localStorage.setItem('wyber-pending-type', heroTarget);
       } catch { /* private mode */ }
-      track('homepage_prompt_submitted', { length: p.length, target: heroTarget });
+      track('homepage_prompt_submitted', { length: p.length, target: heroTarget, segment: segment ?? 'default' });
     }
     window.location.href = user ? '/dashboard' : '/signup';
   };
@@ -310,7 +344,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
 
   const product = PRODUCTS[activeProduct];
 
-  const navLinks: [string, string][] = [['Web Apps', '/use-cases/ai-app-builder'], ['Mobile Apps', '/templates/mobile'], ['Journey', '/space-journey'], ['Pricing', '/pricing']];
+  const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/ai-app-builder'], [t.navMobileApps, '/templates/mobile'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark">
@@ -325,15 +359,16 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
             <Link key={l} href={h} style={{ padding: '6px 12px', borderRadius: 7, fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--brand-text)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--brand-text-dim)'}>
-              {l === 'Journey' ? <>✦ {l}</> : l}
+              {l === t.navJourney ? <>✦ {l}</> : l}
             </Link>
           ))}
           <div style={{ width: 1, height: 16, background: 'var(--brand-border-strong)', margin: '0 6px' }} />
+          {inr && <LanguageToggle locale={locale} onChange={setLocale} />}
           {user
             ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>Dashboard →</Link>
             : <>
-                <Link href="/login" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
-                <Link href="/signup" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>Start free →</Link>
+                <Link href="/login" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', fontWeight: 500 }}>{t.signIn}</Link>
+                <Link href="/signup" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t.startFree}</Link>
               </>
           }
         </div>
@@ -355,11 +390,12 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
             {user
               ? <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>Dashboard →</Link>
               : <>
-                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="mk-btn-ghost" style={{ justifyContent: 'center' }}>Sign in</Link>
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>Start free →</Link>
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="mk-btn-ghost" style={{ justifyContent: 'center' }}>{t.signIn}</Link>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>{t.startFree}</Link>
                 </>
             }
           </div>
+          {inr && <div style={{ paddingTop: 12, display: 'flex', justifyContent: 'center' }}><LanguageToggle locale={locale} onChange={setLocale} /></div>}
         </div>
       )}
 
@@ -379,19 +415,19 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
             <Reveal y={16}>
               <div className="mk-eyebrow" style={{ marginBottom: 26 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px rgba(34,197,94,0.9)', animation: 'pulse 2s infinite' }} />
-                <span style={{ textDecoration: 'line-through', color: 'var(--brand-text-faint)', opacity: 0.7 }}>THE FASTEST</span>
-                {' '}THE MOST SECURE APP BUILDER
+                <span style={{ textDecoration: 'line-through', color: 'var(--brand-text-faint)', opacity: 0.7 }}>{t.eyebrowStrike}</span>
+                {' '}{t.eyebrowMain}
               </div>
             </Reveal>
             <Reveal delay={0.08}>
               <h1 className="mk-display" style={{ marginBottom: 26 }}>
-                Think of an app idea.<br />
-                <span className="mk-serif">Bring it to life.</span>
+                {t.heroLine1}<br />
+                <span className="mk-serif">{t.heroLine2}</span>
               </h1>
             </Reveal>
             <Reveal delay={0.16}>
               <p className="mk-lead" style={{ maxWidth: 520, marginBottom: 36 }}>
-                Web or mobile — same prompt, you pick the target. Self-healing builds. Live database security scans. The right AI model chosen for every task — automatically. Other builders generate code and hope. WyberAi engineers it.
+                {t.heroLead}
               </p>
             </Reveal>
             <Reveal delay={0.24}>
@@ -404,7 +440,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
                   value={heroPrompt}
                   onChange={e => setHeroPrompt(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitHeroPrompt(e); } }}
-                  placeholder="Describe your app… e.g. an expense tracker for freelancers with invoices"
+                  placeholder={t.heroPlaceholder}
                   rows={2}
                   style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--brand-text)', fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--font-sans)', padding: '8px 10px' }}
                 />
@@ -413,23 +449,24 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
                     <button type="button" onClick={() => setHeroTarget('app')} aria-pressed={heroTarget === 'app'}
                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: heroTarget === 'app' ? '1px solid rgba(14,165,233,0.45)' : '1px solid transparent', background: heroTarget === 'app' ? 'rgba(14,165,233,0.18)' : 'transparent', color: heroTarget === 'app' ? 'var(--brand-accent)' : 'var(--brand-text-dim)', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                      Web app
+                      {t.targetWeb}
                     </button>
                     <button type="button" onClick={() => setHeroTarget('mobile')} aria-pressed={heroTarget === 'mobile'}
                       style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: heroTarget === 'mobile' ? '1px solid rgba(168,85,247,0.45)' : '1px solid transparent', background: heroTarget === 'mobile' ? 'rgba(168,85,247,0.18)' : 'transparent', color: heroTarget === 'mobile' ? '#a855f7' : 'var(--brand-text-dim)', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                      Mobile app
+                      {t.targetMobile}
                     </button>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-text-dim)' }}>
                     <VoiceButton
-                      onTranscript={t => {
-                        setHeroPrompt(prev => (prev ? prev + ' ' + t : t));
-                        track('homepage_voice_used', { length: t.length });
+                      lang={LOCALE_SPEECH_CODE[locale]}
+                      onTranscript={txt => {
+                        setHeroPrompt(prev => (prev ? prev + ' ' + txt : txt));
+                        track('homepage_voice_used', { length: txt.length, locale });
                       }}
                     />
                     <button type="submit" className="mk-btn" style={{ padding: '10px 22px', fontSize: 14 }}>
-                      Build it — free →
+                      {t.ctaBuild}
                     </button>
                   </div>
                 </div>
@@ -439,16 +476,16 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null }: { init
                   <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: '50%', background: 'var(--brand-accent)', boxShadow: '0 0 12px var(--brand-glow)' }}>
                     <svg width="8" height="8" viewBox="0 0 12 12" fill="#fff"><path d="M3 2l7 4-7 4z" /></svg>
                   </span>
-                  Watch the demo
+                  {t.watchDemo}
                 </button>
                 <p className="mk-mono" style={{ fontSize: 11, marginBottom: 0 }}>
-                  50 FREE CREDITS · NO CARD · FROM {inr ? '₹499/MO' : '$29/MO'}
+                  {t.creditsLine(inr ? '₹499' : '$29')}
                 </p>
               </div>
               {inr && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>🛡 A US-registered company · SignalPulse Technologies, Wyoming</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>📱 Pay with UPI</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>🛡 {t.trustLine}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>📱 {t.upiLine}</span>
                 </div>
               )}
             </Reveal>

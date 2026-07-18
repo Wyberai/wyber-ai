@@ -35,7 +35,8 @@ export function ThreatModelCard() {
   const sentinel = agentMeta('security')
   if (!threatModelHasContent(tm)) return null
 
-  const surfaceCount = tm.supabaseTables.length + tm.authSurfaces.length
+  const surfaceCount = tm.supabaseTables.length + tm.collections.length + tm.authSurfaces.length
+    + tm.piiInputs.length + tm.localStorageKeys.length
     + tm.externalCalls.length + tm.sensitiveSinks.length + tm.secretFindings.length
 
   return (
@@ -70,6 +71,11 @@ export function ThreatModelCard() {
           {tm.supabaseTables.length > 0 && (
             <Section title={`Database tables touched (${tm.supabaseTables.length})`}>
               <Chips items={tm.supabaseTables} />
+            </Section>
+          )}
+          {tm.collections.length > 0 && (
+            <Section title={`Data collections (${tm.collections.length})`}>
+              <Chips items={tm.collections} />
             </Section>
           )}
           {tm.authSurfaces.length > 0 && (

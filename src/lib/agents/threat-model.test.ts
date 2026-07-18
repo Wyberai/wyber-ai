@@ -11,6 +11,14 @@ describe('buildThreatModel', () => {
     expect(tm.supabaseTables).toEqual(['orders', 'profiles'])
   })
 
+  it('extracts wyber-store collections', () => {
+    const tm = buildThreatModel({
+      'src/App.tsx': f(`const tasks = useCollection<Task>('tasks'); const users = getCollection("users")`),
+    })
+    expect(tm.collections).toEqual(['tasks', 'users'])
+    expect(threatModelHasContent(tm)).toBe(true)
+  })
+
   it('extracts localStorage keys', () => {
     const tm = buildThreatModel({
       'src/store.ts': f(`localStorage.setItem('cart', JSON.stringify(x)); localStorage.getItem('theme')`),

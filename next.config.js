@@ -23,7 +23,8 @@ const nextConfig = {
       { source: '/home', destination: '/', permanent: true },
       { source: '/app', destination: '/dashboard', permanent: false },
       { source: '/community', destination: '/gallery', permanent: true },
-      { source: '/build', destination: '/dashboard', permanent: false },
+      // NOTE: the old `/build → /dashboard` vanity alias was removed Jul 2026:
+      // /build is now the programmatic-SEO namespace (app/build/*).
     ]
   },
   async headers() {

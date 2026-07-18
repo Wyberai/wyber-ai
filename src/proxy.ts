@@ -36,6 +36,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/vs') ||
     path.startsWith('/lovable-alternatives') ||
     path.startsWith('/use-cases') ||
+    // Programmatic-SEO "build a ___ app" pages — public marketing surface.
+    path.startsWith('/build') ||
     path.startsWith('/employees') ||
     path.startsWith('/blog') ||
     path.startsWith('/contact') ||

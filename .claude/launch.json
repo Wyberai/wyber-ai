@@ -7,6 +7,48 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "session-c-worktree",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyberai-session-c", "--", "-p", "3011"],
+      "port": 3011
+    },
+    {
+      "name": "recon-site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "apps/site", "--prefix", "C:\\Users\\sumit\\recon-signal-v3"],
+      "port": 3001
+    },
+    {
+      "name": "recon-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "-w", "apps/web", "--prefix", "C:\\Users\\sumit\\recon-signal-v3"],
+      "port": 3000
+    },
+    {
+      "name": "wyberai-mobile-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "web", "--prefix", "C:\\Users\\sumit\\wyberai-mobile", "--", "--port", "8090"],
+      "port": 8090
+    },
+    {
+      "name": "jobpulse",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\jobpulse-app", "--", "--port", "5199"],
+      "port": 5199
+    },
+    {
+      "name": "session-a-worktree",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyberai-session-a", "--", "-p", "3012"],
+      "port": 3012
+    },
+    {
+      "name": "trugrain",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\trugrain", "--", "--port", "3100"],
+      "port": 3100
     }
   ]
 }

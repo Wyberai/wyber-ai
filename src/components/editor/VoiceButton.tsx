@@ -7,9 +7,13 @@ interface Props {
   onInterim?: (text: string) => void
   disabled?: boolean
   size?: number
+  /** BCP-47 code for the Web Speech API — Chrome supports hi-IN/kn-IN/te-IN/
+   * ta-IN natively, same as en-US. Defaults to en-US for every caller that
+   * doesn't pass a locale (dashboard/editor stay English-only for now). */
+  lang?: string
 }
 
-export function VoiceButton({ onTranscript, onInterim, disabled, size = 30 }: Props) {
+export function VoiceButton({ onTranscript, onInterim, disabled, size = 30, lang = 'en-US' }: Props) {
   const [listening, setListening] = useState(false)
   // Detect support in an effect, not the initial render: SSR renders null
   // (no window), so the client's first render must match or hydration drops
@@ -34,7 +38,7 @@ export function VoiceButton({ onTranscript, onInterim, disabled, size = 30 }: Pr
     const rec = new SpeechRecognition()
     rec.continuous = false
     rec.interimResults = !!onInterim
-    rec.lang = 'en-US'
+    rec.lang = lang
 
     rec.onresult = (e: any) => {
       let interim = ''
@@ -56,7 +60,7 @@ export function VoiceButton({ onTranscript, onInterim, disabled, size = 30 }: Pr
     rec.start()
     recRef.current = rec
     setListening(true)
-  }, [listening, supported, onTranscript, onInterim])
+  }, [listening, supported, onTranscript, onInterim, lang])
 
   if (!supported) return null
 

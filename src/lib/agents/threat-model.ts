@@ -27,6 +27,8 @@ export interface SensitiveSink {
 export interface ThreatModel {
   /** Supabase tables the code reads or writes (`.from('x')`). */
   supabaseTables: string[]
+  /** wyber-store collections — the data layer most generated apps actually use. */
+  collections: string[]
   /** localStorage keys the app persists client-side. */
   localStorageKeys: string[]
   /** Human-readable auth mechanisms found (empty = no auth surface). */
@@ -73,6 +75,7 @@ const IGNORED_DOMAIN_RE = /(^|\.)(supabase\.co|supabase\.in|localhost|127\.0\.0\
 
 export function buildThreatModel(files: Record<string, FileVal>): ThreatModel {
   const tables = new Set<string>()
+  const collections = new Set<string>()
   const storageKeys = new Set<string>()
   const auth = new Set<string>()
   const pii = new Set<string>()
@@ -87,6 +90,8 @@ export function buildThreatModel(files: Record<string, FileVal>): ThreatModel {
     filesAnalyzed++
 
     for (const m of code.matchAll(/\.from\(\s*["'`]([\w.]+)["'`]\s*\)/g)) tables.add(m[1])
+    // wyber-store collections: useCollection('tasks') / getCollection("users")
+    for (const m of code.matchAll(/(?:useCollection|getCollection)(?:<[^>]*>)?\(\s*["'`]([\w-]+)["'`]/g)) collections.add(m[1])
     for (const m of code.matchAll(/localStorage\.(?:get|set|remove)Item\(\s*["'`]([^"'`]+)["'`]/g)) storageKeys.add(m[1])
     for (const [re, label] of AUTH_LABELS) if (re.test(code)) auth.add(label)
     for (const [re, label] of PII_LABELS) if (re.test(code)) pii.add(label)
@@ -104,6 +109,7 @@ export function buildThreatModel(files: Record<string, FileVal>): ThreatModel {
 
   return {
     supabaseTables: [...tables].sort(),
+    collections: [...collections].sort(),
     localStorageKeys: [...storageKeys].sort(),
     authSurfaces: [...auth],
     externalCalls: [...domains.entries()]
@@ -118,7 +124,7 @@ export function buildThreatModel(files: Record<string, FileVal>): ThreatModel {
 
 /** True when the model has anything worth showing at all. */
 export function threatModelHasContent(tm: ThreatModel): boolean {
-  return tm.supabaseTables.length > 0 || tm.localStorageKeys.length > 0
+  return tm.supabaseTables.length > 0 || tm.collections.length > 0 || tm.localStorageKeys.length > 0
     || tm.authSurfaces.length > 0 || tm.externalCalls.length > 0
     || tm.sensitiveSinks.length > 0 || tm.piiInputs.length > 0
     || tm.secretFindings.length > 0

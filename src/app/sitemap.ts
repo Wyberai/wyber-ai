@@ -1,8 +1,21 @@
 import { MetadataRoute } from 'next'
+import { BUILD_PAGES } from './build/data'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://wyberai.com'
   const now = new Date()
+
+  // /build programmatic pages — derived from data so new batches are never
+  // forgotten here. Keep priority below the curated /use-cases pillars.
+  const buildRoutes: MetadataRoute.Sitemap = [
+    { url: `${base}/build`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
+    ...BUILD_PAGES.map(p => ({
+      url: `${base}/build/${p.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    })),
+  ]
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
@@ -51,5 +64,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // client-side redirect stubs (spinner → build project → /project or /login)
   // with no indexable content, which mass-triggered "not indexed" and tanked
   // sitemap quality. The public content page is /gallery (kept above).
-  return staticRoutes
+  return [...staticRoutes, ...buildRoutes]
 }

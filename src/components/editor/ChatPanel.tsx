@@ -1553,6 +1553,30 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
   }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents]);
 
+  // The ONE entry point for "start a build/edit now" — the agentic staged
+  // path for first builds (flag-gated), the classic single request otherwise.
+  // Every lane that kicks off generation (dispatchTurn, the dep-gate's Save
+  // keys & build / Build without backend resumes) must go through here, or it
+  // silently bypasses the agent team. Screenshot/attachment builds skip
+  // staging: the plan pass can't see the image, so its manifest would be a
+  // blind guess. Defined ABOVE its callers so their useCallback dep arrays
+  // never hit the const's temporal dead zone.
+  const startGeneration = useCallback(async (content: string, img: AttachedImage | null, paletteId?: string | null, hasAttachments = false) => {
+    // "First build" can NOT be hasGeneratedFiles alone: new projects ship with
+    // starter placeholder files, so hydration flips it true before the user's
+    // first real build and staging would silently never trigger (found in
+    // authed E2E Jul 18). A project is fresh until its entry file stops being
+    // the starter placeholder.
+    const st = useEditorStore.getState();
+    const appFile = (st.files?.['src/App.tsx'] || st.files?.['App.tsx'] || st.files?.['src/App.jsx']) as { content?: string } | undefined;
+    const isFirstBuild = !st.hasGeneratedFiles || isPlaceholderApp(appFile?.content);
+    if (AGENT_TEAM_ENABLED && !img && !hasAttachments && isFirstBuild) {
+      await runAgenticBuild(content, img, paletteId);
+      return;
+    }
+    await executeGeneration(content, img, paletteId ? { paletteId } : undefined);
+  }, [executeGeneration, runAgenticBuild]);
+
   const handleUndo = useCallback(() => {
     if (checkpoints.length === 0) return;
     const last = checkpoints[checkpoints.length - 1];
@@ -1583,13 +1607,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
     setInlineSecrets({});
     setSecretSaving(false);
     setPendingGenArgs(null);
-    await executeGeneration(prompt, img);
+    await startGeneration(prompt, img);
     // Tell the Connectors panel to refresh only after the triggered build
     // finishes — firing this right after the vault save made the panel show
     // "✓ Connected" while "Applying changes..." was still spinning, which
     // read as a stuck/contradictory state even though both were accurate.
     window.dispatchEvent(new CustomEvent('wyber:secrets-saved'));
-  }, [pendingGenArgs, inlineSecrets, executeGeneration]);
+  }, [pendingGenArgs, inlineSecrets, startGeneration]);
 
   /**
    * Conversational lane: questions, confirmations, greetings. Hits /api/assist,
@@ -1724,16 +1748,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
         return;
       }
     }
-    // Agentic staged build (flag-gated): first builds only — edits keep
-    // today's single-request fast path (Sentinel still reviews them
-    // server-side). Screenshot/attachment builds skip staging: the plan pass
-    // can't see the image, so its manifest would be a blind guess.
-    if (AGENT_TEAM_ENABLED && !img && !hasAttachments && !useEditorStore.getState().hasGeneratedFiles) {
-      await runAgenticBuild(content, img, paletteId);
-      return;
-    }
-    await executeGeneration(content, img, paletteId ? { paletteId } : undefined);
-  }, [files, handleConversational, executeGeneration, runAgenticBuild]);
+    await startGeneration(content, img, paletteId, hasAttachments);
+  }, [files, handleConversational, startGeneration]);
 
   // Everything that runs once the user has settled on "just build it" —
   // regulated-domain notice, pre-gen dep gate, then the intent router. Pulled
@@ -2190,7 +2206,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 const { prompt, img } = pendingGenArgs;
                 setPendingGenArgs(null);
                 setInlineSecrets({});
-                executeGeneration(prompt, img);
+                startGeneration(prompt, img);
               }}
               style={{ padding:'7px 14px', borderRadius:7, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text2)', fontSize:12, fontWeight:600, cursor:'pointer' }}
             >
