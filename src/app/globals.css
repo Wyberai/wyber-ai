@@ -15,6 +15,7 @@
 @font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
 
 @import "tailwindcss";
+@import "../styles/typeset.css";
 
 /* ─── BRAND TOKENS ───
    --brand-* vars come from src/styles/brand.css (frozen, imported in
@@ -202,6 +203,10 @@
    .wy-journey: revert-layer rolls the reset back to the cascade layers. */
 .wy-journey *, .wy-journey *::before, .wy-journey *::after { margin: revert-layer; padding: revert-layer; }
 .wy-journey { font-family: var(--font-sans); }
+/* shadcn/typeset (src/styles/typeset.css) needs the same escape hatch — its
+   @layer components rules set margin/padding on headings, lists, tables etc.,
+   which this reset would otherwise zero out regardless of specificity. */
+.typeset, .typeset *, .typeset *::before, .typeset *::after { margin: revert-layer; padding: revert-layer; }
 .wy-journey .font-mono { font-family: var(--font-mono); }
 .wy-journey .wy-display { font-family: var(--font-display); }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }

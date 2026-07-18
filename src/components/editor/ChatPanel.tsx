@@ -260,32 +260,21 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   );
 }
 
-// Markdown component overrides: keep everything sized/spaced for a compact
-// chat bubble (the parent sets fontSize:12/lineHeight:1.65 — these just fix
-// margins/list indentation instead of full browser-default markdown spacing).
-// `pre` is where fenced code blocks land (inline code never has a `pre`
-// wrapper), so overriding it — not `code` — is what reliably distinguishes a
-// real code block from a single backtick-quoted word.
+// Markdown component overrides. Typography (p/h1-h4/ul/ol/li/blockquote/hr/
+// table cells/inline code) is now handled by shadcn/typeset CSS — the
+// renderMessage() wrapper below applies .typeset.typeset-chat — so those
+// elements render bare and pick up typeset's :where() rules instead of
+// fighting them with inline styles. Only two overrides remain, both for
+// BEHAVIOR typeset doesn't provide:
+//  - `a`: forces target="_blank"/rel — link-opening behavior, not styling.
+//  - `table`: typeset needs an explicit .typeset-scroll wrapper to make wide
+//    tables scroll instead of visually compressing inside the chat column.
+//  - `pre`: fenced code blocks land here (inline code never has a `pre`
+//    wrapper), rendered as the custom CodeBlock (copy button + real Prism
+//    syntax highlighting) that typeset has no equivalent for.
 const markdownComponents: Components = {
-  p: ({ children }) => <div style={{ margin:'2px 0' }}>{children}</div>,
-  h1: ({ children }) => <div style={{ fontWeight:700, fontSize:14, marginTop:8, marginBottom:2 }}>{children}</div>,
-  h2: ({ children }) => <div style={{ fontWeight:700, fontSize:13, marginTop:8, marginBottom:2 }}>{children}</div>,
-  h3: ({ children }) => <div style={{ fontWeight:700, marginTop:6, marginBottom:2 }}>{children}</div>,
-  h4: ({ children }) => <div style={{ fontWeight:700, marginTop:6, marginBottom:2 }}>{children}</div>,
-  ul: ({ children }) => <ul style={{ margin:'4px 0', paddingLeft:18 }}>{children}</ul>,
-  ol: ({ children }) => <ol style={{ margin:'4px 0', paddingLeft:18 }}>{children}</ol>,
-  li: ({ children }) => <li style={{ marginBottom:2 }}>{children}</li>,
-  blockquote: ({ children }) => <blockquote style={{ margin:'6px 0', paddingLeft:10, borderLeft:'3px solid var(--ide-border)', color:'var(--ide-text3)' }}>{children}</blockquote>,
-  hr: () => <hr style={{ margin:'8px 0', border:'none', borderTop:'1px solid var(--ide-border)' }} />,
-  a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" style={{ color:'var(--accent)' }}>{children}</a>,
-  table: ({ children }) => <div style={{ overflowX:'auto', margin:'6px 0' }}><table style={{ borderCollapse:'collapse', fontSize:11, width:'100%' }}>{children}</table></div>,
-  th: ({ children }) => <th style={{ border:'1px solid var(--ide-border)', padding:'4px 8px', textAlign:'left', background:'var(--bg-overlay)', fontWeight:600 }}>{children}</th>,
-  td: ({ children }) => <td style={{ border:'1px solid var(--ide-border)', padding:'4px 8px' }}>{children}</td>,
-  code: ({ className, children }) => (
-    <code style={{ background:'var(--bg-overlay)', padding:'1px 5px', borderRadius:3, fontFamily:'monospace', fontSize:12 }} className={className}>
-      {children}
-    </code>
-  ),
+  a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
+  table: ({ children }) => <div className="typeset-scroll"><table>{children}</table></div>,
   pre: ({ children }) => {
     // children is the single <code> element react-markdown produced for this
     // fenced block; pull its language + text out and render our own CodeBlock
@@ -309,9 +298,11 @@ function renderMessage(text: string) {
   // messages, so keep this defensive strip too).
   const cleaned = stripInternalMarkers(text).replace(/```edited:[^`]*```/g, '');
   return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-      {cleaned}
-    </ReactMarkdown>
+    <div className="typeset typeset-chat">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {cleaned}
+      </ReactMarkdown>
+    </div>
   );
 }
 

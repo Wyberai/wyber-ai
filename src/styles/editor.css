@@ -34,6 +34,18 @@
   --accent-glow: var(--brand-glow-soft);
 }
 
+/* shadcn/typeset preset for chat message bodies (src/components/editor/ChatPanel.tsx
+   renderMessage) — tighter than typeset's blog-post defaults (1.25em flow) so a
+   thread of short messages doesn't turn sparse; size/leading match the panel's
+   prior hand-rolled inline styles (13px / 1.65) so this reads as a styling
+   upgrade, not a resize. */
+.typeset-chat {
+  --typeset-font-heading: inherit;
+  --typeset-size: 13px;
+  --typeset-leading: 1.65;
+  --typeset-flow: 0.6em;
+}
+
 /* Slim, unobtrusive scrollbars inside the cockpit */
 .ide-root ::-webkit-scrollbar { width: 8px; height: 8px; }
 .ide-root ::-webkit-scrollbar-track { background: transparent; }
