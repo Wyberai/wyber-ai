@@ -826,25 +826,40 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const pendingSave = useRef<typeof files | null>(null);
   const saveWarned = useRef(false);
   const saveRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Guards against a second overlapping save loop. Staged agent-team builds
+  // call saveProject once per pass (scaffold + up to 7 fill batches) — without
+  // this, each call started its OWN independent retry loop, so multiple
+  // unserialized PATCH requests raced each other and whichever happened to
+  // land LAST won regardless of which pass it belonged to, silently
+  // clobbering later passes' files with an earlier, incomplete snapshot
+  // (root cause of publish shipping stale/incomplete apps after staged
+  // builds). Now only one loop ever runs; new calls just bump pendingSave
+  // and the active loop's next send picks up the latest state.
+  const saveLoopActive = useRef(false);
   useEffect(() => () => { if (saveRetryTimer.current) clearTimeout(saveRetryTimer.current); }, []);
 
   const saveProject = useCallback((updatedFiles: typeof files) => {
     if (!resolvedProjectId) return;
     pendingSave.current = updatedFiles;
+    if (saveLoopActive.current) return;
+    saveLoopActive.current = true;
     if (saveRetryTimer.current) { clearTimeout(saveRetryTimer.current); saveRetryTimer.current = null; }
 
     const attempt = async (): Promise<boolean> => {
-      if (!pendingSave.current) return true;
+      const toSave = pendingSave.current;
+      if (!toSave) return true;
       try {
         const res = await fetch('/api/projects', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId: resolvedProjectId, files: pendingSave.current, userId: resolvedUserId || 'auto' }),
+          body: JSON.stringify({ projectId: resolvedProjectId, files: toSave, userId: resolvedUserId || 'auto' }),
         });
+        // Only clear if nothing newer queued while this request was in
+        // flight — otherwise the loop below must keep going to flush that.
+        if (res.ok && pendingSave.current === toSave) pendingSave.current = null;
         return res.ok;
       } catch { return false; }
     };
     const onSaved = () => {
-      pendingSave.current = null;
       if (saveWarned.current) {
         saveWarned.current = false;
         addMessage({ id: uid(), role: 'assistant', content: '✓ Connection restored — all your changes are saved.', timestamp: Date.now(), status: 'done' });
@@ -852,19 +867,26 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     };
 
     void (async () => {
-      for (const delay of [0, 2000, 6000]) {
-        if (delay) await new Promise(r => setTimeout(r, delay));
-        if (await attempt()) { onSaved(); return; }
+      while (pendingSave.current) {
+        let landed = false;
+        for (const delay of [0, 2000, 6000]) {
+          if (delay) await new Promise(r => setTimeout(r, delay));
+          if (await attempt()) { landed = true; onSaved(); break; }
+        }
+        if (landed) continue; // pendingSave may already hold a newer pass — recheck
+        if (!saveWarned.current) {
+          saveWarned.current = true;
+          addMessage({ id: uid(), role: 'assistant', content: '⚠ **I can\'t reach the server to save your latest changes.** Your work is safe in this tab and I\'ll keep retrying — just don\'t close it until you see the saved confirmation.', timestamp: Date.now(), status: 'done' });
+        }
+        await new Promise<void>(resolve => {
+          const retryLoop = async () => {
+            if (await attempt()) { onSaved(); resolve(); return; }
+            saveRetryTimer.current = setTimeout(retryLoop, 20_000);
+          };
+          saveRetryTimer.current = setTimeout(retryLoop, 20_000);
+        });
       }
-      if (!saveWarned.current) {
-        saveWarned.current = true;
-        addMessage({ id: uid(), role: 'assistant', content: '⚠ **I can\'t reach the server to save your latest changes.** Your work is safe in this tab and I\'ll keep retrying — just don\'t close it until you see the saved confirmation.', timestamp: Date.now(), status: 'done' });
-      }
-      const loop = async () => {
-        if (await attempt()) { onSaved(); return; }
-        saveRetryTimer.current = setTimeout(loop, 20_000);
-      };
-      saveRetryTimer.current = setTimeout(loop, 20_000);
+      saveLoopActive.current = false;
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage]);
 
