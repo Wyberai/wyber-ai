@@ -100,10 +100,21 @@ export function buildStagedPlan(files: PlannedFile[]): StagedPlan {
  * Uses the feature purpose, not the filename, so it reads like a craftsman
  * narrating rather than a compiler logging.
  */
+// Atlas (the plan step) sometimes lists a platform-provided file (e.g.
+// wyber-store.ts) with a purpose that's a note to itself, not a feature
+// description — "DO NOT CREATE - platform injected local-first storage" is a
+// real one seen live. forgeLine used to surface that verbatim as "Building
+// the DO NOT CREATE - platform injected local-first storage", leaking
+// planning metadata into the user-facing progress line. Filter those out.
+function looksLikeInternalNote(purpose: string): boolean {
+  return /^do not\b/i.test(purpose) || /platform.injected/i.test(purpose) || /already (exists|provided)/i.test(purpose)
+}
+
 export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): string {
   if (phase === 'scaffold') return 'Laying the foundation — shell, theme, and navigation'
-  // Prefer the most descriptive purpose in the batch
-  const withPurpose = batch.find((f) => f.purpose && f.purpose.length > 4)
+  // Prefer the most descriptive purpose in the batch, skipping any that read
+  // like an internal note rather than a feature description.
+  const withPurpose = batch.find((f) => f.purpose && f.purpose.length > 4 && !looksLikeInternalNote(f.purpose))
   if (withPurpose) {
     // Clean the purpose into a short phrase
     const p = withPurpose.purpose.replace(/^(the|a|an)\s+/i, '').replace(/\.$/, '')

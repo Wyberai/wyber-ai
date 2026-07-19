@@ -1718,7 +1718,19 @@ ${code}
 
     const resolvedTier = tier
     const model = MODELS[resolvedTier] ?? MODELS.default
-    const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
+    // 'fast' was 8000 with no documented rationale (vs 64000-96000 for the
+    // other tiers) — every continuation call below reuses this SAME cap
+    // (max_tokens: stageMaxTokens), so any 'fast'-tier edit whose real output
+    // exceeds it (common: this app's rich-UI style means even a Haiku-classified
+    // "LOW complexity" edit like a notifications dropdown or settings page
+    // often runs 15-25K tokens) pays for a fully sequential round-trip PER
+    // continuation — confirmed live via server logs showing single edits
+    // taking 3-6+ minutes across 3-4 chained 8000-token calls. 24000 matches
+    // the budget this file already trusts elsewhere (the isInternalPass 'fill'
+    // clamp below) — most of those edits now complete in one call instead of
+    // three or four, with no cost change (the model still stops at its own
+    // natural end_turn; a higher ceiling doesn't make it write more).
+    const maxTokens = resolvedTier === 'fast' ? 24000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
     const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
