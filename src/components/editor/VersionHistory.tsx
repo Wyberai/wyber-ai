@@ -42,7 +42,14 @@ export function VersionHistory({ projectId }: { projectId: string }) {
         body: JSON.stringify({ projectId, files, label }),
       })
       const data = await res.json()
-      if (data.version) setVersions(v => [data.version, ...v])
+      // The POST response deliberately omits `files` (no reason to round-trip
+      // potentially large file content back over the wire when the client
+      // already has it) — but the list item's "N files" count reads
+      // `v.files`, so the just-saved snapshot showed "0 files" until the
+      // panel was reloaded. The content was always correctly persisted
+      // (confirmed directly in the DB); this was a display-only bug that
+      // still looked exactly like "did this actually save anything?"
+      if (data.version) setVersions(v => [{ ...data.version, files }, ...v])
     } catch {}
     setLabelInput('')
     setSaving(false)
