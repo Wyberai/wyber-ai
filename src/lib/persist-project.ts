@@ -45,22 +45,37 @@ export function withProjectWriteLock<T>(projectId: string, fn: () => Promise<T>)
   return result
 }
 
+// Went through two rounds tonight patching individual callers (ChatPanel's
+// own flow, then self-heal) as each one turned out to race the SAME class of
+// problem — same-tab concurrent writers during an active build, not a real
+// second tab. Patching call sites one at a time only fixes the specific pair
+// I happened to catch live; the next caller that fires mid-build (a self-heal
+// variant, a future feature) would hit the identical false conflict again.
+// Fixed once, properly: whether to enforce is now automatic, based on
+// whether THIS TAB is (or just was) actively mid-build — isGenerating is
+// per-tab store state, so checking it here correctly tells apart "my own
+// build's other writers" (skip enforcement) from "a genuinely different tab"
+// (that tab's isGenerating can't affect this tab's check either way, so
+// enforcement still applies). A short trailing grace window covers saves
+// that start just after isGenerating flips false but are still racing the
+// build's own tail-end writes.
+let lastGeneratingAt = 0
+if (typeof window !== 'undefined') {
+  useEditorStore.subscribe((state, prevState) => {
+    if (state.isGenerating || prevState.isGenerating) lastGeneratingAt = Date.now()
+  })
+}
+const GENERATING_GRACE_MS = 5000
+
 export async function persistProjectFiles(
   projectId: string,
   files: unknown,
   userId: string | undefined,
   opts?: { enforceConflict?: boolean },
 ): Promise<boolean> {
-  // Self-heal calls this with enforceConflict:false — confirmed live that it
-  // shares the exact same race as ChatPanel's own save flow (both are part of
-  // the SAME build turn, not a genuinely separate tab): self-heal reads
-  // project.updated_at, the chat flow's own (unguarded) save lands first and
-  // moves the real value forward, and self-heal's already-in-flight request
-  // then gets a false "changed in another tab" conflict for a write that was
-  // never in another tab at all — just a few hundred ms behind its own turn's
-  // other save. Genuinely separate user actions (theme change, image regen,
-  // version restore, in-preview text edit) keep full enforcement.
   const enforceConflict = opts?.enforceConflict !== false
+    && !useEditorStore.getState().isGenerating
+    && Date.now() - lastGeneratingAt > GENERATING_GRACE_MS
   const attempt = async (): Promise<AttemptResult> => withProjectWriteLock(projectId, async () => {
     const project = useEditorStore.getState().project
     const expectedUpdatedAt = enforceConflict && project?.id === projectId ? project.updated_at : undefined
