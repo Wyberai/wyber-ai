@@ -73,6 +73,11 @@ export function PreviewPanel() {
   // so a missed heartbeat IS the detection signal, not a separate crash check.
   const lastHeartbeat = useRef(0)
   const [hung, setHung] = useState(false)
+  // D6: surfaces a specific, actionable message for a CORS-blocked external
+  // API call instead of the app just silently failing and users blaming the
+  // builder. Non-fatal (unlike a startup crash) — doesn't touch `error`/the
+  // preview at all, just an informational strip the user can dismiss.
+  const [corsNotice, setCorsNotice] = useState<{ message: string; url?: string } | null>(null)
 
   // Mirror local error/heal state into the store so UI outside this component
   // (e.g. Wyberman) can know the preview is stuck, without touching any of the
@@ -375,6 +380,9 @@ export function PreviewPanel() {
         lastHeartbeat.current = Date.now()
         if (hung) setHung(false)
       }
+      if (e.data.type === 'wyber-cors-error') {
+        setCorsNotice({ message: String(e.data.message || ''), url: e.data.url })
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
@@ -384,7 +392,7 @@ export function PreviewPanel() {
   // the OLD iframe's last heartbeat lingers and the watchdog below could fire
   // on the brand-new iframe before it's even had a chance to send its first
   // beat (postMessage + iframe navigation both take a moment).
-  useEffect(() => { lastHeartbeat.current = Date.now(); setHung(false) }, [html])
+  useEffect(() => { lastHeartbeat.current = Date.now(); setHung(false); setCorsNotice(null) }, [html])
 
   // Poll for a missed heartbeat. A generous 10s threshold (5x the 2s beat
   // interval) avoids false positives from normal GC pauses or heavy renders;
@@ -679,6 +687,16 @@ Change requested: ${editInstruction.trim()}`
             onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) iframeRef.current.src = html }}
             style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
           >Reload preview</button>
+        </div>
+      )}
+
+      {/* CORS-blocked external API notice (D6) — informational only, never
+          touches `error`/the preview; the app itself keeps running exactly as
+          it would have without this banner. */}
+      {corsNotice && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+          <span>⚠ This app tried to call {corsNotice.url ? <code style={{ background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>{corsNotice.url}</code> : 'an external API'} directly from the browser, and that API's server doesn't allow requests from this origin (CORS). This usually needs a server-side proxy for that call, not a builder fix.</span>
+          <button onClick={() => setCorsNotice(null)} style={{ background: 'none', border: 'none', color: '#fef3c7', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 4px', opacity: 0.7 }}>&times;</button>
         </div>
       )}
 
