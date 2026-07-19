@@ -854,19 +854,34 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     saveLoopActive.current = true;
     if (saveRetryTimer.current) { clearTimeout(saveRetryTimer.current); saveRetryTimer.current = null; }
 
-    const attempt = async (): Promise<boolean> => {
+    // 'conflict' means another tab/session saved this same project since this
+    // one last saw it — writing this tab's stale-based files would silently
+    // clobber that other save with no signal to anyone (the last-writer-wins
+    // multi-tab data-loss bug). Read `project` fresh via getState() rather
+    // than closing over the outer variable, since this loop can run for
+    // minutes across retries and the store's copy may have moved on.
+    const attempt = async (): Promise<'ok' | 'conflict' | 'fail'> => {
       const toSave = pendingSave.current;
-      if (!toSave) return true;
+      if (!toSave) return 'ok';
+      const currentProject = useEditorStore.getState().project;
+      const expectedUpdatedAt = currentProject?.id === resolvedProjectId ? currentProject.updated_at : undefined;
       try {
         const res = await fetch('/api/projects', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId: resolvedProjectId, files: toSave, userId: resolvedUserId || 'auto' }),
+          body: JSON.stringify({ projectId: resolvedProjectId, files: toSave, userId: resolvedUserId || 'auto', expectedUpdatedAt }),
         });
+        if (res.status === 409) return 'conflict';
+        if (!res.ok) return 'fail';
+        const data = await res.json().catch(() => null);
+        if (data?.updatedAt) {
+          const cur = useEditorStore.getState().project;
+          if (cur?.id === resolvedProjectId) setProject({ ...cur, updated_at: data.updatedAt });
+        }
         // Only clear if nothing newer queued while this request was in
         // flight — otherwise the loop below must keep going to flush that.
-        if (res.ok && pendingSave.current === toSave) pendingSave.current = null;
-        return res.ok;
-      } catch { return false; }
+        if (pendingSave.current === toSave) pendingSave.current = null;
+        return 'ok';
+      } catch { return 'fail'; }
     };
     const onSaved = () => {
       if (saveWarned.current) {
@@ -878,26 +893,44 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     void (async () => {
       while (pendingSave.current) {
         let landed = false;
+        let conflicted = false;
         for (const delay of [0, 2000, 6000]) {
           if (delay) await new Promise(r => setTimeout(r, delay));
-          if (await attempt()) { landed = true; onSaved(); break; }
+          const result = await attempt();
+          if (result === 'ok') { landed = true; onSaved(); break; }
+          if (result === 'conflict') { conflicted = true; break; }
+        }
+        if (conflicted) {
+          pendingSave.current = null;
+          addMessage({ id: uid(), role: 'assistant', content: "⚠ **This project changed in another tab or session since you loaded it.** To avoid overwriting that work, this change wasn't saved — reload the page to see the latest version before continuing.", timestamp: Date.now(), status: 'done' });
+          break;
         }
         if (landed) continue; // pendingSave may already hold a newer pass — recheck
         if (!saveWarned.current) {
           saveWarned.current = true;
           addMessage({ id: uid(), role: 'assistant', content: '⚠ **I can\'t reach the server to save your latest changes.** Your work is safe in this tab and I\'ll keep retrying — just don\'t close it until you see the saved confirmation.', timestamp: Date.now(), status: 'done' });
         }
+        let resolvedConflict = false;
         await new Promise<void>(resolve => {
           const retryLoop = async () => {
-            if (await attempt()) { onSaved(); resolve(); return; }
+            const result = await attempt();
+            if (result === 'ok') { onSaved(); resolve(); return; }
+            if (result === 'conflict') {
+              resolvedConflict = true;
+              pendingSave.current = null;
+              addMessage({ id: uid(), role: 'assistant', content: "⚠ **This project changed in another tab or session since you loaded it.** To avoid overwriting that work, this change wasn't saved — reload the page to see the latest version before continuing.", timestamp: Date.now(), status: 'done' });
+              resolve();
+              return;
+            }
             saveRetryTimer.current = setTimeout(retryLoop, 20_000);
           };
           saveRetryTimer.current = setTimeout(retryLoop, 20_000);
         });
+        if (resolvedConflict) break;
       }
       saveLoopActive.current = false;
     })();
-  }, [resolvedProjectId, resolvedUserId, addMessage]);
+  }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
   const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting

@@ -8,25 +8,45 @@
 // (a chat message) instead of adding yet another topbar status pill — this
 // codebase already deliberately avoids stacking multiple build-state
 // indicators (see TopBar.tsx's "third indicator was pure noise" note).
+//
+// Also carries the multi-tab conflict guard: every save sends the
+// `updated_at` this tab last saw (project.updated_at in the store). If the
+// server's row has since moved — another tab saved in between — the PATCH
+// returns 409 instead of silently overwriting the other tab's changes with
+// this tab's stale-based edit (the last-writer-wins data-loss bug). A
+// conflict is NOT a transient failure, so it does not enter the retry loop —
+// retrying with the same stale expectedUpdatedAt would just 409 forever.
 import { useEditorStore } from '@/store/editor'
 
 let warned = false
+let conflictWarned = false
+
+type AttemptResult = 'ok' | 'conflict' | 'fail'
 
 export async function persistProjectFiles(
   projectId: string,
   files: unknown,
   userId: string | undefined,
 ): Promise<boolean> {
-  const attempt = async (): Promise<boolean> => {
+  const attempt = async (): Promise<AttemptResult> => {
+    const project = useEditorStore.getState().project
+    const expectedUpdatedAt = project?.id === projectId ? project.updated_at : undefined
     try {
       const res = await fetch('/api/projects', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, files, userId: userId || 'auto' }),
+        body: JSON.stringify({ projectId, files, userId: userId || 'auto', expectedUpdatedAt }),
       })
-      return res.ok
+      if (res.status === 409) return 'conflict'
+      if (!res.ok) return 'fail'
+      const data = await res.json().catch(() => null)
+      if (data?.updatedAt) {
+        const cur = useEditorStore.getState().project
+        if (cur?.id === projectId) useEditorStore.getState().setProject({ ...cur, updated_at: data.updatedAt })
+      }
+      return 'ok'
     } catch {
-      return false
+      return 'fail'
     }
   }
 
@@ -42,9 +62,22 @@ export async function persistProjectFiles(
     }
   }
 
+  const onConflict = () => {
+    useEditorStore.getState().setSaveStatus('error')
+    if (conflictWarned) return
+    conflictWarned = true
+    useEditorStore.getState().addMessage({
+      id: `save-conflict-${Date.now()}`, role: 'assistant',
+      content: "⚠ **This project changed in another tab or session since you loaded it.** To avoid overwriting that work, this change wasn't saved — reload the page to see the latest version before continuing.",
+      timestamp: Date.now(), status: 'done',
+    })
+  }
+
   for (const delay of [0, 1500, 4000]) {
     if (delay) await new Promise(r => setTimeout(r, delay))
-    if (await attempt()) { onSaved(); return true }
+    const result = await attempt()
+    if (result === 'ok') { onSaved(); return true }
+    if (result === 'conflict') { onConflict(); return false }
   }
 
   useEditorStore.getState().setSaveStatus('error')
@@ -60,7 +93,9 @@ export async function persistProjectFiles(
   // lose the edit just because the caller stopped awaiting this promise.
   void (function retryLoop() {
     setTimeout(async () => {
-      if (await attempt()) { onSaved(); return }
+      const result = await attempt()
+      if (result === 'ok') { onSaved(); return }
+      if (result === 'conflict') { onConflict(); return }
       retryLoop()
     }, 20_000)
   })()

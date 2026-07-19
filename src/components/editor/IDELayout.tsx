@@ -74,6 +74,10 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
       createdAt: Date.now(),
       userId: (initialProject as any).user_id,
       is_public: (initialProject as any).is_public,
+      // Seeds the multi-tab conflict guard (persist-project.ts) from the
+      // server-fetched row's real updated_at, so it's active from this tab's
+      // very first save — not just from the second save onward.
+      updated_at: (initialProject as any).updated_at,
     };
 
     // Set credits from profile
