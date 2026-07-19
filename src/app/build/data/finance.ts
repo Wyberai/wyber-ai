@@ -88,4 +88,62 @@ export const FINANCE_PAGES: BuildPage[] = [
     ],
     related: ['budget-planner-app', 'expense-tracker-app', 'habit-tracker-app'],
   },
+  {
+    slug: 'debt-payoff-tracker',
+    noun: 'debt payoff tracker',
+    h1: 'Build a Debt Payoff Tracker with AI',
+    metaTitle: 'Build a Debt Payoff Tracker App with AI',
+    metaDesc: 'Snowball or avalanche method, a progress bar per debt, and a real payoff date — a debt tracker generated from plain English, not a generic calculator.',
+    target: 'web',
+    category: 'finance',
+    tagline: 'Every debt, its balance, and a real projected payoff date — the snowball or avalanche method as software, not a static calculator you re-run by hand.',
+    body: [
+      'Paying off multiple debts is a math problem with a psychology problem riding on top: the avalanche method saves the most interest, the snowball method keeps you motivated by clearing small balances first, and most people fall off because a spreadsheet doesn\'t update itself or make progress feel real. One-off online calculators answer the question once and then forget you.',
+      'Describe your debts and which method you want to follow, and WyberAi builds a live tracker: every debt with its balance, rate, and minimum payment, an extra-payment field that lets you see the payoff date move when you throw more at it, and a progress bar per debt that fills as the balance drops. It recalculates every time you log a payment — the plan stays honest instead of going stale in a downloaded spreadsheet.',
+    ],
+    features: [
+      { title: 'All debts in one place', desc: 'Credit cards, loans, and balances with their interest rate and minimum payment — the full picture in one list.' },
+      { title: 'Snowball or avalanche', desc: 'Pick smallest-balance-first or highest-interest-first, and the app orders your payoff priority accordingly.' },
+      { title: 'Extra-payment projections', desc: 'Add extra to any month and see the payoff date and total interest recalculate immediately.' },
+      { title: 'Progress bar per debt', desc: 'Each debt shows original balance versus remaining — the visual that keeps momentum through a long payoff.' },
+    ],
+    promptExample:
+      'Build a debt payoff tracker web app: a Debts page listing each debt with balance, interest rate, and minimum payment, orderable by snowball (smallest balance first) or avalanche (highest rate first); a Plan page where I enter an extra monthly payment amount and see a projected total payoff date and interest paid; and a Progress page with a bar per debt showing original balance versus current balance.',
+    faqs: [
+      { q: 'Which method should I use, snowball or avalanche?', a: 'Avalanche saves more interest mathematically; snowball tends to keep people motivated with early wins. The tracker supports either — switch anytime and the payoff order updates.' },
+      { q: 'Does it recalculate when I make a payment?', a: 'Yes — log a payment against any debt and the remaining balance, progress bar, and projected payoff date update immediately.' },
+      { q: 'Can it account for different interest rates changing over time?', a: 'Add a rate-change field if you have a promotional rate ending, and describe the schedule in your prompt — the projection follows it.' },
+      { q: 'Is this different from a one-time payoff calculator?', a: 'Yes — this is a living tracker tied to your actual balances and payments, not a static result you have to manually recompute every month.' },
+    ],
+    related: ['budget-planner-app', 'expense-tracker-app'],
+  },
+  {
+    slug: 'roommate-expense-splitter',
+    noun: 'roommate expense splitter',
+    h1: 'Build a Roommate Expense Splitter with AI',
+    metaTitle: 'Build a Roommate Bill Splitter App with AI',
+    metaDesc: 'Shared bills, auto-split calculations, and a running who-owes-who balance — a roommate expense app generated from plain English, no ads, no fees.',
+    target: 'mobile',
+    category: 'finance',
+    tagline: 'Log the shared grocery run once, and the app remembers who owes what — instead of a group chat doing long division at midnight.',
+    body: [
+      'Every shared household re-invents the same broken system: someone pays for groceries, someone else covers the electric bill, and reconciling who actually owes whom turns into a group-chat argument nobody enjoys. The popular splitting apps work, but they\'re built for one-off trip expenses and bury the recurring-household use case behind ads and premium tiers.',
+      'Describe your household — how many people, how bills usually get split — and WyberAi builds the ledger around it: a shared expense log where anyone can add a charge and how it splits, a running balance per roommate so "who owes who" is a glance, not a calculation, and a settle-up flow for when someone finally pays their share back.',
+    ],
+    features: [
+      { title: 'Shared expense log', desc: 'Anyone in the household logs a charge — groceries, utilities, rent — with who paid and how it splits.' },
+      { title: 'Flexible split rules', desc: 'Even split, custom percentages, or "just these two people" — the split is set per expense, not forced to one rule.' },
+      { title: 'Running balance per person', desc: 'A live view of who owes whom and how much, updated the instant a new expense lands.' },
+      { title: 'Settle-up tracking', desc: 'Mark a debt as settled when it\'s paid back in cash or transfer, clearing the balance without deleting the history.' },
+    ],
+    promptExample:
+      'Build a roommate expense splitter mobile app for a 3-person household: an Add Expense screen where anyone logs a charge with amount, description, who paid, and how it splits (even, custom percentages, or specific people); a Balances screen showing a running total of who owes whom across the household; and a Settle Up screen to mark a debt as paid, which clears the balance while keeping the expense history.',
+    faqs: [
+      { q: 'Can it handle uneven splits, like one person\'s guest?', a: 'Yes — set a custom split per expense, so a dinner where only two of three roommates ate splits between just those two.' },
+      { q: 'Does it work for more than roommates — trips too?', a: 'The same structure fits any shared-expense group; describe your use case (a trip, a shared subscription) and the split logic follows.' },
+      { q: 'Can someone leave the household and settle their final balance?', a: 'Yes — a final settle-up clears their balance to zero, and their historical expenses stay in the log for reference.' },
+      { q: 'Is it free to use with my roommates?', a: 'Yes — no ads, no per-transaction fee. Building uses free monthly credits, and the app runs as yours from then on.' },
+    ],
+    related: ['expense-tracker-app', 'debt-payoff-tracker'],
+  },
 ]

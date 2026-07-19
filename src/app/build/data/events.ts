@@ -88,4 +88,33 @@ export const EVENTS_PAGES: BuildPage[] = [
     ],
     related: ['event-registration-app', 'team-task-manager', 'wedding-rsvp-website'],
   },
+  {
+    slug: 'volunteer-management-app',
+    noun: 'volunteer management app',
+    h1: 'Build a Volunteer Management App with AI',
+    metaTitle: 'Build a Volunteer Management App with AI',
+    metaDesc: 'Shift sign-ups, volunteer hours, and role assignments for your nonprofit — a volunteer app generated from plain English, free to start.',
+    target: 'web',
+    category: 'events',
+    tagline: 'Volunteers pick a shift, you see who\'s covered and who\'s not — instead of a sign-up sheet emailed around and never quite reconciled.',
+    body: [
+      'Nonprofits and community organizations run volunteer scheduling on whatever\'s free: a shared spreadsheet, a paper sign-up sheet at the front desk, a group text that loses track of who actually confirmed. It works until an event needs twelve people and only seven show up, because nobody had a clear view of the gaps.',
+      'Describe your organization\'s shifts and roles, and WyberAi builds the coordination layer: a public shift board volunteers can claim themselves, a roster that tracks hours logged per volunteer for recognition or grant reporting, and an admin view showing exactly which shifts are still short-staffed before the event, not after.',
+    ],
+    features: [
+      { title: 'Public shift board', desc: 'Volunteers browse open shifts by date and role, and claim one directly — no email back-and-forth to confirm.' },
+      { title: 'Volunteer roster', desc: 'Every volunteer with contact info, roles they\'re trained for, and total hours logged over time.' },
+      { title: 'Coverage view for organizers', desc: 'See which shifts are fully staffed and which need more hands, at a glance, before the day arrives.' },
+      { title: 'Hours logged for reporting', desc: 'Completed shifts add to a volunteer\'s hour total — useful for recognition, school credit, or grant applications.' },
+    ],
+    promptExample:
+      'Build a volunteer management web app: a public Shifts page listing open shifts by date and role with a claim button (volunteer enters name and email); a Volunteers page (admin) listing everyone with total hours logged and roles they\'ve done; and a Coverage Dashboard showing each upcoming shift\'s filled versus needed volunteer count, highlighting anything understaffed.',
+    faqs: [
+      { q: 'Can volunteers cancel a shift they claimed?', a: 'Yes — ask for a cancel-my-shift link in your prompt, which reopens the slot on the public board immediately.' },
+      { q: 'Can it track different roles, like setup versus check-in?', a: 'Yes — define roles in your prompt and each shift can require a specific role, so the coverage view splits by what\'s actually needed.' },
+      { q: 'Can I export hours for a grant report?', a: 'Ask for a CSV export on the volunteers page — total hours per person for any date range, ready to paste into a report.' },
+      { q: 'Does it send reminders before a shift?', a: 'Add reminder emails or notifications in your prompt, and volunteers get pinged before their claimed shift starts.' },
+    ],
+    related: ['event-registration-app', 'sports-league-manager'],
+  },
 ]

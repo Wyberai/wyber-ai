@@ -88,4 +88,62 @@ export const PRODUCTIVITY_PAGES: BuildPage[] = [
     ],
     related: ['client-crm', 'freelance-time-tracker', 'event-registration-app'],
   },
+  {
+    slug: 'job-application-tracker',
+    noun: 'job application tracker',
+    h1: 'Build a Job Application Tracker with AI',
+    metaTitle: 'Build a Job Application Tracker App with AI',
+    metaDesc: 'Track every application, interview stage, and follow-up in one board — a job search tracker generated from plain English, not a messy spreadsheet.',
+    target: 'web',
+    category: 'productivity',
+    tagline: 'Every application, its stage, and when you last heard back — one board instead of a spreadsheet that\'s three tabs behind reality.',
+    body: [
+      'A serious job search generates more state than a spreadsheet wants to hold: which version of the resume went where, whether that recruiter call was a screen or a real interview, and which of the fourteen "still reviewing candidates" emails you actually need to follow up on this week. The spreadsheet degrades into colored cells only you can interpret.',
+      'Describe your search and WyberAi builds the tracker around it: a pipeline board from Applied through Offer, a record per application with the role, contact, and resume version attached, and a follow-up view that surfaces anything gone quiet past your own threshold. It\'s the one system a search this stressful deserves — built in an afternoon, not maintained as a side project.',
+    ],
+    features: [
+      { title: 'Pipeline by stage', desc: 'Applied, Screening, Interview, Offer, Rejected — a kanban board so the whole search is visible at a glance.' },
+      { title: 'Per-application record', desc: 'Company, role, resume version, referral contact, and salary range, attached to the card it belongs to.' },
+      { title: 'Follow-up radar', desc: 'Applications with no update past a set number of days surface automatically — the ones going cold.' },
+      { title: 'Interview notes', desc: 'Log what was asked and how it went right after each round, while it\'s still fresh enough to matter for the next one.' },
+    ],
+    promptExample:
+      'Build a job application tracker web app: a Board page with kanban columns Applied, Screening, Interview, Offer, Rejected, where each card shows company, role, and date applied; a card detail view with contact name, resume version used, salary range, and free-text interview notes; and a Follow-ups page listing applications with no status change in the last 10 days.',
+    faqs: [
+      { q: 'Can it remind me to follow up?', a: 'The Follow-ups view lists anything stale past your threshold every time you open the app; ask chat to add email reminders if you want a push.' },
+      { q: 'Can I track which resume version I sent where?', a: 'Yes — attach a resume-version field to each application so you know exactly what a recruiter has seen if they call back in three weeks.' },
+      { q: 'Can I see stats on my search?', a: 'Ask for a stats view — response rate, average time in each stage, applications per week — computed from your own data.' },
+      { q: 'Is this better than a spreadsheet?', a: 'A spreadsheet doesn\'t warn you when an application goes quiet or hold structured interview notes per round — this tracker does both natively.' },
+    ],
+    related: ['freelance-time-tracker', 'habit-tracker-app'],
+  },
+  {
+    slug: 'reading-list-app',
+    noun: 'reading list app',
+    h1: 'Build a Reading List App with AI',
+    metaTitle: 'Build a Reading List & Book Tracker App with AI',
+    metaDesc: 'Track your to-be-read pile, log finished books with ratings, and hit a yearly reading goal — a book tracker built from plain English, yours to keep.',
+    target: 'mobile',
+    category: 'productivity',
+    tagline: 'The to-be-read pile, what you\'re on now, and the yearly count — without a social feed guilt-tripping your pace.',
+    body: [
+      'Goodreads solves book tracking by wrapping it in a social network you didn\'t ask for, and most reading-tracker apps solve discovery, not the actual problem: an ever-growing list of books you meant to read, no memory of where you paused the current one, and no honest sense of whether this is a 20-book year or a 50-book year.',
+      'Tell WyberAi how you read — physical, ebook, audiobook, or all three — and it builds a tracker shaped to that: a to-be-read shelf you add to on a whim, a currently-reading view with a page or percentage you update in seconds, and a finished shelf with your own rating and a note for future-you. A yearly goal counter turns "I should read more" into a number you can actually see moving.',
+    ],
+    features: [
+      { title: 'To-be-read shelf', desc: 'Add books the moment someone mentions them — title, author, and why you want to read it.' },
+      { title: 'Currently reading progress', desc: 'Update page number or percentage as you go; the app shows how far into each book you are.' },
+      { title: 'Finished shelf with ratings', desc: 'Your own star rating and a short note per book — the log that actually helps you recommend books later.' },
+      { title: 'Yearly reading goal', desc: 'Set a books-per-year target and watch a progress bar fill as finished books land on the shelf.' },
+    ],
+    promptExample:
+      'Build a reading list mobile app: a To Be Read screen where I add books with title, author, and format (physical/ebook/audiobook); a Currently Reading screen showing books in progress with a page or percentage slider I update; a Finished screen listing completed books with my star rating and a short note; and a Goal screen showing books finished this year against a target I set.',
+    faqs: [
+      { q: 'Can it track audiobooks differently from physical books?', a: 'Yes — set format per book, and track progress by percentage or time listened instead of page number for audiobooks.' },
+      { q: 'Does it recommend books?', a: 'No — this is a personal tracker, not a discovery feed. It shows your own shelves, not what a marketplace wants you to buy next.' },
+      { q: 'Can I organize books by genre or series?', a: 'Add tags or a series field in your prompt, and shelves can filter or group by them.' },
+      { q: 'Is my reading data private?', a: 'It\'s your own app on your own database — nothing is shared to a social feed unless you specifically build one in.' },
+    ],
+    related: ['habit-tracker-app', 'flashcard-app'],
+  },
 ]

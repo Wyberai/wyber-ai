@@ -61,7 +61,7 @@ async function findStuckSignups() {
 
   const candidates = []
   for (const p of profiles) {
-    if (p.email?.toLowerCase().endsWith('@wyberai.com')) continue // internal/test accounts, never a real lead
+    if (/@(wyberai\.com|signalpulsehq\.com)$/i.test(p.email || '')) continue // internal/test accounts, never a real lead
     const own = byUser.get(p.id) || []
     if (own.length === 0) continue // never built anything — not a "stuck" signal, just unactivated
     if (own.some(pr => pr.published_url)) continue // published something — not stuck

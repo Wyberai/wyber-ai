@@ -88,4 +88,62 @@ export const HEALTH_PAGES: BuildPage[] = [
     ],
     related: ['habit-tracker-app', 'workout-tracker-app', 'meal-planner-app'],
   },
+  {
+    slug: 'period-tracker-app',
+    noun: 'period tracker',
+    h1: 'Build a Period Tracker App with AI',
+    metaTitle: 'Build a Private Period Tracker App with AI',
+    metaDesc: 'Cycle predictions, symptom logging, and a history view — on your own database, not a big-tech app selling your health data. Built from plain English.',
+    target: 'mobile',
+    category: 'health',
+    tagline: 'Cycle predictions and symptom logging that live on YOUR database — not a big-tech app with a business model built on your health data.',
+    body: [
+      'Period tracking apps have earned genuine distrust: several mainstream ones have been caught selling or sharing exactly the data — cycle dates, symptoms, sexual activity — that users least want leaving their phone. For something this personal, "who owns this data" isn\'t a minor detail, it\'s the whole decision.',
+      'Building your own collapses that risk to zero: describe how you want to log and predict cycles, and WyberAi generates an app that stores everything in a database only you control, with no analytics SDK bundled in by a company whose revenue model depends on your data. Cycle predictions, symptom and mood logging, and a history view that helps you actually spot patterns — the features, without the tradeoff.',
+    ],
+    features: [
+      { title: 'Cycle logging and predictions', desc: 'Log period start and end dates; the app predicts your next cycle based on your own history, not a population average.' },
+      { title: 'Symptom and mood tracking', desc: 'Log symptoms, flow intensity, and mood per day — your own tags, not a fixed list a product team chose for you.' },
+      { title: 'Private by construction', desc: 'Your data lives in your own database with no third-party analytics or ad SDKs bundled in — because you didn\'t build any in.' },
+      { title: 'History and patterns', desc: 'A calendar view across past cycles so patterns — irregular timing, symptom clusters — are visible over months, not just this cycle.' },
+    ],
+    promptExample:
+      'Build a period tracker mobile app: a Log screen to record period start/end dates, flow intensity, symptoms (cramps, headache, fatigue), and mood for any day; a Calendar screen showing past cycles and a predicted next start date based on average cycle length; and a History screen with trends in cycle length and most common symptoms over the last 6 months. Simple, private, no social features.',
+    faqs: [
+      { q: 'Is my data really private?', a: 'It\'s stored in your own app\'s database, generated with no analytics or tracking SDKs unless you explicitly ask for them — nothing to sell because nothing is collected by a third party.' },
+      { q: 'How accurate are the predictions?', a: 'Predictions are based on your own logged cycle history — the more cycles logged, the more the average reflects your actual pattern rather than a generic 28-day assumption.' },
+      { q: 'Can I export my data?', a: 'Ask for a CSV export in your prompt — your history is yours to take with you, unlike a closed app\'s walled-off records.' },
+      { q: 'Can a partner or doctor see specific data?', a: 'Ask for a shareable summary or PDF report screen if you want to hand specific data to a doctor — sharing stays entirely your choice.' },
+    ],
+    related: ['workout-tracker-app', 'meal-planner-app'],
+  },
+  {
+    slug: 'sleep-tracker-app',
+    noun: 'sleep tracker',
+    h1: 'Build a Sleep Tracker App with AI',
+    metaTitle: 'Build a Sleep Tracker App with AI — No Code',
+    metaDesc: 'Log bedtime and wake time, see your sleep debt, and spot what wrecks a night — a sleep tracker generated from plain English, no wearable required.',
+    target: 'mobile',
+    category: 'health',
+    tagline: 'Log the night, see the debt add up, and spot that late coffee is the actual reason Wednesdays feel awful.',
+    body: [
+      'You don\'t need a $300 ring to notice you\'re tired — you need an honest record of when you actually went to sleep and woke up, compared against what you know you need. Wearable-linked apps drown that simple fact in scores and stages measured by consumer sensors of questionable accuracy.',
+      'A logged sleep tracker skips the sensor entirely: tell WyberAi how you want to record nights — bedtime, wake time, how rested you felt — and it builds an app around that habit. A weekly chart shows the pattern, a running sleep-debt number makes the deficit concrete, and optional notes (late coffee, a stressful day, a nightcap) let you correlate cause with the groggy mornings without needing a device on your wrist to tell you what you already suspected.',
+    ],
+    features: [
+      { title: 'Bedtime and wake logging', desc: 'A quick nightly entry for when you went to bed and woke up — the two numbers that actually matter.' },
+      { title: 'Sleep duration chart', desc: 'A weekly view of hours slept per night, so a bad streak is visible instead of just felt.' },
+      { title: 'Sleep debt tracker', desc: 'A running total against your target hours per night — the number that explains why Thursday feels worse than Monday.' },
+      { title: 'Correlation notes', desc: 'Tag nights with caffeine, screen time, or stress and see which tags cluster with your worst-rated mornings.' },
+    ],
+    promptExample:
+      'Build a sleep tracker mobile app: a Log screen to enter bedtime, wake time, and a 1-5 rested rating each morning, with optional tags (caffeine after 3pm, late screen time, stressful day); a Weekly screen with a bar chart of hours slept per night against a target I set; and a Debt screen showing my running sleep debt or surplus versus target over the last 30 days.',
+    faqs: [
+      { q: 'Does it need a wearable or phone sensor?', a: 'No — this is a manual log, which takes ten seconds a day and avoids the accuracy problems of consumer sleep-sensing hardware.' },
+      { q: 'Can it show what correlates with bad sleep?', a: 'Tag nights with anything you suspect matters — caffeine, screen time, stress — and a correlation view can group your rested-rating by tag.' },
+      { q: 'Can I set a personal sleep target?', a: 'Yes — set your target hours per night in settings and the debt tracker calculates against that number, not a generic recommendation.' },
+      { q: 'Will it remind me to log before bed?', a: 'Ask for a nightly reminder notification in your prompt — a simple push at a time you set.' },
+    ],
+    related: ['workout-tracker-app', 'period-tracker-app'],
+  },
 ]

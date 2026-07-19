@@ -88,4 +88,33 @@ export const EDUCATION_PAGES: BuildPage[] = [
     ],
     related: ['quiz-maker-app', 'flashcard-app', 'restaurant-menu-app'],
   },
+  {
+    slug: 'gradebook-app-for-teachers',
+    noun: 'gradebook app',
+    h1: 'Build a Gradebook App for Teachers with AI',
+    metaTitle: 'Build a Gradebook App for Teachers with AI',
+    metaDesc: 'Class rosters, assignment grades, and auto-calculated averages — a gradebook app generated from plain English, shaped to how you actually grade.',
+    target: 'web',
+    category: 'education',
+    tagline: 'Enter one grade, watch the average update — a gradebook shaped to your weighting and your classes, not a district-wide system\'s rigid template.',
+    body: [
+      'School-issued gradebook systems are built for administrators first and teachers second — rigid categories, weighting rules you can\'t adjust, and a UI designed for compliance reporting rather than the daily reality of entering forty quiz scores between periods. Teachers end up keeping a personal spreadsheet anyway, just to actually understand their own class.',
+      'Describe how you grade — categories, weights, how you want to see the class distribution — and WyberAi builds a gradebook around your method: a roster per class, an entry grid for assignments and scores, and averages that recalculate the instant a grade lands, weighted exactly the way your syllabus says they should be.',
+    ],
+    features: [
+      { title: 'Class rosters', desc: 'Students grouped by class or period, each with their own assignment history and running average.' },
+      { title: 'Assignment grade grid', desc: 'Enter scores for a whole class against one assignment in a fast spreadsheet-like grid.' },
+      { title: 'Weighted averages', desc: 'Homework, quizzes, and tests weighted your way — the overall grade reflects your syllabus, not a generic default.' },
+      { title: 'Exportable reports', desc: 'A per-student or per-class report ready to hand to parents or administration, generated from your own gradebook.' },
+    ],
+    promptExample:
+      'Build a gradebook web app for a teacher: a Classes page listing my classes with student rosters; an Assignments page per class where I create assignments (category: homework, quiz, test, each with a weight) and enter scores for every student in a grid; a Student detail view showing all their scores and a weighted current average; and a Reports page exporting grades per class to CSV.',
+    faqs: [
+      { q: 'Can I set my own grade weighting?', a: 'Yes — define your categories and their percentage weights in your prompt, and every average calculates using your exact syllabus rule.' },
+      { q: 'Can it handle multiple classes or periods?', a: 'Yes — each class has its own roster, assignments, and grades, so a student in two of your classes is tracked separately in each.' },
+      { q: 'Can students or parents view grades?', a: 'Add a student or parent login in your prompt for a read-only view of just their own grades, separate from your teacher view.' },
+      { q: 'Does it calculate letter grades too?', a: 'Describe your grading scale (A is 90+, etc.) and the app can show a letter grade alongside the numeric average.' },
+    ],
+    related: ['quiz-maker-app', 'flashcard-app'],
+  },
 ]

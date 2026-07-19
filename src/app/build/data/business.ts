@@ -88,4 +88,62 @@ export const BUSINESS_PAGES: BuildPage[] = [
     ],
     related: ['team-task-manager', 'freelance-time-tracker', 'salon-booking-app'],
   },
+  {
+    slug: 'inventory-management-app',
+    noun: 'inventory management app',
+    h1: 'Build an Inventory Management App with AI',
+    metaTitle: 'Build an Inventory Management App with AI',
+    metaDesc: 'Stock levels, low-stock alerts, and supplier reorder info for your shop — an inventory app generated from plain English, no per-SKU platform fee.',
+    target: 'web',
+    category: 'business',
+    tagline: 'Know what\'s actually on the shelf, get warned before you run out, and reorder from the supplier who sells it — one screen, not a stack of notebooks.',
+    body: [
+      'Small retailers and makers run inventory the way it was run fifty years ago — a count on a clipboard, a reorder decided from memory, a stockout discovered when a customer asks for the one thing you didn\'t know you\'d sold the last of. The inventory platforms built to fix this price per SKU or per location, which punishes exactly the growth you\'re trying to have.',
+      'Describe what you stock and how you sell it, and WyberAi builds the system around your shop: a product list with quantities that move as you log sales and deliveries, a low-stock view that flags what needs reordering before it\'s gone, and supplier details attached to each item so reordering is a lookup, not a memory test. One location or three, retail or raw materials — the shape follows your description.',
+    ],
+    features: [
+      { title: 'Live stock levels', desc: 'Every product with a quantity on hand that updates as sales and deliveries are logged — no more end-of-week recount.' },
+      { title: 'Low-stock alerts', desc: 'Set a reorder threshold per product; anything below it surfaces on a dashboard before it becomes a stockout.' },
+      { title: 'Supplier info per item', desc: 'Supplier name, contact, and cost price attached to each product — reordering starts with a lookup, not a search through email.' },
+      { title: 'Multi-location support', desc: 'Track stock per store or warehouse separately, or roll it up into one total — described the way your business actually operates.' },
+    ],
+    promptExample:
+      'Build an inventory management web app: a Products page listing items with SKU, quantity on hand, reorder threshold, cost price, and supplier name; a Dashboard highlighting products below their reorder threshold; a Stock Movement page to log sales and incoming deliveries which adjust quantities; and a Suppliers page with contact details linked to the products they supply.',
+    faqs: [
+      { q: 'Can it handle barcodes?', a: 'Add a barcode field to each product in your prompt; pairing it with a phone camera scanner is an edit in chat once you\'re live.' },
+      { q: 'Can I track stock across more than one store?', a: 'Yes — describe your locations and quantities can be tracked per location, with a combined total view on the dashboard.' },
+      { q: 'Does it generate purchase orders?', a: 'Ask for a purchase-order page and low-stock items can be turned into a PO addressed to their supplier in one click.' },
+      { q: 'Is this cheaper than an inventory SaaS?', a: 'You build it once with free monthly credits and it\'s yours — no per-SKU or per-location monthly fee as your catalog grows.' },
+    ],
+    related: ['client-crm', 'restaurant-menu-app'],
+  },
+  {
+    slug: 'rental-property-manager',
+    noun: 'rental property manager',
+    h1: 'Build a Rental Property Manager with AI',
+    metaTitle: 'Build a Rental Property Management App with AI',
+    metaDesc: 'Units, tenants, rent tracking, and maintenance requests for your rentals — a property manager app generated from plain English, no per-unit fee.',
+    target: 'web',
+    category: 'business',
+    tagline: 'Every unit, who\'s in it, whether rent landed this month, and what\'s broken — a landlord\'s whole operation in one dashboard.',
+    body: [
+      'Landlords with a handful of units end up running the business on a mix of bank statements, text messages about a leaking tap, and memory for who paid and who\'s a week late. Property management software exists, but it\'s priced and built for portfolios of hundreds of units, not the four duplexes you actually own.',
+      'Describe your properties and how you manage them, and WyberAi builds the operation into an app: a roster of units and tenants, a rent ledger that shows who\'s paid this cycle and who hasn\'t, and a maintenance board so a reported issue doesn\'t just live in a text thread until you forget it. Lease renewal dates surface before they sneak up on you, not after.',
+    ],
+    features: [
+      { title: 'Units and tenants', desc: 'Every property and unit with the current tenant, lease start and end dates, and monthly rent attached.' },
+      { title: 'Rent payment log', desc: 'Mark rent received per unit per month; a dashboard shows who\'s current and who\'s overdue at a glance.' },
+      { title: 'Maintenance request board', desc: 'Tenants (or you) log issues with a status — reported, in progress, fixed — so nothing gets lost in a text thread.' },
+      { title: 'Lease expiry reminders', desc: 'Leases nearing their end date surface on the dashboard, giving you time to renew or list the unit again.' },
+    ],
+    promptExample:
+      'Build a rental property management web app: a Properties page listing units with tenant name, lease start/end date, and monthly rent; a Rent Ledger page to mark payments received per unit per month with an overdue indicator; a Maintenance page for logging issues per unit with status (reported, in progress, fixed); and a Dashboard highlighting leases expiring in the next 60 days.',
+    faqs: [
+      { q: 'Can tenants submit maintenance requests themselves?', a: 'Yes — add a tenant login and a request form, and issues they submit land directly on your maintenance board.' },
+      { q: 'Can it calculate late fees?', a: 'Describe your late-fee rule in the prompt and the rent ledger can apply it automatically once a payment passes its due date.' },
+      { q: 'Does it work for more than one property?', a: 'Yes — the structure scales from one duplex to a portfolio; each property has its own units, tenants, and ledger.' },
+      { q: 'Is tenant data secure?', a: 'The app runs on its own database with row-level security, scanned live before you publish — tenant details aren\'t exposed publicly.' },
+    ],
+    related: ['inventory-management-app', 'client-crm'],
+  },
 ]
