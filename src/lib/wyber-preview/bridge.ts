@@ -126,6 +126,12 @@ export function injectWyberLoc<T extends Record<string, FileVal>>(files: T): T {
 // break a user's app.
 export const WYBER_BRIDGE_SNIPPET = `/* wyber-select-bridge */(function(){
 if(window.parent===window)return;
+// Heartbeat: a genuine infinite-loop/render-loop hang blocks this single JS
+// thread just like everything else in the page, so a missed heartbeat IS the
+// signal — no separate crash detection needed. setInterval callbacks queue
+// but never run while the thread is busy-looping, so the parent seeing a gap
+// reliably means "frozen", not "briefly slow".
+setInterval(function(){try{window.parent.postMessage({type:'wyber-heartbeat'},'*')}catch(e){}},2000);
 var selecting=false,hoverBox=null,selEl=null,editing=false;
 function box(){if(hoverBox)return hoverBox;hoverBox=document.createElement('div');hoverBox.setAttribute('style','position:fixed;z-index:2147483646;pointer-events:none;border:1.5px solid #0EA5E9;background:rgba(14,165,233,0.08);border-radius:3px;display:none;transition:all 60ms linear');document.documentElement.appendChild(hoverBox);return hoverBox}
 function place(el){try{var r=el.getBoundingClientRect();var b=box();b.style.display='block';b.style.left=r.left+'px';b.style.top=r.top+'px';b.style.width=r.width+'px';b.style.height=r.height+'px'}catch(e){}}

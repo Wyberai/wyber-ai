@@ -66,6 +66,13 @@ export function PreviewPanel() {
   const lastBuiltKey = useRef('')
   const buildRef = useRef<() => void>(() => {})
   const autoBuildTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Hang watchdog (D5): a genuine infinite render loop / runaway synchronous
+  // work freezes the iframe's single JS thread solid — no error ever fires,
+  // it just silently stops responding forever. The bridge script's own
+  // heartbeat (every 2s) can't fire either while that thread is busy-looping,
+  // so a missed heartbeat IS the detection signal, not a separate crash check.
+  const lastHeartbeat = useRef(0)
+  const [hung, setHung] = useState(false)
 
   // Mirror local error/heal state into the store so UI outside this component
   // (e.g. Wyberman) can know the preview is stuck, without touching any of the
@@ -364,10 +371,33 @@ export function PreviewPanel() {
           }
         }
       }
+      if (e.data.type === 'wyber-heartbeat') {
+        lastHeartbeat.current = Date.now()
+        if (hung) setHung(false)
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [error, fixing, isGenerating, selectionConsumer, html])
+  }, [error, fixing, isGenerating, selectionConsumer, html, hung])
+
+  // Reset the baseline whenever a new build/iframe load happens — otherwise
+  // the OLD iframe's last heartbeat lingers and the watchdog below could fire
+  // on the brand-new iframe before it's even had a chance to send its first
+  // beat (postMessage + iframe navigation both take a moment).
+  useEffect(() => { lastHeartbeat.current = Date.now(); setHung(false) }, [html])
+
+  // Poll for a missed heartbeat. A generous 10s threshold (5x the 2s beat
+  // interval) avoids false positives from normal GC pauses or heavy renders;
+  // skipped entirely while building/erroring, since those states already have
+  // their own handling and a mid-build iframe navigation legitimately pauses
+  // heartbeats for a moment.
+  useEffect(() => {
+    if (!html || building || error) return
+    const t = setInterval(() => {
+      if (Date.now() - lastHeartbeat.current > 10_000) setHung(true)
+    }, 3000)
+    return () => clearInterval(t)
+  }, [html, building, error])
 
   // Tell the iframe when edit mode toggles
   const toggleEditMode = () => {
@@ -634,6 +664,21 @@ Change requested: ${editInstruction.trim()}`
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
           <div style={{ width: 11, height: 11, border: '2px solid rgba(251,191,36,0.25)', borderTopColor: '#fbbf24', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <span>Restoring your database — usually takes under a minute…</span>
+        </div>
+      )}
+
+      {/* Hang watchdog banner (D5) — an infinite render loop or runaway
+          synchronous code freezes the preview solid with no error ever
+          firing; the missed-heartbeat check above is the only way to notice.
+          Reload just re-navigates the iframe to the same build (cheap); if
+          the loop is in the code itself, Rebuild/self-heal is the next step. */}
+      {hung && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+          <span>⚠ The preview seems to have <strong>frozen</strong> (unresponsive for 10s+) — this usually means something in the app is stuck in a loop.</span>
+          <button
+            onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) iframeRef.current.src = html }}
+            style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
+          >Reload preview</button>
         </div>
       )}
 
