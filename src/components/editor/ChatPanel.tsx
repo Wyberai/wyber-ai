@@ -1762,7 +1762,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
         body: JSON.stringify({ prompt: userMsg, fileContext: chatFileContext, history, hasFiles, forceChat, projectId: resolvedProjectId }),
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('SESSION_EXPIRED');
+        throw new Error(await res.text());
+      }
 
       // The server reclassified this as a real build/edit → hand to the build
       // lane. Two paths land here: the pre-reply Haiku classification (empty
@@ -1811,7 +1814,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       persistMessage('assistant', full);
     } catch (err) {
       setChatThinking(false);
-      const errMsg = `**Error:** ${err instanceof Error ? err.message : 'Could not reach the assistant'}`;
+      const isSessionExpired = err instanceof Error && err.message === 'SESSION_EXPIRED';
+      const errMsg = isSessionExpired
+        ? "**Your session expired.** [Log in again](/login), then come back and re-send your message — nothing was lost."
+        : `**Error:** ${err instanceof Error ? err.message : 'Could not reach the assistant'}`;
       addMessage({ id: uid(), role: 'assistant', content: errMsg, timestamp: Date.now(), status: 'error', retryPrompt: userMsg, retryLane: 'chat' });
     } finally {
       setChatThinking(false);

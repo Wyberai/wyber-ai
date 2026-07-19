@@ -144,13 +144,29 @@ export function PreviewPanel() {
       // sanitize (only the user's real files get tagged), append the bridge
       // <script> AFTER sanitize (index.html is guaranteed to exist by then).
       // Both transforms fall back to the untouched map on any error.
-      const res = await fetch(`${BUILDER_URL}/build`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id }),
-      })
-
-      const data = await res.json()
+      // A thrown fetch (DNS/connection failure, transient builder-infra hiccup)
+      // used to go straight to the catch block below with zero retry — and
+      // since setError() there also feeds the self-heal effect, a network
+      // blip burned one of the 3 self-heal attempts trying to "fix" a
+      // nonexistent code bug instead of just retrying the request. Retry
+      // network-level failures specifically (not HTTP responses that came
+      // back with a real build error — those still go through self-heal as
+      // before) with a short backoff before giving up.
+      const buildBody = JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id })
+      let res: Response | null = null
+      let networkErr: unknown = null
+      for (const delay of [0, 1500, 4000]) {
+        if (delay) await new Promise(r => setTimeout(r, delay))
+        try {
+          res = await fetch(`${BUILDER_URL}/build`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: buildBody,
+          })
+          networkErr = null
+          break
+        } catch (e) { networkErr = e }
+      }
+      if (networkErr) throw networkErr
+      const data = await res!.json()
       if (timerRef.current) clearInterval(timerRef.current)
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 

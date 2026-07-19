@@ -22,7 +22,7 @@ the new "Jul 19 audit" note at the bottom.
 | A10 | Model re-creates existing files (data loss on rewrite) | ✅ prompt rule 7; not mechanically enforced ⚠️ |
 | A11 | Model imports npm package not in REQUIRED_DEPS | ✅ sanitize-files.ts scans every source file's bare imports and merges pinned versions for ~35 known packages into package.json (39 tests). Truly unknown packages are deliberately left alone (guessing a version breaks `npm install` harder than the missing module breaks vite) — self-heal covers that residual case |
 | A12 | Context overflow on big projects | ✅ windowed history + file outlines + rolling project memory (needs migration 034 applied!) |
-| A13 | Prompt injection via uploaded CSV/docs/knowledge | ⚠️ no sanitization of document content fed to the model |
+| A13 | Prompt injection via uploaded CSV/docs/knowledge | ✅ (Jul 19) attached-document content is now explicitly framed as DATA ONLY — the model is told to treat any embedded "ignore previous instructions"-style text literally as content, never as a command |
 | A14 | Gemini fallback produces text-tag output while client expects tool-mode format | ✅ same <file> tag wire format either way |
 
 ## B. Applying output (client, ChatPanel)
@@ -42,7 +42,7 @@ the new "Jul 19 audit" note at the bottom.
 | C2 | Tailwind stripped / no config → unstyled | ✅ sanitizeFiles guarantees compile inputs |
 | C3 | Truncated builds importing never-written files | ✅ stub-missing-imports |
 | C4 | File path used as both file and directory (EISDIR) | ✅ sanitizeFiles collision resolution |
-| C5 | Builder service down / unreachable | ⚠️ single error message + manual retry button. Gap: automatic retry with backoff; no status page/health check |
+| C5 | Builder service down / unreachable | ✅ (partial, Jul 19) a thrown fetch (DNS/connection failure) now retries with backoff (0/1.5s/4s) before surfacing an error — previously went straight to error and could burn a self-heal attempt trying to "fix" a network blip. /status page already existed for visibility |
 | C6 | Builder slow under load | ✅ live timer + rotating messages (perception managed) |
 | C7 | vite build fails (syntax error) | ✅ auto-fix API (free) → chat self-heal, bounded at 3 attempts, then honest error UI |
 | C8 | Concurrent build requests | ✅ pendingBuild queue (no dropped rebuilds) |
@@ -97,7 +97,7 @@ the new "Jul 19 audit" note at the bottom.
 
 | # | Failure | Status |
 |---|---------|--------|
-| H1 | Session expires mid-session | ✅ (partial, Jul 19) the main build/edit path (ChatPanel's primary /api/generate call) now shows "Your session expired — Log in again" with a link instead of a raw error dump. The lighter-weight /api/assist chat-only path still shows the generic error — lower traffic, not yet fixed |
+| H1 | Session expires mid-session | ✅ (Jul 19) both /api/generate (main build/edit path) and /api/assist (conversational lane) now show "Your session expired — Log in again" instead of a raw error dump |
 | H2 | Signup email deliverability | ✅ fixed Jul 2 (launch blockers commit) |
 | H3 | Secrets encryption key rotation | ✅ (Jul 19) decrypt failures now log clearly everywhere instead of `catch {}`. connectors/route.ts and rls-scan-project.ts's getAnonConnector also used to silently fall through to using the raw ciphertext AS the credential on decrypt failure — fixed to return null/fail the same way "not connected" does, so a broken key can't get used as if it were valid |
 
