@@ -394,14 +394,27 @@ export function PreviewPanel() {
   // beat (postMessage + iframe navigation both take a moment).
   useEffect(() => { lastHeartbeat.current = Date.now(); setHung(false); setCorsNotice(null) }, [html])
 
+  // Chrome (and other browsers) throttle setInterval in a backgrounded tab —
+  // confirmed live with two builds open in two tabs: switching away from one
+  // for more than ~10s stretched its heartbeat interval out and the watchdog
+  // below fired "frozen" on a preview that was never actually stuck, just
+  // sitting in a tab that wasn't focused. Reset the baseline the moment the
+  // tab becomes visible again so a long background stint never counts against
+  // it, and skip the check entirely while backgrounded.
+  useEffect(() => {
+    const onVisible = () => { if (!document.hidden) lastHeartbeat.current = Date.now() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
+
   // Poll for a missed heartbeat. A generous 10s threshold (5x the 2s beat
   // interval) avoids false positives from normal GC pauses or heavy renders;
-  // skipped entirely while building/erroring, since those states already have
-  // their own handling and a mid-build iframe navigation legitimately pauses
-  // heartbeats for a moment.
+  // skipped entirely while building/erroring (those already have their own
+  // handling) or while the tab is backgrounded (see above).
   useEffect(() => {
     if (!html || building || error) return
     const t = setInterval(() => {
+      if (document.hidden) return
       if (Date.now() - lastHeartbeat.current > 10_000) setHung(true)
     }, 3000)
     return () => clearInterval(t)
