@@ -23,12 +23,34 @@ let conflictWarned = false
 
 type AttemptResult = 'ok' | 'conflict' | 'fail'
 
+// This app has TWO independent save paths for the same project: ChatPanel's
+// own saveProject loop (the main build flow) and this module (visual edits,
+// self-heal, themes, images, version restore). Confirmed live: during a
+// staged build, one of these can still be finishing a save while the other
+// starts its own — each reads project.updated_at independently, so whichever
+// lands SECOND sends an expectedUpdatedAt that's now stale relative to the
+// FIRST one's write (made moments earlier, same tab) and gets a false
+// "changed in another tab" conflict, even though nothing happened outside
+// this tab at all. Serializing every actual PATCH for a given project
+// through one queue — regardless of which save path triggered it — closes
+// the read-then-send race: whoever's turn it is reads the truly latest
+// updated_at, including whatever the previous writer in THIS tab just set.
+const projectWriteQueues = new Map<string, Promise<unknown>>()
+
+export function withProjectWriteLock<T>(projectId: string, fn: () => Promise<T>): Promise<T> {
+  const prior = projectWriteQueues.get(projectId) ?? Promise.resolve()
+  const settled = prior.then(() => {}, () => {})
+  const result = settled.then(fn)
+  projectWriteQueues.set(projectId, result.then(() => {}, () => {}))
+  return result
+}
+
 export async function persistProjectFiles(
   projectId: string,
   files: unknown,
   userId: string | undefined,
 ): Promise<boolean> {
-  const attempt = async (): Promise<AttemptResult> => {
+  const attempt = async (): Promise<AttemptResult> => withProjectWriteLock(projectId, async () => {
     const project = useEditorStore.getState().project
     const expectedUpdatedAt = project?.id === projectId ? project.updated_at : undefined
     try {
@@ -37,18 +59,18 @@ export async function persistProjectFiles(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId, files, userId: userId || 'auto', expectedUpdatedAt }),
       })
-      if (res.status === 409) return 'conflict'
-      if (!res.ok) return 'fail'
+      if (res.status === 409) return 'conflict' as const
+      if (!res.ok) return 'fail' as const
       const data = await res.json().catch(() => null)
       if (data?.updatedAt) {
         const cur = useEditorStore.getState().project
         if (cur?.id === projectId) useEditorStore.getState().setProject({ ...cur, updated_at: data.updatedAt })
       }
-      return 'ok'
+      return 'ok' as const
     } catch {
-      return 'fail'
+      return 'fail' as const
     }
-  }
+  })
 
   const onSaved = () => {
     useEditorStore.getState().setSaveStatus('idle')

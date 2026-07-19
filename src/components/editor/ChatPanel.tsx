@@ -854,21 +854,32 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     saveLoopActive.current = true;
     if (saveRetryTimer.current) { clearTimeout(saveRetryTimer.current); saveRetryTimer.current = null; }
 
-    // 'conflict' means another tab/session saved this same project since this
-    // one last saw it — writing this tab's stale-based files would silently
-    // clobber that other save with no signal to anyone (the last-writer-wins
-    // multi-tab data-loss bug). Read `project` fresh via getState() rather
-    // than closing over the outer variable, since this loop can run for
-    // minutes across retries and the store's copy may have moved on.
+    // NOT sending expectedUpdatedAt here — this is the main chat/build save
+    // path, and generate/route.ts has its own server-side rescue-persist
+    // safety net (persistGeneratedFiles, via after()) for a DIFFERENT failure
+    // mode (client dies mid-stream): it waits 8s after each generation call
+    // and, if the client hasn't saved yet, writes the files itself, bumping
+    // updated_at with zero coordination with the client's own tracked value.
+    // Confirmed live: a fast staged build (several generate calls in quick
+    // succession) can have rescue-persist land between this tab's OWN passes,
+    // so this tab's own next save would see its own prior save's window get
+    // silently invalidated and hit a false "changed in another tab" conflict
+    // — for a write that was never in a different tab at all. Enforcing
+    // optimistic concurrency here would require rescue-persist to participate
+    // in the same versioning scheme too, which is a bigger, riskier change
+    // than tonight's fix budget. The theme/image/version-restore paths below
+    // (persist-project.ts) never trigger rescue-persist (they don't call
+    // /api/generate), so they keep full conflict protection — this narrows
+    // B3's guarantee to "not the main build flow, which has its own separate
+    // protection for a different failure" rather than silently pretending
+    // it's covered everywhere.
     const attempt = async (): Promise<'ok' | 'conflict' | 'fail'> => {
       const toSave = pendingSave.current;
       if (!toSave) return 'ok';
-      const currentProject = useEditorStore.getState().project;
-      const expectedUpdatedAt = currentProject?.id === resolvedProjectId ? currentProject.updated_at : undefined;
       try {
         const res = await fetch('/api/projects', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId: resolvedProjectId, files: toSave, userId: resolvedUserId || 'auto', expectedUpdatedAt }),
+          body: JSON.stringify({ projectId: resolvedProjectId, files: toSave, userId: resolvedUserId || 'auto' }),
         });
         if (res.status === 409) return 'conflict';
         if (!res.ok) return 'fail';
