@@ -49,10 +49,21 @@ export async function persistProjectFiles(
   projectId: string,
   files: unknown,
   userId: string | undefined,
+  opts?: { enforceConflict?: boolean },
 ): Promise<boolean> {
+  // Self-heal calls this with enforceConflict:false — confirmed live that it
+  // shares the exact same race as ChatPanel's own save flow (both are part of
+  // the SAME build turn, not a genuinely separate tab): self-heal reads
+  // project.updated_at, the chat flow's own (unguarded) save lands first and
+  // moves the real value forward, and self-heal's already-in-flight request
+  // then gets a false "changed in another tab" conflict for a write that was
+  // never in another tab at all — just a few hundred ms behind its own turn's
+  // other save. Genuinely separate user actions (theme change, image regen,
+  // version restore, in-preview text edit) keep full enforcement.
+  const enforceConflict = opts?.enforceConflict !== false
   const attempt = async (): Promise<AttemptResult> => withProjectWriteLock(projectId, async () => {
     const project = useEditorStore.getState().project
-    const expectedUpdatedAt = project?.id === projectId ? project.updated_at : undefined
+    const expectedUpdatedAt = enforceConflict && project?.id === projectId ? project.updated_at : undefined
     try {
       const res = await fetch('/api/projects', {
         method: 'PATCH',

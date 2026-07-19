@@ -517,8 +517,12 @@ export function PreviewPanel() {
         // reverted straight back to the broken file, silently undoing an
         // otherwise-successful fix. Same PATCH call PreviewPanel already uses
         // for the in-preview text-edit path a few lines up.
+        // enforceConflict:false — self-heal runs as part of the same build
+        // turn as ChatPanel's own save (see persist-project.ts) and can race
+        // it the same way; confirmed live it produced a false "changed in
+        // another tab" conflict against this tab's own, more recent save.
         if (project?.id) {
-          void persistProjectFiles(project.id, updatedFiles, (project as { userId?: string }).userId)
+          void persistProjectFiles(project.id, updatedFiles, (project as { userId?: string }).userId, { enforceConflict: false })
         }
         return
       }
