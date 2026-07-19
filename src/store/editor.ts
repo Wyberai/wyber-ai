@@ -83,6 +83,12 @@ interface EditorState {
   openTabs: string[];
   messages: ChatMessage[];
   isGenerating: boolean;
+  // Bumped once per genuinely fresh user turn (never per staged-build pass —
+  // a staged build flips isGenerating true/false once per stage: scaffold,
+  // then each fill batch). PreviewPanel keys its self-heal budget reset off
+  // this instead of isGenerating, so a multi-stage build doesn't get its
+  // 3-attempt heal cap reset up to 8x in one turn.
+  generationTurnSeq: number;
   hasGeneratedFiles: boolean;
   streamingContent: string;
   knowledge: string;
@@ -126,6 +132,7 @@ interface EditorState {
   addMessage: (msg: ChatMessage) => void;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
   setIsGenerating: (v: boolean) => void;
+  bumpGenerationTurn: () => void;
   setHasGeneratedFiles: (v: boolean) => void;
   setStreamingContent: (v: string) => void;
   appendStreamingContent: (chunk: string) => void;
@@ -173,6 +180,7 @@ export const useEditorStore = create<EditorState>()(
     openTabs: [],
     messages: [],
     isGenerating: false,
+    generationTurnSeq: 0,
     hasGeneratedFiles: false,
     streamingContent: '',
     knowledge: '',
@@ -274,6 +282,7 @@ export const useEditorStore = create<EditorState>()(
     }),
 
     setIsGenerating: (v) => set((s) => { s.isGenerating = v; }),
+    bumpGenerationTurn: () => set((s) => { s.generationTurnSeq += 1; }),
     setHasGeneratedFiles: (v) => set((s) => { s.hasGeneratedFiles = v; }),
     setStreamingContent: (v) => set((s) => { s.streamingContent = v; }),
     appendStreamingContent: (chunk) => set((s) => { s.streamingContent += chunk; }),

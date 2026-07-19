@@ -10,6 +10,25 @@ describe('build pages data integrity', () => {
     expect(new Set(slugs).size).toBe(slugs.length)
   })
 
+  // The prior "no duplicated copy" gate below only checked body/tagline/prompt/
+  // FAQ text — it never caught two pages shipping the same (or near-identical)
+  // <title>/H1, which is exactly what a fast weekly batch is most likely to
+  // template-swap by accident, and it's the single most SEO-visible field
+  // (search results show the title, not the body).
+  it('has unique H1s and meta titles (search-result-visible, most doorway-prone field)', () => {
+    const h1s = new Map<string, string>()
+    const titles = new Map<string, string>()
+    for (const p of BUILD_PAGES) {
+      const h1Key = p.h1.trim().toLowerCase()
+      expect(h1s.has(h1Key), `H1 "${p.h1}" duplicated between ${h1s.get(h1Key)} and ${p.slug}`).toBe(false)
+      h1s.set(h1Key, p.slug)
+
+      const titleKey = p.metaTitle.trim().toLowerCase()
+      expect(titles.has(titleKey), `metaTitle "${p.metaTitle}" duplicated between ${titles.get(titleKey)} and ${p.slug}`).toBe(false)
+      titles.set(titleKey, p.slug)
+    }
+  })
+
   it('uses url-safe kebab-case slugs', () => {
     for (const p of BUILD_PAGES) expect(p.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/)
   })

@@ -381,7 +381,7 @@ type ModelTier = 'fast' | 'default' | 'premium' | 'fable';
 export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
     messages, isGenerating, addMessage, updateMessage, setMessages,
-    setIsGenerating, streamingContent, setStreamingContent, clearStreamingContent,
+    setIsGenerating, bumpGenerationTurn, streamingContent, setStreamingContent, clearStreamingContent,
     setFiles, files, framework, consumeCredit, credits, hasGeneratedFiles, setHasGeneratedFiles,
     project, setProject, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints, initialPrompt,
   } = useEditorStore();
@@ -475,7 +475,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => Promise<void>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -601,19 +601,27 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
       const detail = (e as CustomEvent).detail
       if (!detail?.prompt) return
       // Autonomy dial (ask-first): optional fix passes — runtime-error
-      // self-heals from the preview — are OFFERED, not run. Build-completion
-      // passes (continuation: cut streams, failed patches, QA structural
-      // fixes) and user-approved offers always run. This gate comes BEFORE
-      // the futility guard so offering doesn't record the error — only an
-      // actually-attempted fix counts toward the repeat limit.
-      if (AGENT_TEAM_ENABLED && !detail.continuation && !detail.approved
+      // self-heals from the preview AND QA's structural-issue fixes — are
+      // OFFERED, not run (this matches the dial's documented contract in
+      // store/agent-turn.ts). Build-completion passes that aren't really a
+      // new autonomous decision (continuation: cut streams, failed patches —
+      // just finishing what this turn already promised) and user-approved
+      // offers always run. QA fixes are marked `qaFix` specifically so they
+      // stay gated despite also being dispatched with `continuation: true`
+      // (that flag is reused there only to skip the futility-guard recording
+      // below, not to mean "always run"). This gate comes BEFORE the futility
+      // guard so offering doesn't record the error — only an actually-
+      // attempted fix counts toward the repeat limit.
+      if (AGENT_TEAM_ENABLED && (!detail.continuation || detail.qaFix) && !detail.approved
           && useAgentTurnStore.getState().autonomy === 'ask') {
         useEditorStore.getState().addMessage({
           id: uid(), role: 'assistant', content: '', timestamp: Date.now(), status: 'done',
           fixOffer: {
             prompt: detail.prompt,
             error: detail.error ? String(detail.error).slice(0, 300) : undefined,
-            label: 'The preview hit an error — run a free auto-fix?',
+            label: detail.qaFix
+              ? 'Found some structural issues in the build — fix them now?'
+              : 'The preview hit an error — run a free auto-fix?',
           },
         })
         return
@@ -645,13 +653,14 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
         return
       }
       autofixCountRef.current += 1
-      // Verity (QA) narration: a runtime-error self-heal is the QA agent at
-      // work — synthesize its event into the feed (the server stays silent on
-      // selfHeal passes by design).
-      if (AGENT_TEAM_ENABLED && !detail.continuation) {
-        turnAgentEventsRef.current = [...turnAgentEventsRef.current, { agent: 'qa', status: 'fixing', detail: 'preview error detected — fixing automatically' }]
-        useAgentTurnStore.getState().setEvents(turnAgentEventsRef.current)
-      }
+      // Runtime-error self-heals stay OUT of the visible agent-team feed on
+      // purpose — this used to synthesize a "preview error detected — fixing
+      // automatically" event into the feed the user is already looking at, so
+      // a build that appeared to finish would then sprout a new QA lane
+      // announcing something had broken. That's the opposite of "run
+      // silently" (the whole point of self-heal): the fix still happens
+      // exactly as before, it just never narrates the failure it's covering
+      // for. See the matching removed "fixed" event further down.
       // continuation: this is the user's own build still in flight (cut stream,
       // missing entry file, failed patches) → visible bubble + persisted receipt.
       // Untagged events (runtime-error self-heals from the preview) stay silent.
@@ -896,9 +905,14 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     setLiveReasoning('');
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
     if (!opts?.silent) { autofixCountRef.current = 0; loopGuardRef.current.reset(); }
-    // A genuinely fresh visible turn resets the agent-team feed. Orchestrated
-    // passes (stage set) and runAgenticBuild's fallback (preserveAgentTurn)
-    // keep the turn's accumulated events — the planner already spoke.
+    // A genuinely fresh visible turn — not a staged pass (stage set), not a
+    // self-heal/autofix rerun (silent), not a truncated-stream continuation,
+    // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is
+    // the one boundary PreviewPanel's self-heal budget should reset on too —
+    // a staged build's per-stage isGenerating toggles are NOT turn boundaries.
+    if (!opts?.silent && !opts?.continuation && !opts?.stage && !opts?.preserveAgentTurn) {
+      bumpGenerationTurn();
+    }
     if (AGENT_TEAM_ENABLED && !opts?.silent && !opts?.continuation && !opts?.stage && !opts?.preserveAgentTurn) {
       turnAgentEventsRef.current = [];
       agentPassCountRef.current = 0;
@@ -911,7 +925,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     if (!opts?.silent && credits <= 0) {
       addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
       addMessage({ id: uid(), role: 'assistant', content: "You're out of credits, so I can't build or edit right now — but questions are still free. Top up to keep building.", timestamp: Date.now(), status: 'done' });
-      return;
+      return false;
     }
 
     // The funnel's missing middle event (project_created → app_published had no
@@ -944,7 +958,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 const storeProjectId = useEditorStore.getState().project?.id;
   if (resolvedProjectId && storeProjectId && storeProjectId !== resolvedProjectId) {
     console.warn('Blocked generation: project mismatch');
-    return;
+    return false;
   }
     const assistantId = uid();
     // Continuation runs (batch 2+ of a build whose stream was cut, a missing
@@ -1060,6 +1074,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
     try {
       wakeLock = await (navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request('screen') ?? null;
     } catch { /* denied or unsupported — fine */ }
+    // Reports whether this pass actually produced a real file change, so a
+    // multi-stage caller (runAgenticBuild's fill-batch loop) can stop instead
+    // of building further passes on top of a batch that silently failed. A
+    // bare `return;` exits the function immediately with `undefined` — it does
+    // NOT fall through to the `return succeeded` after the try/finally below —
+    // so every early-exit path in this function explicitly `return false`s.
+    // succeeded only flips true right before the try block's normal exit.
+    let succeeded = false;
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
@@ -1261,14 +1283,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
           && (newFiles.length > 0 || editBlocks.length > 0)) {
         const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
         if (qaIssues.length > 0) {
-          pushAgentEvents(
-            ...qaIssues.slice(0, 3).map((i): AgentEvent => ({ agent: 'qa', status: 'finding', detail: i.detail, severity: 'medium' })),
-            { agent: 'qa', status: 'fixing', detail: `${qaIssues.length} structural issue${qaIssues.length === 1 ? '' : 's'} found — fixing in a free pass` },
-          )
+          // Deliberately silent, same as the runtime self-heal above: this is
+          // still a free, invisible fix pass, but it no longer pushes each
+          // finding + a "structural issue(s) found — fixing" summary into the
+          // feed the user is looking at right after their build finished —
+          // that made a normal-looking build sprout a list of problems it
+          // supposedly just had, right as it wrapped up.
           const combined = qaIssues.slice(0, 4).map(i => i.fixPrompt).join('\n')
           setTimeout(() => {
             window.dispatchEvent(new CustomEvent('wyber-autofix', {
-              detail: { continuation: true, prompt: combined }
+              detail: { continuation: true, qaFix: true, prompt: combined }
             }))
           }, 700)
         } else {
@@ -1370,7 +1394,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           persistMessage('assistant', errMsg);
         }
         setLiveReasoning('');
-        return;
+        return false;
       }
 
       // Always run through cleanMessage so stored content is already scrubbed.
@@ -1391,12 +1415,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // client-side only for this session's collapsible display, not persisted
       // to project_messages (no schema for it yet, and it's not needed on reload).
       const finalReasoning = extractReasoning(full);
-      // QA narration: a successful runtime-error self-heal is Verity's work —
-      // synthesize its event so the feed/receipt reflect it (the server stays
-      // silent on selfHeal passes by design).
-      if (AGENT_TEAM_ENABLED && isSelfHeal && !opts?.continuation) {
-        pushAgentEvents({ agent: 'qa', status: 'fixed', detail: 'auto-fixed a preview error' });
-      }
+      // Deliberately no "fixed" event here for a successful runtime-error
+      // self-heal — see the matching removed "fixing" event above. Neither
+      // end of a self-heal shows up in the feed or the turn receipt; the
+      // build just looks like it always worked.
       // Turn receipt: attached once per turn — on the last orchestrated pass,
       // or on any non-orchestrated visible pass that produced agent events.
       const attachReport = AGENT_TEAM_ENABLED && isVisible
@@ -1474,6 +1496,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }, 300);
       }
 
+      succeeded = true;
     } catch (err: unknown) {
       if (isVisible) {
         const isAbort = err instanceof Error && err.name === 'AbortError';
@@ -1501,7 +1524,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
       clearStreamingContent();
       setProgressSteps([]);
     }
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
+    return succeeded;
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
@@ -1549,9 +1573,18 @@ const storeProjectId = useEditorStore.getState().project?.id;
     agentPassCountRef.current += 1;
     useAgentTurnStore.getState().setPasses(agentPassCountRef.current, MAX_INTERNAL_PASSES);
     const hasFills = staged.fillBatches.length > 0;
-    await executeGenerationRef.current?.(userMsg, img, {
+    const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, finalPass: !hasFills,
     });
+    // A failed scaffold means there's no skeleton for fill batches to build
+    // on — piling more passes on top of a pass that produced no real files
+    // (or errored) just multiplies wasted model calls on top of broken state.
+    // executeGeneration already surfaced the failure to the user (an error
+    // bubble or a "nothing changed" message); stop here instead.
+    if (scaffoldOk === false) {
+      pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: 'the scaffold pass didn\'t produce files — stopping before the fill batches; ask me to retry' });
+      return;
+    }
 
     // Forge: fill batches — free internal passes, visible as continuation
     // bubbles (the established multi-part-build UX). Budget-capped.
@@ -1567,11 +1600,26 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // Let React flush the previous pass's setFiles so the ref-latest closure
       // sees the newest files as fileContext (same reason autofix delays).
       await new Promise(r => setTimeout(r, 300));
-      await executeGenerationRef.current?.(userMsg, null, {
+      const batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
         stage: 'fill', stageFiles: batch.map(f => f.path), internalPass: true,
         finalPass: i === staged.fillBatches.length - 1,
       });
+      // A batch that produced no real files means this pass silently failed
+      // (a "Nothing was actually changed" case, or an error swallowed inside
+      // executeGeneration). Continuing the loop would build the NEXT batch on
+      // top of the same incomplete state and could still report as if every
+      // batch had landed — stop and tell the user what's missing instead.
+      if (batchOk === false) {
+        const remaining = staged.fillBatches.length - i - 1;
+        pushAgentEvents({
+          agent: 'orchestrator', status: 'stuck',
+          detail: remaining > 0
+            ? `a fill pass didn't land — stopping ${remaining} remaining batch${remaining === 1 ? '' : 'es'} early; ask me to continue and I'll finish them`
+            : 'the last fill pass didn\'t land — ask me to continue and I\'ll finish it',
+        });
+        break;
+      }
     }
   }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents]);
 

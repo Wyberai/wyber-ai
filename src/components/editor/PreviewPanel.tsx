@@ -43,7 +43,7 @@ function hashStr(s: string): number {
 }
 
 export function PreviewPanel() {
-  const { files, isGenerating, project, hydrated, connectors, setPreviewError, setPreviewHealFailed, selectionConsumer, setSelectionConsumer } = useEditorStore()
+  const { files, isGenerating, generationTurnSeq, project, hydrated, connectors, setPreviewError, setPreviewHealFailed, selectionConsumer, setSelectionConsumer } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
@@ -487,9 +487,15 @@ export function PreviewPanel() {
   }, [error, building, isGenerating, fixing, tryToFix, html])
 
   useEffect(() => { if (!error) { setHealFailed(false); setRevertedToGood(false) } }, [error])
-  // Fresh heal budget only when the USER kicks off a new generation/edit — never
-  // on the file changes that auto-fix itself makes (that was the infinite loop).
-  useEffect(() => { if (isGenerating) { healTotal.current = 0; setHealFailed(false) } }, [isGenerating])
+  // Fresh heal budget only on a genuinely fresh user turn — never on the file
+  // changes auto-fix itself makes (that was the original infinite loop), and
+  // NOT on every isGenerating toggle: a staged agent-team build flips
+  // isGenerating true/false once per stage (scaffold + up to 7 fill batches),
+  // so keying off isGenerating let a single turn reset the 3-attempt heal
+  // budget up to 8x — effectively ~24 free self-heal attempts per turn.
+  // generationTurnSeq only bumps once per real turn (see ChatPanel), so this
+  // now fires exactly once per turn regardless of how many stages it has.
+  useEffect(() => { healTotal.current = 0; setHealFailed(false) }, [generationTurnSeq])
 
   // ── Visual Edits: LLM-free primary path ─────────────────────────────────
   // Text/color/size/spacing/radius edits write the SOURCE directly via

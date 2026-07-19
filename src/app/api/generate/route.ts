@@ -1315,10 +1315,19 @@ export async function POST(req: NextRequest) {
     const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false } = body
 
     // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
-    // WYBER_AGENT_TEAM=true turns on: [agent:{json}] event emission in the
-    // stream, Sentinel's in-stream security review, and the internal-pass
-    // billing lane. Off = byte-identical current behavior.
-    const agentTeamOn = process.env.WYBER_AGENT_TEAM === 'true'
+    // Reads the SAME var the client checks (roster.ts AGENT_TEAM_ENABLED) —
+    // this used to be a separate WYBER_AGENT_TEAM server-only var, but
+    // NEXT_PUBLIC_* vars are readable server-side too (Next.js inlines them
+    // in both bundles), and there was no cross-check between the two names.
+    // If they ever drifted (one deploy target has one set but not the
+    // other), isInternalPass below would evaluate false while the client
+    // still generated free internal fill passes — each one then silently
+    // billed as a full paid build instead of the intended free lane. A
+    // single flag makes that drift impossible instead of just detectable.
+    // Turns on: [agent:{json}] event emission in the stream, Sentinel's
+    // in-stream security review, and the internal-pass billing lane below.
+    // Off = byte-identical current behavior.
+    const agentTeamOn = process.env.NEXT_PUBLIC_AGENT_TEAM === 'true'
     // `internalPass` marks a follow-up pass of an already-charged turn (fill
     // batches after a charged scaffold, or a targeted agent fix). Honored ONLY
     // for those two bounded stages so a crafted request can never get a full
