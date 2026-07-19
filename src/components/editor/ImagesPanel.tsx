@@ -11,6 +11,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useEditorStore } from '@/store/editor';
 import { extractImageDirectives, replaceTokenInFiles, gradientDataUri } from '@/lib/image-directives';
+import { persistProjectFiles } from '@/lib/persist-project';
 import { GlowButton, MicroLabel, EmptyState } from './ui';
 
 interface ImageEntry {
@@ -55,10 +56,7 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
   const persistFiles = (updated: typeof files) => {
     setFiles(updated);
     if (resolvedProjectId) {
-      fetch('/api/projects', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: resolvedProjectId, files: updated, userId: (project as { userId?: string } | null)?.userId || 'auto' }),
-      }).catch(() => {});
+      void persistProjectFiles(resolvedProjectId, updated, (project as { userId?: string } | null)?.userId);
     }
   };
 

@@ -236,8 +236,21 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
   const handleRename = async (id: string, name: string) => {
     if (!name.trim()) { setRenamingId(null); return; }
-    await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: id, name: name.trim(), userId: profile?.id }) });
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, name: name.trim() } : p));
+    // Previously an unguarded `await fetch` with no try/catch: a network blip
+    // threw past the two lines below, leaving the rename input stuck open and
+    // — worse — nothing told the user it didn't save. Retry once, and only
+    // apply the optimistic name update if the PATCH actually succeeded, so the
+    // dashboard never shows a name that isn't really persisted.
+    let ok = false;
+    for (const delay of [0, 1500]) {
+      if (delay) await new Promise(r => setTimeout(r, delay));
+      try {
+        const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: id, name: name.trim(), userId: profile?.id }) });
+        if (res.ok) { ok = true; break; }
+      } catch { /* retry */ }
+    }
+    if (ok) setProjects(prev => prev.map(p => p.id === id ? { ...p, name: name.trim() } : p));
+    else console.error('[rename] failed to save project name after retry', id);
     setRenamingId(null);
   };
 

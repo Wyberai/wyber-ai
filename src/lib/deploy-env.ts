@@ -34,9 +34,17 @@ export async function getDeployEnvVars(
 
     for (const s of secrets ?? []) {
       if (!s.name || !s.value_encrypted) continue
-      try { env[s.name] = decrypt(s.value_encrypted) } catch {}
+      // A silent skip here means the deployed app is missing an env var it
+      // expects and crashes/misbehaves at runtime with zero clue why — the
+      // deploy itself "succeeds" while quietly shipping broken. Log which
+      // secret failed so this is at least diagnosable from server logs.
+      try { env[s.name] = decrypt(s.value_encrypted) } catch (e) {
+        console.error(`[deploy-env] failed to decrypt user secret "${s.name}" for user ${userId} — deployed app will be missing this env var:`, String(e))
+      }
     }
-  } catch {}
+  } catch (e) {
+    console.error(`[deploy-env] failed to load user secrets for user ${userId}:`, String(e))
+  }
 
   // 2. Supabase connector (per-project)
   try {
@@ -58,10 +66,17 @@ export async function getDeployEnvVars(
           const anonKey = decrypt(connector.api_key)
           env['NEXT_PUBLIC_SUPABASE_ANON_KEY'] = anonKey
           env['VITE_SUPABASE_ANON_KEY'] = anonKey
-        } catch {}
+        } catch (e) {
+          // The deployed app ships without its Supabase key — every DB call
+          // fails at runtime, and it looks exactly like "the builder is
+          // broken" rather than "this one project's stored key is corrupt".
+          console.error(`[deploy-env] failed to decrypt Supabase anon key for project ${projectId} — deployed app will have no DB connection:`, String(e))
+        }
       }
     }
-  } catch {}
+  } catch (e) {
+    console.error(`[deploy-env] failed to load Supabase connector for project ${projectId}:`, String(e))
+  }
 
   return env
 }

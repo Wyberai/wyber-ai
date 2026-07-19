@@ -2,11 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { encrypt, decrypt } from '@/lib/secrets-crypto';
 
-function safeDecrypt(val: string): string {
+function safeDecrypt(val: string): string | null {
   if (!val) return val
   // Values encrypted with AES-256-GCM have format "iv:authTag:ciphertext" (3 colons min)
   if (val.split(':').length === 3) {
-    try { return decrypt(val) } catch {}
+    try {
+      return decrypt(val)
+    } catch (e) {
+      // This DID match the encrypted-value shape, so a throw here means the
+      // encryption key was rotated or the ciphertext is corrupt — not "this
+      // was actually a legacy plaintext value" (that's the branch below,
+      // which never reaches decrypt() at all). The old code silently fell
+      // through and returned the raw ciphertext as if it were a valid API
+      // key — a connector would look mysteriously "broken" (or worse, the
+      // ciphertext would get used as a real credential and fail elsewhere)
+      // with zero signal anywhere about why. Log it and return null instead.
+      console.error('[connectors] failed to decrypt stored api_key — key rotation or corruption:', String(e))
+      return null
+    }
   }
   return val // plaintext legacy value
 }

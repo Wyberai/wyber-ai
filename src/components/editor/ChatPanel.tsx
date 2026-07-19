@@ -1115,6 +1115,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
       });
 
       if (!res.ok) {
+        // A session that expires mid-use used to surface here as a raw
+        // '{"error":"Unauthorized"}' string dumped into the chat with no
+        // indication of what happened or what to do — the generic error path
+        // below. 401 specifically means "log in again", not "something broke".
+        if (res.status === 401) {
+          throw new Error('SESSION_EXPIRED');
+        }
         // Parse 402 credit errors
         const errText = await res.text();
         if (res.status === 402) {
@@ -1500,11 +1507,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
     } catch (err: unknown) {
       if (isVisible) {
         const isAbort = err instanceof Error && err.name === 'AbortError';
+        // A session that expires mid-use (long-lived tab, token revoked) used
+        // to hit the generic fallback below and show a raw '{"error":
+        // "Unauthorized"}' string with no indication of what to actually do —
+        // the user had no way to tell "your login expired" apart from "the
+        // server broke". Give it a specific, actionable message instead.
+        const isSessionExpired = err instanceof Error && err.message === 'SESSION_EXPIRED';
         // fetch() surfaces a dropped connection (sleep/suspend, wifi drop, VPN
         // blip) as a bare TypeError — the build usually FINISHES on the server
         // and rescue-persist saves it, so point the user at reload, not retry.
         const isNetworkDrop = !isAbort && err instanceof TypeError;
-        const errMsg = isAbort
+        const errMsg = isSessionExpired
+          ? "**Your session expired.** [Log in again](/login), then come back to this project — nothing was lost, just re-send your last message."
+          : isAbort
           ? (userStoppedRef.current
               ? "**Stopped.** You cancelled this build before it finished — check if your credits were deducted before trying again, and reload the project to see what (if anything) landed."
               : "**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed.")

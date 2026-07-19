@@ -20,7 +20,18 @@ export async function GET() {
 
     const secrets = (data ?? []).map(row => {
       let preview = '••••••••'
-      try { preview = mask(decrypt(row.value_encrypted)) } catch {}
+      try {
+        preview = mask(decrypt(row.value_encrypted))
+      } catch (e) {
+        // Every row here has a real stored value, so a decrypt failure means
+        // the encryption key was rotated or the ciphertext is corrupt — not
+        // "no value set". The old fallback preview ('••••••••') is identical
+        // to what a perfectly healthy secret would never show but looks the
+        // same as a generic placeholder, so users had no reason to suspect
+        // anything was wrong until whatever used the secret failed elsewhere.
+        console.error(`[secrets] failed to decrypt secret "${row.name}" (user ${user.id}):`, String(e))
+        preview = '⚠ decrypt error — re-save this secret'
+      }
       return { id: row.id, name: row.name, preview, created_at: row.created_at, updated_at: row.updated_at }
     })
 

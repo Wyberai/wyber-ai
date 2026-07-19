@@ -8,6 +8,7 @@ import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directi
 import { injectWyberLoc, injectPreviewBridge } from '@/lib/wyber-preview/bridge'
 import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
 import { creditCost } from '@/lib/credits'
+import { persistProjectFiles } from '@/lib/persist-project'
 import { MicroLabel } from './ui'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
@@ -324,10 +325,7 @@ export function PreviewPanel() {
         if (r.ok) {
           st.setFiles(r.files as typeof st.files)
           if (st.project?.id) {
-            fetch('/api/projects', {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ projectId: st.project.id, files: r.files, userId: (st.project as { userId?: string }).userId || 'auto' }),
-            }).catch(() => {})
+            void persistProjectFiles(st.project.id, r.files, (st.project as { userId?: string }).userId)
           }
         }
       }
@@ -453,10 +451,7 @@ export function PreviewPanel() {
         // otherwise-successful fix. Same PATCH call PreviewPanel already uses
         // for the in-preview text-edit path a few lines up.
         if (project?.id) {
-          fetch('/api/projects', {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: project.id, files: updatedFiles, userId: (project as { userId?: string }).userId || 'auto' }),
-          }).catch(() => {})
+          void persistProjectFiles(project.id, updatedFiles, (project as { userId?: string }).userId)
         }
         return
       }
@@ -529,10 +524,7 @@ export function PreviewPanel() {
   const persistFiles = (updated: typeof files) => {
     setFiles(updated)
     if (project?.id) {
-      fetch('/api/projects', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: project.id, files: updated, userId: (project as { userId?: string }).userId || 'auto' }),
-      }).catch(() => { /* next chat-lane save also carries these files */ })
+      void persistProjectFiles(project.id, updated, (project as { userId?: string }).userId)
     }
   }
 

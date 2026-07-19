@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { persistProjectFiles } from '@/lib/persist-project'
 import { SkeletonList, EmptyState } from './ui'
 
 interface Version {
@@ -53,13 +54,7 @@ export function VersionHistory({ projectId }: { projectId: string }) {
     setFiles(v.files)
     setHasGeneratedFiles(true)
     // Persist the restore to Supabase so it survives refresh
-    try {
-      await fetch('/api/projects', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, files: v.files, userId: project?.userId || 'auto' }),
-      })
-    } catch {}
+    await persistProjectFiles(projectId, v.files, project?.userId)
     setTimeout(() => setRestoring(null), 1200)
   }
 
