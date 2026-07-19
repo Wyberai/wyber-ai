@@ -445,6 +445,19 @@ export function PreviewPanel() {
         // normal build, so the user never sees that anything was auto-fixed.
         setError(null)
         setFixing(false)
+        // Persist the fix — this used to only call setFiles (client state),
+        // never saving to the DB. Confirmed live: the preview rendered fine
+        // (client state was correct) but the project row's `files`/`updated_at`
+        // never changed, so a page reload (or anyone else opening the project)
+        // reverted straight back to the broken file, silently undoing an
+        // otherwise-successful fix. Same PATCH call PreviewPanel already uses
+        // for the in-preview text-edit path a few lines up.
+        if (project?.id) {
+          fetch('/api/projects', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id, files: updatedFiles, userId: (project as { userId?: string }).userId || 'auto' }),
+          }).catch(() => {})
+        }
         return
       }
     } catch { /* fall through to chat-based fix */ }
@@ -453,7 +466,7 @@ export function PreviewPanel() {
     const prompt = `The app failed to build with this error. Fix the exact file and syntax causing it, and return the corrected file(s):\n\n${error.slice(0, 600)}`
     window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt } }))
     setTimeout(() => setFixing(false), 3000)
-  }, [error, fixing, files, setFiles])
+  }, [error, fixing, files, setFiles, project])
 
   // Auto-trigger self-heal on errors — BOUNDED so it always converges.
   // The budget is a TOTAL number of attempts per user-initiated generation, and

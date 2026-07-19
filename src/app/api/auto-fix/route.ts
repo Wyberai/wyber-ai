@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { buildFixFileList } from '@/lib/auto-fix-context'
 
 export const maxDuration = 60
 
@@ -23,9 +24,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'error and files required' }, { status: 400 })
   }
 
-  const fileList = Object.entries(files)
-    .map(([path, content]) => `--- ${path} ---\n${(content as string).slice(0, 3000)}`)
-    .join('\n\n')
+  // See lib/auto-fix-context.ts for why this prioritizes the named file and
+  // uses a realistic budget — confirmed live that the old 12000-char total
+  // budget in plain iteration order silently dropped the actual broken file
+  // from the model's context on real, multi-file projects.
+  const fileList = buildFixFileList(files, fileName)
 
   // Detect error type for better fix guidance
   const isRuntime = error.toLowerCase().includes('runtime') || error.includes('is not defined') || error.includes('Cannot read') || error.includes('is not a function') || error.includes('undefined')
@@ -44,7 +47,7 @@ ERROR TYPE: ${errorType}
 ${fileName ? `Most likely in: ${fileName}` : ''}
 
 FILES:
-${fileList.slice(0, 12000)}
+${fileList}
 
 FIX STRATEGY (based on error type):
 ${isImport ? '- Add the missing import or remove the unused one. Check if the module name is spelled correctly.' : ''}
@@ -65,13 +68,27 @@ RULES:
 - Return ONLY <file> blocks, no prose`
 
   try {
+    // Assistant-turn prefill: the prompt already says "no prose" in words, but
+    // confirmed live that Haiku ignores it under real errors — it wrote a
+    // paragraph of diagnosis before the <file> block. That prose ate into the
+    // (also too-small) 8192-token output budget, so a large file's rewrite got
+    // cut off mid-file with no closing </file> tag, and the regex below found
+    // zero matches — the fix silently did nothing. Prefilling the assistant
+    // turn forces the response to continue directly from the tag: no prose is
+    // structurally possible, and the full token budget goes to file content.
+    // Anthropic returns only the CONTINUATION after a prefill, so it must be
+    // prepended back before parsing.
+    const PREFILL = '<file path="'
     const res = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8192,
-      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 16000,
+      messages: [
+        { role: 'user', content: prompt },
+        { role: 'assistant', content: PREFILL },
+      ],
     })
 
-    const text = res.content
+    const text = PREFILL + res.content
       .filter(b => b.type === 'text')
       .map(b => (b as { type: 'text'; text: string }).text)
       .join('')
