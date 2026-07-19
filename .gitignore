@@ -43,3 +43,15 @@ next-env.d.ts
 .vercel
 
 .next/
+
+# local scratch / one-off run artifacts — never repo content
+*.tmp.mjs
+*-tmp.cjs
+*-tmp.mjs
+gtm-run-*.log
+gtm-run-*.json
+gtm-sec-batch*.log
+gtm-sec-batch*-results.json
+growth-brief-history.jsonl
+scratch-*/
+scratch-*.html

@@ -32,14 +32,31 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
         const sb = d.connectors?.find((c: Connector) => c.service === 'supabase')
         if (sb) setConnected(sb)
       })
-    // Returned from Supabase OAuth consent → open the project picker.
+    // Returned from Supabase OAuth consent via a same-tab fallback (popup
+    // blocked) → open the project picker.
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('supabase') === 'pick') {
       openPicker()
     }
   }, [project?.id])
 
+  // Normal case: the OAuth callback runs in the popup and posts the result
+  // back here, so this tab (and its chat history) never navigates away.
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return
+      if (e.data?.type !== 'wyber:supabase-oauth-result') return
+      if (e.data.success) openPicker()
+      else setError(e.data.error || 'Supabase connection failed — please try again.')
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [])
+
   const oauthConnect = () => {
-    window.location.href = `/api/connectors/supabase/start?projectId=${project?.id}`
+    const startUrl = `/api/connectors/supabase/start?projectId=${project?.id}`
+    const popup = window.open(startUrl, 'supabase_oauth', 'width=520,height=680,scrollbars=yes,resizable=yes')
+    // Popup blocked — fall back to a same-tab redirect so the flow still works.
+    if (!popup) window.location.href = startUrl
   }
 
   async function openPicker() {
@@ -63,13 +80,16 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       const d = await r.json()
       if (!r.ok) { setError(d.error || 'Could not link project'); return }
       setConnected({ service: 'supabase', config: { url: d.url }, connected_at: new Date().toISOString() })
+      window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
       setPicker(false)
     } catch { setError('Could not link project') }
     finally { setPickerBusy(false) }
   }
 
   async function createNew() {
-    const name = window.prompt('Name for the new Supabase project:')
+    // Default to the app's name so the project is identifiable in the user's
+    // Supabase dashboard instead of another generic "My App".
+    const name = window.prompt('Name for the new Supabase project:', project?.name || '')
     if (!name) return
     const dbPass = window.prompt('Database password (save it somewhere safe):')
     if (!dbPass) return
@@ -84,6 +104,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       const d = await r.json()
       if (!r.ok) { setError(d.error || 'Could not create project'); return }
       setConnected({ service: 'supabase', config: { url: d.url }, connected_at: new Date().toISOString() })
+      window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
       setPicker(false)
     } catch { setError('Could not create project') }
     finally { setPickerBusy(false) }
@@ -114,6 +135,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       })
       if (res.ok) {
         setConnected({ service: 'supabase', config: { url: url.trim() }, connected_at: new Date().toISOString() })
+        window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
       } else {
         setError('Failed to save connection')
       }
@@ -129,6 +151,7 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
       body: JSON.stringify({ projectId: project?.id, service: 'supabase' })
     })
     setConnected(null); setUrl(''); setAnonKey('')
+    window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
   }
 
   return (
@@ -154,14 +177,24 @@ export function SupabaseConnector({ onClose }: { onClose: () => void }) {
               <div style={{ fontSize: 11, color: '#52526a', fontFamily: 'monospace' }}>{connected.config?.url}</div>
             </div>
             <div style={{ fontSize: 12, color: '#8b8b9a', marginBottom: 16 }}>
-              Your next generation will include a Supabase client, real CRUD operations, and data that persists between sessions.
+              Connecting alone doesn&apos;t change your app — it still runs on mock data until it&apos;s rebuilt against Supabase. One click below rewires it: real reads/writes, auth, and the database tables created automatically.
             </div>
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('wyber:chat-prompt', {
+                  detail: 'Wire the entire app to my connected Supabase project: replace all mock/local state with real Supabase reads and writes, add signup/login if missing, and include the schema SQL block at the end so my tables are created.',
+                }))
+                onClose()
+              }}
+              style={{ width: '100%', padding: '11px 0', borderRadius: 8, border: 'none', background: '#3ecf8e', color: '#06281c', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>⚡</span> Wire my app to Supabase now
+            </button>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={disconnect} style={{ flex: 1, padding: '9px 0', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#ef4444', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                 Disconnect
               </button>
-              <button onClick={onClose} style={{ flex: 2, padding: '9px 0', borderRadius: 8, border: 'none', background: '#6366f1', color: 'white', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                Done
+              <button onClick={onClose} style={{ flex: 2, padding: '9px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#8b8b9a', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                Close
               </button>
             </div>
           </div>

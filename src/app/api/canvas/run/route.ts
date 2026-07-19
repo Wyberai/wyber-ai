@@ -5,6 +5,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { creditCost } from '@/lib/credits'
 import { Composio } from '@composio/core'
 import { sendWorkflowCompletedEmail, sendWorkflowFailedEmail } from '@/lib/email'
+import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -150,7 +151,8 @@ async function executeAiAgent(
 
   // Build Claude tool definitions — one per downstream tool node.
   // Name must be [a-zA-Z0-9_-], so we sanitise the node id.
-  const tools: import('@anthropic-ai/sdk').Anthropic.Tool[] = toolNodes.map(tn => ({
+  // cache_control on the last tool caches the whole set across this run's iterations below.
+  const tools: import('@anthropic-ai/sdk').Anthropic.Tool[] = toolNodes.map((tn, i) => ({
     name: tn.id.replace(/[^a-zA-Z0-9_-]/g, '_'),
     description: [tn.data.label, tn.data.subtitle].filter(Boolean).join(': '),
     input_schema: {
@@ -163,6 +165,7 @@ async function executeAiAgent(
       },
       required: [],
     },
+    ...(i === toolNodes.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}),
   }))
 
   const nodeByToolName = new Map(
@@ -184,7 +187,7 @@ async function executeAiAgent(
       model,
       max_tokens: 4096,
       tools,
-      messages,
+      messages: withCacheBreakpoint(messages),
     })
 
     totalTokens += response.usage.output_tokens

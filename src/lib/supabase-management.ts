@@ -141,6 +141,34 @@ export function projectUrl(ref: string): string {
   return `https://${ref}.supabase.co`
 }
 
+/**
+ * Update the Auth URL Configuration (Site URL + redirect allow-list) for a
+ * project. Without this, Supabase keeps its default Site URL (localhost),
+ * so every email-confirmation / magic-link / OAuth redirect in an app built
+ * here points at localhost even after the app is deployed — signup breaks
+ * for real users. Call this whenever a project gets a real live URL
+ * (Vercel deploy, wyberai.com publish, custom domain).
+ */
+export function updateAuthConfig(token: string, ref: string, opts: { siteUrl: string; extraRedirectUrls?: string[] }): Promise<unknown> {
+  const redirects = [opts.siteUrl, `${opts.siteUrl}/**`, ...(opts.extraRedirectUrls ?? [])]
+  return mgmt(token, `/projects/${ref}/config/auth`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      site_url: opts.siteUrl,
+      uri_allow_list: redirects.join(','),
+    }),
+  })
+}
+
+/**
+ * Restore a paused project. Supabase pauses FREE-tier projects after ~1 week
+ * of inactivity — the #1 silent killer of published hobby apps ("my app worked
+ * last week, now nothing loads"). Restore takes ~1 minute.
+ */
+export function restoreProject(token: string, ref: string): Promise<unknown> {
+  return mgmt(token, `/projects/${ref}/restore`, { method: 'POST', body: JSON.stringify({}) })
+}
+
 /** Run SQL against the project's database (used for schema push). */
 export function runSql(token: string, ref: string, query: string): Promise<unknown> {
   return mgmt(token, `/projects/${ref}/database/query`, {

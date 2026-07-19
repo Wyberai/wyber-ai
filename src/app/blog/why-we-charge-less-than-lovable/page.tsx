@@ -66,12 +66,12 @@ export default function Post() {
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Why credits never expire</h2>
           <p>Expiring credits create artificial urgency and punish users who don't build constantly. We don't want that relationship with our users. If you buy a top-up, it's yours until you use it. We'd rather compete on product quality than on credit anxiety.</p>
 
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What this means for all six products</h2>
-          <p>The same economics apply across all six products. Web apps, mobile apps, AI Employees, workflows — every generation uses the same smart routing and prompt caching. Self-healing builds that fix their own errors never cost you a credit. The more efficiently we run inference, the more credits you get per dollar.</p>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>What this means across the platform</h2>
+          <p>The same economics apply to everything you build. Web apps, mobile apps — and the AI Employees and workflows rolling out in early access — every generation uses the same smart routing and prompt caching. Self-healing builds that fix their own errors never cost you a credit. The more efficiently we run inference, the more credits you get per dollar.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>See for yourself</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 free credits a month. No credit card required. Try all six products.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 free credits a month. No credit card required.</p>
             <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
           </div>
         </div>

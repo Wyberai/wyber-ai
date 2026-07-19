@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { creditCost } from '@/lib/credits'
 import { sendCreditLowEmail } from '@/lib/email'
+import { userCurrency } from '@/lib/user-currency'
+import { notifyPush } from '@/lib/push'
 
 const ITER_COST = creditCost('execution', 'default') // 2 credits
 // Worst-case cost = 1 initial call + MAX_ITERATIONS continuation calls (10) + 1 = 11 calls
@@ -98,7 +100,7 @@ export async function GET(req: NextRequest) {
 
       // Notify via email + in-app notification
       try {
-        await sendCreditLowEmail(profile.email, profile.credits)
+        await sendCreditLowEmail(profile.email, profile.credits, await userCurrency(admin, schedule.user_id))
       } catch (emailErr) {
         console.error(`${tag} email send failed:`, emailErr)
       }
@@ -120,6 +122,12 @@ export async function GET(req: NextRequest) {
           updated_at: now.toISOString(),
         }).eq('id', schedule.id),
       ])
+
+      // Best-effort push to the companion app (never blocks the queue).
+      await notifyPush(admin, schedule.user_id, 'scheduled_agent_skipped', {
+        agent_id: schedule.agent_id,
+        upgrade_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+      })
 
       results.push({ agent_id: schedule.agent_id, user_id: schedule.user_id, action: 'skipped', reason: 'low_credits' })
       continue

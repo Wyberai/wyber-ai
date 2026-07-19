@@ -37,7 +37,7 @@ export default function Post() {
             <li>"Change the CTA button color to sky blue"</li>
             <li>"Add a testimonials section between features and pricing"</li>
           </ul>
-          <p>Each successful refinement costs one credit. AI mistakes are always free to fix.</p>
+          <p>Each successful refinement costs two credits. AI mistakes are always free to fix.</p>
           <h2>Step 3: Add your backend (15 minutes)</h2>
           <p>Go to the Connect tab and add Supabase. Then prompt:</p>
           <div style={{ padding: '14px 18px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text)', lineHeight: 1.7, margin: '16px 0' }}>

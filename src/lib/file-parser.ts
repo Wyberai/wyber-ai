@@ -8,14 +8,33 @@ export interface ParseResult {
 }
 const FILE_BLOCK_RE = /<file\s+path="([^"]+)">([\s\S]*?)<\/file>/g;
 
-// Strip <thinking>...</thinking> reasoning blocks (and an unclosed trailing one)
-// so they never render as chat text.
+// Strip <thinking>...</thinking> blocks (banned model-authored prose, see the
+// CRITICAL OUTPUT RULES in generate/route.ts) and <reasoning>...</reasoning>
+// blocks (real extended-thinking output, opt-in on new-build full generation —
+// captured separately via extractReasoning() for its own collapsible display,
+// so it must never leak into chat text here) — including an unclosed trailing
+// one of either, so they never render as chat text.
 function stripThinking(raw: string): string {
   let out = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
-  // If a <thinking> was opened but never closed (model ran long), drop everything from it on
-  const openIdx = out.search(/<thinking>/i);
+  out = out.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '');
+  // If either tag was opened but never closed (model ran long / stream cut), drop everything from it on
+  const openIdx = out.search(/<thinking>|<reasoning>/i);
   if (openIdx !== -1) out = out.slice(0, openIdx);
   return out;
+}
+
+// Extract <reasoning>...</reasoning> content emitted by opt-in extended
+// thinking (new-build full generation only). Includes a still-open trailing
+// block so live streaming display isn't stuck empty until the tag closes.
+export function extractReasoning(raw: string): string {
+  let out = '';
+  const re = /<reasoning>([\s\S]*?)<\/reasoning>/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) out += m[1];
+  const lastOpen = raw.lastIndexOf('<reasoning>');
+  const lastClose = raw.lastIndexOf('</reasoning>');
+  if (lastOpen !== -1 && lastOpen > lastClose) out += raw.slice(lastOpen + '<reasoning>'.length);
+  return out.trim();
 }
 
 export function parseGenerationOutput(raw: string): ParseResult {
@@ -38,6 +57,9 @@ export function parseGenerationOutput(raw: string): ParseResult {
   chatText = chatText.replace(/```[\s\S]*?```/g, '');
   // Strip [progress: ...] markers — these are surfaced as the live checklist, never as chat text
   chatText = chatText.replace(/\[progress:[^\]]+\]/gi, '');
+  // Strip [agent:{...}] team-event markers — surfaced via extractAgentEvents
+  // (src/lib/agents/events.ts) as the agent feed, never as chat text.
+  chatText = chatText.replace(/\[agent:\{[^\n\]]*\}\]/g, '');
   // Clean up extra whitespace and blank lines
   chatText = chatText
     .split('\n')
@@ -76,6 +98,11 @@ export function cleanStreamingDisplay(raw: string): string {
   let out = raw.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
   const openThink = out.search(/<thinking>/i);
   if (openThink !== -1) out = out.slice(0, openThink);
+  // <reasoning> (real extended-thinking output) is rendered in its own
+  // collapsible section via extractReasoning() — never as main chat text.
+  out = out.replace(/<reasoning>[\s\S]*?<\/reasoning>/gi, '');
+  const openReasoning = out.search(/<reasoning>/i);
+  if (openReasoning !== -1) out = out.slice(0, openReasoning);
   // hide complete <file> and <edit> blocks from the streaming chat text
   out = out.replace(/<file\s+path="[^"]*">[\s\S]*?<\/file>/g, '');
   out = out.replace(/<edit\s+path="[^"]*">[\s\S]*?<\/edit>/g, '');
@@ -84,6 +111,21 @@ export function cleanStreamingDisplay(raw: string): string {
   if (openFile !== -1) out = out.slice(0, openFile);
   const openEdit = out.search(/<edit\s+path="/i);
   if (openEdit !== -1) out = out.slice(0, openEdit);
+  // The schema block ("/* SQL TO RUN IN SUPABASE ... */") is platform protocol —
+  // parsed and auto-applied by ChatPanel, never meant to render as chat text.
+  out = out.replace(/\/\*\s*SQL TO RUN IN SUPABASE[\s\S]*?\*\//gi, '');
+  const openSql = out.search(/\/\*\s*SQL TO RUN IN SUPABASE/i);
+  if (openSql !== -1) out = out.slice(0, openSql);
+  // Stray conflict markers emitted OUTSIDE an <edit> wrapper (model slip) —
+  // never show raw SEARCH/REPLACE machinery in chat.
+  out = out.replace(/<<<<<<<\s*SEARCH[\s\S]*?>>>>>>>\s*REPLACE/g, '');
+  const openSearch = out.search(/<<<<<<<\s*SEARCH/);
+  if (openSearch !== -1) out = out.slice(0, openSearch);
+  // [agent:{...}] team-event markers render via the agent feed, never as text.
+  // Also cut a partial marker at the buffer tail (stream ended mid-marker).
+  out = out.replace(/\[agent:\{[^\n\]]*\}\]/g, '');
+  const openAgent = out.search(/\[agent:\{[^\n\]]*$/);
+  if (openAgent !== -1) out = out.slice(0, openAgent);
   return out.trim();
 }
 

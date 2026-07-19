@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { nextRunAt } from '@/app/api/cron/agent-scheduler/route'
 import { sendCreditLowEmail } from '@/lib/email'
+import { userCurrency } from '@/lib/user-currency'
 
 const MAX_RUN_COST = 22
 
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (!profile || profile.credits < MAX_RUN_COST) {
-      try { await sendCreditLowEmail(profile?.email ?? '', profile?.credits ?? 0) } catch {}
+      try { await sendCreditLowEmail(profile?.email ?? '', profile?.credits ?? 0, await userCurrency(admin, emp.user_id)) } catch {}
       await admin.from('ai_employees').update({
         next_run_at: nextRunAt(emp.cron_expression!, now).toISOString(),
       }).eq('id', emp.id)

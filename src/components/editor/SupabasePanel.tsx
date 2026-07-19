@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import { SkeletonList } from './ui'
 
 interface ConnectorRow {
   id: string
@@ -111,6 +112,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
     setSaving(false)
     if (data.error) { setError(data.error); return }
     setUrl(''); setAnonKey('')
+    window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
     await load()
   }
 
@@ -121,6 +123,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
       body: JSON.stringify({ projectId, service: 'supabase' }),
     })
     setConnected(null)
+    window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
   }
 
   const copy = (text: string, key: string) => {
@@ -140,11 +143,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
   }
 
   if (loading) {
-    return (
-      <div style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ide-text3)', fontSize: 12 }}>
-        <Spinner /> Loading...
-      </div>
-    )
+    return <SkeletonList rows={3} rowHeight={64} />
   }
 
   // ── Connected state ──
@@ -270,16 +269,19 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {/* Auto-provision */}
+      {/* Connect the user's OWN Supabase (OAuth) — link an existing project or
+          create a new one in THEIR org, on their free tier. The old
+          auto-provision path created projects in WyberAi's platform org, which
+          billed every customer database to us. */}
       {mode === 'provision' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: 14, borderRadius: 9, background: 'rgba(63,207,142,0.05)', border: '1px solid rgba(63,207,142,0.15)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <IcoDb />
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#3FCF8E' }}>Auto-provision Supabase</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#3FCF8E' }}>Connect your Supabase</div>
             </div>
             <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.6, marginBottom: 12 }}>
-              Creates a free Supabase project automatically — Postgres + auth + storage.
+              One click to link your Supabase account — pick an existing project or create a new one there (free on Supabase&apos;s free tier). Postgres + auth + storage, owned by you.
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 12 }}>
               {['Postgres database', 'Email & social auth', 'File storage', 'Real-time subscriptions'].map(f => (
@@ -288,7 +290,11 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
                 </div>
               ))}
             </div>
-            <ProvisionButton projectId={projectId} onDone={load} />
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))}
+              style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: '#3FCF8E', color: '#000', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              Connect Supabase
+            </button>
           </div>
         </div>
       )}
@@ -298,50 +304,3 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
   )
 }
 
-// Separate component so it can manage its own loading state
-function ProvisionButton({ projectId, onDone }: { projectId: string; onDone: () => void }) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  const provision = async () => {
-    setLoading(true); setError('')
-    try {
-      const res = await fetch('/api/provision-supabase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, projectName: 'My App' }),
-      })
-      const data = await res.json()
-      if (data.error) { setError(data.error); setLoading(false); return }
-
-      // Save provisioned credentials into project_connectors
-      const sbUrl = data.supabaseUrl || ''
-      const key = data.anonKey || ''
-      const projectRef = sbUrl.split('//')[1]?.split('.')[0] ?? ''
-      await fetch('/api/connectors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          projectId,
-          service: 'supabase',
-          apiKey: key,
-          config: { url: sbUrl, project_id: projectRef },
-        }),
-      })
-      onDone()
-    } catch (e: any) {
-      setError(String(e))
-    }
-    setLoading(false)
-  }
-
-  return (
-    <>
-      {error && <div style={{ fontSize: 11, color: '#ef4444' }}>{error}</div>}
-      <button onClick={provision} disabled={loading}
-        style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: loading ? 'rgba(63,207,142,0.2)' : '#3FCF8E', color: loading ? '#3FCF8E' : '#000', fontSize: 13, fontWeight: 700, cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-        {loading ? <><div style={{ width: 12, height: 12, border: '2px solid #3FCF8E', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Creating...</> : 'Create free Supabase project'}
-      </button>
-    </>
-  )
-}

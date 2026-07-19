@@ -42,7 +42,7 @@ export default function Page() {
           </Step>
           <Step n={5} title="Iterate with follow-up prompts">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Type follow-up prompts in the chat panel to change specific parts of the app. Each iteration costs 1 credit and creates a new snapshot — you can always go back to any previous version.
+              Type follow-up prompts in the chat panel to change specific parts of the app. Each iteration costs 2 credits and creates a new snapshot — you can always go back to any previous version.
             </p>
             <ScreenshotPlaceholder label="Chat panel with follow-up prompt" />
           </Step>

@@ -23,16 +23,19 @@ export interface VsPageProps {
   faqs: FaqItem[]
   pillarNote: string // short sentence on what competitor lacks
   competitorKey: string // key used in the 'winner' field — maps to 'other' display
+  /** When set, promotes the RLS Trust Scanner from a table row to a lead callout right after the hero, with a real (not fabricated) usage stat. Optional — pages that don't pass it render unchanged. */
+  securityStats?: { totalScans: number; cleanPct: number } | null
 }
 
+/* Space-journey brand surfaces (see globals.css --brand-*) */
 const s = {
-  bg: '#09090b',
-  card: '#111113',
-  border: 'rgba(255,255,255,0.08)',
-  text: '#fafafa',
-  muted: '#71717a',
-  dim: '#52525b',
-  sky: '#0EA5E9',
+  bg: 'var(--brand-bg)',
+  card: 'var(--brand-bg-raised)',
+  border: 'var(--brand-border)',
+  text: 'var(--brand-text)',
+  muted: 'var(--brand-text-dim)',
+  dim: 'var(--brand-text-faint)',
+  sky: 'var(--brand-accent)',
 }
 
 const PRODUCTS = [
@@ -53,6 +56,7 @@ export function VsPageTemplate({
   rows,
   faqs,
   pillarNote,
+  securityStats,
 }: VsPageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -116,7 +120,7 @@ export function VsPageTemplate({
 
         {/* Hero */}
         <header style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Comparison · Verified June 2026</div>
+          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>COMPARISON · VERIFIED JUNE 2026</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 12, margin: '0 0 12px' }}>
             WyberAi vs {competitorName}
           </h1>
@@ -129,13 +133,30 @@ export function VsPageTemplate({
           </p>
         </header>
 
+        {/* RLS Trust Scanner lead callout — promoted above the feature table when
+            securityStats is passed, since it's the one thing this competitor
+            doesn't have at all (see the comparison row below), not just a minor edge. */}
+        {securityStats && (
+          <section aria-labelledby="security-callout-heading" style={{ marginBottom: 32, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
+            <h2 id="security-callout-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px', color: '#fbbf24' }}>
+              The gap {competitorName} can&apos;t close: a real database security scan
+            </h2>
+            <p style={{ fontSize: 13, color: s.muted, marginBottom: 10, lineHeight: 1.65 }}>
+              WyberAi probes every published project&apos;s live database with the public anon key — the same way an attacker would — and blocks publish on any critical leak. {competitorName} doesn&apos;t do this at all.
+            </p>
+            <p style={{ fontSize: 13, color: '#fbbf24', fontWeight: 700, margin: 0 }}>
+              {securityStats.totalScans.toLocaleString()} real scans run so far · {securityStats.cleanPct}% came back clean on the first try
+            </p>
+          </section>
+        )}
+
         {/* Six-product differentiator */}
         <section aria-labelledby="six-products-heading" style={{ marginBottom: 48, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.15)', borderRadius: 14, padding: 'clamp(20px,3vw,32px)' }}>
           <h2 id="six-products-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(15px,2vw,20px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8, margin: '0 0 8px' }}>
-            The key difference: Wyber does six things, not one
+            Web <em>and</em> mobile, one workspace
           </h2>
           <p style={{ fontSize: 13, color: s.muted, marginBottom: 20, lineHeight: 1.65 }}>
-            {pillarNote} WyberAi is the only no-code platform that covers all six products from one workspace.
+            {pillarNote} Same prompt, same credits — WyberAi ships web <em>and</em> mobile apps from one workspace, with deploy, integrations, and GitHub code ownership built in.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
             {PRODUCTS.map(p => (

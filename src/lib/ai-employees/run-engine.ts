@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { creditCost } from '@/lib/credits'
 import { sendAsEmployee } from '@/lib/ai-employees/email-identity'
 import { embed } from '@/lib/ai-employees/embeddings'
+import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const MAX_TOOL_ITERATIONS = 15
@@ -715,6 +716,10 @@ async function runSubAgent(opts: {
     description: t.function?.description ?? t.description ?? '',
     input_schema: (t.function?.parameters ?? { type: 'object', properties: {} }) as Anthropic.Tool['input_schema'],
   }))
+  // cache_control on the last tool caches the set across this sub-agent's iterations below.
+  if (toolDefs.length > 0) {
+    toolDefs[toolDefs.length - 1] = { ...toolDefs[toolDefs.length - 1], cache_control: { type: 'ephemeral' } }
+  }
 
   const messages: Anthropic.MessageParam[] = [{ role: 'user', content: task }]
   let finalText = ''
@@ -727,7 +732,7 @@ async function runSubAgent(opts: {
       // Cache the sub-agent's system prompt across its own iteration loop.
       system: [{ type: 'text', text: `${systemPrompt}\n\nYou are operating as a sub-agent deployed by a manager. Do the task focused and well, then report back a concise result (what you did + key outputs). Use tools where they help.`, cache_control: { type: 'ephemeral' } }],
       tools: toolDefs,
-      messages,
+      messages: withCacheBreakpoint(messages),
     })
     messages.push({ role: 'assistant', content: res.content })
     if (res.stop_reason === 'end_turn') {
@@ -795,8 +800,12 @@ export async function runEmployee(
       input_schema: (t.function?.parameters ?? { type: 'object', properties: {} }) as Anthropic.Tool['input_schema'],
     }))
 
-    // Combine composio + wyber tools
-    const allTools = [...composioToolDefs, ...WYBER_TOOLS]
+    // Combine composio + wyber tools. cache_control on the last tool caches the
+    // whole set (identical across this run's up-to-15 iterations below).
+    const allTools: Anthropic.Tool[] = [...composioToolDefs, ...WYBER_TOOLS]
+    if (allTools.length > 0) {
+      allTools[allTools.length - 1] = { ...allTools[allTools.length - 1], cache_control: { type: 'ephemeral' } }
+    }
 
     // ── RECALL: relevance-based memory over the employee's whole tenure ─────────
     // Semantic retrieval (Voyage embeddings) when available — "what do I know
@@ -972,7 +981,7 @@ No text outside the JSON.`
         // the system block covers tools + system → ~90% input-token savings per run.
         system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
         tools: allTools,
-        messages,
+        messages: withCacheBreakpoint(messages),
       })
 
       creditsUsed += ITER_COST

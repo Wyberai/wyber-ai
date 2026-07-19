@@ -1,6 +1,7 @@
 'use client';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Dialog } from '@/components/ui/dialog';
 
 interface Props {
   open: boolean;
@@ -25,12 +26,11 @@ const TABS: { id: Tab; label: string; color: string; icon: React.ReactNode }[] =
   },
 ];
 
-const BG = '#15171f';
-const CARD = '#1a1d28';
-const BORDER = '#262a36';
-const TEXT = '#f4f4f5';
-const MUTED = '#a1a1aa';
-const DIM = '#52525b';
+const CARD = 'var(--bg-elevated)';
+const BORDER = 'var(--ide-border)';
+const TEXT = 'var(--ide-text)';
+const MUTED = 'var(--ide-text2)';
+const DIM = 'var(--ide-text3)';
 
 export function ImportModal({ open, onClose }: Props) {
   const router = useRouter();
@@ -43,8 +43,6 @@ export function ImportModal({ open, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  if (!open) return null;
 
   const activeColor = TABS.find(t => t.id === tab)?.color ?? '#0EA5E9';
   const isWorkflow = tab === 'workflow';
@@ -122,14 +120,8 @@ export function ImportModal({ open, onClose }: Props) {
   };
 
   return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{ width: '100%', maxWidth: 540, background: BG, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', gap: 20 }}
-      >
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }} maxWidth={540}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -268,6 +260,6 @@ export function ImportModal({ open, onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 }

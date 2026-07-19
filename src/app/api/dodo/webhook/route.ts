@@ -9,6 +9,8 @@ import {
   sendRefundEmail,
   sendAdminPaymentAlert,
 } from '@/lib/email'
+import { sendMetaEvent } from '@/lib/meta-capi'
+import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 
 function getAdmin() {
   return createClient(
@@ -19,23 +21,80 @@ function getAdmin() {
 }
 
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_200  || 'TOPUP_UNSET1']: 200,
-  [process.env.DODO_TOPUP_600  || 'TOPUP_UNSET2']: 600,
-  [process.env.DODO_TOPUP_2000 || 'TOPUP_UNSET3']: 2000,
+  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 200,
+  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 600,
+  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 2000,
+  // India (INR) top-ups — same credit packs, separate INR-priced products.
+  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 200,
+  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 600,
+  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 2000,
 }
 
-// Plan config keyed by Dodo product ID env var — matches new 5-tier pricing
-const PLANS: Record<string, { credits: number; dailyCredits: number; plan: string; label: string }> = {
-  [process.env.DODO_PRODUCT_STARTER         || 'UNSET_ST1']: { credits: 150,   dailyCredits: 6,   plan: 'starter',  label: 'Starter'  },
-  [process.env.DODO_PRODUCT_STARTER_ANNUAL  || 'UNSET_ST2']: { credits: 150,   dailyCredits: 6,   plan: 'starter',  label: 'Starter'  },
-  [process.env.DODO_PRODUCT_BUILDER         || 'UNSET_B1']:  { credits: 500,   dailyCredits: 20,  plan: 'builder',  label: 'Builder'  },
-  [process.env.DODO_PRODUCT_BUILDER_ANNUAL  || 'UNSET_B2']:  { credits: 500,   dailyCredits: 20,  plan: 'builder',  label: 'Builder'  },
-  [process.env.DODO_PRODUCT_PRO             || 'UNSET_P1']:  { credits: 1500,  dailyCredits: 60,  plan: 'pro',      label: 'Pro'      },
-  [process.env.DODO_PRODUCT_PRO_ANNUAL      || 'UNSET_P2']:  { credits: 1500,  dailyCredits: 60,  plan: 'pro',      label: 'Pro'      },
-  [process.env.DODO_PRODUCT_GROWTH          || 'UNSET_G1']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
-  [process.env.DODO_PRODUCT_GROWTH_ANNUAL   || 'UNSET_G2']:  { credits: 4000,  dailyCredits: 160, plan: 'growth',   label: 'Growth'   },
-  [process.env.DODO_PRODUCT_SCALE           || 'UNSET_S1']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
-  [process.env.DODO_PRODUCT_SCALE_ANNUAL    || 'UNSET_S2']:  { credits: 10000, dailyCredits: 400, plan: 'scale',    label: 'Scale'    },
+// Plan config, shared by the USD and INR products (same tier, same credits —
+// only the charge currency differs). Spark is the India-only entry tier.
+type PlanConfig = { credits: number; dailyCredits: number; plan: string; label: string }
+const SPARK:   PlanConfig = { credits: 50,    dailyCredits: 2,   plan: 'spark',   label: 'Spark'   }
+const STARTER: PlanConfig = { credits: 150,   dailyCredits: 6,   plan: 'starter', label: 'Starter' }
+const BUILDER: PlanConfig = { credits: 500,   dailyCredits: 20,  plan: 'builder', label: 'Builder' }
+const PRO:     PlanConfig = { credits: 1500,  dailyCredits: 60,  plan: 'pro',     label: 'Pro'     }
+const GROWTH:  PlanConfig = { credits: 4000,  dailyCredits: 160, plan: 'growth',  label: 'Growth'  }
+const SCALE:   PlanConfig = { credits: 10000, dailyCredits: 400, plan: 'scale',   label: 'Scale'   }
+
+// Keyed by Dodo product ID env var. INR product IDs map to the SAME config, so
+// a rupee checkout grants credits/plan identically — without these the payment
+// would succeed but grant nothing.
+const PLANS: Record<string, PlanConfig> = {
+  // USD
+  [process.env.DODO_PRODUCT_STARTER          || 'UNSET_ST1']: STARTER,
+  [process.env.DODO_PRODUCT_STARTER_ANNUAL   || 'UNSET_ST2']: STARTER,
+  [process.env.DODO_PRODUCT_BUILDER          || 'UNSET_B1']:  BUILDER,
+  [process.env.DODO_PRODUCT_BUILDER_ANNUAL   || 'UNSET_B2']:  BUILDER,
+  [process.env.DODO_PRODUCT_PRO              || 'UNSET_P1']:  PRO,
+  [process.env.DODO_PRODUCT_PRO_ANNUAL       || 'UNSET_P2']:  PRO,
+  [process.env.DODO_PRODUCT_GROWTH           || 'UNSET_G1']:  GROWTH,
+  [process.env.DODO_PRODUCT_GROWTH_ANNUAL    || 'UNSET_G2']:  GROWTH,
+  [process.env.DODO_PRODUCT_SCALE            || 'UNSET_S1']:  SCALE,
+  [process.env.DODO_PRODUCT_SCALE_ANNUAL     || 'UNSET_S2']:  SCALE,
+  // India (INR) — including the Spark entry tier
+  [process.env.DODO_PRODUCT_SPARK_INR        || 'UNSET_SPK1']: SPARK,
+  [process.env.DODO_PRODUCT_SPARK_ANNUAL_INR || 'UNSET_SPK2']: SPARK,
+  [process.env.DODO_PRODUCT_STARTER_INR      || 'UNSET_ST1I']: STARTER,
+  [process.env.DODO_PRODUCT_STARTER_ANNUAL_INR || 'UNSET_ST2I']: STARTER,
+  [process.env.DODO_PRODUCT_BUILDER_INR      || 'UNSET_B1I']:  BUILDER,
+  [process.env.DODO_PRODUCT_BUILDER_ANNUAL_INR || 'UNSET_B2I']: BUILDER,
+  [process.env.DODO_PRODUCT_PRO_INR          || 'UNSET_P1I']:  PRO,
+  [process.env.DODO_PRODUCT_PRO_ANNUAL_INR   || 'UNSET_P2I']:  PRO,
+  // Spark USD (in case it's ever sold in USD — spark_monthly=$6)
+  [process.env.DODO_PRODUCT_SPARK            || 'UNSET_SPK3']: SPARK,
+  [process.env.DODO_PRODUCT_SPARK_ANNUAL     || 'UNSET_SPK4']: SPARK,
+}
+
+// Report a paid conversion to Meta (Conversions API). Server-side is the only
+// place with the real payment id + amount and it can't be blocked. Value comes
+// from the plan key stashed in checkout metadata; eventId is the payment id so
+// Meta dedupes retries. Best-effort — sendMetaEvent no-ops without creds and
+// never throws.
+async function reportMetaPurchase(
+  req: NextRequest,
+  event: Record<string, unknown> & { data?: unknown },
+  metadata: Record<string, unknown>,
+  userEmail: string | undefined,
+  dedupeId: string,
+) {
+  const planKey = (metadata.plan as string | undefined) || ''
+  const currency = (metadata.currency as string | undefined) === 'INR' ? 'INR' : 'USD'
+  const value = (currency === 'INR' ? PLAN_VALUE_INR[planKey] : PLAN_VALUE[planKey]) ?? 0
+  const evData = event.data as Record<string, unknown> | undefined
+  const paymentId = String(evData?.payment_id || dedupeId || '')
+  await sendMetaEvent({
+    eventName: 'Purchase',
+    eventId: `purchase_${paymentId}`,
+    email: userEmail || null,
+    value,
+    currency,
+    clientIp: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+    userAgent: req.headers.get('user-agent'),
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -86,11 +145,17 @@ export async function POST(req: NextRequest) {
   const eventType = String(event.type || '')
   console.log('Dodo event:', eventType)
 
+  // Hoisted so the catch below can release the idempotency claims on failure.
+  const dedupeId = headerId || String((event.data as Record<string, unknown> | undefined)?.payment_id || (event as Record<string, unknown>).id || '')
+  // Every processed_webhooks claim taken during this delivery — the catch
+  // releases ALL of them so a retried delivery re-runs the full grant.
+  const claimedKeys: string[] = []
+  if (dedupeId) claimedKeys.push(dedupeId)
+
   try {
     const admin = getAdmin()
 
     // ── Idempotency: webhooks are retried; never apply the same event twice ──
-    const dedupeId = headerId || String((event.data as Record<string, unknown> | undefined)?.payment_id || (event as Record<string, unknown>).id || '')
     if (dedupeId) {
       const { error: dupeErr } = await admin
         .from('processed_webhooks')
@@ -117,7 +182,16 @@ export async function POST(req: NextRequest) {
     )
 
     if (!userId) {
+      // A real payment with no user to credit is a silent money-taken/nothing-
+      // granted black hole — alert a human to reconcile it manually instead of
+      // just logging into the void. Still ack: retries can't fix missing metadata.
       console.warn('No user_id in event metadata for', eventType)
+      if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
+        sendAdminPaymentAlert(
+          'UNKNOWN USER — reconcile manually',
+          `⚠ ${eventType} arrived with NO user_id metadata. product=${productId || 'unknown'} webhook-id=${dedupeId || 'none'} — find the payment in the Dodo dashboard and grant credits by hand.`
+        ).catch(() => {})
+      }
       return NextResponse.json({ received: true, warning: 'no user_id' })
     }
 
@@ -158,7 +232,9 @@ export async function POST(req: NextRequest) {
             .single()
           if (!purchaseRow?.contact_info) throw new Error('No contact_info stored for this purchase')
 
-          const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+          // WYBERAI_DOMAINS is a separately-scoped token with Vercel Registrar API
+          // access (the original VERCEL_TOKEN lacked the right scope for it).
+          const VERCEL_TOKEN = process.env.WYBERAI_DOMAINS || process.env.VERCEL_TOKEN
           const VERCEL_TEAM = process.env.VERCEL_TEAM_ID
           const teamQ = VERCEL_TEAM ? `?teamId=${VERCEL_TEAM}` : ''
           // Old v4/v5 domains/buy was sunset Nov 9 2025 → Registrar API, which
@@ -197,17 +273,30 @@ export async function POST(req: NextRequest) {
       // Check if it's a top-up first
       const topupCredits = TOPUPS[productId]
       if (topupCredits) {
-        const before = (profile?.credits as number) || 0
-        const newBalance = before + topupCredits
-        await admin.from('profiles').update({
-          credits: newBalance,
-          updated_at: new Date().toISOString(),
-        }).eq('id', userId)
+        // Atomic when the adjust_credits RPC exists (migration
+        // 20260702130000); read-then-write fallback until it's applied.
+        let newBalance: number | null = null
+        const { data: adjusted, error: adjErr } = await admin.rpc('adjust_credits', {
+          p_user_id: userId, p_delta: topupCredits,
+        })
+        if (!adjErr && typeof adjusted === 'number') newBalance = adjusted
+        if (newBalance === null) {
+          const before = (profile?.credits as number) || 0
+          newBalance = before + topupCredits
+          const { error: updErr } = await admin.from('profiles').update({
+            credits: newBalance,
+            updated_at: new Date().toISOString(),
+          }).eq('id', userId)
+          // A failed grant must NOT be acked — throw so the catch below
+          // releases the idempotency claim and Dodo retries the delivery.
+          if (updErr) throw updErr
+        }
         console.log(`Topup +${topupCredits} for ${userId}`)
         if (userEmail) {
           sendTopupEmail(userEmail, topupCredits, newBalance).catch(() => {})
           sendAdminPaymentAlert(userEmail, `Top-up: ${topupCredits} credits`).catch(() => {})
         }
+        await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
         return NextResponse.json({ received: true })
       }
 
@@ -216,18 +305,59 @@ export async function POST(req: NextRequest) {
         console.warn('Dodo webhook: unknown product, no plan change:', productId)
         return NextResponse.json({ received: true, warning: 'unknown product' })
       }
-      await admin.from('profiles').update({
+
+      // Plan credits are ADDED to the existing balance (top-ups "never expire"
+      // — activation must not wipe them). Because payment.succeeded and
+      // subscription.active BOTH fire for the same subscribe (and were harmless
+      // when this was a SET), the grant is deduped across the pair on the
+      // subscription id: whichever event lands first grants, the other only
+      // refreshes the plan fields. A renewal's payment.succeeded reuses the
+      // same subscription id, so it can't re-grant either — renewals are
+      // credited by the subscription.renewed handler below.
+      const evData = event.data as Record<string, unknown> | undefined
+      const subscriptionRef = String(evData?.subscription_id || evData?.payment_id || evData?.id || dedupeId || '')
+      let grantCredits = true
+      if (subscriptionRef) {
+        const grantKey = `plan-grant:${userId}:${subscriptionRef}`
+        const { error: grantDupeErr } = await admin
+          .from('processed_webhooks')
+          .insert({ id: grantKey, source: 'dodo-plan-grant' })
+        if (grantDupeErr?.code === '23505') {
+          grantCredits = false
+        } else if (grantDupeErr) {
+          console.warn('Plan-grant dedupe insert failed (granting anyway):', String(grantDupeErr.message || grantDupeErr))
+        } else {
+          claimedKeys.push(grantKey)
+        }
+      }
+
+      let newBalance: number | null = null
+      if (grantCredits) {
+        const { data: adjusted, error: adjErr } = await admin.rpc('adjust_credits', {
+          p_user_id: userId, p_delta: planConfig.credits,
+        })
+        if (!adjErr && typeof adjusted === 'number') newBalance = adjusted
+      }
+      const planUpdate: Record<string, unknown> = {
         plan: planConfig.plan,
-        credits: planConfig.credits,
         daily_credits: planConfig.dailyCredits,
         subscription_status: 'active',
         updated_at: new Date().toISOString(),
-      }).eq('id', userId)
-      console.log(`Plan activated: ${planConfig.plan} for ${userId}`)
-      if (userEmail) {
+      }
+      // RPC unavailable (missing grant) → non-atomic fallback add
+      if (grantCredits && newBalance === null) {
+        planUpdate.credits = ((profile?.credits as number) || 0) + planConfig.credits
+      }
+      const { error: planErr } = await admin.from('profiles').update(planUpdate).eq('id', userId)
+      if (planErr) throw planErr // unacked → Dodo retries (all claims released below)
+      console.log(`Plan activated: ${planConfig.plan} for ${userId} (credits ${grantCredits ? `+${planConfig.credits}` : 'already granted'})`)
+      if (userEmail && grantCredits) {
         sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
         sendAdminPaymentAlert(userEmail, `${planConfig.label} plan`).catch(() => {})
       }
+      // Report the Meta Purchase once — on the event that actually grants (the
+      // payment.succeeded / subscription.active pair fires twice per subscribe).
+      if (grantCredits) await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
     }
 
     if (eventType === 'subscription.renewed') {
@@ -235,10 +365,11 @@ export async function POST(req: NextRequest) {
       if (planConfig) {
         const rollover = Math.min(profile?.credits || 0, planConfig.credits)
         const newBalance = planConfig.credits + rollover
-        await admin.from('profiles').update({
+        const { error: renewErr } = await admin.from('profiles').update({
           credits: newBalance,
           updated_at: new Date().toISOString(),
         }).eq('id', userId)
+        if (renewErr) throw renewErr // unacked → Dodo retries
         console.log(`Renewed for ${userId}, rollover: ${rollover}`)
         if (userEmail) {
           sendRenewalEmail(userEmail, planConfig.label, planConfig.credits, rollover).catch(() => {})
@@ -249,13 +380,17 @@ export async function POST(req: NextRequest) {
 
     if (eventType === 'subscription.cancelled') {
       const { data: cancelProfile } = await admin.from('profiles').select('email, plan').eq('id', userId).single()
+      // Keep the credit balance — top-ups never expire and the user paid for
+      // what's left. Only the plan drops to free; daily_credits returns to the
+      // free-tier drip (3) so a cancelled Scale user doesn't keep receiving
+      // 400/day from the add_daily_credits cron.
       await admin.from('profiles').update({
         plan: 'free',
-        credits: 50,
+        daily_credits: 3,
         subscription_status: 'cancelled',
         updated_at: new Date().toISOString(),
       }).eq('id', userId)
-      console.log(`Cancelled for ${userId}`)
+      console.log(`Cancelled for ${userId} (balance kept)`)
       const planLabel = cancelProfile?.plan ?? 'plan'
       if (cancelProfile?.email) sendCancellationEmail(cancelProfile.email, planLabel).catch(() => {})
     }
@@ -263,6 +398,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (err) {
     console.error('Webhook DB error:', String(err))
-    return NextResponse.json({ received: true, dbError: String(err) })
+    // A failed grant must never be acked with 200: the user paid, and the
+    // provider's retry — the one chance to fix it — would then be swallowed
+    // as a duplicate by the idempotency claims taken above. Release every
+    // claim from this delivery (including the plan-grant key) and return 500
+    // so Dodo redelivers and the grant re-runs.
+    if (claimedKeys.length > 0) {
+      try { await getAdmin().from('processed_webhooks').delete().in('id', claimedKeys) } catch { /* best-effort */ }
+    }
+    return NextResponse.json({ error: 'Processing failed — retry' }, { status: 500 })
   }
 }

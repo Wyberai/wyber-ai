@@ -1,103 +1,535 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createMcpHandler, withMcpAuth } from 'mcp-handler'
+import { z } from 'zod'
+import { createServiceClient } from '@/lib/supabase/server'
+import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
+import { getProjectSupabase } from '@/lib/mcp/project-db'
+import { runSql } from '@/lib/supabase-management'
+import { runProjectRlsScan } from '@/lib/rls-scan-project'
+import { Composio } from '@composio/core'
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 
-const MCP_MANIFEST = {
-  name: 'wyber-ai',
-  version: '1.0.0',
-  description: 'Build full-stack apps from plain English using WyberAi',
-  tools: [
-    {
-      name: 'create_project',
-      description: 'Create a new WyberAi project',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: 'Project name' },
-          framework: { type: 'string', enum: ['next', 'react-vite', 'vue', 'vanilla'], description: 'Framework (default: next)' },
-          description: { type: 'string', description: 'What you want to build' },
-        },
-        required: ['name'],
-      },
-    },
-    {
-      name: 'send_message',
-      description: 'Send a build message to a WyberAi project',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          project_id: { type: 'string', description: 'Project ID' },
-          message: { type: 'string', description: 'What to build or change' },
-        },
-        required: ['project_id', 'message'],
-      },
-    },
-    {
-      name: 'list_projects',
-      description: 'List all projects in your WyberAi workspace',
-      inputSchema: { type: 'object', properties: {} },
-    },
-    {
-      name: 'get_project',
-      description: 'Get details of a specific project',
-      inputSchema: {
-        type: 'object',
-        properties: { project_id: { type: 'string' } },
-        required: ['project_id'],
-      },
-    },
-    {
-      name: 'publish_project',
-      description: 'Publish a project to projectname.wyberai.app',
-      inputSchema: {
-        type: 'object',
-        properties: { project_id: { type: 'string' } },
-        required: ['project_id'],
-      },
-    },
-  ],
-};
+// The MCP route itself only does fast DB work (create/list/get/queue) — the
+// heavy builds run in /api/cron/mcp-consumer, so a short ceiling is fine.
+export const maxDuration = 60
 
-export async function GET() {
-  return NextResponse.json(MCP_MANIFEST);
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
+
+/** Wrap any JSON payload in the MCP text-content envelope. */
+function jsonResult(payload: unknown) {
+  return { content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }] }
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const apiKey = req.headers.get('x-api-key') || req.headers.get('authorization')?.replace('Bearer ', '');
-    if (!apiKey) return NextResponse.json({ error: 'API key required. Get yours at wyberai.com/api-keys' }, { status: 401 });
-
-    const supabase = await createClient();
-    const { data: keyData } = await supabase.from('api_keys').select('user_id, active').eq('key', apiKey).single();
-    if (!keyData?.active) return NextResponse.json({ error: 'Invalid or inactive API key' }, { status: 401 });
-
-    const { tool, input } = await req.json();
-
-    switch (tool) {
-      case 'list_projects': {
-        const { data } = await supabase.from('projects').select('id, name, framework, published_url, deployed_url, updated_at').eq('user_id', keyData.user_id).order('updated_at', { ascending: false }).limit(20);
-        return NextResponse.json({ projects: data || [] });
-      }
-      case 'create_project': {
-        const { data } = await supabase.from('projects').insert({ name: input.name, framework: input.framework || 'next', description: input.description, user_id: keyData.user_id }).select('id, name, framework').single();
-        return NextResponse.json({ project: data, message: `Project "${input.name}" created. Use send_message to start building.` });
-      }
-      case 'get_project': {
-        const { data } = await supabase.from('projects').select('*').eq('id', input.project_id).eq('user_id', keyData.user_id).single();
-        if (!data) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-        return NextResponse.json({ project: { id: data.id, name: data.name, framework: data.framework, published_url: data.published_url, file_count: Object.keys(data.files || {}).length, updated_at: data.updated_at } });
-      }
-      case 'send_message': {
-        const { data } = await supabase.from('mcp_messages').insert({ project_id: input.project_id, user_id: keyData.user_id, message: input.message, status: 'queued' }).select('id').single();
-        return NextResponse.json({ message_id: data?.id, status: 'queued', note: 'Message queued. Open wyberai.com to see the result.' });
-      }
-      case 'publish_project': {
-        const res = await fetch(`${req.nextUrl.origin}/api/publish`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: input.project_id }) });
-        return NextResponse.json(await res.json());
-      }
-      default:
-        return NextResponse.json({ error: `Unknown tool: ${tool}` }, { status: 400 });
-    }
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 });
-  }
+function errorResult(message: string) {
+  return { content: [{ type: 'text' as const, text: message }], isError: true }
 }
+
+const handler = createMcpHandler(
+  (server) => {
+    server.tool(
+      'list_projects',
+      'List the projects in your WyberAi workspace (most recently updated first).',
+      {},
+      { title: 'List projects', readOnlyHint: true, openWorldHint: false },
+      async (_args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('id, name, framework, published_url, deployed_url, updated_at')
+          .eq('user_id', userId)
+          .order('updated_at', { ascending: false })
+          .limit(20)
+        return jsonResult({ projects: data ?? [] })
+      },
+    )
+
+    server.tool(
+      'create_project',
+      'Create a new WyberAi project. Returns a project id that send_message uses to build the app.',
+      {
+        name: z.string().describe('Project name'),
+        framework: z
+          .enum(['next', 'react-vite', 'vue', 'vanilla'])
+          .optional()
+          .describe('Framework (default: react-vite)'),
+        description: z.string().optional().describe('What you want to build'),
+      },
+      { title: 'Create project', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data, error } = await db
+          .from('projects')
+          .insert({
+            name: args.name,
+            framework: args.framework ?? 'react-vite',
+            description: args.description,
+            user_id: userId,
+          })
+          .select('id, name, framework')
+          .single()
+        if (error) return errorResult(`Could not create project: ${error.message}`)
+        return jsonResult({
+          project: data,
+          message: `Project "${args.name}" created. Use send_message with project_id "${data?.id}" to start building.`,
+        })
+      },
+    )
+
+    server.tool(
+      'get_project',
+      'Get details of a specific project, including how many files it has.',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Get project details', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('*')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        return jsonResult({
+          project: {
+            id: data.id,
+            name: data.name,
+            framework: data.framework,
+            published_url: data.published_url,
+            file_count: Object.keys(data.files ?? {}).length,
+            updated_at: data.updated_at,
+          },
+        })
+      },
+    )
+
+    server.tool(
+      'send_message',
+      'Queue a build/change for a project. Returns a message_id immediately; the build runs asynchronously — poll get_message_status until it is "done".',
+      {
+        project_id: z.string().describe('Project ID'),
+        message: z.string().describe('What to build or change'),
+      },
+      // destructiveHint: a build can rewrite the project's existing files. Each
+      // queued build also consumes WyberAi credits from the connected account.
+      { title: 'Build or edit the app', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+
+        // Verify ownership before queueing so a bad project_id fails fast.
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        const { data, error } = await db
+          .from('mcp_messages')
+          .insert({
+            project_id: args.project_id,
+            user_id: userId,
+            message: args.message,
+            status: 'queued',
+          })
+          .select('id')
+          .single()
+        if (error) return errorResult(`Could not queue message: ${error.message}`)
+
+        return jsonResult({
+          message_id: data?.id,
+          status: 'queued',
+          note: 'Build queued. Poll get_message_status with this message_id until status is "done" (usually under 2 minutes), then get_project to see the result.',
+        })
+      },
+    )
+
+    server.tool(
+      'get_message_status',
+      'Check the status of a queued build (from send_message): queued | processing | done | error.',
+      { message_id: z.string().describe('The message_id returned by send_message') },
+      { title: 'Check build status', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('mcp_messages')
+          .select('id, status, response, error, created_at, processed_at')
+          .eq('id', args.message_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Message not found')
+        return jsonResult({
+          message_id: data.id,
+          status: data.status,
+          response: data.response,
+          error: data.error,
+        })
+      },
+    )
+
+    server.tool(
+      'publish_project',
+      'Publish a project to a live URL (projectname on wyberai.com/app).',
+      { project_id: z.string().describe('Project ID') },
+      // destructiveHint: republishing replaces the currently live version.
+      // openWorldHint: the result is a publicly reachable URL.
+      { title: 'Publish to a live URL', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const res = await fetch(`${APP_URL}/api/publish`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Scheduler-User-Id': userId,
+            'X-Scheduler-Secret': process.env.CRON_SECRET!,
+          },
+          body: JSON.stringify({ projectId: args.project_id }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) return errorResult(data.error || `Publish failed (${res.status})`)
+        return jsonResult(data)
+      },
+    )
+
+    server.tool(
+      'list_files',
+      'List the file paths in a project (the app source tree).',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'List project files', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('files')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        const paths = Object.keys((data.files as Record<string, unknown>) ?? {}).sort()
+        return jsonResult({ file_count: paths.length, files: paths })
+      },
+    )
+
+    server.tool(
+      'read_file',
+      'Read the source of one file from the project\'s own generated codebase (stored in WyberAi, not an external API). Use list_files first to see available paths.',
+      {
+        project_id: z.string().describe('Project ID'),
+        path: z.string().describe('File path, e.g. src/App.tsx'),
+      },
+      { title: 'Read a project file', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('files')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        const files = (data.files as Record<string, { content?: string }>) ?? {}
+        const file = files[args.path]
+        if (!file) return errorResult(`File not found: ${args.path}. Call list_files to see available paths.`)
+        return jsonResult({ path: args.path, content: file.content ?? '' })
+      },
+    )
+
+    server.tool(
+      'execute_sql',
+      "Run a SQL statement against the project's own connected Supabase Postgres database (Supabase must be connected to the project first). Accepts freeform SQL — reads, writes, and schema changes. Target: the user's Supabase project, https://supabase.com/docs.",
+      {
+        project_id: z.string().describe('Project ID'),
+        query: z.string().describe('SQL to execute'),
+      },
+      // destructiveHint: SQL can drop/alter/delete. openWorldHint: hits an
+      // external database the connector does not control.
+      { title: 'Run SQL on the project database', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        const conn = await getProjectSupabase(userId, args.project_id)
+        if (!conn) return errorResult('No Supabase connected for this project. Connect it in the WyberAi editor (Connect Supabase) first.')
+        try {
+          const rows = await runSql(conn.token, conn.ref, args.query)
+          return jsonResult({ rows })
+        } catch (e) {
+          return errorResult(`SQL failed: ${String(e).slice(0, 400)}`)
+        }
+      },
+    )
+
+    server.tool(
+      'get_project_knowledge',
+      'Get the persistent knowledge for a project — standards, brand, and patterns the builder follows on every run.',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Get project knowledge', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('projects')
+          .select('knowledge')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!data) return errorResult('Project not found')
+        return jsonResult({ knowledge: data.knowledge ?? '' })
+      },
+    )
+
+    server.tool(
+      'set_project_knowledge',
+      'Set persistent knowledge for a project (brand, coding standards, API patterns). The builder applies it on every future build. Replaces any existing knowledge.',
+      {
+        project_id: z.string().describe('Project ID'),
+        knowledge: z.string().describe('The knowledge text (plain language). Pass an empty string to clear it.'),
+      },
+      { title: 'Set project knowledge', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { error } = await db
+          .from('projects')
+          .update({ knowledge: args.knowledge.slice(0, 8000) })
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+        if (error) return errorResult(`Could not save knowledge: ${error.message}`)
+        return jsonResult({ ok: true, message: 'Project knowledge updated.' })
+      },
+    )
+
+    server.tool(
+      'get_account',
+      'Get the connected WyberAi account: remaining credits and plan. Builds spend credits from this balance.',
+      {},
+      { title: 'Get account & credits', readOnlyHint: true, openWorldHint: false },
+      async (_args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db.from('profiles').select('email, credits, plan').eq('id', userId).single()
+        if (!data) return errorResult('Account not found')
+        return jsonResult({ email: data.email, credits: data.credits, plan: data.plan })
+      },
+    )
+
+    server.tool(
+      'rename_project',
+      'Rename a project.',
+      {
+        project_id: z.string().describe('Project ID'),
+        name: z.string().describe('New project name'),
+      },
+      { title: 'Rename project', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { error } = await db.from('projects').update({ name: args.name.slice(0, 120) }).eq('id', args.project_id).eq('user_id', userId)
+        if (error) return errorResult(error.message)
+        return jsonResult({ ok: true, name: args.name })
+      },
+    )
+
+    server.tool(
+      'duplicate_project',
+      'Duplicate a project (copies its files into a new project). Returns the new project id.',
+      { project_id: z.string().describe('Project ID to copy') },
+      { title: 'Duplicate project', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: original } = await db.from('projects').select('name, description, framework, files').eq('id', args.project_id).eq('user_id', userId).single()
+        if (!original) return errorResult('Project not found')
+        const { data: fork, error } = await db.from('projects').insert({
+          user_id: userId,
+          name: `${original.name} (copy)`,
+          description: original.description,
+          framework: original.framework,
+          files: original.files,
+          is_public: false,
+        }).select('id, name').single()
+        if (error) return errorResult(error.message)
+        return jsonResult({ project: fork })
+      },
+    )
+
+    server.tool(
+      'delete_project',
+      'Permanently delete a project and all its data. This cannot be undone.',
+      { project_id: z.string().describe('Project ID to delete') },
+      { title: 'Delete project', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: proj } = await db.from('projects').select('id').eq('id', args.project_id).eq('user_id', userId).single()
+        if (!proj) return errorResult('Project not found')
+        const { error } = await db.from('projects').delete().eq('id', args.project_id).eq('user_id', userId)
+        if (error) return errorResult(error.message)
+        return jsonResult({ ok: true, deleted: args.project_id })
+      },
+    )
+
+    server.tool(
+      'get_database_status',
+      "Check whether a project has a Supabase database connected (needed for execute_sql and security scans).",
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Get database status', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: rows } = await db
+          .from('project_connectors')
+          .select('service, config')
+          .eq('project_id', args.project_id)
+          .eq('user_id', userId)
+          .in('service', ['supabase', 'supabase-oauth'])
+        const dataPlane = rows?.find(r => r.service === 'supabase')
+        const mgmt = rows?.find(r => r.service === 'supabase-oauth')
+        return jsonResult({
+          connected: !!dataPlane,
+          ref: (dataPlane?.config as { ref?: string })?.ref ?? null,
+          management_api_connected: !!mgmt, // required for execute_sql + security scans
+          hint: dataPlane ? undefined : 'Connect Supabase in the WyberAi editor (Connect Supabase) to enable SQL and security scans.',
+        })
+      },
+    )
+
+    server.tool(
+      'run_security_scan',
+      "Run a real RLS security scan on the project's connected Supabase — probes every table with the public anon key (an attacker's view) and reports which tables leak data. Read-only.",
+      { project_id: z.string().describe('Project ID') },
+      { title: 'Run security (RLS) scan', readOnlyHint: true, openWorldHint: true },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        try {
+          const { connected, blockedRef, report } = await runProjectRlsScan(db, args.project_id, userId)
+          if (blockedRef) return errorResult('That project cannot be scanned.')
+          if (!connected) return errorResult('No Supabase connected for this project. Connect it in the WyberAi editor first.')
+          return jsonResult(report)
+        } catch (e) {
+          return errorResult(`Scan failed: ${String(e).slice(0, 300)}`)
+        }
+      },
+    )
+
+    server.tool(
+      'list_versions',
+      'List saved versions (snapshots) of a project, newest first. Use restore_version to roll back.',
+      { project_id: z.string().describe('Project ID') },
+      { title: 'List project versions', readOnlyHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data } = await db
+          .from('project_versions')
+          .select('id, label, created_at')
+          .eq('project_id', args.project_id)
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20)
+        return jsonResult({ versions: data ?? [] })
+      },
+    )
+
+    server.tool(
+      'restore_version',
+      'Roll a project back to a saved version (from list_versions). Overwrites the current files.',
+      {
+        project_id: z.string().describe('Project ID'),
+        version_id: z.string().describe('Version ID from list_versions'),
+      },
+      // destructiveHint: overwrites the current working files with the snapshot.
+      { title: 'Restore a project version', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+        const { data: version } = await db
+          .from('project_versions')
+          .select('files')
+          .eq('id', args.version_id)
+          .eq('project_id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!version) return errorResult('Version not found')
+        const { error } = await db
+          .from('projects')
+          .update({ files: version.files })
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+        if (error) return errorResult(error.message)
+        const count = Object.keys((version.files as Record<string, unknown>) ?? {}).length
+        return jsonResult({ ok: true, restored_files: count })
+      },
+    )
+
+    server.tool(
+      'list_connectors',
+      'Browse the connector catalog (Gmail, Notion, Linear, Slack, and 250+ others) available to wire into your app. Optionally filter with a search term.',
+      { search: z.string().optional().describe('Filter by name/keyword, e.g. "gmail"') },
+      { title: 'Browse connectors', readOnlyHint: true, openWorldHint: true },
+      async (args) => {
+        const apiKey = process.env.COMPOSIO_API_KEY
+        if (!apiKey) return errorResult('Connectors are not configured on this server.')
+        try {
+          const composio = new Composio({ apiKey })
+          const all = await composio.toolkits.get({ limit: 250 })
+          const q = (args.search || '').toLowerCase()
+          const list = all
+            .map(t => ({ slug: t.slug, name: t.name, description: t.meta?.description ?? '', categories: (t.meta?.categories ?? []).map((c: { name: string }) => c.name) }))
+            .filter(t => !q || t.name.toLowerCase().includes(q) || t.slug.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
+          return jsonResult({ total: list.length, connectors: list.slice(0, 60) })
+        } catch (e) {
+          return errorResult(`Could not load connectors: ${String(e).slice(0, 200)}`)
+        }
+      },
+    )
+  },
+  { serverInfo: { name: 'wyber-ai', version: '2.3.1' } },
+  {
+    // The handler matches the request path against this endpoint. Our route
+    // lives at /api/mcp, so the full path must be configured here (basePath
+    // '/api' derives streamableHttpEndpoint '/api/mcp').
+    basePath: '/api',
+    // SSE is dropped from the MCP spec (2025-03-26); we only serve the stateless
+    // Streamable HTTP transport, so no Redis is needed.
+    disableSse: true,
+    maxDuration: 60,
+  },
+)
+
+const authed = withMcpAuth(handler, verifyToken, { required: true })
+
+export { authed as GET, authed as POST, authed as DELETE }

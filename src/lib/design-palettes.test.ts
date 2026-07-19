@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { PALETTES, pickPalette, renderDesignBrief } from './design-palettes'
+import { PALETTES, pickPalette, getPaletteById, pickPaletteOptions, renderDesignBrief } from './design-palettes'
+import { GOOGLE_FONTS_LINKS } from './design-system'
 
 const REQUIRED_TOKENS = [
   'background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground',
@@ -21,9 +22,29 @@ describe('design-palettes — every palette is complete + well-formed', () => {
       }
       expect(pal.fontSans).toBeTruthy()
       expect(pal.fontDisplay).toBeTruthy()
+      expect(pal.label, `${pal.id} missing label`).toBeTruthy()
+      expect(pal.label.length, `${pal.id} label too long for UI cards`).toBeLessThanOrEqual(24)
       expect(pal.gradientHero).toContain('hsl(')
       expect(['light', 'dark']).toContain(pal.mode)
     }
+  })
+
+  it('only uses fonts that the platform actually preloads (GOOGLE_FONTS_LINKS)', () => {
+    const loaded = (name: string) =>
+      GOOGLE_FONTS_LINKS.includes(name.replace(/ /g, '+')) || // Google CSS2 form
+      GOOGLE_FONTS_LINKS.toLowerCase().includes(name.toLowerCase().replace(/ /g, '-')) || // Fontshare form
+      GOOGLE_FONTS_LINKS.includes(name) // single-word families
+    for (const pal of PALETTES) {
+      expect(loaded(pal.fontSans), `${pal.id} fontSans '${pal.fontSans}' not preloaded`).toBe(true)
+      expect(loaded(pal.fontDisplay), `${pal.id} fontDisplay '${pal.fontDisplay}' not preloaded`).toBe(true)
+    }
+  })
+
+  it('offers a broad library with both modes well represented', () => {
+    expect(PALETTES.length).toBeGreaterThanOrEqual(28)
+    const dark = PALETTES.filter((p) => p.mode === 'dark').length
+    expect(dark).toBeGreaterThanOrEqual(8)
+    expect(PALETTES.length - dark).toBeGreaterThanOrEqual(12)
   })
 
   it('keeps foreground visibly distinct from background (basic contrast guard)', () => {
@@ -62,6 +83,49 @@ describe('design-palettes — pickPalette', () => {
     const a = pickPalette('a wellness meditation app', () => 0.0)
     const b = pickPalette('a wellness meditation app', () => 0.0)
     expect(a.id).toBe(b.id)
+  })
+})
+
+describe('design-palettes — getPaletteById', () => {
+  it('returns the palette for a known id and undefined otherwise', () => {
+    expect(getPaletteById('fintech-emerald-dark')?.id).toBe('fintech-emerald-dark')
+    expect(getPaletteById('no-such-palette')).toBeUndefined()
+    expect(getPaletteById(undefined)).toBeUndefined()
+    expect(getPaletteById('')).toBeUndefined()
+  })
+})
+
+describe('design-palettes — pickPaletteOptions', () => {
+  // deterministic LCG so shuffles are reproducible but not degenerate
+  const seededRnd = (seed: number) => () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296
+    return seed / 4294967296
+  }
+
+  it('returns n distinct palettes', () => {
+    for (const seed of [1, 42, 999]) {
+      const opts = pickPaletteOptions('a crm for florists', 3, seededRnd(seed))
+      expect(opts).toHaveLength(3)
+      expect(new Set(opts.map((p) => p.id)).size).toBe(3)
+    }
+  })
+
+  it('puts strong-domain matches first', () => {
+    const opts = pickPaletteOptions('a crypto trading wallet', 3, seededRnd(7))
+    // fintech palettes match 'crypto'/'trading'/'wallet' — the first option must be one of them
+    expect(opts[0].domains.some((d) => 'a crypto trading wallet'.includes(d))).toBe(true)
+  })
+
+  it('offers contrasting modes when the pool allows it', () => {
+    const opts = pickPaletteOptions('zzzz nonsense', 3, seededRnd(3))
+    expect(new Set(opts.map((p) => p.mode)).size).toBeGreaterThan(1)
+  })
+
+  it('is deterministic given a fixed RNG and caps at the pool size', () => {
+    const a = pickPaletteOptions('a health tracker', 3, seededRnd(5)).map((p) => p.id)
+    const b = pickPaletteOptions('a health tracker', 3, seededRnd(5)).map((p) => p.id)
+    expect(a).toEqual(b)
+    expect(pickPaletteOptions('x', 999, seededRnd(1))).toHaveLength(PALETTES.length)
   })
 })
 

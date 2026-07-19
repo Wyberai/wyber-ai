@@ -11,6 +11,8 @@ export type ActionType =
   | 'component'
   | 'web-build'
   | 'mobile-build'
+  | 'plan'
+  | 'security-scan'
   | 'agent-create'
   | 'agent-run'
   | 'workflow-create'
@@ -55,10 +57,12 @@ export const MODEL_META: Record<ModelTier, {
  * Multiply by MODEL_MULTIPLIERS[tier] and round.
  */
 const BASE_COSTS: Record<ActionType, number> = {
-  'small-edit':         3,
-  'component':          5,
-  'web-build':         10,
-  'mobile-build':      10,
+  'small-edit':         2,
+  'component':          8,
+  'web-build':         30,
+  'mobile-build':      30,
+  'plan':               5,
+  'security-scan':     10,
   'agent-create':       5,
   'agent-run':          5,
   'workflow-create':    2,
@@ -76,6 +80,11 @@ const BASE_COSTS: Record<ActionType, number> = {
  * Always at least 1 credit.
  */
 export function creditCost(action: ActionType, tier: ModelTier = 'default'): number {
+  // Edits are priced explicitly, not by multiplier. The 0.5× fast discount made
+  // simple edits 1cr (below Sonnet COGS), while complexity-escalated edits ran
+  // Opus (~$0.52 COGS, measured Jul 3) for the same price as a tweak. Simple
+  // Sonnet edit = the public 2cr price; Opus-escalated complex edit = 5cr.
+  if (action === 'small-edit') return tier === 'fast' ? 2 : 5
   const base = BASE_COSTS[action]
   const multiplier = MODEL_MULTIPLIERS[tier]
   return Math.max(1, Math.round(base * multiplier))

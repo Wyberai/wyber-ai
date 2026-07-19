@@ -40,7 +40,7 @@ export default function AboutPage() {
         </div>
 
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: 28, boxShadow: 'var(--shadow)', marginBottom: 48, display: 'flex', gap: 24, alignItems: 'flex-start' }}>
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sumeet" alt="Sumeet Sutar" style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--bg3)', flexShrink: 0 }} />
+          <img src="/sumeet-sutar.jpg" alt="Sumeet Sutar, Founder & CEO of Signalpulse Technologies" style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', background: 'var(--bg3)', flexShrink: 0 }} />
           <div>
             <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.03em', color: 'var(--text)', marginBottom: 3 }}>Sumeet Sutar</div>
             <div style={{ fontSize: 13, color: 'var(--sky)', fontWeight: 600, marginBottom: 10 }}>Founder & CEO, SignalPulse Technologies</div>

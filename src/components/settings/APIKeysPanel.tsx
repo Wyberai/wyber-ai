@@ -42,11 +42,12 @@ export function APIKeysPanel() {
       </div>
 
       <div style={{ padding: '12px', borderRadius: 10, background: 'var(--bg2)', border: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>MCP Server — for Claude Desktop & Cursor</div>
-        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>Add to your MCP client config to build WyberAi projects from Claude or Cursor:</div>
-        <code style={{ display: 'block', padding: '8px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 11, color: 'var(--sky)', fontFamily: 'monospace' }}>
-          https://wyberai.com/api/mcp
+        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>MCP Server — for Claude & Cursor</div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>A remote (Streamable HTTP) MCP server. Create a key below, then add it with your key in the <code style={{ fontFamily: 'monospace' }}>x-api-key</code> header. In Claude Code:</div>
+        <code style={{ display: 'block', padding: '8px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 11, color: 'var(--sky)', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+          claude mcp add --transport http wyberai https://wyberai.com/api/mcp --header &quot;x-api-key: YOUR_KEY&quot;
         </code>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>20 tools — build (create_project, send_message, publish_project), inspect (list_files, read_file, get_project, get_account, get_message_status), database (execute_sql, get_database_status), security (run_security_scan), manage (rename/duplicate/delete_project, list/restore_version), knowledge, and connectors.</div>
       </div>
 
       {newKey && (

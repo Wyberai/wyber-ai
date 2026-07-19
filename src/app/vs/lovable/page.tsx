@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
+import { getScanStats } from '@/lib/security-stats'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Lovable (2026) — Honest Comparison',
@@ -55,7 +56,8 @@ const FAQS = [
   },
 ]
 
-export default function VsLovable() {
+export default async function VsLovable() {
+  const securityStats = await getScanStats()
   return (
     <VsPageTemplate
       slug="lovable"
@@ -67,6 +69,7 @@ export default function VsLovable() {
       faqs={FAQS}
       pillarNote="Lovable builds web apps only."
       competitorKey="lovable"
+      securityStats={securityStats}
     />
   )
 }

@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { detectProvider, type DnsProvider } from '@/lib/dns-provider'
+
+// dashboardUrl is a function — resolve it to a plain string before returning
+// from an API route, since NextResponse.json() silently drops function props.
+function serializeProvider(provider: DnsProvider | null, domain: string) {
+  return provider ? { name: provider.name, dashboardUrl: provider.dashboardUrl(domain) } : null
+}
 
 // Where users point their domain. Apex (root) domains cannot use a CNAME —
 // they must use an A record to Vercel's anycast IP. Subdomains (e.g. www) use a CNAME.
@@ -82,13 +89,39 @@ export async function POST(req: NextRequest) {
 
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
+    // Custom domains are a paid feature (pricing lists them under Builder+),
+    // and they serve WITHOUT the free-tier "Built with WyberAi" badge — so an
+    // ungated connect would both undercut the upgrade and bypass attribution.
+    // Exceptions: a domain the user BOUGHT through Wyber (that purchase was
+    // itself paid), and support-mode admins acting on a customer's behalf.
+    if (action !== 'verify') {
+      const { isAdminEmail } = await import('@/lib/admin')
+      if (!isAdminEmail(user.email)) {
+        const { data: prof } = await admin.from('profiles').select('plan').eq('id', user.id).single()
+        if ((prof?.plan ?? 'free') === 'free') {
+          const { data: bought } = await admin
+            .from('domain_purchases')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('domain', cleanDomain)
+            .eq('status', 'purchased')
+            .maybeSingle()
+          if (!bought) {
+            return NextResponse.json({
+              error: 'Connecting your own domain is available on the Builder plan and up. Upgrade to connect it — or buy a new domain right here and it works on any plan.',
+            }, { status: 402 })
+          }
+        }
+      }
+    }
+
     if (action === 'verify') {
       // Check if DNS is configured
       const { verified, error } = await verifyDNS(cleanDomain, projectId)
       
       if (verified) {
         // Register domain with Vercel so it routes correctly
-        const VERCEL_TOKEN = process.env.VERCEL_TOKEN
+        const VERCEL_TOKEN = process.env.WYBERAI_DOMAINS || process.env.VERCEL_TOKEN
         const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID
         const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID || 'prj_pTqy3kMHCQ6CTOrkbCXVuCETb0bZ'
         
@@ -120,9 +153,11 @@ export async function POST(req: NextRequest) {
       }
 
       const rec = recordFor(cleanDomain)
+      const provider = await detectProvider(cleanDomain)
       return NextResponse.json({
         verified: false,
         error,
+        provider: serializeProvider(provider, cleanDomain),
         instructions: {
           ...rec,
           message: `Add ${rec.type === 'A' ? 'an' : 'a'} ${rec.type} record: ${rec.name} → ${rec.value}. If your domain uses email (e.g. Zoho/Google), leave existing MX records untouched.`
@@ -138,11 +173,15 @@ export async function POST(req: NextRequest) {
     }).eq('id', projectId)
 
     const rec = recordFor(cleanDomain)
+    const provider = await detectProvider(cleanDomain)
     return NextResponse.json({
       domain: cleanDomain,
       verified: false,
+      provider: serializeProvider(provider, cleanDomain),
       instructions: {
-        step1: `Go to your DNS provider / domain registrar (e.g. Namecheap, GoDaddy, Cloudflare, Zoho).`,
+        step1: provider
+          ? `Go to ${provider.name} — we detected this domain's nameservers point there.`
+          : `Go to your DNS provider / domain registrar (e.g. Namecheap, GoDaddy, Cloudflare, Zoho).`,
         step2: rec.type === 'A'
           ? `This is a root domain, so add an A record (root domains can't use CNAME):`
           : `Add a CNAME record:`,

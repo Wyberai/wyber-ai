@@ -17,6 +17,39 @@ export interface ChatMessage {
   timestamp: number;
   status?: 'streaming' | 'done' | 'error';
   filesChanged?: string[];
+  // Set on error-status assistant messages so a "Retry" action knows exactly
+  // what to resend and through which lane, without re-deriving/guessing either.
+  retryPrompt?: string;
+  retryLane?: 'build' | 'chat';
+  // Real extended-thinking output (opt-in, new-build full generation only —
+  // see generate/route.ts's useThinking). Shown collapsed under the message.
+  reasoning?: string;
+  // Design-quality advisory (heuristic-only, client-side, non-persisted) —
+  // see design-quality-check.ts. Renders as a dismissible suggestion chip;
+  // clicking only populates the input box, it never auto-sends or
+  // auto-regenerates.
+  designSuggestion?: { prompt: string; label: string };
+  // Agent-team turn receipt (client-session only, same treatment as
+  // `reasoning`): what each agent did this turn, the security findings, and
+  // the single charge. Built from the turn's [agent:{...}] stream events —
+  // see src/lib/agents/events.ts. Renders as TurnReceipt + SecurityReportCard.
+  agentReport?: {
+    agents: { id: string; summary: string }[];
+    findings: {
+      findingId?: string;
+      severity: 'critical' | 'high' | 'medium' | 'low';
+      title: string;
+      status: 'fixed' | 'flagged' | 'dismissed';
+    }[];
+    passesUsed?: number;
+    credits?: number;
+  };
+  // Loop-stop card: self-heal hit the same error twice — surface what was
+  // tried instead of silently burning more passes (see loop-guard.ts).
+  loopStop?: { errorSummary: string; attempts: number; retryPrompt: string };
+  // Ask-first autonomy: a free fix pass OFFERED instead of auto-run (see
+  // agent-turn store `autonomy`). Fix dispatches the self-heal; Dismiss clears.
+  fixOffer?: { prompt: string; error?: string; label: string };
 }
 
 export interface Checkpoint {
@@ -50,6 +83,12 @@ interface EditorState {
   openTabs: string[];
   messages: ChatMessage[];
   isGenerating: boolean;
+  // Bumped once per genuinely fresh user turn (never per staged-build pass —
+  // a staged build flips isGenerating true/false once per stage: scaffold,
+  // then each fill batch). PreviewPanel keys its self-heal budget reset off
+  // this instead of isGenerating, so a multi-stage build doesn't get its
+  // 3-attempt heal cap reset up to 8x in one turn.
+  generationTurnSeq: number;
   hasGeneratedFiles: boolean;
   streamingContent: string;
   knowledge: string;
@@ -64,6 +103,14 @@ interface EditorState {
   rightPanelWidth: number;
   showFileTree: boolean;
   credits: number;
+
+  // Read-only mirror of PreviewPanel's build/heal state, for UI (e.g. Wyberman)
+  // that lives outside PreviewPanel and needs to know if the preview is stuck.
+  previewError: string | null;
+  previewHealFailed: boolean;
+  // Which feature currently owns the preview's click-to-select mode, so two
+  // features asking for a selection at once don't both react to the same click.
+  selectionConsumer: 'visual-edit' | 'wyberman' | null;
 
   // Project
   setProject: (p: Project) => void;
@@ -85,6 +132,7 @@ interface EditorState {
   addMessage: (msg: ChatMessage) => void;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
   setIsGenerating: (v: boolean) => void;
+  bumpGenerationTurn: () => void;
   setHasGeneratedFiles: (v: boolean) => void;
   setStreamingContent: (v: string) => void;
   appendStreamingContent: (chunk: string) => void;
@@ -107,6 +155,9 @@ interface EditorState {
   consumeCredit: () => void;
   setCredits: (n: number) => void;
   setConnectors: (c: Connector[]) => void;
+  setPreviewError: (e: string | null) => void;
+  setPreviewHealFailed: (v: boolean) => void;
+  setSelectionConsumer: (c: 'visual-edit' | 'wyberman' | null) => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -129,6 +180,7 @@ export const useEditorStore = create<EditorState>()(
     openTabs: [],
     messages: [],
     isGenerating: false,
+    generationTurnSeq: 0,
     hasGeneratedFiles: false,
     streamingContent: '',
     knowledge: '',
@@ -139,9 +191,15 @@ export const useEditorStore = create<EditorState>()(
     previewUrl: null,
     previewMode: 'preview',
     leftPanelWidth: 220,
-    rightPanelWidth: 360,
+    // 460 (was 360): the chat is the primary way users drive the product —
+    // at 360 it read as a cramped sidebar next to competitors' ~570px panels.
+    // Still user-resizable (320–700) via the divider.
+    rightPanelWidth: 460,
     showFileTree: true,
     credits: 100,
+    previewError: null,
+    previewHealFailed: false,
+    selectionConsumer: null,
 
     // IMPORTANT: setProject no longer wipes files/messages — hydration handles that
     setProject: (p) => set((s) => { s.project = p; }),
@@ -224,6 +282,7 @@ export const useEditorStore = create<EditorState>()(
     }),
 
     setIsGenerating: (v) => set((s) => { s.isGenerating = v; }),
+    bumpGenerationTurn: () => set((s) => { s.generationTurnSeq += 1; }),
     setHasGeneratedFiles: (v) => set((s) => { s.hasGeneratedFiles = v; }),
     setStreamingContent: (v) => set((s) => { s.streamingContent = v; }),
     appendStreamingContent: (chunk) => set((s) => { s.streamingContent += chunk; }),
@@ -265,5 +324,8 @@ export const useEditorStore = create<EditorState>()(
     consumeCredit: () => set((s) => { s.credits = Math.max(0, s.credits - 1); }),
     setCredits: (n) => set((s) => { s.credits = n; }),
     setConnectors: (c) => set((s) => { s.connectors = c; }),
+    setPreviewError: (e) => set((s) => { s.previewError = e; }),
+    setPreviewHealFailed: (v) => set((s) => { s.previewHealFailed = v; }),
+    setSelectionConsumer: (c) => set((s) => { s.selectionConsumer = c; }),
   }))
 );

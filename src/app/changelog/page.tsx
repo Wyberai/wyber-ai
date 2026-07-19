@@ -3,6 +3,28 @@ import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Changelog', description: 'Every feature, fix, and improvement — logged as we ship.', alternates: { canonical: 'https://wyberai.com/changelog' } };
 const RELEASES = [
+  { date:'July 17, 2026', version:'v1.2', tag:'Security-first', color:'#0EA5E9', items:[
+    { type:'new', text:'Live RLS Trust Scan on every publish — probes your real database with the public anon key (an attacker\'s exact view); critical data leaks block publishing' },
+    { type:'new', text:'Security dashboard — per-project security status, scan history, and publish badges' },
+    { type:'new', text:'Interactive mobile preview — React Native apps run live in an embedded Expo Snack, tap and scroll like a real device' },
+    { type:'new', text:'Wyberman — in-editor help agent that answers questions about your project and the platform' },
+    { type:'new', text:'Plan Mode direction cards — pick a product direction before the first build' },
+    { type:'new', text:'WyberAi in Claude — connect via MCP and build projects from Claude Desktop or claude.ai' },
+    { type:'new', text:'Community challenge gallery — publish your app to the gallery, community votes weekly' },
+    { type:'improved', text:'Hero prompt box — typing an idea builds instantly (web or mobile via visible target toggle); the choice survives signup' },
+    { type:'improved', text:'India pricing — INR plans from ₹499/mo with UPI' },
+    { type:'improved', text:'ErrorBoundary + crash-guard injection in every generated app, expanded secret-pattern detection, rate limits on publish/deploy/export' },
+    { type:'fixed', text:'Instant signup — no confirmation-email wait; magic-link sign-in delivers in seconds' },
+  ]},
+  { date:'July 10, 2026', version:'v1.1', tag:'Design engine', color:'#7C3AED', items:[
+    { type:'new', text:'Wyber UI kit — 31 premium components injected into every build, with 30 curated palettes' },
+    { type:'new', text:'Visual edits without AI — click any text or color in preview and change it directly, 0 credits' },
+    { type:'new', text:'Themes panel — restyle your whole app in one click, 0 credits' },
+    { type:'new', text:'Images panel — upload, generate, and swap images from the editor' },
+    { type:'new', text:'Voice input — describe your app out loud, on web and mobile' },
+    { type:'improved', text:'Smart model routing — the strongest AI model for builds, faster models for edits, chosen automatically' },
+    { type:'improved', text:'Design seeds — every app gets a distinct visual identity, not the same AI-generated look' },
+  ]},
   { date:'June 20, 2026', version:'v1.0', tag:'The AI Business Platform', color:'#10b981', items:[
     { type:'new', text:'Auto error fix — build errors detected and resolved automatically, 0 credits charged' },
     { type:'new', text:'Command palette (Cmd+K) — instant access to any page, template, or action' },

@@ -1,8 +1,9 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SupabaseConnector } from './SupabaseConnector';
+import { SocialShare } from '@/components/shared/SocialShare';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -25,7 +26,13 @@ function WyberIcon() {
 
 export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Props = {}) {
   const { project, setProject, isGenerating, credits, files } = useEditorStore();
-  const displayCredits = initialProfile?.credits ?? credits;
+  // initialProfile.credits is server-rendered and STATIC — it must only cover
+  // the first paint, before IDELayout seeds the store. Once the store matches
+  // it (seeded), latch onto the store value forever: ChatPanel refreshes it
+  // after every charge, so the counter stays live instead of frozen.
+  const creditsLive = useRef(false);
+  if (initialProfile?.credits === undefined || credits === initialProfile.credits) creditsLive.current = true;
+  const displayCredits = creditsLive.current ? credits : (initialProfile?.credits ?? credits);
   const [exporting, setExporting] = useState(false);
   const [deploying, setDeploying] = useState(false);
   const [deploySecs, setDeploySecs] = useState(0);
@@ -34,10 +41,20 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [pushUrl, setPushUrl] = useState('');
   const [showSupabase, setShowSupabase] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  // Flips true when a deploy finishes for an app that was ALREADY live — the
+  // share modal stays open and shows "done" instead of silently reopening
+  // with the same content (which read as "it looped back to the same popup").
+  const [republished, setRepublished] = useState(false);
+  // Post-publish RLS advisory (free, fire-and-forget): after an app goes live
+  // we probe its Supabase DB with the anon key — the attacker's view. Critical
+  // findings surface as a warning in the share modal; a failed/not-connected
+  // scan stays silent so this can never block or noise up publishing.
+  const [postPublishScan, setPostPublishScan] = useState<{ score: number; criticals: number } | null>(null);
   const [customDomain, setCustomDomain] = useState('');
   const [customDomainStatus, setCustomDomainStatus] = useState<'idle'|'saving'|'verifying'|'verified'|'error'>('idle');
   const [customDomainError, setCustomDomainError] = useState('');
   const [dnsInstructions, setDnsInstructions] = useState<any>(null);
+  const [dnsProvider, setDnsProvider] = useState<{ name: string; dashboardUrl: string } | null>(null);
   const [buyDomainQuery, setBuyDomainQuery] = useState('');
   const [buyDomainResult, setBuyDomainResult] = useState<{ name: string; available: boolean; priceCents: number | null } | null>(null);
   const [buyDomainStatus, setBuyDomainStatus] = useState<'idle' | 'searching' | 'buying' | 'error'>('idle');
@@ -60,6 +77,29 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState('');
+
+  // Several places (ConnectorsPanel, SupabasePanel, PreviewPanel's "Connect
+  // Supabase →") dispatch this event to open the Supabase connect modal — the
+  // modal lives here, so this is where the listener has to be. Before this,
+  // the event had NO listener anywhere: those buttons were silent no-ops.
+  useEffect(() => {
+    const open = () => setShowSupabase(true);
+    window.addEventListener('wyber-open-supabase', open);
+    return () => window.removeEventListener('wyber-open-supabase', open);
+  }, []);
+
+  // Close + reset so the next open starts without a stale "done" state.
+  const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
+
+  // No auto-dismiss on republish. The old behavior (pop the modal pre-set to
+  // "✓ Done", then close it by itself 2s later) read as "the save box appeared
+  // already done and vanished on its own" — a modal the user opened or that
+  // shows a result must stay until THEY close it. The "✓ Done" state persists
+  // and resets when the files change (below) or the modal is closed.
+
+  // Any edit after a publish makes the live site stale again — drop the
+  // "✓ Done" state so the button reads "Re-publish with latest changes".
+  useEffect(() => { setRepublished(false); }, [files]);
 
   const openSnapshots = async () => {
     if (!projectId) return;
@@ -182,7 +222,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
   const handleDeploy = async () => {
     if (!projectId || deploying) return;
+    const wasLive = !!deployUrl;
     setDeploying(true);
+    setRepublished(false);
     setDeploySecs(0);
     // Live elapsed counter so a ~30–45s publish reads as "working", not frozen.
     const t0 = Date.now();
@@ -196,7 +238,25 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       const url = data.publishedUrl || data.url;
       if (url) {
         setDeployUrl(url);
-        setShowShareModal(true);
+        // First publish: open the modal so the user can copy/share their new
+        // live URL. Re-publish: no popup — the top-bar button itself flips to
+        // "✓ Updated" (and the in-modal button shows Done if it's already open).
+        if (!wasLive) setShowShareModal(true);
+        else setRepublished(true);
+        setPostPublishScan(null);
+        fetch('/api/security/rls-scan', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        }).then(r => r.ok ? r.json() : null).then((d: { score?: number; findings?: Array<{ severity?: string }> } | null) => {
+          if (!d || !Array.isArray(d.findings)) return; // no Supabase connected / scan unavailable
+          const criticals = d.findings.filter(f => f.severity === 'critical').length;
+          if (criticals > 0) {
+            setPostPublishScan({ score: d.score ?? 0, criticals });
+            // A live data leak is worth a popup — the warning only renders
+            // inside the modal, so make sure the modal is on screen.
+            setShowShareModal(true);
+          }
+        }).catch(() => {});
       } else {
         alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
       }
@@ -219,7 +279,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       const res = await fetch('/api/github', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'push', projectId, userId: initialProfile?.id, files, commitMessage: `wyber: update ${project?.name ?? ''}` }) });
       const data = await res.json();
       if (data.error === 'GitHub not connected') {
-        window.open(`/api/auth/github?projectId=${projectId}`, '_blank');
+        // This runs in an async callback — the user-gesture window is gone, so
+        // popup blockers kill window.open here. Fall back to same-tab OAuth
+        // (the callback redirects back to this project) when that happens.
+        const popup = window.open(`/api/auth/github?projectId=${projectId}`, '_blank');
+        if (!popup) window.location.href = `/api/auth/github?projectId=${projectId}`;
       } else if (data.url) {
         setPushUrl(data.url);
       }
@@ -241,10 +305,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       if (data.verified) {
         setCustomDomainStatus('verified');
         setDnsInstructions(null);
+        setDnsProvider(null);
       } else {
         setCustomDomainStatus('error');
         setCustomDomainError(data.error || 'DNS not verified yet');
         if (data.instructions) setDnsInstructions(data.instructions);
+        setDnsProvider(data.provider ?? null);
       }
     } catch {
       setCustomDomainStatus('error');
@@ -275,6 +341,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     if (!buyDomainResult?.available || !buyDomainResult.priceCents || !domainContactComplete) return;
     setBuyDomainStatus('buying');
     setBuyDomainError('');
+    // Checkout opens in a NEW tab so the editor (and any in-flight build) stays
+    // alive — same-tab navigation meant users came back via Back to a remounted
+    // session. The blank tab must be opened synchronously inside the click
+    // gesture; window.open after the fetch resolves gets swallowed by popup
+    // blockers. Falls back to same-tab if the popup was blocked anyway.
+    const tab = window.open('about:blank', '_blank');
     try {
       const res = await fetch('/api/domain/purchase', {
         method: 'POST',
@@ -283,8 +355,21 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Purchase failed');
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        if (tab) {
+          tab.location.href = data.url;
+          // The editor stays open now — release the button so it doesn't sit
+          // on "Starting checkout..." forever while the user pays in the other tab.
+          setBuyDomainStatus('idle');
+        } else {
+          window.location.href = data.url;
+        }
+      } else {
+        tab?.close();
+        setBuyDomainStatus('idle');
+      }
     } catch (err) {
+      tab?.close();
       setBuyDomainStatus('error');
       setBuyDomainError(err instanceof Error ? err.message : 'Purchase failed');
     }
@@ -358,7 +443,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               {project.name}
             </span>
           ) : null}
-          {isGenerating && <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#0EA5E9', fontSize: 11, fontWeight: 600, marginLeft: 8 }}><div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease-in-out infinite' }} />Building...</div>}
+          {/* No "Building..." pill here — build state already shows in the chat
+              bubble (progress + timer) and the preview status strip; a third
+              indicator was pure noise (user counted four at once). */}
         </div>
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
@@ -391,8 +478,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
           </button>
         )}
-        <button onClick={() => handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1 }}>
-          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying{deploySecs ? ` ${deploySecs}s` : ''}…</> : deployUrl ? 'Live' : 'Publish'}
+        {/* Already live → open the Publish & Share modal (URL, share, re-publish
+            live inside it). Publishing again should be an explicit click in
+            there, not a side effect of wanting to see your URL. */}
+        <button onClick={() => deployUrl ? setShowShareModal(true) : handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1, boxShadow: !deploying && Object.keys(files).length >= 2 ? '0 0 12px var(--brand-glow-soft, rgba(14,165,233,0.15))' : 'none' }}>
+          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying{deploySecs ? ` ${deploySecs}s` : ''}…</> : republished ? '✓ Updated' : deployUrl ? 'Live' : 'Publish'}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}
@@ -433,11 +523,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       )}
 
       {showShareModal && (
-        <div onClick={() => setShowShareModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 28, width: 460, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div onClick={closeShareModal} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 28, width: 460, maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Publish & Share</span>
-              <button onClick={() => setShowShareModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
+              <button onClick={closeShareModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
             </div>
 
             {!deployUrl ? (
@@ -446,8 +536,8 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>Your app is ready to go live on <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
-                <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: '#0EA5E9', color: 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-                  Publish now
+                <button onClick={() => handleDeploy()} disabled={deploying} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: deploying ? 'wait' : 'pointer' }}>
+                  {deploying ? `Publishing… ${deploySecs}s` : 'Publish now'}
                 </button>
               </div>
             ) : (
@@ -458,23 +548,43 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
                     <span style={{ flex: 1, fontSize: 12, color: '#22c55e', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveUrl}</span>
                     <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? 'Copied!' : 'Copy'}</button>
-                    <button onClick={() => window.open(liveUrl, '_blank')} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap' }}>Open</button>
+                    {/* Real <a>, not window.open — mobile popup blockers swallow window.open silently */}
+                    <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', textDecoration: 'none' }}>Open</a>
                   </div>
-                  <button onClick={() => { setShowShareModal(false); handleDeploy(); }} style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, color: '#0EA5E9', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-                    Re-publish with latest changes
+                  {/* Stays in the modal: inline progress + a clear "done" state.
+                      The old close→deploy→reopen flow read as an infinite loop. */}
+                  <button onClick={() => handleDeploy()} disabled={deploying}
+                    style={{
+                      background: republished ? 'rgba(34,197,94,0.1)' : 'rgba(14,165,233,0.08)',
+                      border: `1px solid ${republished ? 'rgba(34,197,94,0.3)' : 'rgba(14,165,233,0.2)'}`,
+                      borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600,
+                      color: republished ? '#22c55e' : '#0EA5E9',
+                      cursor: deploying ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                    }}>
+                    {deploying ? (
+                      <><div style={{ width: 11, height: 11, border: '2px solid rgba(14,165,233,0.25)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Republishing… {deploySecs}s</>
+                    ) : republished ? '✓ Done — your latest changes are live' : 'Re-publish with latest changes'}
                   </button>
+                  {postPublishScan && (
+                    <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#fca5a5', lineHeight: 1.55 }}>
+                      ⚠ <strong style={{ color: '#ef4444' }}>Security check:</strong> your live database has {postPublishScan.criticals} critical exposure{postPublishScan.criticals === 1 ? '' : 's'} — data an anonymous visitor can read right now. Open the <strong>Security</strong> tab to review and one-click fix. Your app stays live either way.
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=Just+built+this+with+%40WyberAI+%F0%9F%9A%80&url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>X / Twitter</button>
-                  <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>LinkedIn</button>
-                  <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent('Check out my app built with WyberAi: ' + liveUrl)}`, '_blank')} style={{ ...btn, flex: 1, justifyContent: 'center', fontSize: 12 }}>WhatsApp</button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share your app</span>
+                  <SocialShare url={liveUrl} text="Just built this with WyberAi — no code, live in minutes." />
                 </div>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Custom Domain</span>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Connect a domain you own</span>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
+                    Three steps: enter your domain and hit Connect, add the DNS record we show you at your registrar, then hit Verify. Your app serves from your domain once DNS propagates (usually minutes).
+                  </span>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input
                       style={inputStyle}
@@ -488,7 +598,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       disabled={!customDomain.trim() || customDomainStatus === 'saving'}
                       style={{ ...btn, whiteSpace: 'nowrap', background: 'var(--bg-elevated)' }}
                     >
-                      {customDomainStatus === 'saving' ? 'Saving...' : 'Save'}
+                      {customDomainStatus === 'saving' ? 'Connecting...' : 'Connect'}
                     </button>
                   </div>
 
@@ -501,6 +611,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
 
                   {dnsInstructions && customDomainStatus !== 'verified' && (
                     <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {dnsProvider && (
+                        <a href={dnsProvider.dashboardUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#38bdf8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
+                          Detected: {dnsProvider.name} — open DNS settings →
+                        </a>
+                      )}
                       <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>Add this DNS record:</span>
                       <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 11, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
                         <span>Type: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.type || 'CNAME'}</strong></span>

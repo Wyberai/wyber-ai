@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
       if (!content) continue
       const snackPath = path.startsWith('src/') ? path.slice(4) : path
       // Skip package.json — deps are provided via manifest.dependencies (prevents
-      // the generated package.json from overriding our curated SDK 52 versions)
+      // the generated package.json from overriding our curated SDK 54 versions)
       if (snackPath === 'package.json') continue
       code[snackPath] = { type: 'CODE', contents: content }
       allCode += content + '\n'
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No App.tsx entry point found in files' }, { status: 400 })
     }
 
-    // Parse all imports across all files, resolve to known SDK 52 versions
+    // Parse all imports across all files, resolve to known SDK 54 versions
     const detectedPkgs = parseImports(allCode)
     const resolvedDeps: Record<string, string> = {}
     for (const pkg of detectedPkgs) {

@@ -4,8 +4,81 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
 import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
+import { notify } from '@/lib/push'
+import { userCurrency } from '@/lib/user-currency'
+import { withCacheBreakpoint } from '@/lib/anthropic-cache'
+import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
+import { WYBER_UI_KIT_PROMPT } from '@/lib/wyber-ui-kit'
+import { WYBER_STORE_PROMPT } from '@/lib/wyber-store'
+import { formatAgentEvent, type AgentEvent } from '@/lib/agents/events'
+import { reviewEmittedFile, createFindingIdGenerator, type SecurityRuleFinding } from '@/lib/agents/security-rules'
 
-export const maxDuration = 300
+// A build/edit turn only did something real if it produced an actual <file> or
+// <edit> block — not just because the model streamed text. Without this check,
+// a confident "I did X" narrative with zero real blocks sails through as a
+// verified success and the turn never gets refunded (confirmed live: a turn
+// claimed "Loaded all 50 restaurants" while the app never changed).
+// The 'plan' stage is the one exception: its whole job is to output a JSON file
+// manifest with no <file>/<edit> blocks at all, so non-empty text IS success there.
+function generationSucceeded(text: string, stage: string): boolean {
+  if (!text.trim()) return false
+  if (stage === 'plan') return true
+  const { files } = parseGenerationOutput(text)
+  return files.length > 0 || parseEditBlocks(text).length > 0
+}
+
+// Streams one string field out of a growing, not-yet-complete JSON object as
+// its raw text accumulates — used for live per-file progress on the write_file
+// tool (Phase 5 sub-phase 2). The SDK's own partial-JSON snapshot (the
+// `inputJson` event) only reveals a string value once its closing quote has
+// been seen, so it can't give incremental content; this decodes JSON escape
+// sequences by hand instead, byte-by-byte, and stops short of anything
+// ambiguous (a lone trailing backslash, a truncated \uXXXX) so it never
+// mis-decodes a chunk boundary that splits an escape sequence.
+function makeJsonFieldStreamer(key: string) {
+  const keyPattern = new RegExp(`"${key}"\\s*:\\s*"`)
+  let startIdx = -1
+  let cursor = -1
+  let value = ''
+  let closed = false
+  return function feed(buf: string): { value: string; closed: boolean } {
+    if (closed) return { value, closed: true }
+    if (startIdx === -1) {
+      const m = keyPattern.exec(buf)
+      if (!m) return { value: '', closed: false }
+      startIdx = m.index + m[0].length
+      cursor = startIdx
+    }
+    let i = cursor
+    while (i < buf.length) {
+      const ch = buf[i]
+      if (ch === '"') { closed = true; cursor = i + 1; return { value, closed: true } }
+      if (ch === '\\') {
+        if (i + 1 >= buf.length) break // dangling escape at chunk boundary — wait for more
+        const next = buf[i + 1]
+        if (next === 'u') {
+          if (i + 6 > buf.length) break // truncated \uXXXX — wait for more
+          value += String.fromCharCode(parseInt(buf.slice(i + 2, i + 6), 16))
+          i += 6
+          continue
+        }
+        const escapeMap: Record<string, string> = { n: '\n', t: '\t', r: '\r', '"': '"', '\\': '\\', '/': '/', b: '\b', f: '\f' }
+        value += escapeMap[next] ?? next
+        i += 2
+        continue
+      }
+      value += ch
+      i += 1
+    }
+    cursor = i
+    return { value, closed: false }
+  }
+}
+
+// 800s needs Fluid compute (Pro) — Vercel clamps/rejects it otherwise. Raised
+// from 300 after five observed timeouts on giant multi-iteration builds; the
+// client ceiling in ChatPanel is set 20s past this, keep them in sync.
+export const maxDuration = 800
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -42,7 +115,7 @@ CREDITS & PLANS:
 - Scale ($799/mo): 10,000 credits/month — all features unlocked
 - No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
-- Web/mobile app build: 10 credits | App edit: 3 credits
+- Web/mobile app build: 30 credits | App edit: 2 credits | Build plan: 5 credits
 - AI Employee run: 5 credits | Agent run: 5 credits | Workflow run: 2 credits
 - GTM campaign action: 3 credits | Lead enrichment: 1 credit per contact | Image: 3 credits
 - Always free: templates, self-healing, export, deploy, GitHub push
@@ -522,7 +595,7 @@ TECH STACK — MANDATORY
 - Do NOT add the Tailwind CDN. Do NOT create tailwind.config or postcss.config — the platform injects them with the design-token mapping below.
 - Lucide React for icons — ALWAYS set size prop: <Icon size={18} />
 - Recharts for charts, framer-motion for motion — both always available.
-- Fonts: the platform preloads the BRAND fonts General Sans (display) + Switzer (body/UI), plus Playfair Display, Lora, JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'; use Playfair Display as the display font only for editorial/luxury looks. Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
+- Fonts: the platform preloads General Sans (display) + Switzer (body/UI), the display serifs Instrument Serif, Fraunces, Playfair Display, Lora, and JetBrains Mono. Default to --font-sans: 'Switzer' and --font-display: 'General Sans'. For editorial/luxury/hospitality looks reach for a display SERIF — Instrument Serif (sharp, contemporary; its italic is a signature move for one emphasized word in a headline) or Fraunces (warm, characterful) — not only Playfair. Use 'JetBrains Mono' for microlabels, eyebrows, data/numbers and captions (text-xs uppercase tracking-widest). Set --font-sans / --font-display in index.css. NEVER use @import in CSS — it breaks the build.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SEO — MANDATORY (especially for websites / landing pages / marketing / blogs)
@@ -531,7 +604,7 @@ Every public-facing site MUST be search-engine-ready. Treat this as required, no
 1. <html lang="en"> and in index.html <head> include, filled with REAL content about THIS site:
    - <title> — unique, descriptive, ≤60 chars (e.g. "Raj Agro Global — Sona Masuri Rice Exporters")
    - <meta name="description"> — compelling, 140–160 chars
-   - <link rel="canonical" href="..."> (use the site's intended URL or "/" if unknown)
+   - <link rel="canonical" href="..."> — MUST be a full absolute https URL (invent a plausible domain from the brand, e.g. https://summitandstone.com/). NEVER "/" or a relative path — a root/relative link href makes the vite build read a directory and CRASHES the entire build.
    - <meta name="viewport" content="width=device-width, initial-scale=1">
    - <meta name="theme-color">
    - Open Graph: og:title, og:description, og:type, og:image, og:url
@@ -550,6 +623,14 @@ Dashboards/internal tools can keep SEO minimal, but ALWAYS still set a real <tit
 DESIGN — BEAUTIFUL & BESPOKE, NEVER GENERIC (#1 PRIORITY)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Every app must look CUSTOM-DESIGNED for THIS product — like a senior product designer made it for this brand. Two different prompts must produce two visibly DIFFERENT looks. There is NO house style, NO default dark zinc theme. You invent the look every time.
+
+AI-SLOP BAN LIST — these patterns instantly read as machine-generated; NEVER ship them:
+- Purple/violet gradient on a white page (the #1 slop tell). Gradients are fine when they belong to the palette's brief.
+- The default rhythm: centered hero → 3-col icon grid → testimonial carousel → 3-col footer. Earn a different structure from the content.
+- Identical radius + identical padding on every element. Vary density: a hero is not a card is not a table row.
+- Uniform fade-in-on-scroll applied to everything equally. Motion has hierarchy too — one cinematic moment, calm elsewhere.
+- Inter-everywhere with no display face, no mono accents, all-medium-gray text on white.
+WHAT 2026 LOOKS LIKE instead: oversized display type (ONE editorial-scale moment per viewport); a serif display + grotesque body + mono microlabel triad when the vibe supports it; engineered precision — 1px hairline borders, sharp geometry, calm near-black or paper grounds, ONE saturated accent; layout-level variety (asymmetric grids, editorial columns, full-bleed breaks); real art-directed imagery.
 
 STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
 - Vibe: what this product evokes + one real reference (e.g. "Linear-precise", "Notion-warm", "Stripe-clean", "editorial magazine", "neo-brutalist", "glassy fintech", "organic wellness", "luxury minimal").
@@ -578,13 +659,19 @@ THE DESIGN SYSTEM — how you stay cohesive AND fresh:
 CRAFT — what makes it look senior, not AI-generated:
 - Strong type hierarchy: large display/headline (use font-display), calm readable body, small uppercase tracked labels (text-xs uppercase tracking-wider text-muted-foreground).
 - Consistent spacing on a 4/6/8 rhythm. Generous whitespace. Align everything to a grid.
-- Hover AND focus-visible states on EVERY interactive element (focus-visible:ring-2 focus-visible:ring-ring). Smooth transition-colors. Tasteful entrance motion (animate-fade-in / framer-motion) — subtle, never gratuitous.
+- Hover AND focus-visible states on EVERY interactive element (focus-visible:ring-2 focus-visible:ring-ring). Smooth transition-colors.
+- ALIVE BY DEFAULT — static UI is forbidden: every landing/marketing section enters with <Reveal> (grids/lists with <Stagger>+<StaggerItem>) from the Wyber UI Kit; big numbers use <AnimatedNumber>; kit Buttons already carry spring hover/press physics. Subtle and physical, never gratuitous — no bouncing logos.
 - Real depth: thin borders (border-border) + soft shadows, rounded via the --radius scale. Avoid heavy boxy outlines.
 - Always include: empty states, loading skeletons (animate-pulse bg-muted rounded), and toasts for user actions.
-- NO placeholder image boxes, EVER. For hero/feature visuals, use a tasteful CSS gradient or geometric SVG — primarily className="bg-[image:var(--gradient-hero)]" (the per-app brand gradient), layered with text and soft shadows. Use an uploaded asset if the user provided a matching one. Never a gray "image" rectangle, via.placeholder, or unsplash URL. (Real AI-generated photos are a publish-time feature, not needed in the build.)
+- IMAGERY — REAL images via platform directives (this is what separates 2026 design from an image-less "AI page"):
+  Write <img src="{{wyber-image: <art-directed prompt> | <ratio>}}" alt="..." className="..." loading="lazy" /> wherever real imagery elevates the design. The preview shows a tasteful brand-gradient placeholder; AT PUBLISH the platform generates a REAL image and persists it permanently. Ratios: 16:9 (wide/hero), 1:1 (square), 9:16 (tall).
+  ART-DIRECT every prompt like a creative director — subject + medium/style + light + palette mood (match your tokens) + composition. Not "coffee" but "macro editorial photograph of freshly roasted coffee beans tumbling from a copper scoop, warm amber side-light, deep espresso-brown backdrop, shallow depth of field | 16:9".
+  WHERE: hero visual (image, or a GlassPanel product mock for SaaS), one image per major content section (story/about, feature deep-dives), testimonial/team contexts. Style with rounded corners + border-border + soft shadow; layer text over images only with a gradient scrim for contrast.
+  Use an uploaded user asset when one matches. CSS gradients (bg-[image:var(--gradient-hero)]) remain right for abstract backdrops and section washes — but a landing page with ZERO real imagery reads dated; only deliberately typographic/brutalist directions skip imagery entirely.
+  NEVER: gray "image" rectangles, via.placeholder, unsplash/pexels or ANY external stock URL — only {{wyber-image}} directives, user uploads, or CSS.
 - Charts (Recharts): theme them with tokens — tooltip contentStyle background hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic curved data with dips, never flat lines.
 
-COMPONENT PATTERNS (semantic — colors come from YOUR tokens):
+COMPONENT PATTERNS (for CUSTOM UI the Wyber UI Kit doesn't cover — for buttons/cards/inputs/modals/nav/pricing/FAQ, import the kit instead of hand-writing):
 Button primary:   "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 Button secondary: "inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary text-secondary-foreground border border-border text-sm font-medium hover:bg-accent transition"
 Button ghost:     "inline-flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent text-sm transition"
@@ -597,8 +684,16 @@ Modal:            backdrop "fixed inset-0 bg-foreground/20 backdrop-blur-sm z-50
 
 VARIETY MANDATE: vary LAYOUT to the request, not just color — a marketing site = top nav + full-bleed sections + hero; a dashboard = sidebar + data; a tool = focused single-column. A rice-export site and a crypto dashboard must share NOTHING visually.
 
+COMPOSITION (websites/landing pages) — structure is what separates 2026 design from 2020:
+- HERO: pick ONE archetype and commit: (a) centered aurora — <AuroraBackground/> + <NoiseOverlay/> behind a <HeroHeadline> + subcopy + dual CTA; (b) split — copy left, product visual right (a {{wyber-image}} hero image or a <GlassPanel> mock UI for SaaS); (c) editorial — <EditorialHeadline as="h1"> left-aligned over <BackgroundGrid/>, <MonoLabel> eyebrow, minimal chrome, one striking <MediaFrame> below the fold; (d) cinematic dark — <GradientBorder>-framed {{wyber-image}} product/scene shot with glow, optional <CursorGlow/>; (e) engineered precision — near-black or paper ground, <HairlineFrame>-framed visual or <DataRow> spec stack beside an oversized headline, mono microlabels everywhere. Hero headline: clamp to 2 lines, benefit-first, no "Welcome to".
+- SECTION RHYTHM: alternate density and background treatment — hero (full-bleed) → logo strip (<Marquee>) → features (<BentoGrid> or 3-col <FeatureCard>s in <Stagger>) → deep-dive (<PinnedStory> or split layout w/ <StatBlock>s) → testimonials (<TestimonialCard>s) → pricing (<PricingCard>s, or a <DataRow> spec sheet for technical products) → FAQ (<Accordion>) → <CTASection> → <Footer>. Open numbered sections with <SectionNumber>. Skip sections that don't fit the product; NEVER two adjacent sections with identical layout or background.
+- ONE display-type moment per viewport (an oversized font-display headline or stat) — everything else stays calm and readable. Eyebrows/captions/meta use <MonoLabel>, not plain gray text.
+- SCROLL STORYTELLING: every long landing page gets exactly ONE pinned cinematic moment mid-page (<StickyShowcase> for feature walkthroughs, <PinnedStory> for numbered processes, or <ScrollStack> for steps/case studies) + <ScrollProgress/> at the top. Wrap hero visuals/images in <Parallax>. Key section titles use <SplitTextReveal>. A page that only fades things in is 2023; a page with a pinned moment performs.
+
 RESPONSIVE:
 - Sidebar collapses on mobile (hidden lg:flex). Stats grid: grid-cols-1 sm:grid-cols-2 lg:grid-cols-4. Tables wrapped in overflow-x-auto. Modals max-w-lg w-full mx-4.
+
+${WYBER_UI_KIT_PROMPT}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 APP GENERATION RULES
@@ -729,6 +824,7 @@ NEVER truncate. NEVER "// ... rest". NEVER stop before all files output.
 QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 □ Does it look BESPOKE for this product — a custom palette + font pairing, not a generic dark dashboard?
+□ Zero AI-slop patterns? No purple-gradient-on-white, no centered-hero→icon-grid→testimonials→footer default rhythm, no identical radius/padding everywhere, no uniform fade-ins?
 □ Did you define real tokens in index.css and use ONLY semantic classes? ZERO literal colors (no zinc/slate/indigo/white/black/#hex) in any className?
 □ Contrast checked — every foreground legible on its surface? No white-on-white / dark-on-dark?
 □ Real imagery (gradient/SVG/asset) — zero placeholder boxes?
@@ -828,9 +924,14 @@ Add a Sign Out button in your tab bar or header when user is logged in.
 
 ── STEP 3: Database CRUD ──
   // Fetch: const { data } = await supabase.from('items').select('*').order('created_at', { ascending: false })
-  // Insert: await supabase.from('items').insert({ user_id: user.id, ...fields })
-  // Update: await supabase.from('items').update({ field: value }).eq('id', id)
-  // Delete: await supabase.from('items').delete().eq('id', id)
+  // Insert: const { error } = await supabase.from('items').insert({ user_id: user.id, ...fields })
+  // Update: const { error } = await supabase.from('items').update({ field: value }).eq('id', id)
+  // Delete: const { error } = await supabase.from('items').delete().eq('id', id)
+
+EVERY WRITE MUST BE HONEST — never optimistic-only UI. Check \`error\` on every
+insert/update/delete; on failure show a visible message (Alert.alert or an
+inline banner) and do NOT update local state as if it succeeded. For bulk
+imports report real counts ("42 rows saved, 3 failed").
 
 useEffect pattern (re-run when user changes):
   useEffect(() => {
@@ -841,7 +942,7 @@ useEffect pattern (re-run when user changes):
   }, [user])
 
 ── STEP 4: SQL block at the end ──
-Output the SQL to run in Supabase at the VERY END as a comment:
+Output the schema SQL at the VERY END as a comment (the marker line must match exactly — the platform parses it):
 /* SQL TO RUN IN SUPABASE DASHBOARD → SQL EDITOR:
 create table if not exists items (
   id uuid primary key default gen_random_uuid(),
@@ -850,9 +951,11 @@ create table if not exists items (
   created_at timestamptz default now()
 );
 alter table items enable row level security;
+drop policy if exists "Users manage own items" on items;
 create policy "Users manage own items" on items for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 */
+The platform runs this SQL AUTOMATICALLY against the connected Supabase project right after your build — keep it idempotent ("create table if not exists", "drop policy if exists" before each "create policy") and tell the user their tables were set up automatically.
 
 ── MANDATORY CHECKLIST ──
 [x] lib/supabase.ts with AsyncStorage session persistence and the real URL/key above
@@ -883,10 +986,11 @@ export const supabase = createClient('${url}', '${anonKey}')
 
 ── STEP 2: Auth — ALWAYS include signup/login/logout ──
 Auth API (use these exact methods):
-  // Sign up: const { data, error } = await supabase.auth.signUp({ email, password })
+  // Sign up: const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } })
   // Sign in: const { data, error } = await supabase.auth.signInWithPassword({ email, password })
   // Sign out: await supabase.auth.signOut()
   // Get current user: const { data: { user } } = await supabase.auth.getUser()
+Always pass emailRedirectTo: window.location.origin on signUp — it makes the confirmation link point at wherever this app is actually running (localhost while previewing, the real domain once deployed) instead of a fixed URL.
 
 Listen for auth changes (put this in App.tsx useEffect):
   supabase.auth.onAuthStateChange((_event, session) => {
@@ -907,6 +1011,16 @@ Add a Sign Out button in the header/navbar.
   // Delete:
   const { error } = await supabase.from('items').delete().eq('id', id)
 
+EVERY WRITE MUST BE HONEST — never optimistic-only UI. Check \`error\` on every
+insert/update/delete; on failure show a VISIBLE message (inline banner or a
+small self-built fixed-position toast that auto-dismisses) saying what failed,
+and do NOT update local state as if it succeeded. Silent write failures are the
+#1 user complaint ("looked like it saved but the database is empty"). Pattern:
+  const { error } = await supabase.from('items').insert(row)
+  if (error) { showToast('Could not save: ' + error.message); return }
+  setItems(prev => [row, ...prev])   // update UI only AFTER a clean write
+For bulk imports (CSV upload etc.) report real counts: "42 rows saved, 3 failed".
+
 ALWAYS use useEffect to load data (re-run when user changes):
   useEffect(() => {
     if (!user) { setItems([]); return }
@@ -920,7 +1034,7 @@ The anon key is safe in client code. Security comes from Row Level Security poli
 ALWAYS include these policies so users only see their own data.
 
 ── STEP 5: SQL block at the end ──
-Output the SQL to run in Supabase at the VERY END as a comment block. Use this exact format:
+Output the schema SQL at the VERY END as a comment block. Use this exact format (the marker line must match exactly — the platform parses it):
 /* SQL TO RUN IN SUPABASE DASHBOARD → SQL EDITOR:
 create table if not exists items (
   id uuid primary key default gen_random_uuid(),
@@ -929,9 +1043,11 @@ create table if not exists items (
   created_at timestamptz default now()
 );
 alter table items enable row level security;
+drop policy if exists "Users manage own items" on items;
 create policy "Users manage own items" on items for all
   using (auth.uid() = user_id) with check (auth.uid() = user_id);
 */
+The platform runs this SQL AUTOMATICALLY against the connected Supabase project right after your build — so it MUST be idempotent: "create table if not exists" for tables, "drop policy if exists" before every "create policy". In your closing recap tell the user their database tables were set up automatically; do NOT tell them to run SQL by hand.
 
 ── MANDATORY CHECKLIST ──
 Before finishing, confirm your generated app has:
@@ -953,14 +1069,25 @@ async function refundCredits(userId: string, amount: number, reason: string): Pr
   if (!userId || amount <= 0) return
   try {
     const admin = await createAdminClient()
-    const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
-    const current = prof?.credits ?? 0
-    await admin.from('profiles')
-      .update({ credits: current + amount, updated_at: new Date().toISOString() })
-      .eq('id', userId)
+    // Atomic when the adjust_credits RPC exists (migration 20260702130000) —
+    // the old read-then-write raced with concurrent deducts/refunds and could
+    // clobber a balance. Fallback kept until the migration is applied.
+    let after: number | null = null
+    const { data: adjusted, error: adjErr } = await admin.rpc('adjust_credits', {
+      p_user_id: userId, p_delta: amount,
+    })
+    if (!adjErr && typeof adjusted === 'number') after = adjusted
+    if (after === null) {
+      const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
+      const current = prof?.credits ?? 0
+      after = current + amount
+      await admin.from('profiles')
+        .update({ credits: after, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+    }
     admin.from('credit_usage').insert({
       user_id: userId, amount: -amount, reason: `refund:${reason}`,
-      credits_before: current, credits_after: current + amount,
+      credits_before: after - amount, credits_after: after,
     }).then(() => {}).catch(() => {})
   } catch (e) { console.error('[refund] failed', e) }
 }
@@ -981,6 +1108,8 @@ async function resolveModelTier(opts: {
 }): Promise<ModelTier> {
   const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext } = opts
   if (stage === 'plan' || selfHeal) return 'fast'
+  // Targeted agent-fix passes (free, internal) are small scoped edits → Sonnet.
+  if (stage === 'agentFix') return 'fast'
   // Staged build passes (scaffold/fill) are part of an initial build → keep Opus.
   if (stage === 'scaffold' || stage === 'fill') return 'default'
   // From-scratch builds get the best model for a strong first impression.
@@ -1001,8 +1130,9 @@ async function isComplexEdit(prompt: string, fileContext?: string): Promise<bool
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 5,
       system: `You rate an edit request to an existing app as LOW or HIGH complexity.
-HIGH = touches multiple files, OR changes auth/routing/state/data-model, OR a large refactor, OR "rebuild/overhaul everything".
-LOW = a single-component tweak: styling, copy, colors, layout, or adding one small feature.
+HIGH = building a new feature MODULE or screen (e.g. "build out the analytics module", "create a data table with scoring/filtering", "add an inline-editing spreadsheet"), OR structural changes to auth/routing/state/data-model, OR a large multi-file refactor, OR "rebuild/overhaul everything".
+LOW = a tweak, even if it touches 2-3 files: styling, copy, colors, spacing, layout shuffles, renaming, toggling visibility, fixing a bug in one behavior, or adding one small self-contained element (a button, a field, a link).
+The bar is WHAT IS BEING BUILT, not how many files exist in the project.
 Reply with EXACTLY one word: LOW or HIGH.`,
       messages: [{ role: 'user', content: `Files in project: ${fileCount}\nRequest: ${prompt.slice(0, 1500)}` }],
     })
@@ -1029,6 +1159,21 @@ async function loadProjectMemory(projectId: string): Promise<string> {
     const { data, error } = await db.from('projects').select('memory_summary').eq('id', projectId).single()
     if (error) return ''
     return ((data?.memory_summary as string | null) ?? '').trim()
+  } catch { return '' }
+}
+
+// Persistent, user-authored project knowledge (brand, standards, API patterns).
+// Settable in-editor and via the MCP set_project_knowledge tool. Applied on
+// EVERY build (editor or MCP), so it's read here rather than trusted from the
+// request body. No-op until migration 20260712090000 adds the column.
+async function loadProjectKnowledge(projectId: string): Promise<string> {
+  if (!projectId) return ''
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    const { data, error } = await db.from('projects').select('knowledge').eq('id', projectId).single()
+    if (error) return ''
+    return ((data?.knowledge as string | null) ?? '').trim()
   } catch { return '' }
 }
 
@@ -1071,6 +1216,88 @@ async function updateProjectMemory(opts: {
   } catch (e) { console.error('[project-memory] update failed', e) }
 }
 
+/**
+ * Give a brand-new project a real name instead of the first 40 characters of
+ * the user's prompt (e.g. "create a full flow project management" instead of
+ * "ProjectFlow"). Cheap Haiku pass, same shape as updateProjectMemory — only
+ * called for isNewBuild, from `after()` so it adds zero latency to the build.
+ */
+async function nameNewProject(projectId: string, userPrompt: string): Promise<void> {
+  if (!projectId || !userPrompt.trim()) return
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    // Fallback only — the primary rename happens at creation time via
+    // /api/projects/auto-name. Never overwrite a name the user (or the
+    // creation-time pass) already set: only fire while the name is still the
+    // raw prompt slice or the "New Project HH:MM" default.
+    const { data: project } = await db.from('projects').select('name, initial_prompt').eq('id', projectId).single()
+    if (!project) return
+    const autoNames = [
+      userPrompt.slice(0, 40).trim(),
+      String(project.initial_prompt ?? '').slice(0, 40).trim(),
+    ].filter(Boolean)
+    const stillAuto = autoNames.includes(project.name) || /^New Project /.test(project.name ?? '')
+    if (!stillAuto) return
+    const res = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 20,
+      system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, not the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
+      messages: [{ role: 'user', content: userPrompt.slice(0, 500) }],
+    })
+    const name = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').trim().slice(0, 60)
+    if (!name) return
+    await db.from('projects').update({ name }).eq('id', projectId)
+  } catch (e) { console.error('[project-naming] failed', e) }
+}
+
+/**
+ * Rescue-persist: files are normally parsed and saved by the CLIENT after the
+ * stream ends — so a client that dies mid-stream (laptop sleep / tab suspend →
+ * ERR_NETWORK_IO_SUSPENDED, seen in the field) loses the whole build while the
+ * credits stay charged. This runs in `after()`: give a live client a short
+ * window to do its own save (visible as an updated_at bump), and only when the
+ * row stays untouched, apply the generated <file>/<edit> blocks server-side so
+ * the work is waiting in the project when the user comes back.
+ */
+async function persistGeneratedFiles(projectId: string, generatedText: string): Promise<void> {
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    const before = await db.from('projects').select('updated_at').eq('id', projectId).single()
+    if (!before.data) return
+    await new Promise(r => setTimeout(r, 8000))
+    const { data: proj } = await db.from('projects').select('files, updated_at').eq('id', projectId).single()
+    if (!proj) return
+    // updated_at moved during the window → the client is alive and saved (its
+    // save also runs sanitize passes this rescue skips) — nothing to do.
+    if (proj.updated_at !== before.data.updated_at) return
+
+    const { parseGenerationOutput, parseEditBlocks } = await import('@/lib/file-parser')
+    const { applyEdits } = await import('@/lib/patch-applier')
+    const { files: newFiles } = parseGenerationOutput(generatedText)
+    const editBlocks = parseEditBlocks(generatedText)
+    if (newFiles.length === 0 && editBlocks.length === 0) return
+
+    const langMap: Record<string, string> = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', css: 'css', html: 'html', json: 'json', vue: 'vue' }
+    const merged: Record<string, { path: string; content: string; language: string }> =
+      { ...((proj.files as Record<string, { path: string; content: string; language: string }>) ?? {}) }
+    for (const { path, content } of newFiles) {
+      const ext = path.split('.').pop() ?? ''
+      merged[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+    }
+    if (editBlocks.length > 0) {
+      const result = applyEdits(merged, editBlocks)
+      for (const [path, content] of Object.entries(result.updated)) {
+        const ext = path.split('.').pop() ?? ''
+        merged[path] = { path, content, language: langMap[ext] ?? 'plaintext' }
+      }
+    }
+    await db.from('projects').update({ files: merged, updated_at: new Date().toISOString() }).eq('id', projectId)
+    console.log(`[rescue-persist] client never saved — persisted ${newFiles.length} file(s) + ${editBlocks.length} edit(s) for ${projectId}`)
+  } catch (e) { console.error('[rescue-persist] failed', e) }
+}
+
 export async function POST(req: NextRequest) {
   // Tracks credits actually deducted so any failure path can refund exactly once.
   let deductedCost = 0
@@ -1085,21 +1312,122 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     // NOTE: modelTier is no longer read from the client — the server picks the
     // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [] } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false } = body
+
+    // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
+    // Reads the SAME var the client checks (roster.ts AGENT_TEAM_ENABLED) —
+    // this used to be a separate WYBER_AGENT_TEAM server-only var, but
+    // NEXT_PUBLIC_* vars are readable server-side too (Next.js inlines them
+    // in both bundles), and there was no cross-check between the two names.
+    // If they ever drifted (one deploy target has one set but not the
+    // other), isInternalPass below would evaluate false while the client
+    // still generated free internal fill passes — each one then silently
+    // billed as a full paid build instead of the intended free lane. A
+    // single flag makes that drift impossible instead of just detectable.
+    // Turns on: [agent:{json}] event emission in the stream, Sentinel's
+    // in-stream security review, and the internal-pass billing lane below.
+    // Off = byte-identical current behavior.
+    const agentTeamOn = process.env.NEXT_PUBLIC_AGENT_TEAM === 'true'
+    // `internalPass` marks a follow-up pass of an already-charged turn (fill
+    // batches after a charged scaffold, or a targeted agent fix). Honored ONLY
+    // for those two bounded stages so a crafted request can never get a full
+    // build for free — and every internal pass is counted by the free-lane
+    // hourly guard below.
+    const isInternalPass = agentTeamOn && internalPass === true && (stage === 'fill' || stage === 'agentFix')
+    // Internal fills are batch-bounded by design (buildStagedPlan batches of 2);
+    // reject oversized lists so "fill" can't be abused as a free full build.
+    if (isInternalPass && stage === 'fill') {
+      const nFiles = Array.isArray(stageFiles) ? stageFiles.length : 0
+      if (nFiles === 0 || nFiles > 3) {
+        return new Response(JSON.stringify({ error: 'Invalid fill batch.' }), { status: 400 })
+      }
+    }
 
     if (!process.env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'API not configured' }), { status: 500 })
     }
 
     // ── Auth + credit pre-flight ──────────────────────────────────────
+    // Internal callers (the MCP build consumer, /api/cron/mcp-consumer) have no
+    // browser session — they authenticate with X-Scheduler-Secret and pass the
+    // target user's id via X-Scheduler-User-Id, exactly like /api/agents/run.
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isInternalCall = !!schedulerUserId && schedulerSecret === process.env.CRON_SECRET
+
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    let user: { id: string } | null
+    if (isInternalCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const { data: { user: cookieUser } } = await supabase.auth.getUser()
+      user = cookieUser
+    }
     if (!user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     }
 
-    // Determine action type for cost calculation
-    const isNewBuild = !fileContext || fileContext.length < 200
+    // ── Free-lane abuse guard ─────────────────────────────────────────
+    // `selfHeal` and the (legacy, now client-unused) 'plan' stage skip billing
+    // entirely, and both flags come straight from the request body — so any
+    // registered user could craft POSTs and burn Anthropic spend for free,
+    // unmetered. Legit self-heal traffic is small (the client caps autofix
+    // passes per turn), so cap free generations per user per hour. Counted in
+    // credit_usage (amount 0) so the limit holds across serverless instances;
+    // the insert is awaited because a fire-and-forget row could miss the very
+    // burst it's supposed to count.
+    if (selfHeal || stage === 'plan' || isInternalPass) {
+      // Raised 30 → 60 for the agent team: a staged build adds ~2-4 free fill
+      // passes per turn on top of self-heals, all riding this same meter.
+      const FREE_PASSES_PER_HOUR = 60
+      const guardAdmin = await createAdminClient()
+      const hourAgo = new Date(Date.now() - 3600_000).toISOString()
+      const { count } = await guardAdmin
+        .from('credit_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reason', 'free-pass')
+        .gte('created_at', hourAgo)
+      if ((count ?? 0) >= FREE_PASSES_PER_HOUR) {
+        return new Response(JSON.stringify({
+          error: 'Auto-fix limit reached for this hour — please try again in a little while.',
+        }), { status: 429 })
+      }
+      await guardAdmin.from('credit_usage').insert({
+        user_id: user.id, amount: 0, reason: 'free-pass',
+        credits_before: 0, credits_after: 0,
+      })
+    }
+
+    // Determine action type for cost calculation. The client sends isFirstBuild
+    // explicitly (its store knows whether this project ever completed a
+    // generation) because fileContext is NEVER small — every brand-new project
+    // is auto-seeded with a starter scaffold, so the old length heuristic
+    // classified every first build as an edit: charged 2–3 credits instead of
+    // 10, routed to Sonnet instead of Opus, skipped extended thinking, and
+    // nameNewProject never ran. Length check kept only as a fallback for
+    // clients that don't send the flag.
+    const isNewBuild = typeof isFirstBuild === 'boolean'
+      ? isFirstBuild
+      : (!fileContext || fileContext.length < 200)
+    // Opt-in extended thinking: only on a genuinely fresh, one-shot build (not
+    // edits, not self-heal repairs) — the one case where seeing the model's
+    // architecture reasoning is worth the extra latency on every call.
+    const useThinking = stage === 'full' && isNewBuild && !selfHeal
+    // Tool-use (Phase 5): real write_file/edit_file tool calls instead of
+    // <file>/<edit> text tags. Started on new builds only (the 'fill' stage
+    // this was originally scoped for turned out to be disabled dead code —
+    // see runStagedBuild in ChatPanel.tsx), now extended to edits too. Each
+    // half has its own env escape hatch since these are the live default
+    // build AND edit paths: flip WYBER_TOOL_USE_BUILD=off or
+    // WYBER_TOOL_USE_EDIT=off to instantly revert either one to its legacy
+    // text-tag path with no deploy. selfHeal repairs stay on the legacy path
+    // regardless — narrower, already-well-tested recovery mechanism, not
+    // worth mixing with the new path's own continuation handling.
+    const useToolUse = stage === 'full' && !selfHeal && (
+      (isNewBuild && process.env.WYBER_TOOL_USE_BUILD !== 'off') ||
+      (!isNewBuild && process.env.WYBER_TOOL_USE_EDIT !== 'off')
+    )
     const actionType = projectType === 'mobile' ? 'mobile-build'
       : isNewBuild ? 'web-build'
       : 'small-edit'
@@ -1113,7 +1441,9 @@ export async function POST(req: NextRequest) {
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
     // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
     // skip deduction entirely — honoring the "self-healing is always free" promise.
-    if (stage !== 'plan' && !selfHeal) {
+    // Internal agent passes (fill / agentFix) are likewise free: the turn was
+    // charged once on its first pass ("your whole AI team, one price").
+    if (stage !== 'plan' && !selfHeal && !isInternalPass) {
       const admin = await createAdminClient()
       const { data: profile } = await admin
         .from('profiles')
@@ -1134,6 +1464,29 @@ export async function POST(req: NextRequest) {
       }
 
       if (balance < cost) {
+        // Highest-intent email moment: they just tried to build and were
+        // refused. Send the first "out of credits" email NOW (the daily drip
+        // cron continues from #2) — at most once, tracked in email_events.
+        if (profile?.email) {
+          ;(async () => {
+            try {
+              const { data: ev, error: evErr } = await admin.from('email_events')
+                .select('sent_count').eq('user_id', user.id).eq('kind', 'credits-drip').single()
+              // 42P01 = table missing (migration 20260703110000 not applied yet)
+              // → skip rather than emailing on EVERY refused build untracked.
+              if (evErr && evErr.code === '42P01') return
+              if (!ev) {
+                const { sendCreditsExhaustedEmail } = await import('@/lib/email')
+                const { unsubscribeUrl } = await import('@/lib/email/unsubscribe')
+                const { data: optRow } = await admin.from('profiles').select('email_opt_out').eq('id', user.id).single()
+                if (!optRow?.email_opt_out) {
+                  await sendCreditsExhaustedEmail(profile.email, 1, unsubscribeUrl(profile.email), await userCurrency(admin, user.id))
+                  await admin.from('email_events').upsert({ user_id: user.id, kind: 'credits-drip', sent_count: 1, last_sent_at: new Date().toISOString() })
+                }
+              }
+            } catch { /* fire-and-forget */ }
+          })()
+        }
         return new Response(JSON.stringify({
           error: `Not enough credits. This action costs ${cost} credit${cost !== 1 ? 's' : ''} and you have ${balance}.`,
           needed: cost,
@@ -1177,8 +1530,13 @@ export async function POST(req: NextRequest) {
         // Low-credit warning — only at the moment the balance crosses the threshold
         const LOW = 20
         if (balance > LOW && after <= LOW && after > 0) {
-          sendCreditLowEmail(email, after).catch(() => {})
+          userCurrency(admin, user.id).then(c => sendCreditLowEmail(email, after, c)).catch(() => {})
         }
+      }
+      // Low-credit PUSH + in-app row — same crossing threshold as the email, but
+      // push needs no email address. Best-effort; never blocks the build response.
+      if (balance > 20 && after <= 20 && after > 0) {
+        notify(admin, user.id, 'credits_low', { balance: after }).catch(() => {})
       }
     }
 
@@ -1313,9 +1671,15 @@ ${code}
       ? `Current files:\n${fileContext}\n\nUser request: ${prompt}`
       : prompt) + assetContext
 
+    // The client already applies a cache-friendly stable window (see
+    // windowedHistory in ChatPanel.tsx — grows the tail instead of sliding it,
+    // so the prefix stays identical turn-to-turn and prompt caching can hit).
+    // Re-slicing to a tight, different-every-turn window here would undo that
+    // stability, so this is only a generous safety cap against a misbehaving
+    // client — comfortably above the client's own max window size.
     const trimmedHistory = (history || [])
       .filter((m: { content: string }) => m.content && !m.content.startsWith('[Image:'))
-      .slice(-10)
+      .slice(-25)
       .map((m: { role: string; content: string }) => ({
         role: m.role as 'user' | 'assistant',
         content: m.content.slice(0, 4000)
@@ -1324,11 +1688,29 @@ ${code}
     type MessageContent = string | Array<{
       type: 'image';
       source: { type: 'base64'; media_type: ValidMime; data: string };
-    } | { type: 'text'; text: string }>
+    } | { type: 'text'; text: string } | {
+      type: 'document';
+      source: { type: 'base64'; media_type: 'application/pdf'; data: string };
+    }>
+
+    // PDFs go straight to Claude as native document content blocks — the Messages
+    // API reads them directly (text, layout, tables), no custom extraction needed.
+    // (.xlsx has no equivalent native support, so that one is parsed client-side to
+    // CSV and flows in as plain text via `attachedText` above instead.)
+    const documentBlocks = (Array.isArray(documents) ? documents : [])
+      .filter((d: { base64?: string }) => d?.base64)
+      .map((d: { base64: string }) => ({
+        type: 'document' as const,
+        source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: d.base64 },
+      }))
 
     let userContent: MessageContent = userPrompt
+    if (documentBlocks.length > 0) {
+      userContent = [...documentBlocks, { type: 'text', text: userPrompt }]
+    }
     if (image?.base64 && isValidMime(image.mimeType)) {
       userContent = [
+        ...documentBlocks,
         { type: 'image', source: { type: 'base64', media_type: image.mimeType, data: image.base64 } },
         { type: 'text', text: userPrompt },
       ]
@@ -1336,7 +1718,19 @@ ${code}
 
     const resolvedTier = tier
     const model = MODELS[resolvedTier] ?? MODELS.default
-    const maxTokens = resolvedTier === 'fast' ? 8000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
+    // 'fast' was 8000 with no documented rationale (vs 64000-96000 for the
+    // other tiers) — every continuation call below reuses this SAME cap
+    // (max_tokens: stageMaxTokens), so any 'fast'-tier edit whose real output
+    // exceeds it (common: this app's rich-UI style means even a Haiku-classified
+    // "LOW complexity" edit like a notifications dropdown or settings page
+    // often runs 15-25K tokens) pays for a fully sequential round-trip PER
+    // continuation — confirmed live via server logs showing single edits
+    // taking 3-6+ minutes across 3-4 chained 8000-token calls. 24000 matches
+    // the budget this file already trusts elsewhere (the isInternalPass 'fill'
+    // clamp below) — most of those edits now complete in one call instead of
+    // three or four, with no cost change (the model still stops at its own
+    // natural end_turn; a higher ceiling doesn't make it write more).
+    const maxTokens = resolvedTier === 'fast' ? 24000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // Inject Supabase context if user has connected their project
     const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
@@ -1344,10 +1738,50 @@ ${code}
     const supabaseStatus = supabaseResult.status
     // Durable rolling memory of this project (no-op until migration 034 is applied).
     const projectMemory = projectId ? await loadProjectMemory(projectId) : ''
-    const knowledgeContext = (knowledge && String(knowledge).trim()) ? `\n\n${knowledge}` : ''
+    // Merge request-body knowledge (editor) with the persistent stored column
+    // (settable via MCP) so both apply on every build.
+    const storedKnowledge = projectId ? await loadProjectKnowledge(projectId) : ''
+    const mergedKnowledge = [String(knowledge ?? '').trim(), storedKnowledge].filter(Boolean).join('\n\n')
+    const knowledgeContext = mergedKnowledge ? `\n\n${mergedKnowledge}` : ''
     const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
-    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach.\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with one short friendly recap of WHAT you changed and ONE suggested next step — e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". When you make no code change, still close with a helpful next step. Keep it to 1-2 sentences.'
-    
+    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach. EXCEPTION — complex builds: if this build spans MORE than ~5 files, your one opening sentence must set expectations instead, e.g. "This is a complex build across multiple files — I\'m generating them in batches; the preview updates when the last file lands." (still one sentence, still followed immediately by the file output).\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with a recap of WHAT you changed and ONE suggested next step. For 1-2 file changes: 1-2 friendly sentences, e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". For changes spanning 3+ files: a short bullet list — one line per meaningful change, stating the OUTCOME ("Dashboard chart now scrolls horizontally on narrow screens"), not the action taken — then the next-step sentence. When you make no code change, still close with a helpful next step.\n10. NEVER NARRATE BETWEEN BLOCKS. After the opening sentence, output the <file>/<edit> blocks back-to-back with ZERO prose between them. Everything you write outside the blocks is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" or "Let me tighten the button row:" turns that answer into unreadable rambling that trails off mid-thought. If you want to signal progress, use [progress: short label] markers (they render as a live ticker, never as chat text). ALL explanation belongs in the closing recap (rule 9), written AFTER the last block, in past tense, describing the finished result.'
+
+    // Tool-use variant of the output rule (Phase 5) — same voice/behavior rules
+    // as outputRule, but files are written/changed via tools instead of
+    // <file>/<edit> text tags. The model gets a second turn (after tool_results
+    // come back) to add its closing recap, so rule 8's voice guidance still
+    // applies there. Both tools are always offered together (not gated by
+    // isNewBuild) since a single edit turn commonly needs both — e.g. "add a
+    // dark mode toggle" may need a new hook file AND changes to App.tsx.
+    const toolUseOutputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. To CREATE a new file, call write_file(path, content) once per file — full contents each time. Do NOT use <file> or <edit> tags; they do not exist in this mode.\n2. To CHANGE an existing file, call edit_file(path, search, replace) — search must be the EXACT existing lines (verbatim, same whitespace), keep it small (just the changed lines plus a little context). Never call write_file for a file that already exists — use edit_file instead, unless the change touches MANY places in one file (a full theme/color-scheme overhaul), in which case call write_file to replace the whole thing.\n3. PREFER FEWER, LARGER new files. Aim for 3-5 files for a fresh build, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines. If the build genuinely spans MORE than ~5 files, say so FIRST in one short sentence before any tool call — e.g. "This is a complex build across multiple files — I\'m generating them in batches; the preview updates when the last file lands." — so the user knows a longer generation is expected, then start writing files.\n4. Call every tool for every file/change in the SAME turn — do not wait between calls.\n5. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "what next?"), do NOT call any tool — just answer in 1-2 warm, plain sentences.\n6. BUILD/EDIT COMMANDS MUST HAPPEN NOW. If the user asks for a concrete change, call the right tool(s) THIS turn — do not ask a clarifying question first when the intent is already clear.\n7. NEVER PROMISE FUTURE WORK. Do not say "sending it now", "building…", "one moment" — either call the tool now or say plainly what input you need.\n8. ALWAYS CONFIRM + GUIDE. Once your tool calls are done and you see their results, close with one short friendly recap of what you built/changed and ONE suggested next step. Keep it to 1-2 sentences, plain text, no more tool calls.\n9. SCHEMA SQL STILL APPLIES IN TOOL MODE. If the storage context told you to end with a "SQL TO RUN IN SUPABASE" comment block, append that complete block after your recap exactly as instructed — the platform parses and runs it automatically. Rule 8\'s brevity limit does not apply to that block.\n10. NEVER NARRATE BETWEEN TOOL CALLS. Text you write between tool calls is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" turns it into unreadable rambling. Call the tools back-to-back silently; the platform already shows a live per-file progress ticker. ALL explanation belongs in the closing recap (rule 8), written after the last tool result, in past tense, describing the finished result.'
+
+    const writeFileTool = {
+      name: 'write_file',
+      description: 'Write one complete NEW file. Call once per file you are creating — never for a file that already exists (use edit_file for those).',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          path: { type: 'string' as const, description: 'File path relative to the project root, e.g. src/components/Sidebar.tsx' },
+          content: { type: 'string' as const, description: 'The complete file contents.' },
+        },
+        required: ['path', 'content'],
+      },
+    }
+
+    const editFileTool = {
+      name: 'edit_file',
+      description: 'Make one targeted search/replace edit to an EXISTING file. Call once per distinct change — call it again (or call it multiple times) for multiple changes in the same or different files.',
+      input_schema: {
+        type: 'object' as const,
+        properties: {
+          path: { type: 'string' as const, description: 'File path relative to the project root — must be an EXISTING file.' },
+          search: { type: 'string' as const, description: 'The exact existing lines to find, copied verbatim including indentation/whitespace. Keep this small — just the lines that change plus a little surrounding context.' },
+          replace: { type: 'string' as const, description: 'The replacement lines.' },
+        },
+        required: ['path', 'search', 'replace'],
+      },
+    }
+
     const wyberDNA = '' // merged into system prompt
     // ── Staged generation modes ──
     // Static system prompt (cacheable) — per-request context injected into user message instead.
@@ -1368,7 +1802,14 @@ ${code}
     // These vary per project/prompt — keep them out of the system prompt so the cache breakpoint stays byte-stable
     if (supabaseContext) {
       perRequestParts.push(supabaseContext)
+    } else if (projectType !== 'mobile') {
+      // Web, no backend: local-first persistence via the injected wyber-store
+      // helper (sanitize-files/engine inject src/wyber-store.ts into every
+      // build) — personal apps keep their data across reloads without Supabase.
+      perRequestParts.push(WYBER_STORE_PROMPT)
     } else {
+      // Mobile (React Native): no wyber-store injection there — keep the
+      // in-memory default until an AsyncStorage equivalent ships.
       perRequestParts.push(`\n\n=== STORAGE CONTEXT (no backend connected) ===
 Use useState with inline mock data for all persistent data. Do NOT import or reference Supabase.
 Do NOT add any storage-notice banner or warning about data persistence — the platform handles that externally.`)
@@ -1393,6 +1834,24 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       ]
       const seed = MOBILE_DIRECTIONS[Math.floor(Math.random() * MOBILE_DIRECTIONS.length)]
       perRequestParts.push(`\n\n━━━ DESIGN SEED (fresh build — make it bespoke) ━━━\nUnless the user named a specific style, brand, or colors, take THIS as your starting aesthetic and commit to it in theme.ts (choose a light or dark base + accent to match): ${seed}\nDo not default to a generic dark indigo app.`)
+
+      // LAYOUT SEED — mobile's equivalent of the web LAYOUT_SEEDS below: the
+      // DESIGN SEED above only covers color/vibe, so two mobile builds with
+      // similar palettes still ended up with the same tab-bar-plus-card-feed
+      // shape every time. This handles structural freshness (nav pattern,
+      // home-screen shape, onboarding style) so they compose differently too.
+      const MOBILE_LAYOUT_SEEDS = [
+        'Tab bar (4-5 icons) home = a vertical feed of cards; detail screens push full-screen with a large back-swipe area.',
+        'Bottom-sheet nav (single FAB opens a sheet of destinations) home = a 2-col grid of tiles; details open as a modal sheet, not a push.',
+        'Tab bar home = dashboard-style stat cards + a horizontal scroller of recent items; onboarding is a 3-slide swipeable carousel with dot indicators.',
+        'Segmented top tabs (no bottom bar) home = a dense list (rows, not cards); onboarding is a single animated welcome screen with one CTA, no carousel.',
+        'Bottom tab bar + a persistent search bar pinned under the header; home = grid of category tiles; onboarding: permission-request screens one at a time (notifications, then location).',
+        'Drawer nav (hamburger) + no bottom bar; home = list grouped by section headers; onboarding: a single value-prop screen + sign-in, no carousel.',
+        'Tab bar home = a masonry/staggered grid (Pinterest-style); onboarding: full-bleed swipeable image carousel with overlaid copy.',
+        'Bottom tab bar home = a single hero card + stacked list below it (superapp pattern); onboarding: skippable 2-slide carousel, minimal copy.',
+      ]
+      const mobileLayoutSeed = MOBILE_LAYOUT_SEEDS[Math.floor(Math.random() * MOBILE_LAYOUT_SEEDS.length)]
+      perRequestParts.push(`\n\n━━━ LAYOUT SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific navigation or home-screen layout, take THIS as your structural starting point: ${mobileLayoutSeed}`)
     }
     if (!hasExisting && projectType !== 'mobile' && stage !== 'plan') {
       // Inject a complete, hand-tuned, domain-matched HSL token palette as a
@@ -1400,8 +1859,36 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // build starts from a beautiful, accessible, distinct palette; freshness
       // comes from picking a different one each build. Yields to explicit user
       // colors/brand.
-      const { pickPalette, renderDesignBrief } = await import('@/lib/design-palettes')
-      perRequestParts.push(renderDesignBrief(pickPalette(prompt)))
+      const { pickPalette, getPaletteById, renderDesignBrief } = await import('@/lib/design-palettes')
+      // An explicit paletteId (user picked a direction in Plan Mode / theme UI)
+      // wins; unknown or absent ids fall back to the prompt-matched random pick.
+      const palette = (typeof paletteId === 'string' ? getPaletteById(paletteId) : undefined) ?? pickPalette(prompt)
+      perRequestParts.push(renderDesignBrief(palette))
+
+      // LAYOUT & MOTION SEED — the palette brief handles color freshness; this
+      // handles STRUCTURAL freshness so two builds with similar palettes still
+      // compose differently. References Wyber UI Kit components so the seed is
+      // directly actionable. Yields to explicit user layout requests.
+      const LAYOUT_SEEDS = [
+        'Website: centered aurora hero (AuroraBackground, oversized display headline), features as a 3-col FeatureCard Stagger grid, logos in a Marquee. Dashboard: airy top-nav shell (no sidebar), stat row of StatBlocks, generous whitespace. Motion: calm and slow (Reveal delays 0.1-0.3).',
+        'Website: split hero — copy left, GlassPanel product mock right; BentoGrid feature showcase with one 2x2 hero cell. Dashboard: classic slim sidebar + dense data tables, tight spacing. Motion: brisk, minimal — Stagger interval 0.05.',
+        'Website: editorial hero — huge left-aligned display type over BackgroundGrid lines, long-form sections, pull-quote TestimonialCards. Dashboard: content-first, near-invisible chrome, hairline dividers. Motion: fade-only Reveals (y=0), no slides.',
+        'Website: cinematic dark hero — GradientBorder-framed visual with glow, SpotlightCards throughout, stats band with AnimatedNumbers. Dashboard: dark cockpit with glowing primary accents, GlassPanel cards. Motion: pronounced spring physics.',
+        'Website: minimal luxury — vast negative space, single-column narrative sections, thin-weight display type, restrained CTASection. Dashboard: spacious cards, oversized numbers, few borders. Motion: slow elegant Reveals (duration feel ~0.8).',
+        'Website: product-led — sticky Navbar, hero with dual CTA + social-proof strip immediately under it, alternating split sections (image/copy, copy/image). Dashboard: two-pane master-detail. Motion: standard Reveal/Stagger, delta arrows on stats.',
+        'Website: bold geometric — BackgroundGrid dots everywhere, chunky Badge eyebrows, BentoGrid as the ENTIRE page body after the hero. Dashboard: bento-style widget grid instead of uniform card rows. Motion: staggered grid entrances.',
+        'Website: warm organic — soft rounded radius (--radius 1rem+), pastel-tinted section backgrounds alternating with white, hand-crafted feel. Dashboard: friendly rounded cards, pill Tabs navigation. Motion: gentle y=12 Reveals, playful AnimatedNumbers.',
+        'Website: editorial magazine — EditorialHeadline hero with a serif <em> accent, MonoLabel eyebrows on every section, SectionNumber-opened numbered chapters, MediaFrame images with Fig. captions. Dashboard: reading-first list views, hairline dividers, mono metadata. Motion: fade-only Reveals, one SplitTextReveal.',
+        'Website: engineered precision — near-black or paper ground, HairlineFrame-framed hero visual, a DataRow spec sheet instead of a feature grid, 1px borders everywhere, mono microlabels. Dashboard: dense tabular, tabular-nums, zero decoration. Motion: minimal — Stagger interval 0.04, no floating.',
+        'Website: numbered process story — hero, then a PinnedStory (sticky MediaFrame visual + 3-4 SectionNumber steps) as the page centerpiece, DataRow facts band, restrained CTASection. Dashboard: wizard/stepper-first. Motion: calm, the PinnedStory carries it.',
+        'Website: cinematic dark precision — CursorGlow hero with an oversized EditorialHeadline, HairlineFrame stats band, SpotlightCards for features, mono captions. Dashboard: dark cockpit, glowing accents, hairline grid. Motion: pronounced but few — hero glow + one pinned moment.',
+        'Website: gallery minimal — vast white space, EditorialHeadline with ONE italic word, full-bleed MediaFrame images separated by nothing but whitespace, MonoLabel captions, no cards at all. Dashboard: content-grid gallery views. Motion: slow fade-only Reveals (duration feel ~0.9).',
+        'Website: split manifesto — sticky left column (EditorialHeadline + MonoLabel meta), right column scrolls long-form sections with SectionNumbers; a DataRow specification block near the end. Dashboard: master-detail with a fixed summary rail. Motion: right column Reveals only.',
+        'Website: asymmetric editorial grid — 12-col grid used unevenly (7/5, 8/4 splits), BentoGrid with one 2x2 MediaFrame cell, pull-quote TestimonialCard offset from center, footnote-style MonoLabels. Dashboard: mixed-density bento widgets. Motion: staggered grid entrances, nothing else.',
+        'Website: brutalist statement — zero radius, thick borders, oversized ALL-CAPS display hero, accent-block sections, Marquee ticker between sections, raw DataRow lists. Dashboard: spreadsheet-honest tables, visible grid. Motion: instant hovers, one Marquee, NO scroll fades.',
+      ]
+      const layoutSeed = LAYOUT_SEEDS[Math.floor(Math.random() * LAYOUT_SEEDS.length)]
+      perRequestParts.push(`\n\n━━━ LAYOUT & MOTION SEED (fresh build — structural freshness) ━━━\nUnless the user asked for a specific layout, take THIS as your structural starting point: ${layoutSeed}`)
     }
 
     if (stage === 'plan') {
@@ -1410,13 +1897,31 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     } else {
       staticSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt())
         + (projectType === 'mobile' ? '' : wyberDNA)
-        + outputRule
+        + (useToolUse ? toolUseOutputRule : outputRule)
+      // Both staged-pass prompts below override rule 9's "end with a question"
+      // guidance on purpose: rule 9 is written for an interactive turn where a
+      // real person reads the question and replies. Scaffold/fill passes are
+      // links in an automated chain the platform already planned — the next
+      // pass fires on its own regardless of what this response says, so a
+      // model that asks "Want me to build X next?" here is asking a question
+      // nobody answers, right before the platform does exactly that anyway.
+      // Confirmed live in production chat history: every staged pass ended
+      // with such a question, and the very next pass silently acted on it —
+      // reads as the AI ignoring the user and talking to itself.
+      const stagedAutomationNote = "\nThis pass is one link in an automated chain the platform already planned — it runs back-to-back with the next pass, with no user reply in between. Your closing sentence must be a plain, past-tense statement of what you built. NEVER end with a question or an offer awaiting a yes/no (no \"Want me to build X next?\", no \"should I continue?\") — nobody is there to answer it, and the next pass will run regardless of what you ask. NEVER reference internal build mechanics like \"this pass\"/\"next pass\"/\"later passes\" — describe the app in plain language a user would recognize, not the pipeline building it."
       if (stage === 'scaffold') {
         const list = (stageFiles as string[]).join(', ')
-        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in later passes. Output each file as a complete <file> block.`)
+        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in on their own shortly. Output each file as a complete <file> block.${stagedAutomationNote}`)
       } else if (stage === 'fill') {
         const list = (stageFiles as string[]).join(', ')
-        perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.`)
+        perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.${stagedAutomationNote}`)
+      } else if (stage === 'agentFix') {
+        perRequestParts.push(`\n\n=== TARGETED FIX PASS ===\nApply ONLY the specific fix described in the request, using <edit> blocks (or a full <file> rewrite only if the file is small). Do not restyle, refactor, or touch anything else.`)
+      }
+      // Internal passes are free to the user — clamp their output budget so a
+      // forged request can't extract a large free generation.
+      if (isInternalPass) {
+        stageMaxTokens = Math.min(stageMaxTokens, stage === 'fill' ? 24000 : 8000)
       }
       if (stage === 'full') {
         staticSystemPrompt += '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
@@ -1440,19 +1945,489 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // Try Anthropic primary, fallback to Vertex AI Gemini on failure
     let usedModel = model
     let readable: ReadableStream<Uint8Array>
-    // If the stream produces no text at all, the build failed — refund.
-    let emittedAny = false
-    // Full assistant output, captured for the post-response memory distillation.
+    // Full assistant output, captured for the post-response memory distillation
+    // and for the generationSucceeded() check below.
     let generatedText = ''
 
     const encoder = new TextEncoder()
-    const finalMessages = [...trimmedHistory, { role: 'user' as const, content: userContent }]
+    // TWO message breakpoints: one on the last HISTORY message (matches the prefix a
+    // previous turn already cached — windowedHistory() on the client keeps growth
+    // append-only), and one on the NEW user message. The new message carries the full
+    // fileContext (often the biggest part of the request); caching it means the
+    // tool-use loop and max_tokens continuations below read it from cache on every
+    // iteration instead of re-paying it as fresh input each time. Budget: 4
+    // breakpoints max per request = system(1) + history(2) + new message(3), leaving
+    // one for the rolling loop breakpoint.
+    const finalMessages = withCacheBreakpoint([
+      ...withCacheBreakpoint(trimmedHistory),
+      { role: 'user' as const, content: userContent },
+    ])
     const systemBlocks: { type: 'text'; text: string; cache_control?: { type: 'ephemeral' } }[] = [{ type: 'text' as const, text: staticSystemPrompt, cache_control: { type: 'ephemeral' as const } }]
     if (supabaseStatus === 'ok') {
       systemBlocks.push({ type: 'text', text: '\n\n[SYSTEM FACT] Supabase IS connected to this project. If the user asks about Supabase connection status, confirm it is connected. Do NOT contradict this — it is a verified system state, not a guess.' })
     }
 
+    // Extended thinking (opt-in, new-build full generation only — see useThinking
+    // above). 'adaptive' is the current API for Opus 4.8/Fable 5/Sonnet 4.6+;
+    // budget_tokens is deprecated/rejected on these models.
+    const thinkingParam = useThinking ? { thinking: { type: 'adaptive' as const, display: 'summarized' as const } } : {}
+
+    // ── Sentinel: in-stream security review (flag-gated, deterministic) ──
+    // Reviews every file the coder emits, DURING the generation. Blocking
+    // findings are handed back as failed tool_results (tool-use path) or a
+    // veto continuation turn (legacy path) so the coder re-emits a corrected
+    // file before it ever lands — capped at MAX_SECURITY_FIX_ITERATIONS extra
+    // passes; anything still unresolved lands, stays recorded in the event
+    // stream, and the publish gate remains the hard backstop.
+    const emitAgent = (controller: ReadableStreamDefaultController<Uint8Array>, e: AgentEvent) => {
+      if (!agentTeamOn) return
+      try { controller.enqueue(encoder.encode(formatAgentEvent(e))) } catch { /* stream closing */ }
+    }
+    const MAX_SECURITY_FIX_ITERATIONS = 2
+    let securityFixesUsed = 0
+    const nextFindingId = createFindingIdGenerator()
+    const openFindingsByPath = new Map<string, SecurityRuleFinding[]>()
+    const allFindings: SecurityRuleFinding[] = []
+    let emittedSql = ''
+    // On edits (fast path) only the always-critical rules may block — the rest
+    // stay advisory so small edits never slow down. New builds get full vetoes.
+    const vetoEligible = (f: SecurityRuleFinding) =>
+      f.blocking && (isNewBuild || stage === 'scaffold' || stage === 'fill'
+        || f.ruleId === 'secret-literal' || f.ruleId === 'service-role-client')
+    /** Review one emitted file/patch: emits finding/fixed events, tracks state,
+     * returns the findings that are eligible to veto (block) this pass. */
+    const sentinelReview = (
+      controller: ReadableStreamDefaultController<Uint8Array>,
+      path: string,
+      content: string,
+      patch = false,
+    ): SecurityRuleFinding[] => {
+      if (!agentTeamOn || selfHeal) return []
+      const prior = openFindingsByPath.get(path) ?? []
+      const findings = reviewEmittedFile(path, content, emittedSql, { patch, nextId: nextFindingId })
+      if (/create\s+table|create\s+policy|alter\s+table/i.test(content)) emittedSql += `\n${content}`
+      // A re-emitted file that no longer trips a rule → the earlier finding is fixed.
+      const openRules = new Set(findings.map(f => f.ruleId))
+      for (const p of prior) {
+        if (!openRules.has(p.ruleId)) {
+          emitAgent(controller, { agent: 'security', status: 'fixed', detail: `${p.detail} — fixed before it landed`, severity: p.severity, findingId: p.findingId })
+        }
+      }
+      const open: SecurityRuleFinding[] = []
+      for (const f of findings) {
+        const dup = prior.find(p => p.ruleId === f.ruleId)
+        if (dup) { open.push(dup); continue } // already reported, still open
+        allFindings.push(f)
+        emitAgent(controller, { agent: 'security', status: 'finding', detail: f.detail, severity: f.severity, findingId: f.findingId })
+        open.push(f)
+      }
+      openFindingsByPath.set(path, open)
+      return open.filter(vetoEligible)
+    }
+    /** Extract the schema comment block (or trailing raw SQL) from stream text
+     * so Sentinel can review SQL the model emitted as prose, not as a file. */
+    const extractSqlBlock = (text: string): string => {
+      // Last match wins — a corrected re-emitted block supersedes the vetoed one.
+      const matches = text.match(/\/\*\s*SQL TO RUN IN SUPABASE[\s\S]*?\*\//gi)
+      return matches ? matches[matches.length - 1] : ''
+    }
+    const sentinelDone = (controller: ReadableStreamDefaultController<Uint8Array>) => {
+      if (!agentTeamOn || selfHeal || stage === 'plan') return
+      const fixed = allFindings.filter(f => ![...openFindingsByPath.values()].flat().some(o => o.findingId === f.findingId)).length
+      const open = allFindings.length - fixed
+      const detail = allFindings.length === 0
+        ? 'no security issues found'
+        : `${fixed} issue${fixed === 1 ? '' : 's'} fixed before landing${open ? `, ${open} flagged` : ''}`
+      emitAgent(controller, { agent: 'security', status: 'done', detail })
+    }
+
     try {
+      if (useToolUse) {
+        // ── Tool-use prototype (Phase 5 sub-phase 1) ──────────────────────
+        // Real write_file(path, content) tool calls instead of <file> text
+        // tags, converted BACK into <file> tags at the wire boundary so the
+        // entire existing client pipeline (parseGenerationOutput, progress
+        // steps, self-heal cut-off detection, hasRealChange refund check)
+        // keeps working unchanged. A model turn that calls tools always ends
+        // with stop_reason 'tool_use' and cannot add closing text until it
+        // sees tool_results — so this is a genuine multi-turn loop, not a
+        // single call: iteration 1 gets the files, we hand back trivial
+        // "File written." results, iteration 2 lets the model add its usual
+        // one-line recap. MAX_TOOL_ITERATIONS caps runaway loops; in practice
+        // this should almost always take exactly 2 passes.
+        const firstStream = await client.messages.stream({
+          model,
+          max_tokens: stageMaxTokens,
+          system: systemBlocks,
+          messages: finalMessages,
+          tools: [writeFileTool, editFileTool],
+          ...thinkingParam,
+        })
+
+        readable = new ReadableStream({
+          async start(controller) {
+            // Simple Sonnet edits (2cr) get 3 iterations — measured sessions
+            // showed tweak-sized requests ballooning into 6 file-writing turns,
+            // which is what made cheap edits expensive ($15/M output adds up).
+            // Complex edits (Opus, 5cr) and builds keep the full budget.
+            const MAX_TOOL_ITERATIONS = actionType === 'small-edit' && resolvedTier === 'fast' ? 3 : 6
+            emitAgent(controller, { agent: 'coder', status: 'start', detail: isNewBuild ? 'building your app' : 'making the change' })
+            emitAgent(controller, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+            // Blocking findings per path, pending hand-back as failed tool_results.
+            const vetoByPath = new Map<string, SecurityRuleFinding[]>()
+            let assistantSoFar = ''
+            let loopMessages: Anthropic.MessageParam[] = [...finalMessages]
+            let stream = firstStream
+            let inThinkingBlock = false
+            let toolJson = ''
+            let toolName = ''
+            // Live per-file streaming (sub-phase 2): the SDK's own partial-JSON
+            // snapshot (the `inputJson` event) turned out NOT to help here — its
+            // vendored parser only reveals a string field once its closing quote
+            // has arrived (verified against the real API: a 2.7KB file's `content`
+            // appeared in exactly ONE snapshot, at the very last delta, not
+            // incrementally). So this decodes the raw partial_json text by hand via
+            // makeJsonFieldStreamer, byte-by-byte, to get true incremental content
+            // as it's actually generated — same live "typing" feel as the legacy
+            // <file>-tag path, instead of buffering the whole file until
+            // content_block_stop.
+            let pathStreamer = makeJsonFieldStreamer('path')
+            let contentStreamer = makeJsonFieldStreamer('content')
+            let toolOpened = false
+            let toolEmittedLen = 0
+            // One-shot: forced follow-up when a new build ends without its
+            // entry file (see the end_turn branch below).
+            let entryRetried = false
+            try {
+              // `<=` — one pass past MAX_TOOL_ITERATIONS is reserved for the
+              // entry-file guarantee: even when the continuation budget is
+              // spent, a new build must never end without src/App.tsx (that is
+              // a guaranteed-blank preview, strictly worse than a build that
+              // is merely missing one feature file). Sentinel vetoes extend the
+              // budget by the corrective iterations they consume (capped at
+              // MAX_SECURITY_FIX_ITERATIONS) so a veto never eats a build pass.
+              for (let iter = 0; iter <= MAX_TOOL_ITERATIONS + securityFixesUsed; iter++) {
+                for await (const event of stream) {
+                  if (event.type === 'content_block_start') {
+                    if (event.content_block.type === 'thinking') {
+                      inThinkingBlock = true
+                      controller.enqueue(encoder.encode('<reasoning>'))
+                    } else if (event.content_block.type === 'tool_use') {
+                      toolJson = ''
+                      toolName = event.content_block.name
+                      toolOpened = false
+                      toolEmittedLen = 0
+                      pathStreamer = makeJsonFieldStreamer('path')
+                      contentStreamer = makeJsonFieldStreamer('content')
+                    }
+                  } else if (event.type === 'content_block_delta') {
+                    if (event.delta.type === 'text_delta') {
+                      assistantSoFar += event.delta.text
+                      controller.enqueue(encoder.encode(event.delta.text))
+                    } else if (event.delta.type === 'thinking_delta') {
+                      controller.enqueue(encoder.encode(event.delta.thinking))
+                    } else if (event.delta.type === 'input_json_delta') {
+                      toolJson += event.delta.partial_json
+                      if (toolName === 'write_file') {
+                        if (!toolOpened) {
+                          const p = pathStreamer(toolJson)
+                          if (p.closed) {
+                            toolOpened = true
+                            const openTag = `<file path="${p.value.replace(/"/g, '&quot;')}">\n`
+                            assistantSoFar += openTag
+                            controller.enqueue(encoder.encode(openTag))
+                          }
+                        }
+                        if (toolOpened) {
+                          const c = contentStreamer(toolJson)
+                          if (c.value.length > toolEmittedLen) {
+                            const newPiece = c.value.slice(toolEmittedLen)
+                            assistantSoFar += newPiece
+                            controller.enqueue(encoder.encode(newPiece))
+                            toolEmittedLen = c.value.length
+                          }
+                        }
+                      }
+                    }
+                  } else if (event.type === 'content_block_stop') {
+                    if (inThinkingBlock) {
+                      inThinkingBlock = false
+                      controller.enqueue(encoder.encode('</reasoning>'))
+                    } else if (toolName === 'write_file' && toolJson) {
+                      try {
+                        const parsed = JSON.parse(toolJson) as { path?: string; content?: string }
+                        if (parsed.path && typeof parsed.content === 'string') {
+                          if (!toolOpened) {
+                            // Never got a streaming snapshot (short call, one chunk) — fall
+                            // back to emitting the whole tag at once, same as sub-phase 1.
+                            const chunk = `<file path="${parsed.path.replace(/"/g, '&quot;')}">\n${parsed.content}\n</file>\n[progress: Wrote ${parsed.path}]\n`
+                            assistantSoFar += chunk
+                            controller.enqueue(encoder.encode(chunk))
+                          } else {
+                            // Catch up any tail the streaming snapshot hadn't resolved yet
+                            // (partial-json can lag a few chars behind near the end), then close.
+                            const tail = parsed.content.slice(toolEmittedLen)
+                            const closeChunk = `${tail}\n</file>\n[progress: Wrote ${parsed.path}]\n`
+                            assistantSoFar += closeChunk
+                            controller.enqueue(encoder.encode(closeChunk))
+                          }
+                          // Sentinel reviews the file the moment it lands.
+                          const vetoes = sentinelReview(controller, parsed.path, parsed.content)
+                          if (vetoes.length) vetoByPath.set(parsed.path, vetoes)
+                          else vetoByPath.delete(parsed.path)
+                        }
+                      } catch (e) { console.error('[generate tool-use] bad write_file JSON:', e) }
+                      toolJson = ''
+                      toolName = ''
+                      toolOpened = false
+                      toolEmittedLen = 0
+                    } else if (toolName === 'edit_file' && toolJson) {
+                      // Edits are small — buffer the whole call and emit once, same
+                      // pattern as sub-phase 1's original write_file approach. No live
+                      // typing needed here; a search/replace pair finishes almost
+                      // instantly regardless.
+                      try {
+                        const parsed = JSON.parse(toolJson) as { path?: string; search?: string; replace?: string }
+                        if (parsed.path && typeof parsed.search === 'string' && typeof parsed.replace === 'string') {
+                          const chunk = `<edit path="${parsed.path.replace(/"/g, '&quot;')}">\n<<<<<<< SEARCH\n${parsed.search}\n=======\n${parsed.replace}\n>>>>>>> REPLACE\n</edit>\n[progress: Edited ${parsed.path}]\n`
+                          assistantSoFar += chunk
+                          controller.enqueue(encoder.encode(chunk))
+                          // Patch mode: only the always-critical rules (secrets /
+                          // service-role) run on a fragment — see ReviewOptions.
+                          const vetoes = sentinelReview(controller, parsed.path, parsed.replace, true)
+                          if (vetoes.length) vetoByPath.set(parsed.path, vetoes)
+                        }
+                      } catch (e) { console.error('[generate tool-use] bad edit_file JSON:', e) }
+                      toolJson = ''
+                      toolName = ''
+                    }
+                  }
+                }
+
+                const finalMsg = await stream.finalMessage()
+                const u = finalMsg.usage as unknown as Record<string, number>
+                console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
+
+                if (finalMsg.stop_reason === 'max_tokens') {
+                  // Sub-phase 3: a tool call cut off mid-JSON can't be replayed as
+                  // an assistant prefill (same restriction as the legacy path) NOR
+                  // as a genuine tool_use continuation (write_file has no "append"
+                  // semantics — the schema is one complete file per call). So this
+                  // does one in-request retry: close out the dangling <file> tag
+                  // (as a harmless, immediately-closed placeholder — leaving it
+                  // truly unclosed would make parseGenerationOutput's greedy regex
+                  // merge it with the retry's later, correctly-closed tag for the
+                  // SAME path into one corrupted block), drop the invalid trailing
+                  // tool_use block from history (Anthropic still gives back valid
+                  // JSON for any EARLIER tool_use calls that completed in the same
+                  // turn — only the truncated one is malformed), and ask the model
+                  // to write that one file again, complete, in a plain follow-up
+                  // turn — all within this same streaming response, so the user
+                  // never sees a gap or a separate visible retry.
+                  let cutPath: string | null = null
+                  const cutTool = toolName
+                  if (toolName === 'write_file' && toolJson) {
+                    if (toolOpened) {
+                      cutPath = pathStreamer(toolJson).value
+                      controller.enqueue(encoder.encode('</file>\n'))
+                      assistantSoFar += '</file>\n'
+                    } else {
+                      const m = toolJson.match(/"path"\s*:\s*"([^"]*)"/)
+                      if (m) {
+                        cutPath = m[1]
+                        const chunk = `<file path="${cutPath.replace(/"/g, '&quot;')}"></file>\n`
+                        assistantSoFar += chunk
+                        controller.enqueue(encoder.encode(chunk))
+                      }
+                    }
+                  } else if (toolName === 'edit_file' && toolJson) {
+                    // edit_file is buffer-only (never streamed live), so there's no
+                    // dangling tag to close — just salvage the path for the retry note.
+                    const m = toolJson.match(/"path"\s*:\s*"([^"]*)"/)
+                    if (m) cutPath = m[1]
+                  }
+
+                  // Continuation budget spent → normally stop. EXCEPT when a
+                  // new build still has no entry file: spend the one reserved
+                  // extra pass (loop runs to MAX_TOOL_ITERATIONS inclusive)
+                  // demanding App.tsx, or the user ends with components that
+                  // nothing mounts and a permanently blank preview.
+                  let demandEntry = false
+                  const entryPathMt = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
+                  if (iter >= MAX_TOOL_ITERATIONS - 1) {
+                    const wroteEntryMt = assistantSoFar.includes(`path="${entryPathMt}"`)
+                      || (projectType !== 'mobile' && assistantSoFar.includes('path="src/App.jsx"'))
+                    if (!isNewBuild || wroteEntryMt || entryRetried
+                        || !assistantSoFar.includes('<file path="')) break
+                    entryRetried = true
+                    demandEntry = true
+                  }
+
+                  // Keep only genuinely complete tool_use blocks (all required fields
+                  // present for their tool) — the truncated trailing one (if any) is
+                  // missing a field and must never be replayed as history.
+                  const completeBlocks = finalMsg.content.filter(b => {
+                    if (b.type !== 'tool_use') return true
+                    if (b.name === 'write_file') {
+                      const inp = b.input as { path?: string; content?: string }
+                      return typeof inp?.path === 'string' && typeof inp?.content === 'string'
+                    }
+                    if (b.name === 'edit_file') {
+                      const inp = b.input as { path?: string; search?: string; replace?: string }
+                      return typeof inp?.path === 'string' && typeof inp?.search === 'string' && typeof inp?.replace === 'string'
+                    }
+                    return false
+                  })
+                  const completeToolUses = completeBlocks.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+                  if (completeBlocks.length > 0) {
+                    loopMessages = [...loopMessages, { role: 'assistant', content: completeBlocks }]
+                  }
+                  const retryText = demandEntry
+                    ? `You are out of output budget and ${entryPathMt} was never written — the app cannot render without its entry file. Call write_file ONCE now with the COMPLETE ${entryPathMt}, wiring together the components you already created. Keep it lean and write nothing else.`
+                    : cutPath
+                    ? (cutTool === 'edit_file'
+                      ? `Your edit_file call for ${cutPath} was cut off by a length limit before it finished. Call edit_file again for that exact path with a smaller, more targeted search/replace pair.`
+                      : `The file ${cutPath} was cut off by a length limit before it finished. Call write_file again for that exact path with the COMPLETE, CORRECT file contents from scratch — keep it more concise if that's what caused the cutoff.`)
+                    : `Your last response was cut off by a length limit before finishing. Continue with the remaining changes.`
+                  loopMessages = [
+                    ...loopMessages,
+                    {
+                      role: 'user',
+                      content: [
+                        ...completeToolUses.map(b => ({ type: 'tool_result' as const, tool_use_id: b.id, content: b.name === 'write_file' ? 'File written.' : 'File edited.' })),
+                        { type: 'text' as const, text: retryText },
+                      ],
+                    },
+                  ]
+                  stream = await client.messages.stream({
+                    model,
+                    max_tokens: stageMaxTokens,
+                    system: systemBlocks,
+                    // Rolling breakpoint (4th slot): each iteration caches the turns added
+                    // so far, so the next one reads them instead of re-sending fresh.
+                    messages: withCacheBreakpoint(loopMessages),
+                    tools: [writeFileTool, editFileTool],
+                    ...thinkingParam,
+                  })
+                  continue
+                }
+                if (finalMsg.stop_reason !== 'tool_use') {
+                  // New builds MUST produce the entry file. By convention the
+                  // model writes src/App.tsx LAST, so a turn that ends early
+                  // (token budget, or the model deciding it's done) can leave
+                  // components with no App to mount them — the client merges
+                  // them over the starter's tiny placeholder App.tsx, the
+                  // preview's hasApp gate stays false, and the user gets a
+                  // permanently blank preview with no error to self-heal
+                  // from. One forced follow-up turn closes that hole.
+                  const entryPath = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
+                  const wroteAnyFile = assistantSoFar.includes('<file path="')
+                  const wroteEntry = assistantSoFar.includes(`path="${entryPath}"`)
+                    || (projectType !== 'mobile' && assistantSoFar.includes('path="src/App.jsx"'))
+                  if (isNewBuild && wroteAnyFile && !wroteEntry && !entryRetried
+                      && iter < MAX_TOOL_ITERATIONS && finalMsg.content.length > 0) {
+                    entryRetried = true
+                    loopMessages = [
+                      ...loopMessages,
+                      { role: 'assistant', content: finalMsg.content },
+                      { role: 'user', content: `You finished without writing ${entryPath} — the app cannot render without its entry file. Call write_file now with the COMPLETE ${entryPath}, wiring together the components you already created. Do not rewrite any other file.` },
+                    ]
+                    stream = await client.messages.stream({
+                      model,
+                      max_tokens: stageMaxTokens,
+                      system: systemBlocks,
+                      messages: withCacheBreakpoint(loopMessages),
+                      tools: [writeFileTool, editFileTool],
+                      ...thinkingParam,
+                    })
+                    continue
+                  }
+                  // Sentinel: the schema SQL usually arrives as a trailing comment
+                  // block in the recap text (tool-use rule 9), not as a file —
+                  // review it now, and spend one corrective turn if it creates
+                  // tables without RLS.
+                  const sqlBlock = extractSqlBlock(assistantSoFar)
+                  if (sqlBlock && securityFixesUsed < MAX_SECURITY_FIX_ITERATIONS && finalMsg.content.length > 0) {
+                    const sqlVetoes = sentinelReview(controller, 'supabase-schema.sql', sqlBlock)
+                    if (sqlVetoes.length) {
+                      securityFixesUsed++
+                      emitAgent(controller, { agent: 'security', status: 'fixing', detail: 'requesting corrected SQL from the coder' })
+                      loopMessages = [
+                        ...loopMessages,
+                        { role: 'assistant', content: finalMsg.content },
+                        { role: 'user', content: `${sqlVetoes.map(v => v.fixInstruction).join('\n')}\nRe-emit ONLY the corrected "SQL TO RUN IN SUPABASE" comment block, complete — do not repeat anything else and do not call any tools.` },
+                      ]
+                      stream = await client.messages.stream({
+                        model,
+                        max_tokens: stageMaxTokens,
+                        system: systemBlocks,
+                        messages: withCacheBreakpoint(loopMessages),
+                        tools: [writeFileTool, editFileTool],
+                        ...thinkingParam,
+                      })
+                      continue
+                    }
+                  }
+                  break // end_turn / refusal — done
+                }
+
+                const toolUseBlocks = finalMsg.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')
+                if (toolUseBlocks.length === 0) break
+                // Sentinel veto: a blocking finding on a file written this turn is
+                // handed back as a FAILED tool_result, so the model's next
+                // iteration re-emits that file corrected — "fixed before it
+                // landed". Bounded by MAX_SECURITY_FIX_ITERATIONS; past the
+                // budget the file lands as-is (recorded; publish gate backstops).
+                const canVeto = securityFixesUsed < MAX_SECURITY_FIX_ITERATIONS
+                let vetoedThisTurn = false
+                const toolResults = toolUseBlocks.map(b => {
+                  const vetoPath = (b.input as { path?: string })?.path
+                  const vetoes = canVeto && vetoPath ? vetoByPath.get(vetoPath) : undefined
+                  if (vetoes?.length) {
+                    vetoedThisTurn = true
+                    return {
+                      type: 'tool_result' as const,
+                      tool_use_id: b.id,
+                      is_error: true,
+                      content: vetoes.map(v => v.fixInstruction).join('\n'),
+                    }
+                  }
+                  return {
+                    type: 'tool_result' as const,
+                    tool_use_id: b.id,
+                    content: b.name === 'write_file' ? 'File written.' : b.name === 'edit_file' ? 'File edited.' : 'Unknown tool.',
+                  }
+                })
+                vetoByPath.clear()
+                if (vetoedThisTurn) {
+                  securityFixesUsed++
+                  emitAgent(controller, { agent: 'security', status: 'fixing', detail: 'sent back to the coder for a corrected version' })
+                }
+                loopMessages = [
+                  ...loopMessages,
+                  { role: 'assistant', content: finalMsg.content },
+                  { role: 'user', content: toolResults },
+                ]
+                stream = await client.messages.stream({
+                  model,
+                  max_tokens: stageMaxTokens,
+                  system: systemBlocks,
+                  messages: withCacheBreakpoint(loopMessages),
+                  tools: [writeFileTool, editFileTool],
+                  ...thinkingParam,
+                })
+              }
+            } catch (err) { console.error('Tool-use stream error:', err) }
+            finally {
+              emitAgent(controller, { agent: 'coder', status: 'done' })
+              sentinelDone(controller)
+              generatedText = assistantSoFar
+              controller.close()
+              if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
+            }
+          },
+        })
+      } else {
       // Probe the first stream so any auth/quota error throws here and falls
       // through to the Gemini fallback below (rather than dying mid-ReadableStream).
       const firstStream = await client.messages.stream({
@@ -1460,56 +2435,155 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         max_tokens: stageMaxTokens,
         system: systemBlocks,
         messages: finalMessages,
+        ...thinkingParam,
       })
 
       readable = new ReadableStream({
         async start(controller) {
           // Auto-continuation: if a pass stops because it hit max_tokens, the
           // output was cut off mid-file (App.tsx is emitted LAST, so it's the
-          // usual casualty). Re-prompt with the partial text as an assistant
-          // prefill and keep streaming into the SAME response, so the client
-          // sees one seamless, complete output. Without this, truncated files
-          // render broken and every retry truncates the same way ("false hope").
+          // usual casualty). Assistant-turn prefill (ending the `messages` array
+          // on a `role: 'assistant'` entry) is what this used to do, but that's
+          // rejected with a 400 on every model this app uses (Opus 4.8, Sonnet
+          // 4.6, Fable 5 all removed prefill support) — so instead we close out
+          // the partial text as a real assistant turn and ask for a continuation
+          // in a fresh user turn, per Anthropic's documented prefill replacement.
           const MAX_CONTINUATIONS = 4
           let assistantSoFar = ''
           let stream = firstStream
+          // Extended-thinking content arrives as separate `thinking` content
+          // blocks before the real text — wrap them in <reasoning> tags (own
+          // convention, distinct from the banned model-authored <thinking>
+          // prose tag) so the client can render them as collapsible reasoning
+          // instead of chat text. Never appended to assistantSoFar: that string
+          // feeds parseGenerationOutput/continuation and must stay pure of
+          // reasoning prose.
+          let inThinkingBlock = false
+          // No agent events on the 'plan' stage — the client parses that stream
+          // as a raw JSON manifest, so markers would corrupt it; ChatPanel
+          // synthesizes the Planner's events itself. Self-heal likewise stays
+          // silent here (the client narrates it as the QA agent).
+          const emitLegacyAgents = stage !== 'plan' && !selfHeal
+          if (emitLegacyAgents) {
+            emitAgent(controller, {
+              agent: 'coder', status: 'start',
+              detail: stage === 'scaffold' ? 'building the app shell'
+                : stage === 'fill' ? 'building feature files'
+                : stage === 'agentFix' ? 'applying a targeted fix'
+                : isNewBuild ? 'building your app' : 'making the change',
+            })
+            emitAgent(controller, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
+          }
+          // End-of-pass Sentinel review for the text-tag path: parse the files
+          // accumulated so far, review anything new, return eligible vetoes.
+          const reviewedKeys = new Set<string>()
+          const legacyReview = (): SecurityRuleFinding[] => {
+            if (!agentTeamOn || !emitLegacyAgents) return []
+            const vetoes: SecurityRuleFinding[] = []
+            try {
+              const { files } = parseGenerationOutput(assistantSoFar)
+              for (const f of files) {
+                const key = `${f.path}:${f.content.length}`
+                if (reviewedKeys.has(key)) continue
+                reviewedKeys.add(key)
+                vetoes.push(...sentinelReview(controller, f.path, f.content))
+              }
+              const sqlBlock = extractSqlBlock(assistantSoFar)
+              if (sqlBlock) {
+                const key = `sql:${sqlBlock.length}`
+                if (!reviewedKeys.has(key)) {
+                  reviewedKeys.add(key)
+                  vetoes.push(...sentinelReview(controller, 'supabase-schema.sql', sqlBlock))
+                }
+              }
+            } catch (e) { console.error('[sentinel] legacy review failed', e) }
+            return vetoes
+          }
           try {
-            for (let pass = 0; pass <= MAX_CONTINUATIONS; pass++) {
+            for (let pass = 0; pass <= MAX_CONTINUATIONS + securityFixesUsed; pass++) {
               for await (const event of stream) {
-                if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                  emittedAny = true
-                  assistantSoFar += event.delta.text
-                  controller.enqueue(encoder.encode(event.delta.text))
+                if (event.type === 'content_block_start' && event.content_block.type === 'thinking') {
+                  inThinkingBlock = true
+                  controller.enqueue(encoder.encode('<reasoning>'))
+                } else if (event.type === 'content_block_delta') {
+                  if (event.delta.type === 'text_delta') {
+                    assistantSoFar += event.delta.text
+                    controller.enqueue(encoder.encode(event.delta.text))
+                  } else if (event.delta.type === 'thinking_delta') {
+                    controller.enqueue(encoder.encode(event.delta.thinking))
+                  }
+                } else if (event.type === 'content_block_stop' && inThinkingBlock) {
+                  inThinkingBlock = false
+                  controller.enqueue(encoder.encode('</reasoning>'))
                 }
               }
 
               const finalMsg = await stream.finalMessage()
               const u = finalMsg.usage as unknown as Record<string, number>
-              console.log(`[generate cache] pass=${pass} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
+              console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
 
-              // Only continue when the model was cut off by the token ceiling.
-              if (finalMsg.stop_reason !== 'max_tokens' || pass === MAX_CONTINUATIONS) break
-
-              // Anthropic rejects an assistant prefill ending in whitespace.
-              const prefill = assistantSoFar.replace(/\s+$/, '')
-              if (!prefill) break
-              console.log(`[generate] pass ${pass} hit max_tokens — continuing (prefill ${prefill.length} chars)`)
+              // Pass finished cleanly → Sentinel end-of-pass review. A blocking
+              // finding spends a bounded corrective turn (the text-tag path has
+              // no tool_results to fail, so the veto rides a continuation turn);
+              // otherwise we're done.
+              if (finalMsg.stop_reason !== 'max_tokens') {
+                const vetoes = legacyReview()
+                if (vetoes.length && securityFixesUsed < MAX_SECURITY_FIX_ITERATIONS && assistantSoFar.trim()) {
+                  securityFixesUsed++
+                  emitAgent(controller, { agent: 'security', status: 'fixing', detail: 'requesting a corrected version from the coder' })
+                  stream = await client.messages.stream({
+                    model,
+                    max_tokens: stageMaxTokens,
+                    system: systemBlocks,
+                    messages: withCacheBreakpoint([
+                      ...finalMessages,
+                      { role: 'assistant' as const, content: assistantSoFar },
+                      { role: 'user' as const, content: `${vetoes.map(v => v.fixInstruction).join('\n')}\nRe-emit ONLY the affected file(s) or SQL block, corrected and complete, in the same output format. Do not repeat anything else.` },
+                    ]),
+                    ...thinkingParam,
+                  })
+                  continue
+                }
+                break
+              }
+              // Cut off by the token ceiling — continue, unless the budget is spent.
+              if (pass >= MAX_CONTINUATIONS + securityFixesUsed) break
+              if (!assistantSoFar.trim()) break
+              console.log(`[generate] pass ${pass} hit max_tokens — continuing (${assistantSoFar.length} chars so far)`)
+              const cutoffTail = assistantSoFar.slice(-200)
               stream = await client.messages.stream({
                 model,
                 max_tokens: stageMaxTokens,
                 system: systemBlocks,
-                messages: [...finalMessages, { role: 'assistant' as const, content: prefill }],
+                // Breakpoint on the continuation turn caches the (large) assistant
+                // text so later passes read it from cache instead of re-paying it.
+                messages: withCacheBreakpoint([
+                  ...finalMessages,
+                  { role: 'assistant' as const, content: assistantSoFar },
+                  {
+                    role: 'user' as const,
+                    content: `Your previous response was cut off by the token limit. It ended with:\n\n"${cutoffTail}"\n\nContinue the raw output EXACTLY from that cut-off point. Do not repeat any text already written, do not add any preamble, acknowledgement, or explanation — resume mid-stream as if there had been no interruption, preserving the exact <file>/<edit> tag structure in progress.`,
+                  },
+                ]),
+                ...thinkingParam,
               })
             }
           } catch (err) { console.error('Stream error:', err) }
           finally {
+            if (emitLegacyAgents) {
+              legacyReview() // advisory sweep for anything not yet reviewed (e.g. max_tokens exit)
+              emitAgent(controller, { agent: 'coder', status: 'done' })
+              sentinelDone(controller)
+            }
             generatedText = assistantSoFar
             controller.close()
-            // No text emitted → generation failed; give the credits back.
-            if (!emittedAny) await settleRefund('empty-generation')
+            // No real file/edit block produced → generation failed (whether or not
+            // text was emitted); give the credits back.
+            if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
           }
         },
       })
+      }
     } catch (anthropicErr) {
       console.error('[generate] Anthropic failed, trying Vertex AI Gemini fallback:', String(anthropicErr))
 
@@ -1559,14 +2633,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                 try {
                   const parsed = JSON.parse(json) as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }
                   const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text
-                  if (text) { emittedAny = true; generatedText += text; controller.enqueue(encoder.encode(text)) }
+                  if (text) { generatedText += text; controller.enqueue(encoder.encode(text)) }
                 } catch { /* skip malformed SSE */ }
               }
             }
           } catch (err) { console.error('Gemini stream error:', err) }
           finally {
             controller.close()
-            if (!emittedAny) await settleRefund('empty-generation')
+            if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
           }
         },
       })
@@ -1574,16 +2648,40 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
     // After the build finishes streaming, distill the turn into durable project
     // memory. `after()` runs post-response (within maxDuration) so it adds ZERO
-    // latency to the build. Skipped for plan/self-heal passes and empty outputs.
+    // latency to the build. Skipped for plan/self-heal passes and turns that
+    // didn't actually produce a real change — feeding a hallucinated "Built: X"
+    // narrative into durable memory would make future turns build on the lie.
     after(async () => {
-      if (!emittedAny || selfHeal || stage === 'plan' || !projectId) return
-      await updateProjectMemory({
-        projectId,
-        userPrompt: prompt,
-        generatedText,
-        prevMemory: projectMemory,
-        isNewBuild,
-      })
+      if (!generationSucceeded(generatedText, stage) || selfHeal || stage === 'plan' || !projectId) return
+      await Promise.all([
+        // Rescue-persist runs regardless of client fate; it detects a live
+        // client's own save and stands down (see helper above).
+        persistGeneratedFiles(projectId, generatedText),
+        (async () => {
+          // Internal agent passes (fills / targeted fixes) still rescue-persist
+          // above, but only the charged pass distills memory / names / pushes —
+          // one turn, one distillation.
+          if (isInternalPass) return
+          await updateProjectMemory({
+            projectId,
+            userPrompt: prompt,
+            generatedText,
+            prevMemory: projectMemory,
+            isNewBuild,
+          })
+          if (isNewBuild) await nameNewProject(projectId, prompt)
+        })(),
+      ])
+      // "Build complete" push + in-app row — only for full new builds (web or
+      // mobile), never tiny edits, to avoid push spam. Best-effort.
+      // NOTE: `admin`/`user` aren't in scope inside after(); use a fresh
+      // cookie-free service client + the handler-scoped `userId` (body param).
+      // The old `notify(admin, user.id, …)` threw ReferenceError: admin is not
+      // defined on every new build, silently killing the build-complete push.
+      if (isNewBuild && userId && !isInternalPass) {
+        const { createServiceClient } = await import('@/lib/supabase/server')
+        await notify(createServiceClient(), userId, 'build_complete', { projectId }).catch(() => {})
+      }
     })
 
     return new Response(readable, {
@@ -1591,7 +2689,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'X-Model-Used': usedModel,
-        'X-Credits-Used': String(selfHeal ? 0 : cost),
+        'X-Credits-Used': String(selfHeal || isInternalPass ? 0 : cost),
         'X-Credits-Tier': resolvedTier,
         'X-Supabase-Status': supabaseStatus,
       },

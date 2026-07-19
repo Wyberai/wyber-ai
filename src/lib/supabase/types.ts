@@ -18,6 +18,7 @@ export interface Profile {
 export interface Project {
   id: string;
   user_id: string;
+  org_id?: string | null;
   name: string;
   description: string | null;
   framework: Framework;
@@ -41,6 +42,7 @@ export interface Generation {
   id: string;
   project_id: string | null;
   user_id: string;
+  org_id?: string | null;
   prompt: string;
   response_text: string | null;
   files_changed: string[] | null;
@@ -51,6 +53,57 @@ export interface Generation {
   status: 'success' | 'error';
   error_msg: string | null;
   created_at: string;
+}
+
+// ── Enterprise/org-scoping (additive — see migrations 038-042) ──────────────
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  owner_id: string;
+  plan: 'free' | 'pro' | 'enterprise';
+  logo_url: string | null;
+  website: string | null;
+  industry: string | null;
+  company_size: string | null;
+  custom_domain: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  org_id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member' | 'viewer';
+  invited_via: 'manual' | 'sso' | 'scim';
+  created_at: string;
+}
+
+export interface AuditLog {
+  id: string;
+  org_id: string;
+  user_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  before_state: unknown;
+  after_state: unknown;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface OrgSsoConnection {
+  id: string;
+  org_id: string;
+  workos_org_id: string;
+  workos_connection_id: string | null;
+  domain: string | null;
+  status: 'pending' | 'active' | 'disabled';
+  created_at: string;
+  updated_at: string;
 }
 
 export const PLAN_LIMITS: Record<Plan, { credits: number; privateProjects: boolean; customDomain: boolean; badge: boolean; collaborators: number }> = {

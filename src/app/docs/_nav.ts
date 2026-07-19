@@ -45,6 +45,14 @@ export const DOC_NAV: DocSection[] = [
     ],
   },
   {
+    title: 'Integrations',
+    slug: 'integrations',
+    icon: 'flows',
+    links: [
+      { label: 'Claude & MCP', href: '/docs/integrations/claude-mcp' },
+    ],
+  },
+  {
     title: 'Account & Billing',
     slug: 'account-billing',
     icon: 'settings',

@@ -59,7 +59,7 @@ Score rubric:
   // Persist scores
   for (const s of scores) {
     await db.from('gtm_leads').update({
-      icp_score: s.score,
+      icp_fit_score: s.score,
       score_tier: s.tier,
       score_reason: s.reason,
       scored_at: new Date().toISOString(),

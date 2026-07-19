@@ -87,6 +87,18 @@ export function gradientDataUri(prompt: string, ratio: string): string {
   const c1 = `hsl(${hue} 70% 56%)`
   const c2 = `hsl(${hue2} 72% 44%)`
   const c3 = `hsl(${(hue + 200) % 360} 65% 60%)`
+  // A visible "this is a placeholder" label so a generated app never looks
+  // broken/cheap while its real image is still resolving (or if the user hasn't
+  // swapped their own in). Scaled to the image; hidden on very small tiles where
+  // text would be illegible.
+  const fs = Math.max(11, Math.round(Math.min(w, h) * 0.05))
+  const showLabel = Math.min(w, h) >= 90
+  const label = showLabel
+    ? `<g font-family="system-ui,-apple-system,Segoe UI,sans-serif" text-anchor="middle" fill="#ffffff">` +
+      `<text x="${w / 2}" y="${h / 2 - fs * 0.2}" font-size="${fs}" font-weight="700" opacity="0.92">Placeholder image</text>` +
+      `<text x="${w / 2}" y="${h / 2 + fs * 1.15}" font-size="${Math.round(fs * 0.8)}" opacity="0.72">Tap to upload your own</text>` +
+      `</g>`
+    : ''
   const svg =
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">` +
     `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
@@ -95,6 +107,7 @@ export function gradientDataUri(prompt: string, ratio: string): string {
     `<stop offset="0" stop-color="${c3}" stop-opacity="0.55"/><stop offset="1" stop-color="${c3}" stop-opacity="0"/></radialGradient></defs>` +
     `<rect width="${w}" height="${h}" fill="url(#g)"/>` +
     `<rect width="${w}" height="${h}" fill="url(#r)"/>` +
+    label +
     `</svg>`
   return `data:image/svg+xml,${encodeURIComponent(svg)}`
 }

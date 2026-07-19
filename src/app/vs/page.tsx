@@ -58,9 +58,18 @@ const COMPARISONS = [
     summary: 'Cursor makes developers faster. WyberAi builds complete apps from plain English — no developer needed.',
     wyberWins: ['Zero coding required', 'App in A few minutes', 'Live preview + one-click deploy', 'Mobile + agents + workflows'],
   },
+  {
+    slug: 'softr',
+    name: 'Softr',
+    url: 'softr.io',
+    tag: 'No-code platform',
+    summary: 'Softr hosts your app on their platform from $269/mo for Business. WyberAi generates real React code you own — web + mobile — from $29/mo.',
+    wyberWins: ['Real code, GitHub export, zero lock-in', 'Native mobile apps (React Native)', 'Live database security scan', 'A tenth of the price for solo founders'],
+  },
 ]
 
-const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.08)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9' }
+/* Space-journey brand surfaces (see globals.css --brand-*) */
+const s = { bg: 'var(--brand-bg)', card: 'var(--brand-bg-raised)', border: 'var(--brand-border)', text: 'var(--brand-text)', muted: 'var(--brand-text-dim)', dim: 'var(--brand-text-faint)', sky: 'var(--brand-accent)' }
 
 export default function VsIndex() {
   return (
@@ -76,12 +85,12 @@ export default function VsIndex() {
 
       <div style={{ maxWidth: 960, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px)' }}>
         <header style={{ textAlign: 'center', marginBottom: 56 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Verified June 2026</div>
+          <div className="mk-eyebrow" style={{ marginBottom: 12 }}>VERIFIED JUNE 2026</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,4vw,44px)', fontWeight: 800, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
             WyberAi vs Every Alternative
           </h1>
           <p style={{ fontSize: 15, color: s.muted, maxWidth: 560, margin: '0 auto', lineHeight: 1.65 }}>
-            Honest, up-to-date comparisons. WyberAi is the only platform that covers all six products — web apps, mobile apps, AI agents, workflows, AI employees, and GTM engine — from one workspace.
+            Honest, up-to-date comparisons. WyberAi ships full-stack web apps and native mobile apps from one workspace — with deploy, integrations, and GitHub code ownership built in.
           </p>
         </header>
 

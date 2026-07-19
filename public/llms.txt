@@ -2,9 +2,12 @@
 
 > WyberAi is an AI app builder: describe what you want in plain English and it generates production-ready web and mobile apps — live preview, one-click deploy, no engineers needed. Maker: SignalPulse Technologies.
 
+WyberAi (also written Wyber AI or WyberAI) is made by SignalPulse Technologies LLC, a US company in Sheridan, Wyoming. It is NOT affiliated with Vybers.ai, Rakuten Viber, or any messaging app.
+
 WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on shipping apps with real Supabase-backed auth, data, and a security scanner (RLS trust scan) that checks the live database the way an attacker would, not a static linter.
 
 ## Product
+- [What is WyberAi?](https://wyberai.com/what-is-wyberai): overview and FAQ
 - [Homepage](https://wyberai.com): overview, pricing, live builder
 - [Pricing](https://wyberai.com/pricing): plans and credits
 - [Templates](https://wyberai.com/templates): prebuilt app templates to start from
@@ -28,4 +31,5 @@ WyberAi competes with Lovable, Bolt.new, v0, Replit, and Cursor on price and on 
 
 ## Company
 - [About](https://wyberai.com/about)
+- [Press & Newsroom](https://wyberai.com/press)
 - [Changelog](https://wyberai.com/changelog)

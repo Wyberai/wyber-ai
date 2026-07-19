@@ -1,6 +1,7 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import { AutoFix } from './AutoFix';
+import { Wyberman } from './Wyberman';
 import { useCallback, useEffect, useState, Suspense } from 'react';
 import { TopBar } from './TopBar';
 import { FileTree } from './FileTree';
@@ -46,6 +47,21 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     if (isNarrow && isGenerating) setMobileView('preview');
   }, [isGenerating, isNarrow]);
 
+  // Wyberman's "point and ask" needs the preview tab reachable on mobile too —
+  // it dispatches this instead of reaching into layout state directly.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const view = (e as CustomEvent).detail as 'preview' | 'chat' | 'code' | undefined;
+      if (view) setMobileView(view);
+    };
+    window.addEventListener('wyber-request-mobile-view', handler);
+    return () => window.removeEventListener('wyber-request-mobile-view', handler);
+  }, []);
+
+  // Tell the page-level hydration watchdog React is alive (see project/[id]/page.tsx —
+  // AV web filters can render the editor as inert SSR HTML with no error).
+  useEffect(() => { (window as unknown as { __wyber_hydrated?: boolean }).__wyber_hydrated = true }, []);
+
   // Hydrate store from server data + load messages and knowledge
   useEffect(() => {
     if (!initialProject?.id) return;
@@ -78,6 +94,22 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
       });
       if (cData.connectors?.length) setConnectors(cData.connectors);
     });
+  }, [initialProject?.id]);
+
+  // Connect/disconnect flows (SupabaseConnector, ConnectorsPanel) dispatch this
+  // after saving so every connector-keyed UI (e.g. the "connect a database"
+  // banner above the preview) updates immediately — without it the store only
+  // reflects connections made before the page loaded.
+  useEffect(() => {
+    if (!initialProject?.id) return;
+    const refresh = () => {
+      fetch(`/api/connectors?projectId=${initialProject.id}`)
+        .then(r => r.ok ? r.json() : { connectors: [] })
+        .then(d => setConnectors(d.connectors ?? []))
+        .catch(() => {});
+    };
+    window.addEventListener('wyber-connectors-changed', refresh);
+    return () => window.removeEventListener('wyber-connectors-changed', refresh);
   }, [initialProject?.id]);
 
   const resizeLeft = useCallback(
@@ -161,6 +193,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
       </div>
       )}
       <AutoFix />
+      <Wyberman />
     </div>
   );
 }

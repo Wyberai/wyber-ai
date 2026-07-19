@@ -10,9 +10,10 @@ export const metadata: Metadata = {
   openGraph: { title: 'Use Cases — WyberAi', description: 'Build web apps and mobile apps from plain English. No code required.' },
 }
 
-const s = { bg: '#09090b', card: '#111113', border: 'rgba(255,255,255,0.08)', text: '#fafafa', muted: '#71717a', dim: '#52525b', sky: '#0EA5E9', green: '#10b981', amber: '#f59e0b', violet: '#8b5cf6' }
+/* Space-journey brand surfaces (see globals.css --brand-*) */
+const s = { bg: 'var(--brand-bg)', card: 'var(--brand-bg-raised)', border: 'var(--brand-border)', text: 'var(--brand-text)', muted: 'var(--brand-text-dim)', dim: 'var(--brand-text-faint)', sky: '#0EA5E9', green: '#10b981', amber: '#f59e0b' }
 
-const PILLAR_COLORS: Record<string, string> = { web: s.sky, mobile: s.violet }
+const PILLAR_COLORS: Record<string, string> = { web: s.sky, mobile: '#F97316' }
 
 const jsonLd = {
   '@context': 'https://schema.org',

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/admin';
 
 export async function PATCH(req: NextRequest) {
   const supabase = await createClient();
@@ -8,6 +9,17 @@ export async function PATCH(req: NextRequest) {
 
   const { projectId, files } = await req.json();
   if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
+
+  // Support mode: allowlisted admins save to any project (remote-fixing a
+  // stuck customer). Everyone else stays strictly ownership-scoped.
+  if (isAdminEmail(user.email)) {
+    const admin = await createAdminClient();
+    const { error } = await admin.from('projects')
+      .update({ files, updated_at: new Date().toISOString() })
+      .eq('id', projectId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, supportMode: true });
+  }
 
   const { error } = await supabase.from('projects')
     .update({ files, updated_at: new Date().toISOString() })

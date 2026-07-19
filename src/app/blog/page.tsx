@@ -106,7 +106,7 @@ const POSTS = [
   {
     slug: 'wyber-vs-lovable',
     title: 'WyberAi vs Lovable — an honest comparison',
-    excerpt: 'Both tools build full-stack apps from plain English. Six products vs one. Here\'s what actually matters.',
+    excerpt: 'Both tools build full-stack apps from plain English. Web + mobile vs web-only. Here\'s what actually matters.',
     date: 'May 10, 2026',
     readTime: '5 min read',
     tag: 'Compare',

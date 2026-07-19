@@ -10,18 +10,18 @@ export default function Page() {
       title="What is WyberAi?"
       intro="WyberAi is a plain-English product builder. Describe what you want to build and Wyber generates a working app — web, mobile, agent, or workflow — with no code required."
     >
-      <DocSection title="The six products">
+      <DocSection title="The Wyber platform">
         <p style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.7, marginBottom: 16 }}>
-          Wyber covers six distinct capabilities — all from one platform, one credit balance:
+          Web and mobile app building are live today. Four more capabilities are in early access and roll out over the coming weeks — all on one platform, one credit balance:
         </p>
         <ul style={{ margin: '0 0 16px', paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             ['Web Apps', '/docs/web-apps/generating', 'Full-stack React apps with a Supabase backend, one-click Vercel deploy.'],
             ['Mobile Apps', '/docs/mobile-apps/generating', 'Expo React Native apps with a live in-browser preview and export to your phone.'],
-            ['AI Agents', '/docs/ai-agents/building-in-plain-english', 'Multi-step agents that connect to 250+ external tools via Composio OAuth.'],
-            ['Workflows', '/docs/workflows/building', 'Visual flow automations with triggers, AI steps, and action nodes.'],
-            ['AI Employees', '/employees', 'Hire from 100 roles — the equivalent of senior specialists who run on a schedule and report back.'],
-            ['GTM Engine', '/gtm', 'ICP-driven lead discovery, multi-step outreach sequences, and a visual campaign canvas.'],
+            ['AI Agents', '/docs/ai-agents/building-in-plain-english', 'Early access — multi-step agents that connect to 250+ external tools via Composio OAuth.'],
+            ['Workflows', '/docs/workflows/building', 'Early access — visual flow automations with triggers, AI steps, and action nodes.'],
+            ['AI Employees', '/employees', 'Early access — hire from 100 roles; senior-specialist equivalents that run on a schedule and report back.'],
+            ['GTM Engine', '/gtm', 'Early access — ICP-driven lead discovery, outreach sequences, and a visual campaign canvas.'],
           ].map(([name, href, desc]) => (
             <li key={href as string} style={{ fontSize: 14, color: '#a1a1aa', lineHeight: 1.6 }}>
               <Link href={href as string} style={{ color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' }}>{name}</Link>

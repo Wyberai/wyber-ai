@@ -72,7 +72,15 @@ describe('classifyIntent — edges', () => {
   it('vague statement with files and no verb/question → AMBIGUOUS', () => {
     expect(classifyIntent('the sidebar on the right side over there', true)).toBe('AMBIGUOUS')
   })
-  it('short verbless fragment with files → CHAT', () => {
-    expect(classifyIntent('the footer', true)).toBe('CHAT')
+  it('short verbless fragment with files → AMBIGUOUS (server decides with history)', () => {
+    // Used to hard-return CHAT, which silently dropped short confirmations
+    // like "go ahead" or "yes please" that were approving a change the
+    // assistant had just proposed — see classifyWithHaiku in /api/assist,
+    // which gets the recent turns and can tell the two cases apart.
+    expect(classifyIntent('the footer', true)).toBe('AMBIGUOUS')
+  })
+  it('bare confirmation with files → AMBIGUOUS, not a silent no-op CHAT', () => {
+    expect(classifyIntent('go ahead', true)).toBe('AMBIGUOUS')
+    expect(classifyIntent('yes please', true)).toBe('AMBIGUOUS')
   })
 })

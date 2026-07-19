@@ -7,10 +7,24 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const db = createServiceClient()
+
+  // PostgREST's .in.() takes a literal value list, not a subquery — the old
+  // inline "id.in.(select org_id …)" was sent verbatim as a uuid and 500'd.
+  // Resolve the user's member orgs first, then filter by owner OR membership.
+  const { data: memberships } = await db
+    .from('organization_members')
+    .select('org_id')
+    .eq('user_id', user.id)
+  const memberOrgIds = (memberships ?? []).map(m => m.org_id).filter(Boolean)
+
+  const orFilter = memberOrgIds.length
+    ? `owner_id.eq.${user.id},id.in.(${memberOrgIds.join(',')})`
+    : `owner_id.eq.${user.id}`
+
   const { data, error } = await db
     .from('organizations')
     .select('*, organization_members(user_id, role)')
-    .or(`owner_id.eq.${user.id},id.in.(select org_id from organization_members where user_id = '${user.id}')`)
+    .or(orFilter)
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

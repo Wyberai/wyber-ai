@@ -134,7 +134,11 @@ export function AdminClient({ data }: { data: AdminData }) {
           </Link>
           <span style={{ fontSize: 10, padding: '2px 9px', borderRadius: 20, background: 'rgba(239,68,68,0.1)', color: RED, fontWeight: 700, letterSpacing: '0.06em', border: '1px solid rgba(239,68,68,0.2)' }}>ADMIN</span>
         </div>
-        <Link href="/dashboard" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1e1e26' }}>← Dashboard</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link href="/admin/challenge" style={{ fontSize: 12, color: SKY, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.3)' }}>🏆 Challenge</Link>
+          <Link href="/admin/community" style={{ fontSize: 12, color: SKY, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.3)' }}>🎁 Rewards</Link>
+          <Link href="/dashboard" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1e1e26' }}>← Dashboard</Link>
+        </div>
       </nav>
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '36px 32px' }}>

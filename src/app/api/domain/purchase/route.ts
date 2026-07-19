@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 export interface DomainContactInfo {
   firstName: string
@@ -57,12 +57,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Domain is no longer available' }, { status: 409 })
     }
 
-    const { data: purchase, error: insertErr } = await supabase
+    // Write with the admin client: RLS INSERT/UPDATE policies for this table
+    // (migration 044) are not applied on prod, and the user is already
+    // authenticated above with user_id set server-side — RLS adds nothing here.
+    const admin = await createAdminClient()
+    const { data: purchase, error: insertErr } = await admin
       .from('domain_purchases')
       .insert({ user_id: user.id, project_id: projectId ?? null, domain, price_cents: priceCents, status: 'pending', contact_info: contactInfo })
       .select()
       .single()
-    if (insertErr || !purchase) return NextResponse.json({ error: 'Failed to create purchase record' }, { status: 500 })
+    if (insertErr || !purchase) {
+      console.error('[domain/purchase] insert failed:', insertErr?.message || insertErr, insertErr?.details, insertErr?.hint)
+      return NextResponse.json({ error: 'Failed to create purchase record' }, { status: 500 })
+    }
 
     const res = await fetch('https://live.dodopayments.com/checkouts', {
       method: 'POST',
@@ -77,12 +84,12 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json() as { checkout_url?: string; url?: string; payment_link?: string; id?: string; [k: string]: unknown }
     if (!res.ok) {
-      await supabase.from('domain_purchases').update({ status: 'failed' }).eq('id', purchase.id)
+      await admin.from('domain_purchases').update({ status: 'failed' }).eq('id', purchase.id)
       return NextResponse.json({ error: `Dodo: ${JSON.stringify(data)}` }, { status: 500 })
     }
 
     if (data.id) {
-      await supabase.from('domain_purchases').update({ dodo_checkout_id: data.id }).eq('id', purchase.id)
+      await admin.from('domain_purchases').update({ dodo_checkout_id: data.id }).eq('id', purchase.id)
     }
 
     const url = data.checkout_url || data.url || data.payment_link

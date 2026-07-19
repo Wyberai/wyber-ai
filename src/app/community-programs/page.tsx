@@ -22,10 +22,10 @@ const PROGRAMS = [
     id: 'build_in_public' as const,
     emoji: '📣',
     title: 'Build in Public',
-    tagline: 'Share what you built with WyberAI on Twitter/LinkedIn. Get 50 bonus credits instantly.',
+    tagline: 'Share what you built with WyberAI on Twitter/LinkedIn. Get 50 bonus credits.',
     color: SKY,
-    how: 'Post about your WyberAI project on Twitter or LinkedIn with #BuiltWithWyber. Paste the post URL below — credits are added automatically.',
-    reward: '50 bonus credits (instant)',
+    how: 'Post about your WyberAI project on Twitter or LinkedIn with #BuiltOnWyber. Paste the post URL below — we review within 24 hours and add the credits.',
+    reward: '50 bonus credits',
     proofLabel: 'Post URL',
     proofPlaceholder: 'https://twitter.com/you/status/...',
     needsUrl: true,
@@ -58,10 +58,10 @@ const PROGRAMS = [
     id: 'follow_linkedin' as const,
     emoji: '💼',
     title: 'Follow us on LinkedIn',
-    tagline: 'Follow WyberAI on LinkedIn and get 25 bonus credits instantly.',
+    tagline: 'Follow WyberAI on LinkedIn and get 25 bonus credits.',
     color: '#0a66c2',
-    how: 'Follow our LinkedIn page, then paste a link to your LinkedIn profile below. Credits are added automatically.',
-    reward: '25 bonus credits (instant)',
+    how: 'Follow our LinkedIn page, then paste a link to your LinkedIn profile below. We review within 24 hours and add the credits.',
+    reward: '25 bonus credits',
     proofLabel: 'Your LinkedIn profile URL',
     proofPlaceholder: 'https://linkedin.com/in/you',
     needsUrl: true,
@@ -70,10 +70,10 @@ const PROGRAMS = [
     id: 'follow_reddit' as const,
     emoji: '👽',
     title: 'Follow us on Reddit',
-    tagline: 'Join r/WyberAI on Reddit and get 25 bonus credits instantly.',
+    tagline: 'Join r/WyberAI on Reddit and get 25 bonus credits.',
     color: '#ff4500',
-    how: 'Join our subreddit, then paste a link to your Reddit profile below. Credits are added automatically.',
-    reward: '25 bonus credits (instant)',
+    how: 'Join our subreddit, then paste a link to your Reddit profile below. We review within 24 hours and add the credits.',
+    reward: '25 bonus credits',
     proofLabel: 'Your Reddit profile URL',
     proofPlaceholder: 'https://reddit.com/user/you',
     needsUrl: true,
@@ -84,8 +84,8 @@ const PROGRAMS = [
     title: 'Review us on Product Hunt',
     tagline: 'Leave an honest review on Product Hunt and get 50 bonus credits.',
     color: '#ff6154',
-    how: 'Review WyberAI on Product Hunt, then paste the link to your review below. Credits are added automatically.',
-    reward: '50 bonus credits (instant)',
+    how: 'Review WyberAI on Product Hunt, then paste the link to your review below. We review within 24 hours and add the credits.',
+    reward: '50 bonus credits',
     proofLabel: 'Link to your Product Hunt review',
     proofPlaceholder: 'https://www.producthunt.com/products/wyberai/reviews',
     needsUrl: true,
@@ -158,7 +158,7 @@ export default function CommunityProgramsPage() {
             Good people get rewarded
           </h1>
           <p style={{ fontSize: 15, color: '#71717a', maxWidth: 520, margin: '0 auto', lineHeight: 1.65 }}>
-            We believe in giving back. These programs reward our community for doing good — whether it's saving lives, building in the open, or contributing to open source.
+            We believe in giving back. These programs reward our community for doing good — whether it's saving lives, building in the open, or contributing to open source. Apply below and <strong style={{ color: '#fafafa' }}>we&apos;ll do what&apos;s right within 24 hours</strong>.
           </p>
         </div>
 
@@ -284,7 +284,7 @@ export default function CommunityProgramsPage() {
 
         <div style={{ textAlign: 'center', marginTop: 40, padding: '24px', background: '#111113', borderRadius: 14, border: '1px solid rgba(255,255,255,0.06)' }}>
           <p style={{ fontSize: 13, color: '#52525b', margin: 0 }}>
-            Questions? Email us at <a href="mailto:hello@wyberai.com" style={{ color: SKY, textDecoration: 'none' }}>hello@wyberai.com</a>. We review all submissions within 24 hours.
+            Every application is reviewed by a human — we&apos;ll do what&apos;s right within 24 hours. Questions? Email <a href="mailto:hello@wyberai.com" style={{ color: SKY, textDecoration: 'none' }}>hello@wyberai.com</a>.
           </p>
         </div>
       </div>

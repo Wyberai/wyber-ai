@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 const STEPS = [
   {
     title: 'Welcome to WyberAi 👋',
-    desc: 'Build production-ready web and mobile apps with AI — and soon, hire AI employees too. Here’s the 30-second tour.',
+    desc: 'Build production-ready web and mobile apps with AI. Here’s the 30-second tour.',
     target: null,
   },
   {
@@ -18,26 +18,33 @@ const STEPS = [
     target: '[data-tour="build"]',
   },
   {
-    title: 'A new AI employee every Monday',
-    desc: 'Starting Monday July 6 with the Marketing Manager, we release a new AI employee each week. It’s not a single agent — each employee commands 200+ agents and runs on its own schedule.',
-    target: null,
-  },
-  {
     title: "You're ready!",
     desc: 'Describe your first app in the box above and watch it build. It’ll be live in minutes.',
     target: null,
   },
 ]
 
-export function OnboardingTour() {
+export function OnboardingTour({ isNewUser }: { isNewUser: boolean }) {
   const [step, setStep] = useState(0)
   const [visible, setVisible] = useState(false)
   const [rect, setRect] = useState<DOMRect | null>(null)
 
   useEffect(() => {
+    // isNewUser is a per-account server signal (profiles.welcome_sent flips
+    // exactly once, on the first post-signup dashboard load) — it's what stops
+    // an existing account from seeing this tour again on a browser that never
+    // set wyber_tour_done. The localStorage flag still guards against a reload
+    // re-showing the tour mid-way through the SAME new-user session below.
+    if (!isNewUser) return
     const done = localStorage.getItem('wyber_tour_done')
-    if (!done) setTimeout(() => setVisible(true), 1200)
-  }, [])
+    if (!done) {
+      // Set immediately (not only on finish/dismiss) so a reload partway
+      // through doesn't re-trigger it — isNewUser itself won't be true again
+      // on a later load anyway, but this also covers a same-request re-render.
+      localStorage.setItem('wyber_tour_done', '1')
+      setTimeout(() => setVisible(true), 1200)
+    }
+  }, [isNewUser])
 
   useEffect(() => {
     if (!visible) return

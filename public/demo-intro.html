@@ -6,7 +6,7 @@
 <title>WyberAi Demo</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
 <style>
-:root { --brand:#0EA5E9; --purple:#a855f7; --green:#22c55e; }
+:root { --brand:#0EA5E9; --purple:#a855f7; --green:#22c55e; --amber:#f59e0b; }
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { height:100%; background:#09090b; overflow:hidden; font-family:'Space Grotesk',sans-serif; color:#fafafa; }
 .frame { position:fixed; inset:0; }
@@ -20,18 +20,16 @@ html,body { height:100%; background:#09090b; overflow:hidden; font-family:'Space
 .scene.active { opacity:1; pointer-events:auto; }
 h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; line-height:1.08; }
 .grad { background:linear-gradient(135deg,var(--brand),var(--purple)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.sub { color:#71717a; font-size:min(2.2vh,17px); margin-top:14px; line-height:1.5; }
 
-/* Animatable elements */
 .reveal { opacity:0; transform:translateY(20px); }
-.reveal.show { opacity:1; transform:none; transition:opacity 0.45s ease, transform 0.45s ease; }
+.reveal.show { opacity:1; transform:none; transition:opacity 0.5s ease, transform 0.5s ease; }
 
-/* Scene 1 */
 #s1 .logo { font-family:'Sora',sans-serif; font-size:min(6vh,48px); font-weight:800; }
 #s1 .logo .a { color:var(--brand); }
 #s1 h1 { font-size:min(10vh,80px); margin-top:12px; }
-#s1 .sub { color:#71717a; font-size:min(2.4vh,18px); margin-top:16px; }
+#s1 .sub { font-size:min(2.4vh,18px); margin-top:18px; }
 
-/* Scene 2 */
 .prompt-box { width:min(82%,640px); background:rgba(16,18,26,0.95); border:1px solid rgba(255,255,255,0.08);
               border-radius:14px; padding:24px 24px 20px; text-align:left; box-shadow:0 16px 60px rgba(0,0,0,0.6); }
 .prompt-label { font-size:13px; color:#52525b; margin-bottom:10px; }
@@ -44,23 +42,31 @@ h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; lin
 .send-pill { background:var(--brand); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
 .send-pill svg { width:14px; height:14px; }
 
-/* Scene 3 */
-.build-col { width:min(72%,520px); text-align:left; }
-.bstep { display:flex; align-items:center; gap:14px; padding:14px 18px; margin-bottom:10px; border-radius:12px;
+.build-col { width:min(72%,540px); text-align:left; }
+.bstep { display:flex; align-items:center; gap:14px; padding:12px 18px; margin-bottom:9px; border-radius:12px;
          background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); }
 .bdot { width:28px; height:28px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
         font-size:13px; transition:all 0.3s; }
 .bdot.pending { border:2px solid #3f3f46; color:#3f3f46; background:none; }
 .bdot.done { border:2px solid var(--green); color:var(--green); background:rgba(34,197,94,0.1); }
+.bdot.sec.done { border-color:var(--brand); color:var(--brand); background:rgba(14,165,233,0.12); }
 .btxt { font-size:min(2vh,15px); font-weight:500; }
 .bmeta { font-size:min(1.5vh,12px); color:#52525b; }
-.timer { font-family:'Sora',sans-serif; font-size:min(3vh,24px); font-weight:800; color:var(--brand); margin-top:16px; text-align:center; }
+.timer { font-family:'Sora',sans-serif; font-size:min(3vh,24px); font-weight:800; color:var(--brand); margin-top:14px; text-align:center; }
 
-/* Scene 4 */
+.scan-card { width:min(80%,560px); background:#111113; border:1px solid rgba(34,197,94,0.25); border-radius:16px; padding:22px 24px; text-align:left; box-shadow:0 20px 60px rgba(0,0,0,0.45); }
+.scan-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.scan-title { font-size:min(2.2vh,17px); font-weight:600; }
+.scan-badge { font-size:12px; font-weight:700; padding:4px 12px; border-radius:20px; background:rgba(245,158,11,0.12); color:var(--amber); border:1px solid rgba(245,158,11,0.3); transition:all 0.4s; }
+.scan-badge.passed { background:rgba(34,197,94,0.12); color:var(--green); border-color:rgba(34,197,94,0.35); }
+.scan-sub { font-size:min(1.7vh,13px); color:#71717a; margin-bottom:14px; line-height:1.5; }
+.scan-row { display:flex; align-items:center; justify-content:space-between; padding:11px 0; border-top:1px solid rgba(255,255,255,0.05); font-size:min(1.9vh,14px); }
+.scan-row .ok { color:var(--green); font-weight:600; }
+
 .app-preview { width:min(80%,640px); background:#111113; border:1px solid rgba(34,197,94,0.2); border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
 .app-toolbar { height:36px; background:#1a1a1e; border-bottom:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; padding:0 12px; gap:6px; }
 .app-dot { width:8px; height:8px; border-radius:50%; }
-.app-body { padding:24px; min-height:200px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.app-body { padding:24px; min-height:190px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
 .app-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:16px; }
 .app-card-num { font-family:'Sora',sans-serif; font-size:min(3.5vh,28px); font-weight:800; }
 .app-card-label { font-size:11px; color:#52525b; text-transform:uppercase; letter-spacing:0.06em; margin-top:4px; }
@@ -69,49 +75,63 @@ h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; lin
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 .live-url { font-size:13px; color:var(--green); font-weight:500; }
 
-/* Scene 5 */
-.int-grid { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:600px; margin-top:20px; }
-.int-pill { font-size:min(1.9vh,14px); color:#d4d4d8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:8px 18px; font-weight:500; }
+.phone-wrap { display:flex; flex-direction:column; align-items:center; gap:16px; margin-top:6px; }
+.phone { width:min(22vh,140px); height:min(44vh,280px); background:#0d0d10; border:2px solid rgba(255,255,255,0.12); border-radius:26px; padding:9px; box-shadow:0 24px 60px rgba(0,0,0,0.5); }
+.phone-notch { width:38%; height:5px; background:rgba(255,255,255,0.16); border-radius:3px; margin:1px auto 8px; }
+.phone-screen { background:linear-gradient(160deg,rgba(14,165,233,0.16),rgba(168,85,247,0.13)); border-radius:16px; height:calc(100% - 16px); display:flex; flex-direction:column; gap:8px; padding:13px; }
+.ph-bar { height:9px; border-radius:5px; background:rgba(255,255,255,0.14); }
+.ph-bar.short { width:55%; }
+.ph-card { flex:1; background:rgba(255,255,255,0.07); border-radius:10px; }
+.mobile-badges { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.mob-badge { font-size:min(1.8vh,13px); font-weight:600; color:#d4d4d8; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:7px 16px; }
 
-/* Scene 6 */
-.prize-row { display:flex; gap:14px; margin-top:28px; flex-wrap:wrap; justify-content:center; }
-.prize-card { padding:20px 24px; border-radius:14px; text-align:center; min-width:110px; }
+.int-grid { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; max-width:600px; margin-top:18px; }
+.int-pill { font-size:min(1.9vh,14px); color:#d4d4d8; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:8px 18px; font-weight:500; }
+.own-line { font-size:min(1.8vh,13px); color:#52525b; margin-top:18px; }
+
+.prize-row { display:flex; gap:14px; margin-top:26px; flex-wrap:wrap; justify-content:center; }
+.prize-card { padding:18px 24px; border-radius:14px; text-align:center; min-width:110px; }
 .prize-amt { font-family:'Sora',sans-serif; font-weight:800; }
 .prize-label { font-size:11px; color:#71717a; margin-top:6px; }
-.weekly-tag { font-size:12px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); padding:6px 16px; border-radius:20px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.25); margin-bottom:20px; display:inline-block; }
+.weekly-tag { font-size:12px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; color:var(--purple); padding:6px 16px; border-radius:20px; background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.25); margin-bottom:18px; display:inline-block; }
 
-/* Scene 7 */
-#s7 h1 { font-size:min(8vh,64px); }
-.final-cta { display:inline-block; margin-top:28px; background:var(--brand); color:#fff; font-size:min(2.2vh,17px); font-weight:700; padding:16px 40px; border-radius:12px; box-shadow:0 0 50px rgba(14,165,233,0.35); }
+#s9 h1 { font-size:min(8vh,64px); }
+.final-cta { display:inline-block; margin-top:26px; background:var(--brand); color:#fff; font-size:min(2.2vh,17px); font-weight:700; padding:16px 40px; border-radius:12px; box-shadow:0 0 50px rgba(14,165,233,0.35); }
 .final-sub { font-size:13px; color:#52525b; margin-top:14px; }
 
-/* Mobile */
 @media (max-width:600px), (max-aspect-ratio:3/4) {
   .scene { padding:0 5%; }
   #s1 .logo { font-size:32px; }
   #s1 h1 { font-size:40px; }
   #s1 .sub { font-size:14px; }
+  .sub { font-size:14px; }
   .prompt-box { width:92%; padding:16px; }
   .typed-line { font-size:16px; }
   .caret { height:16px; }
   .prompt-chips { display:none; }
-  .build-col { width:92%; }
-  .bstep { padding:10px 12px; gap:10px; }
+  .build-col { width:94%; }
+  .bstep { padding:9px 12px; gap:10px; margin-bottom:7px; }
   .btxt { font-size:13px; }
   .bmeta { font-size:10px; }
-  .bdot { width:24px; height:24px; font-size:11px; }
+  .bdot { width:22px; height:22px; font-size:11px; }
   .timer { font-size:20px; }
-  .app-preview { width:92%; }
-  .app-body { grid-template-columns:1fr; gap:8px; padding:16px; }
+  .scan-card { width:94%; padding:16px 16px; }
+  .scan-title { font-size:14px; }
+  .scan-sub { font-size:11px; }
+  .scan-row { font-size:12px; padding:9px 0; }
+  .app-preview { width:94%; }
+  .app-body { grid-template-columns:1fr; gap:8px; padding:16px; min-height:0; }
   .app-card-num { font-size:24px; }
+  .phone { width:120px; height:240px; }
+  .mob-badge { font-size:11px; padding:6px 12px; }
   .int-grid { max-width:100%; gap:6px; }
   .int-pill { font-size:12px; padding:6px 12px; }
   .prize-row { gap:8px; }
   .prize-card { min-width:70px; padding:14px 16px; }
   .prize-amt { font-size:20px !important; }
   .weekly-tag { font-size:10px; padding:5px 12px; }
-  #s6 h1 { font-size:36px !important; }
-  #s7 h1 { font-size:36px; }
+  #s8 h1 { font-size:36px !important; }
+  #s9 h1 { font-size:36px; }
   .final-cta { font-size:14px; padding:14px 28px; }
 }
 </style>
@@ -123,8 +143,8 @@ h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; lin
 
   <div class="scene" id="s1">
     <div class="reveal logo" data-d="0">Wyber<span class="a">Ai</span></div>
-    <h1 class="reveal" data-d="200">Describe it.<br><span class="grad">It builds.</span></h1>
-    <div class="reveal sub" data-d="500">Web apps & mobile apps — no code, one prompt.</div>
+    <h1 class="reveal" data-d="250">Describe it.<br><span class="grad">It builds.</span></h1>
+    <div class="reveal sub" data-d="650">Web &amp; mobile apps from one prompt — real code, secure by default.</div>
   </div>
 
   <div class="scene" id="s2">
@@ -146,15 +166,31 @@ h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; lin
     <h1 class="reveal" data-d="0" style="font-size:min(3.6vh,28px);margin-bottom:20px;color:#71717a">Building your app...</h1>
     <div class="build-col">
       <div class="bstep reveal" data-d="0" id="b1"><div class="bdot pending" id="d1">○</div><div><div class="btxt">Planning components</div><div class="bmeta">Architecture · routing · data model</div></div></div>
-      <div class="bstep reveal" data-d="300" id="b2"><div class="bdot pending" id="d2">○</div><div><div class="btxt">Writing fresh React code</div><div class="bmeta">Tailwind CSS · no templates</div></div></div>
-      <div class="bstep reveal" data-d="600" id="b3"><div class="bdot pending" id="d3">○</div><div><div class="btxt">Wiring 27 integrations</div><div class="bmeta">Supabase · Stripe · OpenAI</div></div></div>
-      <div class="bstep reveal" data-d="900" id="b4"><div class="bdot pending" id="d4">○</div><div><div class="btxt">Deploying to live URL</div><div class="bmeta">One click — instant</div></div></div>
+      <div class="bstep reveal" data-d="220" id="b2"><div class="bdot pending" id="d2">○</div><div><div class="btxt">Writing fresh React code</div><div class="bmeta">Tailwind CSS · no templates</div></div></div>
+      <div class="bstep reveal" data-d="440" id="b3"><div class="bdot pending" id="d3">○</div><div><div class="btxt">Wiring integrations &amp; database</div><div class="bmeta">Supabase · Stripe · OpenAI</div></div></div>
+      <div class="bstep reveal" data-d="660" id="b4"><div class="bdot pending sec" id="d4">○</div><div><div class="btxt">Running security scan</div><div class="bmeta">Live RLS check · attacker's-eye view</div></div></div>
+      <div class="bstep reveal" data-d="880" id="b5"><div class="bdot pending" id="d5">○</div><div><div class="btxt">Deploying to live URL</div><div class="bmeta">One click — instant</div></div></div>
     </div>
     <div class="timer reveal" data-d="200" id="timerEl">0.0s</div>
   </div>
 
   <div class="scene" id="s4">
-    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)"><span class="grad">Your app is live.</span></h1>
+    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)">Secure <span class="grad">by default</span>.</h1>
+    <div class="scan-card reveal" data-d="200">
+      <div class="scan-head">
+        <span class="scan-title">Live database security scan</span>
+        <span class="scan-badge" id="scanBadge">Scanning…</span>
+      </div>
+      <div class="scan-sub">We probe your app's database with the anonymous key — exactly like an attacker would.</div>
+      <div class="scan-row reveal" data-d="550"><span>Row-Level Security</span><span class="ok">Enforced ✓</span></div>
+      <div class="scan-row reveal" data-d="800"><span>Publicly exposed tables</span><span class="ok" id="exposedVal">0</span></div>
+      <div class="scan-row reveal" data-d="1050"><span>Auth policies</span><span class="ok">Valid ✓</span></div>
+    </div>
+    <div class="reveal sub" data-d="1350">Before every deploy. Automatically. No other AI app builder does this.</div>
+  </div>
+
+  <div class="scene" id="s5">
+    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)"><span class="grad">Your web app is live.</span></h1>
     <div class="app-preview reveal" data-d="200">
       <div class="app-toolbar">
         <div class="app-dot" style="background:#ef4444"></div>
@@ -172,31 +208,52 @@ h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; lin
         <div class="live-dot"></div>
         <div class="live-url">myapp.wyberai.app</div>
         <span style="flex:1"></span>
-        <span style="font-size:12px;color:#71717a">Built in 7.2s</span>
+        <span style="font-size:12px;color:#71717a">Built in 7.4s</span>
       </div>
     </div>
   </div>
 
-  <div class="scene" id="s5">
-    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)">Everything <span class="grad">included</span>.</h1>
-    <div class="reveal sub" data-d="200" style="margin-bottom:8px">50 free credits · No credit card · Most apps ready in 3-5 credits</div>
-    <div class="int-grid">
-      <span class="int-pill reveal" data-d="100">Supabase</span>
-      <span class="int-pill reveal" data-d="180">Stripe</span>
-      <span class="int-pill reveal" data-d="260">OpenAI</span>
-      <span class="int-pill reveal" data-d="340">Clerk</span>
-      <span class="int-pill reveal" data-d="420">Firebase</span>
-      <span class="int-pill reveal" data-d="500">Resend</span>
-      <span class="int-pill reveal" data-d="580">Cloudinary</span>
-      <span class="int-pill reveal" data-d="660">PostHog</span>
-      <span class="int-pill reveal" data-d="740">Twilio</span>
-      <span class="int-pill reveal" data-d="820">Sentry</span>
-      <span class="int-pill reveal" data-d="900">Algolia</span>
-      <span class="int-pill reveal" data-d="980" style="color:var(--brand);border-color:rgba(14,165,233,0.3)">+ 37 more</span>
+  <div class="scene" id="s6">
+    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)">Same prompt. <span class="grad">Now on mobile.</span></h1>
+    <div class="phone-wrap">
+      <div class="phone reveal" data-d="200">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="ph-bar short"></div>
+          <div class="ph-bar"></div>
+          <div class="ph-card"></div>
+          <div class="ph-bar short"></div>
+        </div>
+      </div>
+      <div class="mobile-badges">
+        <span class="mob-badge reveal" data-d="500">iOS</span>
+        <span class="mob-badge reveal" data-d="640">Android</span>
+        <span class="mob-badge reveal" data-d="780">React Native · Expo</span>
+      </div>
     </div>
+    <div class="reveal sub" data-d="1000">Reuse the same prompt to ship a real native mobile app — React Native for iOS &amp; Android.</div>
   </div>
 
-  <div class="scene" id="s6">
+  <div class="scene" id="s7">
+    <h1 class="reveal" data-d="0" style="font-size:min(5vh,40px)">Everything <span class="grad">included</span>.</h1>
+    <div class="reveal sub" data-d="200" style="margin-bottom:6px">50 free credits · No credit card · Most apps ready in 3–5 credits</div>
+    <div class="int-grid">
+      <span class="int-pill reveal" data-d="120">Supabase</span>
+      <span class="int-pill reveal" data-d="200">Stripe</span>
+      <span class="int-pill reveal" data-d="280">OpenAI</span>
+      <span class="int-pill reveal" data-d="360">Clerk</span>
+      <span class="int-pill reveal" data-d="440">Firebase</span>
+      <span class="int-pill reveal" data-d="520">Resend</span>
+      <span class="int-pill reveal" data-d="600">Cloudinary</span>
+      <span class="int-pill reveal" data-d="680">PostHog</span>
+      <span class="int-pill reveal" data-d="760">Twilio</span>
+      <span class="int-pill reveal" data-d="840">Sentry</span>
+      <span class="int-pill reveal" data-d="920" style="color:var(--brand);border-color:rgba(14,165,233,0.3)">+ 16 more</span>
+    </div>
+    <div class="reveal own-line" data-d="1100">Own every line — GitHub sync · custom domains · full code export</div>
+  </div>
+
+  <div class="scene" id="s8">
     <div class="weekly-tag reveal" data-d="0">Weekly Build Challenge</div>
     <h1 class="reveal" data-d="200" style="font-size:min(7vh,56px)">Submit your idea.<br><span class="grad">Win credits.</span></h1>
     <div class="reveal sub" data-d="400">Ideas and finished apps both welcome. Best entries win every Sunday.</div>
@@ -208,25 +265,24 @@ h1 { font-family:'Sora',sans-serif; font-weight:800; letter-spacing:-0.04em; lin
     </div>
   </div>
 
-  <div class="scene" id="s7">
+  <div class="scene" id="s9">
     <div class="reveal logo" data-d="0" style="font-family:'Sora',sans-serif;font-size:min(4vh,32px);font-weight:800">Wyber<span style="color:var(--brand)">Ai</span></div>
     <h1 class="reveal" data-d="200" style="margin-top:12px">Your next app is<br><span class="grad">one prompt away.</span></h1>
-    <div class="reveal sub" data-d="400" style="max-width:480px">Share your app on Twitter with #BuiltWithWyberAi<br>Submit ideas on reddit.com/user/WyberAi</div>
-    <div class="reveal final-cta" data-d="600">wyberai.com/challenge</div>
-    <div class="reveal final-sub" data-d="800">Free to enter · 50 credits on signup · New winners every Sunday</div>
+    <div class="reveal sub" data-d="400" style="max-width:480px">Share your build with #BuiltOnWyber<br>Submit ideas on reddit.com/user/WyberAi</div>
+    <div class="reveal final-cta" data-d="600">wyberai.com</div>
+    <div class="reveal final-sub" data-d="800">Free to start · 50 credits on signup · Web &amp; mobile · Secure by default</div>
   </div>
 </div>
 
 <script>
-const SCENES = ['s1','s2','s3','s4','s5','s6','s7'];
-const TIMING = [3000, 4500, 5000, 4000, 4000, 4500, 3500];
+const SCENES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9'];
+const TIMING = [5000, 7000, 8600, 7000, 6500, 7000, 6500, 7000, 5000];
 const PROMPT = 'A project management tool with kanban board, team members, and analytics dashboard';
 
 let current = -1;
 
 function revealChildren(sceneEl) {
-  const items = sceneEl.querySelectorAll('.reveal');
-  items.forEach(el => {
+  sceneEl.querySelectorAll('.reveal').forEach(el => {
     const d = parseInt(el.dataset.d || '0');
     setTimeout(() => el.classList.add('show'), d);
   });
@@ -251,8 +307,8 @@ function countUp(el, target, duration) {
 }
 
 function animateBuild() {
-  const dots = ['d1','d2','d3','d4'];
-  const delays = [400, 1200, 2200, 3200];
+  const dots = ['d1','d2','d3','d4','d5'];
+  const delays = [500, 1400, 2400, 3400, 4400];
   dots.forEach((id, i) => {
     setTimeout(() => {
       const d = document.getElementById(id);
@@ -261,13 +317,12 @@ function animateBuild() {
       d.textContent = '✓';
     }, delays[i]);
   });
-  // Timer
   const timerEl = document.getElementById('timerEl');
   let t = 0;
   const iv = setInterval(() => {
     t += 0.1;
     timerEl.textContent = t.toFixed(1) + 's';
-    if (t >= 7.2) { clearInterval(iv); timerEl.style.color = '#22c55e'; }
+    if (t >= 7.4) { clearInterval(iv); timerEl.style.color = '#22c55e'; }
   }, 100);
 }
 
@@ -276,7 +331,7 @@ function showScene(idx) {
     const el = document.getElementById(id);
     if (i === idx) {
       el.classList.add('active');
-      el.style.transition = 'opacity 0.5s ease';
+      el.style.transition = 'opacity 0.6s ease';
       revealChildren(el);
     } else {
       el.classList.remove('active');
@@ -295,12 +350,19 @@ function advance() {
     document.getElementById('g2').classList.add('show');
   }
   if (current === 1) {
-    setTimeout(() => typeText(document.getElementById('typeTarget'), PROMPT, 40), 400);
+    setTimeout(() => typeText(document.getElementById('typeTarget'), PROMPT, 40), 500);
   }
   if (current === 2) {
     setTimeout(animateBuild, 300);
   }
   if (current === 3) {
+    setTimeout(() => {
+      const b = document.getElementById('scanBadge');
+      b.textContent = 'Passed';
+      b.classList.add('passed');
+    }, 1700);
+  }
+  if (current === 4) {
     setTimeout(() => countUp(document.getElementById('c1'), 8, 800), 600);
     setTimeout(() => countUp(document.getElementById('c2'), 6, 600), 800);
     setTimeout(() => countUp(document.getElementById('c3'), 48, 1000), 1000);

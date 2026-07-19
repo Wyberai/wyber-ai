@@ -80,7 +80,7 @@ export default function PayPage() {
                   </div>
                 ))}
               </div>
-              <a href={b.link} style={{ display:'block', padding:'12px', borderRadius:9, background:b.badge ? b.color : 'transparent', border:`1px solid ${b.color}`, color:b.badge ? '#fff' : b.color, fontSize:13, fontWeight:700, textDecoration:'none', textAlign:'center' }}>
+              <a href={b.link} target="_blank" rel="noopener noreferrer" style={{ display:'block', padding:'12px', borderRadius:9, background:b.badge ? b.color : 'transparent', border:`1px solid ${b.color}`, color:b.badge ? '#fff' : b.color, fontSize:13, fontWeight:700, textDecoration:'none', textAlign:'center' }}>
                 Pay {b.price} →
               </a>
             </div>

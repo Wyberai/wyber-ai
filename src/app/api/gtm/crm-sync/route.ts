@@ -14,7 +14,7 @@ async function syncToHubSpot(apiKey: string, leads: Record<string, unknown>[]): 
         company: String(lead.company_name ?? ''),
         jobtitle: String(lead.title ?? ''),
         website: String(lead.company_website ?? ''),
-        wyber_icp_score: String(lead.icp_score ?? ''),
+        wyber_icp_score: String(lead.icp_fit_score ?? ''),
         wyber_status: String(lead.status ?? ''),
       }
       const res = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
@@ -46,7 +46,7 @@ async function syncToSalesforce(instanceUrl: string, accessToken: string, leads:
         Company: String(lead.company_name ?? 'Unknown'),
         Title: String(lead.title ?? ''),
         Website: String(lead.company_website ?? ''),
-        Description: `Wyber ICP Score: ${lead.icp_score ?? 'N/A'}`,
+        Description: `Wyber ICP Score: ${lead.icp_fit_score ?? 'N/A'}`,
         LeadSource: 'WyberAI GTM',
       }
       const res = await fetch(`${instanceUrl}/services/data/v58.0/sobjects/Lead/`, {

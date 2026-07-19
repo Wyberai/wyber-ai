@@ -1,0 +1,136 @@
+/**
+ * Editor cockpit chrome — Session C owns this file.
+ *
+ * All IDE-only styling lives here (or inline on the components); we never
+ * touch src/app/globals.css. NOTE: globals.css ships an un-layered
+ * `* { margin:0; padding:0 }` reset that beats Tailwind utilities, so rules
+ * here must be explicit selectors, not bare utility-class expectations.
+ *
+ * The .ide-root scope remaps the IDE tokens defined in globals.css onto the
+ * frozen space-journey brand tokens (src/styles/brand.css). Everything inside
+ * IDELayout inherits these; globals.css itself stays untouched (Session A's).
+ */
+
+.ide-root {
+  /* Surfaces — deep-space blacks instead of neutral zinc */
+  --bg-base: var(--brand-bg);
+  --bg-surface: var(--brand-bg-raised);
+  --bg-elevated: var(--brand-bg-overlay);
+  --bg-overlay: #151927;
+  --bg-hover: #1c2133;
+
+  /* Hairlines */
+  --ide-border: var(--brand-border);
+  --ide-border2: var(--brand-border-strong);
+
+  /* Text */
+  --ide-text: var(--brand-text);
+  --ide-text2: var(--brand-text-dim);
+  --ide-text3: var(--brand-text-faint);
+
+  /* Accent */
+  --accent: var(--brand-accent);
+  --accent-dim: var(--brand-glow-soft);
+  --accent-glow: var(--brand-glow-soft);
+}
+
+/* shadcn/typeset preset for chat message bodies (src/components/editor/ChatPanel.tsx
+   renderMessage) — tighter than typeset's blog-post defaults (1.25em flow) so a
+   thread of short messages doesn't turn sparse; size/leading match the panel's
+   prior hand-rolled inline styles (13px / 1.65) so this reads as a styling
+   upgrade, not a resize. */
+.typeset-chat {
+  --typeset-font-heading: inherit;
+  --typeset-size: 13px;
+  --typeset-leading: 1.65;
+  --typeset-flow: 0.6em;
+}
+
+/* Slim, unobtrusive scrollbars inside the cockpit */
+.ide-root ::-webkit-scrollbar { width: 8px; height: 8px; }
+.ide-root ::-webkit-scrollbar-track { background: transparent; }
+.ide-root ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.09); border-radius: 4px; }
+.ide-root ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
+
+/* ── Shared chrome animations ─────────────────────────────────────────── */
+
+@keyframes ide-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes ide-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--brand-glow-soft); }
+  50% { box-shadow: 0 0 12px 2px var(--brand-glow-soft); }
+}
+
+@keyframes ide-fade-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Skeleton shimmer bar — pair with inline width/height/borderRadius */
+.ide-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: ide-shimmer 1.4s var(--brand-ease) infinite;
+  border-radius: 6px;
+}
+
+/* Streaming-text shimmer (chat "writing…" states) */
+.ide-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    var(--brand-text-faint) 30%,
+    var(--brand-text) 50%,
+    var(--brand-text-faint) 70%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ide-shimmer 2s linear infinite;
+}
+
+/* Panel content entrance — applied by RightPanel on tab switch */
+.ide-panel-enter {
+  animation: ide-fade-up var(--brand-dur-base) var(--brand-ease) both;
+}
+
+/* Code-tab underline — springs in under the active tab (the .tab/.active
+   classes come from globals.css; only the indicator is added here). */
+.ide-root .tab {
+  position: relative;
+}
+.ide-root .tab::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--brand-accent);
+  box-shadow: 0 0 8px var(--brand-glow);
+  transform: scaleX(0);
+  transition: transform var(--brand-dur-base) var(--brand-ease-spring);
+}
+.ide-root .tab.active::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ide-skeleton,
+  .ide-shimmer-text,
+  .ide-panel-enter {
+    animation: none;
+  }
+  .ide-root .tab::after {
+    transition: none;
+  }
+}

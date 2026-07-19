@@ -59,6 +59,50 @@ describe('scanForExposedSecrets', () => {
     expect(result.findings[0].name).toBe('Generic private key block')
   })
 
+  it('flags a Stripe restricted key', () => {
+    const result = scanForExposedSecrets({
+      'src/payments.ts': { content: `const KEY = 'rk_live_${'b'.repeat(24)}'` },
+    })
+    expect(result.ok).toBe(false)
+    expect(result.findings[0].name).toBe('Stripe restricted key')
+  })
+
+  it('flags GitHub tokens (classic and fine-grained)', () => {
+    const classic = scanForExposedSecrets({
+      'src/gh.ts': { content: `const T = 'ghp_${'a1B2'.repeat(9)}'` },
+    })
+    expect(classic.ok).toBe(false)
+    expect(classic.findings[0].name).toBe('GitHub token')
+    const fineGrained = scanForExposedSecrets({
+      'src/gh.ts': { content: `const T = 'github_pat_${'a1B2'.repeat(8)}'` },
+    })
+    expect(fineGrained.ok).toBe(false)
+  })
+
+  it('flags a Google API key', () => {
+    const result = scanForExposedSecrets({
+      'src/maps.ts': { content: `const KEY = 'AIza${'Sy0'.repeat(11)}Ab'` },
+    })
+    expect(result.ok).toBe(false)
+    expect(result.findings[0].name).toBe('Google API key')
+  })
+
+  it('flags a Slack bot token', () => {
+    const result = scanForExposedSecrets({
+      'src/slack.ts': { content: `const T = 'xoxb-1234567890-abcdefghij'` },
+    })
+    expect(result.ok).toBe(false)
+    expect(result.findings[0].name).toBe('Slack token')
+  })
+
+  it('flags a SendGrid API key', () => {
+    const result = scanForExposedSecrets({
+      'src/mail.ts': { content: `const K = 'SG.${'a'.repeat(22)}.${'b'.repeat(43)}'` },
+    })
+    expect(result.ok).toBe(false)
+    expect(result.findings[0].name).toBe('SendGrid API key')
+  })
+
   it('handles plain-string file values, not just {content} objects', () => {
     const result = scanForExposedSecrets({
       'src/config.ts': `const KEY = 'AKIAABCDEFGHIJKLMNOP'`,

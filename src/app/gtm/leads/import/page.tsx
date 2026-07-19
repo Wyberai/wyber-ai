@@ -21,7 +21,98 @@ export default function ImportLeadsPage() {
   const [searching, setSearching] = useState(false)
   const [importing, setImporting] = useState(false)
   const [csvFile, setCsvFile] = useState<File | null>(null)
+  const [csvRows, setCsvRows] = useState<Record<string, string>[]>([])
+  const [csvMap, setCsvMap] = useState<Record<string, string>>({})
+  const [csvListName, setCsvListName] = useState('')
+  const [csvProgress, setCsvProgress] = useState<{ done: number; total: number } | null>(null)
+  const [csvResult, setCsvResult] = useState<{ imported: number; duplicates: number; invalid: number } | null>(null)
+  const [csvError, setCsvError] = useState('')
   const CREDIT_COST = 2
+
+  const LEAD_FIELDS = ['email', 'first_name', 'last_name', 'title', 'company_name', 'company_domain', 'company_location', 'phone', 'linkedin_url'] as const
+
+  // RFC-ish CSV parse: quoted fields, escaped quotes, CR/LF
+  function parseCsv(text: string): Record<string, string>[] {
+    const rows: string[][] = []
+    let field = '', row: string[] = [], inQ = false
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i]
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++ } else inQ = false }
+        else field += c
+      } else if (c === '"') inQ = true
+      else if (c === ',') { row.push(field); field = '' }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++
+        row.push(field); field = ''
+        if (row.some(v => v.trim() !== '')) rows.push(row)
+        row = []
+      } else field += c
+    }
+    row.push(field)
+    if (row.some(v => v.trim() !== '')) rows.push(row)
+    if (rows.length < 2) return []
+    const headers = rows[0].map(h => h.trim())
+    return rows.slice(1).map(r => Object.fromEntries(headers.map((h, i) => [h, (r[i] || '').trim()])))
+  }
+
+  function autoMap(headers: string[]): Record<string, string> {
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const candidates: Record<string, string[]> = {
+      email: ['email', 'emailaddress', 'workemail', 'verifiedemail'],
+      first_name: ['firstname', 'first', 'fname', 'givenname'],
+      last_name: ['lastname', 'last', 'lname', 'surname', 'familyname'],
+      title: ['title', 'jobtitle', 'position', 'role', 'designation'],
+      company_name: ['companyname', 'company', 'organization', 'organisation', 'org', 'employer'],
+      company_domain: ['companydomain', 'domain', 'website', 'companywebsite', 'site'],
+      company_location: ['companylocation', 'location', 'city', 'country', 'region'],
+      phone: ['phone', 'phonenumber', 'mobile', 'tel'],
+      linkedin_url: ['linkedinurl', 'linkedin', 'linkedinprofile', 'liurl'],
+    }
+    const map: Record<string, string> = {}
+    for (const f of LEAD_FIELDS) {
+      const hit = headers.find(h => candidates[f].includes(norm(h)))
+      if (hit) map[f] = hit
+    }
+    return map
+  }
+
+  function onCsvFile(f: File | null) {
+    setCsvFile(f); setCsvRows([]); setCsvMap({}); setCsvResult(null); setCsvError('')
+    if (!f) return
+    setCsvListName(f.name.replace(/\.csv$/i, '').slice(0, 60))
+    f.text().then(text => {
+      const rows = parseCsv(text)
+      if (rows.length === 0) { setCsvError('Could not parse any rows — is this a valid CSV with a header row?'); return }
+      setCsvRows(rows)
+      setCsvMap(autoMap(Object.keys(rows[0])))
+    }).catch(() => setCsvError('Failed to read file'))
+  }
+
+  async function importCsv() {
+    if (!csvMap.email) { setCsvError('Map the email column first — it’s required.'); return }
+    setImporting(true); setCsvError(''); setCsvResult(null)
+    const mapped = csvRows.map(r => Object.fromEntries(LEAD_FIELDS.map(f => [f, csvMap[f] ? r[csvMap[f]] || '' : ''])))
+    const BATCH = 500
+    const totals = { imported: 0, duplicates: 0, invalid: 0 }
+    let listId: string | undefined
+    setCsvProgress({ done: 0, total: mapped.length })
+    for (let i = 0; i < mapped.length; i += BATCH) {
+      const res = await fetch('/api/gtm/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'csv', rows: mapped.slice(i, i + BATCH), listName: csvListName || 'CSV import', listId }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) { setCsvError(data.error || `Batch failed at row ${i}`); break }
+      listId = data.list_id
+      totals.imported += data.imported; totals.duplicates += data.duplicates; totals.invalid += data.invalid
+      setCsvProgress({ done: Math.min(i + BATCH, mapped.length), total: mapped.length })
+    }
+    setCsvProgress(null)
+    setCsvResult(totals)
+    setImporting(false)
+  }
 
   useEffect(() => {
     fetch('/api/gtm/profile').then(r => r.json()).then(d => setProfile(d.profile))
@@ -156,19 +247,72 @@ export default function ImportLeadsPage() {
             )}
           </div>
         ) : (
-          <div style={{ background: s.card, border: `1px dashed ${s.border}`, borderRadius: 12, padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Upload CSV</div>
-            <div style={{ fontSize: 13, color: s.muted, marginBottom: 20 }}>Columns: first_name, last_name, email, company_name, title, linkedin_url</div>
-            <input type="file" accept=".csv" onChange={e => setCsvFile(e.target.files?.[0] || null)} style={{ display: 'none' }} id="csv-upload" />
-            <label htmlFor="csv-upload" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
-              {csvFile ? csvFile.name : 'Choose CSV file'}
-            </label>
-            {csvFile && (
-              <div style={{ marginTop: 16 }}>
-                <button style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none' }}>
-                  Upload & import
+          <div>
+            <div style={{ background: s.card, border: `1px dashed ${s.border}`, borderRadius: 12, padding: csvRows.length ? '24px' : '48px 24px', textAlign: csvRows.length ? 'left' : 'center' }}>
+              {!csvRows.length && <>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>📄</div>
+                <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>Upload CSV</div>
+                <div style={{ fontSize: 13, color: s.muted, marginBottom: 20 }}>Free for your own data. We auto-map columns like email, first_name, company…</div>
+              </>}
+              <input type="file" accept=".csv,text/csv" onChange={e => onCsvFile(e.target.files?.[0] || null)} style={{ display: 'none' }} id="csv-upload" />
+              <label htmlFor="csv-upload" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                {csvFile ? `📄 ${csvFile.name}` : 'Choose CSV file'}
+              </label>
+              {csvRows.length > 0 && <span style={{ marginLeft: 12, fontSize: 13, color: s.muted }}>{csvRows.length.toLocaleString()} rows parsed</span>}
+            </div>
+
+            {csvError && <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171', fontSize: 13 }}>{csvError}</div>}
+
+            {csvRows.length > 0 && !csvResult && (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 11, color: s.muted, marginBottom: 4 }}>Lead list name</label>
+                  <input value={csvListName} onChange={e => setCsvListName(e.target.value)} placeholder="e.g. Continuum verified leads"
+                    style={{ width: 320, background: s.card, border: `1px solid ${s.border}`, borderRadius: 8, padding: '9px 12px', fontSize: 13, color: s.text, fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: s.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Column mapping</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, marginBottom: 16 }}>
+                  {LEAD_FIELDS.map(f => (
+                    <div key={f}>
+                      <label style={{ display: 'block', fontSize: 11, color: f === 'email' ? s.yellow : s.dim, marginBottom: 3 }}>{f}{f === 'email' ? ' (required)' : ''}</label>
+                      <select value={csvMap[f] || ''} onChange={e => setCsvMap(m => ({ ...m, [f]: e.target.value }))}
+                        style={{ width: '100%', background: s.card, border: `1px solid ${csvMap[f] ? 'rgba(16,185,129,0.35)' : s.border}`, borderRadius: 8, padding: '8px 10px', fontSize: 12, color: s.text, fontFamily: 'inherit', outline: 'none' }}>
+                        <option value="">— skip —</option>
+                        {Object.keys(csvRows[0]).map(h => <option key={h} value={h}>{h}</option>)}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: s.card, border: `1px solid ${s.border}`, borderRadius: 10, overflow: 'auto', marginBottom: 16 }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead><tr style={{ borderBottom: `1px solid ${s.border}`, background: 'rgba(255,255,255,0.02)' }}>
+                      {LEAD_FIELDS.filter(f => csvMap[f]).map(f => <th key={f} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 700, color: s.dim, textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{f}</th>)}
+                    </tr></thead>
+                    <tbody>
+                      {csvRows.slice(0, 3).map((r, i) => (
+                        <tr key={i} style={{ borderBottom: i < 2 ? `1px solid ${s.border}` : 'none' }}>
+                          {LEAD_FIELDS.filter(f => csvMap[f]).map(f => <td key={f} style={{ padding: '8px 12px', fontSize: 12, color: s.muted, whiteSpace: 'nowrap', maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis' }}>{r[csvMap[f]] || '—'}</td>)}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button onClick={importCsv} disabled={importing || !csvMap.email} style={{ padding: '10px 20px', borderRadius: 8, background: s.orange, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', opacity: csvMap.email ? 1 : 0.5 }}>
+                  {csvProgress ? `Importing… ${csvProgress.done.toLocaleString()} / ${csvProgress.total.toLocaleString()}` : importing ? 'Importing…' : `Import ${csvRows.length.toLocaleString()} leads (free) →`}
                 </button>
+              </div>
+            )}
+
+            {csvResult && (
+              <div style={{ marginTop: 20, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 10, padding: '16px 18px' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: s.green, marginBottom: 6 }}>Import complete</div>
+                <div style={{ fontSize: 13, color: s.muted }}>
+                  {csvResult.imported.toLocaleString()} imported · {csvResult.duplicates.toLocaleString()} already existed · {csvResult.invalid.toLocaleString()} invalid/blank emails
+                </div>
+                <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                  <Link href="/gtm/leads" style={{ padding: '8px 16px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>View leads →</Link>
+                  <button onClick={() => onCsvFile(null)} style={{ padding: '8px 16px', borderRadius: 8, background: 'transparent', border: `1px solid ${s.border}`, color: s.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Import another</button>
+                </div>
               </div>
             )}
           </div>

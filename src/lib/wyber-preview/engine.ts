@@ -21,6 +21,9 @@
 
 import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/lib/design-system'
 import { resolveDirectivesForPreview } from '@/lib/image-directives'
+import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
+import { WYBER_STORE_FILES } from '@/lib/wyber-store'
+import { injectWyberLoc, WYBER_BRIDGE_SCRIPT } from '@/lib/wyber-preview/bridge'
 
 export interface PreviewFile {
   content: string
@@ -48,6 +51,11 @@ const EXTERNAL_DEPS: Record<string, string> = {
   'date-fns':               'https://esm.sh/date-fns@3.6.0',
   'zustand':                'https://esm.sh/zustand@4.5.2',
   'axios':                  'https://esm.sh/axios@1.7.2',
+  // Scroll/motion physics for landing pages. Subpath entries are explicit
+  // because the importmap only prefix-maps keys ending in '/'.
+  'gsap':                   'https://esm.sh/gsap@3.12.5',
+  'gsap/ScrollTrigger':     'https://esm.sh/gsap@3.12.5/ScrollTrigger',
+  'lenis':                  'https://esm.sh/lenis@1.1.14',
 }
 
 let esbuildInitialized = false
@@ -132,18 +140,38 @@ export async function bundleFiles(
     // Normalize all file paths, and resolve any image directives to a gradient
     // data URI so the preview shows a tasteful placeholder (never a broken image
     // or literal {{wyber-image}} text). Real images are generated at publish.
+    // Also tag JSX DOM elements with data-wyber-loc for the selection bridge
+    // (transient — the stored project never carries these attributes).
+    const locTagged = injectWyberLoc(files)
     const normalizedFiles: Record<string, string> = {}
-    for (const [path, content] of Object.entries(files)) {
+    for (const [path, content] of Object.entries(locTagged)) {
       normalizedFiles[normalizeFilePath(path)] = resolveDirectivesForPreview(content)
     }
 
-    // Find entry point
+    // Find entry point (BEFORE merging the UI kit, so an injected kit file can
+    // never be picked as the app entry for projects without one)
     let entry = normalizeFilePath(entryPoint)
     if (!normalizedFiles[entry]) {
       // Try common entry points
       const candidates = ['/src/App.tsx', '/App.tsx', '/src/index.tsx', '/index.tsx', '/src/main.tsx']
       entry = candidates.find(c => normalizedFiles[c]) || Object.keys(normalizedFiles).find(k => k.endsWith('.tsx')) || ''
       if (!entry) throw new Error('No entry point found')
+    }
+
+    // Inject the Wyber UI kit (premium pre-built components) into the virtual
+    // FS so apps can `import { Button } from './wyber-ui'`. User files always
+    // win; unused kit exports are tree-shaken out of the bundle.
+    for (const [kitPath, kitContent] of Object.entries(WYBER_UI_KIT_FILES)) {
+      const np = normalizeFilePath(kitPath)
+      if (!normalizedFiles[np]) normalizedFiles[np] = kitContent
+    }
+
+    // Same for the Wyber Store (local-first persistence,
+    // `import { useCollection } from './wyber-store'`). generateHTML already
+    // sets window.__WYBER_PROJECT_ID__, which the store uses for namespacing.
+    for (const [storePath, storeContent] of Object.entries(WYBER_STORE_FILES)) {
+      const np = normalizeFilePath(storePath)
+      if (!normalizedFiles[np]) normalizedFiles[np] = storeContent
     }
 
     // Phase 3: Check if any files changed
@@ -193,9 +221,13 @@ export async function bundleFiles(
                 }
               }
 
-              // Resolve relative/absolute imports to virtual namespace
+              // Resolve relative/absolute imports to virtual namespace.
+              // '@/x' is the standard src alias (models emit it occasionally;
+              // stub-missing-imports resolves it the same way on publish).
               let resolved: string
-              if (args.path.startsWith('.') || args.path.startsWith('/')) {
+              if (args.path.startsWith('@/')) {
+                resolved = normalizeFilePath('/src/' + args.path.slice(2))
+              } else if (args.path.startsWith('.') || args.path.startsWith('/')) {
                 resolved = args.importer
                   ? resolveImport(args.importer, args.path)
                   : normalizeFilePath(args.path)
@@ -345,6 +377,7 @@ ${js}
       }
     });
   </script>
+  ${WYBER_BRIDGE_SCRIPT}
 </body>
 </html>`
 }

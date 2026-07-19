@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { track } from '@/lib/track';
 
 interface Props {
   projectId: string;
@@ -18,6 +19,30 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
   const [url, setUrl] = useState(publishedUrl);
   const [error, setError] = useState('');
   const [block, setBlock] = useState<RlsBlock | null>(null);
+  const [refCode, setRefCode] = useState('');
+  const [invCopied, setInvCopied] = useState(false);
+
+  // Fetch the owner's referral code so the post-publish share can carry it —
+  // publishing is the highest-intent moment to turn a live build into reach.
+  useEffect(() => {
+    fetch('/api/referral').then(r => r.json()).then(d => { if (d.code) setRefCode(d.code); }).catch(() => {});
+  }, []);
+
+  const inviteLink = refCode ? `https://wyberai.com/signup?ref=${refCode}` : 'https://wyberai.com';
+
+  const openShare = (network: 'x' | 'linkedin') => {
+    if (!url) return;
+    track('publish_shared', { network });
+    const text = `I just built this and it's live 👇 ${url}\n\nMade it on WyberAi in minutes — try it free:`;
+    const shareUrl = network === 'x'
+      ? `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(inviteLink)}`
+      : `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank', 'noopener,noreferrer,width=600,height=540');
+  };
+
+  const copyInvite = () => {
+    navigator.clipboard.writeText(inviteLink).then(() => { setInvCopied(true); setTimeout(() => setInvCopied(false), 2000); });
+  };
 
   const publish = async (override = false) => {
     setLoading(true); setError(''); setBlock(null);
@@ -38,7 +63,7 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
           .filter((f: { severity: string }) => f.severity === 'critical')
           .map((f: { table: string }) => f.table);
         setBlock({ message: data.message || 'Publish blocked by a security check.', tables });
-      } else if (data.publishedUrl) { setUrl(data.publishedUrl); onPublish?.(data.publishedUrl); }
+      } else if (data.publishedUrl) { setUrl(data.publishedUrl); onPublish?.(data.publishedUrl); track('app_published', { projectId }); }
       else setError(data.error || 'Failed to publish');
     } catch (e: any) {
       clearTimeout(timeout);
@@ -73,6 +98,22 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
             {copied ? '✓ Copied' : 'Copy'}
           </button>
         </div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+          📱 Installable as an app — open the link on your phone and tap <strong style={{ color: 'var(--text2)' }}>Install app</strong>
+        </div>
+
+        {/* Post-publish share — turn every live build into reach + referrals */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2, padding: '9px 10px', borderRadius: 8, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.18)' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)' }}>🎉 It’s live — share your build</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => openShare('x')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Share on X</button>
+            <button onClick={() => openShare('linkedin')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Share on LinkedIn</button>
+          </div>
+          <button onClick={copyInvite} style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'none', color: invCopied ? '#34D399' : 'var(--text3)', fontSize: 10.5, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+            {invCopied ? '✓ Invite link copied' : '🎁 Copy invite link · +50 credits per signup'}
+          </button>
+        </div>
+
         <button onClick={unpublish} disabled={loading} style={{ fontSize: 11, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', textAlign: 'left', fontFamily: 'inherit' }}>
           {loading ? 'Unpublishing...' : 'Unpublish'}
         </button>

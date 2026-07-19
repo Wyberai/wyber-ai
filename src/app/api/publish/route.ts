@@ -4,8 +4,14 @@ import { sanitizeFiles } from '@/lib/sanitize-files'
 import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
-import { extractImageDirectives, replaceTokenInFiles, gradientDataUri } from '@/lib/image-directives'
+import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
+import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
+import { notify } from '@/lib/push'
+import { rateLimit } from '@/lib/rate-limit'
+import { injectPwa } from '@/lib/pwa/install-snippet'
+import { extractThemeColor, BRAND_THEME_COLOR } from '@/lib/pwa/manifest'
+import { warmPwaIcons } from '@/lib/pwa/icon'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -34,19 +40,37 @@ async function ensureUniqueSlug(base: string, admin: any): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    // Internal callers (the MCP `publish_project` tool) have no browser session —
+    // they authenticate with X-Scheduler-Secret + X-Scheduler-User-Id, the same
+    // internal-bypass convention used by /api/agents/run and /api/generate.
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isInternalCall = !!schedulerUserId && schedulerSecret === process.env.CRON_SECRET
+
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    let user: { id: string; email?: string } | null
+    if (isInternalCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const { data: { user: cookieUser } } = await supabase.auth.getUser()
+      user = cookieUser
+    }
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Each publish is a 30–45s remote build — a loop here monopolizes builder
+    // capacity. Real users republish a handful of times per session at most.
+    const { allowed } = rateLimit(`publish:${user.id}`, 10, 600_000)
+    if (!allowed) return NextResponse.json({ error: 'Too many publishes in a short time. Please wait a few minutes.' }, { status: 429 })
 
     const { projectId, override = false } = await req.json()
     const admin = createServiceClient()
 
-    const { data: project } = await admin
-      .from('projects')
-      .select('*')
-      .eq('id', projectId)
-      .eq('user_id', user.id)
-      .single()
+    // Support mode: allowlisted admins can publish on a customer's behalf
+    // after fixing their project remotely.
+    const { isAdminEmail } = await import('@/lib/admin')
+    let projectQuery = admin.from('projects').select('*').eq('id', projectId)
+    if (!isAdminEmail(user.email)) projectQuery = projectQuery.eq('user_id', user.id)
+    const { data: project } = await projectQuery.single()
 
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
@@ -64,26 +88,31 @@ export async function POST(req: NextRequest) {
     let projectFiles = project.files || {}
     const directives = extractImageDirectives(projectFiles)
     if (directives.length > 0) {
+      let generated = 0
       for (const d of directives) {
         let url: string | null = null
-        try { url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId) } catch { /* fall back */ }
-        projectFiles = replaceTokenInFiles(projectFiles, d.token, url || gradientDataUri(d.prompt, d.ratio))
+        try { url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId) } catch (e) { console.error('[publish] image generation threw:', d.prompt.slice(0, 60), e) }
+        // Success → substitute the permanent URL and persist it (re-publishing
+        // won't regenerate). FAILURE → leave the token in the saved source:
+        // sanitizeFiles resolves it to a gradient for THIS publish's build, and
+        // the NEXT publish retries generation. (Previously the gradient was
+        // baked into the saved files on failure, so a transient OpenAI error
+        // permanently destroyed the directive — republish could never recover.)
+        if (url) { projectFiles = replaceTokenInFiles(projectFiles, d.token, url); generated++ }
+        else console.error('[publish] image generation failed, keeping token for retry:', d.prompt.slice(0, 60))
       }
-      try { await admin.from('projects').update({ files: projectFiles }).eq('id', projectId) } catch { /* non-critical */ }
-    }
-
-    const sanitized = sanitizeFiles(projectFiles)
-
-    const secretScan = scanForExposedSecrets(sanitized)
-    if (!secretScan.ok) {
-      const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ')
-      return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
+      if (generated > 0) {
+        try { await admin.from('projects').update({ files: projectFiles }).eq('id', projectId) } catch { /* non-critical */ }
+      }
     }
 
     // RLS gate: if the connected database leaks private data to the public anon
     // key (the CVE-2025-48757 failure mode), block on CRITICAL findings unless
     // the user explicitly chose to publish anyway. Never block on scanner errors
-    // (fail-open — the gate is a safety net, not a wall).
+    // (fail-open — the gate is a safety net, not a wall). Also the source of the
+    // score for the security badge below — an overridden publish (known
+    // criticals) never gets a "scanned clean" badge, since the scan is skipped.
+    let rlsScore: number | undefined
     if (!override) {
       try {
         const { connected, report } = await runProjectRlsScan(supabase, projectId, user.id, 'publish-gate')
@@ -95,9 +124,21 @@ export async function POST(req: NextRequest) {
             report,
           }, { status: 409 })
         }
+        if (connected && report) rlsScore = report.score
       } catch (e) {
         console.warn('[publish] RLS gate skipped (scan failed):', String(e))
       }
+    }
+
+    const sanitized = sanitizeFiles(projectFiles, {
+      appId: projectId,
+      securityBadge: (project.show_security_badge && rlsScore !== undefined) ? { score: rlsScore } : undefined,
+    })
+
+    const secretScan = scanForExposedSecrets(sanitized)
+    if (!secretScan.ok) {
+      const summary = secretScan.findings.map(f => `${f.name} in ${f.file}`).join('; ')
+      return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
     }
 
     // Build the app via Railway
@@ -119,10 +160,17 @@ export async function POST(req: NextRequest) {
 
     // Fix asset paths to be absolute (pointing to Railway CDN)
     const baseUrl = buildData.url.replace('/index.html', '')
-    const fixedHtml = html
+    let fixedHtml = html
       .replace(/src="\.\/assets\//g, `src="${baseUrl}/assets/`)
       .replace(/href="\.\/assets\//g, `href="${baseUrl}/assets/`)
       .replace(/from "\.\/assets\//g, `from "${baseUrl}/assets/`)
+
+    // Make the published app an installable PWA: manifest link + apple metas +
+    // the install-pill runtime. The runtime is inert inside the shell iframe /
+    // editor previews (window.top check) — it only activates on the app's own
+    // origin. The manifest/icons themselves are served per-request by
+    // serve-custom-domain (subdomains) and /app/[slug]/* (main domain).
+    fixedHtml = injectPwa(fixedHtml, { themeColor: extractThemeColor(fixedHtml) || BRAND_THEME_COLOR })
 
     // Reject builds that "succeeded" (got a URL) but ship a blank page or
     // unhandled runtime error — buildData.url alone doesn't guarantee that.
@@ -154,8 +202,20 @@ export async function POST(req: NextRequest) {
         published_url: publishedUrl,
         is_public: true,
         updated_at: new Date().toISOString(),
+        ...(rlsScore !== undefined ? { last_security_score: rlsScore, last_security_scanned_at: new Date().toISOString() } : {}),
       })
       .eq('id', projectId)
+
+    // Keep the connected Supabase project's Auth Site URL pointed at this
+    // published URL — see deploy/route.ts for why. Best-effort.
+    syncSupabaseAuthUrl(projectId, publishedUrl).catch(() => {})
+
+    // Warm the PWA icons (regenerates on republish so a fresh thumbnail is
+    // picked up). Best-effort — the icon routes lazily generate on a miss.
+    warmPwaIcons(admin, { id: projectId, name: project.name, thumbnail_url: project.thumbnail_url }).catch(() => {})
+
+    // Notify: project published (in-app Activity row + push). Best-effort.
+    notify(admin, user.id, 'published', { projectId, url: publishedUrl }).catch(() => {})
 
     return NextResponse.json({ subdomain, publishedUrl })
   } catch (err: any) {
@@ -173,7 +233,11 @@ export async function DELETE(req: NextRequest) {
     const { projectId } = await req.json()
     const admin = createServiceClient()
 
-    await admin.storage.from('published-apps').remove([`${projectId}/index.html`])
+    await admin.storage.from('published-apps').remove([
+      `${projectId}/index.html`,
+      `${projectId}/icon-192.png`,
+      `${projectId}/icon-512.png`,
+    ])
     await admin.from('projects')
       .update({ published_url: null, is_public: false })
       .eq('id', projectId)

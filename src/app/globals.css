@@ -15,6 +15,11 @@
 @font-face { font-family: 'Switzer'; src: url('/fonts/Switzer-800.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
 
 @import "tailwindcss";
+@import "../styles/typeset.css";
+
+/* ─── BRAND TOKENS ───
+   --brand-* vars come from src/styles/brand.css (frozen, imported in
+   layout.tsx — the shared source of truth with the editor). */
 
 /* ─── LIGHT THEME ─── */
 :root {
@@ -193,6 +198,17 @@
 
 /* ─── RESET ─── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* The un-layered reset above beats Tailwind's @layer utilities, so padding and
+   margin utility classes are inert site-wide. Pages that need them opt in via
+   .wy-journey: revert-layer rolls the reset back to the cascade layers. */
+.wy-journey *, .wy-journey *::before, .wy-journey *::after { margin: revert-layer; padding: revert-layer; }
+.wy-journey { font-family: var(--font-sans); }
+/* shadcn/typeset (src/styles/typeset.css) needs the same escape hatch — its
+   @layer components rules set margin/padding on headings, lists, tables etc.,
+   which this reset would otherwise zero out regardless of specificity. */
+.typeset, .typeset *, .typeset *::before, .typeset *::after { margin: revert-layer; padding: revert-layer; }
+.wy-journey .font-mono { font-family: var(--font-mono); }
+.wy-journey .wy-display { font-family: var(--font-display); }
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 body { font-family: var(--font-sans); background: var(--bg); color: var(--text); line-height: 1.6; }
 a { text-decoration: none; color: inherit; }
@@ -454,9 +470,11 @@ input, textarea, select { font-family: var(--font-sans); }
   border: 1px solid rgba(255,255,255,0.06);
 }
 
-/* ─── GRADIENT ACCENTS ─── */
+/* ─── GRADIENT ACCENTS ───
+   Sky-only ramp. The old sky→indigo (and the hero's sky→purple) gradient is
+   the canonical "AI-generated site" tell in 2026 — banned brand-wide. */
 .wy-gradient-text {
-  background: linear-gradient(135deg, var(--sky), #6366f1);
+  background: linear-gradient(135deg, var(--brand-accent-dim), var(--brand-accent-hot));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -505,3 +523,297 @@ input, textarea, select { font-family: var(--font-sans); }
 .turbo0-badge-light { display: none; }
 [data-theme="light"] .turbo0-badge-dark  { display: none; }
 [data-theme="light"] .turbo0-badge-light { display: inline; }
+
+/* ═══ MK — MARKETING PRIMITIVES (space-journey brand, July 2026) ═══
+   Dark-first, consume --brand-* tokens. All spacing is explicit (the
+   un-layered reset above keeps Tailwind spacing utilities inert). */
+
+.mk-page {
+  min-height: 100vh;
+  background: var(--brand-bg);
+  color: var(--brand-text);
+  font-family: var(--font-display);
+  /* clip, not hidden — hidden creates a scroll container and silently
+     breaks every position:sticky descendant (the pinned scroll moment) */
+  overflow-x: clip;
+}
+
+/* Starfield — two layered dot fields, pure CSS, no WebGL. */
+.mk-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 12% 24%, rgba(230,237,246,0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 71%, rgba(230,237,246,0.35) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 56% 12%, rgba(56,189,248,0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 48%, rgba(230,237,246,0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 82%, rgba(230,237,246,0.3) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 8% 88%, rgba(56,189,248,0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 42%, rgba(230,237,246,0.25) 50%, transparent 51%),
+    radial-gradient(1px 1px at 94% 18%, rgba(230,237,246,0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 55%, rgba(230,237,246,0.2) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 64% 92%, rgba(230,237,246,0.35) 50%, transparent 51%);
+  background-size: 720px 720px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35));
+}
+
+/* Film grain overlay */
+.mk-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--brand-noise);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.mk-section {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(64px, 9vw, 128px) clamp(20px, 5vw, 48px);
+}
+
+/* Mono eyebrow — "01 · TELEMETRY" style microlabel */
+.mk-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--brand-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brand-accent);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.mk-eyebrow::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--brand-border-accent);
+}
+
+/* Oversized editorial display headline */
+.mk-display {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 7.5vw, 96px);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+  color: var(--brand-text);
+  margin: 0;
+}
+.mk-h2 {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 4.5vw, 54px);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+  color: var(--brand-text);
+  margin: 0;
+}
+/* Accent phrase inside a headline — same display face as the rest of the
+   headline, sky. (Was Instrument Serif italic; Sumeet preferred the plain
+   blue used across the other pages — Jul 11.) */
+.mk-serif {
+  color: var(--brand-accent-hot);
+}
+
+.mk-lead {
+  font-size: clamp(16px, 1.9vw, 19px);
+  color: var(--brand-text-dim);
+  line-height: 1.7;
+  margin: 0;
+}
+.mk-mono {
+  font-family: var(--brand-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--brand-text-faint);
+}
+
+/* Hairline surfaces */
+.mk-card {
+  background: var(--brand-bg-raised);
+  border: 1px solid var(--brand-border);
+  border-radius: 14px;
+  transition: border-color var(--brand-dur-base) var(--brand-ease),
+              box-shadow var(--brand-dur-base) var(--brand-ease),
+              transform var(--brand-dur-base) var(--brand-ease);
+}
+.mk-card:hover {
+  border-color: var(--brand-border-accent);
+  box-shadow: 0 0 0 1px var(--brand-glow-soft), 0 8px 40px rgba(0,0,0,0.5), 0 0 32px var(--brand-glow-soft);
+}
+.mk-frame {
+  background: var(--brand-bg-raised);
+  border: 1px solid var(--brand-border);
+  border-radius: 14px;
+}
+
+/* Buttons */
+.mk-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 30px;
+  border-radius: 10px;
+  background: var(--brand-accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 0 24px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+  transition: transform var(--brand-dur-fast) var(--brand-ease),
+              box-shadow var(--brand-dur-base) var(--brand-ease),
+              background var(--brand-dur-fast) var(--brand-ease);
+}
+.mk-btn:hover {
+  background: var(--brand-accent-hot);
+  transform: translateY(-1px);
+  box-shadow: 0 0 40px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.mk-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.02);
+  color: var(--brand-text-dim);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: var(--font-display);
+  text-decoration: none;
+  border: 1px solid var(--brand-border-strong);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color var(--brand-dur-fast) var(--brand-ease),
+              color var(--brand-dur-fast) var(--brand-ease),
+              background var(--brand-dur-fast) var(--brand-ease);
+}
+.mk-btn-ghost:hover {
+  border-color: var(--brand-border-accent);
+  color: var(--brand-text);
+  background: rgba(14,165,233,0.05);
+}
+
+/* Data row — mono telemetry strip entries */
+.mk-stat {
+  font-family: var(--brand-mono);
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 600;
+  color: var(--brand-text);
+  letter-spacing: -0.02em;
+}
+.mk-stat-label {
+  font-family: var(--brand-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--brand-text-faint);
+}
+
+/* Reduced motion: kill transforms/animation on mk primitives */
+@media (prefers-reduced-motion: reduce) {
+  .mk-card, .mk-btn, .mk-btn-ghost { transition: none; }
+  .mk-card:hover, .mk-btn:hover { transform: none; }
+}
+
+/* ─── DIALOG (Radix + framer-motion primitive, src/components/ui/dialog.tsx) ─── */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+}
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 201;
+  width: calc(100% - 40px);
+  background: var(--bg-elevated);
+  border: 1px solid var(--ide-border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+  padding: 24px;
+  color: var(--ide-text);
+  outline: none;
+}
+.dialog-title { font-size: 17px; font-weight: 700; color: var(--ide-text); margin-bottom: 6px; }
+.dialog-desc { font-size: 13px; color: var(--ide-text2); line-height: 1.6; margin-bottom: 20px; }
+.dialog-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.dialog-btn-danger {
+  padding: 9px 18px; border-radius: var(--r-sm); border: none;
+  background: var(--ide-red); color: #fff; font-size: 13px; font-weight: 700;
+  cursor: pointer; transition: var(--t);
+}
+.dialog-btn-danger:hover { filter: brightness(1.1); }
+.dialog-btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ─── DASHBOARD CHROME (IDE-dark surface, replaces the old ad hoc palette) ─── */
+.dash-nav-row {
+  transition: var(--t);
+}
+.dash-nav-row:hover { background: var(--bg-hover); color: var(--ide-text); }
+.dash-nav-row[data-active="true"] { background: var(--accent-dim); color: var(--ide-text); }
+
+.dash-recent-link { transition: var(--t); }
+.dash-recent-link:hover { background: var(--bg-hover); color: var(--ide-text); }
+
+.dash-chip { transition: var(--t); }
+.dash-chip:hover { color: var(--ide-text); border-color: var(--accent-dim); }
+
+.dash-upgrade-card { transition: var(--t); }
+.dash-upgrade-card:hover { background: var(--accent-dim); }
+
+.dash-project-card {
+  transition: border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.pt-chooser-card { transition: border-color 0.15s var(--ease), transform 0.15s var(--ease); }
+.pt-chooser-card:hover, .pt-chooser-card:focus-visible { border-color: var(--pt-accent, var(--ide-border)); transform: translateY(-2px); }
+
+.dash-project-card:hover {
+  border-color: rgba(14,165,233,0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
+}
+
+/* ─── SECURITY CHROME (dashboard security badges / sidebar widget) ─── */
+.wy-sec-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.wy-sec-dot[data-level="green"]  { background: #34D399; box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+.wy-sec-dot[data-level="amber"]  { background: #F5A623; box-shadow: 0 0 6px rgba(245,166,35,0.5); }
+.wy-sec-dot[data-level="red"]    { background: #F0524B; box-shadow: 0 0 6px rgba(240,82,75,0.5); }
+.wy-sec-dot[data-level="none"]   { background: var(--ide-text3); }
+
+@keyframes sec-scan-sweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.wy-sec-sweep {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none; border-radius: inherit;
+}
+.wy-sec-sweep::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(14,165,233,0.12), transparent);
+  animation: sec-scan-sweep 3s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wy-sec-sweep::after { animation: none; display: none; }
+}
+
+@media (max-width: 768px) {
+  .mk-section { padding: 56px 20px; }
+  .mk-display { font-size: clamp(38px, 11vw, 52px); }
+  .mk-h2 { font-size: clamp(27px, 8vw, 36px); }
+}

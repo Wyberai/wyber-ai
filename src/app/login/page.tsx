@@ -13,12 +13,20 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const supabase = createClient();
 
+  // Preserve ?next= so a deep link (e.g. "Get your MCP key" → /api-keys) returns
+  // the user to where they were headed instead of dumping them on /dashboard.
+  // The auth callback already honors ?next; the login page just has to forward it.
+  const callbackUrl = () => {
+    const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
+    return `${location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`;
+  };
+
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl() },
     });
     if (error) setError(error.message);
     else setSent(true);
@@ -29,7 +37,7 @@ export default function LoginPage() {
     setOauthLoading(provider);
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     });
   };
 
@@ -41,7 +49,7 @@ export default function LoginPage() {
       <div style={{ display: 'none', flex: 1, background: '#0B1627', padding: '48px', flexDirection: 'column', justifyContent: 'space-between', minHeight: '100vh' }} className="login-left">
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
           <WyberLogo markSize={36} showWordmark={false} />
-          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.05em', color: '#EDF4FF' }}>Wyber<span style={{ color: '#38BDF8' }}>AI</span></span>
+          <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.05em', color: '#EDF4FF' }}>Wyber<span style={{ color: '#38BDF8' }}>Ai</span></span>
         </Link>
         <div>
           <p style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.03em', color: '#EDF4FF', lineHeight: 1.3, marginBottom: 16 }}>
@@ -60,7 +68,7 @@ export default function LoginPage() {
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 24 }}>
               <WyberLogo markSize={36} showWordmark={false} />
-              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.05em', color: '#0B1627' }}>Wyber<span style={{ color: '#0EA5E9' }}>AI</span></span>
+              <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.05em', color: '#0B1627' }}>Wyber<span style={{ color: '#0EA5E9' }}>Ai</span></span>
             </Link>
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', color: '#0B1627', margin: '0 0 8px' }}>Welcome back</h1>
             <p style={{ fontSize: 14, color: '#7A9BBE', margin: 0 }}>Sign in to continue building</p>

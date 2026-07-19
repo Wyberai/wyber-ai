@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { runProjectRlsScan, applyProjectRlsFix } from '@/lib/rls-scan-project'
+import { rateLimit } from '@/lib/rate-limit'
 
 /** Recent scan history for a project (RLS-scoped to the owner). */
 export async function GET(req: NextRequest) {
@@ -36,6 +37,11 @@ export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Each scan probes the customer's live Supabase over PostgREST table-by-table
+  // — cheap for us, but don't let a stuck client hammer THEIR database.
+  const { allowed } = rateLimit(`rls-scan:${user.id}`, 15, 600_000)
+  if (!allowed) return NextResponse.json({ error: 'Too many scans in a short time. Please wait a few minutes.' }, { status: 429 })
 
   const { projectId, action = 'scan', tables } = await req.json().catch(() => ({}))
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })

@@ -1,7 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useEditorStore } from '@/store/editor';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
+import { PanelHeader } from './ui';
 
 const ChatPanel       = dynamic(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })), { ssr: false });
 const KnowledgePanel  = dynamic(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })), { ssr: false });
@@ -13,6 +15,7 @@ const VersionHistory  = dynamic(() => import('./VersionHistory').then(m => ({ de
 const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ default: m.AgentMode })), { ssr: false });
 const FigmaImportPanel = dynamic(() => import('./FigmaImportPanel').then(m => ({ default: m.FigmaImportPanel })), { ssr: false });
 const RlsScanPanel    = dynamic(() => import('./RlsScanPanel').then(m => ({ default: m.RlsScanPanel })), { ssr: false });
+const ImagesPanel     = dynamic(() => import('./ImagesPanel').then(m => ({ default: m.ImagesPanel })), { ssr: false });
 
 interface Props {
   projectId?: string;
@@ -23,7 +26,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'connectors' | 'history';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'images' | 'connectors' | 'history';
 
 const TAB_ICONS: Record<string, JSX.Element> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
@@ -34,6 +37,7 @@ const TAB_ICONS: Record<string, JSX.Element> = {
   database: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
   security: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
   themes: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10M12 2a15.3 15.3 0 00-4 10 15.3 15.3 0 004 10M2 12h20"/></svg>,
+  images: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>,
   connectors: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 13.5l7 3.5M15.5 7l-7 3.5"/></svg>,
   history: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>,
 };
@@ -45,6 +49,8 @@ const TABS: { id: Tab; label: string; desc: string }[] = [
   { id: 'knowledge',  label: 'Knowledge',  desc: 'Your project brain — sent with every prompt' },
   { id: 'database',   label: 'Database',   desc: 'Connect Supabase' },
   { id: 'security',   label: 'Security',   desc: 'Real RLS scan — proves nobody can read your users’ data' },
+  { id: 'themes',     label: 'Themes',     desc: 'Retheme your app instantly — colors, fonts, radius. Free' },
+  { id: 'images',     label: 'Images',     desc: 'Every image in your app — regenerate, upload, transparency' },
   { id: 'connectors', label: 'Connectors', desc: 'Stripe, Resend & more' },
   { id: 'history',    label: 'History',    desc: 'Save & restore versions' },
 ];
@@ -53,6 +59,18 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
   const { files, setFiles } = useEditorStore();
+
+  // Deep-link into a specific tab from elsewhere in the editor (e.g. the
+  // SecurityReportCard's "Open full security scan" → 'security'). Same
+  // CustomEvent pattern as wyber-request-mobile-view.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tab = (e as CustomEvent).detail;
+      if (typeof tab === 'string' && TABS.some(t => t.id === tab)) setActive(tab as Tab);
+    };
+    window.addEventListener('wyber-open-panel-tab', handler);
+    return () => window.removeEventListener('wyber-open-panel-tab', handler);
+  }, []);
 
   // FigmaImportPanel callback — add the imported component to the editor store and switch to chat
   const handleFigmaImport = (code: string, fileName: string) => {
@@ -69,11 +87,12 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
           <button key={tab.id} onClick={() => setActive(tab.id)} title={`${tab.label} — ${tab.desc}`}
             style={{
               width: 38, height: 38, borderRadius: 9, border: 'none',
-              background: active === tab.id ? 'rgba(14,165,233,0.12)' : 'transparent',
-              color: active === tab.id ? '#0EA5E9' : 'var(--ide-text3)',
+              background: active === tab.id ? 'var(--brand-glow-soft, rgba(14,165,233,0.12))' : 'transparent',
+              color: active === tab.id ? 'var(--brand-accent, #0EA5E9)' : 'var(--ide-text3)',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, transition: 'all 0.15s',
-              outline: active === tab.id ? '1px solid rgba(14,165,233,0.25)' : 'none',
+              fontSize: 16, transition: 'all var(--brand-dur-fast, 0.15s) var(--brand-ease, ease)',
+              outline: active === tab.id ? '1px solid var(--brand-border-accent, rgba(14,165,233,0.25))' : 'none',
+              boxShadow: active === tab.id ? '0 0 10px var(--brand-glow-soft, rgba(14,165,233,0.15))' : 'none',
             }}
             onMouseEnter={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
             onMouseLeave={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
@@ -92,29 +111,31 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
 
       {/* Panel content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ display: 'flex', alignItems: 'center' }}>{TAB_ICONS[active]}</span>
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ide-text)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-              {TABS.find(t => t.id === active)?.label}
-            </div>
-            <div style={{ fontSize: 10, color: 'var(--ide-text3)' }}>
-              {TABS.find(t => t.id === active)?.desc}
-            </div>
-          </div>
-        </div>
+        <PanelHeader
+          icon={TAB_ICONS[active]}
+          title={TABS.find(t => t.id === active)?.label ?? ''}
+          desc={TABS.find(t => t.id === active)?.desc}
+        />
 
-        <div style={{ flex: 1, overflow: 'hidden' }}>
-          {active === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
-          {active === 'agent'      && <div style={scrollStyle}><AgentMode /></div>}
-          {active === 'figma'      && <div style={scrollStyle}><FigmaImportPanel onImport={handleFigmaImport} /></div>}
-          {active === 'knowledge'  && <KnowledgePanel projectId={projectId} />}
-          {active === 'templates'  && <div style={scrollStyle}><TemplateGallery onClose={() => setActive('chat')} /></div>}
-          {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
-          {active === 'security'   && <div style={scrollStyle}><RlsScanPanel projectId={projectId || ''} /></div>}
-          {active === 'themes'     && <div style={scrollStyle}><ThemePanel /></div>}
-          {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} /></div>}
-          {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
+        {/* Every panel is error-boundary'd so a crash inside one tab can never
+            take down the editor or the live preview (hard rule — a prior
+            chatbot widget once broke the preview for days). key=active gives
+            each tab its own boundary instance AND retriggers the entrance
+            animation on switch. */}
+        <div key={active} className="ide-panel-enter" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <ErrorBoundary fallbackMessage={`The ${TABS.find(t => t.id === active)?.label ?? ''} panel hit an error — your app and preview are unaffected`}>
+            {active === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
+            {active === 'agent'      && <div style={scrollStyle}><AgentMode /></div>}
+            {active === 'figma'      && <div style={scrollStyle}><FigmaImportPanel onImport={handleFigmaImport} /></div>}
+            {active === 'knowledge'  && <KnowledgePanel projectId={projectId} />}
+            {active === 'templates'  && <div style={scrollStyle}><TemplateGallery onClose={() => setActive('chat')} /></div>}
+            {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
+            {active === 'security'   && <div style={scrollStyle}><RlsScanPanel projectId={projectId || ''} /></div>}
+            {active === 'themes'     && <div style={scrollStyle}><ThemePanel /></div>}
+            {active === 'images'     && <div style={scrollStyle}><ImagesPanel projectId={projectId} /></div>}
+            {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
+            {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
+          </ErrorBoundary>
         </div>
       </div>
     </div>

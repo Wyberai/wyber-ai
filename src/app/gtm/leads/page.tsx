@@ -19,9 +19,9 @@ export default async function LeadsPage() {
 
   const { data: leads, count } = user ? await supabase
     .from('gtm_leads')
-    .select('id, first_name, last_name, email, company_name, title, status, icp_score, created_at', { count: 'exact' })
+    .select('id, first_name, last_name, email, company_name, title, status, icp_fit_score, created_at', { count: 'exact' })
     .eq('user_id', user.id)
-    .order('icp_score', { ascending: false })
+    .order('icp_fit_score', { ascending: false })
     .limit(50) : { data: [], count: 0 }
 
   return (
@@ -62,7 +62,7 @@ export default async function LeadsPage() {
               <tbody>
                 {leads.map((lead: any, i: number) => {
                   const color = STATUS_COLORS[lead.status] || s.muted
-                  const score = lead.icp_score || 0
+                  const score = lead.icp_fit_score || 0
                   const scoreColor = score >= 80 ? s.green : score >= 60 ? s.yellow : s.muted
                   return (
                     <tr key={lead.id} style={{ borderBottom: i < leads.length - 1 ? `1px solid ${s.border}` : 'none' }}>

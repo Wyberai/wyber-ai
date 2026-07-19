@@ -14,10 +14,13 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json() as {
     lead_ids?: string[]
-    leads?: Array<{ first_name: string; last_name: string; company_name: string; title?: string; linkedin_url?: string; email?: string }>
+    leads?: Array<{ id?: string; first_name: string; last_name: string; company_name: string; title?: string; linkedin_url?: string; email?: string }>
     template: string
     sender_name?: string
     value_prop?: string
+    /** Persist results as approval-queue drafts (gtm_outreach_logs, status 'draft') */
+    save?: boolean
+    campaign_id?: string
   }
 
   if (!body.template) return NextResponse.json({ error: 'template required' }, { status: 400 })
@@ -35,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   if (!leads.length) return NextResponse.json({ error: 'No leads provided' }, { status: 400 })
 
-  const results: Array<{ lead_name: string; email?: string; personalized_subject: string; personalized_body: string; signals_used: string[] }> = []
+  const results: Array<{ lead_id?: string; lead_name: string; email?: string; personalized_subject: string; personalized_body: string; signals_used: string[]; signal_hook?: string }> = []
 
   for (const lead of leads.slice(0, 20)) {
     const signals: string[] = []
@@ -103,14 +106,17 @@ Rules:
       const parsed = match ? JSON.parse(match[0]) : { subject: '', body: '' }
 
       results.push({
+        lead_id: (lead as { id?: string }).id,
         lead_name: `${lead.first_name} ${lead.last_name}`,
         email: lead.email,
         personalized_subject: parsed.subject ?? '',
         personalized_body: parsed.body ?? '',
         signals_used: signals,
+        signal_hook: parsed.opening_hook ?? '',
       })
     } catch {
       results.push({
+        lead_id: (lead as { id?: string }).id,
         lead_name: `${lead.first_name} ${lead.last_name}`,
         email: lead.email,
         personalized_subject: '',
@@ -120,5 +126,26 @@ Rules:
     }
   }
 
-  return NextResponse.json({ personalized: results, count: results.length })
+  // Persist as approval-queue drafts — the queue (gtm/outreach) is where a human approves them.
+  let saved = 0
+  if (body.save) {
+    const rows = results.filter(r => r.lead_id && r.personalized_body).map(r => ({
+      user_id: user.id,
+      campaign_id: body.campaign_id || null,
+      lead_id: r.lead_id,
+      type: 'email',
+      status: 'draft',
+      subject: r.personalized_subject || 'Quick question',
+      body: r.personalized_body,
+      body_preview: r.personalized_body.slice(0, 200),
+      signal: [r.signal_hook, ...(r.signals_used || [])].filter(Boolean).join(' · ') || 'no external signal found',
+    }))
+    if (rows.length) {
+      const { error: saveErr, data: ins } = await db.from('gtm_outreach_logs').insert(rows).select('id')
+      if (saveErr) return NextResponse.json({ personalized: results, count: results.length, saved: 0, save_error: saveErr.message })
+      saved = ins?.length || 0
+    }
+  }
+
+  return NextResponse.json({ personalized: results, count: results.length, saved })
 }

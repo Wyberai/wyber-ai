@@ -33,7 +33,9 @@ export function AutoFix() {
         const btn = document.querySelector('[data-send-button]') as HTMLButtonElement
         if (btn && !btn.disabled) {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { prompt: 'Fix this JavaScript error in the app: ' + msg.slice(0, 200) }
+            // `error` carries the raw message so ChatPanel's loop guard can
+            // signature-match repeats independent of the prompt wording.
+            detail: { prompt: 'Fix this JavaScript error in the app: ' + msg.slice(0, 200), error: msg.slice(0, 300) }
           }))
         }
       }, 500)

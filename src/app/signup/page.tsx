@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { WyberLogo } from '@/components/shared/WyberLogo';
@@ -11,20 +11,37 @@ export default function SignupPage() {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
-  const [agreed, setAgreed] = useState(false);
   const supabase = createClient();
 
-  const [termsShake, setTermsShake] = useState(false);
-  const nudgeTerms = () => { setError('Please agree to the Terms of Service first'); setTermsShake(true); setTimeout(() => setTermsShake(false), 600); };
+  // Capture a referral code from ?ref=CODE so the referrer gets credited when
+  // this person signs up. Stashed in a cookie (survives the OAuth/magic-link
+  // round-trip on the same browser) AND carried on the auth redirect URL (so it
+  // survives even cross-tab). The callback reads whichever is present.
+  const [ref, setRef] = useState('');
+  useEffect(() => {
+    const code = new URLSearchParams(location.search).get('ref');
+    if (code) {
+      const clean = code.trim().toUpperCase().slice(0, 32);
+      setRef(clean);
+      document.cookie = `wyber_ref=${encodeURIComponent(clean)}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    }
+  }, []);
+  const callbackUrl = () => {
+    const params = new URLSearchParams();
+    if (ref) params.set('ref', ref);
+    const next = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null;
+    if (next) params.set('next', next);
+    const qs = params.toString();
+    return `${location.origin}/auth/callback${qs ? `?${qs}` : ''}`;
+  };
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreed) { nudgeTerms(); return; }
     if (!email.trim()) { setError('Please enter your email address'); return; }
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: callbackUrl() },
     });
     if (error) setError(error.message);
     else setSent(true);
@@ -32,11 +49,10 @@ export default function SignupPage() {
   };
 
   const handleOAuth = async (provider: 'google' | 'github') => {
-    if (!agreed) { nudgeTerms(); return; }
     setOauthLoading(provider);
     await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: callbackUrl() },
     });
   };
 
@@ -70,20 +86,12 @@ export default function SignupPage() {
               <p style={{ fontSize: 16, fontWeight: 700, color: '#065F46', marginBottom: 8 }}>Check your email</p>
               <p style={{ fontSize: 14, color: '#059669', margin: 0 }}>We sent a sign-in link to <strong>{email}</strong></p>
               <p style={{ fontSize: 12, color: '#6EE7B7', marginTop: 16 }}>The link expires in 10 minutes</p>
+              <p style={{ fontSize: 12, color: '#059669', marginTop: 8 }}>
+                Nothing after a minute? Check spam — or go back and use <strong>Google/GitHub</strong> for instant access.
+              </p>
             </div>
           ) : (
             <div style={{ background: '#FFFFFF', border: '1px solid #DCE4F0', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(11,22,39,0.06)' }}>
-
-              {/* Terms checkbox — top, before anything */}
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 20, padding: '12px 14px', background: termsShake ? '#FEF2F2' : '#F6F8FB', borderRadius: 10, border: `1px solid ${termsShake ? '#FCA5A5' : '#DCE4F0'}`, animation: termsShake ? 'shake 0.4s ease' : 'none', transition: 'background 0.3s, border-color 0.3s' }}>
-                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 2, flexShrink: 0, accentColor: '#0EA5E9', width: 15, height: 15 }} />
-                <span style={{ fontSize: 12, color: '#7A9BBE', lineHeight: 1.6 }}>
-                  I agree to the{' '}
-                  <a href="/terms" target="_blank" style={{ color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' }}>Terms of Service</a>
-                  {' '}and{' '}
-                  <a href="/privacy" target="_blank" style={{ color: '#0EA5E9', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</a>
-                </span>
-              </label>
 
               {/* OAuth buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -131,7 +139,15 @@ export default function SignupPage() {
                 </button>
               </form>
 
-              <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 20, marginBottom: 0 }}>
+              {/* Implicit consent (clickwrap) — no hard gate that silently blocks the buttons */}
+              <p style={{ textAlign: 'center', color: '#9CB2CC', fontSize: 11.5, lineHeight: 1.6, marginTop: 18, marginBottom: 0 }}>
+                By continuing, you agree to our{' '}
+                <a href="/terms" target="_blank" style={{ color: '#7A9BBE', fontWeight: 600, textDecoration: 'none' }}>Terms</a>
+                {' '}&amp;{' '}
+                <a href="/privacy" target="_blank" style={{ color: '#7A9BBE', fontWeight: 600, textDecoration: 'none' }}>Privacy Policy</a>
+              </p>
+
+              <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 16, marginBottom: 0 }}>
                 Already have an account? <Link href="/login" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
               </p>
             </div>

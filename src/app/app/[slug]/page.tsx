@@ -1,6 +1,9 @@
-import { createClient } from '@/lib/supabase/server'
-import { notFound } from 'next/navigation'
+import { createServiceClient } from '@/lib/supabase/server'
+import { headers } from 'next/headers'
+import { logDemoEvent } from '@/lib/gtm/events'
 import { Metadata } from 'next'
+import ReportButton from './ReportButton'
+import InstallPrompt from './InstallPrompt'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -21,8 +24,20 @@ interface AppSeo {
   ogTitle?: string
   ogDescription?: string
   ogImage?: string
-  ogType?: string
+  ogType?: OgType
   jsonLd?: string
+}
+
+// Next.js validates openGraph.type against a fixed union and THROWS during
+// metadata resolution on anything else — a generated restaurant app emitting
+// og:type="restaurant.restaurant" crashed the whole published page (SSR throw →
+// global error boundary). Scrape freely, but only ever hand Next a value it
+// accepts; everything else falls back to 'website'.
+type OgType = 'website' | 'article' | 'book' | 'profile'
+const ALLOWED_OG_TYPES = new Set<OgType>(['website', 'article', 'book', 'profile'])
+function safeOgType(raw?: string): OgType {
+  const t = (raw ?? '').trim().toLowerCase()
+  return ALLOWED_OG_TYPES.has(t as OgType) ? (t as OgType) : 'website'
 }
 
 function extractSeo(html: string): AppSeo {
@@ -33,23 +48,51 @@ function extractSeo(html: string): AppSeo {
     ogTitle: decode(metaContent(html, 'property', 'og:title')),
     ogDescription: decode(metaContent(html, 'property', 'og:description')),
     ogImage: decode(metaContent(html, 'property', 'og:image')),
-    ogType: decode(metaContent(html, 'property', 'og:type')) || 'website',
+    ogType: safeOgType(decode(metaContent(html, 'property', 'og:type'))),
     jsonLd: html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i)?.[1]?.trim(),
   }
 }
 
-async function loadHtml(slug: string): Promise<{ name: string; html: string } | null> {
-  const supabase = await createClient()
+async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean } | null> {
+  try {
+    return await loadHtmlInner(slug)
+  } catch {
+    // A Supabase/storage failure must never crash the public page into the
+    // platform error boundary (which bounces visitors to /login). Fall through
+    // to the calm "Building your app…" state instead.
+    return null
+  }
+}
+
+async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean } | null> {
+  // Service client, not the session client: this is a PUBLIC page (anonymous
+  // visitors, shared links, the mobile app's in-app browser). The `projects`
+  // RLS policy doesn't grant anon SELECT on is_public rows, so the session
+  // client returned null for everyone but the logged-in owner — the app then
+  // showed the "Building your app…" fallback forever. Still filtered to
+  // is_public=true, so no private project is ever readable here.
+  const supabase = await createServiceClient()
   const { data: project } = await supabase
     .from('projects')
-    .select('id, name')
+    .select('id, name, user_id, is_demo')
     .eq('subdomain', slug)
     .eq('is_public', true)
     .single()
   if (!project) return null
   const { data: fileData } = await supabase.storage.from('published-apps').download(`${project.id}/index.html`)
   if (!fileData) return null
-  return { name: project.name, html: await fileData.text() }
+  // Owner's plan decides the "Built with WyberAi" badge (free = badge, paid =
+  // clean app). RLS hides other users' profile rows from the session client,
+  // so this lookup needs the service client; a failed lookup falls back to
+  // 'free' — matching the profiles schema default — so the badge fails toward
+  // showing, never toward silently removing a free-tier attribution.
+  let ownerPlan = 'free'
+  try {
+    const { data: owner } = await supabase
+      .from('profiles').select('plan').eq('id', project.user_id).single()
+    if (owner?.plan) ownerPlan = String(owner.plan)
+  } catch { /* fall back to free */ }
+  return { name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -65,12 +108,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    // Campaign demos are ~100 near-duplicate pages carrying real company names
+    // with placeholder data — must never be indexed (thin/duplicate content +
+    // brand-exposure risk). Cleared to a normal page once the founder claims it.
+    ...(loaded.isDemo ? { robots: { index: false, follow: false } } : {}),
     alternates: { canonical },
+    // Each published app is its own PWA. Without these overrides the root
+    // layout's metadata leaks here and this page advertises the PLATFORM's
+    // manifest + icons — Chrome would offer to install "WyberAi" on top of a
+    // user's app.
+    manifest: `/app/${slug}/manifest.webmanifest`,
+    icons: { icon: `/app/${slug}/pwa-icon-192.png`, apple: `/app/${slug}/pwa-icon-192.png` },
+    appleWebApp: { capable: true, title: loaded.name, statusBarStyle: 'black-translucent' },
     openGraph: {
       title: seo.ogTitle || title,
       description: seo.ogDescription || description,
       url: canonical,
-      type: (seo.ogType as 'website') || 'website',
+      type: seo.ogType ?? 'website',
       images: seo.ogImage ? [seo.ogImage] : undefined,
     },
     twitter: {
@@ -97,7 +151,14 @@ export default async function PublishedAppPage({ params }: Props) {
     )
   }
 
-  const { name, html } = loaded
+  const { name, html, ownerPlan } = loaded
+
+  // GTM funnel: record that this campaign demo was opened (fire-and-forget,
+  // is_demo pages only so we don't log every published app).
+  if (loaded.isDemo) {
+    const h = await headers()
+    logDemoEvent(createServiceClient(), { event: 'view', slug, ua: h.get('user-agent'), ref: h.get('referer') })
+  }
   // Hoist the app's JSON-LD up to the real document so crawlers + rich results
   // see it (iframe/srcdoc structured data is not attributed to the page).
   // SECURITY: this runs in the wyberai.com origin (not the sandboxed iframe), so
@@ -114,10 +175,15 @@ export default async function PublishedAppPage({ params }: Props) {
       {safeJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd }} />
       )}
-      <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
-        <a href="https://wyberai.com" target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
-      </div>
+      {/* Free-tier attribution — paid plans publish clean, unbranded apps. */}
+      {ownerPlan === 'free' && (
+        <div style={{ position: 'fixed', bottom: 12, right: 12, zIndex: 9999, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '5px 10px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)' }}>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-sans)' }}>Built with</span>
+          {/* Attributed link — every free published app is an acquisition
+              channel; utm+ref make it measurable in GA/PostHog. */}
+          <a href={`https://wyberai.com/?utm_source=made-with-badge&utm_medium=badge&utm_campaign=${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
+        </div>
+      )}
       {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
       <iframe
         srcDoc={html}
@@ -125,6 +191,11 @@ export default async function PublishedAppPage({ params }: Props) {
         style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }}
         title={name}
       />
+      {/* UGC abuse-report control — required on every published app regardless of plan. */}
+      <ReportButton slug={slug} />
+      {/* Install pill — the shell is the top-level document Chrome reads the
+          manifest from; the app HTML's own runtime is inert inside the iframe. */}
+      <InstallPrompt />
     </>
   )
 }

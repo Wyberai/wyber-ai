@@ -3,6 +3,12 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+import { isPlaceholderApp } from '@/lib/starter-templates'
+import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
+import { injectWyberLoc, injectPreviewBridge } from '@/lib/wyber-preview/bridge'
+import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
+import { creditCost } from '@/lib/credits'
+import { MicroLabel } from './ui'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
@@ -21,6 +27,10 @@ interface SelectedEl {
   tag: string
   text: string
   classes: string
+  /** data-wyber-loc of the element (or nearest tagged ancestor): "path:line" */
+  loc: string | null
+  /** the tagged ancestor's own text — used when the clicked node itself is untagged */
+  locText: string | null
 }
 
 // Cheap, stable content hash (djb2). Used to detect when a file actually changed
@@ -33,7 +43,7 @@ function hashStr(s: string): number {
 }
 
 export function PreviewPanel() {
-  const { files, isGenerating, project, hydrated, connectors } = useEditorStore()
+  const { files, isGenerating, generationTurnSeq, project, hydrated, connectors, setPreviewError, setPreviewHealFailed, selectionConsumer, setSelectionConsumer } = useEditorStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
@@ -56,11 +66,35 @@ export function PreviewPanel() {
   const buildRef = useRef<() => void>(() => {})
   const autoBuildTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Mirror local error/heal state into the store so UI outside this component
+  // (e.g. Wyberman) can know the preview is stuck, without touching any of the
+  // local state machine above.
+  useEffect(() => { setPreviewError(error) }, [error, setPreviewError])
+  useEffect(() => { setPreviewHealFailed(healFailed) }, [healFailed, setPreviewHealFailed])
+
   const appFile = (files['src/App.tsx'] || files['src/App.jsx']) as any
-  const hasApp = Object.keys(files).length >= 2 && (appFile?.content?.length ?? 0) > 200
+  // "A real App exists" — not the starter placeholder. The old `length > 200`
+  // check passed for the ~460-char starter placeholder, so a build that never
+  // wrote App.tsx still "previewed": it built the placeholder page with every
+  // generated component unmounted, which users read as a blank/broken preview.
+  const hasApp = Object.keys(files).length >= 2 && !isPlaceholderApp(appFile?.content)
+
+  // Set when a build request arrives while another build is in flight. Without
+  // this, that request was silently DROPPED (build() early-returns on
+  // `building`) — the classic "generation finished but the preview never
+  // updated" case. The effect below re-runs build once the in-flight one ends;
+  // the content-hash check makes the re-run a no-op if nothing changed.
+  const pendingBuild = useRef(false)
+
+  // URL of the previous successful build. When a fresh bundle crashes at
+  // startup (blank white screen — common mid-Supabase-integration), the iframe
+  // reverts to this while self-heal repairs the new one, so the user keeps
+  // seeing a working app instead of a white void.
+  const lastGoodUrl = useRef<string | null>(null)
 
   const build = useCallback(async (force = false) => {
-    if (!hasApp || building) return
+    if (!hasApp) return
+    if (building) { pendingBuild.current = true; return }
     const key = Object.keys(files).sort().map(p => `${p}:${hashStr((files[p] as any)?.content ?? '')}`).join('|')
     // Auto-builds skip when nothing changed; the manual Rebuild button passes
     // force=true so it always re-fetches (e.g. to pick up a new preview shell).
@@ -79,10 +113,40 @@ export function PreviewPanel() {
     }, 1800)
 
     try {
+      // Real images in the PREVIEW: resolve {{wyber-image}} directives into
+      // permanent generated-image URLs before building. Server-side generation
+      // is idempotent (one ~$0.06 generation per unique image, cached in
+      // storage; publish reuses the same cache), so rebuilds resolve in <1s.
+      // Substitution happens on the BUILD REQUEST only — the saved source
+      // keeps its tokens. Any failure falls back to sanitize's gradient
+      // placeholders; the build itself is never blocked by imagery.
+      let buildFiles = files as Record<string, { content?: string; language?: string }>
+      const directives = extractImageDirectives(buildFiles)
+      if (directives.length > 0 && project?.id) {
+        try {
+          const imgRes = await fetch('/api/images/resolve-directives', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id, directives }),
+          })
+          const { urls } = await imgRes.json()
+          if (urls && typeof urls === 'object') {
+            for (const [token, url] of Object.entries(urls)) {
+              if (typeof url === 'string' && url) buildFiles = replaceTokenInFiles(buildFiles, token, url)
+            }
+          }
+        } catch { /* gradients remain — never block the build on imagery */ }
+      }
+
+      // Selection bridge (transient, build-request only — saved source stays
+      // clean, publish is untouched): tag JSX with data-wyber-loc BEFORE
+      // sanitize (only the user's real files get tagged), append the bridge
+      // <script> AFTER sanitize (index.html is guaranteed to exist by then).
+      // Both transforms fall back to the untouched map on any error.
       const res = await fetch(`${BUILDER_URL}/build`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: sanitizeFiles(files as Record<string, { content?: string; language?: string }>), projectId: project?.id }),
+        body: JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id }),
       })
 
       const data = await res.json()
@@ -90,6 +154,10 @@ export function PreviewPanel() {
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
       if (data.url) {
+        // The build being replaced rendered without a startup crash (a crash
+        // would have reverted html to the previous good URL already) — keep it
+        // as the fallback for the incoming one.
+        if (html) lastGoodUrl.current = html
         setHtml(data.url + (data.url.includes('?') ? '&' : '?') + 't=' + Date.now())
         setError(null)
         if (isFirstBuild.current && Object.keys(files).length > 3) {
@@ -111,6 +179,14 @@ export function PreviewPanel() {
 
   useEffect(() => { buildRef.current = build }, [build])
 
+  // Drain the queued build request once the in-flight build finishes.
+  useEffect(() => {
+    if (!building && pendingBuild.current) {
+      pendingBuild.current = false
+      buildRef.current()
+    }
+  }, [building])
+
   useEffect(() => {
     if (prevGenerating.current && !isGenerating && hasApp) {
       buildRef.current()
@@ -129,12 +205,77 @@ export function PreviewPanel() {
     return () => { if (autoBuildTimer.current) clearTimeout(autoBuildTimer.current) }
   }, [files, hydrated, hasApp, isGenerating])
 
+  // Supabase FREE projects auto-pause after ~1 week of inactivity — the app
+  // then looks broken (nothing loads or saves) with no visible cause, and
+  // users blame the builder. Poll health when a Supabase connector exists and
+  // offer a one-click restore. Fully isolated: any failure here only hides
+  // the banner, never touches the preview state machine.
+  const [dbHealth, setDbHealth] = useState<'paused' | 'restoring' | null>(null)
+  const dbPollGen = useRef(0)
+  // Derived render guard (instead of resetting state inside the effect):
+  // stale health from a disconnected project simply stops rendering.
+  const hasSupabaseConn = connectors.some(c => c.service === 'supabase')
+  useEffect(() => {
+    if (!project?.id || !hasSupabaseConn) return
+    const gen = ++dbPollGen.current
+    const check = async () => {
+      try {
+        const r = await fetch(`/api/connectors/supabase/health?projectId=${project.id}`)
+        const d = await r.json() as { status?: string }
+        if (dbPollGen.current !== gen) return
+        if (d.status === 'paused') setDbHealth('paused')
+        else if (d.status === 'restoring') setDbHealth('restoring')
+        else setDbHealth(null)
+      } catch { /* banner stays as-is; never disturb the preview */ }
+    }
+    check()
+    const t = setInterval(check, 5 * 60_000)
+    return () => { dbPollGen.current++; clearInterval(t) }
+  }, [project?.id, hasSupabaseConn])
+
+  // Plain function (not useCallback): only used as an onClick handler, and
+  // the ref mutation inside trips the react-compiler memoization check.
+  const restoreDb = async () => {
+    if (!project?.id) return
+    setDbHealth('restoring')
+    try {
+      const r = await fetch('/api/connectors/supabase/health', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.id, action: 'restore' }),
+      })
+      const d = await r.json() as { restored?: boolean }
+      if (!d.restored) {
+        // Can't restore from here (no OAuth) — reopen the connect modal so the
+        // user can fix the connection; banner returns to paused.
+        setDbHealth('paused')
+        window.dispatchEvent(new CustomEvent('wyber-open-supabase'))
+        return
+      }
+      // Poll until the project comes back (usually <1 min, cap ~4 min).
+      const gen = ++dbPollGen.current
+      for (let i = 0; i < 24; i++) {
+        await new Promise(res => setTimeout(res, 10_000))
+        if (dbPollGen.current !== gen) return
+        try {
+          const h = await fetch(`/api/connectors/supabase/health?projectId=${project.id}`)
+          const hd = await h.json() as { status?: string }
+          if (hd.status === 'ok') { setDbHealth(null); return }
+        } catch { /* keep polling */ }
+      }
+    } catch { setDbHealth('paused') }
+  }
+
+  // When the current preview finished loading — runtime errors are only
+  // treated as build-breaking within a grace window after this (see handler).
+  const loadedAt = useRef(0)
+
   useEffect(() => {
     if (iframeRef.current && html) {
       iframeRef.current.src = html
       // Inject runtime error capture after iframe loads
       const iframe = iframeRef.current
       const injectErrorCapture = () => {
+        loadedAt.current = Date.now()
         try {
           const iframeWindow = iframe.contentWindow
           if (!iframeWindow) return
@@ -157,33 +298,86 @@ export function PreviewPanel() {
     const handler = (e: MessageEvent) => {
       if (!e.data || typeof e.data !== 'object') return
       if (e.data.type === 'wyber-element-selected') {
-        setSelectedEl({
+        const picked = {
           selector: e.data.selector || '',
           tag: e.data.tag || '',
           text: e.data.text || '',
           classes: e.data.classes || '',
-        })
+          loc: e.data.loc || null,
+          locText: e.data.locText || null,
+        }
+        // Route the pick to whichever feature currently owns selection mode —
+        // Wyberman's "point and ask" reuses this same channel but explains the
+        // element instead of opening the visual-edit instruction popup.
+        if (selectionConsumer === 'wyberman') {
+          window.dispatchEvent(new CustomEvent('wyberman-element-selected', { detail: picked }))
+        } else {
+          setSelectedEl(picked)
+        }
       }
-      // Capture runtime errors from inside the iframe
+      // In-preview inline text edit committed (bridge's contentEditable path).
+      // Fresh state via getState() — this handler's closure would otherwise
+      // hold stale files.
+      if (e.data.type === 'wyber-text-committed' && typeof e.data.newText === 'string' && e.data.oldText) {
+        const st = useEditorStore.getState()
+        const r = applyTextEdit(st.files, e.data.loc, e.data.oldText, e.data.newText)
+        if (r.ok) {
+          st.setFiles(r.files as typeof st.files)
+          if (st.project?.id) {
+            fetch('/api/projects', {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projectId: st.project.id, files: r.files, userId: (st.project as { userId?: string }).userId || 'auto' }),
+            }).catch(() => {})
+          }
+        }
+      }
+      // Capture runtime errors from inside the iframe. Only errors within a
+      // grace window after load count as build-breaking (startup crashes /
+      // white screens). Errors thrown later — e.g. the user clicks a button
+      // with a bug in its handler — used to blank a perfectly visible preview
+      // and kick off the heal loop, which is the "preview keeps fluctuating"
+      // behavior. Those are now logged but don't tear down the preview.
       if (e.data.type === 'wyber-runtime-error') {
         const runtimeErr = `Runtime error: ${e.data.message || 'Unknown error'}${e.data.source ? ` in ${e.data.source}` : ''}${e.data.lineno ? `:${e.data.lineno}` : ''}`
         console.warn('[Preview] Runtime error caught:', runtimeErr)
-        if (!error && !fixing && !isGenerating) {
+        const withinStartupWindow = Date.now() - loadedAt.current < 15_000
+        if (!error && !fixing && !isGenerating && withinStartupWindow) {
           setError(runtimeErr)
+          // Show the previous working build while self-heal repairs this one —
+          // a startup crash otherwise leaves a blank white iframe on screen.
+          if (lastGoodUrl.current && lastGoodUrl.current !== html) {
+            setHtml(lastGoodUrl.current)
+          }
         }
       }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [error, fixing, isGenerating])
+  }, [error, fixing, isGenerating, selectionConsumer, html])
 
   // Tell the iframe when edit mode toggles
   const toggleEditMode = () => {
     const next = !editMode
     setEditMode(next)
     setSelectedEl(null)
+    setSelectionConsumer(next ? 'visual-edit' : null)
     iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: next }, '*')
   }
+
+  // External features (e.g. Wyberman's "point and ask") can request the same
+  // click-to-select mode without reaching into this component's iframe ref.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { on: boolean; consumer: 'wyberman' } | undefined
+      if (!detail) return
+      setEditMode(detail.on)
+      setSelectedEl(null)
+      setSelectionConsumer(detail.on ? detail.consumer : null)
+      iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: detail.on }, '*')
+    }
+    window.addEventListener('wyber-request-edit-mode', handler)
+    return () => window.removeEventListener('wyber-request-edit-mode', handler)
+  }, [setSelectionConsumer])
 
   // Re-send edit mode state whenever the iframe reloads
   useEffect(() => {
@@ -194,6 +388,19 @@ export function PreviewPanel() {
       return () => clearTimeout(t)
     }
   }, [html, editMode])
+
+  // ThemePanel's instant retheme: forward the override CSS into the iframe
+  // (the bridge upserts <style id="wyber-theme-override"> — no rebuild).
+  // Purely additive; touches nothing in the build/heal state machine.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { css?: string } | undefined
+      if (typeof detail?.css !== 'string') return
+      iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-apply-theme', css: detail.css }, '*')
+    }
+    window.addEventListener('wyber-apply-theme', handler)
+    return () => window.removeEventListener('wyber-apply-theme', handler)
+  }, [])
 
   // Total auto-heal attempts spent on the CURRENT user generation. Bounded so the
   // loop always converges — see the auto-heal effect below.
@@ -238,6 +445,19 @@ export function PreviewPanel() {
         // normal build, so the user never sees that anything was auto-fixed.
         setError(null)
         setFixing(false)
+        // Persist the fix — this used to only call setFiles (client state),
+        // never saving to the DB. Confirmed live: the preview rendered fine
+        // (client state was correct) but the project row's `files`/`updated_at`
+        // never changed, so a page reload (or anyone else opening the project)
+        // reverted straight back to the broken file, silently undoing an
+        // otherwise-successful fix. Same PATCH call PreviewPanel already uses
+        // for the in-preview text-edit path a few lines up.
+        if (project?.id) {
+          fetch('/api/projects', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectId: project.id, files: updatedFiles, userId: (project as { userId?: string }).userId || 'auto' }),
+          }).catch(() => {})
+        }
         return
       }
     } catch { /* fall through to chat-based fix */ }
@@ -246,7 +466,7 @@ export function PreviewPanel() {
     const prompt = `The app failed to build with this error. Fix the exact file and syntax causing it, and return the corrected file(s):\n\n${error.slice(0, 600)}`
     window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt } }))
     setTimeout(() => setFixing(false), 3000)
-  }, [error, fixing, files, setFiles])
+  }, [error, fixing, files, setFiles, project])
 
   // Auto-trigger self-heal on errors — BOUNDED so it always converges.
   // The budget is a TOTAL number of attempts per user-initiated generation, and
@@ -256,46 +476,115 @@ export function PreviewPanel() {
   // for any reason auto-fix couldn't resolve looped "Build failed → finishing
   // touches →…" forever. Once the budget is spent we stop and surface the error.
   const MAX_HEAL = 3
+  // When heal gives up but an earlier build worked, fall back to that build in
+  // the iframe (with an error strip on top) instead of a full-screen error —
+  // a broken update (e.g. mid-connector integration) must never blank out a
+  // previously working app.
+  const [revertedToGood, setRevertedToGood] = useState(false)
   useEffect(() => {
     if (error && !building && !isGenerating && !fixing) {
-      if (healTotal.current >= MAX_HEAL) { setHealFailed(true); return }
+      if (healTotal.current >= MAX_HEAL) {
+        setHealFailed(true)
+        if (lastGoodUrl.current) {
+          setRevertedToGood(true)
+          if (lastGoodUrl.current !== html) setHtml(lastGoodUrl.current)
+        }
+        return
+      }
       setHealFailed(false)
       const delay = healTotal.current === 0 ? 1500 : 3000
       healTotal.current += 1
       const t = setTimeout(() => tryToFix(), delay)
       return () => clearTimeout(t)
     }
-  }, [error, building, isGenerating, fixing, tryToFix])
+  }, [error, building, isGenerating, fixing, tryToFix, html])
 
-  useEffect(() => { if (!error) setHealFailed(false) }, [error])
-  // Fresh heal budget only when the USER kicks off a new generation/edit — never
-  // on the file changes that auto-fix itself makes (that was the infinite loop).
-  useEffect(() => { if (isGenerating) { healTotal.current = 0; setHealFailed(false) } }, [isGenerating])
+  useEffect(() => { if (!error) { setHealFailed(false); setRevertedToGood(false) } }, [error])
+  // Fresh heal budget only on a genuinely fresh user turn — never on the file
+  // changes auto-fix itself makes (that was the original infinite loop), and
+  // NOT on every isGenerating toggle: a staged agent-team build flips
+  // isGenerating true/false once per stage (scaffold + up to 7 fill batches),
+  // so keying off isGenerating let a single turn reset the 3-attempt heal
+  // budget up to 8x — effectively ~24 free self-heal attempts per turn.
+  // generationTurnSeq only bumps once per real turn (see ChatPanel), so this
+  // now fires exactly once per turn regardless of how many stages it has.
+  useEffect(() => { healTotal.current = 0; setHealFailed(false) }, [generationTurnSeq])
 
-  const sendVisualEdit = () => {
+  // ── Visual Edits: LLM-free primary path ─────────────────────────────────
+  // Text/color/size/spacing/radius edits write the SOURCE directly via
+  // lib/visual-edit-apply (loc-based, unique-string fallback) — 0 credits.
+  // The bridge live-patches the DOM for instant feedback while the normal
+  // debounced rebuild catches up. Structural asks fall back to the normal
+  // paid chat lane (real billing — never the free self-heal channel).
+  const [textDraft, setTextDraft] = useState('')
+  const [workingClasses, setWorkingClasses] = useState('')
+  const [editStatus, setEditStatus] = useState<'idle' | 'applied' | 'notfound'>('idle')
+  useEffect(() => {
+    setTextDraft(selectedEl?.text ?? '')
+    setWorkingClasses(selectedEl?.classes ?? '')
+    setEditStatus('idle')
+    setEditInstruction('')
+  }, [selectedEl])
+
+  const persistFiles = (updated: typeof files) => {
+    setFiles(updated)
+    if (project?.id) {
+      fetch('/api/projects', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: project.id, files: updated, userId: (project as { userId?: string }).userId || 'auto' }),
+      }).catch(() => { /* next chat-lane save also carries these files */ })
+    }
+  }
+
+  const applyText = () => {
+    if (!selectedEl) return
+    const next = textDraft
+    const r = applyTextEdit(files, selectedEl.loc, selectedEl.text || selectedEl.locText || '', next)
+    if (!r.ok) { setEditStatus('notfound'); return }
+    persistFiles(r.files as typeof files)
+    iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-set-text', selector: selectedEl.selector, text: next }, '*')
+    setSelectedEl({ ...selectedEl, text: next })
+    setEditStatus('applied')
+  }
+
+  const applyClasses = (nextClasses: string) => {
+    if (!selectedEl || nextClasses === workingClasses) return
+    const r = applyClassEdit(files, selectedEl.loc, workingClasses, nextClasses)
+    if (!r.ok) { setEditStatus('notfound'); return }
+    persistFiles(r.files as typeof files)
+    iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-set-class', selector: selectedEl.selector, className: nextClasses }, '*')
+    setWorkingClasses(nextClasses)
+    setEditStatus('applied')
+  }
+
+  const applyStep = (family: StepFamily, dir: 1 | -1) => applyClasses(stepClass(workingClasses, family, dir))
+  const applyColor = (prop: 'text' | 'bg', token: string) => applyClasses(setColorClass(workingClasses, prop, token))
+
+  // Structural fallback — routes through the NORMAL chat dispatch (classify →
+  // edit lane, standard credit charge), never the free self-heal channel.
+  const sendAiEdit = () => {
     if (!selectedEl || !editInstruction.trim()) return
-    const desc = `Visual edit request. The user clicked on this element in the preview:
-- Element: <${selectedEl.tag}>${selectedEl.classes ? ' with classes "' + selectedEl.classes + '"' : ''}
+    const desc = `Edit this exact element (the user clicked it in the preview):
+- Element: <${selectedEl.tag}>${selectedEl.classes ? ' with classes "' + selectedEl.classes + '"' : ''}${selectedEl.loc ? `\n- Source location: ${selectedEl.loc}` : ''}
 - Text content: "${selectedEl.text}"
 - CSS path: ${selectedEl.selector}
 
-Change requested: ${editInstruction.trim()}
-
-Find this element in the code and apply the change.`
-    window.dispatchEvent(new CustomEvent('wyber-autofix', { detail: { prompt: desc } }))
+Change requested: ${editInstruction.trim()}`
+    window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: desc }))
     setEditInstruction('')
     setSelectedEl(null)
     setEditMode(false)
+    setSelectionConsumer(null)
     iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: false }, '*')
   }
 
   return (
-    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b', position: 'relative' }}>
+    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg-base, #09090b)', position: 'relative' }}>
       <Confetti trigger={confettiTrigger} />
       {/* Toolbar */}
-      <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#111118', flexShrink: 0 }}>
+      <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid var(--ide-border, rgba(255,255,255,0.06))', background: 'var(--bg-surface, #111118)', flexShrink: 0 }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: (building || fixing || (error && !healFailed)) ? '#f59e0b' : healFailed ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : (building || fixing || (error && !healFailed)) ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: (fixing || (error && !healFailed)) ? 'pulse 1s ease infinite' : 'none' }} />
-        <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace' }}>
+        <span style={{ flex: 1, fontSize: 11, color: 'var(--ide-text3, #52525b)', fontFamily: 'var(--brand-mono, monospace)' }}>
           {/* Auto-fix is presented as a normal build step — never surfaced as "self-healing"
               or a build error unless it genuinely can't recover (healFailed). */}
           {isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : (fixing || (error && !healFailed)) ? MESSAGES[msgIdx] : healFailed ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
@@ -311,6 +600,12 @@ Find this element in the code and apply the change.`
           <button onClick={() => build(true)} title="Rebuild preview"
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
         )}
+        {/* Real <a>, not window.open: mobile browsers' popup blockers silently
+            swallow window.open, which is why "open in new tab" never worked. */}
+        {html && !building && !error && (
+          <a href={html} target="_blank" rel="noopener noreferrer" title="Open preview in a new tab"
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
+        )}
         {hasApp && !building && !html && !error && (
           <button onClick={() => build(true)}
             style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
@@ -318,6 +613,21 @@ Find this element in the code and apply the change.`
           </button>
         )}
       </div>
+
+      {/* Paused-database banner — Supabase free projects pause after ~1 week
+          of inactivity; without this the app just silently stops persisting. */}
+      {hasSupabaseConn && dbHealth === 'paused' && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+          <span>⏸ Your Supabase database is <strong>paused</strong> (free projects pause after a week of inactivity) — nothing will load or save until it&apos;s restored.</span>
+          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>Restore now</button>
+        </div>
+      )}
+      {hasSupabaseConn && dbHealth === 'restoring' && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+          <div style={{ width: 11, height: 11, border: '2px solid rgba(251,191,36,0.25)', borderTopColor: '#fbbf24', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span>Restoring your database — usually takes under a minute…</span>
+        </div>
+      )}
 
       {/* Platform-level storage banner — not baked into generated code */}
       {html && !building && !connectors.some(c => c.service === 'supabase') && (() => {
@@ -333,31 +643,79 @@ Find this element in the code and apply the change.`
         )
       })()}
 
-      {/* Visual edit instruction bar */}
+      {/* Visual-edit inspector card — direct source edits, 0 credits */}
       {editMode && selectedEl && (
-        <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-          <div style={{ fontSize: 11, color: '#0EA5E9', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 700 }}>Selected:</span>
+        <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.05)', borderBottom: '1px solid var(--brand-border-accent, rgba(14,165,233,0.2))', display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0, maxHeight: 260, overflowY: 'auto' }}>
+          <div style={{ fontSize: 11, color: 'var(--brand-accent, #0EA5E9)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>&lt;{selectedEl.tag}&gt;</code>
-            {selectedEl.text && <span style={{ color: '#71717a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 200 }}>"{selectedEl.text}"</span>}
+            <MicroLabel style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none' }}>
+              {selectedEl.loc ?? selectedEl.selector}
+            </MicroLabel>
+            {editStatus === 'applied' && <MicroLabel color="var(--ide-green, #22c55e)">✓ saved · free</MicroLabel>}
+            {editStatus === 'notfound' && <MicroLabel color="var(--ide-amber, #f59e0b)">can&apos;t match source — use AI edit below</MicroLabel>}
+            <button onClick={() => setSelectedEl(null)} title="Deselect" style={{ background: 'none', border: 'none', color: 'var(--ide-text3, #71717a)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>×</button>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+
+          {/* Text */}
+          {(selectedEl.text || selectedEl.locText) && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                value={textDraft}
+                onChange={e => setTextDraft(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') applyText() }}
+                placeholder="Edit the text…"
+                style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
+              />
+              <button onClick={applyText} disabled={textDraft === selectedEl.text}
+                style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
+                Set text
+              </button>
+            </div>
+          )}
+
+          {/* Color chips + steppers */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 7 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MicroLabel>Text</MicroLabel>
+              {(['foreground', 'muted-foreground', 'primary', 'accent-foreground', 'destructive'] as const).map(t => (
+                <button key={t} onClick={() => applyColor('text', t)} title={`text-${t}`}
+                  style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${t}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
+              ))}
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MicroLabel>Bg</MicroLabel>
+              {(['background', 'card', 'muted', 'primary', 'secondary', 'accent'] as const).map(t => (
+                <button key={t} onClick={() => applyColor('bg', t)} title={`bg-${t}`}
+                  style={{ width: 16, height: 16, borderRadius: 4, border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${t}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
+              ))}
+            </span>
+            {([['text-size', 'Size'], ['p', 'Pad'], ['rounded', 'Radius']] as const).map(([family, label]) => (
+              <span key={family} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <MicroLabel>{label}</MicroLabel>
+                <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>−</button>
+                <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>+</button>
+              </span>
+            ))}
+          </div>
+
+          {/* Structural fallback → normal paid edit lane, honestly labeled */}
+          <div style={{ display: 'flex', gap: 6 }}>
             <input
-              autoFocus
               value={editInstruction}
               onChange={e => setEditInstruction(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') sendVisualEdit() }}
-              placeholder="Describe the change (e.g. make this bigger and blue)"
-              style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, padding: '7px 11px', outline: 'none' }}
+              onKeyDown={e => { if (e.key === 'Enter') sendAiEdit() }}
+              placeholder="Bigger change? Describe it (e.g. turn this into a 3-column grid)"
+              style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
             />
-            <button onClick={sendVisualEdit} disabled={!editInstruction.trim()}
-              style={{ background: editInstruction.trim() ? '#0EA5E9' : '#27272a', color: 'white', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed' }}>
-              Apply
+            <button onClick={sendAiEdit} disabled={!editInstruction.trim()}
+              title="Runs a normal AI edit — charged at the standard edit rate"
+              style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+              AI edit · from {creditCost('small-edit', 'fast')}cr
             </button>
           </div>
         </div>
       )}
-      {editMode && !selectedEl && (
+      {editMode && !selectedEl && selectionConsumer !== 'wyberman' && (
         <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
           Click any element in the preview to edit it
         </div>
@@ -373,7 +731,14 @@ Find this element in the code and apply the change.`
           </div>
         )}
 
-        {isGenerating && (
+        {/* Full-screen "writing" state ONLY when there is no previous preview
+            to show. Once a build exists it STAYS VISIBLE while the AI works —
+            hiding a working app behind a spinner for a whole generation read
+            as "the preview disappeared while it worked on Supabase". No
+            floating pill over an existing preview: build state already shows
+            in the chat bubble and the status strip above — a real user saw
+            FOUR simultaneous "building" indicators and rightly called it out. */}
+        {isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Writing your app...</div>
@@ -382,16 +747,37 @@ Find this element in the code and apply the change.`
 
         {/* One neutral "building" overlay covers the real build AND the silent
             auto-fix retries — the user can't tell a fix happened. The error
-            screen below only shows if it genuinely can't recover (healFailed). */}
-        {(building || fixing || (error && !healFailed)) && !isGenerating && (
+            screen below only shows if it genuinely can't recover (healFailed).
+            Full-screen ONLY when there's no previous preview to show — once a
+            preview exists, rebuilds keep it on screen (no blank-out flicker)
+            with just a small pill announcing the update. */}
+        {(building || fixing || (error && !healFailed)) && !isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{MESSAGES[msgIdx]}</div>
             <div style={{ fontSize: 11, color: '#52525b' }}>Building your app…</div>
           </div>
         )}
+        {(building || fixing || (error && !healFailed)) && !isGenerating && html && (
+          <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
+            <div style={{ width: 12, height: 12, border: '2px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <span style={{ fontSize: 11, color: '#e4e4e7', fontWeight: 600 }}>Updating preview…</span>
+          </div>
+        )}
 
-        {error && !building && healFailed && (
+        {/* Heal gave up but a previous build works — keep that on screen and
+            surface the failure as a strip instead of nuking the preview. */}
+        {error && !building && healFailed && revertedToGood && (
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.94)', borderBottom: '1px solid rgba(248,113,113,0.3)', fontSize: 11, color: '#fecaca', zIndex: 7 }}>
+            <span>⚠ The latest update didn&apos;t build — showing your last working preview.</span>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button onClick={tryToFix} disabled={fixing} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: fixing ? 'wait' : 'pointer', fontSize: 11, fontWeight: 700, padding: '3px 10px' }}>{fixing ? 'Fixing…' : 'Try to fix'}</button>
+              <button onClick={() => build(true)} style={{ background: 'none', border: '1px solid rgba(254,202,202,0.35)', borderRadius: 6, color: '#fecaca', cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px' }}>Retry</button>
+            </div>
+          </div>
+        )}
+
+        {error && !building && healFailed && !revertedToGood && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
@@ -412,7 +798,7 @@ Find this element in the code and apply the change.`
           ref={iframeRef}
           title="Wyber Preview"
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !building && !isGenerating && !error ? 'block' : 'none', background: '#09090b' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed && !revertedToGood) ? 'block' : 'none', background: '#09090b' }}
         />
       </div>
       <style>{`

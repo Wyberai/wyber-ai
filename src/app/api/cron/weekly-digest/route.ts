@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { sendWeeklyDigestEmail } from '@/lib/email'
+import { notifyPush } from '@/lib/push'
 
 export const maxDuration = 300
 
@@ -44,8 +45,13 @@ export async function GET(req: NextRequest) {
 
   let sent = 0
   for (const p of profiles ?? []) {
-    if (!p.email) continue
     const stats = perUser.get(p.id)!
+    // Weekly come-back PUSH (push-only — no Activity row, to avoid weekly clutter).
+    const plural = stats.appsBuilt === 1 ? '' : 's'
+    notifyPush(admin, p.id, 'weekly_digest', {
+      message: `You shipped ${stats.appsBuilt} app${plural} this week. ${p.credits ?? 0} credits ready — what's next?`,
+    }).catch(() => {})
+    if (!p.email) continue
     try {
       await sendWeeklyDigestEmail(p.email, (p.full_name as string) || p.email.split('@')[0], {
         appsBuilt: stats.appsBuilt,
