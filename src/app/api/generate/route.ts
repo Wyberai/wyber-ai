@@ -1886,12 +1886,23 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       staticSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt())
         + (projectType === 'mobile' ? '' : wyberDNA)
         + (useToolUse ? toolUseOutputRule : outputRule)
+      // Both staged-pass prompts below override rule 9's "end with a question"
+      // guidance on purpose: rule 9 is written for an interactive turn where a
+      // real person reads the question and replies. Scaffold/fill passes are
+      // links in an automated chain the platform already planned — the next
+      // pass fires on its own regardless of what this response says, so a
+      // model that asks "Want me to build X next?" here is asking a question
+      // nobody answers, right before the platform does exactly that anyway.
+      // Confirmed live in production chat history: every staged pass ended
+      // with such a question, and the very next pass silently acted on it —
+      // reads as the AI ignoring the user and talking to itself.
+      const stagedAutomationNote = "\nThis pass is one link in an automated chain the platform already planned — it runs back-to-back with the next pass, with no user reply in between. Your closing sentence must be a plain, past-tense statement of what you built. NEVER end with a question or an offer awaiting a yes/no (no \"Want me to build X next?\", no \"should I continue?\") — nobody is there to answer it, and the next pass will run regardless of what you ask. NEVER reference internal build mechanics like \"this pass\"/\"next pass\"/\"later passes\" — describe the app in plain language a user would recognize, not the pipeline building it."
       if (stage === 'scaffold') {
         const list = (stageFiles as string[]).join(', ')
-        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in later passes. Output each file as a complete <file> block.`)
+        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in on their own shortly. Output each file as a complete <file> block.${stagedAutomationNote}`)
       } else if (stage === 'fill') {
         const list = (stageFiles as string[]).join(', ')
-        perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.`)
+        perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.${stagedAutomationNote}`)
       } else if (stage === 'agentFix') {
         perRequestParts.push(`\n\n=== TARGETED FIX PASS ===\nApply ONLY the specific fix described in the request, using <edit> blocks (or a full <file> rewrite only if the file is small). Do not restyle, refactor, or touch anything else.`)
       }
