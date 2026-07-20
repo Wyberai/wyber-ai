@@ -105,6 +105,7 @@ export function ExampleDashboard() {
           slug="ecommerce-example-full"
           label="Build this, with my real numbers →"
           color={color}
+          projectLabel="Ecommerce Dashboard"
         />
       </div>
     </div>

@@ -200,16 +200,25 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     if (!profile?.id) return;
     let pending: string | null = null;
     let pendingType: string | null = null;
+    let pendingLabel: string | null = null;
     try {
       pending = localStorage.getItem('wyber-pending-prompt');
       pendingType = localStorage.getItem('wyber-pending-type');
+      pendingLabel = localStorage.getItem('wyber-pending-project-label');
       if (pending) localStorage.removeItem('wyber-pending-prompt');
       if (pendingType) localStorage.removeItem('wyber-pending-type');
+      if (pendingLabel) localStorage.removeItem('wyber-pending-project-label');
     } catch { /* storage blocked */ }
     if (pending?.trim()) {
+      // Personalized entry points (e.g. /ecommerce) set a project label; combine
+      // it with the signed-in user's name so the first project reads "Mark
+      // Taylor's Ecommerce Dashboard" instead of a raw prompt slice. Falls back
+      // to the email prefix if OAuth didn't supply a display name.
+      const person = profile?.full_name?.trim() || profile?.email?.split('@')[0];
+      const nameOverride = pendingLabel && person ? `${person}'s ${pendingLabel}` : undefined;
       // Honor the homepage hero's Web/Mobile toggle; fall back to keyword detection.
-      if (pendingType === 'mobile') startProject(pending.trim(), 'mobile');
-      else openChooser(pending.trim());
+      if (pendingType === 'mobile') startProject(pending.trim(), 'mobile', nameOverride);
+      else openChooser(pending.trim(), nameOverride);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id]);
@@ -260,8 +269,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   // A typed prompt ALWAYS builds directly — the type picker is only for the
   // empty "+ New Project" path. Short prompts used to fall into the picker
   // (length gate) which read as a wall of coming-soon tiles mid-flow.
-  const openChooser = (prompt?: string) => {
-    if (prompt) { startProject(prompt, MOBILE_KEYWORDS.test(prompt) ? 'mobile' : 'app'); return; }
+  const openChooser = (prompt?: string, nameOverride?: string) => {
+    if (prompt) { startProject(prompt, MOBILE_KEYWORDS.test(prompt) ? 'mobile' : 'app', nameOverride); return; }
     setPendingPrompt(prompt); setShowTypePicker(true);
   };
   const submitPrompt = () => {
@@ -269,12 +278,14 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     if (!p) { openChooser(); return; }
     startProject(p, MOBILE_KEYWORDS.test(p) || buildMode === 'mobile' ? 'mobile' : 'app');
   };
-  const startProject = async (prompt?: string, type: ProjectType = 'app') => {
+  const startProject = async (prompt?: string, type: ProjectType = 'app', nameOverride?: string) => {
     if (!profile?.id || creating) return;
     setCreating(true);
     setCreateError(null);
     try {
-      const projectName = prompt
+      const projectName = nameOverride
+        ? nameOverride.slice(0, 60).trim()
+        : prompt
         ? prompt.slice(0, 40).trim()
         : 'New Project ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const { data, error } = await supabase

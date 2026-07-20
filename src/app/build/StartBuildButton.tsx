@@ -13,6 +13,7 @@ export function StartBuildButton({
   label,
   color = '#0EA5E9',
   variant = 'solid',
+  projectLabel,
 }: {
   prompt: string;
   target: 'web' | 'mobile';
@@ -20,11 +21,16 @@ export function StartBuildButton({
   label: string;
   color?: string;
   variant?: 'solid' | 'compact';
+  /** Opt-in: when set (e.g. "Ecommerce Dashboard"), DashboardClient names the
+   * first project "{signed-in user's name}'s {projectLabel}" instead of the
+   * default prompt-slice name. Omit for the standard, unpersonalized flow. */
+  projectLabel?: string;
 }) {
   const onClick = () => {
     try {
       localStorage.setItem('wyber-pending-prompt', prompt.slice(0, 2000));
       localStorage.setItem('wyber-pending-type', target === 'mobile' ? 'mobile' : 'app');
+      if (projectLabel) localStorage.setItem('wyber-pending-project-label', projectLabel);
     } catch { /* private mode */ }
     track('build_page_cta_clicked', { slug, target });
     window.location.href = '/signup';
