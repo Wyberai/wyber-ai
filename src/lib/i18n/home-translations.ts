@@ -16,6 +16,7 @@ export interface HomeStrings {
   navPricing: string;
   signIn: string;
   startFree: string;
+  navDashboard: string;
   eyebrowStrike: string;
   eyebrowMain: string;
   heroLine1: string;
@@ -157,6 +158,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     navPricing: 'Pricing',
     signIn: 'Sign in',
     startFree: 'Start free →',
+    navDashboard: 'Dashboard →',
     eyebrowStrike: 'THE FASTEST',
     eyebrowMain: 'THE MOST SECURE APP BUILDER',
     heroLine1: 'Think of an app idea.',
@@ -300,6 +302,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     navPricing: 'प्राइसिंग',
     signIn: 'साइन इन',
     startFree: 'फ्री शुरू करें →',
+    navDashboard: 'डैशबोर्ड →',
     eyebrowStrike: 'सबसे तेज़',
     eyebrowMain: 'सबसे सुरक्षित ऐप बिल्डर',
     heroLine1: 'ऐप का आइडिया सोचें।',
@@ -443,6 +446,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     navPricing: 'ಬೆಲೆ',
     signIn: 'ಸೈನ್ ಇನ್',
     startFree: 'ಫ್ರೀ ಆಗಿ ಪ್ರಾರಂಭಿಸಿ →',
+    navDashboard: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ →',
     eyebrowStrike: 'ಅತಿ ವೇಗದ',
     eyebrowMain: 'ಅತ್ಯಂತ ಸುರಕ್ಷಿತ ಆ್ಯಪ್ ಬಿಲ್ಡರ್',
     heroLine1: 'ಆ್ಯಪ್ ಐಡಿಯಾ ಯೋಚಿಸಿ.',
@@ -586,6 +590,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     navPricing: 'ధర',
     signIn: 'సైన్ ఇన్',
     startFree: 'ఫ్రీగా ప్రారంభించండి →',
+    navDashboard: 'డాష్‌బోర్డ్ →',
     eyebrowStrike: 'అత్యంత వేగవంతమైన',
     eyebrowMain: 'అత్యంత సురక్షితమైన యాప్ బిల్డర్',
     heroLine1: 'యాప్ ఐడియా ఆలోచించండి.',
@@ -729,6 +734,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     navPricing: 'விலை',
     signIn: 'சைன் இன்',
     startFree: 'இலவசமாக தொடங்குங்கள் →',
+    navDashboard: 'டாஷ்போர்டு →',
     eyebrowStrike: 'மிக வேகமான',
     eyebrowMain: 'மிகவும் பாதுகாப்பான ஆப் பில்டர்',
     heroLine1: 'ஒரு ஆப் ஐடியாவை நினைத்துப் பாருங்கள்.',
