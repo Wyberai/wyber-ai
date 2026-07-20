@@ -1,7 +1,17 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { NON_ENGLISH_LOCALES } from '@/lib/i18n/locales'
 
 export async function proxy(request: NextRequest) {
-  const path = request.nextUrl.pathname
+  const rawPath = request.nextUrl.pathname
+  // Locale-prefixed public pages (app/[locale]/vs/..., .../blog/..., etc.) must
+  // pass the SAME public-path allowlist below as their English /vs/... siblings —
+  // otherwise /hi/vs/lovable doesn't match startsWith('/vs') and falls through
+  // to the auth gate, bouncing an anonymous visitor to /login on a page that
+  // has no auth requirement at all. Strip a real locale prefix before checking.
+  const localePrefixMatch = rawPath.match(/^\/(hi|kn|te|ta)(\/.*|$)/)
+  const path = localePrefixMatch && (NON_ENGLISH_LOCALES as readonly string[]).includes(localePrefixMatch[1])
+    ? (localePrefixMatch[2] || '/')
+    : rawPath
   const host = (request.headers.get('host') || '').toLowerCase().replace(/:\d+$/, '')
 
   // Handle custom domains — if the host is not wyberai.com, serve the published app
@@ -10,7 +20,7 @@ export async function proxy(request: NextRequest) {
   if (!isWyberDomain && host.includes('.')) {
     // Custom domain request — rewrite to /api/serve-custom-domain
     const url = new URL(
-      `/api/serve-custom-domain?domain=${encodeURIComponent(host)}&path=${encodeURIComponent(path)}`,
+      `/api/serve-custom-domain?domain=${encodeURIComponent(host)}&path=${encodeURIComponent(rawPath)}`,
       request.url
     )
     return NextResponse.rewrite(url)
@@ -114,7 +124,7 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
-      url.searchParams.set('next', path)
+      url.searchParams.set('next', rawPath)
       return NextResponse.redirect(url)
     }
 
@@ -129,7 +139,7 @@ export async function proxy(request: NextRequest) {
         const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
         if (aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2') {
           const url = request.nextUrl.clone()
-          const dest = path + (request.nextUrl.search || '')
+          const dest = rawPath + (request.nextUrl.search || '')
           url.pathname = '/mfa'
           url.search = ''
           url.searchParams.set('next', dest)

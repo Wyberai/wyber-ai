@@ -27,6 +27,8 @@ import { DirectionCards } from './DirectionCards';
 import { VoiceButton } from './VoiceButton';
 import { FileMentionDropdown } from './FileMentionDropdown';
 import { useT } from '@/lib/i18n/useT';
+import { useLocale } from '@/lib/i18n/LocaleProvider';
+import { LOCALE_SPEECH_CODE } from '@/lib/i18n/locales';
 import { EDITOR_CHATPANEL_STRINGS } from '@/lib/i18n/dict/editor-chatpanel';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import ReactMarkdown, { type Components } from 'react-markdown';
@@ -394,6 +396,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const resolvedUserId = userId || project?.userId;
   const t = useT(EDITOR_CHATPANEL_STRINGS);
   const tc = useT(COMMON_STRINGS);
+  const { locale } = useLocale();
 
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -2704,7 +2707,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <VoiceButton
                 size={24}
                 disabled={isGenerating}
-                onTranscript={t => setInput(prev => prev ? prev + ' ' + t : t)}
+                lang={LOCALE_SPEECH_CODE[locale]}
+                onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
               />
               {/* Automatic model routing — system picks the best model per task */}
               <span

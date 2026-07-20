@@ -21,7 +21,7 @@ import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
-import { isLocale } from '@/lib/i18n/locales';
+import { isLocale, LOCALE_SPEECH_CODE } from '@/lib/i18n/locales';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -552,8 +552,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 </div>
                 <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>{t('enterToBuild')}</span>
-                <VoiceButton size={26} disabled={creating}
-                  onTranscript={t => { setPromptInput(prev => (prev ? prev + ' ' + t : t)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: t.length }); }} />
+                <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
+                  onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
                 <button onClick={submitPrompt} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating

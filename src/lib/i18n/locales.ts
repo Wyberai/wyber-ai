@@ -33,3 +33,9 @@ export const LOCALE_COOKIE_KEY = LOCALE_STORAGE_KEY;
 export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }
+
+// The locale-prefixed static routes (app/[locale]/...) only ever generate
+// hi/kn/te/ta — English keeps its existing unprefixed URLs (/blog/x, not
+// /en/blog/x) so there's zero disruption to current backlinks/SEO equity.
+// See src/app/[locale]/README or the vs/[competitor] route for the pattern.
+export const NON_ENGLISH_LOCALES = LOCALES.filter(l => l !== 'en') as Exclude<Locale, 'en'>[];
