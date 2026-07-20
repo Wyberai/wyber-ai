@@ -38,6 +38,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/use-cases') ||
     // Programmatic-SEO "build a ___ app" pages — public marketing surface.
     path.startsWith('/build') ||
+    // Paid-traffic / cold-email landing pages — must stay public, anonymous
+    // ad and outbound clicks land here before any account exists.
+    path.startsWith('/lp') ||
     path.startsWith('/employees') ||
     path.startsWith('/blog') ||
     path.startsWith('/contact') ||
