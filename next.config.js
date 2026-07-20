@@ -25,6 +25,7 @@ const nextConfig = {
       { source: '/community', destination: '/gallery', permanent: true },
       // NOTE: the old `/build → /dashboard` vanity alias was removed Jul 2026:
       // /build is now the programmatic-SEO namespace (app/build/*).
+      { source: '/lp/ecommerce-dashboard', destination: '/ecommerce', permanent: false },
     ]
   },
   async headers() {
