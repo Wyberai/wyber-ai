@@ -11,7 +11,7 @@ import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import { SETTINGS_STRINGS } from '@/lib/i18n/dict/settings';
-import { LOCALES, LOCALE_LABEL, isLocale, type Locale } from '@/lib/i18n/locales';
+import { LOCALES, LOCALE_LABEL, I18N_ENABLED, isLocale, type Locale } from '@/lib/i18n/locales';
 import { AutoTranslateNotice } from '@/components/shared/AutoTranslateNotice';
 
 type Tab = 'profile' | 'billing' | 'models' | 'api-keys' | 'secrets' | 'integrations' | 'github' | 'notifications' | 'security' | 'danger';
@@ -454,8 +454,9 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             </div>
           </div>
 
-          {/* Language — gated to India/INR users, same signal the homepage toggle uses */}
-          {isIndia && (
+          {/* Language — gated to India/INR users, same signal the homepage toggle uses.
+              Also behind the I18N_ENABLED kill switch while translation work is paused. */}
+          {isIndia && I18N_ENABLED && (
             <div style={S.card}>
               <div style={{ ...S.row, marginBottom: 0 }}>
                 <div>

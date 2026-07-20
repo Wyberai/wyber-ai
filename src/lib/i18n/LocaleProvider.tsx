@@ -1,6 +1,6 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
-import { DEFAULT_LOCALE, LOCALE_COOKIE_KEY, LOCALE_STORAGE_KEY, isLocale, type Locale } from './locales';
+import { DEFAULT_LOCALE, I18N_ENABLED, LOCALE_COOKIE_KEY, LOCALE_STORAGE_KEY, isLocale, type Locale } from './locales';
 
 const LocaleCtx = createContext<{ locale: Locale; setLocale: (l: Locale) => void }>({
   locale: DEFAULT_LOCALE,
@@ -26,9 +26,10 @@ const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 // returning India user who picked hi/kn/te/ta, in exchange for every
 // anonymous/marketing page staying statically prerendered.
 export function LocaleProvider({ children, initialLocale }: { children: React.ReactNode; initialLocale?: Locale }) {
-  const [locale, setLocaleState] = useState<Locale>(initialLocale && isLocale(initialLocale) ? initialLocale : DEFAULT_LOCALE);
+  const [locale, setLocaleState] = useState<Locale>(I18N_ENABLED && initialLocale && isLocale(initialLocale) ? initialLocale : DEFAULT_LOCALE);
 
   useEffect(() => {
+    if (!I18N_ENABLED) return; // kill switch — never adopt a stored non-English locale while disabled
     if (initialLocale) return; // caller already knows the right locale server-side (Dashboard/Settings/Editor)
     try {
       const stored = localStorage.getItem(LOCALE_STORAGE_KEY);
@@ -38,6 +39,7 @@ export function LocaleProvider({ children, initialLocale }: { children: React.Re
   }, []);
 
   const setLocale = (l: Locale) => {
+    if (!I18N_ENABLED) return; // kill switch — ignore attempts to change locale while disabled
     setLocaleState(l);
     try {
       localStorage.setItem(LOCALE_STORAGE_KEY, l);

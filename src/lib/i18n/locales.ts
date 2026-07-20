@@ -2,6 +2,14 @@
 // that already decides INR vs USD (see lib/region.ts) — a non-India visitor
 // never sees this, never renders these strings, and the switcher itself only
 // mounts when the page is passed isIndia=true from the server.
+
+// Temporary kill switch: the hi/kn/te/ta translations aren't fully wired
+// through every surface yet, so the toggle is hidden and locale is pinned to
+// English everywhere until the remaining work resumes. Flip back to `true`
+// to re-enable — all the translation infra/dictionaries stay intact either
+// way, this only gates visibility + whether a stored locale is honored.
+export const I18N_ENABLED = false;
+
 export const LOCALES = ['en', 'hi', 'kn', 'te', 'ta'] as const;
 export type Locale = (typeof LOCALES)[number];
 

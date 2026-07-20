@@ -8,7 +8,7 @@ import { type Currency } from '@/lib/currency';
 import { track } from '@/lib/track';
 import { VoiceButton } from '@/components/editor/VoiceButton';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
-import { LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
+import { I18N_ENABLED, LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
 import { HOME_STRINGS, type HomeStrings } from '@/lib/i18n/home-translations';
 import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
 
@@ -365,7 +365,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
             </Link>
           ))}
           <div style={{ width: 1, height: 16, background: 'var(--brand-border-strong)', margin: '0 6px' }} />
-          {inr && <LanguageToggle locale={locale} onChange={setLocale} />}
+          {inr && I18N_ENABLED && <LanguageToggle locale={locale} onChange={setLocale} />}
           {user
             ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t.navDashboard}</Link>
             : <>
@@ -397,7 +397,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                 </>
             }
           </div>
-          {inr && <div style={{ paddingTop: 12, display: 'flex', justifyContent: 'center' }}><LanguageToggle locale={locale} onChange={setLocale} /></div>}
+          {inr && I18N_ENABLED && <div style={{ paddingTop: 12, display: 'flex', justifyContent: 'center' }}><LanguageToggle locale={locale} onChange={setLocale} /></div>}
         </div>
       )}
 

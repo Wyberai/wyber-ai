@@ -5,6 +5,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { type Currency, formatPrice } from '@/lib/currency'
 import { useT } from '@/lib/i18n/useT'
 import { useLocale } from '@/lib/i18n/LocaleProvider'
+import { I18N_ENABLED } from '@/lib/i18n/locales'
 import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
 
@@ -323,7 +324,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
         </Link>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <Link href="/challenge" style={{ fontSize: 13, color: '#a855f7', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 600 }}>{t('navWeeklyChallenge')}</Link>
-          {currency === 'INR' && <LanguageToggle locale={locale} onChange={setLocale} />}
+          {currency === 'INR' && I18N_ENABLED && <LanguageToggle locale={locale} onChange={setLocale} />}
           {user
             ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>{t('navDashboard')}</Link>
             : <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>{t('navGetStarted')}</Link>
