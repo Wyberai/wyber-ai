@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
   const supabase = createClient();
 
@@ -33,7 +35,7 @@ export default function LoginPage() {
     return `${location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`;
   };
 
-  const handleMagicLink = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError('');
     const { error } = await supabase.auth.signInWithOtp({
@@ -43,6 +45,31 @@ export default function LoginPage() {
     if (error) setError(error.message);
     else setSent(true);
     setLoading(false);
+  };
+
+  // Typed-code path: verifyOtp() authenticates directly in this tab — no
+  // redirect, no code_verifier cookie, so it can't fail from being opened in
+  // a different browser/device the way the clicked magic link could. Still
+  // has to hit /api/auth/complete-otp afterward to run the same welcome-email/
+  // referral/student-bonus pipeline the OAuth and clicked-link paths get from
+  // /auth/callback — verifyOtp alone only establishes the session.
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setVerifying(true); setError('');
+    const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: 'email' });
+    if (error) { setError(error.message); setVerifying(false); return; }
+    const next = new URLSearchParams(window.location.search).get('next') || '/dashboard';
+    try {
+      const res = await fetch('/api/auth/complete-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ next }),
+      });
+      const json = await res.json();
+      window.location.href = json.next || next;
+    } catch {
+      window.location.href = next;
+    }
   };
 
   const handleOAuth = async (provider: 'google' | 'github') => {
@@ -87,11 +114,30 @@ export default function LoginPage() {
           </div>
 
           {sent ? (
-            <div style={{ background: '#ECFDF5', border: '1px solid #6EE7B7', borderRadius: 14, padding: 32, textAlign: 'center' }}>
-              <div style={{ fontSize: 40, marginBottom: 16 }}>📬</div>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#065F46', marginBottom: 8 }}>Check your email</p>
-              <p style={{ fontSize: 14, color: '#059669', margin: 0 }}>We sent a sign-in link to <strong>{email}</strong></p>
-              <p style={{ fontSize: 12, color: '#6EE7B7', marginTop: 16 }}>The link expires in 10 minutes</p>
+            <div style={{ background: '#FFFFFF', border: '1px solid #DCE4F0', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(11,22,39,0.06)' }}>
+              <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>🔢</div>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#0B1627', marginBottom: 6 }}>Enter your code</p>
+                <p style={{ fontSize: 13, color: '#7A9BBE', margin: 0 }}>We sent a 6-digit code to <strong>{email}</strong></p>
+              </div>
+              <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <input type="text" inputMode="numeric" autoComplete="one-time-code" value={code}
+                  onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="123456" required autoFocus
+                  style={{ width: '100%', padding: '11px 14px', borderRadius: 9, border: '1.5px solid #DCE4F0', background: '#F6F8FB', color: '#0B1627', fontSize: 20, textAlign: 'center', letterSpacing: '0.3em', outline: 'none', fontFamily: 'var(--font-sans)' }}
+                  onFocus={e => e.target.style.borderColor = '#0EA5E9'}
+                  onBlur={e => e.target.style.borderColor = '#DCE4F0'}
+                />
+                {error && <p style={{ color: '#EF4444', fontSize: 12, margin: 0 }}>{error}</p>}
+                <button type="submit" disabled={verifying || code.length < 6}
+                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: verifying ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)', opacity: code.length < 6 ? 0.6 : 1 }}>
+                  {verifying ? 'Verifying...' : 'Verify & sign in →'}
+                </button>
+              </form>
+              <p style={{ textAlign: 'center', fontSize: 12, color: '#7A9BBE', marginTop: 16, marginBottom: 0 }}>
+                Prefer the link? Check your email — it's in there too.{' '}
+                <button onClick={() => { setSent(false); setCode(''); setError(''); }} style={{ background: 'none', border: 'none', color: '#0EA5E9', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', fontSize: 12, padding: 0 }}>Use a different email</button>
+              </p>
             </div>
           ) : (
             <div style={{ background: '#FFFFFF', border: '1px solid #DCE4F0', borderRadius: 16, padding: 32, boxShadow: '0 4px 24px rgba(11,22,39,0.06)' }}>
@@ -129,8 +175,8 @@ export default function LoginPage() {
                 <div style={{ flex: 1, height: 1, background: '#EDF1F8' }} />
               </div>
 
-              {/* Magic link form */}
-              <form onSubmit={handleMagicLink} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Email code form */}
+              <form onSubmit={handleSendCode} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com" required
                   style={{ width: '100%', padding: '11px 14px', borderRadius: 9, border: '1.5px solid #DCE4F0', background: '#F6F8FB', color: '#0B1627', fontSize: 14, outline: 'none', fontFamily: 'var(--font-sans)', transition: 'border-color 0.15s' }}
@@ -140,7 +186,7 @@ export default function LoginPage() {
                 {error && <p style={{ color: '#EF4444', fontSize: 12, margin: 0 }}>{error}</p>}
                 <button type="submit" disabled={loading}
                   style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)', letterSpacing: '-0.01em', transition: 'all 0.15s' }}>
-                  {loading ? 'Sending link...' : 'Send magic link →'}
+                  {loading ? 'Sending code...' : 'Send sign-in code →'}
                 </button>
               </form>
 
