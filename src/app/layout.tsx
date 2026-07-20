@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "@/styles/brand.css";
 import "@/styles/editor.css";
-import { cookies } from 'next/headers';
 import { ThemeProvider } from '@/lib/theme';
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
-import { DEFAULT_LOCALE, LOCALE_COOKIE_KEY, isLocale } from '@/lib/i18n/locales';
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '@/lib/i18n/locales';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
@@ -145,12 +144,18 @@ const jsonLd = {
   ],
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Cookie-only (no DB call here so marketing/anonymous routes stay fast) —
-  // Dashboard/Settings reconcile against profiles.preferred_locale once their
-  // own profile fetch resolves. See LocaleProvider.
-  const cookieLocale = (await cookies()).get(LOCALE_COOKIE_KEY)?.value;
-  const locale = isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // No cookies()/headers() read here on purpose — that was tried and reverted
+  // (see LocaleProvider's comment): reading a cookie in the root layout opts
+  // Next's app router into dynamic rendering for every route underneath it,
+  // which silently turned every static marketing/blog/docs page dynamic just
+  // to seed a locale that only the authenticated app (Dashboard/Settings/
+  // Editor) actually needs server-side. SSR always renders DEFAULT_LOCALE;
+  // the inline script below (mirroring the theme one) fixes up `lang` from
+  // localStorage before paint, and LocaleProvider's own effect does the same
+  // for the React tree — same "no flash for returning visitors" outcome,
+  // without forcing the whole site dynamic.
+  const locale = DEFAULT_LOCALE;
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -167,6 +172,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   var t = typeof localStorage !== 'undefined' ? localStorage.getItem('wyber-theme') : null;
                   var p = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                   document.documentElement.setAttribute('data-theme', t || p);
+                } catch(e) {}
+                try {
+                  var l = typeof localStorage !== 'undefined' ? localStorage.getItem('${LOCALE_STORAGE_KEY}') : null;
+                  if (l && l !== '${DEFAULT_LOCALE}') document.documentElement.setAttribute('lang', l);
                 } catch(e) {}
               })();
             `,
