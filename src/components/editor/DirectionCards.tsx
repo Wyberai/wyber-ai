@@ -7,6 +7,8 @@
 import { useMemo, useState } from 'react';
 import { pickPaletteOptions, type Palette } from '@/lib/design-palettes';
 import { MicroLabel } from './ui';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas';
 
 const sw = (pal: Palette, token: string): string =>
   pal.tokens[token] ? `hsl(${pal.tokens[token]})` : 'transparent';
@@ -24,6 +26,7 @@ interface Props {
 }
 
 export function DirectionCards({ prompt, selectedId, onPick, count = 3 }: Props) {
+  const t = useT(EDITOR_CANVAS_STRINGS);
   // Stable per mount — pickPaletteOptions is intentionally randomized for
   // diversity, so memoize or the cards reshuffle on every keystroke/render.
   const [options] = useState<Palette[]>(() => {
@@ -35,10 +38,10 @@ export function DirectionCards({ prompt, selectedId, onPick, count = 3 }: Props)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <MicroLabel>Pick a design direction</MicroLabel>
+        <MicroLabel>{t('pickDesignDirectionLabel')}</MicroLabel>
         <button onClick={() => onPick(null)}
           style={{ fontSize: 10, fontWeight: 600, border: 'none', background: 'transparent', color: selectedId === null ? 'var(--brand-accent, #0EA5E9)' : 'var(--ide-text3)', cursor: 'pointer', padding: 0 }}>
-          {selectedId === null ? '✓ Surprise me' : 'Surprise me'}
+          {selectedId === null ? `✓ ${t('surpriseMeLabel')}` : t('surpriseMeLabel')}
         </button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 7 }}>

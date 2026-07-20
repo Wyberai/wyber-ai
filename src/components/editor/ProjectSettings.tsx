@@ -3,8 +3,13 @@ import { useState } from 'react';
 import { useEditorStore } from '@/store/editor';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
 export function ProjectSettings({ projectId, userId }: { projectId?: string; userId?: string }) {
+  const t = useT(EDITOR_CONNECTORS_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   const { project, setProject } = useEditorStore();
   const [name, setName] = useState(project?.name ?? '');
   const [saving, setSaving] = useState(false);
@@ -51,11 +56,11 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
 
   return (
     <div style={S.wrap}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Project Settings</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>{t('projectSettingsTitle')}</div>
 
       {/* Name */}
       <div style={S.section}>
-        <div style={S.title}>Project name</div>
+        <div style={S.title}>{t('projectNameSectionTitle')}</div>
         <input style={S.input} value={name} onChange={e => setName(e.target.value)}
           onFocus={e => e.target.style.borderColor = 'var(--accent)'}
           onBlur={e => e.target.style.borderColor = 'var(--ide-border)'}
@@ -64,9 +69,9 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
 
       {/* Visibility */}
       <div style={S.section}>
-        <div style={S.title}>Visibility</div>
+        <div style={S.title}>{t('visibilitySectionTitle')}</div>
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          {[{ v: false, l: '🔒 Private', d: 'Only you can see this project' }, { v: true, l: '🌐 Public', d: 'Anyone with the link can view' }].map(opt => (
+          {[{ v: false, l: `🔒 ${t('privateOptionLabel')}`, d: t('privateOptionDesc') }, { v: true, l: `🌐 ${t('publicOptionLabel')}`, d: t('publicOptionDesc') }].map(opt => (
             <button key={String(opt.v)} onClick={() => setIsPublic(opt.v)}
               style={{ ...S.btn, flex: 1, background: isPublic === opt.v ? 'var(--accent-glow)' : 'var(--bg-overlay)', color: isPublic === opt.v ? 'var(--accent)' : 'var(--ide-text2)', border: `1px solid ${isPublic === opt.v ? 'var(--accent-dim)' : 'var(--ide-border)'}` }}>
               {opt.l}
@@ -74,18 +79,18 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
           ))}
         </div>
         <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: 0 }}>
-          {isPublic ? 'Anyone with the link can view and fork this project.' : 'Only you can access this project.'}
+          {isPublic ? t('visibilityPublicNote') : t('visibilityPrivateNote')}
         </p>
       </div>
 
       {/* Share URL */}
       {shareUrl && isPublic && (
         <div style={S.section}>
-          <div style={S.title}>Share URL</div>
+          <div style={S.title}>{t('shareUrlSectionTitle')}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input style={{ ...S.input, flex: 1, fontSize: 11, color: 'var(--ide-text2)' }} value={shareUrl} readOnly />
             <button onClick={copyShareUrl} style={{ ...S.btn, background: 'var(--bg-overlay)', color: 'var(--ide-text2)', border: '1px solid var(--ide-border)', padding: '8px 12px' }}>
-              Copy
+              {tc('copy')}
             </button>
           </div>
         </div>
@@ -94,23 +99,23 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
       {/* Save */}
       <button onClick={handleSave} disabled={saving || !projectId}
         style={{ ...S.btn, width: '100%', background: 'var(--accent)', color: '#fff', padding: '10px', marginBottom: 14, fontSize: 13 }}>
-        {saving ? '⟳ Saving...' : saved ? '✓ Saved!' : 'Save changes'}
+        {saving ? `⟳ ${tc('saving')}` : saved ? `✓ ${tc('saved')}` : tc('saveChanges')}
       </button>
 
       {/* Danger zone */}
       <div style={{ ...S.section, border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.04)' }}>
-        <div style={{ ...S.title, color: 'var(--ide-red)' }}>Danger zone</div>
+        <div style={{ ...S.title, color: 'var(--ide-red)' }}>{t('dangerZoneTitle')}</div>
         <p style={{ fontSize: 12, color: 'var(--ide-text2)', marginBottom: 12, lineHeight: 1.6 }}>
-          Type <strong style={{ color: 'var(--ide-text)' }}>{project?.name}</strong> to confirm deletion. This cannot be undone.
+          {t('dangerZoneConfirmPrefix')} <strong style={{ color: 'var(--ide-text)' }}>{project?.name}</strong> {t('dangerZoneConfirmSuffix')}
         </p>
-        <input style={{ ...S.input, marginBottom: 10 }} placeholder={`Type "${project?.name}" to confirm`}
+        <input style={{ ...S.input, marginBottom: 10 }} placeholder={t('confirmDeletePlaceholderTemplate').replace('{name}', project?.name ?? '')}
           value={confirmDelete} onChange={e => setConfirmDelete(e.target.value)}
           onFocus={e => e.target.style.borderColor = 'var(--ide-red)'}
           onBlur={e => e.target.style.borderColor = 'var(--ide-border)'}
         />
         <button onClick={handleDelete} disabled={deleting || confirmDelete !== project?.name}
           style={{ ...S.btn, width: '100%', background: confirmDelete === project?.name ? 'var(--ide-red)' : 'transparent', color: confirmDelete === project?.name ? '#fff' : 'var(--ide-red)', border: '1px solid rgba(239,68,68,0.3)', padding: '9px', opacity: confirmDelete === project?.name ? 1 : 0.5 }}>
-          {deleting ? '⟳ Deleting...' : 'Delete project permanently'}
+          {deleting ? `⟳ ${tc('deleting')}` : t('deletePermanentlyBtn')}
         </button>
       </div>
     </div>

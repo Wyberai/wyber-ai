@@ -26,6 +26,9 @@ import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
 import { VoiceButton } from './VoiceButton';
 import { FileMentionDropdown } from './FileMentionDropdown';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_CHATPANEL_STRINGS } from '@/lib/i18n/dict/editor-chatpanel';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -70,16 +73,17 @@ function uid() { return Math.random().toString(36).slice(2, 9); }
 
 // Fold a turn's agent events into the per-message receipt shape
 // (ChatMessage.agentReport) — one summary line per agent + the findings list.
-function buildAgentReport(events: AgentEvent[], passesUsed: number, credits?: number): NonNullable<ChatMessage['agentReport']> {
+function buildAgentReport(events: AgentEvent[], passesUsed: number, credits: number | undefined, t: (key: string) => string): NonNullable<ChatMessage['agentReport']> {
   const lanes = deriveAgentLanes(events);
   const agents = lanes.map(l => {
-    let summary = l.lastStatus || (l.state === 'done' ? 'done' : 'worked this turn');
+    let summary = l.lastStatus || (l.state === 'done' ? t('doneStatusMsg') : t('workedThisTurnMsg'));
     if (l.agent === 'security') {
       const fixed = l.findings.filter(f => f.resolution === 'fixed').length;
       const flagged = l.findings.filter(f => f.resolution === 'flagged').length;
       summary = l.findings.length === 0
-        ? 'reviewed every file — no security issues'
-        : `${fixed} issue${fixed === 1 ? '' : 's'} fixed before landing${flagged ? `, ${flagged} flagged` : ''}`;
+        ? t('securityNoIssuesMsg')
+        : t('securityFixedMsg').replace('{count}', String(fixed)).replace('{plural}', fixed === 1 ? '' : 's')
+          + (flagged ? t('securityFlaggedSuffixMsg').replace('{count}', String(flagged)) : '');
     }
     return { id: l.agent, summary };
   });
@@ -198,7 +202,7 @@ function stripInternalMarkers(text: string): string {
 // down to a short "Built: X" style confirmation. Only ever call this on
 // build-turn text before storing it — never on conversational chat-lane
 // answers, which need their full sentences, bullets, and code blocks intact.
-function cleanMessage(text: string): string {
+function cleanMessage(text: string, doneFallback: string): string {
   let t = stripInternalMarkers(text);
   t = t.replace(/```[\s\S]*?```/g, '');
   t = t.replace(/`src\/[^`]+`/g, '');
@@ -252,7 +256,7 @@ function cleanMessage(text: string): string {
   // paragraphs) and just cap runaway length.
   result = result.replace(/[ \t]{2,}/g, ' ').trim();
   if (result.length > 2500) result = result.slice(0, 2500).trimEnd() + '…';
-  if (!result || result.length < 3) result = 'Done — check the preview.';
+  if (!result || result.length < 3) result = doneFallback;
   return result;
 }
 
@@ -388,6 +392,8 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
 
   const resolvedProjectId = projectId || project?.id;
   const resolvedUserId = userId || project?.userId;
+  const t = useT(EDITOR_CHATPANEL_STRINGS);
+  const tc = useT(COMMON_STRINGS);
 
   const [input, setInput] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -399,8 +405,8 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const [elapsed, setElapsed] = useState(0);
   const isFirstBuild = !hasGeneratedFiles;
   const BUILD_MSGS = isFirstBuild
-    ? ['Planning your app...', 'Setting up the design system...', 'Writing components...', 'Wiring up interactions...', 'Adding realistic data...', 'Polishing the UI...', 'Almost there...']
-    : ['Applying your changes...', 'Updating components...', 'Refining the code...', 'Almost done...'];
+    ? [t('planningAppMsg'), t('settingUpDesignMsg'), t('writingComponentsMsg'), t('wiringInteractionsMsg'), t('addingDataMsg'), t('polishingUiMsg'), t('almostThereMsg')]
+    : [t('applyingChangesMsg'), t('updatingComponentsMsg'), t('refiningCodeMsg'), t('almostDoneMsg')];
 
   useEffect(() => {
     if (!isGenerating) { setElapsed(0); return; }
@@ -620,8 +626,8 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
             prompt: detail.prompt,
             error: detail.error ? String(detail.error).slice(0, 300) : undefined,
             label: detail.qaFix
-              ? 'Found some structural issues in the build — fix them now?'
-              : 'The preview hit an error — run a free auto-fix?',
+              ? t('qaFixOfferLabel')
+              : t('autoFixOfferLabel'),
           },
         })
         return
@@ -633,7 +639,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
         const seen = loopGuardRef.current.record(detail.error)
         if (seen >= 2) {
           if (AGENT_TEAM_ENABLED) {
-            turnAgentEventsRef.current = [...turnAgentEventsRef.current, { agent: 'qa', status: 'stuck', detail: 'same error came back after a fix — stopping auto-fix' }]
+            turnAgentEventsRef.current = [...turnAgentEventsRef.current, { agent: 'qa', status: 'stuck', detail: t('sameErrorStoppingMsg') }]
             useAgentTurnStore.getState().setEvents(turnAgentEventsRef.current)
           }
           useEditorStore.getState().addMessage({
@@ -739,7 +745,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const handleFile = useCallback((file: File) => {
     if (!file) return;
     if (file.size > MAX_UPLOAD_BYTES) {
-      addMessage({ id: uid(), role: 'assistant', content: `"${file.name}" is larger than 25 MB — please attach a smaller file.`, timestamp: Date.now(), status: 'done' });
+      addMessage({ id: uid(), role: 'assistant', content: t('fileTooLargeMsg').replace('{name}', file.name), timestamp: Date.now(), status: 'done' });
       return;
     }
     const localId = uid();
@@ -761,7 +767,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
           setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', kind: 'text', size: file.size, text, uploading: true }]);
           uploadAsset(file, localId);
         } catch {
-          addMessage({ id: uid(), role: 'assistant', content: `Couldn't read "${file.name}" as a spreadsheet — it may be corrupted or password-protected.`, timestamp: Date.now(), status: 'done' });
+          addMessage({ id: uid(), role: 'assistant', content: t('spreadsheetReadErrorMsg').replace('{name}', file.name), timestamp: Date.now(), status: 'done' });
         }
       })();
       return;
@@ -897,7 +903,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     const onSaved = () => {
       if (saveWarned.current) {
         saveWarned.current = false;
-        addMessage({ id: uid(), role: 'assistant', content: '✓ Connection restored — all your changes are saved.', timestamp: Date.now(), status: 'done' });
+        addMessage({ id: uid(), role: 'assistant', content: t('connectionRestoredMsg'), timestamp: Date.now(), status: 'done' });
       }
     };
 
@@ -913,13 +919,13 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
         }
         if (conflicted) {
           pendingSave.current = null;
-          addMessage({ id: uid(), role: 'assistant', content: "⚠ **This project changed in another tab or session since you loaded it.** To avoid overwriting that work, this change wasn't saved — reload the page to see the latest version before continuing.", timestamp: Date.now(), status: 'done' });
+          addMessage({ id: uid(), role: 'assistant', content: t('projectChangedConflictMsg'), timestamp: Date.now(), status: 'done' });
           break;
         }
         if (landed) continue; // pendingSave may already hold a newer pass — recheck
         if (!saveWarned.current) {
           saveWarned.current = true;
-          addMessage({ id: uid(), role: 'assistant', content: '⚠ **I can\'t reach the server to save your latest changes.** Your work is safe in this tab and I\'ll keep retrying — just don\'t close it until you see the saved confirmation.', timestamp: Date.now(), status: 'done' });
+          addMessage({ id: uid(), role: 'assistant', content: t('cantReachServerMsg'), timestamp: Date.now(), status: 'done' });
         }
         let resolvedConflict = false;
         await new Promise<void>(resolve => {
@@ -929,7 +935,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
             if (result === 'conflict') {
               resolvedConflict = true;
               pendingSave.current = null;
-              addMessage({ id: uid(), role: 'assistant', content: "⚠ **This project changed in another tab or session since you loaded it.** To avoid overwriting that work, this change wasn't saved — reload the page to see the latest version before continuing.", timestamp: Date.now(), status: 'done' });
+              addMessage({ id: uid(), role: 'assistant', content: t('projectChangedConflictMsg'), timestamp: Date.now(), status: 'done' });
               resolve();
               return;
             }
@@ -968,7 +974,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     // Conversational messages never reach here; they go through handleConversational.
     if (!opts?.silent && credits <= 0) {
       addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
-      addMessage({ id: uid(), role: 'assistant', content: "You're out of credits, so I can't build or edit right now — but questions are still free. Top up to keep building.", timestamp: Date.now(), status: 'done' });
+      addMessage({ id: uid(), role: 'assistant', content: t('outOfCreditsMsg'), timestamp: Date.now(), status: 'done' });
       return false;
     }
 
@@ -1216,7 +1222,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // regardless — pinned as the first progress line for the whole stream.
         const fileTagCount = (full.match(/<file path="/g) || []).length;
         const batchNotice = fileTagCount > 5
-          ? [`📦 Big build — ${fileTagCount} files so far, generating in batches. The preview loads automatically when the last one lands.`]
+          ? [t('bigBuildNoticeMsg').replace('{count}', String(fileTagCount))]
           : [];
         if (steps.length > 0 || batchNotice.length > 0) setProgressSteps([...batchNotice, ...steps]);
 
@@ -1347,7 +1353,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             }))
           }, 700)
         } else {
-          pushAgentEvents({ agent: 'qa', status: 'done', detail: 'structural checks passed — all imports resolve' })
+          pushAgentEvents({ agent: 'qa', status: 'done', detail: t('qaPassedMsg') })
         }
       }
 
@@ -1379,13 +1385,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
           body: JSON.stringify({ projectId: resolvedProjectId, sql: schemaSql }),
         }).then(r => r.json()).then((d: { applied?: boolean; reason?: string; error?: string }) => {
           if (d.applied) {
-            addMessage({ id: uid(), role: 'assistant', content: '🗄 **Database tables set up automatically** in your connected Supabase project — your data now persists for real.', timestamp: Date.now(), status: 'done' });
+            addMessage({ id: uid(), role: 'assistant', content: t('dbSetupAutoMsg'), timestamp: Date.now(), status: 'done' });
           } else if (d.reason === 'oauth-expired') {
-            addMessage({ id: uid(), role: 'assistant', content: '🗄 **Your Supabase connection expired**, so I couldn\'t create the database tables automatically. Click the Supabase button in the top bar and reconnect, then ask me to "set up my database tables" and I\'ll finish the job. (Or run the SQL below in Supabase → SQL Editor yourself.)\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
+            addMessage({ id: uid(), role: 'assistant', content: t('dbOauthExpiredMsg') + '\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
           } else if (d.reason === 'no-oauth') {
-            addMessage({ id: uid(), role: 'assistant', content: '🗄 **One manual step to make data persist:** your Supabase connection doesn\'t let me create tables automatically. Open Supabase → SQL Editor and run:\n\n```sql\n' + schemaSql + '\n```\n\nTip: reconnect Supabase with the one-click connect button to enable automatic setup next time.', timestamp: Date.now(), status: 'done' });
+            addMessage({ id: uid(), role: 'assistant', content: t('dbNoOauthMsg') + '\n\n```sql\n' + schemaSql + '\n```\n\n' + t('dbNoOauthTipMsg'), timestamp: Date.now(), status: 'done' });
           } else if (d.reason === 'sql-error') {
-            addMessage({ id: uid(), role: 'assistant', content: '⚠ I tried to create your database tables in Supabase but hit an error:\n\n```\n' + (d.error || 'unknown') + '\n```\n\nRun this in Supabase → SQL Editor instead:\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
+            addMessage({ id: uid(), role: 'assistant', content: t('dbSqlErrorMsg') + '\n\n```\n' + (d.error || 'unknown') + '\n```\n\n' + t('dbSqlErrorRunInsteadMsg') + '\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
           }
           // reason 'not-connected' → mock-data app, nothing to apply
         }).catch(() => { /* best-effort — the SQL block is still in the transcript */ });
@@ -1410,7 +1416,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           setTimeout(() => {
             addMessage({
               id: uid(), role: 'assistant',
-              content: '🗄 **This template uses Supabase** for its database and auth. Connect your Supabase project to make login and data persistence work — open the **Connectors** tab in the right panel.',
+              content: t('templateNeedsSupabaseMsg'),
               timestamp: Date.now(), status: 'done',
             });
           }, 400);
@@ -1418,7 +1424,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           setTimeout(() => {
             addMessage({
               id: uid(), role: 'assistant',
-              content: '💳 **This template includes Stripe payments.** Add your `STRIPE_SECRET_KEY` in the Connectors tab to enable checkout.',
+              content: t('templateIncludesStripeMsg'),
               timestamp: Date.now(), status: 'done',
             });
           }, 400);
@@ -1437,10 +1443,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
         if (isVisible) {
           const emittedNothing = full.trim().length === 0;
           const errMsg = (fileCut || editCut)
-            ? "⏳ **The response was cut off before any file finished.** Continuing automatically below — the changes land in the next message."
+            ? t('streamCutOffMsg')
             : emittedNothing
-            ? "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again."
-            : "**Nothing was actually changed** — the model responded but didn't produce any file changes, so the app is unmodified. You weren't charged for this. If your message included a large paste (a big table, a long document), try splitting it into smaller pieces and asking again.";
+            ? t('emptyResponseMsg')
+            : t('nothingChangedMsg');
           updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : 'error', retryPrompt: userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
         }
@@ -1452,15 +1458,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // cleanMessage never returns empty (it has its own generic fallback) —
       // swap that fallback for a continuation-specific receipt when this run
       // was finishing a cut build, so the chat says what actually happened.
-      let finalContent = cleanMessage(chatText);
-      if (opts?.continuation && finalContent === 'Done — check the preview.') {
-        finalContent = '✓ Finished applying the remaining files — the build is complete. Check the preview.';
+      let finalContent = cleanMessage(chatText, t('doneCheckPreviewMsg'));
+      if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
+        finalContent = t('continuationDoneMsg');
       }
       // A cut stream means the turn ends mid-work — say so, or the preamble
       // reads as a finished summary ("…Let me look at App.tsx:") and the user
       // waits on nothing. The continuation that follows is a visible bubble.
       if (fileCut || editCut) {
-        finalContent += '\n\n⏳ **Hit the output limit mid-file — continuing automatically below.** The rest of this build lands in the next message (no extra charge).';
+        finalContent += '\n\n' + t('hitOutputLimitMsg');
       }
       // Extended-thinking output (opt-in, new-build full generation only) — kept
       // client-side only for this session's collapsible display, not persisted
@@ -1476,7 +1482,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         && turnAgentEventsRef.current.length > 0
         && (!opts?.stage || opts?.finalPass);
       const agentReport = attachReport
-        ? buildAgentReport(turnAgentEventsRef.current, agentPassCountRef.current, turnCreditsRef.current || undefined)
+        ? buildAgentReport(turnAgentEventsRef.current, agentPassCountRef.current, turnCreditsRef.current || undefined, t)
         : undefined;
       if (isVisible) {
         updateMessage(assistantId, {
@@ -1502,7 +1508,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         if (AGENT_TEAM_ENABLED) {
           pushAgentEvents(suggestion
             ? { agent: 'design', status: 'finding', detail: suggestion.label, severity: 'low' }
-            : { agent: 'design', status: 'done', detail: 'design check passed' });
+            : { agent: 'design', status: 'done', detail: t('designCheckPassedMsg') });
         }
         if (suggestion) {
           addMessage({
@@ -1541,7 +1547,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         setTimeout(() => {
           addMessage({
             id: uid(), role: 'assistant',
-            content: "⚠ I couldn't reach your connected Supabase project, so this build doesn't have a working database. Check your keys in the Connectors tab, then ask me to rebuild the data layer.",
+            content: t('supabaseUnreachableMsg'),
             timestamp: Date.now(), status: 'done',
           });
         }, 300);
@@ -1562,14 +1568,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // and rescue-persist saves it, so point the user at reload, not retry.
         const isNetworkDrop = !isAbort && err instanceof TypeError;
         const errMsg = isSessionExpired
-          ? "**Your session expired.** [Log in again](/login), then come back to this project — nothing was lost, just re-send your last message."
+          ? t('sessionExpiredBuildMsg')
           : isAbort
           ? (userStoppedRef.current
-              ? "**Stopped.** You cancelled this build before it finished — check if your credits were deducted before trying again, and reload the project to see what (if anything) landed."
-              : "**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed.")
+              ? t('stoppedByUserMsg')
+              : t('buildTimedOutMsg'))
           : isNetworkDrop
-          ? "**Your connection dropped mid-build** (this happens when the computer sleeps or wifi blips). The build kept running on the server and gets saved to your project automatically — **wait ~30 seconds, then reload this page** and your files should be here. Only retry if nothing landed after reloading."
-          : `**Error:** ${err instanceof Error ? err.message : 'Unknown error'}`;
+          ? t('connectionDroppedMsg')
+          : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('unknownErrorLabel')}`;
         updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
         persistMessage('assistant', errMsg);
       }
@@ -1599,7 +1605,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     agentPassCountRef.current = 0;
     turnCreditsRef.current = 0;
     useAgentTurnStore.getState().resetTurn();
-    pushAgentEvents({ agent: 'planner', status: 'start', detail: 'mapping the build' });
+    pushAgentEvents({ agent: 'planner', status: 'start', detail: t('mappingBuildMsg') });
 
     // Atlas: the plan pass — a JSON file manifest, free (stage:'plan' skips
     // billing server-side). Best-effort: any failure falls back to one-shot.
@@ -1621,11 +1627,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
     } catch { /* plan pass is best-effort */ }
 
     if (!staged || !staged.shouldStage) {
-      pushAgentEvents({ agent: 'planner', status: 'done', detail: staged ? 'compact build — one pass' : 'building in one pass' });
+      pushAgentEvents({ agent: 'planner', status: 'done', detail: staged ? t('compactBuildMsg') : t('buildingOnePassMsg') });
       await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true });
       return;
     }
-    pushAgentEvents({ agent: 'planner', status: 'done', detail: `${staged.files.length} files planned` });
+    pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) });
 
     // Forge: scaffold — the single charged pass; shell/theme/nav so the
     // preview renders a skeleton right away.
@@ -1641,7 +1647,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // executeGeneration already surfaced the failure to the user (an error
     // bubble or a "nothing changed" message); stop here instead.
     if (scaffoldOk === false) {
-      pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: 'the scaffold pass didn\'t produce files — stopping before the fill batches; ask me to retry' });
+      pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('scaffoldFailedMsg') });
       return;
     }
 
@@ -1649,7 +1655,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // bubbles (the established multi-part-build UX). Budget-capped.
     for (let i = 0; i < staged.fillBatches.length; i++) {
       if (agentPassCountRef.current >= MAX_INTERNAL_PASSES) {
-        pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: 'pass budget reached — some features may be missing; ask me to continue and I\'ll finish them' });
+        pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('passBudgetReachedMsg') });
         break;
       }
       const batch = staged.fillBatches[i];
@@ -1674,8 +1680,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
         pushAgentEvents({
           agent: 'orchestrator', status: 'stuck',
           detail: remaining > 0
-            ? `a fill pass didn't land — stopping ${remaining} remaining batch${remaining === 1 ? '' : 'es'} early; ask me to continue and I'll finish them`
-            : 'the last fill pass didn\'t land — ask me to continue and I\'ll finish it',
+            ? t('fillBatchStoppedMsg').replace('{count}', String(remaining)).replace('{plural}', remaining === 1 ? '' : 'es')
+            : t('lastFillBatchStoppedMsg'),
         });
         break;
       }
@@ -1712,7 +1718,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     restoreCheckpoint(last.id);
     const updated = last.files;
     saveProject(updated as any);
-    addMessage({ id: uid(), role:'assistant', content:`↩ Reverted to "${last.label}"`, timestamp:Date.now(), status:'done' });
+    addMessage({ id: uid(), role:'assistant', content: t('revertedToMsg').replace('{label}', last.label), timestamp:Date.now(), status:'done' });
   }, [checkpoints, restoreCheckpoint, saveProject, addMessage]);
 
   /**
@@ -1846,22 +1852,22 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // raw protocol text — keep only the prose before the marker.
       if (created && full.includes('<<BUILD>>')) {
         full = full.slice(0, full.indexOf('<<BUILD>>')).trim()
-          || 'That change needs a build — say "go ahead" and I\'ll run it.';
+          || t('buildHandoffFallbackMsg');
         updateMessage(assistantId, { content: full });
       }
       if (!created) {
         // Empty reply — degrade gracefully, still no charge.
         setChatThinking(false);
-        addMessage({ id: assistantId, role: 'assistant', content: 'Sorry, I didn’t catch that — could you rephrase?', timestamp: Date.now(), status: 'done' });
-        full = 'Sorry, I didn’t catch that — could you rephrase?';
+        addMessage({ id: assistantId, role: 'assistant', content: t('rephraseMsg'), timestamp: Date.now(), status: 'done' });
+        full = t('rephraseMsg');
       }
       persistMessage('assistant', full);
     } catch (err) {
       setChatThinking(false);
       const isSessionExpired = err instanceof Error && err.message === 'SESSION_EXPIRED';
       const errMsg = isSessionExpired
-        ? "**Your session expired.** [Log in again](/login), then come back and re-send your message — nothing was lost."
-        : `**Error:** ${err instanceof Error ? err.message : 'Could not reach the assistant'}`;
+        ? t('sessionExpiredChatMsg')
+        : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('couldNotReachAssistantLabel')}`;
       addMessage({ id: uid(), role: 'assistant', content: errMsg, timestamp: Date.now(), status: 'error', retryPrompt: userMsg, retryLane: 'chat' });
     } finally {
       setChatThinking(false);
@@ -2074,18 +2080,18 @@ const storeProjectId = useEditorStore.getState().project?.id;
           {checkpoints.length > 0 && !isGenerating && (
             <button
               onClick={handleUndo}
-              title="Undo last change"
+              title={t('undoTooltip')}
               style={{ fontSize:10, padding:'3px 8px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
             >
-              ↩ Undo
+              {t('undoButton')}
             </button>
           )}
           <button
             onClick={() => setPlanMode(v => !v)}
-            title="Plan Mode"
+            title={t('planModeTooltip')}
             style={{ fontSize:10, padding:'3px 8px', borderRadius:5, border:`1px solid ${planMode ? 'var(--accent-dim)' : 'var(--ide-border)'}`, background: planMode ? 'var(--accent-glow)' : 'transparent', color: planMode ? 'var(--accent)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
           >
-            ◎ Plan
+            {t('planModeButton')}
           </button>
         </div>
       </div>
@@ -2122,9 +2128,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             </div>
             <div>
-              <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>Want to see a plan first?</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>{t('planOfferTitle')}</div>
               <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
-                I can sketch the file structure and approach before writing any code — you can edit or approve it. Or I can just build it now.
+                {t('planOfferDesc')}
               </div>
             </div>
           </div>
@@ -2139,7 +2145,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               }}
               style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}
             >
-              Show me a plan ({creditCost('plan', 'default')} credits)
+              {t('showPlanButton').replace('{credits}', String(creditCost('plan', 'default')))}
             </button>
             <button
               onClick={async () => {
@@ -2151,7 +2157,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               }}
               style={{ padding:'7px 14px', borderRadius:7, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text2)', fontSize:12, fontWeight:600, cursor:'pointer' }}
             >
-              Just build it
+              {t('justBuildItButton')}
             </button>
           </div>
         </div>
@@ -2164,14 +2170,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <div style={{ fontSize: 20, lineHeight: 1, marginTop: 1 }}>⚠️</div>
             <div>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', letterSpacing: '-0.01em', marginBottom: 3 }}>
-                Regulated data detected — read before building
+                {t('regulatedTitle')}
               </div>
               <div style={{ fontSize: 11, color: '#a3a3a3', lineHeight: 1.6 }}>
-                This prompt involves{' '}
+                {t('regulatedIntroPrefix')}{' '}
                 <strong style={{ color: '#fef3c7' }}>
                   {pendingRegulated.domains.map(d => d.label).join(' and ')}
                 </strong>
-                {' '}— a regulated category. Real data of this type requires:
+                {' '}{t('regulatedIntroSuffix')}
               </div>
             </div>
           </div>
@@ -2185,7 +2191,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
 
           <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.6, paddingLeft: 29 }}>
-            Wyber's default storage is <strong style={{ color: '#f87171' }}>not suitable for real regulated data</strong>. Build here for prototyping and UI design only — connect your own compliant infrastructure before handling any real records.
+            {t('regulatedFooterNotice')}
           </div>
 
           <div style={{ display: 'flex', gap: 7, paddingLeft: 29 }}>
@@ -2223,13 +2229,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
               }}
               style={{ flex: 1, padding: '7px 0', borderRadius: 7, border: 'none', background: 'rgba(251,191,36,0.15)', color: '#fbbf24', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
             >
-              I understand — build as prototype only →
+              {t('regulatedProceedButton')}
             </button>
             <button
               onClick={() => { setPendingRegulated(null); setInput(pendingRegulated.prompt) }}
               style={{ padding: '7px 14px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
             >
-              Cancel
+              {tc('cancel')}
             </button>
           </div>
         </div>
@@ -2244,9 +2250,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
             <div>
-              <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>One thing before we build</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>{t('depGateTitle')}</div>
               <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
-                This app needs external services. Add your keys now or skip and build a demo version.
+                {t('depGateDesc')}
               </div>
             </div>
           </div>
@@ -2257,7 +2263,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                 <span style={{ fontSize:14 }}>🗄</span>
                 <span style={{ fontSize:12, fontWeight:700, color:'#3FCF8E' }}>Supabase</span>
-                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>— database + auth</span>
+                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>{t('supabaseSectionDesc')}</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                 {['SUPABASE_URL', 'SUPABASE_ANON_KEY'].map(key => (
@@ -2269,7 +2275,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   />
                 ))}
                 <div style={{ fontSize:10, color:'var(--ide-text3)' }}>
-                  Find these in your Supabase project → Settings → API
+                  {t('supabaseFindKeysNote')}
                 </div>
               </div>
             </div>
@@ -2281,7 +2287,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                 <span style={{ fontSize:14 }}>💳</span>
                 <span style={{ fontSize:12, fontWeight:700, color:'#635BFF' }}>Stripe</span>
-                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>— payments</span>
+                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>{t('stripeSectionDesc')}</span>
               </div>
               <input
                 placeholder="pk_live_... or pk_test_..."
@@ -2290,7 +2296,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(99,91,255,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
               />
               <div style={{ fontSize:10, color:'var(--ide-text3)', marginTop:5 }}>
-                Find this in dashboard.stripe.com → Developers → API keys
+                {t('stripeFindKeysNote')}
               </div>
             </div>
           )}
@@ -2319,10 +2325,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
           {pendingGenArgs.composioTools.length > 0 && (
             <div style={{ background:'rgba(14,165,233,0.06)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:8, padding:'10px 12px' }}>
               <div style={{ fontSize:12, fontWeight:700, color:'var(--blue)', marginBottom:6 }}>
-                🔗 Connected tools needed: {pendingGenArgs.composioTools.join(', ')}
+                {t('composioToolsNeeded').replace('{tools}', pendingGenArgs.composioTools.join(', '))}
               </div>
               <div style={{ fontSize:11, color:'var(--ide-text3)' }}>
-                Connect these via the <strong>Agents</strong> canvas → Browse Tools → OAuth. Build with mock data for now and connect later.
+                {t('composioConnectNote')}
               </div>
             </div>
           )}
@@ -2334,7 +2340,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               disabled={secretSaving}
               style={{ flex:1, padding:'7px 0', borderRadius:7, border:'none', background:'var(--accent)', color:'white', fontSize:12, fontWeight:700, cursor:'pointer', opacity: secretSaving ? 0.7 : 1 }}
             >
-              {secretSaving ? 'Saving…' : 'Save keys & build →'}
+              {secretSaving ? tc('saving') : t('saveKeysAndBuildButton')}
             </button>
             <button
               onClick={() => {
@@ -2345,7 +2351,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               }}
               style={{ padding:'7px 14px', borderRadius:7, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text2)', fontSize:12, fontWeight:600, cursor:'pointer' }}
             >
-              Build without backend
+              {t('buildWithoutBackendButton')}
             </button>
           </div>
         </div>
@@ -2354,7 +2360,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       {dragOver && (
         <div style={{ position:'absolute', inset:0, background:'rgba(124,110,247,0.1)', border:'2px dashed var(--accent)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, pointerEvents:'none' }}>
-          <span style={{ fontSize:14, color:'var(--accent)', fontWeight:500 }}>Drop files to attach — images, docs, anything</span>
+          <span style={{ fontSize:14, color:'var(--accent)', fontWeight:500 }}>{t('dropFilesBanner')}</span>
         </div>
       )}
 
@@ -2375,8 +2381,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       style={{ width:'100%', padding:'9px 13px', borderRadius:10, border:'1px solid var(--accent)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:12, lineHeight:1.55, fontFamily:'inherit', resize:'vertical', outline:'none' }}
                     />
                     <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                      <button onClick={handleCancelEdit} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>Cancel</button>
-                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>Save & regenerate</button>
+                      <button onClick={handleCancelEdit} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>{tc('cancel')}</button>
+                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
                     </div>
                   </div>
                 </div>
@@ -2385,7 +2391,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   {!isGenerating && !msg.content.startsWith('[Image:') && (
                     <button
                       onClick={() => handleStartEdit(msg)}
-                      title="Edit and regenerate from here"
+                      title={t('editRegenerateTooltip')}
                       style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:3, borderRadius:5, display:'flex', flexShrink:0 }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
@@ -2452,7 +2458,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                                 })}
                                 style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0 }}
                               >
-                                🧠 {expandedReasoning.has(msg.id) ? 'Hide reasoning' : 'Show reasoning'}
+                                🧠 {expandedReasoning.has(msg.id) ? t('hideReasoningLabel') : t('showReasoningLabel')}
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: expandedReasoning.has(msg.id) ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
                               </button>
                               {expandedReasoning.has(msg.id) && (
@@ -2480,7 +2486,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                                   })}
                                   style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0, marginTop:4 }}
                                 >
-                                  {detailsOpen ? 'Hide details' : 'Show details'}
+                                  {detailsOpen ? t('hideDetailsLabel') : t('showDetailsLabel')}
                                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: detailsOpen ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
                                 </button>
                                 {detailsOpen && (
@@ -2513,19 +2519,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
                     <div style={{ marginTop:5, display:'flex', gap:4 }}>
                       <button
                         onClick={() => handleCopyMessage(msg.id, msg.content)}
-                        title="Copy message"
+                        title={t('copyMessageTooltip')}
                         style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copiedMessageId === msg.id ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
                       >
-                        {copiedMessageId === msg.id ? '✓ Copied' : 'Copy'}
+                        {copiedMessageId === msg.id ? '✓ ' + tc('copied') : tc('copy')}
                       </button>
                       {msg.status === 'error' && msg.retryPrompt && !isGenerating && (
                         <button
                           onClick={() => handleRetry(msg.id)}
-                          title="Retry this message"
+                          title={t('retryMessageTooltip')}
                           style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:3 }}
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>
-                          Retry
+                          {tc('retry')}
                         </button>
                       )}
                     </div>
@@ -2534,7 +2540,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                     <div style={{ marginTop:6, display:'flex', alignItems:'center', gap:6 }}>
                       <button
                         onClick={() => { setInput(msg.designSuggestion!.prompt); textareaRef.current?.focus(); }}
-                        title="Fill the input with a follow-up prompt — you still need to press Send"
+                        title={t('fillFollowUpTooltip')}
                         style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'; }}
@@ -2543,7 +2549,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       </button>
                       <button
                         onClick={() => setDismissedSuggestions(prev => new Set(prev).add(msg.id))}
-                        title="Dismiss"
+                        title={t('dismissTooltip')}
                         style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:14, lineHeight:1, padding:0 }}
                       >
                         ×
@@ -2607,7 +2613,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                <span className="ide-shimmer-text">Thinking…</span>
+                <span className="ide-shimmer-text">{t('thinkingLabel')}</span>
               </div>
             </div>
           </div>
@@ -2625,7 +2631,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 : <span style={{ fontSize:18, flexShrink:0 }}>{f.kind === 'image' ? '🖼' : f.kind === 'pdf' ? '📕' : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? '📊' : f.kind === 'text' ? '📄' : '📎'}</span>}
               <div style={{ minWidth:0 }}>
                 <div style={{ fontSize:12, color:'var(--text-primary)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
-                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? 'Uploading…' : f.kind === 'image' ? 'Image' : f.kind === 'pdf' ? 'PDF · read in full' : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? 'Spreadsheet · read as data' : f.kind === 'text' ? 'Doc · text read' : 'Attached'}</div>
+                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? t('uploadingLabel') : f.kind === 'image' ? t('imageLabel') : f.kind === 'pdf' ? t('pdfReadLabel') : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? t('spreadsheetReadLabel') : f.kind === 'text' ? t('docReadLabel') : t('attachedLabel')}</div>
               </div>
               <button onClick={() => removeAttachedFile(f.localId)} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:16, flexShrink:0, lineHeight:1 }}>×</button>
             </div>
@@ -2653,16 +2659,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <div style={{ display: 'flex', gap: 4, padding: '6px 10px 0', flexWrap: 'wrap' }}>
               {(Object.keys(files).length > 2 || hasGeneratedFiles
                 ? [
-                    { label: 'Add dark mode', prompt: 'Add a dark/light mode toggle with persistent theme. Use CSS variables for all colors.' },
-                    ...(supabaseConnected ? [] : [{ label: 'Connect Supabase', prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' }]),
-                    { label: 'Add settings page', prompt: 'Add a Settings page with profile info, notification preferences, and theme toggle.' },
-                    { label: 'Make responsive', prompt: 'Make the entire app fully responsive. Mobile-first layout, collapsible sidebar, stacked cards on small screens.' },
+                    { label: t('quickActionDarkMode'), prompt: 'Add a dark/light mode toggle with persistent theme. Use CSS variables for all colors.' },
+                    ...(supabaseConnected ? [] : [{ label: t('quickActionConnectSupabase'), prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' }]),
+                    { label: t('quickActionAddSettings'), prompt: 'Add a Settings page with profile info, notification preferences, and theme toggle.' },
+                    { label: t('quickActionMakeResponsive'), prompt: 'Make the entire app fully responsive. Mobile-first layout, collapsible sidebar, stacked cards on small screens.' },
                   ]
                 : [
-                    { label: 'CRM dashboard', prompt: 'Build a CRM dashboard with leads table, pipeline columns, and KPI cards.' },
-                    { label: 'SaaS landing page', prompt: 'Build a modern SaaS landing page with hero, features, pricing, and CTA sections.' },
-                    { label: 'Project manager', prompt: 'Build a project management app with Kanban board, task details, and team view.' },
-                    { label: 'E-commerce store', prompt: 'Build an e-commerce store with product grid, shopping cart, and checkout flow.' },
+                    { label: t('quickActionCrmDashboard'), prompt: 'Build a CRM dashboard with leads table, pipeline columns, and KPI cards.' },
+                    { label: t('quickActionSaasLanding'), prompt: 'Build a modern SaaS landing page with hero, features, pricing, and CTA sections.' },
+                    { label: t('quickActionProjectManager'), prompt: 'Build a project management app with Kanban board, task details, and team view.' },
+                    { label: t('quickActionEcommerceStore'), prompt: 'Build an e-commerce store with product grid, shopping cart, and checkout flow.' },
                   ]
               ).slice(0, 4).map(s => (
                 <button key={s.label} onClick={() => { setInput(s.prompt); textareaRef.current?.focus() }}
@@ -2683,7 +2689,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={credits <= 0 ? 'No credits — questions are free; top up to build' : planMode ? 'Plan mode active — describe what to build...' : pendingGenArgs ? 'Add your keys above, or click "Build without backend"' : 'Ask anything or describe what you want to build...'}
+            placeholder={credits <= 0 ? t('noCreditsPlaceholder') : planMode ? t('planModePlaceholder') : pendingGenArgs ? t('pendingKeysPlaceholder') : t('defaultPlaceholder')}
             disabled={isGenerating || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer}
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:13, color:'var(--ide-text)', lineHeight:1.55, minHeight:44, maxHeight:160, overflowY:'auto', letterSpacing:'-0.01em' }}
@@ -2691,7 +2697,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px', gap: 6 }}>
             <div style={{ display:'flex', gap:4, alignItems:'center', flex: 1 }}>
               <input ref={fileInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(handleFile); e.target.value=''; }} />
-              <button onClick={() => fileInputRef.current?.click()} title="Attach files — images, docs, anything"
+              <button onClick={() => fileInputRef.current?.click()} title={t('attachFilesTooltip')}
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               </button>
@@ -2702,17 +2708,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
               />
               {/* Automatic model routing — system picks the best model per task */}
               <span
-                title="WyberAi automatically picks the best model: top-tier for new builds, a fast model for quick edits. You only pay for what each change needs."
+                title={t('autoModelTooltip')}
                 style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:4 }}
               >
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                Auto
+                {t('autoModelLabel')}
               </span>
             </div>
             <button
               onClick={isGenerating ? handleStop : handleSend}
               data-send-button="true"
-              title={isGenerating ? 'Stop generating' : undefined}
+              title={isGenerating ? t('stopGeneratingTooltip') : undefined}
               disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer)}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,

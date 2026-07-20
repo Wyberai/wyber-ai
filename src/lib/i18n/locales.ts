@@ -25,3 +25,11 @@ export const LOCALE_SPEECH_CODE: Record<Locale, string> = {
 
 export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_STORAGE_KEY = 'wyber-locale';
+// Same key doubles as the cookie name — one identifier, two storage layers
+// (localStorage for instant client reads, cookie so server components can
+// resolve the locale for SSR without a DB round-trip).
+export const LOCALE_COOKIE_KEY = LOCALE_STORAGE_KEY;
+
+export function isLocale(value: unknown): value is Locale {
+  return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
+}

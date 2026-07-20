@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useEditorStore } from '@/store/editor';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors';
 
 // Real brand logos, pulled from Composio's public logo CDN purely for art —
 // no OAuth or connection tie — falls back to the emoji glyph if it 404s.
@@ -97,6 +99,7 @@ const CONNECTORS: { id: string; name: string; desc: string; icon: string; color:
 ];
 
 export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: string; onSwitchToChat?: () => void }) {
+  const t = useT(EDITOR_CONNECTORS_STRINGS);
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState<string | null>(null);
 
@@ -175,11 +178,11 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--ide-border)' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Connectors</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('connectorsTitle')}</div>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Search connectors..."
+          placeholder={t('searchConnectorsPlaceholder')}
           style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', color: 'var(--text-primary)', fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
         />
       </div>
@@ -211,7 +214,7 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
                       fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'all 0.15s',
                     }}
                   >
-                    {connected ? '✓ Connected' : adding === c.id ? 'Adding…' : '+ Add'}
+                    {connected ? `✓ ${t('connectedBadge')}` : adding === c.id ? t('addingLabel') : `+ ${t('addBtn')}`}
                   </button>
                 </div>
                 );

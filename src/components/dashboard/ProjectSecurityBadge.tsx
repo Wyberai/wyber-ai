@@ -1,5 +1,7 @@
 'use client';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import { useT } from '@/lib/i18n/useT';
+import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 
 export interface ProjectSecurityInfo {
   score: number;
@@ -15,21 +17,22 @@ function levelFor(info?: ProjectSecurityInfo): 'green' | 'amber' | 'red' | 'none
   return 'red';
 }
 
-function labelFor(info?: ProjectSecurityInfo): string {
-  if (!info) return 'Not scanned yet — connect Supabase to get a security score.';
-  if (info.criticalCount > 0) return `${info.criticalCount} critical issue${info.criticalCount === 1 ? '' : 's'} found (score ${info.score}).`;
-  if (info.score >= 85) return `Clean — no leaks found (score ${info.score}).`;
-  return `${info.score >= 50 ? 'Some' : 'Multiple'} issues found (score ${info.score}).`;
+function labelFor(info: ProjectSecurityInfo | undefined, t: (key: keyof typeof DASHBOARD_STRINGS['en']) => string): string {
+  if (!info) return t('secNotScannedYet');
+  if (info.criticalCount > 0) return t('secCriticalIssues').replace('{count}', String(info.criticalCount)).replace('{score}', String(info.score));
+  if (info.score >= 85) return t('secCleanNoLeaks').replace('{score}', String(info.score));
+  return (info.score >= 50 ? t('secSomeIssues') : t('secMultipleIssues')).replace('{score}', String(info.score));
 }
 
 /** Small colored dot on each project card — the security posture the user sees every session, not just on a marketing page. */
 export function ProjectSecurityBadge({ info }: { info?: ProjectSecurityInfo }) {
+  const t = useT(DASHBOARD_STRINGS);
   const level = levelFor(info);
   return (
     <Tooltip.Provider delayDuration={200}>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <span className="wy-sec-dot" data-level={level} aria-label={labelFor(info)} />
+          <span className="wy-sec-dot" data-level={level} aria-label={labelFor(info, t)} />
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content
@@ -41,7 +44,7 @@ export function ProjectSecurityBadge({ info }: { info?: ProjectSecurityInfo }) {
               boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
             }}
           >
-            {labelFor(info)}
+            {labelFor(info, t)}
             <Tooltip.Arrow style={{ fill: 'var(--bg-overlay)' }} />
           </Tooltip.Content>
         </Tooltip.Portal>

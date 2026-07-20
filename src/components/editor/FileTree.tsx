@@ -1,6 +1,8 @@
 'use client';
 import { useEditorStore } from '@/store/editor';
 import { useState, useMemo } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_CORE_UI_STRINGS } from '@/lib/i18n/dict/editor-core-ui';
 
 const FILE_ICONS: Record<string, { icon: string; color: string }> = {
   tsx: { icon: '⚛', color: '#61dafb' },
@@ -119,6 +121,7 @@ function TreeItem({ node, depth = 0 }: { node: TreeNode; depth?: number }) {
 
 export function FileTree() {
   const { files, project } = useEditorStore();
+  const t = useT(EDITOR_CORE_UI_STRINGS);
   const paths = Object.keys(files);
   const tree = useMemo(() => buildTree(paths), [paths.join(',')]);
 
@@ -131,12 +134,12 @@ export function FileTree() {
         letterSpacing: '0.08em', display: 'flex', alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span>{project?.name ?? 'Project'}</span>
+        <span>{project?.name ?? t('fileTreeDefaultProjectName')}</span>
         <span style={{ color: 'var(--text-muted)', cursor: 'pointer', fontSize: 14 }}>+</span>
       </div>
       {tree.length === 0 ? (
         <div style={{ padding: '24px 16px', color: 'var(--text-muted)', fontSize: 12, textAlign: 'center' }}>
-          No files yet.<br />Start a conversation to generate your app.
+          {t('fileTreeEmptyTitle')}<br />{t('fileTreeEmptyHint')}
         </div>
       ) : (
         tree.map(node => <TreeItem key={node.path} node={node} />)

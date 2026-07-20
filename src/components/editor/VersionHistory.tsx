@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { persistProjectFiles } from '@/lib/persist-project'
 import { SkeletonList, EmptyState } from './ui'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_SHELL_STRINGS } from '@/lib/i18n/dict/editor-shell'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 interface Version {
   id: string
@@ -12,6 +15,8 @@ interface Version {
 }
 
 export function VersionHistory({ projectId }: { projectId: string }) {
+  const t = useT(EDITOR_SHELL_STRINGS)
+  const tc = useT(COMMON_STRINGS)
   const [versions, setVersions] = useState<Version[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -32,7 +37,7 @@ export function VersionHistory({ projectId }: { projectId: string }) {
   }
 
   const saveVersion = async () => {
-    const label = labelInput.trim() || `Snapshot ${new Date().toLocaleString()}`
+    const label = labelInput.trim() || `${t('vhSnapshotDefaultLabelPrefix')} ${new Date().toLocaleString()}`
     setSaving(true)
     setNaming(false)
     try {
@@ -68,11 +73,11 @@ export function VersionHistory({ projectId }: { projectId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ide-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>History</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('rpTabHistoryLabel')}</div>
         {!naming && (
           <button onClick={() => setNaming(true)} disabled={saving || Object.keys(files).length < 2}
             style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: saving ? 'rgba(14,165,233,0.1)' : 'transparent', color: saving ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            {saving ? '✓ Saved' : '+ Save snapshot'}
+            {saving ? `✓ ${tc('saved')}` : t('vhSaveSnapshotBtn')}
           </button>
         )}
       </div>
@@ -85,12 +90,12 @@ export function VersionHistory({ projectId }: { projectId: string }) {
             value={labelInput}
             onChange={e => setLabelInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') saveVersion(); if (e.key === 'Escape') { setNaming(false); setLabelInput('') } }}
-            placeholder="Name this snapshot (e.g. Before adding auth)"
+            placeholder={t('vhSnapshotPlaceholder')}
             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, padding: '8px 11px', outline: 'none', fontFamily: 'inherit' }}
           />
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-            <button onClick={() => { setNaming(false); setLabelInput('') }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('save')}</button>
+            <button onClick={() => { setNaming(false); setLabelInput('') }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('cancel')}</button>
           </div>
         </div>
       )}
@@ -101,18 +106,18 @@ export function VersionHistory({ projectId }: { projectId: string }) {
         ) : versions.length === 0 ? (
           <EmptyState
             icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>}
-            title="No snapshots yet"
-            hint="Save a snapshot before big changes so you can always roll back."
+            title={t('vhEmptyTitle')}
+            hint={t('vhEmptyHint')}
           />
         ) : versions.map(v => (
           <div key={v.id} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', marginBottom: 6 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{v.label}</div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 8 }}>
-              {new Date(v.created_at).toLocaleString()} · {Object.keys(v.files || {}).length} files
+              {new Date(v.created_at).toLocaleString()} · {Object.keys(v.files || {}).length} {t('vhFilesWord')}
             </div>
             <button onClick={() => restore(v)} disabled={restoring === v.id}
               style={{ width: '100%', padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: restoring === v.id ? 'rgba(14,165,233,0.1)' : 'transparent', color: restoring === v.id ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              {restoring === v.id ? '✓ Restored' : '↩ Restore this version'}
+              {restoring === v.id ? t('vhRestoredLabel') : t('vhRestoreBtn')}
             </button>
           </div>
         ))}

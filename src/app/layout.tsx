@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "@/styles/brand.css";
 import "@/styles/editor.css";
+import { cookies } from 'next/headers';
 import { ThemeProvider } from '@/lib/theme';
+import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
+import { DEFAULT_LOCALE, LOCALE_COOKIE_KEY, isLocale } from '@/lib/i18n/locales';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
@@ -142,9 +145,15 @@ const jsonLd = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Cookie-only (no DB call here so marketing/anonymous routes stay fast) —
+  // Dashboard/Settings reconcile against profiles.preferred_locale once their
+  // own profile fetch resolves. See LocaleProvider.
+  const cookieLocale = (await cookies()).get(LOCALE_COOKIE_KEY)?.value;
+  const locale = isLocale(cookieLocale) ? cookieLocale : DEFAULT_LOCALE;
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -166,18 +175,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PostHogProvider>
-          <ThemeProvider>
-            <ErrorBoundary fallbackMessage="WyberAI hit an unexpected error">
-              <Suspense>
-                {children}
-              </Suspense>
-            </ErrorBoundary>
-          </ThemeProvider>
-          {/* All platform-only chrome (cookie banner, palette, chat widgets,
-              analytics pixels, SW registration) lives in PlatformChrome, which
-              renders NOTHING on white-label routes (/app/[slug]) so published
-              user apps stay 100% unbranded and untracked. */}
-          <Suspense fallback={null}><PlatformChrome /></Suspense>
+          <LocaleProvider initialLocale={locale}>
+            <ThemeProvider>
+              <ErrorBoundary fallbackMessage="WyberAI hit an unexpected error">
+                <Suspense>
+                  {children}
+                </Suspense>
+              </ErrorBoundary>
+            </ThemeProvider>
+            {/* All platform-only chrome (cookie banner, palette, chat widgets,
+                analytics pixels, SW registration) lives in PlatformChrome, which
+                renders NOTHING on white-label routes (/app/[slug]) so published
+                user apps stay 100% unbranded and untracked. */}
+            <Suspense fallback={null}><PlatformChrome /></Suspense>
+          </LocaleProvider>
         </PostHogProvider>
       </body>
     </html>

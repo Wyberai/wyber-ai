@@ -6,6 +6,8 @@
 // for by the click itself.
 
 import type { ChatMessage } from '@/store/editor'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_AGENTTEAM_STRINGS } from '@/lib/i18n/dict/editor-agentteam'
 
 export function FixOfferCard({
   fixOffer,
@@ -16,6 +18,7 @@ export function FixOfferCard({
   onFix: () => void
   onDismiss: () => void
 }) {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
   return (
     <div style={{
       marginTop: 7, borderRadius: 8, border: '1px solid rgba(244,114,182,0.3)',
@@ -38,16 +41,16 @@ export function FixOfferCard({
       <div style={{ display: 'flex', gap: 6 }}>
         <button
           onClick={onFix}
-          title="Runs a free auto-fix pass — no credits charged"
+          title={t('freeAutoFixTooltip')}
           style={{ fontSize: 10.5, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}
         >
-          Fix it (free)
+          {t('fixItFree')}
         </button>
         <button
           onClick={onDismiss}
           style={{ fontSize: 10.5, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer' }}
         >
-          Dismiss
+          {t('dismiss')}
         </button>
       </div>
     </div>

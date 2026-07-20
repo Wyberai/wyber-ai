@@ -1,6 +1,9 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { SkeletonList } from './ui'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 interface ConnectorRow {
   id: string
@@ -45,6 +48,8 @@ function Spinner({ size = 12, color = '#0EA5E9' }: { size?: number; color?: stri
 }
 
 export function SupabasePanel({ projectId }: { projectId: string }) {
+  const t = useT(EDITOR_CONNECTORS_STRINGS)
+  const tc = useT(COMMON_STRINGS)
   const [connected, setConnected] = useState<ConnectorRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'own' | 'provision'>('own')
@@ -73,8 +78,8 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
     setError('')
     const trimUrl = url.trim().replace(/\/$/, '')
     const trimKey = anonKey.trim()
-    if (!trimUrl || !trimKey) { setError('Both fields are required'); return }
-    if (!trimUrl.startsWith('https://')) { setError('URL must start with https://'); return }
+    if (!trimUrl || !trimKey) { setError(t('bothFieldsAreRequired')); return }
+    if (!trimUrl.startsWith('https://')) { setError(t('urlMustStartHttps')); return }
 
     // Test connection: hit the Supabase REST root with the anon key
     setTesting(true)
@@ -84,12 +89,12 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
       })
       if (!probe.ok && probe.status !== 400) {
         // 400 is fine (no table name given) — it means the server responded
-        setError(`Connection test failed (HTTP ${probe.status}). Check your URL and anon key.`)
+        setError(t('connectionTestFailedTemplate').replace('{status}', String(probe.status)))
         setTesting(false)
         return
       }
     } catch {
-      setError('Could not reach that Supabase URL. Check for typos.')
+      setError(t('couldNotReachUrl'))
       setTesting(false)
       return
     }
@@ -157,17 +162,17 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         <div style={{ ...S.row, justifyContent: 'space-between' }}>
           <div style={{ ...S.row }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Connected</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('connectedStatusLabel')}</span>
           </div>
-          <button onClick={disconnect} style={{ ...S.ghost, color: '#ef4444', borderColor: 'rgba(239,68,68,0.25)', fontSize: 10 }}>Disconnect</button>
+          <button onClick={disconnect} style={{ ...S.ghost, color: '#ef4444', borderColor: 'rgba(239,68,68,0.25)', fontSize: 10 }}>{t('disconnect')}</button>
         </div>
 
         {/* Project URL */}
         <div style={S.card}>
           <div style={{ ...S.row, justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={S.label}>Project URL</span>
+            <span style={S.label}>{t('projectUrlLabel')}</span>
             <button onClick={() => copy(sbUrl, 'url')} style={{ ...S.ghost, fontSize: 10, padding: '2px 7px' }}>
-              {copied === 'url' ? 'Copied!' : 'Copy'}
+              {copied === 'url' ? tc('copied') : tc('copy')}
             </button>
           </div>
           <code style={{ fontSize: 10, color: '#0EA5E9', fontFamily: 'monospace', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -178,9 +183,9 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         {/* Anon Key */}
         <div style={S.card}>
           <div style={{ ...S.row, justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={S.label}>Anon Key</span>
+            <span style={S.label}>{t('anonKeyShortLabel')}</span>
             <button onClick={() => copy(connected.api_key, 'key')} style={{ ...S.ghost, fontSize: 10, padding: '2px 7px' }}>
-              {copied === 'key' ? 'Copied!' : 'Copy'}
+              {copied === 'key' ? tc('copied') : tc('copy')}
             </button>
           </div>
           <code style={{ fontSize: 10, color: '#a1a1aa', fontFamily: 'monospace' }}>{maskedKey}</code>
@@ -188,15 +193,15 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
 
         {/* Info box */}
         <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.6 }}>
-          <div style={{ fontWeight: 700, color: '#0EA5E9', marginBottom: 4 }}>Auto-wired into generation</div>
-          Next generation will include working auth (signup/login/logout) and real Postgres CRUD. The anon key is safe in client code — RLS is the security boundary.
+          <div style={{ fontWeight: 700, color: '#0EA5E9', marginBottom: 4 }}>{t('autoWiredTitle')}</div>
+          {t('autoWiredBody')}
         </div>
 
         {/* Open dashboard */}
         {projectRef && (
           <a href={`https://supabase.com/dashboard/project/${projectRef}`} target="_blank" rel="noopener noreferrer"
             style={{ ...S.btn('transparent', 'var(--ide-text3)'), border: '1px solid var(--ide-border)', textDecoration: 'none', justifyContent: 'center', fontSize: 11 }}>
-            Open Supabase Dashboard <IcoLink />
+            {t('openSupabaseDashboard')} <IcoLink />
           </a>
         )}
 
@@ -213,7 +218,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         {(['own', 'provision'] as const).map(m => (
           <button key={m} onClick={() => setMode(m)}
             style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: mode === m ? '#0EA5E9' : 'transparent', color: mode === m ? '#fff' : 'var(--ide-text3)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
-            {m === 'own' ? 'Connect existing' : 'Create new'}
+            {m === 'own' ? t('connectExistingTab') : t('createNewTab')}
           </button>
         ))}
       </div>
@@ -222,11 +227,11 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
       {mode === 'own' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
-            Connect your existing Supabase project. The anon key is embedded in generated code — only use it for client-safe public tables with RLS enabled.
+            {t('connectExistingIntro')}
           </div>
 
           <div>
-            <label style={S.label}>Project URL</label>
+            <label style={S.label}>{t('projectUrlLabel')}</label>
             <input
               value={url}
               onChange={e => setUrl(e.target.value)}
@@ -237,7 +242,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
           </div>
 
           <div>
-            <label style={S.label}>Anon / Public Key</label>
+            <label style={S.label}>{t('anonKeyLabel')}</label>
             <input
               value={anonKey}
               onChange={e => setAnonKey(e.target.value)}
@@ -254,17 +259,17 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
             disabled={testing || saving}
             style={{ ...S.btn(), opacity: (testing || saving) ? 0.7 : 1 }}
           >
-            {testing ? <><Spinner size={11} color="#fff" />Testing...</> :
-             saving ? <><Spinner size={11} color="#fff" />Saving...</> :
-             <><IcoCheck />Connect & verify</>}
+            {testing ? <><Spinner size={11} color="#fff" />{t('testingBtn')}</> :
+             saving ? <><Spinner size={11} color="#fff" />{tc('saving')}</> :
+             <><IcoCheck />{t('connectAndVerifyBtn')}</>}
           </button>
 
           <div style={{ fontSize: 10, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
-            Find these in your{' '}
+            {t('findKeysDashboardPrefix')}{' '}
             <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>
-              Supabase dashboard
+              {t('supabaseDashboardLink')}
             </a>
-            {' '}→ Project Settings → API.
+            {' '}{t('findKeysDashboardSuffix')}
           </div>
         </div>
       )}
@@ -278,13 +283,13 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
           <div style={{ padding: 14, borderRadius: 9, background: 'rgba(63,207,142,0.05)', border: '1px solid rgba(63,207,142,0.15)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <IcoDb />
-              <div style={{ fontSize: 13, fontWeight: 700, color: '#3FCF8E' }}>Connect your Supabase</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#3FCF8E' }}>{t('provisionTitle')}</div>
             </div>
             <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.6, marginBottom: 12 }}>
-              One click to link your Supabase account — pick an existing project or create a new one there (free on Supabase&apos;s free tier). Postgres + auth + storage, owned by you.
+              {t('provisionIntro')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 12 }}>
-              {['Postgres database', 'Email & social auth', 'File storage', 'Real-time subscriptions'].map(f => (
+              {[t('featurePostgres'), t('featureAuth'), t('featureStorage'), t('featureRealtime')].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--ide-text3)' }}>
                   <IcoCheck />{f}
                 </div>
@@ -293,7 +298,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
             <button
               onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))}
               style={{ width: '100%', padding: 10, borderRadius: 8, border: 'none', background: '#3FCF8E', color: '#000', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-              Connect Supabase
+              {t('connectSupabaseCta')}
             </button>
           </div>
         </div>

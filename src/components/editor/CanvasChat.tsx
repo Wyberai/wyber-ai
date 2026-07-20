@@ -2,6 +2,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAgentStore } from '@/store/agentStore'
 import { detectDeps } from '@/lib/detect-deps'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -22,12 +24,7 @@ interface Props {
   canvasType: 'agent' | 'workflow'
 }
 
-const SUGGESTIONS = [
-  'When I get a support email, draft a reply and post a summary in Slack',
-  'Every Monday, pull new HubSpot leads and send a personalised intro email',
-  'When a GitHub issue is closed, notify the team in Slack with a summary',
-  'Process invoices from Gmail and log them to a Notion database',
-]
+const SUGGESTION_KEYS = ['suggestion1', 'suggestion2', 'suggestion3', 'suggestion4'] as const
 
 // SVG icons
 const IcoSend = () => (
@@ -81,6 +78,7 @@ function ToolLogo({ toolkit, size = 20 }: { toolkit: string; size?: number }) {
 
 // Single OAuth connect button for one toolkit
 function ConnectToolButton({ toolkit, onConnected }: { toolkit: string; onConnected: () => void }) {
+  const t = useT(EDITOR_CANVAS_STRINGS)
   const [connecting, setConnecting] = useState(false)
 
   const handleConnect = async () => {
@@ -105,16 +103,18 @@ function ConnectToolButton({ toolkit, onConnected }: { toolkit: string; onConnec
       style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(14,165,233,0.3)', background: 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 12, fontWeight: 600, cursor: connecting ? 'wait' : 'pointer', width: '100%' }}
     >
       <ToolLogo toolkit={toolkit} size={16} />
-      {connecting ? 'Opening OAuth...' : `Connect ${toolkit} →`}
+      {connecting ? t('openingOauthEllipsis') : `${t('connectWord')} ${toolkit} →`}
     </button>
   )
 }
 
 export function CanvasChat({ projectId, canvasType }: Props) {
+  const t = useT(EDITOR_CANVAS_STRINGS)
+  const SUGGESTIONS = SUGGESTION_KEYS.map(k => t(k))
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Hi! Describe what you want to automate in plain English — I'll build the agent for you.\n\nOr start from a blank canvas and drag in the steps yourself.`,
+      content: t('greetingMessage'),
     }
   ])
   const [input, setInput] = useState('')
@@ -157,12 +157,12 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   // Path A: generate fresh canvas from Claude
   const generateCanvas = useCallback(async (prompt: string) => {
     setLoading(true)
-    setProgressMsg('Planning your automation...')
+    setProgressMsg(t('planningAutomation'))
     setPendingPrompt(null)
     setMissingTools([])
     setConnectedInGate(new Set())
     try {
-      setProgressMsg('Building canvas...')
+      setProgressMsg(t('buildingCanvasEllipsis'))
       const res = await fetch('/api/generate-canvas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,13 +171,13 @@ export function CanvasChat({ projectId, canvasType }: Props) {
       const data = await res.json()
       setProgressMsg(null)
       if (data.error || !data.nodes?.length) {
-        setMessages(prev => [...prev, { role: 'assistant', content: 'I had trouble building that agent. Try rephrasing what you want to automate.' }])
+        setMessages(prev => [...prev, { role: 'assistant', content: t('troubleBuildingAgent') }])
         setLoading(false)
         return
       }
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `I built "${data.title}" for you — ${data.description}\n\nReview the steps below, then connect any tools you need.`,
+        content: `${t('builtPrefix')} "${data.title}" ${t('builtForYouSuffix')} ${data.description}\n\n${t('reviewStepsNote')}`,
         card: 'canvas_generated',
         meta: {
           nodes: data.nodes,
@@ -189,10 +189,10 @@ export function CanvasChat({ projectId, canvasType }: Props) {
       }])
     } catch {
       setProgressMsg(null)
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: t('wentWrongTryAgain') }])
     }
     setLoading(false)
-  }, [])
+  }, [t])
 
   // Path B: match to catalog via canvas-chat streaming
   const chatMatch = useCallback(async (userMessages: Message[]) => {
@@ -279,10 +279,10 @@ export function CanvasChat({ projectId, canvasType }: Props) {
         await chatMatch(newMessages)
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: t('wentWrongTryAgain') }])
     }
     setLoading(false)
-  }, [input, messages, loading, generateCanvas, chatMatch])
+  }, [input, messages, loading, generateCanvas, chatMatch, t])
 
   const applyCanvas = async (nodes: unknown[], edges: unknown[]) => {
     setApplying(true)
@@ -290,7 +290,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
     setApplying(false)
     setMessages(prev => [...prev, {
       role: 'assistant',
-      content: 'Agent loaded onto your canvas. Click any step to configure it, then hit Run when ready.',
+      content: t('agentLoadedOntoCanvasMessage'),
     }])
   }
 
@@ -306,10 +306,10 @@ export function CanvasChat({ projectId, canvasType }: Props) {
       if (data.canvasData) {
         const { nodes: n, edges: e } = JSON.parse(data.canvasData)
         useAgentStore.setState({ nodes: n, edges: e, selectedNodeId: null })
-        setMessages(prev => [...prev, { role: 'assistant', content: `Loaded to canvas — ${n.length} steps. Click any step to customise it.` }])
+        setMessages(prev => [...prev, { role: 'assistant', content: `${t('loadedToCanvasPrefix')} ${n.length} ${t('stepsClickCustomizeSuffix')}` }])
       }
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Could not load that agent. Try generating a fresh one instead.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: t('couldNotLoadAgentMessage') }])
     }
     setApplying(false)
   }
@@ -318,7 +318,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
     useAgentStore.getState().resetForProject()
     setMessages(prev => [...prev, {
       role: 'assistant',
-      content: 'Blank canvas ready. Drag steps in from the panel on the left, or describe what you want and I\'ll generate it.',
+      content: t('blankCanvasReadyMessage'),
     }])
   }
 
@@ -337,19 +337,19 @@ export function CanvasChat({ projectId, canvasType }: Props) {
           </svg>
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>Agent Builder</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>{t('agentBuilderTitle')}</div>
           <div style={{ fontSize: 10, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#22c55e' }} />
-            Describe it — I'll build it
+            {t('describeItBuildItTagline')}
           </div>
         </div>
         <button
           onClick={startBlank}
-          title="Start with a blank canvas"
+          title={t('blankCanvasTooltip')}
           style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
         >
           <IcoBlank />
-          Blank
+          {t('blankButton')}
         </button>
       </div>
 
@@ -380,9 +380,9 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             {msg.card === 'agent_match' && msg.meta && (
               <div style={{ marginTop: 8, marginLeft: 29, padding: 14, borderRadius: 12, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9' }}>Catalog match</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9' }}>{t('catalogMatchLabel')}</div>
                   <div style={{ marginLeft: 'auto', padding: '2px 8px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)', fontSize: 10, fontWeight: 700, color: '#22c55e' }}>
-                    {String(msg.meta.confidence)}% match
+                    {String(msg.meta.confidence)}% {t('matchWord')}
                   </div>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', marginBottom: 4 }}>{String(msg.meta.name)}</div>
@@ -394,8 +394,8 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                     style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: applying ? '#1a1a24' : '#0EA5E9', color: applying ? '#52525b' : '#fff', fontSize: 12, fontWeight: 700, cursor: applying ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                   >
                     {applying
-                      ? <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Loading...</>
-                      : 'Load to canvas'
+                      ? <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />{t('loadingEllipsis')}</>
+                      : t('loadToCanvasButton')
                     }
                   </button>
                   <button
@@ -406,7 +406,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                     style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(14,165,233,0.3)', background: 'transparent', color: '#0EA5E9', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}
                   >
                     <IcoSparkle />
-                    Generate fresh
+                    {t('generateFreshButton')}
                   </button>
                 </div>
               </div>
@@ -416,13 +416,13 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             {msg.card === 'canvas_generated' && msg.meta && (
               <div style={{ marginTop: 8, marginLeft: 29, padding: 14, borderRadius: 12, background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 8 }}>
-                  Agent ready — {(msg.meta.nodes as unknown[]).length} steps
+                  {t('agentReadyPrefix')} {(msg.meta.nodes as unknown[]).length} {t('stepsWord')}
                 </div>
                 {(msg.meta.requiredToolkits as string[]).length > 0 && (
                   <div style={{ fontSize: 11, color: '#71717a', marginBottom: 10, lineHeight: 1.5 }}>
-                    <span style={{ color: '#f59e0b', fontWeight: 600 }}>Before you run:</span>{' '}
-                    connect {(msg.meta.requiredToolkits as string[]).map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(', ')} in{' '}
-                    <a href="/settings?tab=integrations" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>Settings → Integrations</a>.
+                    <span style={{ color: '#f59e0b', fontWeight: 600 }}>{t('beforeYouRunLabel')}</span>{' '}
+                    {t('connectPrefixWord')} {(msg.meta.requiredToolkits as string[]).map(tk => tk.charAt(0).toUpperCase() + tk.slice(1)).join(', ')} {t('inWord')}{' '}
+                    <a href="/settings?tab=integrations" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>{t('settingsIntegrationsLinkText')}</a>.
                   </div>
                 )}
                 <button
@@ -431,8 +431,8 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                   style={{ width: '100%', padding: '9px', borderRadius: 8, border: 'none', background: applying ? '#1a1a24' : '#22c55e', color: applying ? '#52525b' : '#09090b', fontSize: 12, fontWeight: 700, cursor: applying ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                 >
                   {applying
-                    ? <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(34,197,94,0.3)', borderTopColor: '#22c55e', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Loading...</>
-                    : 'Load to canvas'
+                    ? <><div style={{ width: 10, height: 10, border: '1.5px solid rgba(34,197,94,0.3)', borderTopColor: '#22c55e', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />{t('loadingEllipsis')}</>
+                    : t('loadToCanvasButton')
                   }
                 </button>
               </div>
@@ -444,12 +444,12 @@ export function CanvasChat({ projectId, canvasType }: Props) {
         {pendingPrompt && missingTools.length > 0 && (
           <div style={{ marginLeft: 29, padding: 16, borderRadius: 12, background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.25)' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', marginBottom: 6 }}>
-              Connect tools before building
+              {t('connectToolsBeforeBuildingTitle')}
             </div>
             <div style={{ fontSize: 12, color: '#a1a1aa', marginBottom: 12, lineHeight: 1.5 }}>
-              This automation needs access to{' '}
+              {t('automationNeedsAccessPrefix')}{' '}
               <span style={{ color: '#fafafa', fontWeight: 600 }}>{missingTools.join(', ')}</span>.
-              Connect them so the agent can run for real.
+              {' '}{t('connectThemRunRealSuffix')}
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 12 }}>
@@ -460,7 +460,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                     {isConnected ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.06)', color: '#22c55e', fontSize: 12, fontWeight: 600 }}>
                         <IcoCheck />
-                        {tool} connected
+                        {tool} {t('toolConnectedSuffix')}
                       </div>
                     ) : (
                       <ConnectToolButton
@@ -479,14 +479,14 @@ export function CanvasChat({ projectId, canvasType }: Props) {
                   onClick={() => generateCanvas(pendingPrompt)}
                   style={{ flex: 1, padding: '9px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                 >
-                  Build now →
+                  {t('buildNowButton')}
                 </button>
               )}
               <button
                 onClick={() => generateCanvas(pendingPrompt)}
                 style={{ flex: allToolsConnected ? 'unset' : 1, padding: '9px 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#71717a', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
               >
-                Build without connections
+                {t('buildWithoutConnectionsButton')}
               </button>
             </div>
           </div>
@@ -514,7 +514,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
         {/* Suggestions — show only at start */}
         {messages.length === 1 && !loading && !pendingPrompt && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>Try describing:</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{t('tryDescribingLabel')}</div>
             {SUGGESTIONS.map(s => (
               <button key={s} onClick={() => send(s)}
                 style={{ textAlign: 'left', padding: '8px 12px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)', color: '#a1a1aa', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1.45, transition: 'all 0.15s' }}
@@ -537,7 +537,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-            placeholder="Describe what you want to automate..."
+            placeholder={t('describeAutomatePlaceholder')}
             disabled={loading || pendingPrompt !== null}
             rows={1}
             style={{ flex: 1, background: 'none', border: 'none', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit', resize: 'none', maxHeight: 80, lineHeight: 1.5, opacity: pendingPrompt ? 0.4 : 1 }}
@@ -548,7 +548,7 @@ export function CanvasChat({ projectId, canvasType }: Props) {
             <IcoSend />
           </button>
         </div>
-        <div style={{ fontSize: 10, color: '#3f3f46', marginTop: 6, textAlign: 'center' }}>Enter to send · Shift+Enter for new line</div>
+        <div style={{ fontSize: 10, color: '#3f3f46', marginTop: 6, textAlign: 'center' }}>{t('enterToSendHint')}</div>
       </div>
 
       <style>{`

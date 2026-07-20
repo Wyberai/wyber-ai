@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 import { useEditorStore } from '@/store/editor';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PanelHeader } from './ui';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_SHELL_STRINGS } from '@/lib/i18n/dict/editor-shell';
 
 const ChatPanel       = dynamic(() => import('./ChatPanel').then(m => ({ default: m.ChatPanel })), { ssr: false });
 const KnowledgePanel  = dynamic(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })), { ssr: false });
@@ -42,23 +44,28 @@ const TAB_ICONS: Record<string, JSX.Element> = {
   history: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>,
 };
 
-const TABS: { id: Tab; label: string; desc: string }[] = [
-  { id: 'chat',       label: 'Chat',       desc: 'Build & edit with AI' },
-  { id: 'agent',      label: 'Agent',      desc: 'Autonomous multi-step builder' },
-  { id: 'figma',      label: 'Figma',      desc: 'Import Figma designs as React components' },
-  { id: 'knowledge',  label: 'Knowledge',  desc: 'Your project brain — sent with every prompt' },
-  { id: 'database',   label: 'Database',   desc: 'Connect Supabase' },
-  { id: 'security',   label: 'Security',   desc: 'Real RLS scan — proves nobody can read your users’ data' },
-  { id: 'themes',     label: 'Themes',     desc: 'Retheme your app instantly — colors, fonts, radius. Free' },
-  { id: 'images',     label: 'Images',     desc: 'Every image in your app — regenerate, upload, transparency' },
-  { id: 'connectors', label: 'Connectors', desc: 'Stripe, Resend & more' },
-  { id: 'history',    label: 'History',    desc: 'Save & restore versions' },
+const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; descKey: keyof typeof EDITOR_SHELL_STRINGS['en'] }[] = [
+  { id: 'chat',       labelKey: 'rpTabChatLabel',       descKey: 'rpTabChatDesc' },
+  { id: 'agent',      labelKey: 'rpTabAgentLabel',      descKey: 'rpTabAgentDesc' },
+  { id: 'figma',      labelKey: 'rpTabFigmaLabel',      descKey: 'rpTabFigmaDesc' },
+  { id: 'knowledge',  labelKey: 'rpTabKnowledgeLabel',  descKey: 'rpTabKnowledgeDesc' },
+  { id: 'database',   labelKey: 'rpTabDatabaseLabel',   descKey: 'rpTabDatabaseDesc' },
+  { id: 'security',   labelKey: 'rpTabSecurityLabel',   descKey: 'rpTabSecurityDesc' },
+  { id: 'themes',     labelKey: 'rpTabThemesLabel',     descKey: 'rpTabThemesDesc' },
+  { id: 'images',     labelKey: 'rpTabImagesLabel',     descKey: 'rpTabImagesDesc' },
+  { id: 'connectors', labelKey: 'rpTabConnectorsLabel', descKey: 'rpTabConnectorsDesc' },
+  { id: 'history',    labelKey: 'rpTabHistoryLabel',    descKey: 'rpTabHistoryDesc' },
 ];
 
 export function RightPanel({ projectId, userId, onClose }: Props) {
+  const t = useT(EDITOR_SHELL_STRINGS);
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
   const { files, setFiles } = useEditorStore();
+
+  // Resolve tab copy at render time (hooks can't run at module scope) —
+  // see ProjectTypeChooser.tsx for the same pattern.
+  const TABS = TAB_DEFS.map(def => ({ id: def.id, label: t(def.labelKey), desc: t(def.descKey) }));
 
   // Deep-link into a specific tab from elsewhere in the editor (e.g. the
   // SecurityReportCard's "Open full security scan" → 'security'). Same
@@ -66,7 +73,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
   useEffect(() => {
     const handler = (e: Event) => {
       const tab = (e as CustomEvent).detail;
-      if (typeof tab === 'string' && TABS.some(t => t.id === tab)) setActive(tab as Tab);
+      if (typeof tab === 'string' && TAB_DEFS.some(d => d.id === tab)) setActive(tab as Tab);
     };
     window.addEventListener('wyber-open-panel-tab', handler);
     return () => window.removeEventListener('wyber-open-panel-tab', handler);
@@ -102,7 +109,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
         ))}
         <div style={{ flex: 1 }} />
         {onClose && (
-          <button onClick={onClose} title="Close panel"
+          <button onClick={onClose} title={t('rpClosePanelTitle')}
             style={{ width: 38, height: 38, borderRadius: 9, border: 'none', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             ✕
           </button>
@@ -113,8 +120,8 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <PanelHeader
           icon={TAB_ICONS[active]}
-          title={TABS.find(t => t.id === active)?.label ?? ''}
-          desc={TABS.find(t => t.id === active)?.desc}
+          title={TABS.find(tab => tab.id === active)?.label ?? ''}
+          desc={TABS.find(tab => tab.id === active)?.desc}
         />
 
         {/* Every panel is error-boundary'd so a crash inside one tab can never
@@ -123,7 +130,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             each tab its own boundary instance AND retriggers the entrance
             animation on switch. */}
         <div key={active} className="ide-panel-enter" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <ErrorBoundary fallbackMessage={`The ${TABS.find(t => t.id === active)?.label ?? ''} panel hit an error — your app and preview are unaffected`}>
+          <ErrorBoundary fallbackMessage={`${t('rpPanelErrorPrefix')} ${TABS.find(tab => tab.id === active)?.label ?? ''} ${t('rpPanelErrorSuffix')}`.trim().replace(/\s+/g, ' ')}>
             {active === 'chat'       && <ChatPanel projectId={projectId} userId={userId} />}
             {active === 'agent'      && <div style={scrollStyle}><AgentMode /></div>}
             {active === 'figma'      && <div style={scrollStyle}><FigmaImportPanel onImport={handleFigmaImport} /></div>}

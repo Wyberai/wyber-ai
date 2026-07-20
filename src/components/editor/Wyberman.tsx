@@ -3,6 +3,9 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useEditorStore, type FileNode } from '@/store/editor'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { creditCost } from '@/lib/credits'
+import { useT } from '@/lib/i18n/useT'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
@@ -20,7 +23,6 @@ interface ProposedFix {
   diffs: DiffEntry[]
 }
 
-const GREETING = "Hey, I'm Wyberman. Stuck, confused, or hit an error? Ask me anything about this project."
 const SECURITY_COST = creditCost('security-scan', 'default')
 const LANG_MAP: Record<string, string> = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', css: 'css', html: 'html', json: 'json' }
 const SEVERITY_ICON: Record<string, string> = { critical: '\u{1F534}', high: '\u{1F7E0}', medium: '\u{1F7E1}', low: '\u{1F535}' }
@@ -116,9 +118,11 @@ function WybermanInner() {
   const framework = useEditorStore(s => s.framework)
   const selectionConsumer = useEditorStore(s => s.selectionConsumer)
   const askModeActive = selectionConsumer === 'wyberman'
+  const t = useT(EDITOR_CANVAS_STRINGS)
+  const tc = useT(COMMON_STRINGS)
 
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: GREETING }])
+  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: t('wybGreeting') }])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [isNarrow, setIsNarrow] = useState(false)
@@ -164,7 +168,7 @@ function WybermanInner() {
     announcedError.current = previewError
     setMessages(m => [...m, {
       role: 'assistant',
-      content: `I can see your preview hit an error:\n\n"${summarize(previewError)}"\n\nWant me to explain what's going on, or try fixing it?`,
+      content: `${t('canSeePreviewErrorPrefix')}\n\n"${summarize(previewError)}"\n\n${t('wantExplainOrFixSuffix')}`,
     }])
     setFixStatus('idle')
     setProposedFix(null)
@@ -206,7 +210,7 @@ function WybermanInner() {
         setMessages(m => [...m.slice(0, -1), { role: 'assistant', content: reply }])
       }
     } catch {
-      setMessages(m => [...m, { role: 'assistant', content: "Sorry, I couldn't reach help right now. Try again in a moment." }])
+      setMessages(m => [...m, { role: 'assistant', content: t('couldNotReachHelpMessage') }])
     }
     setLoading(false)
   }
@@ -223,7 +227,7 @@ function WybermanInner() {
       const shortLabel = `<${detail.tag}>${detail.text ? ` "${summarize(detail.text, 30)}"` : ''}`
       const desc = `<${detail.tag}${detail.classes ? ` class="${detail.classes}"` : ''}>${detail.text ? detail.text.slice(0, 120) : ''}</${detail.tag}>`
       setOpen(true)
-      send(`What is this? ${shortLabel}`, [
+      send(`${t('whatIsThisPrefix')} ${shortLabel}`, [
         { role: 'user', content: `Context — I clicked this exact UI element in my app's live preview: ${desc}\nExplain in plain English what it is and why it looks/behaves that way. I might not know how to code.` },
         { role: 'assistant', content: 'Got it, let me take a look.' },
       ])
@@ -236,7 +240,7 @@ function WybermanInner() {
   const toggleAskMode = () => {
     const turningOn = !askModeActive
     if (turningOn && Object.keys(files).length === 0) {
-      setMessages(m => [...m, { role: 'assistant', content: "There's no preview yet to point at — generate an app first." }])
+      setMessages(m => [...m, { role: 'assistant', content: t('noPreviewYetMessage') }])
       return
     }
     window.dispatchEvent(new CustomEvent('wyber-request-edit-mode', { detail: { on: turningOn, consumer: 'wyberman' } }))
@@ -272,11 +276,11 @@ function WybermanInner() {
         setFixStatus('proposed')
       } else {
         setFixStatus('none-found')
-        setMessages(m => [...m, { role: 'assistant', content: "I couldn't find an automatic fix for that one. Want to describe it in the main chat for a deeper look?" }])
+        setMessages(m => [...m, { role: 'assistant', content: t('noAutoFixFoundMessage') }])
       }
     } catch {
       setFixStatus('none-found')
-      setMessages(m => [...m, { role: 'assistant', content: "Couldn't reach the fixer just now — try again in a moment." }])
+      setMessages(m => [...m, { role: 'assistant', content: t('couldNotReachFixerMessage') }])
     }
   }
 
@@ -293,7 +297,7 @@ function WybermanInner() {
     setFiles(updated)
     lastAppliedError.current = previewError
     setFixStatus('applied')
-    setMessages(m => [...m, { role: 'assistant', content: "Applied the fix — the preview will rebuild automatically. I saved a checkpoint first, so you can restore from Version History if anything looks off." }])
+    setMessages(m => [...m, { role: 'assistant', content: t('appliedFixMessage') }])
     setProposedFix(null)
   }
 
@@ -305,13 +309,13 @@ function WybermanInner() {
   const runSecurityCheck = async () => {
     if (isGenerating || secBusy) return
     if (Object.keys(files).length === 0) {
-      setMessages(m => [...m, { role: 'assistant', content: "There's no app here yet to scan — generate something first, then I can check it over." }])
+      setMessages(m => [...m, { role: 'assistant', content: t('noAppToScanMessage') }])
       return
     }
     if (!secConfirm) { setSecConfirm(true); return }
     setSecConfirm(false)
     setSecBusy(true)
-    setMessages(m => [...m, { role: 'assistant', content: 'Scanning your app for common security issues…' }])
+    setMessages(m => [...m, { role: 'assistant', content: t('scanningAppMessage') }])
     try {
       const fileContext = Object.entries(files).slice(0, 20).map(([p, f]) => `<file path="${p}">\n${((f as { content?: string })?.content ?? '').slice(0, 2000)}\n</file>`).join('\n\n')
       const prompt = `You are a security auditor reviewing AI-generated code. Analyze these files for vulnerabilities.\n\n${fileContext}\n\nRespond ONLY with a JSON object, no markdown:\n{\n  "score": <0-100 security score>,\n  "vulnerabilities": [{ "severity": "critical|high|medium|low", "file": "path/to/file", "issue": "Description", "fix": "How to fix it in one sentence" }],\n  "passed": ["Check that passed", ...]\n}\n\nCheck for: hardcoded secrets/API keys, missing input validation, XSS, open CORS, missing auth checks, SQL injection risks, exposed sensitive data, insecure direct object references.`
@@ -332,27 +336,27 @@ function WybermanInner() {
       }
       const clean = full.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean) as { score: number; vulnerabilities?: { severity: string; file: string; issue: string; fix: string }[] }
-      const lines = [`Security score: ${parsed.score}/100`, '']
+      const lines = [`${t('securityScoreLabel')} ${parsed.score}/100`, '']
       const vulns = parsed.vulnerabilities ?? []
       if (vulns.length === 0) {
-        lines.push("No issues found in what I checked — nice.")
+        lines.push(t('noIssuesFoundMessage'))
       } else {
         for (const v of vulns.slice(0, 5)) {
-          lines.push(`${SEVERITY_ICON[v.severity] ?? '•'} ${v.file}: ${v.issue}\n   Fix: ${v.fix}`)
+          lines.push(`${SEVERITY_ICON[v.severity] ?? '•'} ${v.file}: ${v.issue}\n   ${t('fixLabel')} ${v.fix}`)
         }
-        if (vulns.length > 5) lines.push(`\n+${vulns.length - 5} more — ask me to elaborate.`)
+        if (vulns.length > 5) lines.push(`\n+${vulns.length - 5} ${t('moreAskElaborateSuffix')}`)
       }
       setMessages(m => [...m.slice(0, -1), { role: 'assistant', content: lines.join('\n') }])
     } catch {
-      setMessages(m => [...m.slice(0, -1), { role: 'assistant', content: "Couldn't complete the scan — try again in a moment." }])
+      setMessages(m => [...m.slice(0, -1), { role: 'assistant', content: t('couldNotCompleteScanMessage') }])
     }
     setSecBusy(false)
   }
 
   const statusColor = previewError ? (previewHealFailed ? 'var(--ide-red, #ef4444)' : 'var(--ide-amber, #f59e0b)') : 'var(--ide-green, #22c55e)'
   const statusLabel = previewError
-    ? (previewHealFailed ? 'Your preview hit a snag' : (isGenerating ? 'Build in progress…' : 'Trying to self-heal…'))
-    : 'Build looks healthy'
+    ? (previewHealFailed ? t('statusPreviewSnag') : (isGenerating ? t('statusBuildInProgress') : t('statusTryingSelfHeal')))
+    : t('statusBuildHealthy')
   const mascotMood: 'idle' | 'alert' | 'happy' = previewError && previewHealFailed ? 'alert' : (!previewError ? 'happy' : 'idle')
 
   return (
@@ -370,8 +374,8 @@ function WybermanInner() {
         }}
         onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.06)'}
         onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1)'}
-        title={open ? 'Close Wyberman' : 'Ask Wyberman for help'}
-        aria-label={open ? 'Close Wyberman' : 'Ask Wyberman for help'}
+        title={open ? t('closeWybermanTooltip') : t('askWybermanTooltip')}
+        aria-label={open ? t('closeWybermanTooltip') : t('askWybermanTooltip')}
         data-wyberman-toggle
       >
         {open ? (
@@ -397,8 +401,8 @@ function WybermanInner() {
           boxShadow: '0 8px 24px rgba(0,0,0,0.4)', fontFamily: 'var(--font-display)', fontSize: 12,
           color: 'var(--ide-text, #EEEEF4)', maxWidth: 'calc(100vw - 40px)',
         }}>
-          <span>Tap an element to ask about it…</span>
-          <button onClick={toggleAskMode} style={{ background: 'transparent', border: 'none', color: 'var(--accent, #0EA5E9)', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, flexShrink: 0 }}>Cancel</button>
+          <span>{t('tapElementHint')}</span>
+          <button onClick={toggleAskMode} style={{ background: 'transparent', border: 'none', color: 'var(--accent, #0EA5E9)', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0, flexShrink: 0 }}>{tc('cancel')}</button>
         </div>
       )}
 
@@ -447,45 +451,45 @@ function WybermanInner() {
 
             {fixStatus === 'looking' && (
               <div style={{ fontSize: 12, color: 'var(--ide-text2, #7878A0)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ animation: 'wyberman-spin 0.8s linear infinite', display: 'inline-block' }}>⟳</span> Looking at the code…
+                <span style={{ animation: 'wyberman-spin 0.8s linear infinite', display: 'inline-block' }}>⟳</span> {t('lookingAtCodeMessage')}
               </div>
             )}
 
             {proposedFix && (
               <div style={{ border: '1px solid var(--ide-border, #2A2A35)', borderRadius: 10, overflow: 'hidden' }}>
                 <div style={{ padding: '8px 10px', fontSize: 12, fontWeight: 600, color: 'var(--ide-text, #EEEEF4)', background: 'var(--bg-elevated, #18181F)' }}>
-                  Proposed fix — {proposedFix.diffs.length} file{proposedFix.diffs.length !== 1 ? 's' : ''}
+                  {t('proposedFixLabel')} {proposedFix.diffs.length} {proposedFix.diffs.length !== 1 ? t('filesUnit') : t('fileUnit')}
                 </div>
                 <div style={{ maxHeight: 200, overflow: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {proposedFix.diffs.map(d => (
                     <div key={d.path}>
-                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ide-text2, #7878A0)', marginBottom: 3 }}>{d.path}{d.isNewFile ? ' (new)' : ''}</div>
+                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--ide-text2, #7878A0)', marginBottom: 3 }}>{d.path}{d.isNewFile ? ` ${t('newFileSuffix')}` : ''}</div>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, lineHeight: 1.5, borderRadius: 6, overflow: 'hidden' }}>
                         {d.removed.map((l, i) => (
                           <div key={'r' + i} style={{ background: 'rgba(239,68,68,0.12)', color: '#fca5a5', padding: '0 6px', whiteSpace: 'pre' }}>- {l}</div>
                         ))}
-                        {d.removedMore > 0 && <div style={{ color: 'var(--ide-text3, #44445A)', padding: '0 6px' }}>… +{d.removedMore} more removed</div>}
+                        {d.removedMore > 0 && <div style={{ color: 'var(--ide-text3, #44445A)', padding: '0 6px' }}>… +{d.removedMore} {t('moreRemovedSuffix')}</div>}
                         {d.added.map((l, i) => (
                           <div key={'a' + i} style={{ background: 'rgba(34,197,94,0.12)', color: '#86efac', padding: '0 6px', whiteSpace: 'pre' }}>+ {l}</div>
                         ))}
-                        {d.addedMore > 0 && <div style={{ color: 'var(--ide-text3, #44445A)', padding: '0 6px' }}>… +{d.addedMore} more added</div>}
+                        {d.addedMore > 0 && <div style={{ color: 'var(--ide-text3, #44445A)', padding: '0 6px' }}>… +{d.addedMore} {t('moreAddedSuffix')}</div>}
                       </div>
                     </div>
                   ))}
                 </div>
                 <div style={{ display: 'flex', gap: 8, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
-                  <button onClick={applyProposedFix} disabled={isGenerating} style={{ flex: 1, padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: isGenerating ? 'default' : 'pointer', opacity: isGenerating ? 0.5 : 1 }}>Apply fix</button>
-                  <button onClick={discardProposedFix} style={{ padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>Discard</button>
+                  <button onClick={applyProposedFix} disabled={isGenerating} style={{ flex: 1, padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: isGenerating ? 'default' : 'pointer', opacity: isGenerating ? 0.5 : 1 }}>{t('applyFixButton')}</button>
+                  <button onClick={discardProposedFix} style={{ padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{t('discardButton')}</button>
                 </div>
               </div>
             )}
 
             {secConfirm && (
               <div style={{ fontSize: 12, color: 'var(--ide-text, #EEEEF4)', border: '1px solid var(--ide-border, #2A2A35)', borderRadius: 8, padding: '8px 10px' }}>
-                This runs a full AI code review (~{SECURITY_COST} credits). Go ahead?
+                {t('securityConfirmMessage').replace('{cost}', String(SECURITY_COST))}
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <button onClick={runSecurityCheck} style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: 'pointer' }}>Yes, scan</button>
-                  <button onClick={() => setSecConfirm(false)} style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={runSecurityCheck} style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: 'pointer' }}>{t('yesScanButton')}</button>
+                  <button onClick={() => setSecConfirm(false)} style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('cancel')}</button>
                 </div>
               </div>
             )}
@@ -495,18 +499,18 @@ function WybermanInner() {
           {previewError && previewError !== lastAppliedError.current && !proposedFix && fixStatus !== 'looking' && (
             <div style={{ padding: '0 14px 8px', display: 'flex', gap: 6 }}>
               <button
-                onClick={() => send('What does this error mean and how do I fix it?')}
+                onClick={() => send(t('whatDoesErrorMeanMessage'))}
                 disabled={loading}
                 style={{ flex: 1, padding: '8px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'var(--accent-dim, rgba(14,165,233,0.15))', color: 'var(--accent, #0EA5E9)', border: '1px solid var(--accent-glow, rgba(14,165,233,0.12))', cursor: loading ? 'default' : 'pointer' }}
               >
-                Explain this error
+                {t('explainErrorButton')}
               </button>
               <button
                 onClick={() => runAutoFix(previewError)}
                 disabled={isGenerating}
                 style={{ flex: 1, padding: '8px 10px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: isGenerating ? 'default' : 'pointer', opacity: isGenerating ? 0.5 : 1 }}
               >
-                Fix it for me
+                {t('fixItForMeButton')}
               </button>
             </div>
           )}
@@ -521,14 +525,14 @@ function WybermanInner() {
                   textDecoration: 'underline', textUnderlineOffset: 2, fontWeight: askModeActive ? 700 : 400,
                 }}
               >
-                {askModeActive ? 'Click anything in the preview… (cancel)' : 'Point at something in the preview'}
+                {askModeActive ? t('clickAnythingCancelLabel') : t('pointAtSomethingLabel')}
               </button>
               <button
                 onClick={runSecurityCheck}
                 disabled={isGenerating || secBusy}
                 style={{ fontSize: 11, color: 'var(--ide-text2, #7878A0)', background: 'transparent', border: 'none', cursor: isGenerating || secBusy ? 'default' : 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
               >
-                Run a security check
+                {t('runSecurityCheckLabel')}
               </button>
             </div>
           </div>
@@ -539,14 +543,14 @@ function WybermanInner() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-              placeholder="Ask Wyberman..."
+              placeholder={t('askWybermanPlaceholder')}
               rows={1}
               style={{ flex: 1, padding: '8px 10px', borderRadius: 10, border: '1px solid var(--ide-border, #2A2A35)', background: 'var(--bg-elevated, #18181F)', color: 'var(--ide-text, #EEEEF4)', fontSize: 13, resize: 'none', outline: 'none', fontFamily: 'inherit', maxHeight: 80, overflowY: 'auto' }}
             />
             <button
               onClick={() => send()}
               disabled={!input.trim() || loading}
-              aria-label="Send message"
+              aria-label={t('sendMessageAriaLabel')}
               style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: input.trim() && !loading ? 'var(--accent, #0EA5E9)' : 'var(--bg-elevated, #18181F)', color: '#fff', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}
             >
               {loading ? '●' : '↑'}

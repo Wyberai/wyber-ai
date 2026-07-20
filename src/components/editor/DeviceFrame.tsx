@@ -2,6 +2,8 @@
 import { useMemo, useRef, useState, useEffect, useLayoutEffect } from 'react'
 import type { Device } from '@/lib/devices'
 import { buildPreviewHtml, type PreviewPlatform } from '@/lib/rnw-preview/shell'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_CORE_UI_STRINGS } from '@/lib/i18n/dict/editor-core-ui'
 
 interface Props {
   device: Device
@@ -22,6 +24,7 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 // available box from BOTH the measured container AND a window-based floor, and
 // clamp scale to a positive range, so the bezel is ALWAYS visible.
 export function DeviceFrame({ device, js, platform }: Props) {
+  const t = useT(EDITOR_CORE_UI_STRINGS)
   const wrapRef = useRef<HTMLDivElement>(null)
   const [box, setBox] = useState<{ h: number; w: number }>(() => ({
     h: typeof window !== 'undefined' ? window.innerHeight - 120 : 720,
@@ -111,8 +114,8 @@ export function DeviceFrame({ device, js, platform }: Props) {
             {/* App surface — always renders SOMETHING (app, spinner, or error) */}
             {runtimeError ? (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center', gap: 8, overflow: 'auto' }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#F5F5F7' }}>Preview unavailable</div>
-                <div style={{ fontSize: 12, color: '#9A9AA5', lineHeight: 1.5, maxWidth: 240 }}>This screen uses something we can’t render in the in-app preview yet. It still works in a full build.</div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: '#F5F5F7' }}>{t('deviceFramePreviewUnavailableTitle')}</div>
+                <div style={{ fontSize: 12, color: '#9A9AA5', lineHeight: 1.5, maxWidth: 240 }}>{t('deviceFramePreviewUnavailableHint')}</div>
                 {runtimeError.message && (
                   <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(0,0,0,0.35)', borderRadius: 8, maxWidth: 260, textAlign: 'left' }}>
                     <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff8a8a', wordBreak: 'break-word', lineHeight: 1.5 }}>{runtimeError.message}</div>
@@ -126,12 +129,12 @@ export function DeviceFrame({ device, js, platform }: Props) {
                 src={blobUrl}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                 style={{ width: '100%', height: '100%', border: 'none', display: 'block', background: '#0A0A0B' }}
-                title={`${device.name} preview`}
+                title={`${device.name} ${t('deviceFramePreviewTitleSuffix')}`}
               />
             ) : (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <div style={{ width: 24, height: 24, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <div style={{ fontSize: 11, color: '#52525b' }}>Loading preview…</div>
+                <div style={{ fontSize: 11, color: '#52525b' }}>{t('deviceFrameLoadingPreview')}</div>
               </div>
             )}
 

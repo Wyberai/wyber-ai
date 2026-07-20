@@ -1,6 +1,18 @@
 'use client'
 import { memo } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas'
+
+// Category codes are used as internal grouping/comparison values (INTEGRATIONS
+// entries carry the English code, and IntegrationPicker groups by equality on
+// it) — only the on-screen category heading is translated, via this lookup.
+const CATEGORY_KEY: Record<string, string> = {
+  AI: 'catAI', Comms: 'catComms', CRM: 'catCRM', Project: 'catProject',
+  Storage: 'catStorage', Productivity: 'catProductivity', Finance: 'catFinance',
+  Security: 'catSecurity', Dev: 'catDev', Support: 'catSupport',
+  Marketing: 'catMarketing', Data: 'catData',
+}
 
 // All integrations from real agent_workflows required_tools data
 export const INTEGRATIONS: Record<string, { label: string; color: string; icon: string; category: string; fields: string[] }> = {
@@ -143,13 +155,14 @@ IntegrationNode.displayName = 'IntegrationNode'
 
 // Integration picker panel — shows in the canvas sidebar
 export function IntegrationPicker({ onAdd }: { onAdd: (key: string) => void }) {
+  const t = useT(EDITOR_CANVAS_STRINGS)
   const categories = Array.from(new Set(Object.values(INTEGRATIONS).map(i => i.category)))
 
   return (
     <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
       {categories.map(cat => (
         <div key={cat}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#52525b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{cat}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#52525b', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>{CATEGORY_KEY[cat] ? t(CATEGORY_KEY[cat]) : cat}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {Object.entries(INTEGRATIONS)
               .filter(([, v]) => v.category === cat)
