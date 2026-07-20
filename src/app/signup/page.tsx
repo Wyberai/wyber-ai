@@ -112,7 +112,7 @@ export default function SignupPage() {
               <div style={{ textAlign: 'center', marginBottom: 20 }}>
                 <div style={{ fontSize: 32, marginBottom: 10 }}>🔢</div>
                 <p style={{ fontSize: 16, fontWeight: 700, color: '#0B1627', marginBottom: 6 }}>Enter your code</p>
-                <p style={{ fontSize: 13, color: '#7A9BBE', margin: 0 }}>We sent a 6-digit code to <strong>{email}</strong></p>
+                <p style={{ fontSize: 13, color: '#7A9BBE', margin: 0 }}>We sent a code to <strong>{email}</strong></p>
               </div>
               <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input type="text" inputMode="numeric" autoComplete="one-time-code" value={code}
