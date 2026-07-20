@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { WyberLogo } from '@/components/shared/WyberLogo';
@@ -12,6 +12,18 @@ export default function LoginPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const supabase = createClient();
+
+  // /auth/callback redirects here with ?error=auth when the code exchange
+  // fails — most often because the magic link was opened in a different
+  // browser/device than the one that requested it (the PKCE verifier cookie
+  // only exists there), or an email client's link-scanner consumed the
+  // one-time code before the user clicked it. Previously silent — the page
+  // just looked like a fresh login with no explanation.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('error') === 'auth') {
+      setError("That sign-in link didn't work — it may have expired, already been used, or been opened in a different browser than the one you requested it from. Try again in the same browser you're using now.");
+    }
+  }, []);
 
   // Preserve ?next= so a deep link (e.g. "Get your MCP key" → /api-keys) returns
   // the user to where they were headed instead of dumping them on /dashboard.
