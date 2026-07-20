@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
+import { localeAlternates } from '@/lib/i18n/hreflang'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Replit (2026) — AI App Builder vs Cloud IDE',
   description: 'WyberAi vs Replit: predictable credit pricing vs usage-based billing, non-technical vs developer focus, and web + mobile app building Replit doesn\'t offer. Verified June 2026.',
-  alternates: { canonical: 'https://wyberai.com/vs/replit' },
+  alternates: { canonical: 'https://wyberai.com/vs/replit', languages: localeAlternates('/vs/replit') },
   openGraph: { title: 'WyberAi vs Replit (2026)', description: 'AI app builder vs cloud IDE. Verified June 2026.', url: 'https://wyberai.com/vs/replit' },
 }
 

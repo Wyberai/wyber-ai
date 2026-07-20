@@ -5,19 +5,28 @@ import { getScanStats } from '@/lib/security-stats'
 import { NON_ENGLISH_LOCALES, isLocale, type Locale } from '@/lib/i18n/locales'
 import { localeAlternates } from '@/lib/i18n/hreflang'
 import { LOVABLE_CONTENT } from '@/lib/i18n/dict/vs-content/lovable'
+import { BOLT_CONTENT } from '@/lib/i18n/dict/vs-content/bolt'
+import { CURSOR_CONTENT } from '@/lib/i18n/dict/vs-content/cursor'
+import { REPLIT_CONTENT } from '@/lib/i18n/dict/vs-content/replit'
+import { SOFTR_CONTENT } from '@/lib/i18n/dict/vs-content/softr'
+import { V0_CONTENT } from '@/lib/i18n/dict/vs-content/v0'
 
 // Locale-prefixed sibling of app/vs/[competitor]/page.tsx — see that file's
 // English version for the canonical (unprefixed) route. Only 'hi'|'kn'|'te'|'ta'
 // generate here; 'en' 404s (English stays at the existing /vs/[competitor] URL
 // with zero disruption to current backlinks/SEO equity — see NON_ENGLISH_LOCALES).
 //
-// Each competitor needs its own translated content file under
-// dict/vs-content/*.ts (rows/faqs/tagline/blurb/pillarNote) — only 'lovable'
-// exists so far as the proof of this pattern. Adding another competitor means:
-// 1) create dict/vs-content/<slug>.ts following lovable.ts's shape
-// 2) add it to CONTENT below and to generateStaticParams' competitor list
-const COMPETITORS: Record<string, { name: string; url: string; content: typeof LOVABLE_CONTENT }> = {
-  lovable: { name: 'Lovable', url: 'https://lovable.dev', content: LOVABLE_CONTENT },
+// hasSecurityCallout mirrors each competitor's ENGLISH page.tsx exactly — only
+// vs/lovable/page.tsx calls getScanStats()/passes securityStats there, so this
+// must match or the translated pages would show a callout section the English
+// original doesn't have.
+const COMPETITORS: Record<string, { name: string; url: string; content: typeof LOVABLE_CONTENT; hasSecurityCallout?: boolean }> = {
+  lovable: { name: 'Lovable', url: 'https://lovable.dev', content: LOVABLE_CONTENT, hasSecurityCallout: true },
+  bolt: { name: 'Bolt.new', url: 'https://bolt.new', content: BOLT_CONTENT },
+  cursor: { name: 'Cursor', url: 'https://cursor.com', content: CURSOR_CONTENT },
+  replit: { name: 'Replit', url: 'https://replit.com', content: REPLIT_CONTENT },
+  softr: { name: 'Softr', url: 'https://softr.io', content: SOFTR_CONTENT, hasSecurityCallout: true },
+  v0: { name: 'v0 by Vercel', url: 'https://v0.dev', content: V0_CONTENT },
 }
 
 const META: Record<Locale, { titleSuffix: string; descTemplate: string }> = {
@@ -61,7 +70,7 @@ export default async function LocalizedVsPage({ params }: { params: Promise<{ lo
   if (!comp) notFound()
 
   const content = comp.content[locale]
-  const securityStats = await getScanStats()
+  const securityStats = comp.hasSecurityCallout ? await getScanStats() : null
 
   return (
     <VsPageTemplate

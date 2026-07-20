@@ -1,0 +1,175 @@
+import type { Locale } from '../../locales'
+import type { CompRow, FaqItem } from '@/components/seo/VsPageTemplate'
+
+export interface VsContent {
+  tagline: string
+  blurb: string
+  pillarNote: string
+  rows: CompRow[]
+  faqs: FaqItem[]
+}
+
+// AI-drafted, not yet native-reviewed (see AutoTranslateNotice). Content for
+// the /vs/v0 page (English source: src/app/vs/v0/page.tsx). Row values that
+// are pure symbols/numbers/proper nouns (✓, ✗, $29/mo, React Native, dollar
+// figures, Vercel, Supabase, Figma, GitHub, Shadcn/Tailwind, Next.js) are
+// left as-is across locales — only the human-readable phrase values (Good,
+// Excellent, Limited free, Requires assembly, USD only, etc.) and the
+// feature labels themselves are translated.
+export const V0_CONTENT: Record<Locale, VsContent> = {
+  en: {
+    tagline: 'v0 by Vercel generates polished UI components. WyberAi generates complete full-stack web + mobile applications with self-healing builds and 27 integrations.',
+    blurb: 'Honest comparison of WyberAi vs v0 by Vercel: full-stack app builder vs UI generator. Verified June 2026.',
+    pillarNote: 'v0 generates frontend UI components only — no backend, no mobile apps.',
+    rows: [
+      { feature: 'Primary output', wyber: 'Full-stack web app', other: 'UI components / pages', winner: 'wyber' },
+      { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$20/mo', winner: 'tie' },
+      { feature: 'Complete app in one gen', wyber: '✓', other: '✗ Requires assembly', winner: 'wyber' },
+      { feature: 'Database provisioning', wyber: '✓ Auto (Supabase)', other: '✗', winner: 'wyber' },
+      { feature: 'Authentication', wyber: '✓ Built-in', other: '✗ Manual integration', winner: 'wyber' },
+      { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
+      { feature: 'Self-healing builds', wyber: '✓ Auto-fixes errors', other: '✗', winner: 'wyber' },
+      { feature: '27 integrations', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },
+      { feature: 'One-click deploy', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
+      { feature: 'GitHub sync', wyber: '✓', other: '✓', winner: 'tie' },
+      { feature: 'Design system quality', wyber: 'Good', other: '✓ Excellent', winner: 'other' },
+      { feature: 'Figma import', wyber: '✓ Built-in', other: '✓', winner: 'other' },
+      { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'Component library', winner: 'wyber' },
+      { feature: 'Non-technical users', wyber: '✓ Guided', other: 'Developer-focused', winner: 'wyber' },
+      { feature: 'Free tier', wyber: '50 credits/month', other: 'Limited free', winner: 'tie' },
+      { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' },
+      { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
+    ],
+    faqs: [
+      { q: 'What is the main difference between WyberAi and v0?', a: 'v0 by Vercel is a UI component and page generator — it produces frontend code you integrate into an existing project. WyberAi generates a complete, runnable full-stack application including routing, state, data, and deployment, all in one generation.' },
+      { q: 'Does v0 build mobile apps?', a: 'No. v0 generates web UI components using Next.js and Tailwind. WyberAi also builds full React Native + Expo mobile apps that run on iOS and Android.' },
+      { q: 'Which is better for shipping fast without coding?', a: 'WyberAi. v0 is designed for developers who know how to stitch components into a project. WyberAi outputs a working app with no assembly required — ideal for non-technical founders.' },
+      { q: 'Can WyberAi match v0\'s design quality?', a: 'v0\'s design output is excellent, particularly for Shadcn/Tailwind components. WyberAi uses a custom dark-mode design system optimized for dashboards and SaaS UIs. For pixel-perfect component libraries, v0 still has an edge.' },
+      { q: 'Does WyberAi have self-healing builds?', a: 'Yes. When a build hits an error, WyberAi automatically detects and fixes it so your app ships clean. v0 does not auto-fix errors.' },
+    ],
+  },
+  hi: {
+    tagline: 'v0 by Vercel पॉलिश्ड UI कॉम्पोनेंट्स जनरेट करता है। WyberAi सेल्फ-हीलिंग बिल्ड्स और 27 इंटीग्रेशन के साथ पूरे फुल-स्टैक वेब + मोबाइल ऐप्लिकेशन जनरेट करता है।',
+    blurb: 'WyberAi बनाम v0 by Vercel की ईमानदार तुलना: फुल-स्टैक ऐप बिल्डर बनाम UI जनरेटर। जून 2026 में सत्यापित।',
+    pillarNote: 'v0 सिर्फ़ फ्रंटएंड UI कॉम्पोनेंट्स बनाता है — कोई बैकएंड नहीं, कोई मोबाइल ऐप नहीं।',
+    rows: [
+      { feature: 'मुख्य आउटपुट', wyber: 'फुल-स्टैक वेब ऐप', other: 'UI कॉम्पोनेंट्स / पेज', winner: 'wyber' },
+      { feature: 'शुरुआती कीमत', wyber: '$29/माह (Starter)', other: '$20/माह', winner: 'tie' },
+      { feature: 'एक ही जनरेशन में पूरा ऐप', wyber: '✓', other: '✗ असेंबली ज़रूरी', winner: 'wyber' },
+      { feature: 'डेटाबेस प्रोविज़निंग', wyber: '✓ ऑटो (Supabase)', other: '✗', winner: 'wyber' },
+      { feature: 'ऑथेंटिकेशन', wyber: '✓ बिल्ट-इन', other: '✗ मैनुअल इंटीग्रेशन', winner: 'wyber' },
+      { feature: 'मोबाइल ऐप बिल्डर', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
+      { feature: 'सेल्फ-हीलिंग बिल्ड्स', wyber: '✓ ऑटो-फिक्स एरर्स', other: '✗', winner: 'wyber' },
+      { feature: '27 इंटीग्रेशन', wyber: '✓ बिल्ट-इन', other: '✗', winner: 'wyber' },
+      { feature: 'वन-क्लिक डिप्लॉय', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
+      { feature: 'GitHub सिंक', wyber: '✓', other: '✓', winner: 'tie' },
+      { feature: 'डिज़ाइन सिस्टम की गुणवत्ता', wyber: 'अच्छा', other: '✓ बेहतरीन', winner: 'other' },
+      { feature: 'Figma इम्पोर्ट', wyber: '✓ बिल्ट-इन', other: '✓', winner: 'other' },
+      { feature: 'कोड जनरेशन', wyber: 'हमेशा नया AI कोड', other: 'कॉम्पोनेंट लाइब्रेरी', winner: 'wyber' },
+      { feature: 'गैर-तकनीकी यूज़र्स', wyber: '✓ गाइडेड', other: 'डेवलपर-केंद्रित', winner: 'wyber' },
+      { feature: 'फ़्री टियर', wyber: '50 क्रेडिट्स/माह', other: 'सीमित फ़्री', winner: 'tie' },
+      { feature: 'लाइव डेटाबेस सुरक्षा स्कैन', wyber: '✓ anon key से RLS जांच', other: '✗', winner: 'wyber' },
+      { feature: 'भारत/APAC प्राइसिंग', wyber: '✓ जल्द INR', other: 'सिर्फ़ USD', winner: 'wyber' },
+    ],
+    faqs: [
+      { q: 'WyberAi और v0 में मुख्य अंतर क्या है?', a: 'Vercel का v0 एक UI कॉम्पोनेंट और पेज जनरेटर है — यह फ्रंटएंड कोड बनाता है जिसे आपको किसी मौजूदा प्रोजेक्ट में जोड़ना पड़ता है। WyberAi एक पूरा, चलने-लायक फुल-स्टैक ऐप्लिकेशन जनरेट करता है — रूटिंग, स्टेट, डेटा और डिप्लॉयमेंट सहित — सब कुछ एक ही जनरेशन में।' },
+      { q: 'क्या v0 मोबाइल ऐप्स बनाता है?', a: 'नहीं। v0 Next.js और Tailwind का उपयोग करके वेब UI कॉम्पोनेंट्स जनरेट करता है। WyberAi पूरे React Native + Expo मोबाइल ऐप्स भी बनाता है जो iOS और Android पर चलते हैं।' },
+      { q: 'बिना कोडिंग के तेज़ी से शिप करने के लिए कौन बेहतर है?', a: 'WyberAi. v0 उन डेवलपर्स के लिए बनाया गया है जो जानते हैं कि कॉम्पोनेंट्स को प्रोजेक्ट में कैसे जोड़ा जाए। WyberAi बिना किसी असेंबली के एक काम करने वाला ऐप देता है — यह गैर-तकनीकी फ़ाउंडर्स के लिए आदर्श है।' },
+      { q: 'क्या WyberAi v0 की डिज़ाइन क्वालिटी से मुकाबला कर सकता है?', a: 'v0 का डिज़ाइन आउटपुट बेहतरीन है, खासकर Shadcn/Tailwind कॉम्पोनेंट्स के लिए। WyberAi एक कस्टम डार्क-मोड डिज़ाइन सिस्टम इस्तेमाल करता है जो डैशबोर्ड्स और SaaS UI के लिए ऑप्टिमाइज़्ड है। पिक्सल-परफ़ेक्ट कॉम्पोनेंट लाइब्रेरीज़ के लिए, v0 अभी भी आगे है।' },
+      { q: 'क्या WyberAi में सेल्फ-हीलिंग बिल्ड्स हैं?', a: 'हां। जब किसी बिल्ड में एरर आता है, तो WyberAi उसे अपने-आप पहचानकर ठीक कर देता है ताकि आपका ऐप क्लीन शिप हो। v0 एरर्स को अपने-आप ठीक नहीं करता।' },
+    ],
+  },
+  kn: {
+    tagline: 'v0 by Vercel ಪಾಲಿಶ್ಡ್ UI ಘಟಕಗಳನ್ನು ರಚಿಸುತ್ತದೆ. WyberAi ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳು ಮತ್ತು 27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳೊಂದಿಗೆ ಸಂಪೂರ್ಣ ಫುಲ್-ಸ್ಟ್ಯಾಕ್ ವೆಬ್ + ಮೊಬೈಲ್ ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ರಚಿಸುತ್ತದೆ.',
+    blurb: 'WyberAi vs v0 by Vercel ನ ಪ್ರಾಮಾಣಿಕ ಹೋಲಿಕೆ: ಫುಲ್-ಸ್ಟ್ಯಾಕ್ ಆ್ಯಪ್ ಬಿಲ್ಡರ್ vs UI ಜನರೇಟರ್. ಜೂನ್ 2026 ರಲ್ಲಿ ಪರಿಶೀಲಿಸಲಾಗಿದೆ.',
+    pillarNote: 'v0 ಕೇವಲ ಫ್ರಂಟ್‌ಎಂಡ್ UI ಘಟಕಗಳನ್ನು ಮಾತ್ರ ರಚಿಸುತ್ತದೆ — ಬ್ಯಾಕ್‌ಎಂಡ್ ಇಲ್ಲ, ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳಿಲ್ಲ.',
+    rows: [
+      { feature: 'ಮುಖ್ಯ ಔಟ್‌ಪುಟ್', wyber: 'ಫುಲ್-ಸ್ಟ್ಯಾಕ್ ವೆಬ್ ಆ್ಯಪ್', other: 'UI ಘಟಕಗಳು / ಪುಟಗಳು', winner: 'wyber' },
+      { feature: 'ಆರಂಭಿಕ ಬೆಲೆ', wyber: '$29/ತಿಂಗಳು (Starter)', other: '$20/ತಿಂಗಳು', winner: 'tie' },
+      { feature: 'ಒಂದೇ ಜನರೇಶನ್‌ನಲ್ಲಿ ಸಂಪೂರ್ಣ ಆ್ಯಪ್', wyber: '✓', other: '✗ ಜೋಡಣೆ ಅಗತ್ಯ', winner: 'wyber' },
+      { feature: 'ಡೇಟಾಬೇಸ್ ಪ್ರೊವಿಷನಿಂಗ್', wyber: '✓ ಸ್ವಯಂಚಾಲಿತ (Supabase)', other: '✗', winner: 'wyber' },
+      { feature: 'ಆಥೆಂಟಿಕೇಶನ್', wyber: '✓ ಬಿಲ್ಟ್-ಇನ್', other: '✗ ಮ್ಯಾನುವಲ್ ಇಂಟಿಗ್ರೇಶನ್', winner: 'wyber' },
+      { feature: 'ಮೊಬೈಲ್ ಆ್ಯಪ್ ಬಿಲ್ಡರ್', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
+      { feature: 'ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳು', wyber: '✓ ದೋಷಗಳನ್ನು ತಾನಾಗಿಯೇ ಸರಿಪಡಿಸುತ್ತದೆ', other: '✗', winner: 'wyber' },
+      { feature: '27 ಇಂಟಿಗ್ರೇಶನ್‌ಗಳು', wyber: '✓ ಬಿಲ್ಟ್-ಇನ್', other: '✗', winner: 'wyber' },
+      { feature: 'ಒನ್-ಕ್ಲಿಕ್ ಡಿಪ್ಲಾಯ್', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
+      { feature: 'GitHub ಸಿಂಕ್', wyber: '✓', other: '✓', winner: 'tie' },
+      { feature: 'ಡಿಸೈನ್ ಸಿಸ್ಟಮ್ ಗುಣಮಟ್ಟ', wyber: 'ಉತ್ತಮ', other: '✓ ಅತ್ಯುತ್ತಮ', winner: 'other' },
+      { feature: 'Figma ಇಂಪೋರ್ಟ್', wyber: '✓ ಬಿಲ್ಟ್-ಇನ್', other: '✓', winner: 'other' },
+      { feature: 'ಕೋಡ್ ರಚನೆ', wyber: 'ಯಾವಾಗಲೂ ಹೊಸ AI ಕೋಡ್', other: 'ಘಟಕ ಲೈಬ್ರರಿ', winner: 'wyber' },
+      { feature: 'ಟೆಕ್ನಿಕಲ್ ಅಲ್ಲದ ಬಳಕೆದಾರರು', wyber: '✓ ಮಾರ್ಗದರ್ಶಿತ', other: 'ಡೆವಲಪರ್-ಕೇಂದ್ರಿತ', winner: 'wyber' },
+      { feature: 'ಫ್ರೀ ಟಯರ್', wyber: '50 ಕ್ರೆಡಿಟ್‌ಗಳು/ತಿಂಗಳು', other: 'ಸೀಮಿತ ಫ್ರೀ', winner: 'tie' },
+      { feature: 'ಲೈವ್ ಡೇಟಾಬೇಸ್ ಭದ್ರತಾ ಸ್ಕ್ಯಾನ್', wyber: '✓ anon key ಮೂಲಕ RLS ಪರಿಶೀಲನೆ', other: '✗', winner: 'wyber' },
+      { feature: 'ಭಾರತ/APAC ಬೆಲೆ', wyber: '✓ ಶೀಘ್ರದಲ್ಲೇ INR', other: 'USD ಮಾತ್ರ', winner: 'wyber' },
+    ],
+    faqs: [
+      { q: 'WyberAi ಮತ್ತು v0 ನಡುವಿನ ಮುಖ್ಯ ವ್ಯತ್ಯಾಸವೇನು?', a: 'Vercel ನ v0 ಒಂದು UI ಘಟಕ ಮತ್ತು ಪುಟ ಜನರೇಟರ್ ಆಗಿದೆ — ಇದು ಫ್ರಂಟ್‌ಎಂಡ್ ಕೋಡ್ ಅನ್ನು ಉತ್ಪಾದಿಸುತ್ತದೆ, ಅದನ್ನು ನೀವು ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಪ್ರಾಜೆಕ್ಟ್‌ಗೆ ಸೇರಿಸಬೇಕಾಗುತ್ತದೆ. WyberAi ರೂಟಿಂಗ್, ಸ್ಟೇಟ್, ಡೇಟಾ ಮತ್ತು ಡಿಪ್ಲಾಯ್‌ಮೆಂಟ್ ಸೇರಿದಂತೆ ಸಂಪೂರ್ಣ, ಚಾಲನೆ-ಸಿದ್ಧ ಫುಲ್-ಸ್ಟ್ಯಾಕ್ ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಒಂದೇ ಜನರೇಶನ್‌ನಲ್ಲಿ ರಚಿಸುತ್ತದೆ.' },
+      { q: 'v0 ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನು ನಿರ್ಮಿಸುತ್ತದೆಯೇ?', a: 'ಇಲ್ಲ. v0 Next.js ಮತ್ತು Tailwind ಬಳಸಿ ವೆಬ್ UI ಘಟಕಗಳನ್ನು ರಚಿಸುತ್ತದೆ. WyberAi iOS ಮತ್ತು Android ನಲ್ಲಿ ಚಲಿಸುವ ಪೂರ್ಣ React Native + Expo ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳನ್ನೂ ನಿರ್ಮಿಸುತ್ತದೆ.' },
+      { q: 'ಕೋಡಿಂಗ್ ಇಲ್ಲದೆ ವೇಗವಾಗಿ ಶಿಪ್ ಮಾಡಲು ಯಾವುದು ಉತ್ತಮ?', a: 'WyberAi. v0 ಎಂಬುದು ಘಟಕಗಳನ್ನು ಪ್ರಾಜೆಕ್ಟ್‌ಗೆ ಹೇಗೆ ಜೋಡಿಸಬೇಕೆಂದು ತಿಳಿದಿರುವ ಡೆವಲಪರ್‌ಗಳಿಗಾಗಿ ವಿನ್ಯಾಸಗೊಳಿಸಲಾಗಿದೆ. WyberAi ಯಾವುದೇ ಜೋಡಣೆ ಅಗತ್ಯವಿಲ್ಲದೆ ಕೆಲಸ ಮಾಡುವ ಆ್ಯಪ್ ಅನ್ನು ನೀಡುತ್ತದೆ — ಇದು ಟೆಕ್ನಿಕಲ್ ಅಲ್ಲದ ಫೌಂಡರ್‌ಗಳಿಗೆ ಸೂಕ್ತವಾಗಿದೆ.' },
+      { q: 'WyberAi v0 ನ ಡಿಸೈನ್ ಗುಣಮಟ್ಟಕ್ಕೆ ಸರಿಸಾಟಿಯಾಗಬಲ್ಲದೆ?', a: 'v0 ನ ಡಿಸೈನ್ ಔಟ್‌ಪುಟ್ ಅತ್ಯುತ್ತಮವಾಗಿದೆ, ವಿಶೇಷವಾಗಿ Shadcn/Tailwind ಘಟಕಗಳಿಗೆ. WyberAi ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗಳು ಮತ್ತು SaaS UI ಗಳಿಗಾಗಿ ಆಪ್ಟಿಮೈಸ್ ಮಾಡಲಾದ ಕಸ್ಟಮ್ ಡಾರ್ಕ್-ಮೋಡ್ ಡಿಸೈನ್ ಸಿಸ್ಟಮ್ ಬಳಸುತ್ತದೆ. ಪಿಕ್ಸೆಲ್-ಪರ್ಫೆಕ್ಟ್ ಘಟಕ ಲೈಬ್ರರಿಗಳಿಗಾಗಿ, v0 ಇನ್ನೂ ಮುಂದಿದೆ.' },
+      { q: 'WyberAi ಸ್ವಯಂ-ಸರಿಪಡಿಸುವ ಬಿಲ್ಡ್‌ಗಳನ್ನು ಹೊಂದಿದೆಯೇ?', a: 'ಹೌದು. ಬಿಲ್ಡ್‌ನಲ್ಲಿ ದೋಷ ಎದುರಾದಾಗ, WyberAi ಅದನ್ನು ತಾನಾಗಿಯೇ ಪತ್ತೆಹಚ್ಚಿ ಸರಿಪಡಿಸುತ್ತದೆ, ಇದರಿಂದ ನಿಮ್ಮ ಆ್ಯಪ್ ಸ್ವಚ್ಛವಾಗಿ ಸಿದ್ಧವಾಗುತ್ತದೆ. v0 ದೋಷಗಳನ್ನು ತಾನಾಗಿಯೇ ಸರಿಪಡಿಸುವುದಿಲ್ಲ.' },
+    ],
+  },
+  te: {
+    tagline: 'v0 by Vercel మెరుగైన UI కాంపొనెంట్‌లను రూపొందిస్తుంది. WyberAi స్వీయ-సరిదిద్దుకునే బిల్డ్‌లు మరియు 27 ఇంటిగ్రేషన్‌లతో పూర్తి ఫుల్-స్టాక్ వెబ్ + మొబైల్ అప్లికేషన్‌లను రూపొందిస్తుంది.',
+    blurb: 'WyberAi vs v0 by Vercel యొక్క నిజాయితీ పోలిక: ఫుల్-స్టాక్ యాప్ బిల్డర్ vs UI జనరేటర్. జూన్ 2026లో ధృవీకరించబడింది.',
+    pillarNote: 'v0 కేవలం ఫ్రంట్‌ఎండ్ UI కాంపొనెంట్‌లను మాత్రమే రూపొందిస్తుంది — బ్యాకెండ్ లేదు, మొబైల్ యాప్‌లు లేవు.',
+    rows: [
+      { feature: 'ప్రధాన అవుట్‌పుట్', wyber: 'ఫుల్-స్టాక్ వెబ్ యాప్', other: 'UI కాంపొనెంట్‌లు / పేజీలు', winner: 'wyber' },
+      { feature: 'ప్రారంభ ధర', wyber: '$29/నెల (Starter)', other: '$20/నెల', winner: 'tie' },
+      { feature: 'ఒకే జనరేషన్‌లో పూర్తి యాప్', wyber: '✓', other: '✗ అసెంబ్లీ అవసరం', winner: 'wyber' },
+      { feature: 'డేటాబేస్ ప్రొవిజనింగ్', wyber: '✓ ఆటోమేటిక్ (Supabase)', other: '✗', winner: 'wyber' },
+      { feature: 'ఆథెంటికేషన్', wyber: '✓ బిల్ట్-ఇన్', other: '✗ మాన్యువల్ ఇంటిగ్రేషన్', winner: 'wyber' },
+      { feature: 'మొబైల్ యాప్ బిల్డర్', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
+      { feature: 'స్వీయ-సరిదిద్దుకునే బిల్డ్‌లు', wyber: '✓ లోపాలను స్వయంచాలకంగా సరిచేస్తుంది', other: '✗', winner: 'wyber' },
+      { feature: '27 ఇంటిగ్రేషన్‌లు', wyber: '✓ బిల్ట్-ఇన్', other: '✗', winner: 'wyber' },
+      { feature: 'వన్-క్లిక్ డిప్లాయ్', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
+      { feature: 'GitHub సింక్', wyber: '✓', other: '✓', winner: 'tie' },
+      { feature: 'డిజైన్ సిస్టమ్ నాణ్యత', wyber: 'మంచిది', other: '✓ అద్భుతమైనది', winner: 'other' },
+      { feature: 'Figma ఇంపోర్ట్', wyber: '✓ బిల్ట్-ఇన్', other: '✓', winner: 'other' },
+      { feature: 'కోడ్ జనరేషన్', wyber: 'ఎప్పుడూ కొత్త AI కోడ్', other: 'కాంపొనెంట్ లైబ్రరీ', winner: 'wyber' },
+      { feature: 'టెక్నికల్ కాని వినియోగదారులు', wyber: '✓ గైడెడ్', other: 'డెవలపర్-కేంద్రీకృత', winner: 'wyber' },
+      { feature: 'ఫ్రీ టియర్', wyber: '50 క్రెడిట్లు/నెల', other: 'పరిమిత ఫ్రీ', winner: 'tie' },
+      { feature: 'లైవ్ డేటాబేస్ భద్రతా స్కాన్', wyber: '✓ anon key తో RLS తనిఖీ', other: '✗', winner: 'wyber' },
+      { feature: 'భారత్/APAC ధర', wyber: '✓ త్వరలో INR', other: 'USD మాత్రమే', winner: 'wyber' },
+    ],
+    faqs: [
+      { q: 'WyberAi మరియు v0 మధ్య ప్రధాన తేడా ఏమిటి?', a: 'Vercel యొక్క v0 ఒక UI కాంపొనెంట్ మరియు పేజీ జనరేటర్ — ఇది ఫ్రంట్‌ఎండ్ కోడ్‌ను ఉత్పత్తి చేస్తుంది, దానిని మీరు ఇప్పటికే ఉన్న ప్రాజెక్ట్‌లో చేర్చాలి. WyberAi రూటింగ్, స్టేట్, డేటా మరియు డిప్లాయ్‌మెంట్‌తో సహా పూర్తి, రన్ చేయగల ఫుల్-స్టాక్ అప్లికేషన్‌ను ఒకే జనరేషన్‌లో రూపొందిస్తుంది.' },
+      { q: 'v0 మొబైల్ యాప్‌లను నిర్మిస్తుందా?', a: 'లేదు. v0 Next.js మరియు Tailwind ఉపయోగించి వెబ్ UI కాంపొనెంట్‌లను రూపొందిస్తుంది. WyberAi iOS మరియు Androidలో నడిచే పూర్తి React Native + Expo మొబైల్ యాప్‌లను కూడా నిర్మిస్తుంది.' },
+      { q: 'కోడింగ్ లేకుండా వేగంగా షిప్ చేయడానికి ఏది మంచిది?', a: 'WyberAi. v0 అనేది కాంపొనెంట్‌లను ప్రాజెక్ట్‌లో ఎలా జోడించాలో తెలిసిన డెవలపర్ల కోసం రూపొందించబడింది. WyberAi ఎలాంటి అసెంబ్లీ అవసరం లేకుండా పని చేసే యాప్‌ను అందిస్తుంది — ఇది టెక్నికల్ కాని ఫౌండర్‌లకు అనువైనది.' },
+      { q: 'WyberAi v0 డిజైన్ నాణ్యతతో సరిపోలగలదా?', a: 'v0 డిజైన్ అవుట్‌పుట్ అద్భుతమైనది, ముఖ్యంగా Shadcn/Tailwind కాంపొనెంట్‌ల కోసం. WyberAi డాష్‌బోర్డ్‌లు మరియు SaaS UIల కోసం ఆప్టిమైజ్ చేయబడిన కస్టమ్ డార్క్-మోడ్ డిజైన్ సిస్టమ్‌ను ఉపయోగిస్తుంది. పిక్సెల్-పర్ఫెక్ట్ కాంపొనెంట్ లైబ్రరీల విషయంలో, v0 ఇప్పటికీ ముందుంది.' },
+      { q: 'WyberAiలో స్వీయ-సరిదిద్దుకునే బిల్డ్‌లు ఉన్నాయా?', a: 'అవును. బిల్డ్‌లో లోపం వచ్చినప్పుడు, WyberAi దానిని స్వయంచాలకంగా గుర్తించి సరిచేస్తుంది, తద్వారా మీ యాప్ ప్రతిసారీ శుభ్రంగా సిద్ధమవుతుంది. v0 లోపాలను స్వయంచాలకంగా సరిచేయదు.' },
+    ],
+  },
+  ta: {
+    tagline: 'v0 by Vercel மெருகூட்டப்பட்ட UI கூறுகளை உருவாக்குகிறது. WyberAi சுயமாக சரிசெய்யும் பில்டுகள் மற்றும் 27 இன்டகிரேஷன்களுடன் முழுமையான முழு-அடுக்கு வெப் + மொபைல் பயன்பாடுகளை உருவாக்குகிறது.',
+    blurb: 'WyberAi vs v0 by Vercel இன் நேர்மையான ஒப்பீடு: முழு-அடுக்கு ஆப் பில்டர் vs UI ஜெனரேட்டர். ஜூன் 2026 இல் சரிபார்க்கப்பட்டது.',
+    pillarNote: 'v0 வெறும் ஃப்ரண்ட்எண்ட் UI கூறுகளை மட்டுமே உருவாக்குகிறது — பேக்எண்ட் இல்லை, மொபைல் ஆப்கள் இல்லை.',
+    rows: [
+      { feature: 'முதன்மை வெளியீடு', wyber: 'முழு-அடுக்கு வெப் ஆப்', other: 'UI கூறுகள் / பக்கங்கள்', winner: 'wyber' },
+      { feature: 'தொடக்க விலை', wyber: '$29/மாதம் (Starter)', other: '$20/மாதம்', winner: 'tie' },
+      { feature: 'ஒரே ஜெனரேஷனில் முழுமையான ஆப்', wyber: '✓', other: '✗ ஒன்றிணைப்பு தேவை', winner: 'wyber' },
+      { feature: 'தரவுத்தள ப்ரொவிஷனிங்', wyber: '✓ தானியங்கி (Supabase)', other: '✗', winner: 'wyber' },
+      { feature: 'ஆத்தென்டிகேஷன்', wyber: '✓ உள்ளமைந்தது', other: '✗ கைமுறை ஒருங்கிணைப்பு', winner: 'wyber' },
+      { feature: 'மொபைல் ஆப் பில்டர்', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
+      { feature: 'சுயமாக சரிசெய்யும் பில்டுகள்', wyber: '✓ பிழைகளை தானாகவே சரிசெய்கிறது', other: '✗', winner: 'wyber' },
+      { feature: '27 இன்டகிரேஷன்கள்', wyber: '✓ உள்ளமைந்தது', other: '✗', winner: 'wyber' },
+      { feature: 'ஒரு-கிளிக் டெப்ளாய்', wyber: '✓ Vercel', other: '✓ Vercel', winner: 'tie' },
+      { feature: 'GitHub ஒத்திசைவு', wyber: '✓', other: '✓', winner: 'tie' },
+      { feature: 'டிசைன் சிஸ்டம் தரம்', wyber: 'நல்லது', other: '✓ சிறப்பானது', winner: 'other' },
+      { feature: 'Figma இறக்குமதி', wyber: '✓ உள்ளமைந்தது', other: '✓', winner: 'other' },
+      { feature: 'கோட் உருவாக்கம்', wyber: 'எப்போதும் புதிய AI கோட்', other: 'கூறு நூலகம்', winner: 'wyber' },
+      { feature: 'தொழில்நுட்பம் அறியாத பயனர்கள்', wyber: '✓ வழிகாட்டப்பட்டது', other: 'டெவலப்பர்-மையப்படுத்தப்பட்டது', winner: 'wyber' },
+      { feature: 'இலவச நிலை', wyber: '50 கிரெடிட்கள்/மாதம்', other: 'வரம்புக்குட்பட்ட இலவசம்', winner: 'tie' },
+      { feature: 'நேரடி தரவுத்தள பாதுகாப்பு ஸ்கேன்', wyber: '✓ anon key மூலம் RLS சோதனை', other: '✗', winner: 'wyber' },
+      { feature: 'இந்தியா/APAC விலை', wyber: '✓ விரைவில் INR', other: 'USD மட்டும்', winner: 'wyber' },
+    ],
+    faqs: [
+      { q: 'WyberAi மற்றும் v0 இடையே உள்ள முக்கிய வேறுபாடு என்ன?', a: 'Vercel இன் v0 என்பது ஒரு UI கூறு மற்றும் பக்க ஜெனரேட்டர் — இது ஃப்ரண்ட்எண்ட் கோட்டை உருவாக்குகிறது, அதை நீங்கள் ஏற்கனவே உள்ள திட்டத்தில் இணைக்க வேண்டும். WyberAi ரூட்டிங், ஸ்டேட், தரவு மற்றும் டெப்ளாய்மென்ட் உள்ளிட்ட முழுமையான, இயங்கக்கூடிய முழு-அடுக்கு பயன்பாட்டை ஒரே ஜெனரேஷனில் உருவாக்குகிறது.' },
+      { q: 'v0 மொபைல் ஆப்களை உருவாக்குகிறதா?', a: 'இல்லை. v0 Next.js மற்றும் Tailwind பயன்படுத்தி வெப் UI கூறுகளை உருவாக்குகிறது. WyberAi iOS மற்றும் Android இல் இயங்கும் முழுமையான React Native + Expo மொபைல் ஆப்களையும் உருவாக்குகிறது.' },
+      { q: 'கோடிங் இல்லாமல் வேகமாக ஷிப் செய்ய எது சிறந்தது?', a: 'WyberAi. v0 என்பது கூறுகளை ஒரு திட்டத்தில் எப்படி இணைப்பது என்று தெரிந்த டெவலப்பர்களுக்காக வடிவமைக்கப்பட்டுள்ளது. WyberAi எந்த ஒன்றிணைப்பும் தேவையில்லாமல் வேலை செய்யும் ஆப்பை வழங்குகிறது — இது தொழில்நுட்பம் அறியாத நிறுவனர்களுக்கு ஏற்றது.' },
+      { q: 'WyberAi v0 இன் டிசைன் தரத்திற்கு நிகராக இருக்க முடியுமா?', a: 'v0 இன் டிசைன் வெளியீடு சிறப்பானது, குறிப்பாக Shadcn/Tailwind கூறுகளுக்கு. WyberAi டாஷ்போர்டுகள் மற்றும் SaaS UI க்காக ஆப்டிமைஸ் செய்யப்பட்ட தனிப்பயன் டார்க்-மோட் டிசைன் சிஸ்டத்தைப் பயன்படுத்துகிறது. பிக்சல்-பர்ஃபெக்ட் கூறு நூலகங்களுக்கு, v0 இன்னும் முன்னிலையில் உள்ளது.' },
+      { q: 'WyberAi இல் சுயமாக சரிசெய்யும் பில்டுகள் உள்ளனவா?', a: 'ஆம். ஒரு பில்டில் பிழை ஏற்படும்போது, WyberAi அதை தானாகவே கண்டறிந்து சரிசெய்கிறது, இதனால் உங்கள் ஆப் ஒவ்வொரு முறையும் சுத்தமாக தயாராகிறது. v0 பிழைகளை தானாகவே சரிசெய்யாது.' },
+    ],
+  },
+}
