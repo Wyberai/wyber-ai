@@ -90,6 +90,7 @@ export function WidgetPicker() {
           slug="ecommerce-widget-picker"
           label={`Build my dashboard (${selected.size || 3} widgets) →`}
           color={color}
+          projectLabel="Ecommerce Dashboard"
         />
         <span style={{ fontSize: 12, color: s.dim }}>Free to start — no card required.</span>
       </div>

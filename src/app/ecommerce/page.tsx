@@ -135,7 +135,7 @@ export default function EcommerceDashboardLanding() {
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 50 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Live in minutes.</p>
-          <StartBuildButton prompt={DEFAULT_PROMPT} target="web" slug="ecommerce-footer" label="Build my dashboard →" color={color} variant="compact" />
+          <StartBuildButton prompt={DEFAULT_PROMPT} target="web" slug="ecommerce-footer" label="Build my dashboard →" color={color} variant="compact" projectLabel="Ecommerce Dashboard" />
         </div>
       </div>
       <style>{` details summary::-webkit-details-marker{display:none}`}</style>
