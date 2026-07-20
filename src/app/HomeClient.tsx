@@ -179,7 +179,7 @@ function buildProducts(t: HomeStrings) {
       body: t.productMobileBody,
       bullets: [t.productMobileBullet1, t.productMobileBullet2, t.productMobileBullet3],
       cta: t.productMobileCta,
-      href: '/templates/mobile',
+      href: '/signup',
       mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent="#f97316" title="wyberai.com — mobile build" />,
     },
   ] as const;
@@ -346,7 +346,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   const STAGES = buildStages(t);
   const product = PRODUCTS[activeProduct];
 
-  const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/ai-app-builder'], [t.navMobileApps, '/templates/mobile'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/no-code-web-app-builder'], [t.navMobileApps, '/use-cases/build-mobile-app-with-ai'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark">
