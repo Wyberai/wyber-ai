@@ -116,15 +116,15 @@ export default function SignupPage() {
               </div>
               <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <input type="text" inputMode="numeric" autoComplete="one-time-code" value={code}
-                  onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="123456" required autoFocus
+                  onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 12))}
+                  placeholder="Enter code" required autoFocus
                   style={{ width: '100%', padding: '11px 14px', borderRadius: 9, border: '1.5px solid #DCE4F0', background: '#F6F8FB', color: '#0B1627', fontSize: 20, textAlign: 'center', letterSpacing: '0.3em', outline: 'none', fontFamily: 'var(--font-sans)' }}
                   onFocus={e => e.target.style.borderColor = '#0EA5E9'}
                   onBlur={e => e.target.style.borderColor = '#DCE4F0'}
                 />
                 {error && <p style={{ color: '#EF4444', fontSize: 12, margin: 0 }}>{error}</p>}
-                <button type="submit" disabled={verifying || code.length < 6}
-                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: verifying ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)', opacity: code.length < 6 ? 0.6 : 1 }}>
+                <button type="submit" disabled={verifying || code.length < 4}
+                  style={{ width: '100%', padding: '11px 16px', borderRadius: 9, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: verifying ? 'wait' : 'pointer', fontFamily: 'var(--font-sans)', opacity: code.length < 4 ? 0.6 : 1 }}>
                   {verifying ? 'Verifying...' : 'Verify & create account →'}
                 </button>
               </form>
