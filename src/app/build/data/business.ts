@@ -146,4 +146,33 @@ export const BUSINESS_PAGES: BuildPage[] = [
     ],
     related: ['inventory-management-app', 'client-crm'],
   },
+  {
+    slug: 'ecommerce-seller-dashboard',
+    noun: 'ecommerce seller dashboard',
+    h1: 'Build an Ecommerce Seller Dashboard with AI',
+    metaTitle: 'Build an Ecommerce Seller Dashboard with AI — No Code',
+    metaDesc: 'Orders, margin, and stock across Amazon, Shopify, and Etsy in one dashboard — generated from plain English, no per-channel platform fee.',
+    target: 'web',
+    category: 'business',
+    tagline: 'One dashboard for every channel you sell on — real margin per order, stock that doesn\'t lie, and no new subscription every time you add a marketplace.',
+    body: [
+      'Sell on more than one channel — Amazon, Shopify, Etsy, your own storefront — and you end up with a different login, a different report format, and a different definition of "profit" for each one. Stitching them into one picture at month-end usually means exporting spreadsheets from three places and hoping the categories line up.',
+      'Describe how you actually sell — which channels, what each one takes in fees, how you think about margin per order — and WyberAi builds the dashboard around that: one place to log orders from any channel, a margin view that subtracts the fees and costs specific to where the sale happened, and a stock picture that doesn\'t assume you only sell in one place. Add a channel later and it\'s a prompt away, not a new subscription.',
+    ],
+    features: [
+      { title: 'One feed, every channel', desc: 'Log orders from Amazon, Shopify, Etsy, or your own store in one place instead of switching tabs to piece together the full picture.' },
+      { title: 'Real margin per order', desc: 'Attach each channel\'s fee percentage and your cost price, and margin is calculated per order — not guessed at from a blended average.' },
+      { title: 'Stock across channels', desc: 'One product sold in three places still has one quantity on hand, so you don\'t oversell what another channel already sold.' },
+      { title: 'Grows with your catalog, not against it', desc: 'No per-order or per-channel fee that climbs as you scale — you build it once with free credits and it\'s yours.' },
+    ],
+    promptExample:
+      'Build an ecommerce seller dashboard web app: an Orders page to log each sale with the channel it came from (Amazon, Shopify, Etsy, or custom), sale price, channel fee, and cost price; a Dashboard page showing total revenue, fees, and net margin broken down by channel and by month; a Products page tracking stock quantity shared across all channels with a low-stock indicator; and a Channels page to add or edit the fee percentage for each place you sell.',
+    faqs: [
+      { q: 'Does it connect directly to my Amazon or Shopify account?', a: 'Not out of the box — this is a describe-your-numbers dashboard, so you log or paste in orders yourself. That avoids depending on a marketplace API that can change or get revoked; ask for a bulk-paste or CSV-import screen in your prompt and it can be added.' },
+      { q: 'Can it handle more than three channels?', a: 'Yes — the Channels page holds however many you describe, each with its own fee percentage, and the dashboard rolls them all into one margin view.' },
+      { q: 'Do I need my own website or hosting?', a: 'No — publish and it\'s live instantly on a free wyberai.app subdomain; connect your own domain later only if you want one.' },
+      { q: 'Is this cheaper than a multi-channel seller tool?', a: 'You build it once with free monthly credits and own it outright — no per-order or per-channel fee that grows as your sales do.' },
+    ],
+    related: ['inventory-management-app', 'expense-tracker-app'],
+  },
 ]
