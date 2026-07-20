@@ -168,19 +168,23 @@ function buildProducts(t: HomeStrings) {
       body: t.productWebBody,
       bullets: [t.productWebBullet1, t.productWebBullet2, t.productWebBullet3],
       cta: t.productWebCta,
-      href: '/signup',
+      // Matches the "PROMPT RECEIVED" line in the mockup below — clicking the
+      // CTA actually builds the exact app shown, not a generic empty project.
+      prompt: 'Build a CRM with a pipeline view, client notes, and an invoices page.',
       mockup: <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />,
     },
     {
       key: 'mobile',
       label: t.productMobileLabel,
-      accent: '#f97316',
+      accent: BRAND,
       heading: t.productMobileHeading,
       body: t.productMobileBody,
       bullets: [t.productMobileBullet1, t.productMobileBullet2, t.productMobileBullet3],
       cta: t.productMobileCta,
-      href: '/signup',
-      mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent="#f97316" title="wyberai.com — mobile build" />,
+      // Ties directly to the bullets above (camera, GPS, biometrics) so the
+      // demo it builds matches what was just promised.
+      prompt: 'Build a fitness tracking mobile app with workout logging, GPS run tracking, and Face ID login.',
+      mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent={BRAND} title="wyberai.com — mobile build" />,
     },
   ] as const;
 }
@@ -582,9 +586,20 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   </li>
                 ))}
               </ul>
-              <Link href={product.href} className="mk-btn" style={{ background: product.accent, boxShadow: `0 0 24px ${product.accent}50` }}>
+              <button
+                onClick={() => {
+                  try {
+                    localStorage.setItem('wyber-pending-prompt', product.prompt.slice(0, 2000));
+                    localStorage.setItem('wyber-pending-type', product.key === 'mobile' ? 'mobile' : 'app');
+                  } catch { /* private mode */ }
+                  track('homepage_product_cta_clicked', { product: product.key });
+                  window.location.href = user ? '/dashboard' : '/signup';
+                }}
+                className="mk-btn"
+                style={{ background: product.accent, boxShadow: `0 0 24px ${product.accent}50`, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
                 {product.cta} →
-              </Link>
+              </button>
             </div>
             <div>{product.mockup}</div>
           </div>
@@ -713,11 +728,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           <div className="mk-frame" style={{ padding: '28px 28px 24px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
-                <div className="mk-eyebrow" style={{ marginBottom: 10, color: '#f97316' }}>{t.doneForYouLabel}</div>
+                <div className="mk-eyebrow" style={{ marginBottom: 10, color: 'var(--brand-accent-hot)' }}>{t.doneForYouLabel}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 4 }}>{t.doneForYouHeading}</div>
                 <div style={{ fontSize: 13, color: 'var(--brand-text-dim)', maxWidth: 420 }}>{t.doneForYouDesc}</div>
               </div>
-              <a href="/setup-call" className="mk-btn" style={{ background: '#f97316', boxShadow: '0 0 24px rgba(249,115,22,0.35)', padding: '10px 20px', fontSize: 13, flexShrink: 0 }}>
+              <a href="/setup-call" className="mk-btn" style={{ background: 'var(--brand-accent)', boxShadow: '0 0 24px var(--brand-glow-soft)', padding: '10px 20px', fontSize: 13, flexShrink: 0 }}>
                 {t.doneForYouCta}
               </a>
             </div>
