@@ -51,7 +51,7 @@ const ALL_ITEMS = RESOURCES.flatMap(g => g.items);
 // as shipped — matching the dashboard, which already groups them under Coming Soon.
 const NAV_LINKS: [label: string, href: string, soon?: boolean][] = [
   ['Web Apps', '/gallery'],
-  ['Mobile', '/templates/mobile'],
+  ['Mobile', '/use-cases/build-mobile-app-with-ai'],
   ['MCP', '/mcp'],
   ['Pricing', '/pricing'],
 ];

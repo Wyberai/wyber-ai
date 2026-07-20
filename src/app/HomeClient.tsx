@@ -184,7 +184,7 @@ const PRODUCTS = [
     body: 'Generate a real React Native app with Expo. Preview on your phone via QR code. Export a ready-to-publish project.',
     bullets: ['React Native + Expo · camera, GPS, biometrics', 'Push notifications · in-app purchases', 'App Store submission guide included'],
     cta: 'Start building',
-    href: '/templates/mobile',
+    href: '/signup',
     mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent="#f97316" title="wyberai.com — mobile build" />,
   },
 ] as const;
@@ -350,7 +350,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
   const product = PRODUCTS[activeProduct];
 
-  const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/ai-app-builder'], [t.navMobileApps, '/templates/mobile'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/no-code-web-app-builder'], [t.navMobileApps, '/use-cases/build-mobile-app-with-ai'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark">
