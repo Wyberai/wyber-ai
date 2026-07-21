@@ -48,6 +48,7 @@ const TARGET_COLORS = { web: '#0EA5E9', mobile: '#a855f7' } as const
 const CATEGORY_KEY: Record<BuildCategory, string> = {
   productivity: 'categoryProductivity', business: 'categoryBusiness', health: 'categoryHealth',
   finance: 'categoryFinance', events: 'categoryEvents', education: 'categoryEducation',
+  ecommerce: 'categoryEcommerce', trades: 'categoryTrades',
 }
 
 export default async function LocalizedBuildPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {

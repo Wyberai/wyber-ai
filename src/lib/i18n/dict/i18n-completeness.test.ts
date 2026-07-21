@@ -33,6 +33,8 @@ import { EVENTS_BUILD_CONTENT } from './build-content/events'
 import { FINANCE_BUILD_CONTENT } from './build-content/finance'
 import { HEALTH_BUILD_CONTENT } from './build-content/health'
 import { PRODUCTIVITY_BUILD_CONTENT } from './build-content/productivity'
+import { ECOMMERCE_BUILD_CONTENT } from './build-content/ecommerce'
+import { TRADES_BUILD_CONTENT } from './build-content/trades-home-services'
 import { USE_CASES_CONTENT } from './use-cases-content'
 
 // Every dict in this project is shaped Record<Locale, T> for some T (a flat
@@ -95,6 +97,8 @@ checkParity('EVENTS_BUILD_CONTENT', EVENTS_BUILD_CONTENT)
 checkParity('FINANCE_BUILD_CONTENT', FINANCE_BUILD_CONTENT)
 checkParity('HEALTH_BUILD_CONTENT', HEALTH_BUILD_CONTENT)
 checkParity('PRODUCTIVITY_BUILD_CONTENT', PRODUCTIVITY_BUILD_CONTENT)
+checkParity('ECOMMERCE_BUILD_CONTENT', ECOMMERCE_BUILD_CONTENT)
+checkParity('TRADES_BUILD_CONTENT', TRADES_BUILD_CONTENT)
 checkParity('USE_CASES_CONTENT', USE_CASES_CONTENT)
 
 // Deeper check for the per-slug content dicts: catch a translated entry that

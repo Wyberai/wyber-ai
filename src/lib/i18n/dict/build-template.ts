@@ -45,6 +45,8 @@ export const BUILD_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     categoryFinance: 'Finance',
     categoryEvents: 'Events & Community',
     categoryEducation: 'Education',
+    categoryEcommerce: 'Ecommerce',
+    categoryTrades: 'Trades & Home Services',
   },
   hi: {
     navUseCases: 'यूज़ केस',
@@ -86,6 +88,8 @@ export const BUILD_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     categoryFinance: 'फ़ाइनेंस',
     categoryEvents: 'इवेंट्स और कम्युनिटी',
     categoryEducation: 'एजुकेशन',
+    categoryEcommerce: 'ईकॉमर्स',
+    categoryTrades: 'ट्रेड्स और होम सर्विसेज़',
   },
   kn: {
     navUseCases: 'ಬಳಕೆಯ ಸಂದರ್ಭಗಳು',
@@ -127,6 +131,8 @@ export const BUILD_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     categoryFinance: 'ಫೈನಾನ್ಸ್',
     categoryEvents: 'ಈವೆಂಟ್‌ಗಳು ಮತ್ತು ಸಮುದಾಯ',
     categoryEducation: 'ಶಿಕ್ಷಣ',
+    categoryEcommerce: 'ಇಕಾಮರ್ಸ್',
+    categoryTrades: 'ಟ್ರೇಡ್ಸ್ ಮತ್ತು ಹೋಮ್ ಸರ್ವಿಸಸ್',
   },
   te: {
     navUseCases: 'వినియోగ కేసులు',
@@ -168,6 +174,8 @@ export const BUILD_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     categoryFinance: 'ఫైనాన్స్',
     categoryEvents: 'ఈవెంట్స్ & కమ్యూనిటీ',
     categoryEducation: 'విద్య',
+    categoryEcommerce: 'ఈకామర్స్',
+    categoryTrades: 'ట్రేడ్స్ & హోమ్ సర్వీసెస్',
   },
   ta: {
     navUseCases: 'பயன்பாட்டு நிகழ்வுகள்',
@@ -209,5 +217,7 @@ export const BUILD_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     categoryFinance: 'நிதி',
     categoryEvents: 'நிகழ்வுகள் & சமூகம்',
     categoryEducation: 'கல்வி',
+    categoryEcommerce: 'ஈகாமர்ஸ்',
+    categoryTrades: 'டிரேட்ஸ் & ஹோம் சர்வீசஸ்',
   },
 }

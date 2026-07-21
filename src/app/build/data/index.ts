@@ -5,6 +5,8 @@ import { HEALTH_PAGES } from './health'
 import { FINANCE_PAGES } from './finance'
 import { EVENTS_PAGES } from './events'
 import { EDUCATION_PAGES } from './education'
+import { ECOMMERCE_PAGES } from './ecommerce'
+import { TRADES_PAGES } from './trades-home-services'
 
 export type { BuildPage, BuildCategory } from './types'
 export { CATEGORY_LABELS } from './types'
@@ -19,6 +21,8 @@ export const BUILD_PAGES: BuildPage[] = [
   ...FINANCE_PAGES,
   ...EVENTS_PAGES,
   ...EDUCATION_PAGES,
+  ...ECOMMERCE_PAGES,
+  ...TRADES_PAGES,
 ]
 
 export function getBuildPage(slug: string): BuildPage | undefined {
@@ -26,7 +30,7 @@ export function getBuildPage(slug: string): BuildPage | undefined {
 }
 
 export function pagesByCategory(): [BuildCategory, BuildPage[]][] {
-  const order: BuildCategory[] = ['productivity', 'business', 'health', 'finance', 'events', 'education']
+  const order: BuildCategory[] = ['productivity', 'business', 'health', 'finance', 'events', 'education', 'ecommerce', 'trades']
   return order
     .map(c => [c, BUILD_PAGES.filter(p => p.category === c)] as [BuildCategory, BuildPage[]])
     .filter(([, pages]) => pages.length > 0)

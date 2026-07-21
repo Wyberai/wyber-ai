@@ -18,6 +18,8 @@ export type BuildCategory =
   | 'finance'
   | 'events'
   | 'education'
+  | 'ecommerce'
+  | 'trades'
 
 export const CATEGORY_LABELS: Record<BuildCategory, string> = {
   productivity: 'Productivity',
@@ -26,6 +28,8 @@ export const CATEGORY_LABELS: Record<BuildCategory, string> = {
   finance: 'Finance',
   events: 'Events & Community',
   education: 'Education',
+  ecommerce: 'Ecommerce',
+  trades: 'Trades & Home Services',
 }
 
 export interface BuildPage {
