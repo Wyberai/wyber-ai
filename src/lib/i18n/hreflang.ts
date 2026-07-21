@@ -19,7 +19,27 @@ export function localeAlternates(path: string): Record<string, string> {
   return languages
 }
 
+// Only these path SHAPES have a real src/app/[locale]/... route — every other
+// page (home, pricing, signup, dashboard, login, …) has no locale-prefixed
+// variant and translates client-side via LocaleProvider on its plain English
+// URL instead. Prefixing a path outside this list produces a 404 — this bit
+// everyone the first time: lp('/pricing'), lp('/signup'), and lp('/') were all
+// being blindly prefixed on the locale build/use-cases/vs pages, breaking the
+// nav Pricing link, the primary "Try free" signup CTA, and the logo/home link
+// on every single non-English page. Keep in sync with the directories under
+// src/app/[locale]/.
+const LOCALE_ROUTE_PATTERNS: RegExp[] = [
+  /^\/about\/?$/,
+  /^\/build\/[^/]+\/?$/,
+  /^\/use-cases\/[^/]+\/?$/,
+  /^\/vs\/?$/,
+  /^\/vs\/[^/]+\/?$/,
+]
+
 export function localePath(path: string, locale: Locale): string {
   const clean = path.startsWith('/') ? path : `/${path}`
-  return locale === 'en' ? clean : `/${locale}${clean}`
+  if (locale === 'en') return clean
+  const [pathname] = clean.split('?')
+  const hasLocaleRoute = LOCALE_ROUTE_PATTERNS.some(re => re.test(pathname))
+  return hasLocaleRoute ? `/${locale}${clean}` : clean
 }
