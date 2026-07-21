@@ -14,11 +14,6 @@ import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
 
 const BRAND = '#0EA5E9';
 
-// Temporary kill switch: the hi/kn/te/ta translations only cover this page's
-// hero right now, not the rest of the site (dashboard/settings/editor), so
-// the toggle is hidden until that work is finished. Flip back to `true` to
-// re-enable — nothing else needs to change.
-const I18N_ENABLED = false;
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /* ————— shared atoms ————— */
