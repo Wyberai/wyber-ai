@@ -3,12 +3,12 @@
 // never sees this, never renders these strings, and the switcher itself only
 // mounts when the page is passed isIndia=true from the server.
 
-// Temporary kill switch: the hi/kn/te/ta translations aren't fully wired
-// through every surface yet, so the toggle is hidden and locale is pinned to
-// English everywhere until the remaining work resumes. Flip back to `true`
-// to re-enable — all the translation infra/dictionaries stay intact either
-// way, this only gates visibility + whether a stored locale is honored.
-export const I18N_ENABLED = false;
+// The hi/kn/te/ta translations are now fully wired through every surface
+// (including /build/[slug], /use-cases/[slug], and the previously-orphaned
+// editor-panel dicts) — re-enabled 2026-07-21. Flip back to `false` if a
+// regression needs the toggle hidden again; the translation infra and
+// dictionaries stay intact either way.
+export const I18N_ENABLED = true;
 
 export const LOCALES = ['en', 'hi', 'kn', 'te', 'ta'] as const;
 export type Locale = (typeof LOCALES)[number];

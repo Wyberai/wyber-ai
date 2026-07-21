@@ -155,6 +155,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // localStorage before paint, and LocaleProvider's own effect does the same
   // for the React tree — same "no flash for returning visitors" outcome,
   // without forcing the whole site dynamic.
+  //
+  // Deliberately NOT passed to LocaleProvider below: its reconcile-from-
+  // localStorage effect only runs `if (!initialLocale)`, so passing
+  // DEFAULT_LOCALE here (a truthy 'en') would permanently short-circuit that
+  // effect for the app's one and only LocaleProvider instance — silently
+  // resetting every returning visitor to English on each hard reload.
   const locale = DEFAULT_LOCALE;
 
   return (
@@ -184,7 +190,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PostHogProvider>
-          <LocaleProvider initialLocale={locale}>
+          <LocaleProvider>
             <ThemeProvider>
               <ErrorBoundary fallbackMessage="WyberAI hit an unexpected error">
                 <Suspense>
