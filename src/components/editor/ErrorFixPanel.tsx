@@ -2,8 +2,11 @@
 import { useState } from 'react';
 import { useEditorStore } from '@/store/editor';
 import { parseGenerationOutput } from '@/lib/file-parser';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools';
 
 export function ErrorFixPanel() {
+  const t = useT(EDITOR_TOOLS_STRINGS);
   const [errorText, setErrorText] = useState('');
   const [fixing, setFixing] = useState(false);
   const { files, framework, setFiles, addMessage, updateMessage, setIsGenerating, clearStreamingContent, appendStreamingContent, setStreamingContent } = useEditorStore();
@@ -58,17 +61,17 @@ Fix the root cause. Output only the changed files.`;
   return (
     <div style={{ padding: '14px 16px' }}>
       <div style={{ background: 'rgba(61,214,140,0.05)', border: '1px solid rgba(61,214,140,0.2)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>
-        ✕ Paste an error message or console output. WyberAi fixes it — no credit charge for errors we caused.
+        {t('errorFixInfoBox')}
       </div>
       <textarea
         value={errorText}
         onChange={e => setErrorText(e.target.value)}
-        placeholder="Paste error here...\n\nTypeError: Cannot read property 'map' of undefined\n    at App (src/App.tsx:24:18)"
+        placeholder={`${t('errorFixPlaceholderIntro')}\n\nTypeError: Cannot read property 'map' of undefined\n    at App (src/App.tsx:24:18)`}
         rows={6}
         style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 12, outline: 'none', resize: 'vertical', fontFamily: 'var(--font-mono)', lineHeight: 1.6, marginBottom: 10 }}
       />
       <button onClick={fix} disabled={fixing || !errorText.trim()} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', fontSize: 13 }}>
-        {fixing ? '⟳ Fixing...' : '⚡ Fix this error'}
+        {fixing ? t('errorFixFixing') : t('errorFixButton')}
       </button>
     </div>
   );

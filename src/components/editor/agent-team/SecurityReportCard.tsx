@@ -5,6 +5,8 @@
 
 import { useState } from 'react'
 import type { ChatMessage } from '@/store/editor'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_AGENTTEAM_STRINGS } from '@/lib/i18n/dict/editor-agentteam'
 
 const SEVERITY_DOT: Record<string, string> = {
   critical: '#ef4444',
@@ -14,13 +16,14 @@ const SEVERITY_DOT: Record<string, string> = {
 }
 
 export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage['agentReport']> }) {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
   const [open, setOpen] = useState(false)
   const findings = report.findings
   const fixed = findings.filter(f => f.status === 'fixed').length
   const flagged = findings.filter(f => f.status === 'flagged').length
   const summary = findings.length === 0
-    ? 'Sentinel: no security issues found in this build'
-    : `Sentinel: ${fixed} fixed before landing${flagged ? `, ${flagged} flagged` : ''}`
+    ? `${t('sentinelPrefix')} ${t('noSecurityIssuesFound')}`
+    : `${t('sentinelPrefix')} ${fixed} ${t('fixedBeforeLanding')}${flagged ? `, ${flagged} ${t('flaggedSuffix')}` : ''}`
   return (
     <div style={{
       marginTop: 6, borderRadius: 8, border: '1px solid rgba(34,197,94,0.25)',
@@ -43,7 +46,7 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
         <div style={{ padding: '0 10px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {findings.length === 0 && (
             <span style={{ fontSize: 10.5, color: 'var(--ide-text3)' }}>
-              Every file was reviewed as it was written — secrets, service-role usage, RLS coverage, unsafe HTML.
+              {t('everyFileReviewedDesc')}
             </span>
           )}
           {findings.map((f, i) => (
@@ -55,18 +58,18 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
                   onClick={() => window.dispatchEvent(new CustomEvent('wyber-fill-input', {
                     detail: `Fix this security issue Sentinel flagged: ${f.title}`,
                   }))}
-                  title="Fills the chat input with a fix request — you still press Send"
+                  title={t('fillsFixRequestTooltip')}
                   style={{
                     fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
                     border: '1px solid var(--ide-border)', background: 'transparent',
                     color: 'var(--ide-text2)', cursor: 'pointer', flexShrink: 0,
                   }}
                 >
-                  Ask to fix
+                  {t('askToFix')}
                 </button>
               )}
               <span style={{ fontSize: 9.5, fontWeight: 700, color: f.status === 'fixed' ? 'var(--ide-green, #22C55E)' : 'var(--ide-text3)', flexShrink: 0 }}>
-                {f.status === 'fixed' ? 'FIXED' : 'FLAGGED'}
+                {f.status === 'fixed' ? t('fixedBadge') : t('flaggedBadge')}
               </span>
             </div>
           ))}
@@ -78,7 +81,7 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
               background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer',
             }}
           >
-            Open full security scan →
+            {t('openFullSecurityScan')}
           </button>
         </div>
       )}

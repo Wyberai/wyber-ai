@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools';
 
 interface Check { id: string; name: string; status: 'pass' | 'fail' | 'warn'; description: string; fix: string; }
 interface Audit { score: number; checks: Check[]; keywords: string[]; aiSearchOptimized: boolean; recommendations: string[]; }
@@ -9,6 +11,7 @@ const STATUS_COLOR = { pass: '#34D399', fail: '#EF4444', warn: '#F59E0B' };
 const STATUS_ICON = { pass: '✓', fail: '✗', warn: '⚠' };
 
 export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
+  const t = useT(EDITOR_TOOLS_STRINGS);
   const [loading, setLoading] = useState(false);
   const [audit, setAudit] = useState<Audit | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -34,7 +37,7 @@ export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>SEO & AI Search</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('seoAuditTitle')}</div>
         {audit && (
           <div style={{ width: 32, height: 32, borderRadius: '50%', background: audit.score >= 70 ? 'rgba(52,211,153,0.15)' : audit.score >= 40 ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: audit.score >= 70 ? '#34D399' : audit.score >= 40 ? '#F59E0B' : '#EF4444' }}>
             {audit.score}
@@ -43,13 +46,13 @@ export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
       </div>
 
       <button onClick={runAudit} disabled={loading} style={{ padding: '8px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 12, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-        {loading ? 'Auditing...' : '🔍 Run SEO & AI Search audit'}
+        {loading ? t('seoAuditAuditing') : t('seoAuditRunButton')}
       </button>
 
       {audit && (
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-            {[['Passed', passed, '#34D399'], ['Warnings', warned, '#F59E0B'], ['Failed', failed, '#EF4444']].map(([label, count, color]) => (
+            {[[t('seoAuditPassedLabel'), passed, '#34D399'], [t('seoAuditWarningsLabel'), warned, '#F59E0B'], [t('seoAuditFailedLabel'), failed, '#EF4444']].map(([label, count, color]) => (
               <div key={label as string} style={{ padding: '8px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', textAlign: 'center' }}>
                 <div style={{ fontSize: 18, fontWeight: 800, color: color as string }}>{count as number}</div>
                 <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{label}</div>
@@ -61,7 +64,7 @@ export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px', borderRadius: 8, background: audit.aiSearchOptimized ? 'rgba(52,211,153,0.08)' : 'rgba(239,68,68,0.08)', border: `1px solid ${audit.aiSearchOptimized ? 'rgba(52,211,153,0.2)' : 'rgba(239,68,68,0.2)'}` }}>
               <span style={{ fontSize: 13, color: audit.aiSearchOptimized ? '#34D399' : '#EF4444' }}>{audit.aiSearchOptimized ? '✓' : '✗'}</span>
               <span style={{ fontSize: 11, fontWeight: 600, color: audit.aiSearchOptimized ? '#34D399' : '#EF4444' }}>
-                {audit.aiSearchOptimized ? 'Optimized for AI search (ChatGPT, Perplexity, Claude)' : 'Not optimized for AI search engines'}
+                {audit.aiSearchOptimized ? t('seoAuditOptimizedMsg') : t('seoAuditNotOptimizedMsg')}
               </span>
             </div>
           )}
@@ -77,7 +80,7 @@ export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
                 {expanded === c.id && (
                   <div style={{ padding: '8px 10px', background: 'var(--bg2)', borderRadius: '0 0 8px 8px', border: '1px solid var(--border)', borderTop: 'none' }}>
                     <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 6 }}>{c.description}</div>
-                    {c.status !== 'pass' && <div style={{ fontSize: 11, color: 'var(--sky)', fontWeight: 500 }}>Fix: {c.fix}</div>}
+                    {c.status !== 'pass' && <div style={{ fontSize: 11, color: 'var(--sky)', fontWeight: 500 }}>{t('seoAuditFixPrefix')} {c.fix}</div>}
                   </div>
                 )}
               </div>
@@ -86,7 +89,7 @@ export function SEOAuditPanel({ projectUrl, projectFiles }: Props) {
 
           {audit.keywords?.length > 0 && (
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', marginBottom: 6 }}>Detected keywords</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', marginBottom: 6 }}>{t('seoAuditDetectedKeywords')}</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                 {audit.keywords.map(k => (
                   <span key={k} style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: 'var(--bg2)', color: 'var(--text3)', border: '1px solid var(--border)' }}>{k}</span>

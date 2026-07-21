@@ -1,5 +1,8 @@
 'use client';
 import { useRef, useState, useEffect } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_DESIGN_STRINGS } from '@/lib/i18n/dict/editor-design';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
 interface Annotation {
   x: number; y: number; width: number; height: number;
@@ -14,6 +17,8 @@ interface Props {
 const COLORS = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6'];
 
 export function ImageAnnotator({ onSubmit, onClose }: Props) {
+  const t = useT(EDITOR_DESIGN_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [drawing, setDrawing] = useState(false);
@@ -94,7 +99,7 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
 
   const confirmLabel = () => {
     if (!pendingRect) return;
-    setAnnotations(prev => [...prev, { ...pendingRect, text: labelText || `Area ${prev.length + 1}`, color }]);
+    setAnnotations(prev => [...prev, { ...pendingRect, text: labelText || t('areaDefaultLabel').replace('{n}', String(prev.length + 1)), color }]);
     setLabelText(''); setShowLabel(false); setPendingRect(null);
   };
 
@@ -108,8 +113,8 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
       <div style={{ background: 'var(--bg-surface)', borderRadius: 14, width: '100%', maxWidth: 780, maxHeight: '90vh', overflow: 'auto', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--border)' }}>
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Draw on image</div>
-            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>Upload a screenshot, draw on what to change, describe your edit</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{t('drawOnImageTitle')}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>{t('drawOnImageSubtitle')}</div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 18, cursor: 'pointer', color: 'var(--text-muted)', padding: '4px 8px' }}>✕</button>
         </div>
@@ -118,29 +123,29 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
             <div onClick={() => fileRef.current?.click()} style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: '40px 20px', textAlign: 'center', cursor: 'pointer' }}
               onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadImage(f); }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🖼</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>Upload a screenshot</div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Click or drag and drop — PNG, JPG, WebP</div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>{t('uploadScreenshotTitle')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('uploadScreenshotHint')}</div>
               <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) loadImage(f); }} />
             </div>
           ) : (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>Color:</div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>{t('colorLabel')}</div>
                 {COLORS.map(c => (
                   <button key={c} onClick={() => setColor(c)} style={{ width: 22, height: 22, borderRadius: '50%', background: c, border: color === c ? '3px solid white' : '2px solid transparent', cursor: 'pointer', outline: color === c ? `2px solid ${c}` : 'none' }} />
                 ))}
                 <div style={{ flex: 1 }} />
-                <button onClick={() => setAnnotations([])} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>Clear</button>
-                <button onClick={() => fileRef.current?.click()} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>New image</button>
+                <button onClick={() => setAnnotations([])} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>{t('clearButton')}</button>
+                <button onClick={() => fileRef.current?.click()} style={{ fontSize: 11, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit' }}>{t('newImageButton')}</button>
                 <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) loadImage(f); }} />
               </div>
               <div style={{ position: 'relative', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden', cursor: 'crosshair' }}>
                 <canvas ref={canvasRef} onMouseDown={onMouseDown} onMouseMove={onMouseMove} onMouseUp={onMouseUp} style={{ display: 'block', width: '100%' }} />
                 {showLabel && (
                   <div style={{ position: 'absolute', top: (pendingRect?.y || 0) + (pendingRect?.height || 0) + 4, left: pendingRect?.x || 0, background: 'var(--bg-surface)', border: '1px solid var(--sky)', borderRadius: 8, padding: 8, display: 'flex', gap: 6, zIndex: 10, minWidth: 220 }}>
-                    <input autoFocus value={labelText} onChange={e => setLabelText(e.target.value)} onKeyDown={e => e.key === 'Enter' && confirmLabel()} placeholder="Label this area..."
+                    <input autoFocus value={labelText} onChange={e => setLabelText(e.target.value)} onKeyDown={e => e.key === 'Enter' && confirmLabel()} placeholder={t('labelThisAreaPlaceholder')}
                       style={{ flex: 1, padding: '5px 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 11, outline: 'none', fontFamily: 'inherit' }} />
-                    <button onClick={confirmLabel} style={{ padding: '5px 10px', borderRadius: 6, background: 'var(--sky)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>Add</button>
+                    <button onClick={confirmLabel} style={{ padding: '5px 10px', borderRadius: 6, background: 'var(--sky)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>{tc('add')}</button>
                   </div>
                 )}
               </div>
@@ -154,12 +159,12 @@ export function ImageAnnotator({ onSubmit, onClose }: Props) {
                   ))}
                 </div>
               )}
-              <textarea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder="Describe what to change (e.g. 'Make the header darker, change button to blue')..." rows={2}
+              <textarea value={prompt} onChange={e => setPrompt(e.target.value)} placeholder={t('describeChangePlaceholder')} rows={2}
                 style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 13, resize: 'none', fontFamily: 'inherit', outline: 'none' }} />
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={onClose} style={{ padding: '9px 16px', borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+                <button onClick={onClose} style={{ padding: '9px 16px', borderRadius: 9, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>{tc('cancel')}</button>
                 <button onClick={handleSubmit} disabled={!prompt.trim()} style={{ flex: 1, padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: !prompt.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !prompt.trim() ? 0.5 : 1 }}>
-                  Send to AI with annotations →
+                  {t('sendToAiWithAnnotations')}
                 </button>
               </div>
             </>

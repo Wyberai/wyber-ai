@@ -16,6 +16,7 @@ import {
   DARK_SCAFFOLD, LIGHT_SCAFFOLD, CURATED_FONTS, type AppTheme,
 } from '@/lib/app-theme';
 import { GlowButton, MicroLabel, EmptyState } from '@/components/editor/ui';
+import { persistProjectFiles } from '@/lib/persist-project';
 
 const sw = (channels: string | undefined): string => channels ? `hsl(${channels})` : 'transparent';
 
@@ -58,11 +59,7 @@ export function ThemePanel() {
       };
       setFiles(updated as typeof files);
       if (project?.id) {
-        await fetch('/api/projects', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId: project.id, files: updated, userId: project.userId || 'auto' }),
-        }).catch(() => { /* ChatPanel's next save also carries the css; non-fatal */ });
+        await persistProjectFiles(project.id, updated, project.userId);
       }
       setSavedFlash(id);
       setTimeout(() => setSavedFlash(prev => (prev === id ? null : prev)), 1600);

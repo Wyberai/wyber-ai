@@ -1,10 +1,13 @@
 'use client';
 import { useState } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools';
 
 interface TestResult { name: string; passed: boolean; error?: string; }
 interface Props { projectUrl?: string; }
 
 export function BrowserTestPanel({ projectUrl }: Props) {
+  const t = useT(EDITOR_TOOLS_STRINGS);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<TestResult[]>([]);
   const [summary, setSummary] = useState<{ total: number; passed: number; failed: number } | null>(null);
@@ -12,7 +15,7 @@ export function BrowserTestPanel({ projectUrl }: Props) {
   const [ran, setRan] = useState(false);
 
   const runTests = async () => {
-    if (!projectUrl) { setError('Publish your project first to run browser tests'); return; }
+    if (!projectUrl) { setError(t('browserTestPublishFirstError')); return; }
     setLoading(true); setError(''); setResults([]); setSummary(null);
     try {
       const res = await fetch('/api/browser-test', {
@@ -24,30 +27,30 @@ export function BrowserTestPanel({ projectUrl }: Props) {
       setResults(data.results || []);
       setSummary(data.summary);
       setRan(true);
-    } catch { setError('Test run failed'); }
+    } catch { setError(t('browserTestRunFailedError')); }
     setLoading(false);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 0' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Browser Tests</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('browserTestTitle')}</div>
         {ran && summary && (
           <div style={{ display: 'flex', gap: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#34D399' }}>{summary.passed} passed</span>
-            {summary.failed > 0 && <span style={{ fontSize: 11, fontWeight: 600, color: '#EF4444' }}>{summary.failed} failed</span>}
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#34D399' }}>{summary.passed} {t('browserTestPassedWord')}</span>
+            {summary.failed > 0 && <span style={{ fontSize: 11, fontWeight: 600, color: '#EF4444' }}>{summary.failed} {t('browserTestFailedWord')}</span>}
           </div>
         )}
       </div>
 
       {!projectUrl && (
         <div style={{ padding: '10px 12px', background: 'var(--bg2)', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, color: 'var(--text3)' }}>
-          Publish your project first to run automated browser tests.
+          {t('browserTestPublishFirstInfo')}
         </div>
       )}
 
       <button onClick={runTests} disabled={loading || !projectUrl} style={{ padding: '8px', borderRadius: 8, background: loading ? 'var(--bg2)' : 'var(--sky)', color: loading ? 'var(--text2)' : '#fff', fontWeight: 700, fontSize: 12, border: '1px solid var(--border)', cursor: loading || !projectUrl ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: !projectUrl ? 0.5 : 1 }}>
-        {loading ? 'Running tests...' : '▶ Run browser tests'}
+        {loading ? t('browserTestRunning') : t('browserTestRunButton')}
       </button>
 
       {error && <p style={{ color: '#EF4444', fontSize: 11 }}>{error}</p>}

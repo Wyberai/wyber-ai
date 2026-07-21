@@ -1,4 +1,7 @@
 import SettingsClient from './settings-client'
-export default function SettingsPage() {
-  return <SettingsClient />
+import { resolveRegion } from '@/lib/region'
+
+export default async function SettingsPage() {
+  const currency = await resolveRegion()
+  return <SettingsClient isIndia={currency === 'INR'} />
 }

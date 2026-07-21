@@ -4,8 +4,11 @@
 
 import type { ChatMessage } from '@/store/editor'
 import { agentMeta } from '@/lib/agents/roster'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_AGENTTEAM_STRINGS } from '@/lib/i18n/dict/editor-agentteam'
 
 export function TurnReceipt({ report }: { report: NonNullable<ChatMessage['agentReport']> }) {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
   if (!report.agents.length) return null
   return (
     <div style={{
@@ -24,9 +27,9 @@ export function TurnReceipt({ report }: { report: NonNullable<ChatMessage['agent
         )
       })}
       <div style={{ fontSize: 10, color: 'var(--ide-text3)', marginTop: 1, display: 'flex', gap: 8 }}>
-        {typeof report.passesUsed === 'number' && report.passesUsed > 0 && <span>{report.passesUsed + 1} passes</span>}
+        {typeof report.passesUsed === 'number' && report.passesUsed > 0 && <span>{report.passesUsed + 1} {t('passesSuffix')}</span>}
         {typeof report.credits === 'number' && (
-          <span>{report.credits} credit{report.credits === 1 ? '' : 's'} — whole team, one charge</span>
+          <span>{report.credits} {report.credits === 1 ? t('creditSingular') : t('creditPlural')} {t('wholeTeamOneCharge')}</span>
         )}
       </div>
     </div>

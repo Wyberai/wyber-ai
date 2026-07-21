@@ -1,8 +1,11 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { useEditorStore } from '@/store/editor'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools'
 
 export function AutoFix() {
+  const t = useT(EDITOR_TOOLS_STRINGS)
   const lastError = useRef('')
   const cooldown = useRef(false)
   const { isGenerating, addMessage, hasGeneratedFiles } = useEditorStore()
@@ -24,7 +27,7 @@ export function AutoFix() {
       addMessage({
         id: 'autofix-' + Date.now(),
         role: 'assistant',
-        content: 'Fixing error: ' + msg.slice(0, 100),
+        content: t('autoFixMessagePrefix') + ' ' + msg.slice(0, 100),
         timestamp: Date.now(),
         status: 'done',
       })

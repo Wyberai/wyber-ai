@@ -2,6 +2,8 @@
 import { useEditorStore } from '@/store/editor';
 import { useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_CORE_UI_STRINGS } from '@/lib/i18n/dict/editor-core-ui';
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
 
@@ -32,6 +34,7 @@ const MONACO_OPTIONS = {
 
 export function CodeEditor() {
   const { files, activeFile, setFile, markFileDirty } = useEditorStore();
+  const t = useT(EDITOR_CORE_UI_STRINGS);
   const file = activeFile ? files[activeFile] : null;
 
   const handleChange = useCallback((value: string | undefined) => {
@@ -48,9 +51,9 @@ export function CodeEditor() {
         color: 'var(--text-muted)', gap: 12,
       }}>
         <div style={{ fontSize: 32, opacity: 0.3 }}>⚡</div>
-        <div style={{ fontSize: 13 }}>No file open</div>
+        <div style={{ fontSize: 13 }}>{t('codeEditorNoFileOpenTitle')}</div>
         <div style={{ fontSize: 11, color: 'var(--text-muted)', opacity: 0.6 }}>
-          Select a file from the tree or generate code from chat
+          {t('codeEditorNoFileOpenHint')}
         </div>
       </div>
     );

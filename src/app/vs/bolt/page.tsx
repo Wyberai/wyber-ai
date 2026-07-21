@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { VsPageTemplate } from '@/components/seo/VsPageTemplate'
+import { localeAlternates } from '@/lib/i18n/hreflang'
 
 export const metadata: Metadata = {
   title: 'WyberAi vs Bolt.new (2026) — Honest Comparison',
   description: 'WyberAi vs Bolt.new: fixed-credit pricing vs Bolt\'s token model, plus mobile apps, self-healing builds, and 27 integrations. Verified June 2026.',
-  alternates: { canonical: 'https://wyberai.com/vs/bolt' },
+  alternates: { canonical: 'https://wyberai.com/vs/bolt', languages: localeAlternates('/vs/bolt') },
   openGraph: { title: 'WyberAi vs Bolt.new (2026)', description: 'Fixed credits, web + mobile, self-healing builds. Verified June 2026.', url: 'https://wyberai.com/vs/bolt' },
 }
 

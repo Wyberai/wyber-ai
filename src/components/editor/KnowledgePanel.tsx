@@ -1,12 +1,17 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useEditorStore } from '@/store/editor';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
 interface Props {
   projectId?: string;
 }
 
 export function KnowledgePanel({ projectId }: Props) {
+  const t = useT(EDITOR_TOOLS_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   const { knowledge, setKnowledge, files, framework } = useEditorStore();
   const [localValue, setLocalValue] = useState('');
   const [loaded, setLoaded] = useState(false);
@@ -89,7 +94,7 @@ export function KnowledgePanel({ projectId }: Props) {
       {/* Explainer */}
       <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0 }}>
         <p style={{ fontSize: 11, color: 'var(--ide-text2)', margin: 0, lineHeight: 1.5 }}>
-          Knowledge is your project's brain. It's sent with <strong style={{ color: 'var(--ide-text)' }}>every prompt</strong> so the AI always understands your vision, features, design system, and rules.
+          {t('knowledgeExplainerPart1')} <strong style={{ color: 'var(--ide-text)' }}>{t('knowledgeExplainerEveryPrompt')}</strong> {t('knowledgeExplainerPart2')}
         </p>
       </div>
 
@@ -109,9 +114,9 @@ export function KnowledgePanel({ projectId }: Props) {
           }}
         >
           {generating ? (
-            <><span style={{ width: 11, height: 11, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Analyzing your app...</>
+            <><span style={{ width: 11, height: 11, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> {t('knowledgeAnalyzing')}</>
           ) : (
-            <>✦ Auto-generate from current app</>
+            <>{t('knowledgeAutoGenerate')}</>
           )}
         </button>
       </div>
@@ -119,15 +124,15 @@ export function KnowledgePanel({ projectId }: Props) {
       {/* Editor */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '10px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontSize: 10, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Knowledge</span>
+          <span style={{ fontSize: 10, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('knowledgeLabel')}</span>
           <span style={{ fontSize: 10, color: saveState === 'saved' ? 'var(--ide-green)' : 'var(--ide-text3)' }}>
-            {saveState === 'saving' ? 'Saving...' : saveState === 'saved' ? '✓ Saved' : ''}
+            {saveState === 'saving' ? tc('saving') : saveState === 'saved' ? t('knowledgeSavedDone') : ''}
           </span>
         </div>
         <textarea
           value={localValue}
           onChange={e => handleChange(e.target.value)}
-          placeholder={`# Product Vision\nWhat are you building and for whom?\n\n# Core Features\n- Feature one\n- Feature two\n\n# Design System\nColors, fonts, style direction\n\n# User Roles\nAdmin, User, etc. and what each can do\n\n# Rules\nThings the AI should never change`}
+          placeholder={t('knowledgePlaceholder')}
           style={{
             flex: 1, width: '100%', resize: 'none',
             background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)',

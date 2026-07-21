@@ -1,5 +1,7 @@
 'use client'
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools'
 
 interface Props {
   onTranscript: (text: string) => void
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export function VoiceButton({ onTranscript, onInterim, disabled, size = 30, lang = 'en-US' }: Props) {
+  const t = useT(EDITOR_TOOLS_STRINGS)
   const [listening, setListening] = useState(false)
   // Detect support in an effect, not the initial render: SSR renders null
   // (no window), so the client's first render must match or hydration drops
@@ -69,7 +72,7 @@ export function VoiceButton({ onTranscript, onInterim, disabled, size = 30, lang
     <button
       onClick={toggle}
       disabled={disabled}
-      title={listening ? 'Stop recording' : 'Speak your idea'}
+      title={listening ? t('voiceStopRecording') : t('voiceSpeakIdea')}
       style={{
         width: size, height: size, borderRadius: '50%', border: 'none', flexShrink: 0,
         background: listening ? 'rgba(239,68,68,0.15)' : 'transparent',

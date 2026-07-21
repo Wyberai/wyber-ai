@@ -5,6 +5,8 @@
 // never auto-send.
 
 import type { ChatMessage } from '@/store/editor'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_AGENTTEAM_STRINGS } from '@/lib/i18n/dict/editor-agentteam'
 
 export function LoopStopCard({
   loopStop,
@@ -15,6 +17,7 @@ export function LoopStopCard({
   onRetry: (prompt: string) => void
   onDismiss: () => void
 }) {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
   return (
     <div style={{
       marginTop: 7, borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)',
@@ -22,7 +25,7 @@ export function LoopStopCard({
       display: 'flex', flexDirection: 'column', gap: 7,
     }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>
-        Auto-fix stopped after {loopStop.attempts} attempt{loopStop.attempts === 1 ? '' : 's'} — same error keeps coming back
+        {t('autoFixStoppedPrefix')} {loopStop.attempts} {loopStop.attempts === 1 ? t('attemptSingular') : t('attemptPlural')} {t('sameErrorSuffix')}
       </div>
       <pre style={{
         margin: 0, padding: '6px 8px', borderRadius: 6, fontSize: 10,
@@ -35,16 +38,16 @@ export function LoopStopCard({
       <div style={{ display: 'flex', gap: 6 }}>
         <button
           onClick={() => onRetry(loopStop.retryPrompt)}
-          title="Fills the input with a fresh-approach prompt — you still press Send"
+          title={t('fillsFreshApproachTooltip')}
           style={{ fontSize: 10.5, fontWeight: 700, padding: '4px 10px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}
         >
-          Try a different approach
+          {t('tryDifferentApproach')}
         </button>
         <button
           onClick={onDismiss}
           style={{ fontSize: 10.5, fontWeight: 600, padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer' }}
         >
-          Stop here
+          {t('stopHere')}
         </button>
       </div>
     </div>

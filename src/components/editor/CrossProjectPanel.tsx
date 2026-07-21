@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools';
 
 interface OtherProject { id: string; name: string; framework: string; files: Record<string, { path: string; content: string }>; updated_at: string; }
 interface Props { projectId: string; }
@@ -7,6 +9,7 @@ interface Props { projectId: string; }
 const FW_LABELS: Record<string, string> = { 'react-vite': 'React', 'vue': 'Vue', 'vanilla': 'JS', 'next': 'Next.js' };
 
 export function CrossProjectPanel({ projectId }: Props) {
+  const t = useT(EDITOR_TOOLS_STRINGS);
   const [projects, setProjects] = useState<OtherProject[]>([]);
   const [selected, setSelected] = useState<OtherProject | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
@@ -30,19 +33,19 @@ export function CrossProjectPanel({ projectId }: Props) {
       body: JSON.stringify({ sourceProjectId: selected.id, targetProjectId: projectId, filePaths: [...selectedFiles] }),
     });
     const data = await res.json();
-    if (data.copied > 0) setMsg(`✓ Copied ${data.copied} file${data.copied > 1 ? 's' : ''} into this project`);
-    else setMsg('Nothing was copied');
+    if (data.copied > 0) setMsg(t('crossProjectCopiedMsg').replace('{count}', String(data.copied)).replace('{plural}', data.copied > 1 ? 's' : ''));
+    else setMsg(t('crossProjectNothingCopied'));
     setCopying(false); setSelectedFiles(new Set());
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '12px 0' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Cross-Project</div>
-      <div style={{ fontSize: 11, color: 'var(--text3)' }}>Reuse components and files from your other projects.</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('crossProjectTitle')}</div>
+      <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t('crossProjectSubtitle')}</div>
 
       {projects.length === 0 ? (
         <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text3)', fontSize: 12, background: 'var(--bg2)', borderRadius: 9, border: '1px solid var(--border)' }}>
-          No other projects yet. Create another project to use cross-project referencing.
+          {t('crossProjectEmptyState')}
         </div>
       ) : (
         <>
@@ -54,7 +57,7 @@ export function CrossProjectPanel({ projectId }: Props) {
                   <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
                   <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 1 }}>{FW_LABELS[p.framework]} · {Object.keys(p.files || {}).length} files</div>
                 </div>
-                <span style={{ fontSize: 10, color: selected?.id === p.id ? 'var(--sky)' : 'var(--text3)', fontWeight: 500 }}>{selected?.id === p.id ? '▲ Hide' : '▼ Browse'}</span>
+                <span style={{ fontSize: 10, color: selected?.id === p.id ? 'var(--sky)' : 'var(--text3)', fontWeight: 500 }}>{selected?.id === p.id ? t('crossProjectHide') : t('crossProjectBrowse')}</span>
               </div>
             ))}
           </div>
@@ -62,7 +65,7 @@ export function CrossProjectPanel({ projectId }: Props) {
           {selected && (
             <div style={{ border: '1px solid var(--sky)', borderRadius: 10, overflow: 'hidden' }}>
               <div style={{ padding: '8px 10px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 600, color: 'var(--sky)' }}>
-                Files from "{selected.name}" — select to copy
+                {t('crossProjectFilesFromLabel').replace('{name}', selected.name)}
               </div>
               <div style={{ maxHeight: 200, overflowY: 'auto' }}>
                 {Object.keys(selected.files || {}).map(path => (
@@ -77,7 +80,7 @@ export function CrossProjectPanel({ projectId }: Props) {
 
           {selectedFiles.size > 0 && (
             <button onClick={copyFiles} disabled={copying} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-              {copying ? 'Copying...' : `Copy ${selectedFiles.size} file${selectedFiles.size > 1 ? 's' : ''} into this project`}
+              {copying ? t('crossProjectCopyingButton') : t('crossProjectCopyButton').replace('{count}', String(selectedFiles.size)).replace('{plural}', selectedFiles.size > 1 ? 's' : '')}
             </button>
           )}
 

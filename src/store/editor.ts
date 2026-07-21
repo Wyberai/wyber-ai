@@ -67,6 +67,10 @@ export interface Project {
   is_public?: boolean;
   deployed_url?: string;
   userId?: string;
+  // Tracked for the multi-tab conflict guard (see persist-project.ts):
+  // each save sends this as `expectedUpdatedAt` so a save from another tab
+  // that's landed in between is detected instead of silently overwritten.
+  updated_at?: string;
 }
 
 export interface Connector {
@@ -111,6 +115,13 @@ interface EditorState {
   // Which feature currently owns the preview's click-to-select mode, so two
   // features asking for a selection at once don't both react to the same click.
   selectionConsumer: 'visual-edit' | 'wyberman' | null;
+
+  // Surfaces failures from the non-chat save paths (visual edits, self-heal,
+  // theme changes, image regen, version restore) — these used to fire-and-forget
+  // a PATCH with `.catch(() => {})`, so a network blip silently lost the edit
+  // with no sign anything was wrong. 'error' means the persist-project retry
+  // loop is still trying in the background; the UI should show that plainly.
+  saveStatus: 'idle' | 'error';
 
   // Project
   setProject: (p: Project) => void;
@@ -158,6 +169,7 @@ interface EditorState {
   setPreviewError: (e: string | null) => void;
   setPreviewHealFailed: (v: boolean) => void;
   setSelectionConsumer: (c: 'visual-edit' | 'wyberman' | null) => void;
+  setSaveStatus: (v: 'idle' | 'error') => void;
 }
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -200,6 +212,7 @@ export const useEditorStore = create<EditorState>()(
     previewError: null,
     previewHealFailed: false,
     selectionConsumer: null,
+    saveStatus: 'idle',
 
     // IMPORTANT: setProject no longer wipes files/messages — hydration handles that
     setProject: (p) => set((s) => { s.project = p; }),
@@ -327,5 +340,6 @@ export const useEditorStore = create<EditorState>()(
     setPreviewError: (e) => set((s) => { s.previewError = e; }),
     setPreviewHealFailed: (v) => set((s) => { s.previewHealFailed = v; }),
     setSelectionConsumer: (c) => set((s) => { s.selectionConsumer = c; }),
+    setSaveStatus: (v) => set((s) => { s.saveStatus = v; }),
   }))
 );

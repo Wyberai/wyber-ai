@@ -8,19 +8,20 @@ import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directi
 import { injectWyberLoc, injectPreviewBridge } from '@/lib/wyber-preview/bridge'
 import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
 import { creditCost } from '@/lib/credits'
+import { persistProjectFiles } from '@/lib/persist-project'
 import { MicroLabel } from './ui'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_PREVIEW_STRINGS } from '@/lib/i18n/dict/editor-preview'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
 
-const MESSAGES = [
-  'Cooking up your components...',
-  'Wiring the buttons...',
-  'Teaching pixels where to sit...',
-  'Mixing the color palette...',
-  'Bundling it all together...',
-  'Polishing the corners...',
-  'Almost plated and ready...',
-]
+// Keys only — hooks (useT) can't run at module scope, so the actual translated
+// text is resolved inside the component (see `messages` below), the same
+// pattern ProjectTypeChooser uses for its CARDS titleKey/descKey.
+const MESSAGE_KEYS = [
+  'buildMsg1', 'buildMsg2', 'buildMsg3', 'buildMsg4', 'buildMsg5', 'buildMsg6', 'buildMsg7',
+] as const
 
 interface SelectedEl {
   selector: string
@@ -44,6 +45,9 @@ function hashStr(s: string): number {
 
 export function PreviewPanel() {
   const { files, isGenerating, generationTurnSeq, project, hydrated, connectors, setPreviewError, setPreviewHealFailed, selectionConsumer, setSelectionConsumer } = useEditorStore()
+  const t = useT(EDITOR_PREVIEW_STRINGS)
+  const tc = useT(COMMON_STRINGS)
+  const messages = MESSAGE_KEYS.map(k => t(k))
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
@@ -65,6 +69,18 @@ export function PreviewPanel() {
   const lastBuiltKey = useRef('')
   const buildRef = useRef<() => void>(() => {})
   const autoBuildTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Hang watchdog (D5): a genuine infinite render loop / runaway synchronous
+  // work freezes the iframe's single JS thread solid — no error ever fires,
+  // it just silently stops responding forever. The bridge script's own
+  // heartbeat (every 2s) can't fire either while that thread is busy-looping,
+  // so a missed heartbeat IS the detection signal, not a separate crash check.
+  const lastHeartbeat = useRef(0)
+  const [hung, setHung] = useState(false)
+  // D6: surfaces a specific, actionable message for a CORS-blocked external
+  // API call instead of the app just silently failing and users blaming the
+  // builder. Non-fatal (unlike a startup crash) — doesn't touch `error`/the
+  // preview at all, just an informational strip the user can dismiss.
+  const [corsNotice, setCorsNotice] = useState<{ message: string; url?: string } | null>(null)
 
   // Mirror local error/heal state into the store so UI outside this component
   // (e.g. Wyberman) can know the preview is stuck, without touching any of the
@@ -109,7 +125,7 @@ export function PreviewPanel() {
 
     timerRef.current = setInterval(() => {
       setSeconds(s => s + 1)
-      setMsgIdx(i => (i + 1) % MESSAGES.length)
+      setMsgIdx(i => (i + 1) % MESSAGE_KEYS.length)
     }, 1800)
 
     try {
@@ -143,13 +159,29 @@ export function PreviewPanel() {
       // sanitize (only the user's real files get tagged), append the bridge
       // <script> AFTER sanitize (index.html is guaranteed to exist by then).
       // Both transforms fall back to the untouched map on any error.
-      const res = await fetch(`${BUILDER_URL}/build`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id }),
-      })
-
-      const data = await res.json()
+      // A thrown fetch (DNS/connection failure, transient builder-infra hiccup)
+      // used to go straight to the catch block below with zero retry — and
+      // since setError() there also feeds the self-heal effect, a network
+      // blip burned one of the 3 self-heal attempts trying to "fix" a
+      // nonexistent code bug instead of just retrying the request. Retry
+      // network-level failures specifically (not HTTP responses that came
+      // back with a real build error — those still go through self-heal as
+      // before) with a short backoff before giving up.
+      const buildBody = JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id })
+      let res: Response | null = null
+      let networkErr: unknown = null
+      for (const delay of [0, 1500, 4000]) {
+        if (delay) await new Promise(r => setTimeout(r, delay))
+        try {
+          res = await fetch(`${BUILDER_URL}/build`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: buildBody,
+          })
+          networkErr = null
+          break
+        } catch (e) { networkErr = e }
+      }
+      if (networkErr) throw networkErr
+      const data = await res!.json()
       if (timerRef.current) clearInterval(timerRef.current)
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
@@ -167,15 +199,15 @@ export function PreviewPanel() {
           if (!isTemplate) setConfettiTrigger(c => c + 1)
         }
       } else {
-        setError(data.error || 'Build failed')
+        setError(data.error || t('buildFailedFallback'))
       }
     } catch (e: any) {
       if (timerRef.current) clearInterval(timerRef.current)
-      setError('Could not reach preview builder: ' + e.message)
+      setError(t('couldNotReachBuilderPrefix') + e.message)
     } finally {
       setBuilding(false)
     }
-  }, [files, hasApp, building, project, html])
+  }, [files, hasApp, building, project, html, t])
 
   useEffect(() => { buildRef.current = build }, [build])
 
@@ -324,10 +356,7 @@ export function PreviewPanel() {
         if (r.ok) {
           st.setFiles(r.files as typeof st.files)
           if (st.project?.id) {
-            fetch('/api/projects', {
-              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ projectId: st.project.id, files: r.files, userId: (st.project as { userId?: string }).userId || 'auto' }),
-            }).catch(() => {})
+            void persistProjectFiles(st.project.id, r.files, (st.project as { userId?: string }).userId)
           }
         }
       }
@@ -350,10 +379,49 @@ export function PreviewPanel() {
           }
         }
       }
+      if (e.data.type === 'wyber-heartbeat') {
+        lastHeartbeat.current = Date.now()
+        if (hung) setHung(false)
+      }
+      if (e.data.type === 'wyber-cors-error') {
+        setCorsNotice({ message: String(e.data.message || ''), url: e.data.url })
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [error, fixing, isGenerating, selectionConsumer, html])
+  }, [error, fixing, isGenerating, selectionConsumer, html, hung])
+
+  // Reset the baseline whenever a new build/iframe load happens — otherwise
+  // the OLD iframe's last heartbeat lingers and the watchdog below could fire
+  // on the brand-new iframe before it's even had a chance to send its first
+  // beat (postMessage + iframe navigation both take a moment).
+  useEffect(() => { lastHeartbeat.current = Date.now(); setHung(false); setCorsNotice(null) }, [html])
+
+  // Chrome (and other browsers) throttle setInterval in a backgrounded tab —
+  // confirmed live with two builds open in two tabs: switching away from one
+  // for more than ~10s stretched its heartbeat interval out and the watchdog
+  // below fired "frozen" on a preview that was never actually stuck, just
+  // sitting in a tab that wasn't focused. Reset the baseline the moment the
+  // tab becomes visible again so a long background stint never counts against
+  // it, and skip the check entirely while backgrounded.
+  useEffect(() => {
+    const onVisible = () => { if (!document.hidden) lastHeartbeat.current = Date.now() }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [])
+
+  // Poll for a missed heartbeat. A generous 10s threshold (5x the 2s beat
+  // interval) avoids false positives from normal GC pauses or heavy renders;
+  // skipped entirely while building/erroring (those already have their own
+  // handling) or while the tab is backgrounded (see above).
+  useEffect(() => {
+    if (!html || building || error) return
+    const t = setInterval(() => {
+      if (document.hidden) return
+      if (Date.now() - lastHeartbeat.current > 10_000) setHung(true)
+    }, 3000)
+    return () => clearInterval(t)
+  }, [html, building, error])
 
   // Tell the iframe when edit mode toggles
   const toggleEditMode = () => {
@@ -452,11 +520,12 @@ export function PreviewPanel() {
         // reverted straight back to the broken file, silently undoing an
         // otherwise-successful fix. Same PATCH call PreviewPanel already uses
         // for the in-preview text-edit path a few lines up.
+        // enforceConflict:false — self-heal runs as part of the same build
+        // turn as ChatPanel's own save (see persist-project.ts) and can race
+        // it the same way; confirmed live it produced a false "changed in
+        // another tab" conflict against this tab's own, more recent save.
         if (project?.id) {
-          fetch('/api/projects', {
-            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: project.id, files: updatedFiles, userId: (project as { userId?: string }).userId || 'auto' }),
-          }).catch(() => {})
+          void persistProjectFiles(project.id, updatedFiles, (project as { userId?: string }).userId, { enforceConflict: false })
         }
         return
       }
@@ -529,10 +598,7 @@ export function PreviewPanel() {
   const persistFiles = (updated: typeof files) => {
     setFiles(updated)
     if (project?.id) {
-      fetch('/api/projects', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: project.id, files: updated, userId: (project as { userId?: string }).userId || 'auto' }),
-      }).catch(() => { /* next chat-lane save also carries these files */ })
+      void persistProjectFiles(project.id, updated, (project as { userId?: string }).userId)
     }
   }
 
@@ -587,29 +653,29 @@ Change requested: ${editInstruction.trim()}`
         <span style={{ flex: 1, fontSize: 11, color: 'var(--ide-text3, #52525b)', fontFamily: 'var(--brand-mono, monospace)' }}>
           {/* Auto-fix is presented as a normal build step — never surfaced as "self-healing"
               or a build error unless it genuinely can't recover (healFailed). */}
-          {isGenerating ? 'Writing your app...' : building ? `${MESSAGES[msgIdx]} (${seconds}s)` : (fixing || (error && !healFailed)) ? MESSAGES[msgIdx] : healFailed ? 'Build failed' : elapsed ? `Built in ${elapsed}s` : hasApp ? 'Ready' : 'Describe what you want to build'}
+          {isGenerating ? t('writingLabel') : building ? `${messages[msgIdx]} (${seconds}s)` : (fixing || (error && !healFailed)) ? messages[msgIdx] : healFailed ? t('buildFailedFallback') : elapsed ? `${t('builtInPrefix')}${elapsed}s` : hasApp ? t('readyLabel') : t('describeToBuildLabel')}
         </span>
         {html && !building && !error && (
-          <button onClick={toggleEditMode} title="Click an element to edit it"
+          <button onClick={toggleEditMode} title={t('selectElementTitle')}
             style={{ background: editMode ? 'rgba(14,165,233,0.15)' : 'none', border: `1px solid ${editMode ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, color: editMode ? '#0EA5E9' : '#52525b', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
-            {editMode ? 'Selecting' : 'Select'}
+            {editMode ? t('selectingLabel') : t('selectLabel')}
           </button>
         )}
         {html && !building && (
-          <button onClick={() => build(true)} title="Rebuild preview"
+          <button onClick={() => build(true)} title={t('rebuildTitle')}
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
         )}
         {/* Real <a>, not window.open: mobile browsers' popup blockers silently
             swallow window.open, which is why "open in new tab" never worked. */}
         {html && !building && !error && (
-          <a href={html} target="_blank" rel="noopener noreferrer" title="Open preview in a new tab"
+          <a href={html} target="_blank" rel="noopener noreferrer" title={t('openNewTabTitle')}
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
         )}
         {hasApp && !building && !html && !error && (
           <button onClick={() => build(true)}
             style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
-            Build preview
+            {t('buildPreviewBtn')}
           </button>
         )}
       </div>
@@ -618,14 +684,39 @@ Change requested: ${editInstruction.trim()}`
           of inactivity; without this the app just silently stops persisting. */}
       {hasSupabaseConn && dbHealth === 'paused' && (
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
-          <span>⏸ Your Supabase database is <strong>paused</strong> (free projects pause after a week of inactivity) — nothing will load or save until it&apos;s restored.</span>
-          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>Restore now</button>
+          <span>{t('dbPausedPre')}<strong>{t('dbPausedWord')}</strong>{t('dbPausedPost')}</span>
+          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>{t('restoreNowBtn')}</button>
         </div>
       )}
       {hasSupabaseConn && dbHealth === 'restoring' && (
         <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
           <div style={{ width: 11, height: 11, border: '2px solid rgba(251,191,36,0.25)', borderTopColor: '#fbbf24', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <span>Restoring your database — usually takes under a minute…</span>
+          <span>{t('restoringDbMsg')}</span>
+        </div>
+      )}
+
+      {/* Hang watchdog banner (D5) — an infinite render loop or runaway
+          synchronous code freezes the preview solid with no error ever
+          firing; the missed-heartbeat check above is the only way to notice.
+          Reload just re-navigates the iframe to the same build (cheap); if
+          the loop is in the code itself, Rebuild/self-heal is the next step. */}
+      {hung && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+          <span>{t('hungPre')}<strong>{t('hungWord')}</strong>{t('hungPost')}</span>
+          <button
+            onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) iframeRef.current.src = html }}
+            style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
+          >{t('reloadPreviewBtn')}</button>
+        </div>
+      )}
+
+      {/* CORS-blocked external API notice (D6) — informational only, never
+          touches `error`/the preview; the app itself keeps running exactly as
+          it would have without this banner. */}
+      {corsNotice && (
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+          <span>{t('corsPre')}{corsNotice.url ? <code style={{ background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>{corsNotice.url}</code> : t('corsExternalApiFallback')}{t('corsPost')}</span>
+          <button onClick={() => setCorsNotice(null)} style={{ background: 'none', border: 'none', color: '#fef3c7', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 4px', opacity: 0.7 }}>&times;</button>
         </div>
       )}
 
@@ -637,8 +728,8 @@ Change requested: ${editInstruction.trim()}`
         if (!hasData || hasBackend) return null
         return (
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
-            <span>⚠ Data is stored in browser memory only — resets on page refresh. Connect a database to save permanently.</span>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>Connect Supabase →</button>
+            <span>{t('storageWarning')}</span>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>{t('connectSupabaseBtn')}</button>
           </div>
         )
       })()}
@@ -651,9 +742,9 @@ Change requested: ${editInstruction.trim()}`
             <MicroLabel style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none' }}>
               {selectedEl.loc ?? selectedEl.selector}
             </MicroLabel>
-            {editStatus === 'applied' && <MicroLabel color="var(--ide-green, #22c55e)">✓ saved · free</MicroLabel>}
-            {editStatus === 'notfound' && <MicroLabel color="var(--ide-amber, #f59e0b)">can&apos;t match source — use AI edit below</MicroLabel>}
-            <button onClick={() => setSelectedEl(null)} title="Deselect" style={{ background: 'none', border: 'none', color: 'var(--ide-text3, #71717a)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>×</button>
+            {editStatus === 'applied' && <MicroLabel color="var(--ide-green, #22c55e)">{t('savedFreeLabel')}</MicroLabel>}
+            {editStatus === 'notfound' && <MicroLabel color="var(--ide-amber, #f59e0b)">{t('cantMatchSourceLabel')}</MicroLabel>}
+            <button onClick={() => setSelectedEl(null)} title={t('deselectTitle')} style={{ background: 'none', border: 'none', color: 'var(--ide-text3, #71717a)', cursor: 'pointer', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>×</button>
           </div>
 
           {/* Text */}
@@ -663,12 +754,12 @@ Change requested: ${editInstruction.trim()}`
                 value={textDraft}
                 onChange={e => setTextDraft(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') applyText() }}
-                placeholder="Edit the text…"
+                placeholder={t('editTextPlaceholder')}
                 style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
               />
               <button onClick={applyText} disabled={textDraft === selectedEl.text}
                 style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
-                Set text
+                {t('setTextBtn')}
               </button>
             </div>
           )}
@@ -676,22 +767,22 @@ Change requested: ${editInstruction.trim()}`
           {/* Color chips + steppers */}
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 7 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <MicroLabel>Text</MicroLabel>
-              {(['foreground', 'muted-foreground', 'primary', 'accent-foreground', 'destructive'] as const).map(t => (
-                <button key={t} onClick={() => applyColor('text', t)} title={`text-${t}`}
-                  style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${t}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
+              <MicroLabel>{t('textColorLabel')}</MicroLabel>
+              {(['foreground', 'muted-foreground', 'primary', 'accent-foreground', 'destructive'] as const).map(token => (
+                <button key={token} onClick={() => applyColor('text', token)} title={`text-${token}`}
+                  style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${token}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
               ))}
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <MicroLabel>Bg</MicroLabel>
-              {(['background', 'card', 'muted', 'primary', 'secondary', 'accent'] as const).map(t => (
-                <button key={t} onClick={() => applyColor('bg', t)} title={`bg-${t}`}
-                  style={{ width: 16, height: 16, borderRadius: 4, border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${t}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
+              <MicroLabel>{t('bgColorLabel')}</MicroLabel>
+              {(['background', 'card', 'muted', 'primary', 'secondary', 'accent'] as const).map(token => (
+                <button key={token} onClick={() => applyColor('bg', token)} title={`bg-${token}`}
+                  style={{ width: 16, height: 16, borderRadius: 4, border: '1px solid rgba(255,255,255,0.25)', background: `hsl(var(--${token}, 0 0% 50%))`, cursor: 'pointer', padding: 0 }} />
               ))}
             </span>
-            {([['text-size', 'Size'], ['p', 'Pad'], ['rounded', 'Radius']] as const).map(([family, label]) => (
+            {([['text-size', 'sizeLabel'], ['p', 'padLabel'], ['rounded', 'radiusLabel']] as const).map(([family, labelKey]) => (
               <span key={family} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <MicroLabel>{label}</MicroLabel>
+                <MicroLabel>{t(labelKey)}</MicroLabel>
                 <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>−</button>
                 <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>+</button>
               </span>
@@ -704,20 +795,20 @@ Change requested: ${editInstruction.trim()}`
               value={editInstruction}
               onChange={e => setEditInstruction(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendAiEdit() }}
-              placeholder="Bigger change? Describe it (e.g. turn this into a 3-column grid)"
+              placeholder={t('biggerChangePlaceholder')}
               style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
             />
             <button onClick={sendAiEdit} disabled={!editInstruction.trim()}
-              title="Runs a normal AI edit — charged at the standard edit rate"
+              title={t('aiEditRateTitle')}
               style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
-              AI edit · from {creditCost('small-edit', 'fast')}cr
+              {t('aiEditPrefix')}{creditCost('small-edit', 'fast')}cr
             </button>
           </div>
         </div>
       )}
       {editMode && !selectedEl && selectionConsumer !== 'wyberman' && (
         <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
-          Click any element in the preview to edit it
+          {t('clickToEditHint')}
         </div>
       )}
 
@@ -726,8 +817,8 @@ Change requested: ${editInstruction.trim()}`
         {!hasApp && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>Your preview will appear here</div>
-            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 240, textAlign: 'center', lineHeight: 1.5 }}>Describe what you want to build in the chat, and your app appears here automatically</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>{t('emptyPreviewTitle')}</div>
+            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 240, textAlign: 'center', lineHeight: 1.5 }}>{t('emptyPreviewDesc')}</div>
           </div>
         )}
 
@@ -754,7 +845,7 @@ Change requested: ${editInstruction.trim()}`
         {(building || fixing || (error && !healFailed)) && !isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{MESSAGES[msgIdx]}</div>
+            <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{messages[msgIdx]}</div>
             <div style={{ fontSize: 11, color: '#52525b' }}>Building your app…</div>
           </div>
         )}

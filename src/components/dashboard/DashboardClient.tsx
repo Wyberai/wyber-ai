@@ -17,6 +17,11 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { creditsLine } from '@/lib/plans';
 import { VoiceButton } from '@/components/editor/VoiceButton';
+import { useT } from '@/lib/i18n/useT';
+import { useLocale } from '@/lib/i18n/LocaleProvider';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
+import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
+import { isLocale, LOCALE_SPEECH_CODE } from '@/lib/i18n/locales';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -100,6 +105,9 @@ const BRAND = 'var(--accent)';
 export function DashboardClient({ profile, projects: initialProjects, securityByProject = {} }: Props) {
   const router = useRouter();
   const supabase = createClient();
+  const { locale, setLocale } = useLocale();
+  const t = useT(DASHBOARD_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   const [projects, setProjects] = useState(initialProjects);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -121,6 +129,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   // "Today's ideas" — personalized quick prompts from /api/suggestions.
   // null = still loading (render QUICK_PROMPTS); fail-soft to QUICK_PROMPTS.
   const [suggestions, setSuggestions] = useState<{ title: string; prompt: string }[] | null>(null);
+
+  // profiles.preferred_locale is the cross-device source of truth for a
+  // logged-in user — reconcile it into the shared context/cookie once the
+  // server-fetched profile is available (a no-op if it already matches).
+  useEffect(() => {
+    const preferred = (profile as any)?.preferred_locale;
+    if (preferred && isLocale(preferred) && preferred !== locale) setLocale(preferred);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(profile as any)?.preferred_locale]);
 
   useEffect(() => {
     let alive = true;
@@ -245,8 +262,21 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
   const handleRename = async (id: string, name: string) => {
     if (!name.trim()) { setRenamingId(null); return; }
-    await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: id, name: name.trim(), userId: profile?.id }) });
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, name: name.trim() } : p));
+    // Previously an unguarded `await fetch` with no try/catch: a network blip
+    // threw past the two lines below, leaving the rename input stuck open and
+    // — worse — nothing told the user it didn't save. Retry once, and only
+    // apply the optimistic name update if the PATCH actually succeeded, so the
+    // dashboard never shows a name that isn't really persisted.
+    let ok = false;
+    for (const delay of [0, 1500]) {
+      if (delay) await new Promise(r => setTimeout(r, delay));
+      try {
+        const res = await fetch('/api/projects', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: id, name: name.trim(), userId: profile?.id }) });
+        if (res.ok) { ok = true; break; }
+      } catch { /* retry */ }
+    }
+    if (ok) setProjects(prev => prev.map(p => p.id === id ? { ...p, name: name.trim() } : p));
+    else console.error('[rename] failed to save project name after retry', id);
     setRenamingId(null);
   };
 
@@ -300,7 +330,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       }
     } catch (err) {
       console.error('Project creation failed:', err);
-      setCreateError('Failed to create project. Please try logging out and back in.');
+      setCreateError(t('failedCreateProject'));
       setCreating(false);
     }
   };
@@ -320,10 +350,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   };
 
   const NAV = [
-    { label: 'Home',         href: '/dashboard',        icon: <IconHome />,      view: 'all' as const },
-    { label: 'Web Apps',     href: '/dashboard',        icon: <IconTemplates />, view: 'web' as const },
-    { label: 'Mobile Apps',  href: '/dashboard',        icon: <IconPhone />,     view: 'mobile' as const },
-    { label: 'Settings',     href: '/settings',         icon: <IconSettings /> },
+    { label: t('navHome'),         href: '/dashboard',        icon: <IconHome />,      view: 'all' as const },
+    { label: t('navWebApps'),     href: '/dashboard',        icon: <IconTemplates />, view: 'web' as const },
+    { label: t('navMobileApps'),  href: '/dashboard',        icon: <IconPhone />,     view: 'mobile' as const },
+    { label: tc('settings'),     href: '/settings',         icon: <IconSettings /> },
   ];
   const COMING_SOON: { label: string; href: string; icon: React.ReactNode; soon?: boolean }[] = [
   ];
@@ -344,7 +374,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       {/* Mobile top bar */}
       {isMobile && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 52, background: SIDEBAR_BG, borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, zIndex: 50, flexShrink: 0 }}>
-          <button onClick={() => setSidebarOpen(v => !v)} aria-label="Open menu"
+          <button onClick={() => setSidebarOpen(v => !v)} aria-label={t('openMenuAria')}
             style={{ background: 'none', border: 'none', color: TEXT, cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
@@ -356,8 +386,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       {isMobile && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 56, background: SIDEBAR_BG, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', zIndex: 50 }}>
           {[
-            { label: 'Home',    href: '/dashboard',   icon: <IconHome /> },
-            { label: 'Build',   href: '/gallery',     icon: <IconTemplates /> },
+            { label: t('navHome'),    href: '/dashboard',   icon: <IconHome /> },
+            { label: t('buildLabel'),   href: '/gallery',     icon: <IconTemplates /> },
           ].map(item => (
             <Link key={item.label} href={item.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, color: MUTED, textDecoration: 'none', fontSize: 10, fontWeight: 600 }}>
               {item.icon}
@@ -366,7 +396,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           ))}
           <button onClick={() => setSidebarOpen(v => !v)} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            More
+            {t('moreLabel')}
           </button>
         </div>
       )}
@@ -401,7 +431,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 12, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</div>
-            <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} plan</div>
+            <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{plan} {t('planSuffix')}</div>
           </div>
           <IconChevronDown rotated={sidebarExpanded} />
         </button>
@@ -409,15 +439,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {/* Credits panel */}
         {sidebarExpanded && (
           <div style={{ padding: '10px 14px', borderBottom: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ fontSize: 11, color: MUTED, marginBottom: 8 }}>Credits</div>
+            <div style={{ fontSize: 11, color: MUTED, marginBottom: 8 }}>{t('creditsLabel')}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>{credits} left</span>
-              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>Add credits</Link>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{credits} {t('creditsLeftShort')}</span>
+              <Link href="/settings?tab=billing" style={{ fontSize: 11, color: BRAND, textDecoration: 'none', fontWeight: 600 }}>{t('addCredits')}</Link>
             </div>
             <div style={{ height: 4, borderRadius: 9999, background: BORDER }}>
               <div style={{ height: '100%', borderRadius: 9999, background: creditPct < 20 ? '#ef4444' : BRAND, width: creditPct + '%', transition: 'width 0.5s ease' }} />
             </div>
-            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>Low on credits — upgrade to continue building</div>}
+            {credits < 10 && <div style={{ fontSize: 10, color: '#ef4444', marginTop: 6, fontWeight: 600 }}>{t('lowCreditsWarning')}</div>}
           </div>
         )}
 
@@ -439,14 +469,14 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <Link key={n.label} href={n.soon ? '/coming-soon?product=' + encodeURIComponent(n.label) : n.href}
                 className="dash-nav-row" data-active={isActive} style={rowStyle}>
                 {n.icon}{n.label}
-                {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>SOON</span>}
+                {n.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa', marginLeft: 'auto' }}>{t('soonBadge')}</span>}
               </Link>
             );
           })}
 
           {COMING_SOON.length > 0 && (
             <div style={{ marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>Coming Soon</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 10px 5px' }}>{tc('comingSoon')}</div>
               {COMING_SOON.map((n: any) => (
                 <Link key={n.label} href={'/coming-soon?product=' + encodeURIComponent(n.label)}
                   style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 10px', borderRadius: 8, color: DIM, fontSize: 12, fontWeight: 400, textDecoration: 'none', marginBottom: 1, opacity: 0.6 }}>
@@ -457,12 +487,12 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           )}
 
           {projects.length > 0 && <>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>Recent</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '12px 10px 5px' }}>{t('recentLabel')}</div>
             {projects.slice(0, 4).map(p => (
               <Link key={p.id} href={`/project/${p.id}`} className="dash-recent-link"
                 style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 7, color: DIM, fontSize: 12, textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 1 }}>
                 <IconDot />
-                {p.name || 'Untitled'}
+                {p.name || tc('untitled')}
               </Link>
             ))}
           </>}
@@ -478,7 +508,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: `rgba(14,165,233,0.1)`, border: `1px solid rgba(14,165,233,0.2)`, textDecoration: 'none' }}>
               <IconBolt />
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>Upgrade to Starter</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>{t('upgradeToStarter')}</div>
                 <div style={{ fontSize: 10, color: DIM }}>{creditsLine('starter')}</div>
               </div>
             </Link>
@@ -497,7 +527,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,38px)', fontWeight: 800, letterSpacing: '-0.04em', textAlign: 'center', marginBottom: 24, zIndex: 1, position: 'relative' }}>
-            What are we building, {name.split(' ')[0]}?
+            {t('whatBuildingHeading').replace('{name}', name.split(' ')[0])}
           </h1>
 
           <AnimatePresence>
@@ -516,25 +546,25 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           <div data-tour="build" style={{ width: '100%', maxWidth: 640, zIndex: 1, position: 'relative' }}>
             <div style={{ background: 'rgba(16,18,26,0.9)', backdropFilter: 'blur(20px)', border: `1px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
               <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
-                placeholder="Describe the app you want to build..." rows={3}
+                placeholder={t('promptPlaceholder')} rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
                   <button onClick={() => setBuildMode('app')} aria-pressed={buildMode === 'app'}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 6, border: buildMode === 'app' ? '1px solid rgba(14,165,233,0.45)' : '1px solid transparent', background: buildMode === 'app' ? 'rgba(14,165,233,0.18)' : 'transparent', color: buildMode === 'app' ? BRAND : '#9a9fad', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                    Web app
+                    {t('webAppLabel')}
                   </button>
                   <button onClick={() => setBuildMode('mobile')} aria-pressed={buildMode === 'mobile'}
                     style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 6, border: buildMode === 'mobile' ? '1px solid rgba(168,85,247,0.45)' : '1px solid transparent', background: buildMode === 'mobile' ? 'rgba(168,85,247,0.18)' : 'transparent', color: buildMode === 'mobile' ? '#a855f7' : '#9a9fad', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                    Mobile app
+                    {t('mobileAppLabel')}
                   </button>
                 </div>
-                <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} credits</span>
-                <span style={{ fontSize: 11, color: '#3f3f46' }}>Enter to build</span>
-                <VoiceButton size={26} disabled={creating}
-                  onTranscript={t => { setPromptInput(prev => (prev ? prev + ' ' + t : t)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: t.length }); }} />
+                <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
+                <span style={{ fontSize: 11, color: '#3f3f46' }}>{t('enterToBuild')}</span>
+                <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
+                  onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
                 <button onClick={submitPrompt} disabled={creating}
                   style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
@@ -565,16 +595,16 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           {visibleProjects.length > 0 ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>{view === 'web' ? 'Web Apps' : view === 'mobile' ? 'Mobile Apps' : 'My Projects'}</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>{view === 'web' ? t('webAppsHeading') : view === 'mobile' ? t('mobileAppsHeading') : t('myProjectsHeading')}</h2>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => setShowImport(true)}
                     style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                    Import
+                    {t('importBtn')}
                   </button>
                   <button onClick={() => view === 'all' ? openChooser() : startProject(undefined, view === 'web' ? 'app' : 'mobile')} disabled={creating}
                     style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {view === 'web' ? '+ New Web App' : view === 'mobile' ? '+ New Mobile App' : '+ New Project'}
+                    {view === 'web' ? t('newWebAppBtn') : view === 'mobile' ? t('newMobileAppBtn') : t('newProjectBtn')}
                   </button>
                 </div>
               </div>
@@ -587,11 +617,11 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
                       {/* Action buttons */}
                       {p.id && <>
-                        <button onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title="Delete"
+                        <button onClick={e => requestDelete(e, p.id!, p.name)} disabled={deletingId === p.id} title={tc('delete')}
                           style={{ position: 'absolute', top: 7, right: 7, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {deletingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconTrash />}
                         </button>
-                        <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title="Duplicate"
+                        <button onClick={e => handleDuplicate(e, p.id!)} disabled={duplicatingId === p.id} title={tc('duplicate')}
                           style={{ position: 'absolute', top: 7, right: 36, zIndex: 10, width: 24, height: 24, borderRadius: 6, border: `1px solid ${BORDER}`, background: 'rgba(16,18,26,0.85)', color: MUTED, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
                           {duplicatingId === p.id ? <div style={{ width: 10, height: 10, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} /> : <IconCopy />}
                         </button>
@@ -613,7 +643,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                           {renamingId === p.id && p.id ? (
                             <input autoFocus defaultValue={p.name || ''} onBlur={e => handleRename(p.id!, e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleRename(p.id!, (e.target as HTMLInputElement).value); if (e.key === 'Escape') setRenamingId(null); }} onClick={e => e.preventDefault()} style={{ fontSize: 12, fontWeight: 600, color: TEXT, background: 'rgba(255,255,255,0.08)', border: `1px solid rgba(14,165,233,0.5)`, borderRadius: 4, padding: '1px 5px', flex: 1, outline: 'none', fontFamily: 'inherit' }} />
                           ) : (
-                            <div onDoubleClick={e => { e.preventDefault(); e.stopPropagation(); if (p.id) setRenamingId(p.id); }} style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name || 'Untitled'}</div>
+                            <div onDoubleClick={e => { e.preventDefault(); e.stopPropagation(); if (p.id) setRenamingId(p.id); }} style={{ fontSize: 12, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{p.name || tc('untitled')}</div>
                           )}
                           <TypeBadge type={(p as any).project_type} />
                         </div>
@@ -632,27 +662,25 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
             /* Filtered view (Web/Mobile) with no matching projects — no templates, just a build CTA */
             <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>{view === 'mobile' ? <IconPhone /> : <IconTemplates />}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No {view === 'mobile' ? 'mobile' : 'web'} apps yet</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>{view === 'mobile' ? t('dashboardEmptyMobileTitle') : t('dashboardEmptyWebTitle')}</div>
               <div style={{ fontSize: 14, marginBottom: 16 }}>
-                {view === 'mobile'
-                  ? 'Build a real React Native app — preview on your phone via QR, export for the App Store.'
-                  : 'Describe a web app and Wyber generates fresh React code, a database, and a live URL.'}
+                {view === 'mobile' ? t('mobileEmptyDesc') : t('webEmptyDesc')}
               </div>
               <button onClick={() => startProject(undefined, view === 'web' ? 'app' : 'mobile')} disabled={creating}
                 style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-                {view === 'mobile' ? '+ Build a mobile app' : '+ Build a web app'}
+                {view === 'mobile' ? t('buildMobileAppBtn') : t('buildWebAppBtn')}
               </button>
             </div>
           ) : (
             <>
               <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><IconEmpty /></div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>No projects yet</div>
-                <div style={{ fontSize: 14, marginBottom: 16 }}>Describe your first app in the box above and watch it build.</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>{t('noProjectsYetTitle')}</div>
+                <div style={{ fontSize: 14, marginBottom: 16 }}>{t('noProjectsYetDesc')}</div>
                 <button onClick={() => setShowImport(true)}
                   style={{ padding: '8px 18px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                  Import existing project
+                  {t('importExistingBtn')}
                 </button>
               </div>
             </>

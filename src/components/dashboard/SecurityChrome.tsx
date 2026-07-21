@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import type { ProjectSecurityInfo } from '@/components/dashboard/ProjectSecurityBadge';
+import { useT } from '@/lib/i18n/useT';
+import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 
 interface Props {
   securityByProject: Record<string, ProjectSecurityInfo>;
@@ -17,6 +19,7 @@ interface Props {
  * connectors.
  */
 export function SecurityChrome({ securityByProject }: Props) {
+  const t = useT(DASHBOARD_STRINGS);
   const scans = Object.values(securityByProject);
   if (scans.length === 0) return null;
 
@@ -24,8 +27,8 @@ export function SecurityChrome({ securityByProject }: Props) {
   const worst = criticalCount > 0 ? 'red' : 'green';
 
   const label = criticalCount > 0
-    ? `${criticalCount} issue${criticalCount === 1 ? '' : 's'} across ${scans.length} project${scans.length === 1 ? '' : 's'}`
-    : `${scans.length} project${scans.length === 1 ? '' : 's'} scanned clean`;
+    ? t('secIssuesAcrossProjects').replace('{count}', String(criticalCount)).replace('{total}', String(scans.length))
+    : t('secProjectsScannedClean').replace('{total}', String(scans.length));
 
   return (
     <Link

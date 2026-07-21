@@ -2,6 +2,14 @@
 // that already decides INR vs USD (see lib/region.ts) — a non-India visitor
 // never sees this, never renders these strings, and the switcher itself only
 // mounts when the page is passed isIndia=true from the server.
+
+// The hi/kn/te/ta translations are now fully wired through every surface
+// (including /build/[slug], /use-cases/[slug], and the previously-orphaned
+// editor-panel dicts) — re-enabled 2026-07-21. Flip back to `false` if a
+// regression needs the toggle hidden again; the translation infra and
+// dictionaries stay intact either way.
+export const I18N_ENABLED = true;
+
 export const LOCALES = ['en', 'hi', 'kn', 'te', 'ta'] as const;
 export type Locale = (typeof LOCALES)[number];
 
@@ -25,3 +33,17 @@ export const LOCALE_SPEECH_CODE: Record<Locale, string> = {
 
 export const DEFAULT_LOCALE: Locale = 'en';
 export const LOCALE_STORAGE_KEY = 'wyber-locale';
+// Same key doubles as the cookie name — one identifier, two storage layers
+// (localStorage for instant client reads, cookie so server components can
+// resolve the locale for SSR without a DB round-trip).
+export const LOCALE_COOKIE_KEY = LOCALE_STORAGE_KEY;
+
+export function isLocale(value: unknown): value is Locale {
+  return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
+}
+
+// The locale-prefixed static routes (app/[locale]/...) only ever generate
+// hi/kn/te/ta — English keeps its existing unprefixed URLs (/blog/x, not
+// /en/blog/x) so there's zero disruption to current backlinks/SEO equity.
+// See src/app/[locale]/README or the vs/[competitor] route for the pattern.
+export const NON_ENGLISH_LOCALES = LOCALES.filter(l => l !== 'en') as Exclude<Locale, 'en'>[];

@@ -11,6 +11,9 @@ import { PreviewPanel } from './PreviewPanel';
 import { RightPanel } from './RightPanel';
 import { ResizableDivider } from './ResizableDivider';
 import { Project } from '@/lib/supabase/types';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_SHELL_STRINGS } from '@/lib/i18n/dict/editor-shell';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
 interface Props {
   initialProject?: Partial<Project> | null;
@@ -18,6 +21,8 @@ interface Props {
 }
 
 export function IDELayout({ initialProject, initialProfile }: Props = {}) {
+  const t = useT(EDITOR_SHELL_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   const {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
@@ -69,11 +74,15 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
 
     const project = {
       id: initialProject.id!,
-      name: initialProject.name ?? 'Untitled',
+      name: initialProject.name ?? tc('untitled'),
       framework: (initialProject.framework as any) ?? 'react-vite',
       createdAt: Date.now(),
       userId: (initialProject as any).user_id,
       is_public: (initialProject as any).is_public,
+      // Seeds the multi-tab conflict guard (persist-project.ts) from the
+      // server-fetched row's real updated_at, so it's active from this tab's
+      // very first save — not just from the second save onward.
+      updated_at: (initialProject as any).updated_at,
     };
 
     // Set credits from profile
@@ -153,7 +162,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
             />
           </div>
           <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid var(--ide-border)', background: 'var(--bg-base)' }}>
-            {([['chat', 'Chat'], ['preview', 'Preview'], ['code', 'Code']] as const).map(([key, label]) => (
+            {([['chat', t('ideTabChat')], ['preview', tc('preview')], ['code', t('ideTabCode')]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setMobileView(key)}

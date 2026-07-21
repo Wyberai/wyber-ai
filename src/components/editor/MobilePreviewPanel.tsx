@@ -4,6 +4,9 @@ import { useEditorStore } from '@/store/editor'
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary'
 import { DeviceFrame } from './DeviceFrame'
 import { DEVICES, DEFAULT_DEVICE_ID, devicesForOS, getDevice, type DeviceOS } from '@/lib/devices'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_MOBILE_STRINGS } from '@/lib/i18n/dict/editor-mobile'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 type PreviewMode = 'snack' | 'inapp'
 
@@ -18,6 +21,7 @@ const DEFAULT_MODE: PreviewMode =
 
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
+  const t = useT(EDITOR_MOBILE_STRINGS)
 
   const [mode, setMode] = useState<PreviewMode>(DEFAULT_MODE)
   const [platform, setPlatform] = useState<DeviceOS>('ios')
@@ -130,12 +134,12 @@ export function MobilePreviewPanel() {
   const device = getDevice(deviceId)
 
   const statusText = isGenerating
-    ? 'Writing your app…'
+    ? t('statusWritingApp')
     : loading
-      ? (mode === 'snack' ? 'Starting live preview…' : 'Building preview…')
+      ? (mode === 'snack' ? t('statusStartingLivePreview') : t('statusBuildingPreview'))
       : ready
-        ? 'Preview ready'
-        : 'Describe your app to get started'
+        ? t('statusPreviewReady')
+        : t('statusDescribeApp')
 
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
@@ -147,7 +151,7 @@ export function MobilePreviewPanel() {
         <Segmented
           value={mode}
           onChange={v => chooseMode(v as PreviewMode)}
-          options={[{ v: 'snack', label: 'Live (Expo)' }, { v: 'inapp', label: 'In‑app (beta)' }]}
+          options={[{ v: 'snack', label: t('modeLiveExpo') }, { v: 'inapp', label: t('modeInAppBeta') }]}
         />
 
         {/* In-app: platform toggle + device dropdown */}
@@ -177,11 +181,11 @@ export function MobilePreviewPanel() {
 
         {/* Test on a real phone (QR / Expo Go) — the live embed already runs inline. */}
         {mode === 'snack' && snackUrl && !loading && (
-          <a href={snackUrl} target="_blank" rel="noopener noreferrer" title="Open in Expo Go on your phone" style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#a1a1aa', textDecoration: 'none', padding: '2px 8px', fontSize: 11 }}>📱 On device ↗</a>
+          <a href={snackUrl} target="_blank" rel="noopener noreferrer" title={t('openInExpoGoTitle')} style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#a1a1aa', textDecoration: 'none', padding: '2px 8px', fontSize: 11 }}>📱 {t('onDeviceLabel')} ↗</a>
         )}
 
         {shouldBuildPreview && !isGenerating && !loading && (
-          <button onClick={refresh} title="Rebuild preview" style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>⟳</button>
+          <button onClick={refresh} title={t('rebuildPreviewTitle')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>⟳</button>
         )}
       </div>
 
@@ -195,8 +199,8 @@ export function MobilePreviewPanel() {
               <rect x="20" y="6" width="8" height="2" rx="1" fill="rgba(14,165,233,0.4)" />
               <circle cx="24" cy="42" r="2" fill="rgba(14,165,233,0.3)" />
             </svg>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>Mobile preview</div>
-            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>Describe your React Native app and it&apos;ll render here instantly</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>{t('mobilePreviewEmptyTitle')}</div>
+            <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 220, textAlign: 'center', lineHeight: 1.5 }}>{t('mobilePreviewEmptyDesc')}</div>
           </div>
         )}
 
@@ -204,7 +208,7 @@ export function MobilePreviewPanel() {
         {isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Writing your app…</div>
+            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>{t('statusWritingApp')}</div>
           </div>
         )}
 
@@ -231,14 +235,14 @@ export function MobilePreviewPanel() {
                 <div style={{ width: 90, height: 20, background: '#0a0a0a', borderRadius: 10 }} />
               </div>
               <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                {snackLoading && <Centered dark><Spinner small /><span style={{ fontSize: 11, color: '#52525b' }}>Starting live preview…</span></Centered>}
+                {snackLoading && <Centered dark><Spinner small /><span style={{ fontSize: 11, color: '#52525b' }}>{t('statusStartingLivePreview')}</span></Centered>}
                 {error && !snackLoading && <PreviewError error={error} onRetry={refresh} />}
                 {/* Interactive live preview — the Expo Snack web player runs the real
                     RN runtime inline, so the app is genuinely tappable/animated. */}
                 {embedUrl && !snackLoading && !error && (
                   <iframe
                     src={embedUrl}
-                    title="Live mobile preview"
+                    title={t('liveMobilePreviewIframeTitle')}
                     style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', background: '#000' }}
                     sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                     allow="accelerometer; gyroscope; clipboard-write"
@@ -279,12 +283,14 @@ function Spinner({ small }: { small?: boolean }) {
 }
 
 function PreviewError({ error, onRetry }: { error: string; onRetry: () => void }) {
+  const t = useT(EDITOR_MOBILE_STRINGS)
+  const tc = useT(COMMON_STRINGS)
   return (
     <div style={{ position: 'absolute', inset: 0, overflow: 'auto', background: '#1a0505', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ fontFamily: 'monospace', fontSize: 11, color: '#ff6b6b', whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>
-        <strong style={{ display: 'block', marginBottom: 8 }}>Preview error</strong>{error}
+        <strong style={{ display: 'block', marginBottom: 8 }}>{t('previewErrorLabel')}</strong>{error}
       </div>
-      <button onClick={onRetry} style={{ alignSelf: 'flex-start', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontFamily: 'monospace' }}>Retry ⟳</button>
+      <button onClick={onRetry} style={{ alignSelf: 'flex-start', background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 11, fontFamily: 'monospace' }}>{tc('retry')} ⟳</button>
     </div>
   )
 }

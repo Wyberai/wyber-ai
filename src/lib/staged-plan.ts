@@ -18,8 +18,18 @@ export interface StagedPlan {
 
 // Apps with fewer than this many files generate in one shot (no staging).
 export const STAGE_THRESHOLD = 4
-// Files per fill batch — small enough that truncation is structurally impossible.
-export const FILL_BATCH_SIZE = 2
+// Files per fill batch. Each fill pass gets a 24,000-token budget on Opus
+// (see generate/route.ts's stageMaxTokens) — comfortable headroom for 2
+// typical component files, which is why this was set conservatively low.
+// Raised 2→3: a typical 6-9 file build was paying 3 full sequential API
+// round-trips for the fill stage alone (network + generation latency each,
+// observed 15-90s per pass depending on load) when 2 would often do,
+// meaningfully cutting build wall-clock time for the common case. Any batch
+// that genuinely needs more than the budget still hits the EXISTING
+// max_tokens continuation safety net (see A3 in docs/failure-modes.md) rather
+// than losing content — this doesn't remove that protection, it just asks
+// for it less often.
+export const FILL_BATCH_SIZE = 3
 
 // Paths that belong in the scaffold pass: the shell that makes the preview
 // render a skeleton immediately. Matched case-insensitively on the basename.

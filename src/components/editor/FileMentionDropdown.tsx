@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOOLS_STRINGS } from '@/lib/i18n/dict/editor-tools';
 
 interface Props {
   query: string;                 // text typed after the '@'
@@ -12,6 +14,7 @@ interface Props {
 // Shows matching project files; selecting one inserts its path (which the
 // generation scorer then prioritizes into context automatically).
 export function FileMentionDropdown({ query, files, onSelect, onClose }: Props) {
+  const t = useT(EDITOR_TOOLS_STRINGS);
   const ref = useRef<HTMLDivElement>(null);
 
   const q = query.toLowerCase();
@@ -55,7 +58,7 @@ export function FileMentionDropdown({ query, files, onSelect, onClose }: Props) 
       overflowY: 'auto',
     }}>
       <div style={{ padding: '6px 10px', fontSize: 10, color: 'var(--ide-text3, #71717a)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--ide-border, rgba(255,255,255,0.06))' }}>
-        Reference a file
+        {t('fileMentionHeader')}
       </div>
       {matches.map(path => {
         const base = path.split('/').pop()!;

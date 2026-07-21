@@ -16,6 +16,30 @@ import { useAgentStore, WyberNodeData, WyberNodeType } from '@/store/agentStore'
 import { CanvasChat } from '@/components/editor/CanvasChat'
 import { WyberEdge, WyberMarkerDefs } from '@/components/editor/WyberEdge'
 import { useRouter } from 'next/navigation'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+
+type CanvasStringKey = keyof typeof EDITOR_CANVAS_STRINGS['en']
+
+// Node type -> dictionary key lookups. NODE_META itself stays in English at
+// module scope (it's also keyed by color/icon which aren't translated); the
+// label/help text actually shown on screen goes through these maps instead.
+const NODE_LABEL_KEY: Record<WyberNodeType, CanvasStringKey> = {
+  trigger: 'triggerLabel', aiagent: 'aiagentLabel', tool: 'toolLabel', condition: 'conditionLabel',
+  output: 'outputLabel', error: 'errorLabel', webhook: 'webhookLabel', transform: 'transformLabel',
+  loop: 'loopLabel', delay: 'delayLabel', subflow: 'subflowLabel', parallel: 'parallelLabel',
+}
+const NODE_HELP_KEY: Record<WyberNodeType, CanvasStringKey> = {
+  trigger: 'triggerHelp', aiagent: 'aiagentHelp', tool: 'toolHelp', condition: 'conditionHelp',
+  output: 'outputHelp', error: 'errorHelp', webhook: 'webhookHelp', transform: 'transformHelp',
+  loop: 'loopHelp', delay: 'delayHelp', subflow: 'subflowHelp', parallel: 'parallelHelp',
+}
+const PALETTE_DESC_KEY: Record<WyberNodeType, CanvasStringKey> = {
+  trigger: 'paletteDescTrigger', aiagent: 'paletteDescAiagent', tool: 'paletteDescTool', condition: 'paletteDescCondition',
+  output: 'paletteDescOutput', error: 'paletteDescError', webhook: 'paletteDescWebhook', transform: 'paletteDescTransform',
+  loop: 'paletteDescLoop', delay: 'paletteDescDelay', subflow: 'paletteDescSubflow', parallel: 'paletteDescParallel',
+}
 
 // ─── SVG icons — no emojis ───────────────────────────────────────────────────
 
@@ -123,6 +147,7 @@ const STATUS_COLORS = { idle: 'rgba(255,255,255,0.12)', running: '#f59e0b', succ
 function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
   const nodeType = (type || 'trigger') as WyberNodeType
   const meta = NODE_META[nodeType]
+  const t = useT(EDITOR_CANVAS_STRINGS)
   const { setSelectedNode } = useAgentStore()
   const status = (data.status as string) || 'idle'
 
@@ -157,7 +182,7 @@ function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
           }
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{meta.label}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{t(NODE_LABEL_KEY[nodeType])}</div>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.label as string}</div>
         </div>
       </div>
@@ -262,6 +287,7 @@ function useComposioConnections() {
 }
 
 function ComposioConnectButton({ toolkit, onConnected }: { toolkit: string; onConnected?: () => void }) {
+  const t = useT(EDITOR_CANVAS_STRINGS)
   const [connecting, setConnecting] = useState(false)
 
   const handleConnect = async () => {
@@ -301,8 +327,8 @@ function ComposioConnectButton({ toolkit, onConnected }: { toolkit: string; onCo
       }}
     >
       {connecting
-        ? <><div style={{ width: 8, height: 8, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />Connecting...</>
-        : <>Connect {toolkit}</>
+        ? <><div style={{ width: 8, height: 8, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />{t('connectingEllipsis')}</>
+        : <>{t('connectWord')} {toolkit}</>
       }
     </button>
   )
@@ -322,6 +348,8 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
   const [actionsLoading, setActionsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { isConnected, refresh } = useComposioConnections()
+  const t = useT(EDITOR_CANVAS_STRINGS)
+  const tc = useT(COMMON_STRINGS)
 
   useEffect(() => {
     setLoading(true)
@@ -368,11 +396,11 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search 250+ tools..."
+            placeholder={t('searchToolsPlaceholder')}
             style={fieldStyle}
           />
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '16px 0', color: '#52525b', fontSize: 11 }}>Loading...</div>
+            <div style={{ textAlign: 'center', padding: '16px 0', color: '#52525b', fontSize: 11 }}>{tc('loading')}</div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, maxHeight: 260, overflowY: 'auto' }}>
               {filtered.slice(0, 40).map(t => (
@@ -406,13 +434,13 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9' }}>{cfg.toolkit.toUpperCase()}</div>
               <div style={{ fontSize: 10, color: connected ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
-                {connected ? '● Connected' : '● Not connected'}
+                {connected ? t('connectedStatus') : t('notConnectedStatus')}
               </div>
             </div>
             <button
               onClick={() => updateNodeData(nodeId, { config: { ...cfg, toolkit: '', action: '', logo: '' } })}
               style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 12, padding: '2px 4px' }}
-              title="Change toolkit"
+              title={t('changeToolkitTooltip')}
             >✕</button>
           </div>
 
@@ -423,9 +451,9 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
 
           {/* Action picker */}
           <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 6 }}>ACTION</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 6 }}>{t('actionLabel')}</div>
             {actionsLoading ? (
-              <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>Loading actions...</div>
+              <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>{t('loadingActionsText')}</div>
             ) : actions.length === 0 ? null : (() => {
               const toolkit = cfg.toolkit?.toUpperCase() ?? ''
               const topSlugs = TOOLKIT_TOP_ACTIONS[toolkit] ?? []
@@ -478,7 +506,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                   <input
                     value={actionSearch}
                     onChange={e => setActionSearch(e.target.value)}
-                    placeholder="Search actions..."
+                    placeholder={t('searchActionsPlaceholder')}
                     style={{ ...fieldStyle, marginBottom: 8, fontSize: 11 }}
                   />
 
@@ -488,21 +516,21 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                       <>
                         {[...displayTop, ...displayRest].map(a => <ActionRow key={a.slug} a={a} />)}
                         {displayTop.length === 0 && displayRest.length === 0 && (
-                          <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>No matching actions</div>
+                          <div style={{ fontSize: 11, color: '#52525b', padding: '8px 0' }}>{t('noMatchingActions')}</div>
                         )}
                       </>
                     ) : showAllActions ? (
                       /* Expanded: all actions in one flat list */
                       <>
                         <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
-                          All actions ({actions.length} total)
+                          {t('allActionsCountPrefix')}{actions.length}{t('allActionsCountSuffix')}
                         </div>
                         {[...topActions, ...restActions].map(a => <ActionRow key={a.slug} a={a} />)}
                         <button
                           onClick={() => setShowAllActions(false)}
                           style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#52525b', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
                         >
-                          ↑ Show fewer
+                          {t('showFewer')}
                         </button>
                       </>
                     ) : (
@@ -510,7 +538,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                       <>
                         {topActions.length > 0 && (
                           <div style={{ fontSize: 9, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
-                            Common
+                            {t('commonActionsLabel')}
                           </div>
                         )}
                         {topActions.map(a => <ActionRow key={a.slug} a={a} />)}
@@ -519,7 +547,7 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                             onClick={() => setShowAllActions(true)}
                             style={{ width: '100%', padding: '6px 0', background: 'none', border: 'none', color: '#52525b', fontSize: 10, fontWeight: 600, cursor: 'pointer', marginTop: 2 }}
                           >
-                            ↓ Show all {actions.length} actions
+                            {t('showAllActionsPrefix')}{actions.length}{t('showAllActionsSuffix')}
                           </button>
                         )}
                       </>
@@ -540,8 +568,8 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
                 {slugToLabel(cfg.action, cfg.toolkit ?? '')}
               </span>
               {' '}{connected
-                ? '— will execute when this agent runs.'
-                : '— connect the toolkit above before running.'}
+                ? t('willExecuteSuffix')
+                : t('connectBeforeRunningSuffix')}
             </div>
           )}
         </>
@@ -552,6 +580,8 @@ function ComposioToolPicker({ nodeId, cfg, updateNodeData }: {
 
 function ConfigPanel() {
   const { nodes, selectedNodeId, setSelectedNode, updateNodeData, deleteNode } = useAgentStore()
+  const t = useT(EDITOR_CANVAS_STRINGS)
+  const tc = useT(COMMON_STRINGS)
   const node = nodes.find(n => n.id === selectedNodeId)
   if (!node) return null
   const nodeType = node.type as WyberNodeType
@@ -574,51 +604,51 @@ function ConfigPanel() {
           }
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 10, color: meta.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{meta.label}</div>
-          <div style={{ fontSize: 11, color: '#52525b' }}>{meta.helpText}</div>
+          <div style={{ fontSize: 10, color: meta.color, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t(NODE_LABEL_KEY[nodeType])}</div>
+          <div style={{ fontSize: 11, color: '#52525b' }}>{t(NODE_HELP_KEY[nodeType])}</div>
         </div>
         <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 16, lineHeight: 1 }}>×</button>
       </div>
 
       <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'var(--font-display)' }}>
         <div>
-          <label style={labelStyle}>Name</label>
+          <label style={labelStyle}>{tc('name')}</label>
           <input value={node.data.label as string} onChange={e => updateNodeData(node.id, { label: e.target.value })} style={fieldStyle} />
         </div>
 
         {nodeType === 'tool' && (
           <>
             <div>
-              <label style={labelStyle}>What kind of tool?</label>
+              <label style={labelStyle}>{t('whatKindOfTool')}</label>
               <select
                 value={(node.data.config as Record<string,string>).mode || 'http'}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), mode: e.target.value } })}
                 style={fieldStyle}
               >
-                <option value="composio">Connected app (Gmail, Slack, GitHub...)</option>
-                <option value="http">Custom website or API</option>
+                <option value="composio">{t('composioAppOption')}</option>
+                <option value="http">{t('customApiOption')}</option>
               </select>
             </div>
 
             {((node.data.config as Record<string,string>).mode || 'http') === 'http' && (
               <>
                 <div>
-                  <label style={labelStyle}>Method</label>
+                  <label style={labelStyle}>{t('methodLabel')}</label>
                   <select value={(node.data.config as Record<string,string>).method || 'GET'} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), method: e.target.value } })} style={fieldStyle}>
                     {['GET','POST','PUT','PATCH','DELETE'].map(m => <option key={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>URL</label>
+                  <label style={labelStyle}>{t('urlLabel')}</label>
                   <input value={(node.data.config as Record<string,string>).url || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), url: e.target.value } })} placeholder="https://api.example.com/endpoint" style={fieldStyle} />
-                  <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>Use {'{{SECRET:MY_API_KEY}}'} to inject vault secrets server-side.</div>
+                  <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('secretVaultHint')}</div>
                 </div>
                 <div>
-                  <label style={labelStyle}>Headers (JSON)</label>
+                  <label style={labelStyle}>{t('headersJsonLabel')}</label>
                   <textarea value={(node.data.config as Record<string,string>).headers || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), headers: e.target.value } })} placeholder='{"Authorization": "Bearer {{SECRET:MY_TOKEN}}"}' rows={2} style={{ ...fieldStyle, resize: 'none', fontFamily: 'monospace', fontSize: 10 }} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Body (JSON)</label>
+                  <label style={labelStyle}>{t('bodyJsonLabel')}</label>
                   <textarea value={(node.data.config as Record<string,string>).body || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), body: e.target.value } })} placeholder='{"key": "value"}' rows={2} style={{ ...fieldStyle, resize: 'none', fontFamily: 'monospace', fontSize: 10 }} />
                 </div>
               </>
@@ -627,7 +657,7 @@ function ConfigPanel() {
             {((node.data.config as Record<string,string>).mode) === 'composio' && (
               <>
                 <div>
-                  <label style={labelStyle}>TOOLKIT + ACTION</label>
+                  <label style={labelStyle}>{t('toolkitActionLabel')}</label>
                   <ComposioToolPicker
                     nodeId={node.id}
                     cfg={node.data.config as Record<string, string>}
@@ -635,7 +665,7 @@ function ConfigPanel() {
                   />
                 </div>
                 <div style={{ padding: '6px 9px', borderRadius: 7, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
-                  User must connect this toolkit via Settings → Integrations before it will run.
+                  {t('mustConnectToolkitNote')}
                   {/* TODO (next brief): add inline "Connect now" button that initiates OAuth */}
                 </div>
               </>
@@ -645,22 +675,22 @@ function ConfigPanel() {
 
         {nodeType === 'trigger' && (
           <div>
-            <label style={labelStyle}>How does this start?</label>
+            <label style={labelStyle}>{t('howDoesThisStart')}</label>
             <select value={(node.data.config as Record<string,string>).type || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), type: e.target.value } })} style={fieldStyle}>
-              <option value="manual">I click Run manually</option>
-              <option value="webhook">A webhook fires (from another system)</option>
-              <option value="schedule">On a schedule</option>
-              <option value="form">Someone submits a form</option>
-              <option value="email">On new Gmail email (checks every ~15 min)</option>
+              <option value="manual">{t('triggerManualOption')}</option>
+              <option value="webhook">{t('triggerWebhookOption')}</option>
+              <option value="schedule">{t('triggerScheduleOption')}</option>
+              <option value="form">{t('triggerFormOption')}</option>
+              <option value="email">{t('triggerEmailOption')}</option>
             </select>
             {(node.data.config as Record<string,string>).type === 'schedule' && (
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={labelStyle}>Schedule</label>
+                <label style={labelStyle}>{t('scheduleLabel')}</label>
                 {[
-                  { label: 'Every hour',       cron: '0 * * * *'  },
-                  { label: 'Daily at 7 AM',    cron: '0 7 * * *'  },
-                  { label: 'Daily at 9 AM',    cron: '0 9 * * *'  },
-                  { label: 'Weekly (Mon 9 AM)',cron: '0 9 * * 1'  },
+                  { label: t('presetHourly'),       cron: '0 * * * *'  },
+                  { label: t('presetDaily7am'),    cron: '0 7 * * *'  },
+                  { label: t('presetDaily9am'),    cron: '0 9 * * *'  },
+                  { label: t('presetWeeklyMon9am'),cron: '0 9 * * 1'  },
                 ].map(p => (
                   <label key={p.cron} style={{ display: 'flex', alignItems: 'center', gap: 7, cursor: 'pointer', fontSize: 12, color: '#a1a1aa' }}>
                     <input
@@ -683,7 +713,7 @@ function ConfigPanel() {
                     onChange={() => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), cron_expression: '' } })}
                     style={{ accentColor: '#0EA5E9' }}
                   />
-                  Custom cron…
+                  {t('customCronOption')}
                 </label>
                 {!['0 * * * *','0 7 * * *','0 9 * * *','0 9 * * 1'].includes((node.data.config as Record<string,string>).cron_expression || '') && (
                   <input
@@ -694,17 +724,17 @@ function ConfigPanel() {
                   />
                 )}
                 <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5, marginTop: 2 }}>
-                  Credits are checked before each run. If your balance is too low the run is skipped and you get an email.
+                  {t('creditsCheckedNote')}
                 </div>
               </div>
             )}
             {(node.data.config as Record<string,string>).type === 'email' && (
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <div style={{ padding: '8px 10px', borderRadius: 7, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', fontSize: 11, color: '#7dd3fc', lineHeight: 1.6 }}>
-                  Wyber checks your Gmail inbox every ~15 minutes and runs this flow when a new message arrives. Connect Gmail in Settings → Integrations, then click Save to activate.
+                  {t('gmailInboxCheckNote')}
                 </div>
                 <div style={{ fontSize: 10, color: '#52525b', lineHeight: 1.5 }}>
-                  Credits are checked before each run. If your balance is too low the run is skipped and you get an email.
+                  {t('creditsCheckedNote')}
                 </div>
               </div>
             )}
@@ -714,16 +744,16 @@ function ConfigPanel() {
         {nodeType === 'aiagent' && (
           <>
             <div>
-              <label style={labelStyle}>Which AI model?</label>
+              <label style={labelStyle}>{t('whichAiModel')}</label>
               <select value={(node.data.config as Record<string,string>).model || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), model: e.target.value } })} style={fieldStyle}>
-                <option value="claude-sonnet-4-6">Claude Sonnet 4.6 (fast, smart)</option>
-                <option value="claude-opus-4-8">Claude Opus 4.8 (most capable)</option>
-                <option value="gpt-4o">GPT-4o</option>
-                <option value="gpt-4o-mini">GPT-4o mini (faster, cheaper)</option>
+                <option value="claude-sonnet-4-6">{t('modelClaudeSonnet')}</option>
+                <option value="claude-opus-4-8">{t('modelClaudeOpus')}</option>
+                <option value="gpt-4o">{t('modelGpt4o')}</option>
+                <option value="gpt-4o-mini">{t('modelGpt4oMini')}</option>
               </select>
             </div>
             <div>
-              <label style={labelStyle}>What should the AI do?</label>
+              <label style={labelStyle}>{t('whatShouldAiDo')}</label>
               <textarea value={(node.data.config as Record<string,string>).instructions || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), instructions: e.target.value } })} placeholder="e.g. Read the email, extract the customer name and issue type, and draft a polite reply." rows={4} style={{ ...fieldStyle, resize: 'vertical' }} />
             </div>
           </>
@@ -731,16 +761,16 @@ function ConfigPanel() {
 
         {nodeType === 'condition' && (
           <div>
-            <label style={labelStyle}>What condition decides the path?</label>
+            <label style={labelStyle}>{t('whatConditionDecidesPath')}</label>
             <input value={(node.data.config as Record<string,string>).rule || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), rule: e.target.value } })} placeholder="e.g. score > 80   or   status === 'urgent'" style={fieldStyle} />
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>Write a simple true/false expression using values from earlier steps.</div>
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>{t('trueFalseExpressionHint')}</div>
           </div>
         )}
 
         {nodeType === 'webhook' && (
           <>
             <div>
-              <label style={labelStyle}>Webhook URL</label>
+              <label style={labelStyle}>{t('webhookUrlLabel')}</label>
               {_canvasWebhookUrl ? (
                 <div style={{ display: 'flex', gap: 6 }}>
                   <input
@@ -752,20 +782,20 @@ function ConfigPanel() {
                     onClick={() => navigator.clipboard.writeText(`${window.location.origin}${_canvasWebhookUrl}`)}
                     style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(6,182,212,0.3)', background: 'rgba(6,182,212,0.08)', color: '#06b6d4', fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
                   >
-                    Copy
+                    {tc('copy')}
                   </button>
                 </div>
               ) : (
                 <div style={{ padding: '8px 10px', borderRadius: 8, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', fontSize: 11, color: '#f59e0b', lineHeight: 1.5 }}>
-                  Save this flow to generate your unique webhook URL.
+                  {t('saveFlowForWebhookNote')}
                 </div>
               )}
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>Send a POST request to this URL to trigger the flow. The request body is available as <code style={{ color: '#06b6d4' }}>{'{{webhook.body}}'}</code> in later steps.</div>
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 4 }}>{t('webhookPostRequestPrefix')} <code style={{ color: '#06b6d4' }}>{'{{webhook.body}}'}</code> {t('webhookPostRequestSuffix')}</div>
             </div>
             <div>
-              <label style={labelStyle}>Secret header (optional)</label>
+              <label style={labelStyle}>{t('secretHeaderLabel')}</label>
               <input value={(node.data.config as Record<string,string>).secret || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), secret: e.target.value } })} placeholder="e.g. my-secret-token" style={fieldStyle} />
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>If set, the caller must pass this as <code style={{ color: '#a1a1aa' }}>X-Wyber-Secret</code>.</div>
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('secretHeaderNotePrefix')} <code style={{ color: '#a1a1aa' }}>X-Wyber-Secret</code>.</div>
             </div>
           </>
         )}
@@ -773,22 +803,22 @@ function ConfigPanel() {
         {nodeType === 'transform' && (
           <>
             <div>
-              <label style={labelStyle}>Operation</label>
+              <label style={labelStyle}>{t('operationLabel')}</label>
               <select
                 value={(node.data.config as Record<string,string>).op || 'map'}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), op: e.target.value } })}
                 style={fieldStyle}
               >
-                <option value="map">Map fields (reshape an object)</option>
-                <option value="filter">Filter array (keep matching items)</option>
-                <option value="parse_json">Parse JSON string → object</option>
-                <option value="stringify">Stringify object → JSON string</option>
-                <option value="pick">Pick keys from object</option>
+                <option value="map">{t('opMapFields')}</option>
+                <option value="filter">{t('opFilterArray')}</option>
+                <option value="parse_json">{t('opParseJson')}</option>
+                <option value="stringify">{t('opStringify')}</option>
+                <option value="pick">{t('opPickKeys')}</option>
               </select>
             </div>
             <div>
               <label style={labelStyle}>
-                {(node.data.config as Record<string,string>).op === 'filter' ? 'Filter expression' : 'Field mapping (JSON)'}
+                {(node.data.config as Record<string,string>).op === 'filter' ? t('filterExpressionLabel') : t('fieldMappingLabel')}
               </label>
               <textarea
                 value={(node.data.config as Record<string,string>).mapping || ''}
@@ -799,7 +829,7 @@ function ConfigPanel() {
                 rows={4}
                 style={{ ...fieldStyle, resize: 'vertical', fontFamily: 'monospace', fontSize: 10 }}
               />
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>Use {'{{step_name.field}}'} to reference data from earlier steps.</div>
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('stepFieldReferenceHint')}</div>
             </div>
           </>
         )}
@@ -807,23 +837,23 @@ function ConfigPanel() {
         {nodeType === 'loop' && (
           <>
             <div>
-              <label style={labelStyle}>List to iterate over</label>
+              <label style={labelStyle}>{t('listToIterateLabel')}</label>
               <input
                 value={(node.data.config as Record<string,string>).list_field || ''}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), list_field: e.target.value } })}
                 placeholder="e.g. {{trigger.leads}} or {{ai_step.results}}"
                 style={fieldStyle}
               />
-              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>Each item is available as <code style={{ color: '#a1a1aa' }}>{'{{loop.item}}'}</code> inside the loop body.</div>
+              <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('loopItemHint')}</div>
             </div>
             <div>
-              <label style={labelStyle}>Max iterations (safety limit)</label>
+              <label style={labelStyle}>{t('maxIterationsLabel')}</label>
               <select
                 value={(node.data.config as Record<string,string>).max_iter || '100'}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), max_iter: e.target.value } })}
                 style={fieldStyle}
               >
-                {['10','25','50','100','250','500'].map(n => <option key={n} value={n}>{n} items</option>)}
+                {['10','25','50','100','250','500'].map(n => <option key={n} value={n}>{n} {t('itemsUnit')}</option>)}
               </select>
             </div>
           </>
@@ -832,22 +862,22 @@ function ConfigPanel() {
         {nodeType === 'error' && (
           <>
             <div>
-              <label style={labelStyle}>On error — what should happen?</label>
+              <label style={labelStyle}>{t('onErrorWhatHappen')}</label>
               <select
                 value={(node.data.config as Record<string,string>).strategy || 'retry'}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), strategy: e.target.value } })}
                 style={fieldStyle}
               >
-                <option value="retry">Retry the failed step</option>
-                <option value="continue">Log error and continue</option>
-                <option value="stop">Stop the flow</option>
-                <option value="notify">Notify me then stop</option>
+                <option value="retry">{t('errRetry')}</option>
+                <option value="continue">{t('errContinue')}</option>
+                <option value="stop">{t('errStop')}</option>
+                <option value="notify">{t('errNotify')}</option>
               </select>
             </div>
             {(node.data.config as Record<string,string>).strategy === 'retry' && (
               <>
                 <div>
-                  <label style={labelStyle}>Retry attempts</label>
+                  <label style={labelStyle}>{t('retryAttemptsLabel')}</label>
                   <select
                     value={(node.data.config as Record<string,string>).retries || '3'}
                     onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), retries: e.target.value } })}
@@ -857,19 +887,19 @@ function ConfigPanel() {
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Wait between retries</label>
+                  <label style={labelStyle}>{t('waitBetweenRetriesLabel')}</label>
                   <select
                     value={(node.data.config as Record<string,string>).retry_delay || '30s'}
                     onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), retry_delay: e.target.value } })}
                     style={fieldStyle}
                   >
-                    {[['10s','10 seconds'],['30s','30 seconds'],['1m','1 minute'],['5m','5 minutes']].map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                    {([['10s',t('retryDelay10s')],['30s',t('retryDelay30s')],['1m',t('retryDelay1m')],['5m',t('retryDelay5m')]] as const).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
                 </div>
               </>
             )}
             <div>
-              <label style={labelStyle}>Fallback message (optional)</label>
+              <label style={labelStyle}>{t('fallbackMessageLabel')}</label>
               <input
                 value={(node.data.config as Record<string,string>).fallback_msg || ''}
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), fallback_msg: e.target.value } })}
@@ -882,7 +912,7 @@ function ConfigPanel() {
 
         {nodeType === 'delay' && (
           <div>
-            <label style={labelStyle}>Wait for how long?</label>
+            <label style={labelStyle}>{t('waitForHowLong')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
               <input
                 type="number"
@@ -896,41 +926,41 @@ function ConfigPanel() {
                 onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), unit: e.target.value } })}
                 style={fieldStyle}
               >
-                <option value="seconds">Seconds</option>
-                <option value="minutes">Minutes</option>
-                <option value="hours">Hours</option>
-                <option value="days">Days</option>
+                <option value="seconds">{t('unitSeconds')}</option>
+                <option value="minutes">{t('unitMinutes')}</option>
+                <option value="hours">{t('unitHours')}</option>
+                <option value="days">{t('unitDays')}</option>
               </select>
             </div>
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>The flow pauses here before continuing to the next step. Credits are only consumed when the flow resumes.</div>
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 6 }}>{t('delayPauseNote')}</div>
           </div>
         )}
 
         {nodeType === 'subflow' && (
           <div>
-            <label style={labelStyle}>Flow ID to run</label>
+            <label style={labelStyle}>{t('flowIdToRunLabel')}</label>
             <input
               value={(node.data.config as Record<string,string>).flow_id || ''}
               onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), flow_id: e.target.value } })}
-              placeholder="Paste the flow ID from /flows"
+              placeholder={t('pasteFlowIdPlaceholder')}
               style={fieldStyle}
             />
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>The sub-flow runs with this node's input and returns its output to the next step.</div>
-            <label style={{ ...labelStyle, marginTop: 10 }}>Pass input as</label>
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('subflowRunsNote')}</div>
+            <label style={{ ...labelStyle, marginTop: 10 }}>{t('passInputAsLabel')}</label>
             <select
               value={(node.data.config as Record<string,string>).input_mode || 'inherit'}
               onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), input_mode: e.target.value } })}
               style={fieldStyle}
             >
-              <option value="inherit">Inherit from previous step</option>
-              <option value="custom">Custom JSON input</option>
+              <option value="inherit">{t('inheritFromPrevious')}</option>
+              <option value="custom">{t('customJsonInput')}</option>
             </select>
           </div>
         )}
 
         {nodeType === 'parallel' && (
           <div>
-            <label style={labelStyle}>Number of parallel branches</label>
+            <label style={labelStyle}>{t('numParallelBranchesLabel')}</label>
             <input
               type="number"
               min={2}
@@ -939,27 +969,27 @@ function ConfigPanel() {
               onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), branches: e.target.value } })}
               style={{ ...fieldStyle, width: 80 }}
             />
-            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>All branches run simultaneously. The flow continues only after every branch finishes.</div>
-            <label style={{ ...labelStyle, marginTop: 10 }}>Merge strategy</label>
+            <div style={{ fontSize: 10, color: '#52525b', marginTop: 3 }}>{t('allBranchesRunNote')}</div>
+            <label style={{ ...labelStyle, marginTop: 10 }}>{t('mergeStrategyLabel')}</label>
             <select
               value={(node.data.config as Record<string,string>).merge || 'wait_all'}
               onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), merge: e.target.value } })}
               style={fieldStyle}
             >
-              <option value="wait_all">Wait for all branches</option>
-              <option value="first_success">Use first successful result</option>
-              <option value="merge_array">Merge results into array</option>
+              <option value="wait_all">{t('mergeWaitAll')}</option>
+              <option value="first_success">{t('mergeFirstSuccess')}</option>
+              <option value="merge_array">{t('mergeArray')}</option>
             </select>
           </div>
         )}
 
         <div>
-          <label style={labelStyle}>Notes (optional)</label>
-          <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder="Describe what this step does, so you remember later." rows={2} style={{ ...fieldStyle, resize: 'none' }} />
+          <label style={labelStyle}>{t('notesOptionalLabel')}</label>
+          <textarea value={(node.data.subtitle as string) || ''} onChange={e => updateNodeData(node.id, { subtitle: e.target.value })} placeholder={t('notesPlaceholder')} rows={2} style={{ ...fieldStyle, resize: 'none' }} />
         </div>
 
         <button onClick={() => deleteNode(node.id)} style={{ padding: '9px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.05)', color: '#ef4444', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
-          Delete node
+          {t('deleteNodeButton')}
         </button>
       </div>
     </div>
@@ -969,6 +999,7 @@ function ConfigPanel() {
 // ─── Execution Log ────────────────────────────────────────────────────────────
 
 function ExecutionLog() {
+  const t = useT(EDITOR_CANVAS_STRINGS)
   const { executionLogs, clearLogs, isRunning } = useAgentStore()
   const hasErrors = executionLogs.some(l => l.status === 'error')
   if (executionLogs.length === 0 && !isRunning) return null
@@ -980,9 +1011,9 @@ function ExecutionLog() {
       <div style={{ padding: '6px 14px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
         <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: 6, color: hasErrors ? '#ef4444' : '#52525b' }}>
           {isRunning && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1s ease infinite' }} />}
-          {hasErrors ? 'Execution errors' : isRunning ? 'Running...' : 'Execution trace'}
+          {hasErrors ? t('executionErrors') : isRunning ? t('runningEllipsis') : t('executionTrace')}
         </div>
-        <button onClick={clearLogs} style={{ background: 'none', border: 'none', color: '#3f3f46', cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>Clear</button>
+        <button onClick={clearLogs} style={{ background: 'none', border: 'none', color: '#3f3f46', cursor: 'pointer', fontSize: 10, fontWeight: 600 }}>{t('clearButton')}</button>
       </div>
       <div ref={logEndRef} style={{ flex: 1, overflowY: 'auto', padding: '6px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {executionLogs.map((log, i) => {
@@ -1013,7 +1044,7 @@ function ExecutionLog() {
                   rel="noopener noreferrer"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, padding: '3px 9px', borderRadius: 6, background: 'rgba(14,165,233,0.12)', border: '1px solid rgba(14,165,233,0.3)', color: '#0EA5E9', fontSize: 10, fontWeight: 700, fontFamily: 'var(--font-display)', textDecoration: 'none', cursor: 'pointer' }}
                 >
-                  {toolkitName ? `Connect ${toolkitName}` : 'Connect in Settings'}
+                  {toolkitName ? `${t('connectToolkitPrefix')} ${toolkitName}` : t('connectInSettings')}
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </a>
               )}
@@ -1027,19 +1058,12 @@ function ExecutionLog() {
 
 // ─── Node Palette ─────────────────────────────────────────────────────────────
 
-const PALETTE: { type: WyberNodeType; description: string }[] = [
-  { type: 'trigger',   description: 'How it starts' },
-  { type: 'webhook',   description: 'External trigger' },
-  { type: 'aiagent',  description: 'Add an AI step' },
-  { type: 'tool',     description: 'Connect an app' },
-  { type: 'transform', description: 'Reshape data' },
-  { type: 'loop',     description: 'Iterate a list' },
-  { type: 'condition', description: 'Add a decision' },
-  { type: 'delay',    description: 'Wait / pause' },
-  { type: 'error',    description: 'Handle errors' },
-  { type: 'subflow',  description: 'Run sub-flow' },
-  { type: 'parallel', description: 'Parallel split' },
-  { type: 'output',   description: 'Show the result' },
+// Description text is looked up per-render via PALETTE_DESC_KEY so it can be
+// translated; this array only needs to fix the display order of node types.
+const PALETTE: { type: WyberNodeType }[] = [
+  { type: 'trigger' }, { type: 'webhook' }, { type: 'aiagent' }, { type: 'tool' },
+  { type: 'transform' }, { type: 'loop' }, { type: 'condition' }, { type: 'delay' },
+  { type: 'error' }, { type: 'subflow' }, { type: 'parallel' }, { type: 'output' },
 ]
 
 // Module-level slot so ConfigPanel (sibling component) can read the live webhook URL
@@ -1081,6 +1105,8 @@ interface Props {
 
 export function AgentCanvas({ projectId, projectName, canvasType, initialProfile, saveTarget = 'flow', webhookUrl: initialWebhookUrl }: Props) {
   const router = useRouter()
+  const t = useT(EDITOR_CANVAS_STRINGS)
+  const tc = useT(COMMON_STRINGS)
   const [saved, setSaved] = useState(false)
   const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project')
   const [chatWidth] = useState(380)
@@ -1245,7 +1271,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
       <div style={{ height: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, color: '#52525b' }}>
           <div style={{ width: 32, height: 32, border: '2px solid rgba(255,255,255,0.06)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-          <div style={{ fontSize: 13 }}>Loading canvas...</div>
+          <div style={{ fontSize: 13 }}>{t('loadingCanvasText')}</div>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -1259,7 +1285,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
       <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#0d0d0f', flexShrink: 0, zIndex: 20 }}>
         <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', color: '#71717a', cursor: 'pointer', fontSize: 12, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
-          Dashboard
+          {t('dashboardLabel')}
         </button>
         <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.08)' }} />
 
@@ -1281,7 +1307,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         ) : (
           <span
             onClick={() => { setNameInput(displayName); setEditingName(true); }}
-            title="Click to rename"
+            title={t('clickToRenameCanvas')}
             style={{ fontSize: 13, fontWeight: 600, color: '#fafafa', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', padding: '2px 4px', borderRadius: 4 }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -1290,7 +1316,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 20, background: `${accentColor}18`, border: `1px solid ${accentColor}30`, color: accentColor, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           <TypeIcon size={11} color={accentColor} />
-          {isAgent ? 'Agent' : 'Workflow'}
+          {isAgent ? t('agentBadge') : t('workflowBadge')}
         </div>
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 7, alignItems: 'center' }}>
@@ -1302,7 +1328,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
             {(() => {
               const triggerNode = nodes.find(n => n.type === 'trigger')
               const cfg = (triggerNode?.data?.config ?? {}) as Record<string, string>
-              const modeLabel = cfg.type === 'schedule' ? '⏱ Scheduled' : cfg.type === 'email' ? '📧 On Email' : '▶ Manual'
+              const modeLabel = cfg.type === 'schedule' ? t('modeScheduled') : cfg.type === 'email' ? t('modeOnEmail') : t('modeManual')
               return (
                 <button onClick={() => setShowRunPanel(v => !v)}
                   style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunPanel ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunPanel ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunPanel ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}>
@@ -1315,10 +1341,10 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               const cfg = (triggerNode?.data?.config ?? {}) as Record<string, string>
               const currentType = cfg.type || 'manual'
               const PRESETS = [
-                { label: 'Every hour', cron: '0 * * * *' },
-                { label: 'Daily at 7 AM', cron: '0 7 * * *' },
-                { label: 'Daily at 9 AM', cron: '0 9 * * *' },
-                { label: 'Weekly (Mon 9 AM)', cron: '0 9 * * 1' },
+                { label: t('presetHourly'), cron: '0 * * * *' },
+                { label: t('presetDaily7am'), cron: '0 7 * * *' },
+                { label: t('presetDaily9am'), cron: '0 9 * * *' },
+                { label: t('presetWeeklyMon9am'), cron: '0 9 * * 1' },
               ]
               const setMode = (type: string) => {
                 if (!triggerNode) return
@@ -1330,11 +1356,11 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               }
               return (
                 <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, width: 260, background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 14, zIndex: 1000, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>How should this run?</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>{t('howShouldThisRun')}</div>
                   {[
-                    { type: 'manual', icon: '▶', label: 'Run manually', desc: 'You click Run each time' },
-                    { type: 'schedule', icon: '⏱', label: 'On a schedule', desc: 'Runs automatically on cron' },
-                    { type: 'email', icon: '📧', label: 'On new Gmail email', desc: 'Checks inbox every ~15 min' },
+                    { type: 'manual', icon: '▶', label: t('runManualLabel'), desc: t('runManualDesc') },
+                    { type: 'schedule', icon: '⏱', label: t('runScheduleLabel'), desc: t('runScheduleDesc') },
+                    { type: 'email', icon: '📧', label: t('runEmailLabel'), desc: t('runEmailDesc') },
                   ].map(opt => (
                     <div key={opt.type} onClick={() => setMode(opt.type)}
                       style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', borderRadius: 8, marginBottom: 4, cursor: 'pointer', background: currentType === opt.type ? 'rgba(14,165,233,0.08)' : 'transparent', border: `1px solid ${currentType === opt.type ? 'rgba(14,165,233,0.25)' : 'transparent'}` }}>
@@ -1357,7 +1383,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                   )}
                   <button onClick={() => { handleSave(); setShowRunPanel(false) }}
                     style={{ marginTop: 10, width: '100%', padding: '7px 0', borderRadius: 7, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                    Save &amp; Apply
+                    {t('saveApplyButton')}
                   </button>
                 </div>
               )
@@ -1365,19 +1391,19 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           </div>
           {saveTarget === 'flow' && (
             <button onClick={() => { setShowRunHistory(v => !v); if (!showRunHistory) loadRunHistory() }}
-              title="Run history"
+              title={t('runHistoryTitle')}
               style={{ padding: '5px 10px', borderRadius: 7, border: `1px solid ${showRunHistory ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, background: showRunHistory ? 'rgba(14,165,233,0.08)' : 'transparent', color: showRunHistory ? '#0EA5E9' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-              📋 Runs
+              {t('runsButton')}
             </button>
           )}
           <button onClick={handleSave} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: saved ? 'rgba(34,197,94,0.08)' : 'transparent', color: saved ? '#22c55e' : '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5 }}>
-            {saved ? <><IcoCheckSm color="#22c55e" /> Saved</> : 'Save'}
+            {saved ? <><IcoCheckSm color="#22c55e" /> {tc('saved')}</> : tc('save')}
           </button>
           <button
             onClick={() => runFlow({ sourceId: projectId, sourceType: saveTarget === 'project' ? 'project' : 'flow' })}
             disabled={isRunning}
             style={{ padding: '5px 14px', borderRadius: 7, border: 'none', background: isRunning ? '#1a1a24' : '#0EA5E9', color: isRunning ? '#52525b' : '#fff', fontSize: 11, fontWeight: 700, cursor: isRunning ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
-            {isRunning ? <><IcoSpinner /> Running...</> : <><svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5V0z"/></svg> Run</>}
+            {isRunning ? <><IcoSpinner /> {t('runningButton')}</> : <><svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor"><path d="M0 0l9 5-9 5V0z"/></svg> {t('runButton')}</>}
           </button>
         </div>
       </div>
@@ -1387,8 +1413,8 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
 
         {/* Left palette */}
         <div style={{ width: 160, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.06)', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, padding: '0 4px' }}>Nodes</div>
-          {PALETTE.map(({ type, description }) => {
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, padding: '0 4px' }}>{t('nodesHeading')}</div>
+          {PALETTE.map(({ type }) => {
             const m = NODE_META[type]
             return (
               <button key={type} onClick={() => addNode(type)}
@@ -1397,8 +1423,8 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = m.color + '18'; (e.currentTarget as HTMLElement).style.transform = 'none' }}>
                 <m.Icon size={14} color={m.color} />
                 <div>
-                  <div style={{ color: m.color, fontWeight: 600, fontSize: 11 }}>{m.label}</div>
-                  <div style={{ color: '#52525b', fontSize: 10 }}>{description}</div>
+                  <div style={{ color: m.color, fontWeight: 600, fontSize: 11 }}>{t(NODE_LABEL_KEY[type])}</div>
+                  <div style={{ color: '#52525b', fontSize: 10 }}>{t(PALETTE_DESC_KEY[type])}</div>
                 </div>
               </button>
             )
@@ -1408,9 +1434,9 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
               onClick={() => setShowToolBrowse(v => !v)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 9px', borderRadius: 8, border: '1px solid rgba(14,165,233,0.25)', background: showToolBrowse ? 'rgba(14,165,233,0.12)' : 'rgba(14,165,233,0.06)', color: '#0EA5E9', fontSize: 11, fontWeight: 600, cursor: 'pointer', width: '100%', transition: 'all 0.15s' }}>
               <IcoTool size={12} color="#0EA5E9" />
-              Browse Tools
+              {t('browseToolsButton')}
             </button>
-            <div style={{ fontSize: 9, color: '#3f3f46', lineHeight: 1.55 }}>Drag from handle to connect nodes</div>
+            <div style={{ fontSize: 9, color: '#3f3f46', lineHeight: 1.55 }}>{t('dragHandleHint')}</div>
           </div>
         </div>
 
@@ -1418,17 +1444,17 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         {showToolBrowse && (
           <div style={{ position: 'absolute', left: 160, top: 0, bottom: 0, width: 280, background: '#0d0d0f', borderRight: '1px solid rgba(255,255,255,0.08)', zIndex: 10, display: 'flex', flexDirection: 'column', padding: '12px 10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Tool Catalogue</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('toolCatalogueTitle')}</span>
               <button onClick={() => setShowToolBrowse(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 14, padding: 2, lineHeight: 1 }}>✕</button>
             </div>
             <input
               value={toolBrowseSearch}
               onChange={e => setToolBrowseSearch(e.target.value)}
-              placeholder="Search 250+ tools..."
+              placeholder={t('searchToolsPlaceholder')}
               style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 7, color: '#fafafa', fontSize: 12, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }}
             />
             {toolBrowseLoading ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: '#52525b', fontSize: 11 }}>Loading...</div>
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#52525b', fontSize: 11 }}>{tc('loading')}</div>
             ) : (
               <div style={{ overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, alignContent: 'start' }}>
                 {toolBrowseList
@@ -1451,7 +1477,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                   ))}
               </div>
             )}
-            <div style={{ marginTop: 8, fontSize: 10, color: '#3f3f46', textAlign: 'center' }}>Click a tool to add it to the canvas</div>
+            <div style={{ marginTop: 8, fontSize: 10, color: '#3f3f46', textAlign: 'center' }}>{t('clickToolToAddHint')}</div>
           </div>
         )}
 
@@ -1484,20 +1510,18 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                     {isAgent ? <IcoCpu size={36} color="#8b5cf6" /> : <IcoZap size={36} color="#0EA5E9" />}
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6, color: '#e4e4e7' }}>
-                    {isAgent ? 'Build your agent' : 'Build your workflow'}
+                    {isAgent ? t('buildYourAgentTitle') : t('buildYourWorkflowTitle')}
                   </div>
                   <div style={{ fontSize: 13, color: '#71717a', lineHeight: 1.5, marginBottom: 16 }}>
-                    {isAgent
-                      ? 'Add a trigger, connect an AI step, and wire it to your tools. Or describe what you want in the chat and we\'ll build it for you.'
-                      : 'Start by adding a trigger (webhook, schedule, or email), then add AI steps and tool actions.'}
+                    {isAgent ? t('buildAgentDesc') : t('buildWorkflowDesc')}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#52525b', marginBottom: 12 }}>Quick start — click to add:</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#52525b', marginBottom: 12 }}>{t('quickStartLabel')}</div>
                   <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
                     {[
-                      { label: '⚡ Trigger', type: 'trigger' as const },
-                      { label: '🤖 AI Step', type: 'aiagent' as const },
-                      { label: '🔧 Tool', type: 'tool' as const },
-                      { label: '❓ Condition', type: 'condition' as const },
+                      { label: t('quickTrigger'), type: 'trigger' as const },
+                      { label: t('quickAiStep'), type: 'aiagent' as const },
+                      { label: t('quickTool'), type: 'tool' as const },
+                      { label: t('quickCondition'), type: 'condition' as const },
                     ].map(n => (
                       <button key={n.type} onClick={() => addNode(n.type)} style={{ padding: '8px 14px', borderRadius: 8, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', color: '#0EA5E9', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{n.label}</button>
                     ))}
@@ -1529,19 +1553,19 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
           <div style={{ position: 'relative', background: '#111118', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, width: 720, maxHeight: '80vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 80px rgba(0,0,0,0.7)', overflow: 'hidden' }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f5' }}>Run history</div>
-                <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>Last 20 executions of this flow</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f5' }}>{t('runHistoryTitle')}</div>
+                <div style={{ fontSize: 12, color: '#52525b', marginTop: 2 }}>{t('last20ExecutionsDesc')}</div>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <button onClick={loadRunHistory} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Refresh</button>
+                <button onClick={loadRunHistory} style={{ padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.08)', background: 'transparent', color: '#71717a', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('refresh')}</button>
                 <button onClick={() => setShowRunHistory(false)} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '2px 6px' }}>×</button>
               </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
               {runHistoryLoading ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>Loading...</div>
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>{tc('loading')}</div>
               ) : runHistory.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>No runs yet. Hit Run to execute this flow.</div>
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#52525b', fontSize: 13 }}>{t('noRunsYetMessage')}</div>
               ) : (
                 runHistory.map(run => {
                   const isExpanded = expandedRunId === run.id
@@ -1555,7 +1579,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600 }}>{new Date(run.created_at).toLocaleString()}</div>
                           <div style={{ fontSize: 11, color: '#52525b', marginTop: 2 }}>
-                            {run.node_count} nodes · {run.duration_ms}ms · {run.triggered_by}
+                            {run.node_count} {t('nodesUnit')} · {run.duration_ms}ms · {run.triggered_by}
                           </div>
                         </div>
                         <span style={{ color: '#3f3f46', fontSize: 11 }}>{isExpanded ? '▲' : '▼'}</span>

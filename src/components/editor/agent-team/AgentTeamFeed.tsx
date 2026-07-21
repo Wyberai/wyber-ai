@@ -9,6 +9,8 @@ import { Component, type ReactNode } from 'react'
 import { useAgentTurnStore } from '@/store/agent-turn'
 import { deriveAgentLanes, type AgentLane, type AgentLaneFinding } from '@/lib/agents/events'
 import { agentMeta } from '@/lib/agents/roster'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_AGENTTEAM_STRINGS } from '@/lib/i18n/dict/editor-agentteam'
 
 const SEVERITY_COLOR: Record<string, string> = {
   critical: '#ef4444',
@@ -36,6 +38,7 @@ export function AgentAvatar({ id, working }: { id: string; working: boolean }) {
 }
 
 export function AgentFindingChip({ finding }: { finding: AgentLaneFinding }) {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
   const fixed = finding.resolution === 'fixed'
   const color = fixed ? 'var(--ide-green, #22C55E)' : SEVERITY_COLOR[finding.severity] || '#64748b'
   return (
@@ -49,7 +52,7 @@ export function AgentFindingChip({ finding }: { finding: AgentLaneFinding }) {
     }}>
       <span style={{ flexShrink: 0 }}>{fixed ? '🛡' : '⚠'}</span>
       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {fixed ? `Sentinel blocked: ${finding.detail}` : finding.detail}
+        {fixed ? `${t('sentinelBlockedPrefix')} ${finding.detail}` : finding.detail}
       </span>
     </span>
   )
@@ -86,6 +89,7 @@ function LaneRow({ lane, statusOverride }: { lane: AgentLane; statusOverride?: s
 }
 
 export function AgentTeamFeed({ elapsed, progressSteps }: { elapsed: number; progressSteps: string[] }) {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
   const events = useAgentTurnStore(s => s.events)
   const passesUsed = useAgentTurnStore(s => s.passesUsed)
   const passesMax = useAgentTurnStore(s => s.passesMax)
@@ -107,15 +111,15 @@ export function AgentTeamFeed({ elapsed, progressSteps }: { elapsed: number; pro
       ))}
       <span style={{ fontSize: 10, color: 'var(--ide-text3)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 4 }}>
         <span>
-          {passesMax > 0 && `pass ${Math.max(passesUsed, 1)}/${passesMax} · `}{elapsed > 0 && `${elapsed}s`}
+          {passesMax > 0 && `${t('passLabel')} ${Math.max(passesUsed, 1)}/${passesMax} · `}{elapsed > 0 && `${elapsed}s`}
         </span>
         <span style={{ flex: 1 }} />
         {/* Autonomy dial: whether optional fix passes run without asking. */}
         <button
           onClick={() => setAutonomy(autonomy === 'auto' ? 'ask' : 'auto')}
           title={autonomy === 'auto'
-            ? 'Autopilot: the team fixes preview errors automatically. Click to be asked first.'
-            : 'Ask-first: the team offers fixes instead of running them. Click for autopilot.'}
+            ? t('autopilotTooltip')
+            : t('askFirstTooltip')}
           style={{
             fontSize: 9.5, fontWeight: 700, padding: '1px 7px', borderRadius: 8,
             border: '1px solid var(--ide-border)', background: 'transparent',
@@ -123,11 +127,18 @@ export function AgentTeamFeed({ elapsed, progressSteps }: { elapsed: number; pro
             cursor: 'pointer', flexShrink: 0,
           }}
         >
-          {autonomy === 'auto' ? '⚡ autopilot' : '✋ ask first'}
+          {autonomy === 'auto' ? t('autopilotLabel') : t('askFirstLabel')}
         </button>
       </span>
     </div>
   )
+}
+
+// Small function component so the (class-based) boundary below can still use
+// the useT hook for its fallback label.
+function AgentFeedErrorFallback() {
+  const t = useT(EDITOR_AGENTTEAM_STRINGS)
+  return <span style={{ fontSize: 11, color: 'var(--ide-text3)' }}>{t('feedErrorFallback')}</span>
 }
 
 /** Local error boundary: a feed crash degrades to a plain label; the build,
@@ -138,7 +149,7 @@ export class AgentFeedBoundary extends Component<{ children: ReactNode }, { fail
   componentDidCatch(err: unknown) { console.error('[agent-feed] render error', err) }
   render() {
     if (this.state.failed) {
-      return <span style={{ fontSize: 11, color: 'var(--ide-text3)' }}>Building… (progress display hit an error — the build is unaffected)</span>
+      return <AgentFeedErrorFallback />
     }
     return this.props.children
   }

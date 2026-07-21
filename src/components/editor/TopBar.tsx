@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { SupabaseConnector } from './SupabaseConnector';
 import { SocialShare } from '@/components/shared/SocialShare';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_TOPBAR_STRINGS } from '@/lib/i18n/dict/editor-topbar';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -26,6 +29,8 @@ function WyberIcon() {
 
 export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Props = {}) {
   const { project, setProject, isGenerating, credits, files } = useEditorStore();
+  const t = useT(EDITOR_TOPBAR_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   // initialProfile.credits is server-rendered and STATIC — it must only cover
   // the first paint, before IDELayout seeds the store. Once the store matches
   // it (seeded), latch onto the store value forever: ChatPanel refreshes it
@@ -77,6 +82,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState('');
+  const [inviteSuccess, setInviteSuccess] = useState(false);
 
   // Several places (ConnectorsPanel, SupabasePanel, PreviewPanel's "Connect
   // Supabase →") dispatch this event to open the Supabase connect modal — the
@@ -158,11 +164,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     });
     const data = await res.json();
     if (res.ok) {
-      setInviteMsg('Invite sent!');
+      setInviteMsg(t('inviteSentMsg'));
+      setInviteSuccess(true);
       setInviteEmail('');
       openTeam();
     } else {
-      setInviteMsg(data.error ?? 'Failed to invite');
+      setInviteMsg(data.error ?? t('failedToInvite'));
+      setInviteSuccess(false);
     }
     setInviting(false);
   };
@@ -258,13 +266,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
           }
         }).catch(() => {});
       } else {
-        alert('Publish failed: ' + (data.error || 'Unknown error. Try again.'));
+        alert(t('publishFailedPrefix') + ' ' + (data.error || t('unknownErrorTryAgain')));
       }
     } catch (e) {
       const aborted = e instanceof DOMException && e.name === 'AbortError';
       alert(aborted
-        ? 'Publishing is taking longer than expected — your app may still be building. Give it a moment and try again.'
-        : 'Publish failed: ' + (e instanceof Error ? e.message : 'Network error'));
+        ? t('publishingSlowMsg')
+        : t('publishFailedPrefix') + ' ' + (e instanceof Error ? e.message : t('networkErrorFallback')));
     } finally {
       clearTimeout(killer);
       clearInterval(tick);
@@ -308,13 +316,13 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         setDnsProvider(null);
       } else {
         setCustomDomainStatus('error');
-        setCustomDomainError(data.error || 'DNS not verified yet');
+        setCustomDomainError(data.error || t('dnsNotVerifiedYet'));
         if (data.instructions) setDnsInstructions(data.instructions);
         setDnsProvider(data.provider ?? null);
       }
     } catch {
       setCustomDomainStatus('error');
-      setCustomDomainError('Failed to connect domain');
+      setCustomDomainError(t('failedToConnectDomain'));
     }
   };
 
@@ -326,12 +334,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     try {
       const res = await fetch(`/api/domain/search?name=${encodeURIComponent(buyDomainQuery.trim())}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Search failed');
+      if (!res.ok) throw new Error(data.error || t('searchFailed'));
       setBuyDomainResult(data);
       setBuyDomainStatus('idle');
     } catch (err) {
       setBuyDomainStatus('error');
-      setBuyDomainError(err instanceof Error ? err.message : 'Search failed');
+      setBuyDomainError(err instanceof Error ? err.message : t('searchFailed'));
     }
   };
 
@@ -354,7 +362,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         body: JSON.stringify({ projectId, domain: buyDomainResult.name, priceCents: buyDomainResult.priceCents, contactInfo: domainContact }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Purchase failed');
+      if (!res.ok) throw new Error(data.error || t('purchaseFailed'));
       if (data.url) {
         if (tab) {
           tab.location.href = data.url;
@@ -371,7 +379,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     } catch (err) {
       tab?.close();
       setBuyDomainStatus('error');
-      setBuyDomainError(err instanceof Error ? err.message : 'Purchase failed');
+      setBuyDomainError(err instanceof Error ? err.message : t('purchaseFailed'));
     }
   };
 
@@ -420,7 +428,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         </Link>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
         <div style={{ display: 'flex', background: 'var(--bg-elevated)', borderRadius: 7, padding: 2, gap: 1 }}>
-          <span style={{ ...btn, border: 'none', borderRadius: 5, padding: '4px 10px', background: 'var(--surface)', color: 'var(--ide-text)' }}>Preview</span>
+          <span style={{ ...btn, border: 'none', borderRadius: 5, padding: '4px 10px', background: 'var(--surface)', color: 'var(--ide-text)' }}>{tc('preview')}</span>
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
           {editingName ? (
@@ -435,7 +443,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
           ) : project ? (
             <span
               onClick={startRename}
-              title="Click to rename"
+              title={t('clickToRename')}
               style={{ fontSize: 12, color: 'var(--ide-text2)', fontWeight: 500, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'text', padding: '3px 8px', borderRadius: 6 }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--bg-elevated)'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
@@ -450,31 +458,31 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
         {onToggleCode && Object.keys(files).length > 0 && (
-          <button onClick={onToggleCode} title={showCode ? 'Hide code' : 'View code (Dev Mode)'}
+          <button onClick={onToggleCode} title={showCode ? t('hideCode') : t('viewCodeDevMode')}
             style={{ ...btn, padding: '5px 8px', background: showCode ? 'var(--accent-glow)' : (btn as any).background, color: showCode ? 'var(--accent)' : (btn as any).color }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           </button>
         )}
         {projectId && (
-          <button onClick={openTeam} title="Team & collaborators" style={{ ...btn, padding: '5px 8px' }}>
+          <button onClick={openTeam} title={t('teamTooltip')} style={{ ...btn, padding: '5px 8px' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </button>
         )}
         {Object.keys(files).length > 2 && (
-          <button onClick={openSnapshots} title="Version history" style={{ ...btn, padding: '5px 8px' }}>
+          <button onClick={openSnapshots} title={t('versionHistory')} style={{ ...btn, padding: '5px 8px' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </button>
         )}
-        <button onClick={handleExport} disabled={exporting} title="Export as ZIP" style={{ ...btn, padding: '5px 8px' }}>
+        <button onClick={handleExport} disabled={exporting} title={t('exportZip')} style={{ ...btn, padding: '5px 8px' }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
         </button>
         {Object.keys(files).length > 2 && (
-          <button onClick={handleGitHubPush} disabled={pushing} title="Push to GitHub" style={{ ...btn, padding: '5px 8px', color: pushUrl ? '#22c55e' : 'var(--ide-text2)' }}>
+          <button onClick={handleGitHubPush} disabled={pushing} title={t('pushToGithub')} style={{ ...btn, padding: '5px 8px', color: pushUrl ? '#22c55e' : 'var(--ide-text2)' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.929.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
           </button>
         )}
         {Object.keys(files).length > 2 && (
-          <button onClick={() => setShowSupabase(true)} title="Connect Supabase" style={{ ...btn, padding: '5px 8px' }}>
+          <button onClick={() => setShowSupabase(true)} title={t('connectSupabase')} style={{ ...btn, padding: '5px 8px' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
           </button>
         )}
@@ -482,7 +490,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
             live inside it). Publishing again should be an explicit click in
             there, not a side effect of wanting to see your URL. */}
         <button onClick={() => deployUrl ? setShowShareModal(true) : handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1, boxShadow: !deploying && Object.keys(files).length >= 2 ? '0 0 12px var(--brand-glow-soft, rgba(14,165,233,0.15))' : 'none' }}>
-          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Deploying{deploySecs ? ` ${deploySecs}s` : ''}…</> : republished ? '✓ Updated' : deployUrl ? 'Live' : 'Publish'}
+          {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />{t('deploying')}{deploySecs ? ` ${deploySecs}s` : ''}…</> : republished ? t('updated') : deployUrl ? t('live') : tc('publish')}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         {showSupabase && <SupabaseConnector onClose={() => setShowSupabase(false)} />}
@@ -492,29 +500,29 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         <div onClick={() => setShowSnapshots(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 24, width: 480, maxHeight: '70vh', display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Version history</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>{t('versionHistory')}</span>
               <button onClick={() => setShowSnapshots(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1 }}>×</button>
             </div>
             <button
-              onClick={() => { const label = prompt('Label for this version (optional):') ?? ''; saveSnapshot(label); }}
+              onClick={() => { const label = prompt(t('labelForVersionPrompt')) ?? ''; saveSnapshot(label); }}
               disabled={savingSnapshot}
               style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}
             >
-              {savingSnapshot ? 'Saving…' : '+ Save current version'}
+              {savingSnapshot ? tc('saving') : t('saveCurrentVersion')}
             </button>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {snapshotLoading && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>Loading…</div>}
-              {!snapshotLoading && snapshots.length === 0 && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>No saved versions yet. Click above to save the current state.</div>}
+              {snapshotLoading && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>{tc('loading')}</div>}
+              {!snapshotLoading && snapshots.length === 0 && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>{t('noSavedVersions')}</div>}
               {snapshots.map(s => (
                 <div key={s.id} style={{ background: 'var(--bg-elevated)', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, border: '1px solid var(--ide-border)' }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>{s.label || 'Untitled version'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>{s.label || t('untitledVersion')}</div>
                     <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>{new Date(s.created_at).toLocaleString()}</div>
                   </div>
                   <button onClick={() => restoreSnapshot(s.id)} disabled={!!restoringId} style={{ fontSize: 11, fontWeight: 600, color: '#0EA5E9', background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>
-                    {restoringId === s.id ? 'Restoring…' : 'Restore'}
+                    {restoringId === s.id ? t('restoring') : t('restore')}
                   </button>
-                  <button onClick={() => deleteSnapshot(s.id)} style={{ fontSize: 11, color: '#ef4444', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>Delete</button>
+                  <button onClick={() => deleteSnapshot(s.id)} style={{ fontSize: 11, color: '#ef4444', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}>{tc('delete')}</button>
                 </div>
               ))}
             </div>
@@ -526,7 +534,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
         <div onClick={closeShareModal} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-base)', border: '1px solid var(--ide-border)', borderRadius: 16, padding: 28, width: 460, maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>Publish & Share</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>{t('publishShareTitle')}</span>
               <button onClick={closeShareModal} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1, padding: '0 4px' }}>x</button>
             </div>
 
@@ -535,21 +543,21 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(14,165,233,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>Your app is ready to go live on <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
+                <p style={{ fontSize: 13, color: 'var(--ide-text2)', margin: 0 }}>{t('readyToGoLivePrefix')} <strong style={{ color: 'var(--ide-text)' }}>wyberai.com</strong></p>
                 <button onClick={() => handleDeploy()} disabled={deploying} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 8, padding: '9px 24px', fontSize: 13, fontWeight: 700, cursor: deploying ? 'wait' : 'pointer' }}>
-                  {deploying ? `Publishing… ${deploySecs}s` : 'Publish now'}
+                  {deploying ? `${t('publishing')} ${deploySecs}s` : t('publishNow')}
                 </button>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Live URL</span>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('liveUrlLabel')}</span>
                   <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(34,197,94,0.2)' }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
                     <span style={{ flex: 1, fontSize: 12, color: '#22c55e', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{liveUrl}</span>
-                    <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? 'Copied!' : 'Copy'}</button>
+                    <button onClick={() => handleCopy(liveUrl)} style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: copied ? '#22c55e' : 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', transition: 'all 0.15s' }}>{copied ? tc('copied') : tc('copy')}</button>
                     {/* Real <a>, not window.open — mobile popup blockers swallow window.open silently */}
-                    <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', textDecoration: 'none' }}>Open</a>
+                    <a href={liveUrl} target="_blank" rel="noopener noreferrer" style={{ background: 'none', border: '1px solid var(--ide-border)', borderRadius: 6, color: 'var(--ide-text2)', cursor: 'pointer', padding: '3px 10px', fontSize: 11, whiteSpace: 'nowrap', textDecoration: 'none' }}>{t('open')}</a>
                   </div>
                   {/* Stays in the modal: inline progress + a clear "done" state.
                       The old close→deploy→reopen flow read as an infinite loop. */}
@@ -563,27 +571,27 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
                     }}>
                     {deploying ? (
-                      <><div style={{ width: 11, height: 11, border: '2px solid rgba(14,165,233,0.25)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />Republishing… {deploySecs}s</>
-                    ) : republished ? '✓ Done — your latest changes are live' : 'Re-publish with latest changes'}
+                      <><div style={{ width: 11, height: 11, border: '2px solid rgba(14,165,233,0.25)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />{t('republishing')} {deploySecs}s</>
+                    ) : republished ? t('republishedDone') : t('republishButton')}
                   </button>
                   {postPublishScan && (
                     <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#fca5a5', lineHeight: 1.55 }}>
-                      ⚠ <strong style={{ color: '#ef4444' }}>Security check:</strong> your live database has {postPublishScan.criticals} critical exposure{postPublishScan.criticals === 1 ? '' : 's'} — data an anonymous visitor can read right now. Open the <strong>Security</strong> tab to review and one-click fix. Your app stays live either way.
+                      ⚠ <strong style={{ color: '#ef4444' }}>{t('securityCheckLabel')}</strong> {t('securityCheckMessage').replace('{count}', String(postPublishScan.criticals)).replace('{plural}', postPublishScan.criticals === 1 ? '' : 's')} <strong>{t('securityTabWord')}</strong> {t('securityCheckSuffix')}
                     </div>
                   )}
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Share your app</span>
-                  <SocialShare url={liveUrl} text="Just built this with WyberAi — no code, live in minutes." />
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('shareYourApp')}</span>
+                  <SocialShare url={liveUrl} text={t('shareText')} />
                 </div>
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Connect a domain you own</span>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('connectDomainYouOwn')}</span>
                   <span style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
-                    Three steps: enter your domain and hit Connect, add the DNS record we show you at your registrar, then hit Verify. Your app serves from your domain once DNS propagates (usually minutes).
+                    {t('domainStepsInstructions')}
                   </span>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input
@@ -598,14 +606,14 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                       disabled={!customDomain.trim() || customDomainStatus === 'saving'}
                       style={{ ...btn, whiteSpace: 'nowrap', background: 'var(--bg-elevated)' }}
                     >
-                      {customDomainStatus === 'saving' ? 'Connecting...' : 'Connect'}
+                      {customDomainStatus === 'saving' ? t('connecting') : t('connect')}
                     </button>
                   </div>
 
                   {customDomainStatus === 'verified' && (
                     <div style={{ fontSize: 12, color: '#22c55e', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      Domain verified and live!
+                      {t('domainVerifiedLive')}
                     </div>
                   )}
 
@@ -613,24 +621,24 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                     <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8, padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {dnsProvider && (
                         <a href={dnsProvider.dashboardUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#38bdf8', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
-                          Detected: {dnsProvider.name} — open DNS settings →
+                          {t('detectedLabel')} {dnsProvider.name} — {t('openDnsSettingsArrow')}
                         </a>
                       )}
-                      <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>Add this DNS record:</span>
+                      <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 600 }}>{t('addDnsRecord')}</span>
                       <div style={{ background: 'var(--bg-base)', borderRadius: 6, padding: '8px 12px', fontFamily: 'monospace', fontSize: 11, color: 'var(--ide-text2)', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <span>Type: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.type || 'CNAME'}</strong></span>
-                        <span>Name: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.name || '@'}</strong></span>
-                        <span>Value: <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.value || 'cname.vercel-dns.com'}</strong></span>
+                        <span>{t('typeLabel')} <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.type || 'CNAME'}</strong></span>
+                        <span>{t('nameColonLabel')} <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.name || '@'}</strong></span>
+                        <span>{t('valueLabel')} <strong style={{ color: 'var(--ide-text)' }}>{dnsInstructions?.record?.value || 'cname.vercel-dns.com'}</strong></span>
                       </div>
                       {dnsInstructions?.record?.type === 'A' && (
-                        <span style={{ fontSize: 10, color: 'var(--ide-text2)' }}>Root domain — replace any existing A record. Keep MX (email) records as-is.</span>
+                        <span style={{ fontSize: 10, color: 'var(--ide-text2)' }}>{t('rootDomainNote')}</span>
                       )}
                       <button
                         onClick={() => handleCustomDomain('verify')}
                         disabled={customDomainStatus === 'verifying'}
                         style={{ ...btn, background: 'rgba(245,158,11,0.1)', borderColor: 'rgba(245,158,11,0.3)', color: '#f59e0b', justifyContent: 'center' }}
                       >
-                        {customDomainStatus === 'verifying' ? 'Checking DNS...' : 'Verify DNS'}
+                        {customDomainStatus === 'verifying' ? t('checkingDns') : t('verifyDns')}
                       </button>
                       {customDomainError && <span style={{ fontSize: 11, color: '#ef4444' }}>{customDomainError}</span>}
                     </div>

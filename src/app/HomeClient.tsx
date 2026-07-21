@@ -8,8 +8,8 @@ import { type Currency } from '@/lib/currency';
 import { track } from '@/lib/track';
 import { VoiceButton } from '@/components/editor/VoiceButton';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
-import { LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
-import { HOME_STRINGS } from '@/lib/i18n/home-translations';
+import { I18N_ENABLED, LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
+import { HOME_STRINGS, type HomeStrings } from '@/lib/i18n/home-translations';
 import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
 
 const BRAND = '#0EA5E9';
@@ -104,17 +104,17 @@ const MOBILE_BUILD_ROWS = [
    "example" rather than "live" for that reason. The one number that IS real —
    how many times this scanner has actually run, and what fraction came back
    clean — is fetched server-side in page.tsx and passed in as `stats`. */
-function ScanReadout({ stats }: { stats?: { totalScans: number; cleanPct: number } | null }) {
+function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: number } | null; t: HomeStrings }) {
   return (
     <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
-      <WindowChrome title="example scan — what the RLS trust scanner finds" />
+      <WindowChrome title={t.scanWindowTitle} />
       <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 10, letterSpacing: '0.06em' }}>
-        $ probing live database with anon key (attacker&apos;s view)…
+        {t.scanProbingLine}
       </div>
       {[
-        { table: 'profiles',  status: 'LOCKED',  ok: true,  note: 'RLS enforced · 0 rows leaked' },
-        { table: 'orders',    status: 'LOCKED',  ok: true,  note: 'RLS enforced · 0 rows leaked' },
-        { table: 'invoices',  status: 'EXPOSED', ok: false, note: '312 rows readable — publish blocked' },
+        { table: 'profiles',  status: t.scanStatusLocked,  ok: true,  note: t.scanNoteLocked },
+        { table: 'orders',    status: t.scanStatusLocked,  ok: true,  note: t.scanNoteLocked },
+        { table: 'invoices',  status: t.scanStatusExposed, ok: false, note: t.scanNoteExposed },
       ].map(r => (
         <div key={r.table} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--brand-border)' }}>
           <span style={{ color: 'var(--brand-text-dim)', width: 76, flexShrink: 0 }}>{r.table}</span>
@@ -123,11 +123,11 @@ function ScanReadout({ stats }: { stats?: { totalScans: number; cleanPct: number
         </div>
       ))}
       <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginTop: 10 }}>
-        → real queries against your live DB. Not a linter.
+        {t.scanFooterLine}
       </div>
       {stats && (
         <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--brand-border)' }}>
-          ✓ {stats.totalScans.toLocaleString()} real scans run · {stats.cleanPct}% came back clean on the first try
+          {t.scanStatsLine(stats.totalScans.toLocaleString(), stats.cleanPct)}
         </div>
       )}
     </div>
@@ -164,87 +164,85 @@ function McpConsole() {
   );
 }
 
-const PRODUCTS = [
-  {
-    key: 'web',
-    label: 'WEB APPS',
-    accent: BRAND,
-    heading: 'Describe it. It builds.',
-    body: 'Type what you want in plain English. Wyber generates production-ready React code, provisions a database, and deploys to a live URL — in minutes.',
-    bullets: ['Fresh code every time — no stale templates', '27 integrations — Supabase, Stripe, OpenAI & more', 'GitHub push · Vercel deploy · custom domains'],
-    cta: 'Start building',
-    // Matches the "PROMPT RECEIVED" line in the mockup below — clicking the CTA
-    // actually builds the exact app shown, not a generic empty project.
-    prompt: 'Build a CRM with a pipeline view, client notes, and an invoices page.',
-    mockup: <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />,
-  },
-  {
-    key: 'mobile',
-    label: 'MOBILE APPS',
-    accent: BRAND,
-    heading: 'Describe it. Ship to iOS.',
-    body: 'Generate a real React Native app with Expo. Preview on your phone via QR code. Export a ready-to-publish project.',
-    bullets: ['React Native + Expo · camera, GPS, biometrics', 'Push notifications · in-app purchases', 'App Store submission guide included'],
-    cta: 'Start building',
-    // Ties directly to the bullets above (camera, GPS, biometrics) so the
-    // demo it builds matches what was just promised.
-    prompt: 'Build a fitness tracking mobile app with workout logging, GPS run tracking, and Face ID login.',
-    mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent={BRAND} title="wyberai.com — mobile build" />,
-  },
-] as const;
+function buildProducts(t: HomeStrings) {
+  return [
+    {
+      key: 'web',
+      label: t.productWebLabel,
+      accent: BRAND,
+      heading: t.productWebHeading,
+      body: t.productWebBody,
+      bullets: [t.productWebBullet1, t.productWebBullet2, t.productWebBullet3],
+      cta: t.productWebCta,
+      // Matches the "PROMPT RECEIVED" line in the mockup below — clicking the
+      // CTA actually builds the exact app shown, not a generic empty project.
+      prompt: 'Build a CRM with a pipeline view, client notes, and an invoices page.',
+      mockup: <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />,
+    },
+    {
+      key: 'mobile',
+      label: t.productMobileLabel,
+      accent: BRAND,
+      heading: t.productMobileHeading,
+      body: t.productMobileBody,
+      bullets: [t.productMobileBullet1, t.productMobileBullet2, t.productMobileBullet3],
+      cta: t.productMobileCta,
+      // Ties directly to the bullets above (camera, GPS, biometrics) so the
+      // demo it builds matches what was just promised.
+      prompt: 'Build a fitness tracking mobile app with workout logging, GPS run tracking, and Face ID login.',
+      mockup: <BuildConsole rows={MOBILE_BUILD_ROWS} accent={BRAND} title="wyberai.com — mobile build" />,
+    },
+  ] as const;
+}
 
 // Homepage FAQ — visible accordion + matching FAQPage schema (AEO). The
 // "Who makes WyberAi?" answer explicitly names SignalPulse Technologies to
-// correct stale Knowledge Graph data.
-const HOME_FAQS: [string, string][] = [
-  ['What is WyberAi?', 'WyberAi is an AI platform that turns plain-English prompts into production-ready web and mobile apps. Describe what you want and it generates fresh React code, provisions a database, and deploys to a live URL — in minutes, no engineers needed.'],
-  ['Who makes WyberAi?', 'WyberAi is built and operated by SignalPulse Technologies, a US-based software company.'],
-  ['Can WyberAi build mobile apps?', 'Yes. WyberAi generates real React Native (Expo) mobile apps you can preview on your phone via QR code and export for the App Store — from the same prompt-based workflow as web apps.'],
-  ['Do I need to know how to code?', 'No. You describe your app in plain English. WyberAi writes the code, wires up auth, database, and APIs, and deploys it. You can still push to GitHub and own the code if you want.'],
-  ['How is WyberAi different from template builders?', 'WyberAi generates fresh code from scratch every time — never stale templates. Builds self-heal their own errors, ship full-stack (auth, database, APIs), and you own the code via GitHub with zero lock-in.'],
-  ['How much does WyberAi cost?', 'You can start free with 50 credits, no credit card required. Paid plans are affordable and one-time credit top-ups never expire — see the pricing page for the current plans.'],
-];
+// correct stale Knowledge Graph data. Content lives in HomeStrings.homeFaqs
+// so the FAQ (and its schema) localize along with the rest of the page.
 
 /* The six proof points — editorial numbered rows, not an icon grid */
-const PROOF = [
-  { n: '01', title: 'Fresh code, every time', desc: 'No drag-and-drop. No stale templates. AI writes real React + Tailwind from scratch for every project.' },
-  { n: '02', title: 'Self-healing builds', desc: 'A broken import or a truncated file doesn\'t stop the build. WyberAi detects the failure and repairs itself in the same run — no red screen, no manual debugging.' },
-  { n: '03', title: 'Live security scanning', desc: 'We probe your live database with the same anonymous key an attacker would use — real Row-Level Security testing, not a static linter guessing at your schema.' },
-  { n: '04', title: 'Full-stack out of the box', desc: 'Auth, database, API routes, file uploads — generated and wired up. Not just a pretty frontend.' },
-  { n: '05', title: 'GitHub integration', desc: 'Push to your own repo. Own your code. Fork it, extend it, hire devs later if you want. Zero lock-in.' },
-  { n: '06', title: 'Smart model routing', desc: 'Opus for builds, Sonnet for edits, Haiku when speed matters. WyberAi picks the right AI model for every task — automatically.' },
-];
+function buildProof(t: HomeStrings) {
+  return [
+    { n: '01', title: t.proof1Title, desc: t.proof1Desc },
+    { n: '02', title: t.proof2Title, desc: t.proof2Desc },
+    { n: '03', title: t.proof3Title, desc: t.proof3Desc },
+    { n: '04', title: t.proof4Title, desc: t.proof4Desc },
+    { n: '05', title: t.proof5Title, desc: t.proof5Desc },
+    { n: '06', title: t.proof6Title, desc: t.proof6Desc },
+  ];
+}
 
 /* Mission sequence — Describe → Build → Ship, rendered in normal flow */
-const STAGES = [
+function buildStages(t: HomeStrings) {
+  return [
   {
-    tag: 'T-MINUS · DESCRIBE',
-    title: 'Describe your app',
-    desc: 'Tell Wyber what you want in plain English — or drop in screenshots, Figma files, or docs.',
+    tag: t.stageDescribeTag,
+    title: t.stageDescribeTitle,
+    desc: t.stageDescribeDesc,
     visual: (
       <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 12 }}>
         <WindowChrome title="wyberai.com — new project" />
         <div style={{ padding: '14px 16px', border: '1px solid var(--brand-border-strong)', borderRadius: 10, background: 'rgba(255,255,255,0.02)', color: 'var(--brand-text)', lineHeight: 1.7 }}>
-          Build a CRM for my agency with a kanban pipeline,<br />client notes, and an invoices page
+          {t.stageDescribePrompt}
           <span style={{ display: 'inline-block', width: 7, height: 15, background: 'var(--brand-accent-hot)', marginLeft: 3, verticalAlign: 'text-bottom', animation: 'blink 1.1s steps(1) infinite' }} />
         </div>
         <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="mk-mono" style={{ fontSize: 10 }}>EST. 30 CREDITS · OPUS SELECTED</span>
-          <span style={{ padding: '6px 14px', borderRadius: 7, background: 'var(--brand-accent)', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-display)' }}>Build →</span>
+          <span className="mk-mono" style={{ fontSize: 10 }}>{t.stageDescribeMeta}</span>
+          <span style={{ padding: '6px 14px', borderRadius: 7, background: 'var(--brand-accent)', color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: 'var(--font-display)' }}>{t.stageDescribeButton}</span>
         </div>
       </div>
     ),
   },
   {
-    tag: 'IGNITION · BUILD',
-    title: 'AI builds it live',
-    desc: 'Watch production-ready code generate in real time. Fresh code every run — and if something breaks mid-build, it heals itself before you ever see an error.',
+    tag: t.stageBuildTag,
+    title: t.stageBuildTitle,
+    desc: t.stageBuildDesc,
     visual: <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />,
   },
   {
-    tag: 'ORBIT · SHIP',
-    title: 'Ship it',
-    desc: 'Deploy to a live URL with one click. Connect your domain, push to GitHub, iterate with plain-English feedback.',
+    tag: t.stageShipTag,
+    title: t.stageShipTitle,
+    desc: t.stageShipDesc,
     visual: (
       <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18 }}>
         <WindowChrome title="crm-abc123.vercel.app" />
@@ -270,7 +268,8 @@ const STAGES = [
       </div>
     ),
   },
-];
+  ];
+}
 
 /* ————— page ————— */
 
@@ -352,6 +351,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
     return () => { mq.removeEventListener('change', update); mqPin.removeEventListener('change', updatePin); };
   }, []);
 
+  const PRODUCTS = buildProducts(t);
+  const PROOF = buildProof(t);
+  const STAGES = buildStages(t);
   const product = PRODUCTS[activeProduct];
 
   const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/no-code-web-app-builder'], [t.navMobileApps, '/use-cases/build-mobile-app-with-ai'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
@@ -375,7 +377,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           <div style={{ width: 1, height: 16, background: 'var(--brand-border-strong)', margin: '0 6px' }} />
           {inr && I18N_ENABLED && <LanguageToggle locale={locale} onChange={setLocale} />}
           {user
-            ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>Dashboard →</Link>
+            ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t.navDashboard}</Link>
             : <>
                 <Link href="/login" style={{ padding: '7px 14px', borderRadius: 8, fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', fontWeight: 500 }}>{t.signIn}</Link>
                 <Link href="/signup" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t.startFree}</Link>
@@ -398,7 +400,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           ))}
           <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {user
-              ? <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>Dashboard →</Link>
+              ? <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>{t.navDashboard}</Link>
               : <>
                   <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="mk-btn-ghost" style={{ justifyContent: 'center' }}>{t.signIn}</Link>
                   <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="mk-btn" style={{ justifyContent: 'center' }}>{t.startFree}</Link>
@@ -411,9 +413,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
       {/* ── BUILD CHALLENGE BANNER ──────────────────────────────────── */}
       <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '9px 20px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid var(--brand-border)', textDecoration: 'none', color: 'var(--brand-text)', fontSize: 12.5, fontWeight: 500 }}>
-        <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>WEEKLY BUILD CHALLENGE</span>
-        <span style={{ color: 'var(--brand-text-dim)' }}>Build your MVP on Wyber, enter to win credits — new winners every Sunday</span>
-        <span style={{ color: 'var(--brand-accent-hot)', fontSize: 12 }}>Enter →</span>
+        <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>{t.bannerLabel}</span>
+        <span style={{ color: 'var(--brand-text-dim)' }}>{t.bannerText}</span>
+        <span style={{ color: 'var(--brand-accent-hot)', fontSize: 12 }}>{t.bannerCta}</span>
       </Link>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
@@ -519,10 +521,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
-            { value: '2,400+', label: 'APPS BUILT' },
-            { value: '30s', label: 'AVG BUILD TIME' },
-            { value: '4.9/5', label: 'USER RATING' },
-            { value: '99.9%', label: 'UPTIME TARGET', href: '/status' },
+            { value: '2,400+', label: t.statAppsBuilt },
+            { value: '30s', label: t.statAvgBuildTime },
+            { value: '4.9/5', label: t.statUserRating },
+            { value: '99.9%', label: t.statUptimeTarget, href: '/status' },
           ].map(s => (
             <div key={s.label}>
               <div className="mk-stat">{s.value}</div>
@@ -538,7 +540,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
              even 4 presses of hijacked scroll read as "the page is stuck") */}
       <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <Reveal>
-          <div className="mk-eyebrow" style={{ marginBottom: 48 }}>MISSION SEQUENCE</div>
+          <div className="mk-eyebrow" style={{ marginBottom: 48 }}>{t.missionSequenceLabel}</div>
         </Reveal>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(48px,6vw,88px)' }}>
           {STAGES.map(s => (
@@ -559,9 +561,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {/* ── PRODUCTS ─────────────────────────────────────────────────── */}
       <section className="mk-section">
         <Reveal>
-          <Eyebrow>PRODUCTS</Eyebrow>
-          <h2 className="mk-h2" style={{ marginBottom: 10 }}>Web apps &amp; mobile apps, <span className="mk-serif">one platform</span></h2>
-          <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 560 }}>Everything you need to build, launch, and grow — in one place.</p>
+          <Eyebrow>{t.productsLabel}</Eyebrow>
+          <h2 className="mk-h2" style={{ marginBottom: 10 }}>{t.productsHeadingPre} <span className="mk-serif">{t.productsHeadingEmphasis}</span></h2>
+          <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 560 }}>{t.productsLead}</p>
         </Reveal>
 
         <Reveal delay={0.1}>
@@ -614,10 +616,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section style={{ borderTop: '1px solid var(--brand-border)', background: 'var(--brand-bg-raised)' }}>
         <div className="mk-section">
           <Reveal>
-            <Eyebrow>WHY WYBER</Eyebrow>
-            <h2 className="mk-h2" style={{ marginBottom: 10 }}>Not another <span className="mk-serif">template marketplace</span></h2>
+            <Eyebrow>{t.whyWyberLabel}</Eyebrow>
+            <h2 className="mk-h2" style={{ marginBottom: 10 }}>{t.proofHeadingPre} <span className="mk-serif">{t.proofHeadingEmphasis}</span></h2>
             <p className="mk-lead" style={{ marginBottom: 52, maxWidth: 560 }}>
-              Every other AI builder generates code and hopes it holds. WyberAi checks its own work — automatically.
+              {t.proofLead}
             </p>
           </Reveal>
 
@@ -637,10 +639,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
             </div>
             <Reveal delay={0.15}>
               <div style={{ position: 'sticky', top: 90 }}>
-                <div className="mk-mono" style={{ marginBottom: 12, color: 'var(--brand-accent-hot)' }}>HOW THE SCANNER WORKS</div>
-                <ScanReadout stats={scanStats} />
+                <div className="mk-mono" style={{ marginBottom: 12, color: 'var(--brand-accent-hot)' }}>{t.scannerLabel}</div>
+                <ScanReadout stats={scanStats} t={t} />
                 <p style={{ fontSize: 12, color: 'var(--brand-text-faint)', lineHeight: 1.6, marginTop: 12 }}>
-                  The RLS trust scan runs before every publish. Critical leaks block the release until you fix them — or consciously override.
+                  {t.proofCaption}
                 </p>
               </div>
             </Reveal>
@@ -652,10 +654,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section style={{ borderTop: '1px solid var(--brand-border)' }}>
         <div className="mk-section">
           <Reveal>
-            <Eyebrow>MCP SERVER</Eyebrow>
-            <h2 className="mk-h2" style={{ marginBottom: 10 }}>Drive it from <span className="mk-serif">Claude, Cursor &amp; Claude Code</span></h2>
+            <Eyebrow>{t.mcpServerLabel}</Eyebrow>
+            <h2 className="mk-h2" style={{ marginBottom: 10 }}>{t.mcpHeadingPre} <span className="mk-serif">{t.mcpHeadingEmphasis}</span></h2>
             <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 600 }}>
-              WyberAi ships a real MCP server — 20 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps — without leaving your AI editor. No other app builder lets you do this.
+              {t.mcpLead}
             </p>
           </Reveal>
           <div className="wyb-product-detail" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(28px,4vw,56px)', alignItems: 'center' }}>
@@ -663,24 +665,24 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
               <div>
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px' }}>
                   {([
-                    ['create_project', 'Start a new app'],
-                    ['send_message', 'Kick off a build'],
-                    ['execute_sql', 'Query the database'],
-                    ['run_security_scan', 'Audit for data leaks'],
-                    ['set_project_knowledge', 'Set your standards'],
-                    ['publish_project', 'Ship it live'],
-                  ] as [string, string][]).map(([t, d]) => (
-                    <li key={t} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 11 }}>{t}</span>
-                      <span style={{ fontSize: 13, color: 'var(--brand-text-dim)' }}>{d}</span>
+                    ['create_project', t.mcpTool1Desc],
+                    ['send_message', t.mcpTool2Desc],
+                    ['execute_sql', t.mcpTool3Desc],
+                    ['run_security_scan', t.mcpTool4Desc],
+                    ['set_project_knowledge', t.mcpTool5Desc],
+                    ['publish_project', t.mcpTool6Desc],
+                  ] as [string, string][]).map(([code, desc]) => (
+                    <li key={code} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 11 }}>{code}</span>
+                      <span style={{ fontSize: 13, color: 'var(--brand-text-dim)' }}>{desc}</span>
                     </li>
                   ))}
                 </ul>
                 <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
                   <Link href="/api-keys" className="mk-btn" style={{ background: 'var(--brand-accent)', boxShadow: '0 0 24px var(--brand-glow-soft)' }}>
-                    Get your MCP key →
+                    {t.mcpKeyCta}
                   </Link>
-                  <Link href="/mcp" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-accent)' }}>See all 20 tools →</Link>
+                  <Link href="/mcp" style={{ fontSize: 13, fontWeight: 600, color: 'var(--brand-accent)' }}>{t.mcpSeeToolsCta}</Link>
                 </div>
               </div>
             </Reveal>
@@ -694,23 +696,23 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {/* ── PRICING PREVIEW ─────────────────────────────────────────── */}
       <section className="mk-section">
         <Reveal>
-          <Eyebrow>PRICING</Eyebrow>
-          <h2 className="mk-h2" style={{ marginBottom: 10 }}>Simple, transparent pricing</h2>
-          <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 520 }}>Start free. Upgrade when you need more builds. All features included on every plan.</p>
+          <Eyebrow>{t.pricingLabel}</Eyebrow>
+          <h2 className="mk-h2" style={{ marginBottom: 10 }}>{t.pricingHeading}</h2>
+          <p className="mk-lead" style={{ marginBottom: 44, maxWidth: 520 }}>{t.pricingLead}</p>
         </Reveal>
 
         <Reveal delay={0.1}>
           <div className="wyb-plans-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 44 }}>
             {(inr
               ? [
-                  { name: 'SPARK', price: '₹499', credits: '50', highlight: false, badge: 'INDIA ENTRY' },
+                  { name: 'SPARK', price: '₹499', credits: '50', highlight: false, badge: t.badgeIndiaEntry },
                   { name: 'STARTER', price: '₹1,499', credits: '150', highlight: false },
-                  { name: 'BUILDER', price: '₹3,999', credits: '500', highlight: true, badge: 'MOST POPULAR' },
+                  { name: 'BUILDER', price: '₹3,999', credits: '500', highlight: true, badge: t.badgeMostPopular },
                 ]
               : [
                   { name: 'STARTER', price: '$29', credits: '150', highlight: false },
-                  { name: 'BUILDER', price: '$79', credits: '500', highlight: true, badge: 'MOST POPULAR' },
-                  { name: 'PRO', price: '$199', credits: '1,500', highlight: false, badge: 'BEST VALUE' },
+                  { name: 'BUILDER', price: '$79', credits: '500', highlight: true, badge: t.badgeMostPopular },
+                  { name: 'PRO', price: '$199', credits: '1,500', highlight: false, badge: t.badgeBestValue },
                 ]
             ).map(p => (
               <div key={p.name} className="mk-card" style={{ padding: '26px 22px', position: 'relative', borderColor: p.highlight ? 'var(--brand-border-accent)' : undefined, boxShadow: p.highlight ? '0 0 40px var(--brand-glow-soft)' : undefined }}>
@@ -718,10 +720,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                 <div className="mk-mono" style={{ color: p.highlight ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', marginBottom: 12 }}>{p.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 14 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: 'var(--brand-text)', letterSpacing: '-0.03em' }}>{p.price}</span>
-                  <span className="mk-mono" style={{ fontSize: 11 }}>/MO</span>
+                  <span className="mk-mono" style={{ fontSize: 11 }}>{t.perMonthSuffix}</span>
                 </div>
-                <div className="mk-mono" style={{ color: '#22c55e', fontSize: 11 }}>{p.credits} CREDITS</div>
-                <div style={{ fontSize: 12, color: 'var(--brand-text-faint)', marginTop: 4 }}>All features unlocked</div>
+                <div className="mk-mono" style={{ color: '#22c55e', fontSize: 11 }}>{p.credits} {t.creditsLabel}</div>
+                <div style={{ fontSize: 12, color: 'var(--brand-text-faint)', marginTop: 4 }}>{t.allFeaturesUnlocked}</div>
               </div>
             ))}
           </div>
@@ -732,19 +734,19 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           <div className="mk-frame" style={{ padding: '28px 28px 24px', marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
               <div>
-                <div className="mk-eyebrow" style={{ marginBottom: 10, color: 'var(--brand-accent-hot)' }}>DONE-FOR-YOU</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 4 }}>We build it for you</div>
-                <div style={{ fontSize: 13, color: 'var(--brand-text-dim)', maxWidth: 420 }}>Prefer to hand it off? Book a $99 scoping call — the fee is credited toward your build.</div>
+                <div className="mk-eyebrow" style={{ marginBottom: 10, color: 'var(--brand-accent-hot)' }}>{t.doneForYouLabel}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 4 }}>{t.doneForYouHeading}</div>
+                <div style={{ fontSize: 13, color: 'var(--brand-text-dim)', maxWidth: 420 }}>{t.doneForYouDesc}</div>
               </div>
               <a href="/setup-call" className="mk-btn" style={{ background: 'var(--brand-accent)', boxShadow: '0 0 24px var(--brand-glow-soft)', padding: '10px 20px', fontSize: 13, flexShrink: 0 }}>
-                Book $99 consultation →
+                {t.doneForYouCta}
               </a>
             </div>
             <div className="wyb-builds-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {[
-                { name: 'SIMPLE BUILD', price: '$199', delivery: '24 HOURS', desc: 'Landing pages, portfolios, tools. No auth or database.' },
-                { name: 'MEDIUM BUILD', price: '$399', delivery: '3 WORKING DAYS', desc: 'SaaS MVP with auth + database. 3–6 screens, real accounts.', badge: 'MOST COMMON' },
-                { name: 'COMPLEX BUILD', price: '$799', delivery: '1 WEEK', desc: 'Full SaaS with payments, multi-roles, integrations.' },
+                { name: t.buildSimpleName, price: '$199', delivery: t.buildSimpleDelivery, desc: t.buildSimpleDesc },
+                { name: t.buildMediumName, price: '$399', delivery: t.buildMediumDelivery, desc: t.buildMediumDesc, badge: t.buildMediumBadge },
+                { name: t.buildComplexName, price: '$799', delivery: t.buildComplexDelivery, desc: t.buildComplexDesc },
               ].map(b => (
                 <div key={b.name} className="mk-card" style={{ padding: 16, position: 'relative', borderRadius: 12 }}>
                   {b.badge && <div className="mk-mono" style={{ position: 'absolute', top: -9, left: 14, background: 'var(--brand-accent)', color: '#fff', fontSize: 9, padding: '2px 8px', borderRadius: 20 }}>{b.badge}</div>}
@@ -761,7 +763,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         </Reveal>
         )}
 
-        <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 14 }}>See full pricing →</Link>
+        <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 14 }}>{t.pricingSeeFullCta}</Link>
       </section>
 
       {/* ── SPACE JOURNEY INVITE ────────────────────────────────────── */}
@@ -771,11 +773,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         <Link href="/space-journey" style={{ display: 'block', textDecoration: 'none', color: 'inherit', position: 'relative' }}>
           <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(48px,7vw,88px) clamp(20px,5vw,48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
             <div>
-              <div className="mk-eyebrow" style={{ marginBottom: 14 }}>✦ THE JOURNEY</div>
-              <div className="mk-h2" style={{ fontSize: 'clamp(26px,3.5vw,42px)' }}>See the whole system, <span className="mk-serif">in flight</span></div>
-              <p className="mk-lead" style={{ marginTop: 10, fontSize: 15 }}>A cinematic tour of WyberAi — piloted by you, one scroll at a time.</p>
+              <div className="mk-eyebrow" style={{ marginBottom: 14 }}>✦ {t.journeyLabel}</div>
+              <div className="mk-h2" style={{ fontSize: 'clamp(26px,3.5vw,42px)' }}>{t.journeyHeadingPre} <span className="mk-serif">{t.journeyHeadingEmphasis}</span></div>
+              <p className="mk-lead" style={{ marginTop: 10, fontSize: 15 }}>{t.journeyLead}</p>
             </div>
-            <span className="mk-btn-ghost" style={{ flexShrink: 0 }}>Begin the journey →</span>
+            <span className="mk-btn-ghost" style={{ flexShrink: 0 }}>{t.journeyCta}</span>
           </div>
         </Link>
       </section>
@@ -783,13 +785,13 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {/* ── FAQ (with FAQPage schema for AEO) ───────────────────────── */}
       <section className="mk-section" style={{ maxWidth: 820 }}>
         <Reveal>
-          <Eyebrow>FAQ</Eyebrow>
-          <h2 className="mk-h2" style={{ marginBottom: 40 }}>Questions, answered</h2>
+          <Eyebrow>{t.faqLabel}</Eyebrow>
+          <h2 className="mk-h2" style={{ marginBottom: 40 }}>{t.faqHeading}</h2>
         </Reveal>
         <Reveal delay={0.1}>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {HOME_FAQS.map(([q, a], i) => (
-              <details key={i} style={{ borderTop: '1px solid var(--brand-border)', borderBottom: i === HOME_FAQS.length - 1 ? '1px solid var(--brand-border)' : 'none', padding: '18px 0' }}>
+            {t.homeFaqs.map(([q, a], i) => (
+              <details key={i} style={{ borderTop: '1px solid var(--brand-border)', borderBottom: i === t.homeFaqs.length - 1 ? '1px solid var(--brand-border)' : 'none', padding: '18px 0' }}>
                 <summary style={{ cursor: 'pointer', fontSize: 15, fontWeight: 600, color: 'var(--brand-text)', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, fontFamily: 'var(--font-display)' }}>
                   {q}<span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 16, flexShrink: 0, transition: 'transform 0.2s var(--brand-ease)' }}>+</span>
                 </summary>
@@ -803,7 +805,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           dangerouslySetInnerHTML={{ __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'FAQPage',
-            mainEntity: HOME_FAQS.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
+            mainEntity: t.homeFaqs.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })),
           }).replace(/</g, '\\u003c') }}
         />
       </section>
@@ -814,16 +816,16 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         <div className="mk-section" style={{ position: 'relative', maxWidth: 720, paddingTop: 'clamp(80px,10vw,140px)', paddingBottom: 'clamp(80px,10vw,140px)' }}>
           <Reveal>
             <h2 className="mk-display" style={{ fontSize: 'clamp(36px,6vw,72px)', marginBottom: 20 }}>
-              Stop dreaming.<br /><span className="mk-serif">Start shipping.</span>
+              {t.finalCtaLine1}<br /><span className="mk-serif">{t.finalCtaLine2}</span>
             </h2>
             <p className="mk-lead" style={{ maxWidth: 480, margin: '0 auto 36px' }}>
-              Your next app is one prompt away. Describe it, watch it build, ship it today.
+              {t.finalCtaLead}
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/signup" className="mk-btn" style={{ padding: '16px 40px', fontSize: 16 }}>Start for free →</Link>
-              <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 16 }}>View pricing →</Link>
+              <Link href="/signup" className="mk-btn" style={{ padding: '16px 40px', fontSize: 16 }}>{t.finalCtaPrimary}</Link>
+              <Link href="/pricing" className="mk-btn-ghost" style={{ fontSize: 16 }}>{t.finalCtaSecondary}</Link>
             </div>
-            <div className="mk-mono" style={{ marginTop: 20, fontSize: 10 }}>NO CREDIT CARD · 50 FREE CREDITS ON SIGNUP · CANCEL ANYTIME</div>
+            <div className="mk-mono" style={{ marginTop: 20, fontSize: 10 }}>{t.finalCtaFootnote}</div>
           </Reveal>
         </div>
       </section>

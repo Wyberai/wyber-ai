@@ -37,8 +37,25 @@ export async function getAnonConnector(
   const url = String(data.config?.url || '')
   let anonKey = String(data.api_key || '')
   if (!url || !anonKey) return null
+  // The 3-colon check means this positively matches the encrypted format, so
+  // reaching the catch means the key was rotated or the ciphertext is corrupt
+  // — not "this was plaintext all along" (that's the untouched fallthrough
+  // below, for values that never matched the encrypted shape in the first
+  // place). The old code silently kept the raw ciphertext as `anonKey` and
+  // used it as a real Supabase key — every caller (RLS security scan, schema
+  // apply, health check) would then either get a confusing auth failure or,
+  // worse, the scan would report "unreachable" and the publish gate's
+  // deliberate fail-open policy (see publish/route.ts) would treat a broken
+  // decrypt identically to "nothing to report", silently skipping the leak
+  // check instead of visibly erroring out. Return null so it's treated the
+  // same as "not connected" everywhere, with a clear log line explaining why.
   if (anonKey.split(':').length === 3) {
-    try { anonKey = decrypt(anonKey) } catch { /* not encrypted */ }
+    try {
+      anonKey = decrypt(anonKey)
+    } catch (e) {
+      console.error(`[rls-scan-project] failed to decrypt anon key for project ${projectId}:`, String(e))
+      return null
+    }
   }
   const ref = String(data.config?.ref || refFromUrl(url))
   return { url, anonKey, ref }

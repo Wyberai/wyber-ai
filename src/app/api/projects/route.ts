@@ -7,26 +7,49 @@ export async function PATCH(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { projectId, files } = await req.json();
+  const { projectId, files, expectedUpdatedAt } = await req.json();
   if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
+
+  // Multi-tab conflict guard (optimistic concurrency): the client sends the
+  // `updated_at` it last saw. If that no longer matches the row, someone else
+  // (another tab, another session) saved in between — this write would
+  // silently clobber their changes with no signal to anyone, a real
+  // last-writer-wins data-loss bug for two tabs open on the same project.
+  // Callers that omit expectedUpdatedAt (support mode, older clients) get the
+  // old unconditional-overwrite behavior — this is additive, not a breaking
+  // change to the endpoint's contract.
+  const nowIso = new Date().toISOString()
 
   // Support mode: allowlisted admins save to any project (remote-fixing a
   // stuck customer). Everyone else stays strictly ownership-scoped.
   if (isAdminEmail(user.email)) {
     const admin = await createAdminClient();
-    const { error } = await admin.from('projects')
-      .update({ files, updated_at: new Date().toISOString() })
-      .eq('id', projectId);
+    let query = admin.from('projects').update({ files, updated_at: nowIso }).eq('id', projectId)
+    if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt)
+    const { data, error } = await query.select('id, updated_at')
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, supportMode: true });
+    if (expectedUpdatedAt && (!data || data.length === 0)) {
+      const { data: current } = await admin.from('projects').select('updated_at').eq('id', projectId).maybeSingle()
+      return NextResponse.json({ error: 'Conflict: this project was modified elsewhere', conflict: true, currentUpdatedAt: current?.updated_at }, { status: 409 })
+    }
+    return NextResponse.json({ ok: true, supportMode: true, updatedAt: nowIso });
   }
 
-  const { error } = await supabase.from('projects')
-    .update({ files, updated_at: new Date().toISOString() })
-    .eq('id', projectId).eq('user_id', user.id);
+  let query = supabase.from('projects').update({ files, updated_at: nowIso }).eq('id', projectId).eq('user_id', user.id)
+  if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt)
+  const { data, error } = await query.select('id, updated_at')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  if (expectedUpdatedAt && (!data || data.length === 0)) {
+    // Distinguish "conflict" (row exists, updated_at moved) from "not yours/
+    // doesn't exist" (already covered by the id+user_id filters above) so the
+    // client gets a specific, actionable signal either way.
+    const { data: current } = await supabase.from('projects').select('updated_at').eq('id', projectId).eq('user_id', user.id).maybeSingle()
+    if (current) {
+      return NextResponse.json({ error: 'Conflict: this project was modified elsewhere', conflict: true, currentUpdatedAt: current.updated_at }, { status: 409 })
+    }
+  }
+  return NextResponse.json({ ok: true, updatedAt: nowIso });
 }
 
 export async function DELETE(req: NextRequest) {

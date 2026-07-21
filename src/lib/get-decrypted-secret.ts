@@ -17,7 +17,13 @@ export async function getDecryptedSecret(userId: string, name: string): Promise<
   if (error || !data) return null
   try {
     return decrypt(data.value_encrypted)
-  } catch {
+  } catch (e) {
+    // A silent null here is indistinguishable from "this secret was never
+    // set" — an agent/workflow run just quietly proceeds without a key it
+    // actually needs, and whatever integration depended on it fails with no
+    // clue the real cause is a broken decrypt (key rotation, corruption),
+    // not a missing secret. Log it so this is at least diagnosable.
+    console.error(`[get-decrypted-secret] failed to decrypt secret "${name}" for user ${userId}:`, String(e))
     return null
   }
 }

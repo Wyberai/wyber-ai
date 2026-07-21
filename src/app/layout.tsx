@@ -3,6 +3,8 @@ import "./globals.css";
 import "@/styles/brand.css";
 import "@/styles/editor.css";
 import { ThemeProvider } from '@/lib/theme';
+import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
+import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '@/lib/i18n/locales';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
@@ -143,8 +145,26 @@ const jsonLd = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // No cookies()/headers() read here on purpose — that was tried and reverted
+  // (see LocaleProvider's comment): reading a cookie in the root layout opts
+  // Next's app router into dynamic rendering for every route underneath it,
+  // which silently turned every static marketing/blog/docs page dynamic just
+  // to seed a locale that only the authenticated app (Dashboard/Settings/
+  // Editor) actually needs server-side. SSR always renders DEFAULT_LOCALE;
+  // the inline script below (mirroring the theme one) fixes up `lang` from
+  // localStorage before paint, and LocaleProvider's own effect does the same
+  // for the React tree — same "no flash for returning visitors" outcome,
+  // without forcing the whole site dynamic.
+  //
+  // Deliberately NOT passed to LocaleProvider below: its reconcile-from-
+  // localStorage effect only runs `if (!initialLocale)`, so passing
+  // DEFAULT_LOCALE here (a truthy 'en') would permanently short-circuit that
+  // effect for the app's one and only LocaleProvider instance — silently
+  // resetting every returning visitor to English on each hard reload.
+  const locale = DEFAULT_LOCALE;
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <script
           type="application/ld+json"
@@ -159,6 +179,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   var p = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                   document.documentElement.setAttribute('data-theme', t || p);
                 } catch(e) {}
+                try {
+                  var l = typeof localStorage !== 'undefined' ? localStorage.getItem('${LOCALE_STORAGE_KEY}') : null;
+                  if (l && l !== '${DEFAULT_LOCALE}') document.documentElement.setAttribute('lang', l);
+                } catch(e) {}
               })();
             `,
           }}
@@ -166,18 +190,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PostHogProvider>
-          <ThemeProvider>
-            <ErrorBoundary fallbackMessage="WyberAI hit an unexpected error">
-              <Suspense>
-                {children}
-              </Suspense>
-            </ErrorBoundary>
-          </ThemeProvider>
-          {/* All platform-only chrome (cookie banner, palette, chat widgets,
-              analytics pixels, SW registration) lives in PlatformChrome, which
-              renders NOTHING on white-label routes (/app/[slug]) so published
-              user apps stay 100% unbranded and untracked. */}
-          <Suspense fallback={null}><PlatformChrome /></Suspense>
+          <LocaleProvider>
+            <ThemeProvider>
+              <ErrorBoundary fallbackMessage="WyberAI hit an unexpected error">
+                <Suspense>
+                  {children}
+                </Suspense>
+              </ErrorBoundary>
+            </ThemeProvider>
+            {/* All platform-only chrome (cookie banner, palette, chat widgets,
+                analytics pixels, SW registration) lives in PlatformChrome, which
+                renders NOTHING on white-label routes (/app/[slug]) so published
+                user apps stay 100% unbranded and untracked. */}
+            <Suspense fallback={null}><PlatformChrome /></Suspense>
+          </LocaleProvider>
         </PostHogProvider>
       </body>
     </html>

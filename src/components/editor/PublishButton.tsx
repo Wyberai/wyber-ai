@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { track } from '@/lib/track';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_SHELL_STRINGS } from '@/lib/i18n/dict/editor-shell';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
 interface Props {
   projectId: string;
@@ -14,6 +17,8 @@ interface Props {
 interface RlsBlock { message: string; tables: string[] }
 
 export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish }: Props) {
+  const t = useT(EDITOR_SHELL_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState(publishedUrl);
@@ -62,18 +67,18 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
         const tables: string[] = (data.report?.findings ?? [])
           .filter((f: { severity: string }) => f.severity === 'critical')
           .map((f: { table: string }) => f.table);
-        setBlock({ message: data.message || 'Publish blocked by a security check.', tables });
+        setBlock({ message: data.message || t('pbPublishBlockedDefaultMsg'), tables });
       } else if (data.publishedUrl) { setUrl(data.publishedUrl); onPublish?.(data.publishedUrl); track('app_published', { projectId }); }
-      else setError(data.error || 'Failed to publish');
+      else setError(data.error || t('pbFailedToPublishMsg'));
     } catch (e: any) {
       clearTimeout(timeout);
-      setError(e?.name === 'AbortError' ? 'Publish timed out — please try again' : 'Failed to publish');
+      setError(e?.name === 'AbortError' ? t('pbPublishTimeoutMsg') : t('pbFailedToPublishMsg'));
     }
     setLoading(false);
   };
 
   const unpublish = async () => {
-    if (!confirm('Unpublish this project? The URL will stop working.')) return;
+    if (!confirm(t('pbConfirmUnpublishMsg'))) return;
     setLoading(true);
     await fetch('/api/publish', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId }) });
     setUrl(null); onUnpublish?.();
@@ -95,27 +100,27 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
             </a>
           </div>
           <button onClick={copyUrl} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? `✓ ${tc('copied')}` : tc('copy')}
           </button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
-          📱 Installable as an app — open the link on your phone and tap <strong style={{ color: 'var(--text2)' }}>Install app</strong>
+          {t('pbInstallHintPrefix')} <strong style={{ color: 'var(--text2)' }}>{t('pbInstallAppLabel')}</strong>
         </div>
 
         {/* Post-publish share — turn every live build into reach + referrals */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2, padding: '9px 10px', borderRadius: 8, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.18)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)' }}>🎉 It’s live — share your build</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)' }}>{t('pbLiveShareHeading')}</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => openShare('x')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Share on X</button>
-            <button onClick={() => openShare('linkedin')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Share on LinkedIn</button>
+            <button onClick={() => openShare('x')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('pbShareOnX')}</button>
+            <button onClick={() => openShare('linkedin')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('pbShareOnLinkedin')}</button>
           </div>
           <button onClick={copyInvite} style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'none', color: invCopied ? '#34D399' : 'var(--text3)', fontSize: 10.5, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
-            {invCopied ? '✓ Invite link copied' : '🎁 Copy invite link · +50 credits per signup'}
+            {invCopied ? t('pbInviteCopiedLabel') : t('pbCopyInviteLabel')}
           </button>
         </div>
 
         <button onClick={unpublish} disabled={loading} style={{ fontSize: 11, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', textAlign: 'left', fontFamily: 'inherit' }}>
-          {loading ? 'Unpublishing...' : 'Unpublish'}
+          {loading ? t('pbUnpublishingBtn') : t('pbUnpublishBtn')}
         </button>
       </div>
     );
@@ -124,20 +129,20 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
   return (
     <div>
       <button onClick={() => publish()} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}>
-        {loading ? 'Publishing...' : '↑ Publish to web'}
+        {loading ? tc('publishing') : t('pbPublishToWebBtn')}
       </button>
       {error && <p style={{ color: '#EF4444', fontSize: 11, marginTop: 6 }}>{error}</p>}
       {block && (
         <div style={{ marginTop: 8, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(240,82,75,0.35)', background: 'rgba(240,82,75,0.07)' }}>
-          <div style={{ fontSize: 12, color: '#F0524B', fontWeight: 600, marginBottom: 4 }}>🔐 Publish blocked — data leak detected</div>
+          <div style={{ fontSize: 12, color: '#F0524B', fontWeight: 600, marginBottom: 4 }}>{t('pbPublishBlockedHeading')}</div>
           <div style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5, marginBottom: block.tables.length ? 6 : 8 }}>{block.message}</div>
           {block.tables.length > 0 && (
             <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 8 }}>
-              Leaking table{block.tables.length === 1 ? '' : 's'}: <strong style={{ color: '#F0524B' }}>{block.tables.join(', ')}</strong>. Open the <strong>Security</strong> tab to fix with one click.
+              {block.tables.length === 1 ? t('pbLeakingTableSingular') : t('pbLeakingTablePlural')}: <strong style={{ color: '#F0524B' }}>{block.tables.join(', ')}</strong>. {t('pbOpenSecurityPrefix')} <strong>{t('rpTabSecurityLabel')}</strong> {t('pbOpenSecuritySuffix')}
             </div>
           )}
           <button onClick={() => publish(true)} disabled={loading} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text3)', cursor: 'pointer', fontFamily: 'inherit' }}>
-            {loading ? 'Publishing…' : 'Publish anyway (not recommended)'}
+            {loading ? tc('publishing') : t('pbPublishAnywayBtn')}
           </button>
         </div>
       )}

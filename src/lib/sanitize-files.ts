@@ -290,7 +290,17 @@ ReactDOM.createRoot(document.getElementById('root')${tsBang}).render(
   // embedded in an iframe (window.parent === window), so published sites are
   // unaffected. Plain non-module inline script: vite build leaves it untouched
   // and it registers before the app bundle executes.
-  const ERROR_RELAY = `<script>/* wyber-error-relay */(function(){if(window.parent===window)return;var send=function(m,s,l){try{window.parent.postMessage({type:'wyber-runtime-error',message:String(m||'Script error'),source:s?String(s).split('/').pop():undefined,lineno:l},'*')}catch(e){}};window.addEventListener('error',function(e){send(e.message||e.error,e.filename,e.lineno)});window.addEventListener('unhandledrejection',function(e){send(e.reason&&e.reason.message?e.reason.message:e.reason)})})()</script>`
+  // CORS-blocked external API calls (D6): a browser rejects the fetch() promise
+  // with a generic "Failed to fetch" TypeError — by design, JS can never see
+  // WHY (that would let code probe cross-origin resources). The one place the
+  // actual reason surfaces is a console.error the browser's network stack logs
+  // itself, invisible to both the 'error' and 'unhandledrejection' listeners
+  // below since a fetch the app's own try/catch already handled never reaches
+  // either. Previously this meant a real integration failure (an external API
+  // that doesn't allow this origin) looked exactly like "the builder is
+  // broken" with zero diagnostic signal anywhere. Wrap console.error to spot
+  // the browser's own CORS message and relay a distinct, specific type.
+  const ERROR_RELAY = `<script>/* wyber-error-relay */(function(){if(window.parent===window)return;var send=function(m,s,l){try{window.parent.postMessage({type:'wyber-runtime-error',message:String(m||'Script error'),source:s?String(s).split('/').pop():undefined,lineno:l},'*')}catch(e){}};window.addEventListener('error',function(e){send(e.message||e.error,e.filename,e.lineno)});window.addEventListener('unhandledrejection',function(e){send(e.reason&&e.reason.message?e.reason.message:e.reason)});var origErr=console.error;console.error=function(){try{var text=Array.prototype.slice.call(arguments).map(function(a){return typeof a==='string'?a:(a&&a.message)||''}).join(' ');if(/cors policy|access-control-allow-origin/i.test(text)){var m=text.match(/https?:\\/\\/[^\\s'"]+/);window.parent.postMessage({type:'wyber-cors-error',message:text.slice(0,300),url:m?m[0]:undefined},'*')}}catch(e){}return origErr.apply(console,arguments)}})()</script>`
   // Crash guard: the React ErrorBoundary only catches errors INSIDE the React
   // tree — a module-init error or a crash before ReactDOM.render leaves #root
   // empty forever (white screen). If an uncaught error fires and #root is still

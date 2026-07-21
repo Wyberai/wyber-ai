@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { compileAndPreview, clearModuleCache, triggerHMR } from '@/lib/wyber-preview/engine'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_PLAN_STRINGS } from '@/lib/i18n/dict/editor-plan'
 
 interface WyberPreviewProps {
   files: Record<string, { content: string; path?: string }>
@@ -20,6 +22,7 @@ export default function WyberPreview({
   onError,
   onFilesFixed,
 }: WyberPreviewProps) {
+  const t = useT(EDITOR_PLAN_STRINGS)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const prevBlobURL = useRef<string | null>(null)
   const compileTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -58,7 +61,7 @@ export default function WyberPreview({
     // Safety timeout — never show spinner >20s
     const timeout = setTimeout(() => {
       setStatus('error')
-      setError('Compilation timeout — click ↺ to retry')
+      setError(t('compilationTimeout'))
     }, 20000)
 
     try {
@@ -100,7 +103,7 @@ export default function WyberPreview({
       setError(msg)
       onError?.(msg)
     }
-  }, [projectId, onError])
+  }, [projectId, onError, t])
 
   // Self-healing: auto-fix errors using AI (0 credits, always free)
   const attemptAutoHeal = useCallback(async (errorMsg: string) => {
@@ -125,14 +128,14 @@ export default function WyberPreview({
       if (data.fixed && data.files) {
         onFilesFixed(data.files)
         const changedNames = (data.filesChanged ?? Object.keys(data.files)).map(p => p.split('/').pop()).join(', ')
-        setHealToast(`Auto-fixed ${changedNames}`)
+        setHealToast(`${t('autoFixedPrefix')} ${changedNames}`)
         setError(null)
         setStatus('compiling')
         setTimeout(() => setHealToast(null), 4000)
       }
     } catch { /* silent fail — user can still manually fix */ }
     setHealing(false)
-  }, [files, healing, onFilesFixed])
+  }, [files, healing, onFilesFixed, t])
 
   // Trigger auto-heal when an error occurs (not during generation)
   useEffect(() => {
@@ -210,19 +213,19 @@ export default function WyberPreview({
                 borderRadius: '50%',
                 animation: 'spin 0.7s linear infinite',
               }} />
-              Compiling...
+              {t('compilingLabel')}
             </div>
           )}
           {status === 'ready' && compileDuration !== null && (
             <div style={{ fontSize: 11, color: 'var(--ide-text3, #52525b)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ color: '#22c55e', fontSize: 9 }}>●</span>
-              Live · {compileDuration}ms · Phase {phase}
+              {t('liveLabel')} · {compileDuration}ms · {t('phaseLabel')} {phase}
             </div>
           )}
           {status === 'error' && !healing && (
             <div style={{ fontSize: 11, color: '#ef4444', display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: 9 }}>●</span>
-              Build error
+              {t('buildErrorLabel')}
             </div>
           )}
           {healing && (
@@ -234,12 +237,12 @@ export default function WyberPreview({
                 borderRadius: '50%',
                 animation: 'spin 0.7s linear infinite',
               }} />
-              Self-healing...
+              {t('selfHealingLabel')}
             </div>
           )}
           {status === 'idle' && !hasFiles && (
             <div style={{ fontSize: 11, color: 'var(--ide-text3, #52525b)' }}>
-              {esbuildReady ? '⚡ Ready' : 'Loading engine...'}
+              {esbuildReady ? t('engineReady') : t('loadingEngine')}
             </div>
           )}
         </div>
@@ -272,7 +275,7 @@ export default function WyberPreview({
               compile(fileMap)
             }}
             disabled={status === 'compiling'}
-            title="Recompile"
+            title={t('recompileTitle')}
             style={{
               background: 'none',
               border: '1px solid var(--ide-border, rgba(255,255,255,0.08))',
@@ -293,7 +296,7 @@ export default function WyberPreview({
               href={previewURL}
               target="_blank"
               rel="noopener noreferrer"
-              title="Open in new tab"
+              title={t('openInNewTabTitle')}
               style={{
                 background: 'none',
                 border: '1px solid var(--ide-border, rgba(255,255,255,0.08))',
@@ -333,10 +336,10 @@ export default function WyberPreview({
               <path d="M23 11L28 16L23 21" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/>
             </svg>
             <div style={{ fontSize: 13, fontWeight: 600 }}>
-              {esbuildReady ? 'Ask me what to build' : 'Warming up engine...'}
+              {esbuildReady ? t('askMeWhatToBuild') : t('warmingUpEngine')}
             </div>
             <div style={{ fontSize: 11 }}>
-              {esbuildReady ? 'Your app will preview here' : 'First compile may take a few seconds'}
+              {esbuildReady ? t('appWillPreviewHere') : t('firstCompileHint')}
             </div>
           </div>
         )}
@@ -366,7 +369,7 @@ export default function WyberPreview({
               borderRadius: '50%',
               animation: 'spin 0.7s linear infinite',
             }} />
-            Updating...
+            {t('updatingLabel')}
           </div>
         )}
 
@@ -374,7 +377,7 @@ export default function WyberPreview({
         <iframe
           ref={iframeRef}
           src={previewURL || 'about:blank'}
-          title="WyberAi Preview"
+          title={t('previewIframeTitle')}
           sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
           style={{
             width: '100%',
@@ -399,7 +402,7 @@ export default function WyberPreview({
         }}>
           <span style={{ fontSize: 14 }}>&#10003;</span>
           {healToast}
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>0 credits</span>
+          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>{t('zeroCreditsLabel')}</span>
         </div>
       )}
 

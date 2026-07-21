@@ -6,6 +6,9 @@ import { MobilePreviewPanel } from './MobilePreviewPanel'
 import { MobileRightPanel } from './MobileRightPanel'
 import { Wyberman } from './Wyberman'
 import { WyberLogo } from '@/components/shared/WyberLogo'
+import { useT } from '@/lib/i18n/useT'
+import { EDITOR_MOBILE_STRINGS } from '@/lib/i18n/dict/editor-mobile'
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 interface Props {
   initialProject?: { id: string; name: string; files?: any; project_type?: string; user_id?: string }
@@ -13,10 +16,12 @@ interface Props {
 }
 
 export function MobileLayout({ initialProject, initialProfile }: Props) {
+  const t = useT(EDITOR_MOBILE_STRINGS)
+  const tc = useT(COMMON_STRINGS)
   const { hydrateProject, resetForProject, setCredits, setConnectors } = useEditorStore()
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
-  const [displayName, setDisplayName] = useState(initialProject?.name || 'Mobile App')
+  const [displayName, setDisplayName] = useState(initialProject?.name || t('defaultMobileAppName'))
   const [exporting, setExporting] = useState(false)
 
   // Download the full Expo/React Native source as a ZIP — the "own your code"
@@ -37,9 +42,9 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
         URL.revokeObjectURL(url)
       } else {
         const d = await res.json().catch(() => ({}))
-        alert(d.error || 'Export failed. Please try again.')
+        alert(d.error || t('exportFailedError'))
       }
-    } catch { alert('Export failed. Please try again.') }
+    } catch { alert(t('exportFailedError')) }
     setExporting(false)
   }
 
@@ -156,7 +161,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
         ) : (
           <span
             onClick={() => { setNameInput(displayName); setEditingName(true); }}
-            title="Click to rename"
+            title={t('clickToRenameTitle')}
             style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'var(--font-display)', cursor: 'pointer', padding: '1px 4px', borderRadius: 4 }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}

@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
+import { useT } from '@/lib/i18n/useT';
+import { EDITOR_DESIGN_STRINGS } from '@/lib/i18n/dict/editor-design';
 
 interface Props {
   onImport: (code: string, fileName: string) => void;
 }
 
 export function FigmaImportPanel({ onImport }: Props) {
+  const t = useT(EDITOR_DESIGN_STRINGS);
   const [url, setUrl] = useState('');
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,19 +27,19 @@ export function FigmaImportPanel({ onImport }: Props) {
       });
       const data = await res.json();
       if (data.code) setResult({ fileName: data.fileName, code: data.code });
-      else setError(data.error || 'Import failed');
-    } catch { setError('Import failed'); }
+      else setError(data.error || t('importFailed'));
+    } catch { setError(t('importFailed')); }
     setLoading(false);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 0' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Figma Import</div>
-      <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>Paste a Figma share link and WyberAi converts it to a React component.</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('figmaImportHeader')}</div>
+      <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>{t('figmaImportDesc')}</div>
 
       <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: 'var(--text2)', lineHeight: 1.6 }}>
-        <strong style={{ color: 'var(--sky)' }}>How to get a share link:</strong><br />
-        In Figma → right-click your design → Share → Copy link
+        <strong style={{ color: 'var(--sky)' }}>{t('howToGetShareLink')}</strong><br />
+        {t('figmaShareLinkSteps')}
       </div>
 
       <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.figma.com/file/..."
@@ -44,7 +47,7 @@ export function FigmaImportPanel({ onImport }: Props) {
 
       <div>
         <button onClick={() => setShowToken(!showToken)} style={{ fontSize: 11, color: 'var(--sky)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
-          {showToken ? '▲ Hide' : '▼ Add'} Figma access token (required for private files)
+          {showToken ? t('hideFigmaToken') : t('showFigmaToken')}
         </button>
         {showToken && (
           <input value={token} onChange={e => setToken(e.target.value)} placeholder="figd_XXXX... — get from figma.com/settings" type="password"
@@ -53,7 +56,7 @@ export function FigmaImportPanel({ onImport }: Props) {
       </div>
 
       <button onClick={importFigma} disabled={loading || !url.trim()} style={{ padding: '9px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', fontFamily: 'inherit', opacity: !url.trim() ? 0.5 : 1 }}>
-        {loading ? 'Converting design...' : 'Import from Figma →'}
+        {loading ? t('convertingDesign') : t('importFromFigma')}
       </button>
 
       {error && <p style={{ color: '#EF4444', fontSize: 11 }}>{error}</p>}
@@ -61,14 +64,14 @@ export function FigmaImportPanel({ onImport }: Props) {
       {result && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#34D399', marginBottom: 4 }}>✓ Converted: {result.fileName}</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{result.code.split('\n').length} lines of React code generated</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#34D399', marginBottom: 4 }}>{t('convertedLabel').replace('{fileName}', result.fileName)}</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t('linesOfCodeGenerated').replace('{count}', String(result.code.split('\n').length))}</div>
           </div>
           <button onClick={() => onImport(result.code, result.fileName)} style={{ padding: '9px', borderRadius: 9, background: '#34D399', color: '#0B1627', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-            Add to project →
+            {t('addToProject')}
           </button>
           <details style={{ fontSize: 11 }}>
-            <summary style={{ cursor: 'pointer', color: 'var(--text3)', padding: '4px 0' }}>Preview code</summary>
+            <summary style={{ cursor: 'pointer', color: 'var(--text3)', padding: '4px 0' }}>{t('previewCode')}</summary>
             <pre style={{ marginTop: 8, padding: '10px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', fontSize: 10, overflow: 'auto', maxHeight: 200, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{result.code.slice(0, 500)}...</pre>
           </details>
         </div>

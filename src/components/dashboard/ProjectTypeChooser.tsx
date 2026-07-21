@@ -1,5 +1,7 @@
 'use client';
 import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { useT } from '@/lib/i18n/useT';
+import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 
 export type ProjectType = 'app' | 'mobile' | 'agent' | 'workflow' | 'employee' | 'gtm';
 
@@ -18,8 +20,8 @@ const IconTarget = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="n
 
 const CARDS: {
   type: ProjectType;
-  title: string;
-  desc: string;
+  titleKey: keyof typeof DASHBOARD_STRINGS['en'];
+  descKey: keyof typeof DASHBOARD_STRINGS['en'];
   icon: React.ReactNode;
   color: string;
   redirect?: string;
@@ -27,22 +29,22 @@ const CARDS: {
 }[] = [
   {
     type: 'app',
-    title: 'Web App',
-    desc: 'Dashboards, SaaS tools, internal apps — AI builds from scratch in minutes.',
+    titleKey: 'cardWebTitle',
+    descKey: 'cardWebDesc',
     icon: <IconWeb />,
     color: '#0EA5E9',
   },
   {
     type: 'mobile',
-    title: 'Mobile App',
-    desc: 'iOS & Android apps with React Native — preview live on your phone.',
+    titleKey: 'cardMobileTitle',
+    descKey: 'cardMobileDesc',
     icon: <IconMobile />,
     color: '#f97316',
   },
   {
     type: 'employee',
-    title: 'AI Employee',
-    desc: 'Agentic employees with memory and reasoning. Coming soon.',
+    titleKey: 'cardEmployeeTitle',
+    descKey: 'cardEmployeeDesc',
     icon: <IconEmployee />,
     color: '#a855f7',
     redirect: '/coming-soon?product=AI+Employees',
@@ -50,8 +52,8 @@ const CARDS: {
   },
   {
     type: 'workflow',
-    title: 'Workflow',
-    desc: 'Visual automations with AI at every step. Coming soon.',
+    titleKey: 'cardWorkflowTitle',
+    descKey: 'cardWorkflowDesc',
     icon: <IconWorkflow />,
     color: '#22c55e',
     redirect: '/coming-soon?product=Workflows',
@@ -59,8 +61,8 @@ const CARDS: {
   },
   {
     type: 'gtm',
-    title: 'GTM Campaign',
-    desc: 'AI-powered lead gen and outreach. Coming soon.',
+    titleKey: 'cardGtmTitle',
+    descKey: 'cardGtmDesc',
     icon: <IconTarget />,
     color: '#10b981',
     redirect: '/coming-soon?product=GTM+Engine',
@@ -69,13 +71,14 @@ const CARDS: {
 ];
 
 export function ProjectTypeChooser({ open, onClose, onPick }: ChooserProps) {
+  const t = useT(DASHBOARD_STRINGS);
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }} maxWidth={780}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-        <DialogTitle className="dialog-title" style={{ marginBottom: 0 }}>What would you like to build today?</DialogTitle>
+        <DialogTitle className="dialog-title" style={{ marginBottom: 0 }}>{t('chooserTitle')}</DialogTitle>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--ide-text3)', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>&times;</button>
       </div>
-      <DialogDescription className="dialog-desc">Pick a product. Everything is built fresh by AI — no stale templates.</DialogDescription>
+      <DialogDescription className="dialog-desc">{t('chooserDesc')}</DialogDescription>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
         {CARDS.map((c) => (
@@ -97,10 +100,10 @@ export function ProjectTypeChooser({ open, onClose, onPick }: ChooserProps) {
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ color: c.soon ? 'var(--ide-text3)' : c.color }}>{c.icon}</span>
-              {c.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>SOON</span>}
+              {c.soon && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>{t('soonBadge')}</span>}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text)' }}>{c.title}</div>
-            <div style={{ fontSize: 11.5, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text2)', lineHeight: 1.5 }}>{c.desc}</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text)' }}>{t(c.titleKey)}</div>
+            <div style={{ fontSize: 11.5, color: c.soon ? 'var(--ide-text3)' : 'var(--ide-text2)', lineHeight: 1.5 }}>{t(c.descKey)}</div>
           </button>
         ))}
       </div>

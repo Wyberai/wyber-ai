@@ -4,6 +4,9 @@ import { creditCost } from '@/lib/credits';
 import { useEditorStore } from '@/store/editor';
 import { getPaletteById, renderDesignBrief } from '@/lib/design-palettes';
 import { DirectionCards } from './DirectionCards';
+import { useT } from '@/lib/i18n/useT';
+import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
+import { EDITOR_PLAN_STRINGS } from '@/lib/i18n/dict/editor-plan';
 
 type IconKey = 'auth' | 'dashboard' | 'list' | 'board' | 'payment' | 'settings' | 'search' | 'chat' | 'calendar' | 'profile' | 'notification' | 'upload' | 'map' | 'analytics' | 'landing' | 'other';
 
@@ -87,6 +90,8 @@ ORIGINAL REQUEST: ${originalPrompt}`;
 }
 
 export function PlanMode({ prompt, framework, fileContext, projectId, onApprove, onCancel }: Props) {
+  const t = useT(EDITOR_PLAN_STRINGS);
+  const tc = useT(COMMON_STRINGS);
   // 'questions': loading/showing phase-1 clarifying questions.
   // 'plan-loading': phase-1 done (or skipped), waiting on the actual plan.
   // 'plan': plan loaded and ready to review/approve.
@@ -208,7 +213,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
   };
   const addFeature = () => {
     if (!plan) return;
-    setPlan({ ...plan, features: [...plan.features, { id: uid(), title: 'New feature', description: '', icon: 'other' }] });
+    setPlan({ ...plan, features: [...plan.features, { id: uid(), title: t('newFeatureTitle'), description: '', icon: 'other' }] });
   };
   const moveFeature = (idx: number, dir: -1 | 1) => {
     if (!plan) return;
@@ -246,12 +251,12 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
           onClick={() => failedPhase === 'plan' ? loadPlan(answers) : loadQuestions()}
           className="btn" style={{ fontSize: 12 }}
         >
-          Retry
+          {tc('retry')}
         </button>
         {/* Always available — Plan Mode is an offer, never a requirement. If
             planning itself is broken, the user can still build directly with
             their original words, same as typing straight into the chat box. */}
-        <button onClick={() => onApprove(prompt)} className="btn btn-primary" style={{ fontSize: 12 }}>Generate anyway</button>
+        <button onClick={() => onApprove(prompt)} className="btn btn-primary" style={{ fontSize: 12 }}>{t('generateAnyway')}</button>
       </div>
     </div>
   );
@@ -259,7 +264,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
   if (stage === 'questions' && questions.length === 0) return (
     <div style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ width: 16, height: 16, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Thinking about what to ask…</span>
+      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('thinkingWhatToAsk')}</span>
       <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -267,8 +272,8 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
   if (stage === 'questions') return (
     <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div>
-        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 3px' }}>What are you looking to build?</p>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>A couple quick questions before I put together a plan.</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 3px' }}>{t('whatAreYouBuilding')}</p>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0 }}>{t('quickQuestionsSub')}</p>
       </div>
       {questions.map((q, i) => (
         <div key={i}>
@@ -298,7 +303,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
           <input
             value={answers[q.question] ?? ''}
             onChange={e => setAnswers(a => ({ ...a, [q.question]: e.target.value }))}
-            placeholder="Or type your own answer…"
+            placeholder={t('typeOwnAnswerPlaceholder')}
             style={{ fontSize: 12, width: '100%', background: 'var(--bg-overlay, rgba(255,255,255,0.05))', border: '1px solid var(--border)', borderRadius: 6, padding: '7px 9px', outline: 'none', fontFamily: 'inherit', color: 'var(--text-primary)' }}
           />
         </div>
@@ -310,9 +315,9 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
           className="btn btn-primary"
           style={{ flex: 1, justifyContent: 'center', fontSize: 13, background: allQuestionsAnswered ? 'var(--accent, #0EA5E9)' : 'var(--bg-overlay, rgba(255,255,255,0.08))', color: allQuestionsAnswered ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: 8, padding: '9px', fontWeight: 700, cursor: allQuestionsAnswered ? 'pointer' : 'not-allowed' }}
         >
-          Continue →
+          {t('continueArrow')}
         </button>
-        <button onClick={onCancel} className="btn btn-ghost" style={{ fontSize: 13, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+        <button onClick={onCancel} className="btn btn-ghost" style={{ fontSize: 13, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-secondary)', cursor: 'pointer' }}>{tc('cancel')}</button>
       </div>
     </div>
   );
@@ -320,7 +325,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
   if (stage === 'plan-loading' || !plan) return (
     <div style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ width: 16, height: 16, border: '2px solid var(--accent)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Sketching the plan…</span>
+      <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('sketchingPlan')}</span>
       <style>{`@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -341,7 +346,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
               {plan.complexity}
             </span>
             <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 10, background: 'var(--accent-glow, rgba(14,165,233,0.1))', color: 'var(--accent, #0EA5E9)', fontWeight: 600 }}>
-              ~{plan.estimatedCredits} credits incl. iterations
+              ~{plan.estimatedCredits} {t('creditsInclIterations')}
             </span>
           </div>
         </div>
@@ -359,13 +364,13 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       {(plan.integrations.length > 0 || editing) && (
         <div>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Tools needed
+            {t('toolsNeeded')}
             {/* Always-visible affordance: users who saw "HubSpot" but use
                 Salesforce never found the global ✎ Edit plan toggle. */}
             {!editing && (
               <button onClick={() => setEditing(true)}
                 style={{ marginLeft: 8, fontSize: 10, fontWeight: 600, textTransform: 'none', letterSpacing: 'normal', padding: '1px 8px', borderRadius: 10, border: '1px solid var(--border)', background: 'transparent', color: 'var(--accent, #0EA5E9)', cursor: 'pointer', fontFamily: 'inherit' }}>
-                ✎ change tools
+                {t('changeToolsBtn')}
               </button>
             )}
           </p>
@@ -374,7 +379,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
               <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: 'var(--accent, #0EA5E9)', background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 20, padding: '4px 10px' }}>
                 <span style={{ fontSize: 13 }}>{integrationIcon(s)}</span>{s}
                 {editing && (
-                  <button onClick={() => removeTool(s)} title="Remove tool" style={{ background: 'none', border: 'none', color: 'var(--accent, #0EA5E9)', cursor: 'pointer', padding: 0, marginLeft: 2, fontSize: 12, lineHeight: 1, opacity: 0.7 }}>×</button>
+                  <button onClick={() => removeTool(s)} title={t('removeToolTitle')} style={{ background: 'none', border: 'none', color: 'var(--accent, #0EA5E9)', cursor: 'pointer', padding: 0, marginLeft: 2, fontSize: 12, lineHeight: 1, opacity: 0.7 }}>×</button>
                 )}
               </span>
             ))}
@@ -385,7 +390,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
                 value={toolQuery}
                 onChange={e => setToolQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && toolQuery.trim()) { e.preventDefault(); addTool(toolQuery); } }}
-                placeholder="Search tools to add (e.g. Gmail, Slack, Supabase)…"
+                placeholder={t('searchToolsPlaceholder')}
                 style={{ fontSize: 11, width: '100%', background: 'var(--bg-overlay, rgba(255,255,255,0.05))', border: '1px solid var(--border)', borderRadius: 6, padding: '6px 9px', outline: 'none', fontFamily: 'inherit', color: 'var(--text-primary)' }}
               />
               {toolSuggestions.length > 0 && (
@@ -409,7 +414,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       {/* Flow — the primary screen-to-screen path, rendered as a connected diagram */}
       {plan.flow.screens.length > 0 && (
         <div>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Flow</p>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('flowLabel')}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
             {plan.flow.screens.map((s, i) => (
               <div key={s.id} style={{ display: 'contents' }}>
@@ -428,11 +433,11 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 8px' }}>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Features ({plan.features.length})
+            {t('featuresLabel')} ({plan.features.length})
           </p>
           <button onClick={() => setEditing(v => !v)}
             style={{ fontSize: 10, padding: '3px 9px', borderRadius: 5, border: '1px solid var(--border)', background: editing ? 'var(--accent-glow, rgba(14,165,233,0.1))' : 'transparent', color: editing ? 'var(--accent, #0EA5E9)' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>
-            {editing ? '✓ Done editing' : '✎ Edit plan'}
+            {editing ? t('doneEditingBtn') : t('editPlanBtn')}
           </button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -464,9 +469,9 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
                   </div>
                   {editing && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, flexShrink: 0 }}>
-                      <button onClick={() => moveFeature(i, -1)} title="Move up" style={{ fontSize: 10, width: 22, height: 18, borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>↑</button>
-                      <button onClick={() => moveFeature(i, 1)} title="Move down" style={{ fontSize: 10, width: 22, height: 18, borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>↓</button>
-                      <button onClick={() => deleteFeature(f.id)} title="Delete feature" style={{ fontSize: 10, width: 22, height: 18, borderRadius: 4, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}>×</button>
+                      <button onClick={() => moveFeature(i, -1)} title={t('moveUpTitle')} style={{ fontSize: 10, width: 22, height: 18, borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>↑</button>
+                      <button onClick={() => moveFeature(i, 1)} title={t('moveDownTitle')} style={{ fontSize: 10, width: 22, height: 18, borderRadius: 4, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}>↓</button>
+                      <button onClick={() => deleteFeature(f.id)} title={t('deleteFeatureTitle')} style={{ fontSize: 10, width: 22, height: 18, borderRadius: 4, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}>×</button>
                     </div>
                   )}
                 </div>
@@ -475,7 +480,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
           })}
           {editing && (
             <button onClick={addFeature} style={{ fontSize: 11, padding: '7px', borderRadius: 8, border: '1px dashed var(--border)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit' }}>
-              + Add feature
+              {t('addFeatureBtn')}
             </button>
           )}
         </div>
@@ -487,7 +492,7 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
       {/* Warnings */}
       {plan.warnings.length > 0 && !editing && (
         <div style={{ padding: '10px 12px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 8 }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber, #f59e0b)', margin: '0 0 5px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Heads up</p>
+          <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--amber, #f59e0b)', margin: '0 0 5px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('headsUpLabel')}</p>
           {plan.warnings.map((w, i) => <p key={i} style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '3px 0 0' }}>• {w}</p>)}
         </div>
       )}
@@ -499,15 +504,15 @@ export function PlanMode({ prompt, framework, fileContext, projectId, onApprove,
             onClick={approve}
             disabled={plan.features.length === 0}
             className="btn btn-primary"
-            title={plan.features.length === 0 ? 'Add at least one feature first' : undefined}
+            title={plan.features.length === 0 ? t('addFeatureFirstTitle') : undefined}
             style={{ flex: 1, justifyContent: 'center', fontSize: 13, background: plan.features.length > 0 ? 'var(--accent, #0EA5E9)' : 'var(--bg-overlay, rgba(255,255,255,0.08))', color: plan.features.length > 0 ? 'white' : 'var(--text-muted)', border: 'none', borderRadius: 8, padding: '9px', fontWeight: 700, cursor: plan.features.length > 0 ? 'pointer' : 'not-allowed' }}
           >
-            ⚡ Build this plan ({creditCost('web-build', 'default')} credits)
+            {t('buildThisPlanBtn')} ({creditCost('web-build', 'default')} {t('creditsSuffix')})
           </button>
-          <button onClick={onCancel} className="btn btn-ghost" style={{ fontSize: 13, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-secondary)', cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onCancel} className="btn btn-ghost" style={{ fontSize: 13, background: 'transparent', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 14px', color: 'var(--text-secondary)', cursor: 'pointer' }}>{tc('cancel')}</button>
         </div>
         {plan.features.length === 0 && (
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, textAlign: 'center' }}>Add at least one feature to build</p>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, textAlign: 'center' }}>{t('addFeatureToBuildHint')}</p>
         )}
       </div>
     </div>
