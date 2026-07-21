@@ -32,16 +32,22 @@ export function Dialog({ open, onOpenChange, children, maxWidth = 480 }: DialogP
               />
             </DialogPrimitive.Overlay>
             <DialogPrimitive.Content asChild forceMount>
-              <motion.div
-                className="dialog-content"
-                style={{ maxWidth }}
-                initial={{ opacity: 0, scale: 0.97, y: 8 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.97, y: 8 }}
-                transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {children}
-              </motion.div>
+              {/* Framer Motion writes its own `transform` onto whichever element it
+                  animates, which would clobber .dialog-content's CSS
+                  `translate(-50%,-50%)` centering — so the fixed/centered
+                  positioning lives on this plain wrapper, and only the inner div
+                  (which needs no position of its own) is a motion.div. */}
+              <div className="dialog-content-wrap" style={{ maxWidth }}>
+                <motion.div
+                  className="dialog-content"
+                  initial={{ opacity: 0, scale: 0.97, y: 8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 8 }}
+                  transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  {children}
+                </motion.div>
+              </div>
             </DialogPrimitive.Content>
           </DialogPrimitive.Portal>
         )}

@@ -41,7 +41,7 @@ export default async function LocalizedAboutPage({ params }: { params: Promise<{
 
   return (
     <div lang={locale} style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: 'var(--font-sans)' }}>
-      <Navbar />
+      <Navbar locale={locale as Locale} />
 
       <div style={{ maxWidth: 800, margin: '0 auto', padding: 'clamp(64px,10vw,100px) clamp(16px,4vw,40px) 0' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--sky)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>{c.eyebrowAbout}</div>
@@ -93,7 +93,7 @@ export default async function LocalizedAboutPage({ params }: { params: Promise<{
         </div>
       </div>
 
-      <Footer />
+      <Footer locale={locale as Locale} />
     </div>
   )
 }

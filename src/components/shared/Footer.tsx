@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { WyberLogo } from '@/components/shared/WyberLogo';
+import { localePath } from '@/lib/i18n/hreflang';
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales';
 
 const COLS = [
   { heading: 'Product',   links: [['Pricing','/pricing'],['Web Apps','/use-cases/no-code-web-app-builder'],['MCP Server','/mcp'],['The Journey','/space-journey'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
@@ -9,7 +11,10 @@ const COLS = [
   { heading: 'Company',   links: [['Founders','/founders'],['Press','/press'],['Affiliates','/affiliates'],['Community','/community'],['Privacy','/privacy'],['Terms','/terms']] },
 ];
 
-export function Footer() {
+// `locale` only matters on the 5 real locale-routed pages (about/build/use-cases/vs) —
+// every other caller renders this footer on a plain English/self-translating URL and
+// gets the default, which localePath resolves to a no-op passthrough.
+export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale } = {}) {
   return (
     <footer style={{
       borderTop: '1px solid var(--border)',
@@ -21,7 +26,7 @@ export function Footer() {
         <div style={{ display: 'grid', gridTemplateColumns: '1.6fr repeat(4,1fr)', gap: 40, marginBottom: 40 }}>
           {/* Brand */}
           <div>
-            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
+            <Link href={localePath('/', locale)} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, marginBottom: 14 }}>
               <WyberLogo markSize={24} wordmarkSize={15} />
             </Link>
             <p style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.7, marginBottom: 16, maxWidth: 220 }}>
@@ -54,7 +59,7 @@ export function Footer() {
               <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>{col.heading}</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 {col.links.map(([label, href]) => (
-                  <Link key={href} href={href}
+                  <Link key={href} href={localePath(href, locale)}
                     style={{ fontSize: 13, color: 'var(--text3)', fontWeight: 500, transition: 'color 0.12s' }}
                     onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--text)'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--text3)'}

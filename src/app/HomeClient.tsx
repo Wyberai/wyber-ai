@@ -9,6 +9,7 @@ import { track } from '@/lib/track';
 import { VoiceButton } from '@/components/editor/VoiceButton';
 import { LanguageToggle } from '@/components/shared/LanguageToggle';
 import { I18N_ENABLED, LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Locale } from '@/lib/i18n/locales';
+import { localePath } from '@/lib/i18n/hreflang';
 import { HOME_STRINGS, type HomeStrings } from '@/lib/i18n/home-translations';
 import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
 
@@ -351,7 +352,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   const STAGES = buildStages(t);
   const product = PRODUCTS[activeProduct];
 
-  const navLinks: [string, string][] = [[t.navWebApps, '/use-cases/no-code-web-app-builder'], [t.navMobileApps, '/use-cases/build-mobile-app-with-ai'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  // /use-cases/[slug] has a real locale route (src/app/[locale]/use-cases/[slug]) —
+  // route it through localePath so picking a non-English locale doesn't get
+  // dropped the moment the visitor leaves the homepage. /space-journey and
+  // /pricing have no locale-prefixed variant and self-translate client-side.
+  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark">

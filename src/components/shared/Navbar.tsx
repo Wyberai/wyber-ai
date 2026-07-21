@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { useTheme } from '@/lib/theme';
 import { createClient } from '@/lib/supabase/client';
 import { WyberLogo } from '@/components/shared/WyberLogo';
+import { localePath } from '@/lib/i18n/hreflang';
+import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales';
 
-interface Props { user?: { email?: string } | null; }
+interface Props { user?: { email?: string } | null; locale?: Locale; }
 
 // ── Resources mega-menu structure ──────────────────────────────────────────────
 const RESOURCES = [
@@ -58,7 +60,8 @@ const NAV_LINKS: [label: string, href: string, soon?: boolean][] = [
 
 const soonPillStyle: CSSProperties = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 };
 
-export function Navbar({ user }: Props) {
+export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
+  const lp = (path: string) => localePath(path, locale);
   const { theme, toggle } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -173,14 +176,14 @@ export function Navbar({ user }: Props) {
         transition: 'all 0.3s',
         fontFamily: 'var(--font-sans)',
       }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <Link href={lp('/')} style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
 
         {/* Desktop nav */}
         <div className="nav-links-desktop" style={{ display: 'flex', alignItems: 'center', gap: 24, position: 'relative' }}>
           {NAV_LINKS.map(([label, href, soon]) => (
-            <Link key={href} href={href} className="wy-nav-link" style={soon ? { display: 'inline-flex', alignItems: 'center', gap: 5 } : undefined}>
+            <Link key={href} href={lp(href)} className="wy-nav-link" style={soon ? { display: 'inline-flex', alignItems: 'center', gap: 5 } : undefined}>
               {label}{soon && <span style={soonPillStyle}>soon</span>}
             </Link>
           ))}
@@ -252,7 +255,7 @@ export function Navbar({ user }: Props) {
                         return (
                           <a
                             key={item.href}
-                            href={item.href}
+                            href={lp(item.href)}
                             role="menuitem"
                             className="wy-res-item"
                             ref={el => { itemRefs.current[idx] = el; }}
@@ -308,7 +311,7 @@ export function Navbar({ user }: Props) {
           boxShadow: 'var(--shadow-lg)', maxHeight: 'calc(100vh - 58px)', overflowY: 'auto',
         }}>
           {NAV_LINKS.map(([label, href, soon]) => (
-            <Link key={href} href={href} onClick={() => setMenuOpen(false)}
+            <Link key={href} href={lp(href)} onClick={() => setMenuOpen(false)}
               style={{ fontSize: 15, fontWeight: 500, color: 'var(--text2)', padding: '11px 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
               {label}{soon && <span style={soonPillStyle}>soon</span>}
             </Link>
@@ -340,7 +343,7 @@ export function Navbar({ user }: Props) {
                     {group.heading}
                   </div>
                   {group.items.map(item => (
-                    <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}
+                    <Link key={item.href} href={lp(item.href)} onClick={() => setMenuOpen(false)}
                       style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--text2)', padding: '8px 0', borderBottom: '1px solid var(--border)', textDecoration: 'none' }}>
                       {item.label}
                     </Link>
