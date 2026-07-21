@@ -17,6 +17,8 @@ const VersionHistory  = dynamic(() => import('./VersionHistory').then(m => ({ de
 const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ default: m.AgentMode })), { ssr: false });
 const FigmaImportPanel = dynamic(() => import('./FigmaImportPanel').then(m => ({ default: m.FigmaImportPanel })), { ssr: false });
 const RlsScanPanel    = dynamic(() => import('./RlsScanPanel').then(m => ({ default: m.RlsScanPanel })), { ssr: false });
+const LaunchReadinessPanel = dynamic(() => import('./LaunchReadinessPanel').then(m => ({ default: m.LaunchReadinessPanel })), { ssr: false });
+const FounderChecklistPanel = dynamic(() => import('./FounderChecklistPanel').then(m => ({ default: m.FounderChecklistPanel })), { ssr: false });
 const ImagesPanel     = dynamic(() => import('./ImagesPanel').then(m => ({ default: m.ImagesPanel })), { ssr: false });
 
 interface Props {
@@ -137,7 +139,15 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'knowledge'  && <KnowledgePanel projectId={projectId} />}
             {active === 'templates'  && <div style={scrollStyle}><TemplateGallery onClose={() => setActive('chat')} /></div>}
             {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
-            {active === 'security'   && <div style={scrollStyle}><RlsScanPanel projectId={projectId || ''} /></div>}
+            {active === 'security'   && (
+              <div style={scrollStyle}>
+                <RlsScanPanel projectId={projectId || ''} />
+                <div style={{ height: 1, background: 'var(--ide-border)', margin: '4px 16px' }} />
+                <LaunchReadinessPanel projectId={projectId || ''} />
+                <div style={{ height: 1, background: 'var(--ide-border)', margin: '4px 16px' }} />
+                <FounderChecklistPanel projectId={projectId || ''} />
+              </div>
+            )}
             {active === 'themes'     && <div style={scrollStyle}><ThemePanel /></div>}
             {active === 'images'     && <div style={scrollStyle}><ImagesPanel projectId={projectId} /></div>}
             {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}

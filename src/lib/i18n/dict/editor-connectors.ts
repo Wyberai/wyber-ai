@@ -143,6 +143,33 @@ export const EDITOR_CONNECTORS_STRINGS: Record<Locale, Record<string, string>> =
     criticalSuffix: 'critical',
     publishSuffix: 'publish',
 
+    // LaunchReadinessPanel.tsx — English only for now (new panel, pending a
+    // native-review translation pass like the rest of this file's note above).
+    // Deliberately scoped as "Technical & Trust" — NOT "Launch Readiness" —
+    // since this only scans code-level hygiene (legal pages, contact info,
+    // placeholder content, broken links). Pricing, positioning, support
+    // staffing, and marketing plan are founder judgment calls, not code
+    // properties — see FounderChecklistPanel.tsx for that half of the picture.
+    launchReadinessBold: 'Technical & trust scan.',
+    launchReadinessDesc: "Reads your actual shipped app for missing legal pages, dead contact info, leftover placeholder content, and broken internal links — not a guess from a template. This is code-level hygiene only; see the checklist below for pricing, support, and GTM readiness.",
+    runLaunchScanBtn: 'Run technical & trust scan',
+    checkingAppBtn: 'Checking your app…',
+    launchScanFailedFallback: 'Scan failed. Try again in a moment.',
+    launchReadinessScoreTitle: 'Technical & Trust Readiness',
+    issuesFoundTemplate: '{issues} issue{issuesPlural} found · {passed} of {total} checks passed',
+    passedHeaderTemplate: 'Passed ({count})',
+    readyToLaunchBadge: '✓ Code-ready',
+    notReadyYetBadge: 'Not ready yet',
+
+    // FounderChecklistPanel.tsx — the human-judgment half of launch readiness.
+    // These are decisions and processes, not code properties, so they're
+    // self-certified rather than scanned — a rubber-stamp checkbox alone is
+    // gameable, so items that benefit from it also ask for the real answer.
+    founderChecklistTitle: 'Founder launch checklist',
+    founderChecklistDesc: "Pricing, support, and go-to-market are decisions only you can make — no scanner can check them for you. Tick off what's genuinely true.",
+    checklistSavedMsg: 'Saved',
+    checklistCompleteTemplate: '{done} of {total} done',
+
     // ProjectSettings.tsx
     projectSettingsTitle: 'Project Settings',
     projectNameSectionTitle: 'Project name',
