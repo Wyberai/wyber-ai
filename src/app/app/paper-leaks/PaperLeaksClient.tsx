@@ -32,6 +32,9 @@ const CATEGORY_ICON: Record<string, string> = {
   'Medical Entrance': '\u{1FA7A}',
   'Medical Entrance / Recruitment': '\u{1FA7A}',
   'Academic — Eligibility Test': '✅',
+  'University Entrance': '\u{1F4D6}',
+  'Law Entrance': '⚖️',
+  'Engineering Entrance': '\u{1F4D0}',
 }
 const DEFAULT_ICON = '\u{1F4C4}'
 
