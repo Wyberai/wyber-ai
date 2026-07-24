@@ -102,6 +102,10 @@ export function PaperLeaksClient() {
     .sort((a, b) => b[1] - a[1])
     .map(([st, count]) => ({ key: st, label: STATUS_LABELS[st as IncidentStatus], value: count, color: STATUS_COLORS[st as IncidentStatus] }))
 
+  const byState: BarDatum[] = countBy(PAPER_LEAK_INCIDENTS, i => i.state)
+    .sort((a, b) => b[1] - a[1])
+    .map(([st, count]) => ({ key: st, label: st, value: count, icon: st === 'National' ? '\u{1F1EE}\u{1F1F3}' : '\u{1F4CD}' }))
+
   const selectStyle: React.CSSProperties = {
     padding: '9px 14px', borderRadius: 9, border: '1px solid var(--brand-border-strong)', background: 'var(--brand-bg-raised)',
     color: 'var(--brand-text)', fontSize: 12.5, fontFamily: 'inherit', outline: 'none',
@@ -175,24 +179,31 @@ export function PaperLeaksClient() {
             <BreakdownTable
               groups={[
                 { title: 'By year', rows: byYear },
-                { title: 'By category', rows: byCategory },
-                { title: 'By status', rows: byStatus },
+                { title: 'By state', rows: byState },
+                { title: 'By department / category', rows: byCategory },
+                { title: 'By case status (judgement)', rows: byStatus },
               ]}
             />
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 40 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 40 }}>
             <div className="mk-card" style={{ padding: 20 }}>
               <div className="mk-stat-label" style={{ marginBottom: 16 }}>By year</div>
               <VerticalBarChart data={byYear} defaultColor={ACCENT_HOT} />
             </div>
-            <div className="mk-card" style={{ padding: 20 }}>
-              <div className="mk-stat-label" style={{ marginBottom: 14 }}>By category</div>
-              <HorizontalBarChart data={byCategory} defaultColor={ACCENT} />
-            </div>
-            <div className="mk-card" style={{ padding: 20 }}>
-              <div className="mk-stat-label" style={{ marginBottom: 14 }}>By status</div>
-              <HorizontalBarChart data={byStatus} defaultColor={ACCENT} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+              <div className="mk-card" style={{ padding: 20 }}>
+                <div className="mk-stat-label" style={{ marginBottom: 14 }}>By state</div>
+                <HorizontalBarChart data={byState} defaultColor={ACCENT} />
+              </div>
+              <div className="mk-card" style={{ padding: 20 }}>
+                <div className="mk-stat-label" style={{ marginBottom: 14 }}>By department / category</div>
+                <HorizontalBarChart data={byCategory} defaultColor={ACCENT} />
+              </div>
+              <div className="mk-card" style={{ padding: 20 }}>
+                <div className="mk-stat-label" style={{ marginBottom: 14 }}>By case status (judgement)</div>
+                <HorizontalBarChart data={byStatus} defaultColor={ACCENT} />
+              </div>
             </div>
           </div>
         )}
