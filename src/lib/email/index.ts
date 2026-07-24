@@ -188,6 +188,33 @@ export async function sendAdminContentReport(opts: {
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚠️ Content reported: ${opts.slug}`, html })
 }
 
+export async function sendAdminPaperLeakTip(opts: {
+  examName: string
+  state?: string
+  year?: number
+  description: string
+  sourceUrl?: string
+  reporterEmail?: string
+}) {
+  // A visitor to /app/paper-leaks suggested an incident. Nothing auto-publishes —
+  // this just gets it in front of the founder to verify against real sources
+  // before it's added to src/lib/paper-leaks/data.ts.
+  const html = wrap(`
+    ${h1('📝 Paper leak tip submitted')}
+    ${p('A visitor suggested an incident for the Paper Leaks Dashboard. Verify against real sources before adding it.')}
+    ${infoBox([
+      ['Exam', opts.examName],
+      ...(opts.state ? [['State', opts.state] as [string, string]] : []),
+      ...(opts.year ? [['Year', String(opts.year)] as [string, string]] : []),
+      ['Description', opts.description],
+      ...(opts.sourceUrl ? [['Source', opts.sourceUrl] as [string, string]] : []),
+      ...(opts.reporterEmail ? [['Reporter email', opts.reporterEmail] as [string, string]] : []),
+      ['When', new Date().toUTCString()],
+    ], '#0EA5E955')}
+  `, `Paper leak tip: ${opts.examName}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📝 Paper leak tip: ${opts.examName}`, html })
+}
+
 export async function sendChallengeWinnerEmail(to: string, placeLabel: string, credits: number, newBalance?: number) {
   const html = wrap(`
     ${h1(`You won ${placeLabel} 🏆`)}

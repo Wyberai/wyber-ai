@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { PAPER_LEAK_INCIDENTS, STATUS_LABELS, type IncidentStatus, type PaperLeakIncident } from '@/lib/paper-leaks/data'
 import { HorizontalBarChart, VerticalBarChart, BreakdownTable, MosaicStrip, HeroNumber, type BarDatum } from './charts'
+import { TipModal } from './TipModal'
 
 const ACCENT = 'var(--brand-accent)'
 const ACCENT_HOT = 'var(--brand-accent-hot)'
@@ -69,6 +70,7 @@ export function PaperLeaksClient() {
   const [category, setCategory] = useState('All')
   const [status, setStatus] = useState<'All' | IncidentStatus>('All')
   const [tableView, setTableView] = useState(false)
+  const [tipOpen, setTipOpen] = useState(false)
 
   const states = useMemo(() => ['All', ...Array.from(new Set(PAPER_LEAK_INCIDENTS.map(i => i.state))).sort()], [])
   const categories = useMemo(() => ['All', ...Array.from(new Set(PAPER_LEAK_INCIDENTS.map(i => i.category))).sort()], [])
@@ -133,7 +135,12 @@ export function PaperLeaksClient() {
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={22} wordmarkSize={13} />
         </Link>
-        <a href="#methodology" className="mk-mono" style={{ textDecoration: 'none' }}>Methodology & corrections</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <a href="#methodology" className="mk-mono" style={{ textDecoration: 'none' }}>Methodology & corrections</a>
+          <button onClick={() => setTipOpen(true)} className="mk-btn" style={{ padding: '7px 16px', fontSize: 12.5 }}>
+            + Suggest a leak
+          </button>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -332,7 +339,9 @@ export function PaperLeaksClient() {
             Casualty and injury figures are <strong>not</strong> tracked for every incident. A &ldquo;Reported human impact&rdquo; note appears only where multiple reputable outlets documented a specific, attributable toll for that exact incident — most protests around these cases involved no reported deaths or injuries, and most entries simply have no note because none was found.
           </p>
           <p style={{ margin: '0 0 10px' }}>
-            Spotted an error, an outdated status, or a documented incident that should be added? <Link href="/contact" style={{ color: ACCENT_HOT, textDecoration: 'none' }}>Let us know</Link>.
+            Spotted an error, an outdated status, or a documented incident that should be added?{' '}
+            <button onClick={() => setTipOpen(true)} style={{ color: ACCENT_HOT, background: 'none', border: 'none', padding: 0, font: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>Suggest it</button>
+            {' '}or <Link href="/contact" style={{ color: ACCENT_HOT, textDecoration: 'none' }}>contact us</Link>.
           </p>
           <p style={{ margin: 0, fontWeight: 600, color: 'var(--brand-text-dim)' }}>
             This page is an independent public-interest resource. It is not affiliated with, funded by, or endorsed by any political party or government, and nothing on it is for sale.
@@ -349,6 +358,8 @@ export function PaperLeaksClient() {
         }
         select option { background: var(--brand-bg-raised); color: var(--brand-text); }
       `}</style>
+
+      <TipModal open={tipOpen} onClose={() => setTipOpen(false)} states={states} />
     </div>
   )
 }
