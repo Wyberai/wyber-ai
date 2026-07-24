@@ -99,6 +99,12 @@ interface EditorState {
   initialPrompt: string; // the prompt the project was created with (durable handoff fallback)
   checkpoints: Checkpoint[];
   connectors: Connector[];
+  // Connector ids (see ConnectorsPanel's CONNECTORS catalog) detected as
+  // needed by THIS project's files — e.g. after a marketplace purchase or a
+  // zip/GitHub import delivers a fully-formed app with no "generation" moment
+  // to hook. Empty for normal AI-generated projects, which already get this
+  // via ChatPanel's per-message dependency gate instead.
+  recommendedConnectorIds: string[];
   hydrated: boolean; // true once project data loaded from server
 
   previewUrl: string | null;
@@ -166,6 +172,7 @@ interface EditorState {
   consumeCredit: () => void;
   setCredits: (n: number) => void;
   setConnectors: (c: Connector[]) => void;
+  setRecommendedConnectorIds: (ids: string[]) => void;
   setPreviewError: (e: string | null) => void;
   setPreviewHealFailed: (v: boolean) => void;
   setSelectionConsumer: (c: 'visual-edit' | 'wyberman' | null) => void;
@@ -199,6 +206,7 @@ export const useEditorStore = create<EditorState>()(
     initialPrompt: '',
     checkpoints: [],
     connectors: [],
+    recommendedConnectorIds: [],
     hydrated: false,
     previewUrl: null,
     previewMode: 'preview',
@@ -229,23 +237,38 @@ export const useEditorStore = create<EditorState>()(
       s.initialPrompt = '';
       s.checkpoints = [];
       s.connectors = [];
+      s.recommendedConnectorIds = [];
       s.hydrated = false;
     }),
     setFramework: (f) => set((s) => { s.framework = f; }),
 
     hydrateProject: (data) => set((s) => {
-      s.project = data.project;
-      s.framework = data.project.framework ?? 'react-vite';
-      if (data.files && Object.keys(data.files).length > 0) {
-        s.files = data.files;
-        s.hasGeneratedFiles = true;
-        const paths = Object.keys(data.files);
-        const preferred = paths.find(p => p.includes('App') || p.includes('index') || p.includes('main')) ?? paths[0];
-        s.activeFile = preferred;
-        s.openTabs = [preferred];
-      } else {
-        s.files = {};
-        s.hasGeneratedFiles = false;
+      // Same race as files below: if the caller already set s.project (synchronously,
+      // before its own async fetches resolved) and a save has since bumped its
+      // updated_at, blindly reapplying data.project here would reset it back to the
+      // stale SSR value — causing the NEXT save's conflict-guard to false-positive
+      // and get silently rejected by the server (see persist-project.ts).
+      if (!s.project || s.project.id !== data.project.id) {
+        s.project = data.project;
+        s.framework = data.project.framework ?? 'react-vite';
+      }
+      // This resolves after a few parallel network round-trips (messages/knowledge/
+      // connectors), so the user can already have edited files (e.g. a theme change)
+      // by the time it lands. If so, `data.files` is just the stale SSR snapshot from
+      // page load — applying it would silently revert the edit a few seconds later.
+      // Only seed files here if nothing has populated the store yet.
+      if (Object.keys(s.files).length === 0) {
+        if (data.files && Object.keys(data.files).length > 0) {
+          s.files = data.files;
+          s.hasGeneratedFiles = true;
+          const paths = Object.keys(data.files);
+          const preferred = paths.find(p => p.includes('App') || p.includes('index') || p.includes('main')) ?? paths[0];
+          s.activeFile = preferred;
+          s.openTabs = [preferred];
+        } else {
+          s.files = {};
+          s.hasGeneratedFiles = false;
+        }
       }
       s.messages = data.messages ?? [];
       s.knowledge = data.knowledge ?? '';
@@ -337,6 +360,7 @@ export const useEditorStore = create<EditorState>()(
     consumeCredit: () => set((s) => { s.credits = Math.max(0, s.credits - 1); }),
     setCredits: (n) => set((s) => { s.credits = n; }),
     setConnectors: (c) => set((s) => { s.connectors = c; }),
+    setRecommendedConnectorIds: (ids) => set((s) => { s.recommendedConnectorIds = ids; }),
     setPreviewError: (e) => set((s) => { s.previewError = e; }),
     setPreviewHealFailed: (v) => set((s) => { s.previewHealFailed = v; }),
     setSelectionConsumer: (c) => set((s) => { s.selectionConsumer = c; }),

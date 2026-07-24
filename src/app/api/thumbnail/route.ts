@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
+import { captureScreenshot, uploadScreenshot, isAllowedScreenshotUrl } from '@/lib/screenshot';
 
 export async function POST(req: NextRequest) {
   const { projectId, previewUrl } = await req.json();
@@ -7,46 +8,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Missing params' }, { status: 400 });
   }
 
+  // This runs a real server-side fetch of `previewUrl` inside a headless
+  // browser and writes the result to `projectId` — without these two checks
+  // it's an unauthenticated arbitrary-URL SSRF primitive with a write side
+  // effect on any project row.
+  if (!isAllowedScreenshotUrl(previewUrl)) {
+    return NextResponse.json({ error: 'previewUrl is not on an allowed host' }, { status: 400 });
+  }
+  const auth = await createClient();
+  const { data: { user } } = await auth.auth.getUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const admin = await createAdminClient();
+  const { data: project } = await admin.from('projects').select('user_id').eq('id', projectId).single();
+  if (!project || project.user_id !== user.id) {
+    return NextResponse.json({ error: 'Not your project' }, { status: 403 });
+  }
+
   try {
-    // Use puppeteer-core with @sparticuz/chromium for serverless
-    const chromium = await import('@sparticuz/chromium');
-    const puppeteer = await import('puppeteer-core');
+    const screenshotBuffer = await captureScreenshot(previewUrl);
+    const publicUrl = await uploadScreenshot(screenshotBuffer, `thumbnails/${projectId}.jpg`);
 
-    const browser = await puppeteer.default.launch({
-      args: chromium.default.args,
-      defaultViewport: { width: 1280, height: 800 },
-      executablePath: await chromium.default.executablePath(),
-      headless: true,
-    });
-
-    const page = await browser.newPage();
-    await page.goto(previewUrl, { waitUntil: 'networkidle2', timeout: 15000 });
-    await new Promise(r => setTimeout(r, 1000)); // let animations settle
-
-    const screenshotBuffer = await page.screenshot({
-      type: 'jpeg',
-      quality: 80,
-      clip: { x: 0, y: 0, width: 1280, height: 800 },
-    });
-    await browser.close();
-
-    // Upload to Supabase Storage
-    const supabase = await createAdminClient();
-    const filename = `thumbnails/${projectId}.jpg`;
-    const { error } = await supabase.storage
-      .from('wyber-assets')
-      .upload(filename, screenshotBuffer, {
-        contentType: 'image/jpeg',
-        upsert: true,
-      });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('wyber-assets')
-      .getPublicUrl(filename);
-
-    await supabase.from('projects')
+    await admin.from('projects')
       .update({ thumbnail_url: publicUrl })
       .eq('id', projectId);
 

@@ -140,9 +140,15 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
 
   const categories = [...new Set(filtered.map(c => c.category))];
   const projectConnectors = useEditorStore(s => s.connectors);
+  const recommendedIds = useEditorStore(s => s.recommendedConnectorIds);
   const supabaseConnected = projectConnectors?.some(c => c.service === 'supabase');
   const isConnected = (c: typeof CONNECTORS[0]) =>
     c.id === 'supabase' ? !!supabaseConnected : (c.secretKeys ?? []).every(k => vaultNames.has(k.name.toUpperCase()));
+
+  // Detected from THIS app's actual source (a marketplace purchase or an
+  // imported project) — surfaced first so the buyer doesn't have to dig
+  // through the full 40+ catalog to find what's actually needed.
+  const recommended = CONNECTORS.filter(c => recommendedIds.includes(c.id))
 
   const handleAdd = async (connector: typeof CONNECTORS[0]) => {
     if (connector.id === 'supabase') {
@@ -175,6 +181,35 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
     sendToChat('wyber:request-secrets', { prompt: connector.prompt, group: { label: connector.name, icon: connector.icon, color: connector.color, keys: connector.secretKeys } });
   };
 
+  const renderRow = (c: typeof CONNECTORS[0]) => {
+    const connected = isConnected(c);
+    const logoUrl = c.id === 'supabase' ? 'https://logos.composio.dev/api/supabase' : c.logoSlug ? `https://logos.composio.dev/api/${c.logoSlug}` : undefined;
+    return (
+      <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', transition: 'all 0.15s' }}
+        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)')}
+        onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'}
+      >
+        <ConnectorIcon logoUrl={logoUrl} emoji={c.icon} color={c.color} name={c.name} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{c.name}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.desc}</div>
+        </div>
+        <button
+          onClick={() => handleAdd(c)}
+          disabled={adding === c.id}
+          style={{
+            padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)',
+            background: connected ? 'rgba(34,197,94,0.1)' : adding === c.id ? 'rgba(14,165,233,0.1)' : 'transparent',
+            color: connected ? '#22c55e' : adding === c.id ? '#0EA5E9' : 'var(--text-secondary)',
+            fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'all 0.15s',
+          }}
+        >
+          {connected ? `✓ ${t('connectedBadge')}` : adding === c.id ? t('addingLabel') : `+ ${t('addBtn')}`}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--ide-border)' }}>
@@ -187,38 +222,21 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
         />
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px' }}>
+        {recommended.length > 0 && !search && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+              ✨ Recommended for this app
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {recommended.map(renderRow)}
+            </div>
+          </div>
+        )}
         {categories.map(cat => (
           <div key={cat} style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{cat}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {filtered.filter(c => c.category === cat).map(c => {
-                const connected = isConnected(c);
-                const logoUrl = c.id === 'supabase' ? 'https://logos.composio.dev/api/supabase' : c.logoSlug ? `https://logos.composio.dev/api/${c.logoSlug}` : undefined;
-                return (
-                <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', transition: 'all 0.15s' }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.3)')}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'}
-                >
-                  <ConnectorIcon logoUrl={logoUrl} emoji={c.icon} color={c.color} name={c.name} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{c.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.desc}</div>
-                  </div>
-                  <button
-                    onClick={() => handleAdd(c)}
-                    disabled={adding === c.id}
-                    style={{
-                      padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)',
-                      background: connected ? 'rgba(34,197,94,0.1)' : adding === c.id ? 'rgba(14,165,233,0.1)' : 'transparent',
-                      color: connected ? '#22c55e' : adding === c.id ? '#0EA5E9' : 'var(--text-secondary)',
-                      fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'all 0.15s',
-                    }}
-                  >
-                    {connected ? `✓ ${t('connectedBadge')}` : adding === c.id ? t('addingLabel') : `+ ${t('addBtn')}`}
-                  </button>
-                </div>
-                );
-              })}
+              {filtered.filter(c => c.category === cat).map(renderRow)}
             </div>
           </div>
         ))}

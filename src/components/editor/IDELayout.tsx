@@ -3,6 +3,8 @@ import { useEditorStore } from '@/store/editor';
 import { AutoFix } from './AutoFix';
 import { Wyberman } from './Wyberman';
 import { useCallback, useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { detectDepsInFiles } from '@/lib/detect-deps';
 import { TopBar } from './TopBar';
 import { FileTree } from './FileTree';
 import { TabBar } from './TabBar';
@@ -26,8 +28,9 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   const {
     leftPanelWidth, rightPanelWidth,
     setLeftPanelWidth, setRightPanelWidth,
-    hydrateProject, setHydrated, setCredits, setConnectors, resetForProject,
+    hydrateProject, setHydrated, setCredits, setConnectors, setRecommendedConnectorIds, resetForProject, setProject,
   } = useEditorStore();
+  const searchParams = useSearchParams();
   const [showCode, setShowCode] = useState(false);
   const [showFileTree, setShowFileTree] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -88,6 +91,13 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
     // Set credits from profile
     if (initialProfile?.credits !== undefined) setCredits(initialProfile.credits);
 
+    // Set project synchronously, before the async fetches below. Without this,
+    // any save the user triggers (e.g. a theme change) in the window before
+    // messages/knowledge/connectors resolve sees project.id as null in the
+    // store, so persistProjectFiles's `if (project?.id)` guard silently skips
+    // the PATCH entirely — the UI shows "applied" but nothing reaches the DB.
+    setProject(project);
+
     // Load messages, knowledge, and connectors in parallel, then hydrate
     Promise.all([
       fetch(`/api/projects/messages?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ messages: [] })),
@@ -104,6 +114,35 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
       if (cData.connectors?.length) setConnectors(cData.connectors);
     });
   }, [initialProject?.id]);
+
+  // A marketplace purchase or a zip/GitHub import delivers a fully-formed
+  // project with no "generation" moment for ChatPanel's per-message
+  // dependency gate to hook — scan the whole file set once instead, and (for
+  // a purchase specifically, flagged by ?justDelivered=1 on the redirect from
+  // /marketplace/purchase/[id]) jump straight to the Connectors tab so the
+  // buyer sees exactly what THIS app needs, not a 40-service catalog to dig
+  // through on their own.
+  useEffect(() => {
+    const files = initialProject?.files as Record<string, { content?: string } | string> | undefined;
+    if (!files || Object.keys(files).length === 0) return;
+
+    const deps = detectDepsInFiles(files);
+    const ids = [
+      deps.needsSupabase && 'supabase',
+      deps.needsStripe && 'stripe',
+      deps.needsOpenAI && 'openai',
+      deps.needsSendgrid && 'sendgrid',
+      deps.needsResend && 'resend',
+    ].filter((id): id is string => !!id);
+    setRecommendedConnectorIds(ids);
+
+    if (ids.length > 0 && searchParams.get('justDelivered') === '1') {
+      setTimeout(() => window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'connectors' })), 300);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('justDelivered');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [initialProject?.id, initialProject?.files, searchParams, setRecommendedConnectorIds]);
 
   // Connect/disconnect flows (SupabaseConnector, ConnectorsPanel) dispatch this
   // after saving so every connector-keyed UI (e.g. the "connect a database"

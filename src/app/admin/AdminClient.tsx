@@ -137,6 +137,7 @@ export function AdminClient({ data }: { data: AdminData }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Link href="/admin/challenge" style={{ fontSize: 12, color: SKY, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.3)' }}>🏆 Challenge</Link>
           <Link href="/admin/community" style={{ fontSize: 12, color: SKY, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.3)' }}>🎁 Rewards</Link>
+          <Link href="/admin/marketplace" style={{ fontSize: 12, color: SKY, textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid rgba(14,165,233,0.3)' }}>🛍 Marketplace</Link>
           <Link href="/dashboard" style={{ fontSize: 12, color: '#52525b', textDecoration: 'none', padding: '5px 12px', borderRadius: 7, border: '1px solid #1e1e26' }}>← Dashboard</Link>
         </div>
       </nav>

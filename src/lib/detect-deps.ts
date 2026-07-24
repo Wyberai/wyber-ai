@@ -16,6 +16,9 @@
 export interface DetectedDeps {
   needsSupabase: boolean
   needsStripe: boolean
+  needsOpenAI: boolean
+  needsSendgrid: boolean
+  needsResend: boolean
   /** Names of Composio-connected tools detected (e.g. ['GitHub', 'Slack']) */
   composioTools: string[]
   /** True if ANY external dep was detected */
@@ -101,6 +104,15 @@ const STRIPE_KEYWORDS = [
   'paid plan', 'pricing tier', 'monetize',
 ]
 
+const OPENAI_KEYWORDS = [
+  'openai', 'gpt', 'chatgpt', 'ai chat', 'ai-generated', 'llm', 'completion',
+  'embeddings', 'assistant api', 'dall-e', 'whisper transcription',
+]
+
+const SENDGRID_KEYWORDS = ['sendgrid']
+
+const RESEND_KEYWORDS = ['resend', 'transactional email', 'send an email', 'email notification', 'email confirmation']
+
 // Map of tool name → keywords that suggest it's needed
 const COMPOSIO_TOOL_KEYWORDS: Record<string, string[]> = {
   GitHub:   ['github', 'repo', 'pull request', 'commit', 'issues', 'git'],
@@ -121,6 +133,9 @@ function matches(prompt: string, keywords: string[]): boolean {
 export function detectDeps(prompt: string): DetectedDeps {
   const needsSupabase = matches(prompt, SUPABASE_KEYWORDS)
   const needsStripe   = matches(prompt, STRIPE_KEYWORDS)
+  const needsOpenAI   = matches(prompt, OPENAI_KEYWORDS)
+  const needsSendgrid = matches(prompt, SENDGRID_KEYWORDS)
+  const needsResend   = matches(prompt, RESEND_KEYWORDS)
 
   const composioTools: string[] = []
   for (const [tool, kws] of Object.entries(COMPOSIO_TOOL_KEYWORDS)) {
@@ -130,8 +145,11 @@ export function detectDeps(prompt: string): DetectedDeps {
   return {
     needsSupabase,
     needsStripe,
+    needsOpenAI,
+    needsSendgrid,
+    needsResend,
     composioTools,
-    hasAnyDep: needsSupabase || needsStripe || composioTools.length > 0,
+    hasAnyDep: needsSupabase || needsStripe || needsOpenAI || needsSendgrid || needsResend || composioTools.length > 0,
   }
 }
 
@@ -143,6 +161,9 @@ export function detectDepsInCode(code: string): DetectedDeps {
   const c = code.toLowerCase()
   const needsSupabase = c.includes('supabase') || c.includes('createclient')
   const needsStripe   = c.includes('stripe') || c.includes('loadstripe')
+  const needsOpenAI   = c.includes('openai') || c.includes('gpt-')
+  const needsSendgrid = c.includes('sendgrid')
+  const needsResend   = c.includes('resend')
 
   const composioTools: string[] = []
   for (const [tool, kws] of Object.entries(COMPOSIO_TOOL_KEYWORDS)) {
@@ -152,7 +173,23 @@ export function detectDepsInCode(code: string): DetectedDeps {
   return {
     needsSupabase,
     needsStripe,
+    needsOpenAI,
+    needsSendgrid,
+    needsResend,
     composioTools,
-    hasAnyDep: needsSupabase || needsStripe || composioTools.length > 0,
+    hasAnyDep: needsSupabase || needsStripe || needsOpenAI || needsSendgrid || needsResend || composioTools.length > 0,
   }
+}
+
+/**
+ * Scan an ENTIRE project's files (not just one generated blob) for service
+ * references. Used when a project is delivered fully-formed — a marketplace
+ * purchase or a zip/GitHub import — where there's no single "generated code"
+ * moment to hook, unlike the AI-generation flow detectDepsInCode covers.
+ */
+export function detectDepsInFiles(files: Record<string, { content?: string } | string>): DetectedDeps {
+  const all = Object.values(files)
+    .map(f => (typeof f === 'string' ? f : f?.content ?? ''))
+    .join('\n')
+  return detectDepsInCode(all)
 }

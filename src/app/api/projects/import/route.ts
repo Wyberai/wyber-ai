@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { createClient } from '@/lib/supabase/server';
+import { sanitizeFiles } from '@/lib/sanitize-files';
+
+// Guards against a crafted zip: no single file may claim to be a legitimate
+// source file while smuggling a path-traversal segment, and the sum of
+// accepted (decompressed) file content is capped well below what a real
+// small app's source would ever total — a compressed-tiny/decompressed-huge
+// entry (zip bomb) blows this cap long before it exhausts memory.
+const MAX_TOTAL_DECOMPRESSED_BYTES = 5 * 1024 * 1024;
+
+function hasPathTraversal(path: string): boolean {
+  return path.split('/').some(seg => seg === '..') || path.startsWith('/');
+}
 
 const SUPPORTED_EXTS = new Set([
   'ts','tsx','js','jsx','css','html','json','md','vue','svg','env','example','txt',
@@ -60,25 +72,31 @@ export async function POST(req: NextRequest) {
 
     const files: Record<string, { path: string; content: string; language: string }> = {};
     let fileCount = 0;
+    let totalBytes = 0;
 
     for (const [relativePath, zipEntry] of Object.entries(zip.files)) {
       if (zipEntry.dir) continue;
       if (shouldSkip(relativePath)) continue;
 
+      const cleanPath = relativePath.replace(/^[^/]+\//, '');
+      if (hasPathTraversal(cleanPath)) continue;
+
       const ext = relativePath.split('.').pop()?.toLowerCase() ?? '';
       const isMobileAsset = MOBILE_EXTRA_EXTS.has(ext);
       if (!SUPPORTED_EXTS.has(ext) && !isMobileAsset) continue;
       if (fileCount >= 150) break;
+      if (totalBytes >= MAX_TOTAL_DECOMPRESSED_BYTES) break;
 
       const content = isMobileAsset
         ? `[binary asset: ${relativePath}]`
         : await zipEntry.async('string');
 
       if (!isMobileAsset && content.length > 150_000) continue;
+      if (!isMobileAsset && totalBytes + content.length > MAX_TOTAL_DECOMPRESSED_BYTES) continue;
 
-      const cleanPath = relativePath.replace(/^[^/]+\//, '');
       files[cleanPath] = { path: cleanPath, content, language: inferLanguage(ext) };
       fileCount++;
+      totalBytes += content.length;
     }
 
     if (fileCount === 0) return NextResponse.json({ error: 'No supported files found in ZIP' }, { status: 400 });
@@ -86,11 +104,15 @@ export async function POST(req: NextRequest) {
     const isMobile = forceType === 'mobile' || (forceType !== 'app' && detectMobile(files));
     const project_type = isMobile ? 'mobile' : 'app';
     const framework = isMobile ? 'react-native' : inferFramework(files);
+    // Guarantees a buildable/previewable file set (Tailwind config, entry
+    // file, ErrorBoundary, etc.) the same way an AI-generated project gets —
+    // an imported zip has no such guarantee on its own.
+    const sanitized = isMobile ? files : sanitizeFiles(files);
     const admin = await createAdminClient();
 
     const { data: project, error } = await admin
       .from('projects')
-      .insert({ user_id: user.id, name: projectName, framework, files, project_type, is_public: false })
+      .insert({ user_id: user.id, name: projectName, framework, files: sanitized, project_type, is_public: false })
       .select('id, name')
       .single();
 

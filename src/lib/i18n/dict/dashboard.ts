@@ -42,7 +42,7 @@ export const DASHBOARD_STRINGS: Record<Locale, Record<string, string>> = {
     cardWorkflowTitle: 'Workflow', cardWorkflowDesc: 'Visual automations with AI at every step. Coming soon.',
     cardGtmTitle: 'GTM Campaign', cardGtmDesc: 'AI-powered lead gen and outreach. Coming soon.',
 
-    importModalTitle: 'Import existing project', importModalDesc: 'Bring your code into Wyber and keep building.',
+    importModalTitle: 'Import existing project', importModalDesc: 'Bring code from Lovable, Bolt, v0, or any GitHub repo into Wyber — keep building, or list it on the marketplace.',
     tabWebApp: 'Web App', tabMobileApp: 'Mobile App', tabN8nWorkflow: 'n8n Workflow',
     importUploadZip: 'Upload ZIP', importGithubUrlBtn: 'GitHub URL',
     workflowNameOptional: 'Workflow name (optional)', projectNameLabel: 'Project name',
@@ -98,7 +98,7 @@ export const DASHBOARD_STRINGS: Record<Locale, Record<string, string>> = {
     cardWorkflowTitle: 'वर्कफ़्लो', cardWorkflowDesc: 'हर स्टेप पर AI के साथ विज़ुअल ऑटोमेशन। जल्द आ रहा है।',
     cardGtmTitle: 'GTM कैंपेन', cardGtmDesc: 'AI-पावर्ड लीड जनरेशन और आउटरीच। जल्द आ रहा है।',
 
-    importModalTitle: 'मौजूदा प्रोजेक्ट इम्पोर्ट करें', importModalDesc: 'अपना कोड Wyber में लाएं और बनाना जारी रखें।',
+    importModalTitle: 'मौजूदा प्रोजेक्ट इम्पोर्ट करें', importModalDesc: 'Lovable, Bolt, v0 या किसी भी GitHub रिपॉजिटरी से कोड Wyber में लाएं — बनाना जारी रखें, या मार्केटप्लेस पर लिस्ट करें।',
     tabWebApp: 'वेब ऐप', tabMobileApp: 'मोबाइल ऐप', tabN8nWorkflow: 'n8n वर्कफ़्लो',
     importUploadZip: 'ZIP अपलोड करें', importGithubUrlBtn: 'GitHub URL',
     workflowNameOptional: 'वर्कफ़्लो नाम (वैकल्पिक)', projectNameLabel: 'प्रोजेक्ट नाम',
@@ -154,7 +154,7 @@ export const DASHBOARD_STRINGS: Record<Locale, Record<string, string>> = {
     cardWorkflowTitle: 'ವರ್ಕ್‌ಫ್ಲೋ', cardWorkflowDesc: 'ಪ್ರತಿ ಹಂತದಲ್ಲೂ AI ಜೊತೆ ವಿಷುವಲ್ ಆಟೊಮೇಶನ್‌ಗಳು. ಶೀಘ್ರದಲ್ಲೇ ಬರುತ್ತಿದೆ.',
     cardGtmTitle: 'GTM ಕ್ಯಾಂಪೇನ್', cardGtmDesc: 'AI-ಚಾಲಿತ ಲೀಡ್ ಜನರೇಷನ್ ಮತ್ತು ಔಟ್‌ರೀಚ್. ಶೀಘ್ರದಲ್ಲೇ ಬರುತ್ತಿದೆ.',
 
-    importModalTitle: 'ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಪ್ರಾಜೆಕ್ಟ್ ಇಂಪೋರ್ಟ್ ಮಾಡಿ', importModalDesc: 'ನಿಮ್ಮ ಕೋಡ್ ಅನ್ನು Wyber ಗೆ ತಂದು ಬಿಲ್ಡ್ ಮಾಡುವುದನ್ನು ಮುಂದುವರಿಸಿ.',
+    importModalTitle: 'ಅಸ್ತಿತ್ವದಲ್ಲಿರುವ ಪ್ರಾಜೆಕ್ಟ್ ಇಂಪೋರ್ಟ್ ಮಾಡಿ', importModalDesc: 'Lovable, Bolt, v0 ಅಥವಾ ಯಾವುದೇ GitHub ರೆಪೊದಿಂದ ಕೋಡ್ ಅನ್ನು Wyber ಗೆ ತಂದು — ಬಿಲ್ಡ್ ಮಾಡುವುದನ್ನು ಮುಂದುವರಿಸಿ, ಅಥವಾ ಮಾರುಕಟ್ಟೆಯಲ್ಲಿ ಲಿಸ್ಟ್ ಮಾಡಿ.',
     tabWebApp: 'ವೆಬ್ ಆ್ಯಪ್', tabMobileApp: 'ಮೊಬೈಲ್ ಆ್ಯಪ್', tabN8nWorkflow: 'n8n ವರ್ಕ್‌ಫ್ಲೋ',
     importUploadZip: 'ZIP ಅಪ್‌ಲೋಡ್ ಮಾಡಿ', importGithubUrlBtn: 'GitHub URL',
     workflowNameOptional: 'ವರ್ಕ್‌ಫ್ಲೋ ಹೆಸರು (ಐಚ್ಛಿಕ)', projectNameLabel: 'ಪ್ರಾಜೆಕ್ಟ್ ಹೆಸರು',
@@ -210,7 +210,7 @@ export const DASHBOARD_STRINGS: Record<Locale, Record<string, string>> = {
     cardWorkflowTitle: 'వర్క్‌ఫ్లో', cardWorkflowDesc: 'ప్రతి దశలో AI తో విజువల్ ఆటోమేషన్‌లు. త్వరలో వస్తోంది.',
     cardGtmTitle: 'GTM క్యాంపెయిన్', cardGtmDesc: 'AI-శక్తితో కూడిన లీడ్ జనరేషన్ మరియు అవుట్‌రీచ్. త్వరలో వస్తోంది.',
 
-    importModalTitle: 'ఇప్పటికే ఉన్న ప్రాజెక్ట్‌ని ఇంపోర్ట్ చేయండి', importModalDesc: 'మీ కోడ్‌ని Wyberలోకి తీసుకువచ్చి బిల్డ్ చేయడం కొనసాగించండి.',
+    importModalTitle: 'ఇప్పటికే ఉన్న ప్రాజెక్ట్‌ని ఇంపోర్ట్ చేయండి', importModalDesc: 'Lovable, Bolt, v0 లేదా ఏదైనా GitHub రెపో నుండి కోడ్‌ని Wyberలోకి తీసుకురండి — బిల్డ్ చేయడం కొనసాగించండి, లేదా మార్కెట్‌ప్లేస్‌లో లిస్ట్ చేయండి.',
     tabWebApp: 'వెబ్ యాప్', tabMobileApp: 'మొబైల్ యాప్', tabN8nWorkflow: 'n8n వర్క్‌ఫ్లో',
     importUploadZip: 'ZIP అప్‌లోడ్ చేయండి', importGithubUrlBtn: 'GitHub URL',
     workflowNameOptional: 'వర్క్‌ఫ్లో పేరు (ఐచ్ఛికం)', projectNameLabel: 'ప్రాజెక్ట్ పేరు',
@@ -266,7 +266,7 @@ export const DASHBOARD_STRINGS: Record<Locale, Record<string, string>> = {
     cardWorkflowTitle: 'வொர்க்ஃப்ளோ', cardWorkflowDesc: 'ஒவ்வொரு படியிலும் AI உடன் காட்சி ஆட்டோமேஷன்கள். விரைவில் வருகிறது.',
     cardGtmTitle: 'GTM கேம்பெயின்', cardGtmDesc: 'AI-இயங்கும் லீட் ஜெனரேஷன் மற்றும் அவுட்ரீச். விரைவில் வருகிறது.',
 
-    importModalTitle: 'ஏற்கனவே உள்ள ப்ராஜெக்டை இம்போர்ட் செய்யுங்கள்', importModalDesc: 'உங்கள் கோடை Wyber-க்குள் கொண்டு வந்து உருவாக்குவதைத் தொடருங்கள்.',
+    importModalTitle: 'ஏற்கனவே உள்ள ப்ராஜெக்டை இம்போர்ட் செய்யுங்கள்', importModalDesc: 'Lovable, Bolt, v0 அல்லது எந்த GitHub repo-விலிருந்தும் கோடை Wyber-க்குள் கொண்டு வாருங்கள் — உருவாக்குவதைத் தொடருங்கள், அல்லது மார்க்கெட்பிளேஸில் லிஸ்ட் செய்யுங்கள்.',
     tabWebApp: 'வெப் ஆப்', tabMobileApp: 'மொபைல் ஆப்', tabN8nWorkflow: 'n8n வொர்க்ஃப்ளோ',
     importUploadZip: 'ZIP பதிவேற்றவும்', importGithubUrlBtn: 'GitHub URL',
     workflowNameOptional: 'வொர்க்ஃப்ளோ பெயர் (விருப்பம்)', projectNameLabel: 'ப்ராஜெக்ட் பெயர்',

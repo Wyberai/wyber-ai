@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { shouldSkip, inferLanguage, inferFramework } from '../import/route';
+import { sanitizeFiles } from '@/lib/sanitize-files';
+
+// Same guards as the zip importer (src/app/api/projects/import/route.ts) —
+// a blob path from GitHub's tree API shouldn't contain a traversal segment,
+// but defense-in-depth costs nothing here, and the total-size cap bounds
+// memory even against a repo with a handful of enormous tracked files.
+const MAX_TOTAL_DECOMPRESSED_BYTES = 5 * 1024 * 1024;
+
+function hasPathTraversal(path: string): boolean {
+  return path.split('/').some(seg => seg === '..') || path.startsWith('/');
+}
 
 function parseGithubUrl(url: string): { owner: string; repo: string; branch: string } | null {
   try {
@@ -67,15 +78,17 @@ export async function POST(req: NextRequest) {
 
   const SUPPORTED_EXTS = new Set(['ts','tsx','js','jsx','css','html','json','md','vue','svg','txt','env','example']);
   const blobs = (treeData.tree || []).filter(
-    f => f.type === 'blob' && !shouldSkip(f.path ?? '') && SUPPORTED_EXTS.has(f.path?.split('.').pop()?.toLowerCase() ?? '')
+    f => f.type === 'blob' && !shouldSkip(f.path ?? '') && !hasPathTraversal(f.path ?? '') && SUPPORTED_EXTS.has(f.path?.split('.').pop()?.toLowerCase() ?? '')
   ).slice(0, 120);
 
   if (blobs.length === 0) return NextResponse.json({ error: 'No supported source files found in this repository.' }, { status: 400 });
 
   // Fetch file contents in parallel (batches of 10)
   const files: Record<string, { path: string; content: string; language: string }> = {};
+  let totalBytes = 0;
   const BATCH = 10;
   for (let i = 0; i < blobs.length; i += BATCH) {
+    if (totalBytes >= MAX_TOTAL_DECOMPRESSED_BYTES) break;
     const batch = blobs.slice(i, i + BATCH);
     await Promise.all(batch.map(async blob => {
       try {
@@ -86,8 +99,10 @@ export async function POST(req: NextRequest) {
         if (!res.ok) return;
         const content = await res.text();
         if (content.length > 150_000) return;
+        if (totalBytes + content.length > MAX_TOTAL_DECOMPRESSED_BYTES) return;
         const ext = blob.path.split('.').pop()?.toLowerCase() ?? '';
         files[blob.path] = { path: blob.path, content, language: inferLanguage(ext) };
+        totalBytes += content.length;
       } catch { /* skip broken blobs */ }
     }));
   }
@@ -99,11 +114,15 @@ export async function POST(req: NextRequest) {
   const project_type = isMobile ? 'mobile' : 'app';
   const framework = isMobile ? 'react-native' : inferFramework(files);
   const projectName = name || `${repo} (imported)`;
+  // Guarantees a buildable/previewable file set the same way an AI-generated
+  // project gets (Tailwind config, entry file, ErrorBoundary, etc.) — an
+  // imported repo has no such guarantee on its own.
+  const sanitized = isMobile ? files : sanitizeFiles(files);
 
   const admin = await createAdminClient();
   const { data: project, error } = await admin
     .from('projects')
-    .insert({ user_id: user.id, name: projectName, framework, files, project_type, is_public: false })
+    .insert({ user_id: user.id, name: projectName, framework, files: sanitized, project_type, is_public: false })
     .select('id, name')
     .single();
 

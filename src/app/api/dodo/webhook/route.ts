@@ -11,6 +11,7 @@ import {
 } from '@/lib/email'
 import { sendMetaEvent } from '@/lib/meta-capi'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
+import { templateFilesToProjectFiles } from '@/lib/template-to-project'
 
 function getAdmin() {
   return createClient(
@@ -264,6 +265,97 @@ export async function POST(req: NextRequest) {
         } catch (buyErr) {
           console.error('Domain purchase failed after payment:', String(buyErr))
           await admin.from('domain_purchases').update({ status: 'failed' }).eq('id', purchaseId)
+        }
+      }
+      return NextResponse.json({ received: true })
+    }
+
+    // Marketplace purchase confirmation: clone the listing's source into a
+    // new project owned by the buyer. Distinct from top-ups/plans — keyed by
+    // metadata, not productId, since the marketplace product is pay-what-you-want.
+    if (eventType === 'payment.succeeded' && metadata.purchase_type === 'marketplace_listing') {
+      const purchaseId = String(metadata.purchase_id || '')
+      const listingId = String(metadata.listing_id || '')
+      const evData = event.data as Record<string, unknown> | undefined
+      const paymentId = String(evData?.payment_id || dedupeId || '')
+
+      if (purchaseId && listingId) {
+        try {
+          const { data: purchaseRow } = await admin
+            .from('marketplace_purchases')
+            .select('status, seller_id, seller_earning_usd')
+            .eq('id', purchaseId)
+            .single()
+
+          // Already fulfilled (e.g. a retried delivery that got past the
+          // top-level dedupe check some other way) — don't clone a second project.
+          if (purchaseRow?.status === 'fulfilled') {
+            return NextResponse.json({ received: true, duplicate: true })
+          }
+
+          const { data: listing } = await admin
+            .from('marketplace_listings')
+            .select('title, description, framework, files, sales_count')
+            .eq('id', listingId)
+            .single()
+          if (!listing) throw new Error('Listing not found')
+
+          const normalizedFiles = templateFilesToProjectFiles(listing.files, listing.title)
+
+          const { data: project, error: projErr } = await admin
+            .from('projects')
+            .insert({
+              user_id: userId,
+              name: listing.title,
+              description: listing.description,
+              framework: listing.framework || 'react-vite',
+              files: normalizedFiles,
+              is_public: false,
+            })
+            .select('id')
+            .single()
+          if (projErr || !project) throw new Error(projErr?.message || 'Could not create project')
+
+          try {
+            await admin.from('project_messages').insert({
+              project_id: project.id,
+              role: 'assistant',
+              content: `You've purchased **${listing.title}** from the marketplace. Take a look at the preview and tell me how you'd like to customize it — change colors, add features, rename sections, anything.`,
+            })
+          } catch { /* non-critical */ }
+
+          await admin.from('marketplace_purchases').update({
+            status: 'fulfilled',
+            dodo_payment_id: paymentId,
+            delivered_project_id: project.id,
+            updated_at: new Date().toISOString(),
+          }).eq('id', purchaseId)
+
+          await admin.from('marketplace_listings').update({
+            sales_count: (listing.sales_count || 0) + 1,
+          }).eq('id', listingId)
+
+          // Track the seller's cut — no automated payout yet, settled manually.
+          if (purchaseRow?.seller_id && purchaseRow.seller_earning_usd) {
+            const { data: sellerProfile } = await admin
+              .from('profiles')
+              .select('pending_earnings_usd')
+              .eq('id', purchaseRow.seller_id)
+              .single()
+            await admin.from('profiles').update({
+              pending_earnings_usd: Number(sellerProfile?.pending_earnings_usd || 0) + Number(purchaseRow.seller_earning_usd),
+              updated_at: new Date().toISOString(),
+            }).eq('id', purchaseRow.seller_id)
+          }
+
+          console.log(`Marketplace purchase fulfilled: listing ${listingId} → project ${project.id} for ${userId}`)
+          if (userEmail) sendAdminPaymentAlert(userEmail, `Marketplace purchase: ${listing.title}`).catch(() => {})
+        } catch (fulfillErr) {
+          console.error('Marketplace fulfillment failed after payment:', String(fulfillErr))
+          await admin.from('marketplace_purchases').update({ status: 'failed' }).eq('id', purchaseId)
+          // Don't swallow this as received:true with no project delivered —
+          // fall through to the catch below so Dodo retries and the claim releases.
+          throw fulfillErr
         }
       }
       return NextResponse.json({ received: true })
