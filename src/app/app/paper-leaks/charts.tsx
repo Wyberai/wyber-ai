@@ -123,6 +123,54 @@ export function VerticalBarChart({ data, defaultColor, height = 132 }: { data: B
   )
 }
 
+/** Proportional mosaic strip: tile width ∝ value (flex-grow), sequential-hue
+ * intensity ∝ value, wraps into rows. A denser, more visual alternative to a
+ * bar list for a magnitude-by-category breakdown with many small slots. */
+export function MosaicStrip({ data, defaultColor }: { data: BarDatum[]; defaultColor: string }) {
+  const [tip, setTip] = useState<TooltipState | null>(null)
+  const maxVal = Math.max(1, ...data.map(d => d.value))
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {data.map(d => {
+          const intensity = 0.32 + 0.68 * (d.value / maxVal)
+          const active = tip?.datum.key === d.key
+          const showLabel = d.value / maxVal >= 0.3
+          return (
+            <div
+              key={d.key}
+              role="img"
+              aria-label={`${d.label}: ${d.value}`}
+              tabIndex={0}
+              onMouseMove={e => setTip({ x: e.clientX, y: e.clientY, datum: d })}
+              onMouseEnter={e => setTip({ x: e.clientX, y: e.clientY, datum: d })}
+              onMouseLeave={() => setTip(null)}
+              onFocus={e => { const r = e.currentTarget.getBoundingClientRect(); setTip({ x: r.left, y: r.top, datum: d }) }}
+              onBlur={() => setTip(null)}
+              style={{
+                flex: `${d.value} 1 0px`, minWidth: 44, height: 68, borderRadius: 8,
+                background: defaultColor, opacity: intensity,
+                display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2,
+                cursor: 'default', outline: 'none', padding: '0 6px',
+                boxShadow: active ? `0 10px 24px ${defaultColor}66, 0 0 0 2px ${defaultColor}` : 'none',
+                transform: active ? 'translateY(-3px)' : 'none',
+                transition: 'transform 0.2s var(--brand-ease), box-shadow 0.2s var(--brand-ease), opacity 0.4s',
+              }}
+            >
+              {d.icon && <span aria-hidden style={{ fontSize: 13 }}>{d.icon}</span>}
+              <div style={{ fontFamily: 'var(--brand-mono)', fontWeight: 700, fontSize: 15, color: '#fff', lineHeight: 1 }}>{d.value}</div>
+              {showLabel && (
+                <div style={{ fontSize: 9.5, color: 'rgba(255,255,255,0.9)', textAlign: 'center', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '100%' }}>{d.label}</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {tip && <ChartTooltip x={tip.x} y={tip.y} datum={tip.datum} color={defaultColor} />}
+    </div>
+  )
+}
+
 function useCountUp(target: number, active: boolean) {
   const [value, setValue] = useState(0)
   useEffect(() => {
@@ -140,6 +188,25 @@ function useCountUp(target: number, active: boolean) {
     return () => clearTimeout(timer)
   }, [target, active])
   return active ? value : target
+}
+
+/** The single big number a dashboard leads with — one per view. */
+export function HeroNumber({ value, label }: { value: number; label: string }) {
+  const reduceMotion = useReducedMotion()
+  const display = useCountUp(value, !reduceMotion)
+  return (
+    <div>
+      <div
+        style={{
+          fontFamily: 'var(--brand-mono)', fontWeight: 700, fontSize: 'clamp(68px,11vw,136px)', lineHeight: 0.9,
+          color: 'var(--brand-text)', letterSpacing: '-0.03em', textShadow: '0 0 80px var(--brand-glow)',
+        }}
+      >
+        {display.toLocaleString()}
+      </div>
+      <div className="mk-stat-label" style={{ marginTop: 8 }}>{label}</div>
+    </div>
+  )
 }
 
 export function StatTile({ label, value, delay = 0 }: { label: string; value: number | string; delay?: number }) {

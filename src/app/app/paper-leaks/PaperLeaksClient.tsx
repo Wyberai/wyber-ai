@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { PAPER_LEAK_INCIDENTS, STATUS_LABELS, type IncidentStatus, type PaperLeakIncident } from '@/lib/paper-leaks/data'
-import { HorizontalBarChart, VerticalBarChart, StatTile, BreakdownTable, type BarDatum } from './charts'
+import { HorizontalBarChart, VerticalBarChart, BreakdownTable, MosaicStrip, HeroNumber, type BarDatum } from './charts'
 
 const ACCENT = 'var(--brand-accent)'
 const ACCENT_HOT = 'var(--brand-accent-hot)'
@@ -139,7 +139,8 @@ export function PaperLeaksClient() {
       {/* Hero */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
         <div className="mk-stars" />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 55% at 30% 10%, rgba(14,165,233,0.14) 0%, transparent 60%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 60% at 30% 0%, rgba(14,165,233,0.18) 0%, transparent 62%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 50% 50% at 90% 30%, rgba(56,189,248,0.10) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: 'clamp(40px,6vw,72px) clamp(16px,4vw,48px) 0', position: 'relative' }}>
           <motion.div
             initial={reduceMotion ? undefined : { opacity: 0, y: 18 }}
@@ -150,21 +151,46 @@ export function PaperLeaksClient() {
             <h1 className="mk-display" style={{ fontSize: 'clamp(30px,5vw,58px)', marginBottom: 14 }}>
               Documented exam <span className="mk-serif">paper-leak</span> incidents in India
             </h1>
-            <p className="mk-lead" style={{ maxWidth: 640, marginBottom: 36 }}>
+            <p className="mk-lead" style={{ maxWidth: 640, marginBottom: 40 }}>
               What happened, who investigated, and what came of it — for each documented case, sourced from public news reporting. This is a curated, source-checked record, not an exhaustive scrape; entries are added only when multiple reputable outlets report consistent facts.
             </p>
+          </motion.div>
+
+          <motion.div
+            initial={reduceMotion ? undefined : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            style={{ display: 'flex', alignItems: 'flex-end', gap: 'clamp(20px,4vw,44px)', flexWrap: 'wrap', paddingBottom: 36 }}
+          >
+            <HeroNumber value={PAPER_LEAK_INCIDENTS.length} label="Documented incidents" />
+            <div style={{ display: 'flex', gap: 'clamp(20px,3vw,32px)', flexWrap: 'wrap', paddingBottom: 8 }}>
+              {[['Years covered', `${minYear}–${maxYear}`], ['States affected', stateCount], ['Exams affected', examCount]].map(([label, value]) => (
+                <div key={label}>
+                  <div className="mk-stat" style={{ fontSize: 'clamp(22px,2.4vw,30px)' }}>{value}</div>
+                  <div className="mk-stat-label" style={{ marginTop: 3 }}>{label}</div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </div>
 
       <div className="mk-section" style={{ paddingTop: 0 }}>
-        {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 16 }}>
-          <StatTile label="Documented incidents" value={PAPER_LEAK_INCIDENTS.length} delay={0} />
-          <StatTile label="Years covered" value={`${minYear}–${maxYear}`} delay={0.05} />
-          <StatTile label="States affected" value={stateCount} delay={0.1} />
-          <StatTile label="Exams affected" value={examCount} delay={0.15} />
-        </div>
+        {/* State mosaic — the at-a-glance visual moment */}
+        <motion.div
+          initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="mk-card"
+          style={{ padding: 'clamp(18px,3vw,26px)', marginBottom: 24 }}
+        >
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
+            <div className="mk-stat-label">Every state, at a glance — tile size = share of incidents</div>
+            <div className="mk-mono">{stateCount} states · {PAPER_LEAK_INCIDENTS.length} incidents</div>
+          </div>
+          <MosaicStrip data={byState} defaultColor={ACCENT} />
+        </motion.div>
 
         {/* Breakdown */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 12 }}>
@@ -256,7 +282,7 @@ export function PaperLeaksClient() {
                   exit="hidden"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   className="mk-card pl-card"
-                  style={{ padding: '20px 22px', position: 'relative' }}
+                  style={{ padding: '20px 22px 20px 19px', position: 'relative', borderLeft: `3px solid ${STATUS_COLORS[incident.status]}` }}
                 >
                   <span className="pl-dot" aria-hidden style={{ position: 'absolute', left: -24, top: 26, width: 11, height: 11, borderRadius: '50%', background: 'var(--brand-bg)', border: `2px solid ${STATUS_COLORS[incident.status]}` }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
