@@ -36,6 +36,11 @@ export interface PaperLeakIncident {
   outcome: string
   status: IncidentStatus
   sources: Source[]
+  /** Reported human/social impact (injuries, deaths, suicides) beyond the legal outcome.
+   * Included ONLY where multiple reputable outlets documented a specific, attributable
+   * toll for THIS incident — never estimated or extrapolated. Most incidents have none
+   * on record and omit this field entirely. */
+  impact?: string
 }
 
 export const STATUS_LABELS: Record<IncidentStatus, string> = {
@@ -263,9 +268,11 @@ export const PAPER_LEAK_INCIDENTS: PaperLeakIncident[] = [
     summary: 'Bihar Police uncovered a leak of the exam paper in May 2024, tracing it to a school in Hazaribagh, Jharkhand. The CBI took over the investigation the following month.',
     outcome: 'The CBI arrested 14 people, including a school principal and vice-principal. The Supreme Court declined to order a full nationwide re-examination, finding evidence indicated only around 155 students had directly benefited from the leak. One individual investigated as an alleged key figure in the case received a CBI clean chit for lack of evidence.',
     status: 'chargesheeted',
+    impact: 'Multiple outlets reported a wave of suicides among NEET aspirants in the weeks after the leak and cancellation controversy, including several within a 48-hour span in May 2024, across states including Gujarat, Tamil Nadu, Rajasthan, Delhi, UP, Uttarakhand, Maharashtra, and Karnataka. Advocacy groups have since called for compensation for affected families. If you or someone you know is struggling, India’s KIRAN mental health helpline is available 24/7 at 1800-599-0019.',
     sources: [
       { title: 'Chronology of events in NEET-UG 2024 case', url: 'https://news.careers360.com/chronology-of-events-in-neet-ug-2024-case/amp', outlet: 'Careers360' },
       { title: '2026 NEET controversy', url: 'https://en.wikipedia.org/wiki/2026_NEET_controversy', outlet: 'Wikipedia' },
+      { title: 'NEET Paper Leak, NTA Failures and Student Suicides', url: 'https://www.thequint.com/news/education/neet-paper-leak-student-suicides-examination-crisis-india', outlet: 'The Quint' },
     ],
   },
   {
