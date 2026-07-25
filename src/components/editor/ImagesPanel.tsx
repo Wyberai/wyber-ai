@@ -51,6 +51,7 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
 
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [transparent, setTransparent] = useState<Record<string, boolean>>({});
+  const [hero, setHero] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<string | null>(null); // entry.key + action
   const [status, setStatus] = useState<Record<string, string>>({});
   const uploadInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +81,11 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
     try {
       const res = await fetch('/api/images/regenerate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: resolvedProjectId, prompt, ratio: entry.ratio, transparent: !!transparent[entry.key] }),
+        body: JSON.stringify({
+          projectId: resolvedProjectId, prompt, ratio: entry.ratio,
+          transparent: !!transparent[entry.key],
+          ...(hero[entry.key] ? { quality: 'high' } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) { setStat(entry.key, data.error || t('generationFailedNotCharged')); return; }
@@ -182,7 +187,7 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
                     <GlowButton size="sm" onClick={() => regenerate(entry)} disabled={isBusy}>
-                      {action === 'regen' ? t('regeneratingEllipsis') : t('regenerateButton')}
+                      {action === 'regen' ? t('regeneratingEllipsis') : hero[entry.key] ? t('regenerateHeroButton') : t('regenerateButton')}
                     </GlowButton>
                     <button onClick={() => startUpload(entry)} disabled={isBusy}
                       style={{ fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
@@ -194,7 +199,13 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
                         {action === 'pin' ? t('pinningEllipsis') : t('pinButton')}
                       </button>
                     )}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', marginLeft: 'auto' }} title={t('transparentTooltip')}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', marginLeft: 'auto' }} title={t('heroQualityTooltip')}>
+                      <input type="checkbox" checked={!!hero[entry.key]}
+                        onChange={e => setHero(h => ({ ...h, [entry.key]: e.target.checked }))}
+                        style={{ accentColor: 'var(--brand-accent)' }} />
+                      <MicroLabel>{t('heroQualityLabel')}</MicroLabel>
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }} title={t('transparentTooltip')}>
                       <input type="checkbox" checked={!!transparent[entry.key]}
                         onChange={e => setTransparent(tr => ({ ...tr, [entry.key]: e.target.checked }))}
                         style={{ accentColor: 'var(--brand-accent)' }} />

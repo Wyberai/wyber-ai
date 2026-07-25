@@ -19,6 +19,7 @@ export type ActionType =
   | 'workflow-run'
   | 'ai-helper'
   | 'image-gen'
+  | 'hero-image-gen'
   | 'execution'
   | 'employee-run'
   | 'gtm-icp-sequence'
@@ -69,6 +70,12 @@ const BASE_COSTS: Record<ActionType, number> = {
   'workflow-run':       2,
   'ai-helper':          1,
   'image-gen':          3,
+  // High-quality gpt-image-2 regenerate (ImagesPanel's hero-quality toggle).
+  // Real COGS ~$0.19/image at 'high' quality; 20cr is a flat, tier-agnostic
+  // price (image-gen calls OpenAI, not an Anthropic model, so the usual
+  // MODEL_MULTIPLIERS tier scaling doesn't apply — always cost this at the
+  // 'default' tier regardless of the user's selected Claude model).
+  'hero-image-gen':    20,
   'execution':          5,
   'employee-run':       5,
   'gtm-icp-sequence':   3,

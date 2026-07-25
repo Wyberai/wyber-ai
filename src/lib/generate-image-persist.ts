@@ -10,13 +10,17 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 export const GENERATED_IMAGES_BUCKET = 'generated-images'
 
 export interface ImageGenOpts {
-  /** gpt-image-1 transparent background (skipped on the dall-e-3 fallback) */
+  /** gpt-image transparent background (skipped on the gpt-image-1 fallback) */
   transparent?: boolean
   /** skip the cache-hit check — always call the model */
   force?: boolean
   /** extra key discriminator (regen nonce / 'transparent') so a regenerate can
    *  never collide with the cached original and hand back the same image */
   variant?: string
+  /** 'high' for the paid hero-quality regenerate path (ImagesPanel); every
+   *  other caller (build-time placeholders, plain regenerate) stays 'medium'
+   *  so the bulk of generation volume keeps the cheaper COGS. */
+  quality?: 'medium' | 'high'
 }
 
 /** Stable storage key so re-publishing the same prompt reuses one object.
@@ -39,16 +43,46 @@ const GPT_IMAGE_SIZES: Record<string, string> = {
 
 /** Generate an image and return raw base64 PNG. null if unavailable.
  *
- * Primary: gpt-image-1 (returns b64 by default; the old `response_format`
- * parameter is REJECTED with a 400 "Unknown parameter" — this is why image
- * generation silently failed and every publish fell back to gradients).
- * Fallback: dall-e-3 without response_format (returns a ~1h temp URL, which
- * we download immediately). Failures are LOGGED, never thrown. */
+ * Primary: gpt-image-2 (gpt-image-1's replacement — gpt-image-1 retires
+ * 2026-10-23 per OpenAI's deprecations page; returns b64 by default, the old
+ * `response_format` parameter is REJECTED with a 400 "Unknown parameter").
+ * Fallback: gpt-image-1 (dall-e-3 — the previous fallback — was already shut
+ * down 2026-05-12 and would 400 every time; gpt-image-1 is still live until
+ * its own retirement, so it's a real safety net again, not dead code. This
+ * fallback itself needs re-pointing before Oct 2026.) Failures are LOGGED,
+ * never thrown. */
 export async function generateImageB64(prompt: string, size: string, opts?: ImageGenOpts): Promise<string | null> {
   const key = process.env.OPENAI_API_KEY
   if (!key) { console.error('[image-gen] OPENAI_API_KEY not set'); return null }
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` }
+  const quality = opts?.quality || 'medium'
 
+  try {
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: 'gpt-image-2',
+        prompt,
+        n: 1,
+        size: GPT_IMAGE_SIZES[size] || '1536x1024',
+        quality,
+        ...(opts?.transparent ? { background: 'transparent' } : {}),
+      }),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const b64 = data?.data?.[0]?.b64_json
+      if (b64) return b64
+      console.error('[image-gen] gpt-image-2 returned no b64_json')
+    } else {
+      console.error('[image-gen] gpt-image-2 failed:', res.status, (await res.text()).slice(0, 300))
+    }
+  } catch (e) {
+    console.error('[image-gen] gpt-image-2 threw:', e)
+  }
+
+  // Fallback: gpt-image-1, same b64 contract as the primary model.
   try {
     const res = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -58,45 +92,20 @@ export async function generateImageB64(prompt: string, size: string, opts?: Imag
         prompt,
         n: 1,
         size: GPT_IMAGE_SIZES[size] || '1536x1024',
-        quality: 'medium',
-        // Transparent background is a gpt-image-1-only feature; the dall-e-3
-        // fallback below silently ignores the request (opaque image beats none).
+        quality,
         ...(opts?.transparent ? { background: 'transparent' } : {}),
       }),
     })
-    if (res.ok) {
-      const data = await res.json()
-      const b64 = data?.data?.[0]?.b64_json
-      if (b64) return b64
-      console.error('[image-gen] gpt-image-1 returned no b64_json')
-    } else {
-      console.error('[image-gen] gpt-image-1 failed:', res.status, (await res.text()).slice(0, 300))
-    }
-  } catch (e) {
-    console.error('[image-gen] gpt-image-1 threw:', e)
-  }
-
-  // Fallback: dall-e-3, url format (response_format is no longer accepted),
-  // download the temp URL right away.
-  try {
-    const res = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size }),
-    })
     if (!res.ok) {
-      console.error('[image-gen] dall-e-3 fallback failed:', res.status, (await res.text()).slice(0, 300))
+      console.error('[image-gen] gpt-image-1 fallback failed:', res.status, (await res.text()).slice(0, 300))
       return null
     }
     const data = await res.json()
-    if (data?.data?.[0]?.b64_json) return data.data[0].b64_json
-    const url = data?.data?.[0]?.url
-    if (!url) { console.error('[image-gen] dall-e-3 returned neither b64 nor url'); return null }
-    const img = await fetch(url)
-    if (!img.ok) { console.error('[image-gen] temp-url download failed:', img.status); return null }
-    return Buffer.from(await img.arrayBuffer()).toString('base64')
+    const b64 = data?.data?.[0]?.b64_json
+    if (!b64) { console.error('[image-gen] gpt-image-1 fallback returned no b64_json'); return null }
+    return b64
   } catch (e) {
-    console.error('[image-gen] dall-e-3 fallback threw:', e)
+    console.error('[image-gen] gpt-image-1 fallback threw:', e)
     return null
   }
 }
