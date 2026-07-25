@@ -18,7 +18,7 @@ interface Props {
 export function MobileLayout({ initialProject, initialProfile }: Props) {
   const t = useT(EDITOR_MOBILE_STRINGS)
   const tc = useT(COMMON_STRINGS)
-  const { hydrateProject, resetForProject, setCredits, setConnectors } = useEditorStore()
+  const { hydrateProject, resetForProject, setCredits, setConnectors, setProject } = useEditorStore()
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
   const [displayName, setDisplayName] = useState(initialProject?.name || t('defaultMobileAppName'))
@@ -91,6 +91,8 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     }
 
     if (initialProfile?.credits !== undefined) setCredits(initialProfile.credits)
+
+    setProject(project)
 
     Promise.all([
       fetch(`/api/projects/messages?projectId=${initialProject.id}`).then(r => r.json()).catch(() => ({ messages: [] })),

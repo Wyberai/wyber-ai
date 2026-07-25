@@ -58,11 +58,18 @@ export function ThemePanel() {
         'src/index.css': { path: 'src/index.css', content: nextCss, language: 'css' },
       };
       setFiles(updated as typeof files);
-      if (project?.id) {
-        await persistProjectFiles(project.id, updated, project.userId);
+      // persistProjectFiles returns false on a conflict or an exhausted retry
+      // — it already posts its own chat warning in that case. Only flash the
+      // "Applied" confirmation on an actual confirmed save, so this panel
+      // never claims success for a change that didn't reach the server (that
+      // silent-lie was the root cause of themes reverting after publish).
+      const saved = project?.id
+        ? await persistProjectFiles(project.id, updated, project.userId)
+        : true;
+      if (saved) {
+        setSavedFlash(id);
+        setTimeout(() => setSavedFlash(prev => (prev === id ? null : prev)), 1600);
       }
-      setSavedFlash(id);
-      setTimeout(() => setSavedFlash(prev => (prev === id ? null : prev)), 1600);
     } finally {
       setSaving(null);
     }

@@ -85,7 +85,23 @@ export async function persistProjectFiles(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId, files, userId: userId || 'auto', expectedUpdatedAt }),
       })
-      if (res.status === 409) return 'conflict' as const
+      if (res.status === 409) {
+        // The row's updated_at moved since we last cached it. In practice
+        // this is usually THIS tab's own out-of-band writer (ChatPanel's
+        // saveProject / generate/route.ts's rescue-persist, see its comment)
+        // landing after we read our stale copy, not a genuinely different
+        // tab — see module comment above. The server already tells us the
+        // row's real current value; sync it here so the caller's retry can
+        // succeed on the very next attempt instead of a real edit (a theme
+        // change, an image swap) being silently dropped while the UI still
+        // claims it saved.
+        const data = await res.json().catch(() => null)
+        if (data?.currentUpdatedAt) {
+          const cur = useEditorStore.getState().project
+          if (cur?.id === projectId) useEditorStore.getState().setProject({ ...cur, updated_at: data.currentUpdatedAt })
+        }
+        return 'conflict' as const
+      }
       if (!res.ok) return 'fail' as const
       const data = await res.json().catch(() => null)
       if (data?.updatedAt) {
@@ -121,9 +137,20 @@ export async function persistProjectFiles(
     })
   }
 
+  // A conflict gets exactly one immediate retry, no delay — attempt() just
+  // self-healed the store's updated_at from the server's currentUpdatedAt
+  // above, so if this was the common false-positive (our own out-of-band
+  // writer), THIS retry now sends the correct value and succeeds silently.
+  // If it conflicts again, that's a genuinely different tab still writing —
+  // don't loop forever against real contention, warn same as before.
+  const attemptWithConflictSelfHeal = async (): Promise<AttemptResult> => {
+    const first = await attempt()
+    return first === 'conflict' ? attempt() : first
+  }
+
   for (const delay of [0, 1500, 4000]) {
     if (delay) await new Promise(r => setTimeout(r, delay))
-    const result = await attempt()
+    const result = await attemptWithConflictSelfHeal()
     if (result === 'ok') { onSaved(); return true }
     if (result === 'conflict') { onConflict(); return false }
   }
