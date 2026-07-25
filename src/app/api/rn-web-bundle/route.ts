@@ -156,10 +156,14 @@ function makeNavigator(kind){
   function Navigator(props){
     var parent = React.useContext(NavContext)
     var screens = []
+    // A Screen always has a \`name\`; a Group/Fragment wrapper doesn't but has
+    // children to recurse into. Previously ANY node with .children (including
+    // <Stack.Group>) was pushed as if it WERE a screen — producing a phantom
+    // nameless entry and skipping the real screens grouped inside it.
     var walk = function(children){
       React.Children.toArray(children).forEach(function(c){
         if (!c || !c.props) return
-        if (c.props.component || c.props.children || c.props.getComponent) screens.push(c.props)
+        if (c.props.name && (c.props.component || c.props.children || c.props.getComponent)) screens.push(c.props)
         else if (c.props.children) walk(c.props.children)
       })
     }
@@ -169,6 +173,11 @@ function makeNavigator(kind){
     var st = React.useState(initialIdx); var idx = st[0], setIdx = st[1]
     var histRef = React.useRef([initialIdx])
     var paramsRef = React.useRef({})
+    // setOptions (title/header changed from inside a screen) mutates a ref, so
+    // a tick counter is needed to force the re-render React wouldn't otherwise
+    // schedule from a plain ref mutation.
+    var dynOptsRef = React.useRef({})
+    var tickSt = React.useState(0); var bumpTick = function(){ tickSt[1](function(n){ return n + 1 }) }
     if (idx >= screens.length) idx = 0
     var cur = screens[idx] || {}
 
@@ -186,7 +195,8 @@ function makeNavigator(kind){
       pop: function(){ var h = histRef.current; if (h.length > 1){ h.pop(); setIdx(h[h.length - 1]) } else if (parent && parent.goBack) parent.goBack() },
       popToTop: function(){ histRef.current = [initialIdx]; setIdx(initialIdx) },
       reset: function(){ histRef.current = [initialIdx]; setIdx(initialIdx) },
-      setOptions: function(){}, setParams: function(p){ if (p) paramsRef.current[cur.name] = Object.assign({}, paramsRef.current[cur.name], p) },
+      setOptions: function(o){ if (o) { dynOptsRef.current[cur.name] = Object.assign({}, dynOptsRef.current[cur.name], o); bumpTick() } },
+      setParams: function(p){ if (p) paramsRef.current[cur.name] = Object.assign({}, paramsRef.current[cur.name], p) },
       dispatch: function(){}, addListener: function(){ return function(){} }, removeListener: function(){},
       openDrawer: function(){}, closeDrawer: function(){}, toggleDrawer: function(){},
       isFocused: function(){ return true }, canGoBack: function(){ return histRef.current.length > 1 || !!parent },
@@ -199,10 +209,39 @@ function makeNavigator(kind){
     if (cur.component) body = React.createElement(cur.component, { navigation: controller, route: controller.__route })
     else if (cur.children) body = cur.children({ navigation: controller, route: controller.__route })
 
+    // Header: react-navigation apps overwhelmingly rely on the AUTOMATIC header
+    // (title + back chevron), not a hand-rolled back button in the screen body.
+    // Rendering NOTHING here (the previous behaviour) meant every stack push had
+    // no way back and no title/actions — looked like navigation "didn't work"
+    // even though the controller above was already switching screens correctly.
+    // screenOptions can be an object OR a function of {route, navigation}; a
+    // screen's own \`options\` (same shapes) wins, then any live setOptions() call.
+    var screenOptsBase = (props.screenOptions && typeof props.screenOptions === 'object') ? props.screenOptions : {}
+    var screenOptsFn = typeof props.screenOptions === 'function' ? props.screenOptions({ route: controller.__route, navigation: controller }) : {}
+    var curOptsRaw = typeof cur.options === 'function' ? cur.options({ route: controller.__route, navigation: controller }) : (cur.options || {})
+    var opts = Object.assign({}, screenOptsBase, screenOptsFn, curOptsRaw, dynOptsRef.current[cur.name])
+    var headerShown = opts.headerShown !== false
+    var canGoBack = histRef.current.length > 1 || !!parent
+    var tint = opts.headerTintColor || '#111111'
+    var headerBg = (opts.headerStyle && opts.headerStyle.backgroundColor) || '#ffffff'
+    var titleText = String(opts.title || cur.name || '')
+    var titleNode = typeof opts.headerTitle === 'function'
+      ? opts.headerTitle({ children: titleText, tintColor: tint })
+      : React.createElement(Text, { numberOfLines: 1, style: { color: tint, fontSize: 17, fontWeight: '600' } }, String(opts.headerTitle || titleText))
+    var headerLeft = typeof opts.headerLeft === 'function' ? opts.headerLeft({ tintColor: tint, canGoBack: canGoBack, onPress: controller.goBack }) : null
+    var headerRight = typeof opts.headerRight === 'function' ? opts.headerRight({ tintColor: tint, canGoBack: canGoBack }) : null
+    var header = headerShown ? React.createElement(View, { style: { minHeight: 44, flexDirection: 'row', alignItems: 'center', backgroundColor: headerBg, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.08)', paddingHorizontal: 4 } },
+      React.createElement(View, { style: { minWidth: 44, alignItems: 'flex-start', justifyContent: 'center' } },
+        headerLeft || (canGoBack ? React.createElement(Pressable, { onPress: controller.goBack, style: { padding: 10 } },
+          React.createElement(Text, { style: { color: tint, fontSize: 26, fontWeight: '300' } }, '‹')) : null)),
+      React.createElement(View, { style: { flex: 1, alignItems: 'center', paddingVertical: 8 } }, titleNode),
+      React.createElement(View, { style: { minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' } }, headerRight)) : null
+
     // Tab navigators get a working bottom bar; stack/drawer move via calls only.
     var showTabs = (kind === 'tab') && screens.length > 1
     return React.createElement(NavContext.Provider, { value: controller },
       React.createElement(View, { style: { flex: 1, backgroundColor: '#ffffff' } },
+        header,
         React.createElement(View, { style: { flex: 1 } }, React.createElement(ScreenErrorBoundary, { key: idx }, body)),
         showTabs ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#e5e5e5', backgroundColor: '#fafafa' } },
           screens.map(function(s, i){
