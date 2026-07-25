@@ -1,6 +1,7 @@
 import { getDecryptedSecret } from '@/lib/get-decrypted-secret'
 import { createServiceClient } from '@/lib/supabase/server'
 import { InstantlyProvider } from './instantly'
+import { SmartleadProvider } from './smartlead-provider'
 
 export interface ProviderAccount {
   email: string
@@ -38,13 +39,16 @@ export interface GtmSendProvider {
 
 /**
  * Resolve the user's send provider. Canonical store is the encrypted
- * user_secrets table (INSTANTLY_API_KEY); the legacy plaintext
- * user_api_keys row (instantly_api_key) is read as a fallback so keys
- * added via the older GTM settings screen keep working.
+ * user_secrets table (INSTANTLY_API_KEY / SMARTLEAD_API_KEY); the legacy
+ * plaintext user_api_keys row (instantly_api_key) is read as a fallback so
+ * keys added via the older GTM settings screen keep working.
+ *
+ * Instantly wins if both are connected — it's the longer-standing provider
+ * and existing gtm_campaigns.external_campaign_id rows already point at it.
  */
 export async function getSendProvider(userId: string): Promise<GtmSendProvider | null> {
-  let key = await getDecryptedSecret(userId, 'INSTANTLY_API_KEY')
-  if (!key) {
+  let instantlyKey = await getDecryptedSecret(userId, 'INSTANTLY_API_KEY')
+  if (!instantlyKey) {
     const db = createServiceClient()
     const { data } = await db
       .from('user_api_keys')
@@ -52,8 +56,12 @@ export async function getSendProvider(userId: string): Promise<GtmSendProvider |
       .eq('user_id', userId)
       .eq('key_name', 'instantly_api_key')
       .maybeSingle()
-    key = data?.key_value || null
+    instantlyKey = data?.key_value || null
   }
-  if (key) return new InstantlyProvider(key)
+  if (instantlyKey) return new InstantlyProvider(instantlyKey)
+
+  const smartleadKey = await getDecryptedSecret(userId, 'SMARTLEAD_API_KEY')
+  if (smartleadKey) return new SmartleadProvider(smartleadKey)
+
   return null
 }

@@ -13,10 +13,17 @@ const CONNECTORS = [
   {
     group: 'Lead Sources',
     items: [
+      { id: 'apify_api_key', label: 'Apify', icon: '🕷️', desc: 'Scraping actors — directories, job posts, review sites', referral: 'https://apify.com', referralLabel: 'Get Apify →', color: '#ff9012' },
       { id: 'apollo_api_key', label: 'Apollo.io', icon: '🔍', desc: 'Lead search, enrichment, dialer', referral: 'https://app.apollo.io', referralLabel: 'Get Apollo free →', color: '#f59e0b' },
       { id: 'zoominfo_api_key', label: 'ZoomInfo', icon: '📊', desc: 'Enterprise B2B database', referral: 'https://zoominfo.com', referralLabel: 'Get ZoomInfo →', color: '#0EA5E9' },
       { id: 'lusha_api_key', label: 'Lusha', icon: '👤', desc: 'Email + direct dial finder', referral: 'https://lusha.com', referralLabel: 'Get Lusha →', color: '#8b5cf6' },
       { id: 'hunter_api_key', label: 'Hunter.io', icon: '✉️', desc: 'Email finder & verifier', referral: 'https://hunter.io', referralLabel: 'Get Hunter →', color: '#10b981' },
+    ]
+  },
+  {
+    group: 'Verification',
+    items: [
+      { id: 'continuum_api_key', label: 'Continuum', icon: '⬡', desc: 'Email verification — our own product', referral: 'https://continuumapi.com', referralLabel: 'Open Continuum →', color: '#0EA5E9' },
     ]
   },
   {

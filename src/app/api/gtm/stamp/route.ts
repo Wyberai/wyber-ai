@@ -4,6 +4,12 @@ import { isAdminEmail } from '@/lib/admin'
 import { randomBytes } from 'crypto'
 import { replaceTokenInFiles } from '@/lib/image-directives'
 import { SECURITY_COCKPIT_FILES } from '@/lib/templates/gtm/security-cockpit'
+import { ITSERVICES_COCKPIT_FILES } from '@/lib/templates/gtm/itservices-cockpit'
+
+const COCKPIT_TEMPLATES: Record<string, Record<string, string>> = {
+  security: SECURITY_COCKPIT_FILES,
+  itservices: ITSERVICES_COCKPIT_FILES,
+}
 
 // Publishing runs a full remote build per company (~30–45s). A single
 // invocation publishes a small batch and returns what's left; the caller
@@ -53,6 +59,7 @@ export async function POST(req: NextRequest) {
     Array.isArray(body.companies) ? body.companies : []
   const doPublish: boolean = body.publish !== false
   const limit: number = Math.max(1, Math.min(Number(body.limit) || 5, 8))
+  const template: string = typeof body.template === 'string' && COCKPIT_TEMPLATES[body.template] ? body.template : 'security'
 
   const admin = createServiceClient()
   const created: Array<{ company: string; projectId: string }> = []
@@ -79,7 +86,7 @@ export async function POST(req: NextRequest) {
     const origin = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
     const claimUrl = `${origin}/api/gtm/start-claim?token=${claimToken}`
 
-    let files: Record<string, string> = { ...SECURITY_COCKPIT_FILES }
+    let files: Record<string, string> = { ...COCKPIT_TEMPLATES[template] }
     files = replaceTokenInFiles(files, '{{COMPANY_NAME}}', company)
     files = replaceTokenInFiles(files, '{{FIRST_NAME}}', firstName)
     files = replaceTokenInFiles(files, '{{BRAND_INITIAL}}', brandInitial)

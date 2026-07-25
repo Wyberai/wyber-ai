@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
     bounced: 'bounced',
     unsubscribe: 'suppressed',
     unsubscribed: 'suppressed',
+    lead_unsubscribed: 'suppressed',
     call_completed: 'contacted',
   }
   const newStatus = statusMap[normalized]
