@@ -222,7 +222,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   // When ?template= is present for mobile, the type is already known — skip chooser.
   useEffect(() => {
     const newType = searchParams.get('new');
-    if (!['app', 'mobile', 'agent', 'workflow'].includes(newType ?? '')) return;
+    if (!['app', 'mobile', 'website', 'saas', 'agent', 'workflow'].includes(newType ?? '')) return;
 
     const templateId = searchParams.get('template');
     if (templateId && newType === 'mobile') {
@@ -261,8 +261,10 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       // to the email prefix if OAuth didn't supply a display name.
       const person = profile?.full_name?.trim() || profile?.email?.split('@')[0];
       const nameOverride = pendingLabel && person ? `${person}'s ${pendingLabel}` : undefined;
-      // Honor the homepage hero's Web/Mobile toggle; fall back to keyword detection.
-      if (pendingType === 'mobile') startProject(pending.trim(), 'mobile', nameOverride);
+      // Honor the homepage hero's 4-type toggle; fall back to keyword detection.
+      const DIRECT_TYPES = ['app', 'mobile', 'website', 'saas'] as const;
+      const resolvedType = DIRECT_TYPES.find(t => t === pendingType);
+      if (resolvedType) startProject(pending.trim(), resolvedType, nameOverride);
       else openChooser(pending.trim(), nameOverride);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -642,9 +644,9 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     {t('importBtn')}
                   </button>
-                  <button onClick={() => view === 'all' ? openChooser() : startProject(undefined, view === 'web' ? 'app' : 'mobile')} disabled={creating}
+                  <button onClick={() => view === 'mobile' ? startProject(undefined, 'mobile') : openChooser()} disabled={creating}
                     style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {view === 'web' ? t('newWebAppBtn') : view === 'mobile' ? t('newMobileAppBtn') : t('newProjectBtn')}
+                    {view === 'mobile' ? t('newMobileAppBtn') : t('newProjectBtn')}
                   </button>
                 </div>
               </div>
@@ -706,9 +708,9 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <div style={{ fontSize: 14, marginBottom: 16 }}>
                 {view === 'mobile' ? t('mobileEmptyDesc') : t('webEmptyDesc')}
               </div>
-              <button onClick={() => startProject(undefined, view === 'web' ? 'app' : 'mobile')} disabled={creating}
+              <button onClick={() => view === 'mobile' ? startProject(undefined, 'mobile') : openChooser()} disabled={creating}
                 style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-                {view === 'mobile' ? t('buildMobileAppBtn') : t('buildWebAppBtn')}
+                {view === 'mobile' ? t('buildMobileAppBtn') : t('newProjectBtn')}
               </button>
             </div>
           ) : (
