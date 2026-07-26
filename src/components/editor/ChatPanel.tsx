@@ -389,7 +389,7 @@ type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
 // pending a working OpenAI key; re-add it here once that's confirmed live.
 const PICKABLE_TIERS: ModelTier[] = ['fast', 'default', 'fable'];
 
-export function ChatPanel({ projectId, userId, projectType }: Props) {
+export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: Props) {
   const {
     messages, isGenerating, addMessage, updateMessage, setMessages,
     setIsGenerating, bumpGenerationTurn, streamingContent, setStreamingContent, clearStreamingContent,
@@ -397,6 +397,7 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
     project, setProject, hydrated, knowledge, pushCheckpoint, restoreCheckpoint, checkpoints, initialPrompt,
   } = useEditorStore();
 
+  const projectType = projectTypeProp ?? project?.project_type;
   const resolvedProjectId = projectId || project?.id;
   const resolvedUserId = userId || project?.userId;
   const t = useT(EDITOR_CHATPANEL_STRINGS);

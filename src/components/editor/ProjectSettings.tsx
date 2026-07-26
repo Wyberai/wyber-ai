@@ -7,6 +7,13 @@ import { useT } from '@/lib/i18n/useT';
 import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 
+const BUILDER_TYPES = [
+  { type: 'app',     label: 'Web App',  color: '#0EA5E9', desc: 'Dashboards, tools, CRMs' },
+  { type: 'mobile',  label: 'Mobile',   color: '#f97316', desc: 'React Native iOS & Android' },
+  { type: 'website', label: 'Website',  color: '#6366f1', desc: 'Landing pages, marketing sites' },
+  { type: 'saas',    label: 'SaaS',     color: '#ec4899', desc: 'Auth, billing, teams, dashboard' },
+] as const;
+
 export function ProjectSettings({ projectId, userId }: { projectId?: string; userId?: string }) {
   const t = useT(EDITOR_CONNECTORS_STRINGS);
   const tc = useT(COMMON_STRINGS);
@@ -17,6 +24,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState('');
   const [isPublic, setIsPublic] = useState(project?.is_public ?? false);
+  const [projectType, setProjectType] = useState(project?.project_type ?? 'app');
   const supabase = createClient();
   const router = useRouter();
 
@@ -25,8 +33,8 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
   const handleSave = async () => {
     if (!projectId) return;
     setSaving(true);
-    await supabase.from('projects').update({ name: name.trim(), is_public: isPublic }).eq('id', projectId);
-    if (project) setProject({ ...project, name: name.trim(), is_public: isPublic });
+    await supabase.from('projects').update({ name: name.trim(), is_public: isPublic, project_type: projectType }).eq('id', projectId);
+    if (project) setProject({ ...project, name: name.trim(), is_public: isPublic, project_type: projectType });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     setSaving(false);
@@ -81,6 +89,26 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
         <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: 0 }}>
           {isPublic ? t('visibilityPublicNote') : t('visibilityPrivateNote')}
         </p>
+      </div>
+
+      {/* Builder type */}
+      <div style={S.section}>
+        <div style={S.title}>Builder type</div>
+        <p style={{ fontSize: 11, color: 'var(--ide-text3)', marginBottom: 12, marginTop: -6, lineHeight: 1.5 }}>
+          Changing the type switches the AI system prompt for all future builds in this project.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          {BUILDER_TYPES.map(({ type, label, color, desc }) => {
+            const active = projectType === type;
+            return (
+              <button key={type} onClick={() => setProjectType(type)}
+                style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: active ? `1px solid ${color}55` : '1px solid var(--ide-border)', background: active ? `${color}18` : 'var(--bg-overlay)', transition: 'all 0.15s' }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: active ? color : 'var(--ide-text)', marginBottom: 2 }}>{label}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--ide-text3)', lineHeight: 1.4 }}>{desc}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Share URL */}

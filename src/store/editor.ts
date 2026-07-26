@@ -67,6 +67,7 @@ export interface Project {
   is_public?: boolean;
   deployed_url?: string;
   userId?: string;
+  project_type?: string;
   // Tracked for the multi-tab conflict guard (see persist-project.ts):
   // each save sends this as `expectedUpdatedAt` so a save from another tab
   // that's landed in between is detected instead of silently overwritten.
