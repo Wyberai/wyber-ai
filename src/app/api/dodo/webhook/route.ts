@@ -203,9 +203,21 @@ export async function POST(req: NextRequest) {
       .single()
     const userEmail = profile?.email as string | undefined
 
-    // Payment failed → dunning email (no plan/credit change; processor will retry)
+    // Payment failed → dunning email, escalating tone across up to 3 retries.
+    // Attempt count lives in email_events (kind='payment-failed') and is reset
+    // to zero the moment a payment actually succeeds (see payment.succeeded /
+    // subscription.renewed below) so a later, unrelated failure starts fresh.
     if (eventType === 'payment.failed') {
-      if (userEmail) sendPaymentFailedEmail(userEmail, profile?.plan as string | undefined).catch(() => {})
+      if (userEmail) {
+        (async () => {
+          try {
+            const { data: ev } = await admin.from('email_events').select('sent_count').eq('user_id', userId).eq('kind', 'payment-failed').single()
+            const attemptNumber = (ev?.sent_count ?? 0) + 1
+            await sendPaymentFailedEmail(userEmail, profile?.plan as string | undefined, attemptNumber)
+            await admin.from('email_events').upsert({ user_id: userId, kind: 'payment-failed', sent_count: attemptNumber, last_sent_at: new Date().toISOString() })
+          } catch { /* fire-and-forget; email_events may not exist yet */ }
+        })()
+      }
       console.log(`Payment failed for ${userId}`)
       return NextResponse.json({ received: true })
     }
@@ -362,6 +374,15 @@ export async function POST(req: NextRequest) {
     }
 
     if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
+      // Mark the matching checkout_attempts row converted so the cart-
+      // abandonment cron never nudges someone who already paid. Best-effort:
+      // most recent unconverted attempt for this user, table may not exist
+      // yet if migration 20260726000000 hasn't been applied.
+      admin.from('checkout_attempts')
+        .update({ converted: true, converted_at: new Date().toISOString() })
+        .eq('user_id', userId).eq('converted', false)
+        .then(() => {}, () => {})
+
       // Check if it's a top-up first
       const topupCredits = TOPUPS[productId]
       if (topupCredits) {
@@ -447,6 +468,8 @@ export async function POST(req: NextRequest) {
         sendUpgradeConfirmEmail(userEmail, planConfig.label, planConfig.credits).catch(() => {})
         sendAdminPaymentAlert(userEmail, `${planConfig.label} plan`).catch(() => {})
       }
+      // A payment just went through — clear any payment-failed dunning streak.
+      admin.from('email_events').delete().eq('user_id', userId).eq('kind', 'payment-failed').then(() => {}, () => {})
       // Report the Meta Purchase once — on the event that actually grants (the
       // payment.succeeded / subscription.active pair fires twice per subscribe).
       if (grantCredits) await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
@@ -467,6 +490,8 @@ export async function POST(req: NextRequest) {
           sendRenewalEmail(userEmail, planConfig.label, planConfig.credits, rollover).catch(() => {})
           sendAdminPaymentAlert(userEmail, `${planConfig.label} renewal`).catch(() => {})
         }
+        // Renewal succeeded — clear any payment-failed dunning streak.
+        admin.from('email_events').delete().eq('user_id', userId).eq('kind', 'payment-failed').then(() => {}, () => {})
       }
     }
 

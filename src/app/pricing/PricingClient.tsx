@@ -8,6 +8,7 @@ import { useLocale } from '@/lib/i18n/LocaleProvider'
 import { I18N_ENABLED } from '@/lib/i18n/locales'
 import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
+import { creditCost, type ActionType, type ModelTier } from '@/lib/credits'
 
 const BRAND = '#0EA5E9'
 
@@ -110,16 +111,21 @@ const TOPUPS = [
   { credits: 2000, price: 99,  priceINR: 1999, key: 'topup_2000', label: 'Studio', descKey: 'topupDescStudio', hasBadge: true },
 ]
 
-const CREDIT_TABLE = [
-  { actionKey: 'creditActionWebBuild',    costKey: 'cost30Credits', icon: '🌐' },
-  { actionKey: 'creditActionMobileBuild', costKey: 'cost30Credits', icon: '📱' },
-  { actionKey: 'creditActionEdit',        costKey: 'cost2Credits',  icon: '✏️' },
-  { actionKey: 'creditActionComplexEdit', costKey: 'cost5Credits',  icon: '🧩' },
-  { actionKey: 'creditActionBuildPlan',   costKey: 'cost5Credits',  icon: '🗺️' },
-  { actionKey: 'creditActionImageGen',    costKey: 'cost3Credits',  icon: '🎨' },
-  { actionKey: 'creditActionDeploy',      costKey: 'costFree',      icon: '🚀' },
-  { actionKey: 'creditActionGithub',      costKey: 'costFree',      icon: '📦' },
-  { actionKey: 'creditActionAutoFix',     costKey: 'costFree',      icon: '🔧' },
+// Costs are computed from src/lib/credits.ts (the actual charging logic), not
+// hand-maintained here — this table used to hardcode "30 credits" etc. as
+// literal translated strings duplicated across 5 locales, which could silently
+// drift from what a build actually charges the moment credits.ts changed.
+const CREDIT_TABLE: { actionKey: string; icon: string; action?: ActionType; tier?: ModelTier; free?: true }[] = [
+  { actionKey: 'creditActionWebBuild',    icon: '🌐', action: 'web-build',   tier: 'default' },
+  { actionKey: 'creditActionMobileBuild', icon: '📱', action: 'mobile-build', tier: 'default' },
+  { actionKey: 'creditActionEdit',        icon: '✏️', action: 'small-edit',  tier: 'fast' },
+  { actionKey: 'creditActionComplexEdit', icon: '🧩', action: 'small-edit',  tier: 'default' },
+  { actionKey: 'creditActionBuildPlan',   icon: '🗺️', action: 'plan',        tier: 'default' },
+  { actionKey: 'creditActionImageGen',    icon: '🎨', action: 'image-gen',   tier: 'default' },
+  { actionKey: 'creditActionAudioGen',    icon: '🎙️', action: 'audio-gen',   tier: 'default' },
+  { actionKey: 'creditActionDeploy',      icon: '🚀', free: true },
+  { actionKey: 'creditActionGithub',      icon: '📦', free: true },
+  { actionKey: 'creditActionAutoFix',     icon: '🔧', free: true },
 ]
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -378,15 +384,20 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
             <div style={{ fontSize: 11, fontWeight: 700, color: BRAND, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>{t('creditsBuysEyebrow')}</div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,2.5vw,30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 20 }}>{t('creditsBuysHeading')}</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {CREDIT_TABLE.map(row => (
-                <div key={row.actionKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--brand-bg-raised)', borderRadius: 9, gap: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 16 }}>{row.icon}</span>
-                    <span style={{ fontSize: 13, color: '#a1a1aa' }}>{t(row.actionKey as any)}</span>
+              {CREDIT_TABLE.map(row => {
+                const costLabel = row.free
+                  ? t('costFree' as any)
+                  : t('creditsAmount' as any).replace('{count}', String(creditCost(row.action!, row.tier)))
+                return (
+                  <div key={row.actionKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--brand-bg-raised)', borderRadius: 9, gap: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ fontSize: 16 }}>{row.icon}</span>
+                      <span style={{ fontSize: 13, color: '#a1a1aa' }}>{t(row.actionKey as any)}</span>
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: BRAND, whiteSpace: 'nowrap', background: 'rgba(14,165,233,0.08)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(14,165,233,0.15)' }}>{costLabel}</span>
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: BRAND, whiteSpace: 'nowrap', background: 'rgba(14,165,233,0.08)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(14,165,233,0.15)' }}>{t(row.costKey as any)}</span>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <p style={{ fontSize: 12, color: '#3f3f46', marginTop: 14, lineHeight: 1.6 }}>
               {t('creditsRolloverNote')}

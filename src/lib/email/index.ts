@@ -99,12 +99,24 @@ function divider(): string {
 }
 
 // ── 1. Welcome (on signup) ────────────────────────────────────────────────────
-export async function sendWelcomeEmail(to: string, name?: string) {
+// `source` branches the opener so a Meta-ad / referral signup doesn't read
+// identical to organic — the rest of the email (credits, feature list,
+// referral pitch) stays the same, only the hook line changes.
+export type WelcomeSource = 'organic' | 'paid-ads' | 'referral'
+const WELCOME_HOOKS: Record<WelcomeSource, (name: string) => string> = {
+  organic:    (name) => `Hey ${name}, you're in. Your ideas + our AI — this is the handshake.`,
+  'paid-ads': (name) => `Hey ${name}, you're in. You clicked an ad — respect for making it this far through 2026's attention economy. Let's make it worth it.`,
+  referral:   (name) => `Hey ${name}, you're in — and someone already vouched for WyberAi by inviting you. Let's see if they were right.`,
+}
+function welcomeHook(source: WelcomeSource, name: string): string {
+  return WELCOME_HOOKS[source](name)
+}
+export async function sendWelcomeEmail(to: string, name?: string, source: WelcomeSource = 'organic') {
   const displayName = name ?? to.split('@')[0]
   const html = wrap(`
     ${memeImg('welcome')}
     ${h1('Welcome to WyberAi ⚡')}
-    ${p(`Hey ${displayName}, you're in. Your ideas + our AI — this is the handshake.`)}
+    ${p(welcomeHook(source, displayName))}
     ${p('You have <strong style="color:#f0f0f4">50 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
     ${p('Here\'s what you can do:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
@@ -460,21 +472,45 @@ export async function sendTopupEmail(to: string, credits: number, newBalance: nu
 // ── 6b. Payment failed (dunning) ──────────────────────────────────────────────
 // Meme matrix: Hulk Hogan's twin-referee meltdown — "they took the belt right
 // off our waist!" The bank ran a dirty finish on the transaction.
-export async function sendPaymentFailedEmail(to: string, plan?: string) {
+export async function sendPaymentFailedEmail(to: string, plan?: string, attemptNumber = 1) {
   const planLabel = plan ? `WyberAi ${plan}` : 'your WyberAi subscription'
+  const variants = [
+    {
+      subject: `Whose belt is this anyway?! (Your WyberAi payment failed)`,
+      heading: 'THEY TOOK THE BELT RIGHT OFF OUR WAIST 😭',
+      meme: 'payment-failed' as const,
+      body: `Okay, deep breaths. Your bank just ran a <em>dirty finish</em> on the latest payment for <strong style="color:#f0f0f4">${planLabel}</strong> — usually an expired card or insufficient funds, occasionally just your bank being dramatic.`,
+      cta: 'Reclaim the belt →',
+    },
+    {
+      subject: `Still no belt (payment retry #2 failed)`,
+      heading: 'Second retry, same result',
+      meme: undefined,
+      body: `We tried again and it still didn't go through for <strong style="color:#f0f0f4">${planLabel}</strong>. Worth double-checking your card hasn't expired or hit its limit.`,
+      cta: 'Update payment method →',
+    },
+    {
+      subject: `Final notice — your plan pauses soon`,
+      heading: 'One more try before we have to pause things',
+      meme: undefined,
+      body: `Third attempt, still failed. If payment doesn't go through on the next retry, <strong style="color:#f0f0f4">${planLabel}</strong> moves to the Free plan automatically — your projects and history are never touched, only the paid features pause.`,
+      cta: 'Fix it before then →',
+    },
+  ]
+  const v = variants[Math.min(Math.max(attemptNumber - 1, 0), variants.length - 1)]
   const html = wrap(`
-    ${memeImg('payment-failed')}
-    ${h1('THEY TOOK THE BELT RIGHT OFF OUR WAIST 😭')}
-    ${p(`Okay, deep breaths. Your bank just ran a <em>dirty finish</em> on the latest payment for <strong style="color:#f0f0f4">${planLabel}</strong> — usually an expired card or insufficient funds, occasionally just your bank being dramatic.`)}
+    ${v.meme ? memeImg(v.meme) : ''}
+    ${h1(v.heading)}
+    ${p(v.body)}
     ${p('Update your payment method and we\'ll retry automatically. The championship belt (your plan and credits) goes right back around your waist.')}
     <div style="text-align:center;margin:28px 0">
-      ${btn('Reclaim the belt →', `${APP_URL}/settings?tab=billing`, '#f0a429')}
+      ${btn(v.cta, `${APP_URL}/settings?tab=billing`, '#f0a429')}
     </div>
     ${p('If we can\'t collect payment, your account moves to the Free plan — but your projects and history stay exactly where you left them. Nobody touches those.')}
     ${p('Think the charge itself is wrong? Just reply — hello@wyberai.com goes straight to a human referee.')}
-  `, 'Your payment failed — update billing to keep your plan')
+  `, v.subject)
 
-  return resend.emails.send({ from: FROM, to, subject: `Whose belt is this anyway?! (Your WyberAi payment failed)`, html })
+  return resend.emails.send({ from: FROM, to, subject: v.subject, html })
 }
 
 // ── 6c. Refund processed ──────────────────────────────────────────────────────
@@ -574,18 +610,33 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
   return resend.emails.send({ from: FROM, to, subject: 'Your 50 free credits are still waiting ⚡', html })
 }
 
-// ── 7d. Built-but-never-published nudge ───────────────────────────────────────
-export async function sendPublishNudgeEmail(to: string, projectName: string, projectId: string, unsubUrl: string) {
+// ── 7d. Built-but-never-published nudge — 2-touch (was one-shot only) ───────
+export async function sendPublishNudgeEmail(to: string, projectName: string, projectId: string, unsubUrl: string, sendNumber = 1) {
+  const variants = [
+    {
+      subject: `${projectName} is one click from being live`,
+      heading: `${projectName} is done — but nobody can see it`,
+      meme: 'publish-nudge' as const,
+      body: `That's us, pointing at <strong style="color:#f0f0f4">${projectName}</strong>. You built a real app and it's been sitting unpublished like a movie that never premiered. Publishing is one click and completely free — you get a live link you can share anywhere.`,
+    },
+    {
+      subject: `Second reminder: ${projectName} is still unpublished`,
+      heading: `Okay, one more nudge`,
+      meme: undefined,
+      body: `${projectName} is still sitting there, finished and unpublished. Last time we'll bring it up — publishing takes one click, costs nothing, and gives you a real link to send people instead of a screen recording.`,
+    },
+  ]
+  const v = variants[Math.min(sendNumber - 1, variants.length - 1)]
   const html = wrap(`
-    ${memeImg('publish-nudge')}
-    ${h1(`${projectName} is done — but nobody can see it`)}
-    ${p(`That's us, pointing at <strong style="color:#f0f0f4">${projectName}</strong>. You built a real app and it's been sitting unpublished like a movie that never premiered. Publishing is one click and completely free — you get a live link you can share anywhere.`)}
+    ${v.meme ? memeImg(v.meme) : ''}
+    ${h1(v.heading)}
+    ${p(v.body)}
     <div style="text-align:center;margin:28px 0">
       ${btn('Publish it now →', `${APP_URL}/project/${projectId}`)}
     </div>
     ${p('You can also connect your own domain, push to GitHub, or export the full source as a ZIP.')}
-  `, `${projectName} is one click from live`, unsubUrl)
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `${projectName} is one click from being live`, html })
+  `, v.subject, unsubUrl)
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
 
 // ── 8. App deployed successfully ──────────────────────────────────────────────
@@ -818,7 +869,9 @@ export async function sendWeeklyDigestEmail(to: string, name: string, stats: {
     <div style="text-align:center;margin:0 0 24px">
       ${btn('Keep building →', `${APP_URL}/dashboard`)}
     </div>
-    ${p('Running low? <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Top up or upgrade</a> — credits never expire.')}
+    ${stats.creditsRemaining <= 50
+      ? p('Running low? <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Top up or upgrade</a> — credits never expire.')
+      : ''}
   `, `Your WyberAi week in review`)
 
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `Your WyberAi week — ${stats.appsBuilt} builds, ${stats.creditsRemaining} credits left`, html })
@@ -917,4 +970,195 @@ export async function sendAIEmployeeFailedEmail(
     subject: `${employee.emoji} ${employee.name} failed — action needed`,
     html,
   })
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Lead-nurture sequence (free → paid conversion). Modeled on a cold-outbound
+// cadence, not a single upgrade blast: each touch carries a different angle
+// (activation, social proof, feature discovery, monetization, win-back,
+// breakup) so a lead who ignores touch 1 doesn't get the same pitch again at
+// touch 4. Cron wiring lives in /api/cron/email-drip.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── 22. Quick-start nudge — touch 1, ~18–36h after signup, zero projects ────
+// Faster and lighter than the existing "still waiting" nudge (day 2–14),
+// which is now touch 2 for anyone who ignores this one.
+export async function sendQuickStartNudgeEmail(to: string, name: string, unsubUrl: string) {
+  const html = wrap(`
+    ${h1("You're one sentence away 👀")}
+    ${p(`Hey ${name} — you signed up but haven't built anything yet. That's the only thing standing between you and a working app: one sentence, plain English, about 60 seconds.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“A waitlist page for my product launch”</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“An expense tracker split by category”</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0">“A booking page for my studio”</td></tr>
+    </table>
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Try it now →', `${APP_URL}/dashboard`)}
+    </div>
+    ${p('No pressure — your 50 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
+  `, "Your first app takes about 60 seconds", unsubUrl)
+  return resend.emails.send({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
+}
+
+// ── 23. Post-first-build nurture — fires the day after the aha-moment email ─
+export async function sendNextStepNurtureEmail(to: string, name: string, projectName: string, projectId: string) {
+  const html = wrap(`
+    ${h1('3 things worth doing next')}
+    ${p(`${name}, ${projectName} works — nice. Most people stop right there. Here's how to actually get value out of it:`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:10px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Publish it</strong> — free, one click, get a real URL you can share</td></tr>
+      <tr><td style="padding:10px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Connect Supabase</strong> — swap mock data for a real database so it actually persists</td></tr>
+      <tr><td style="padding:10px 0;font-size:15px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">Try the mobile version</strong> — same prompt, same project, a phone-native build</td></tr>
+    </table>
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Open your project →', `${APP_URL}/project/${projectId}`)}
+    </div>
+    ${p("Reply if you're not sure which one to start with — we'll point you in the right direction.")}
+  `, `What to do next with ${projectName}`)
+  return resend.emails.send({ from: FROM, to, subject: `Now that ${projectName} is built...`, html })
+}
+
+// ── 24. Social proof — day 3–4, no strong engagement signal yet ─────────────
+export async function sendSocialProofEmail(to: string, name: string) {
+  const html = wrap(`
+    ${h1("You're in good company")}
+    ${p(`${name}, here's a slice of what got built on WyberAi this week:`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;A CRM for a landscaping business — leads, quotes, and follow-ups in one place</td></tr>
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;A mobile habit tracker with streaks and charts, published to the Play Store</td></tr>
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;An internal inventory tool that replaced a spreadsheet three people were fighting over</td></tr>
+    </table>
+    ${p('None of these people were developers. Same 50 free credits you have right now.')}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Browse the gallery →', `${APP_URL}/gallery`)}
+    </div>
+  `, 'What builders shipped this week')
+  return resend.emails.send({ from: FROM, to, subject: 'What builders shipped this week', html })
+}
+
+// ── 25. Feature spotlight — rotates across a small set, day 5–7 ─────────────
+const FEATURE_SPOTLIGHTS = {
+  mobile: {
+    subject: 'Same prompt, an actual mobile app',
+    heading: 'You can build mobile apps too 📱',
+    body: 'The exact same prompt that builds a web app also builds a React Native app — preview it live on your phone via QR code, no Xcode or Android Studio required.',
+    cta: 'Try a mobile build →',
+    url: `${APP_URL}/dashboard`,
+  },
+  domain: {
+    subject: 'Put your own domain on it',
+    heading: 'Your app, your domain',
+    body: "Publishing gives you a free wyberai.app link — but you can point your own custom domain at any published project in Settings, no extra hosting to manage.",
+    cta: 'Connect a domain →',
+    url: `${APP_URL}/dashboard`,
+  },
+  connectors: {
+    subject: "You haven't connected anything yet",
+    heading: '25 integrations, one click each',
+    body: 'Supabase for a real database, Stripe for payments, OpenAI for AI features, GitHub to push your code — connect once in a project and the AI writes against real APIs, not mock data.',
+    cta: 'See connectors →',
+    url: `${APP_URL}/dashboard`,
+  },
+  templates: {
+    subject: "Don't start from a blank page",
+    heading: 'Skip the blank page',
+    body: "Templates give you a fully-built starting point — a CRM, a booking app, a habit tracker — that you customize instead of describing from scratch. Faster to your first real result.",
+    cta: 'Browse templates →',
+    url: `${APP_URL}/templates`,
+  },
+} as const
+export type FeatureSpotlightKey = keyof typeof FEATURE_SPOTLIGHTS
+export async function sendFeatureSpotlightEmail(to: string, key: FeatureSpotlightKey) {
+  const f = FEATURE_SPOTLIGHTS[key]
+  const html = wrap(`
+    ${h1(f.heading)}
+    ${p(f.body)}
+    <div style="text-align:center;margin:28px 0">
+      ${btn(f.cta, f.url)}
+    </div>
+  `, f.subject)
+  return resend.emails.send({ from: FROM, to, subject: f.subject, html })
+}
+
+// ── 26. Referral nudge — proactive invite ask, day 5-ish with real usage ────
+export async function sendReferralNudgeEmail(to: string, name: string, referralCode: string) {
+  const html = wrap(`
+    ${h1('Give 50, get 50')}
+    ${p(`${name}, if anyone you know has been talking about wanting an app built — this is the easy version. Share your link, they start with 50 free credits, you get 50 the moment they sign up.`)}
+    <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:16px 20px;margin:0 0 24px;text-align:center">
+      <span style="font-size:14px;color:#8888a0">Your code</span><br/>
+      <span style="font-size:20px;font-weight:700;color:#0EA5E9;letter-spacing:0.05em">${referralCode}</span>
+    </div>
+    <div style="text-align:center;margin:0 0 24px">
+      ${btn('Get your invite link →', `${APP_URL}/settings?tab=referrals`)}
+    </div>
+    ${p('No cap on how many times this can pay out.')}
+  `, 'Invite a friend, you both get 50 credits')
+  return resend.emails.send({ from: FROM, to, subject: 'Give 50, get 50 — invite a friend to WyberAi', html })
+}
+
+// ── 27. Early credit warning — softer signal before the ≤20 credit-low email ─
+export async function sendEarlyCreditWarningEmail(to: string, remaining: number) {
+  const html = wrap(`
+    ${h1('Halfway there ⚡')}
+    ${p(`Just a heads up — you're down to <strong style="color:#f0f0f4">${remaining} credits</strong>. No action needed yet, but if you're mid-project it's worth knowing before you hit zero mid-build.`)}
+    ${p(`Top-up credits never expire, so buying ahead costs you nothing extra — <a href="${APP_URL}/pricing" style="color:#0EA5E9">see plans and top-ups</a> whenever you're ready.`)}
+  `, `${remaining} credits remaining`)
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Halfway there — ${remaining} credits remaining`, html })
+}
+
+// ── 28. Paywall / feature-block hit — blocked from a specific model tier ────
+export async function sendPaywallHitEmail(to: string, tier: string, currency: Currency = 'USD') {
+  const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
+  const html = wrap(`
+    ${h1(`That one needs a higher plan`)}
+    ${p(`You just tried to use the <strong style="color:#f0f0f4">${tier}</strong> model tier — it's reserved for paid plans. On the free plan you get full access to standard generation; ${tier} adds sharper output for the stuff that needs to look flawless (hero images, complex logic, production-grade code).`)}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('See what unlocks it →', `${APP_URL}/pricing`, '#f0a429')}
+    </div>
+    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and includes every model tier.`)}
+  `, `${tier} needs a higher plan`)
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `That model needs a higher plan`, html })
+}
+
+// ── 29. Checkout abandoned — started checkout, never completed payment ─────
+export async function sendCheckoutAbandonedEmail(to: string, planLabel: string, currency: Currency = 'USD') {
+  const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
+  const html = wrap(`
+    ${h1('Still thinking it over?')}
+    ${p(`You started checking out for <strong style="color:#f0f0f4">${planLabel}</strong> but didn't finish — no charge went through, nothing to worry about there.`)}
+    ${p("If something didn't add up or the page glitched, just reply — we'll sort it out directly.")}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Finish checkout →', `${APP_URL}/pricing`)}
+    </div>
+    ${p(`Every plan includes every feature — web, mobile, deploy, connectors — starting at ${formatPrice(prices.starter_monthly, currency)}/mo.`)}
+  `, `Finish setting up ${planLabel}`)
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Still thinking it over?`, html })
+}
+
+// ── 30. Win-back — 14–30 days inactive, unused free credits ────────────────
+export async function sendWinBackEmail(to: string, name: string, remaining: number, unsubUrl: string) {
+  const html = wrap(`
+    ${memeImg('still-waiting')}
+    ${h1('Still there? 👋')}
+    ${p(`It's been a couple weeks, ${name}. Your account — and <strong style="color:#f0f0f4">${remaining} unused credits</strong> — are exactly where you left them.`)}
+    ${p("Whatever pulled you away, no judgment. If you want back in, it's a one-click return, not a fresh start.")}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Pick up where you left off →', `${APP_URL}/dashboard`)}
+    </div>
+  `, "Still there? Your credits are waiting", unsubUrl)
+  return resend.emails.send({ from: FROM, to, subject: 'Still there? 👋', html })
+}
+
+// ── 31. Breakup email — 45–60 days silent, last touch, no meme on purpose ──
+export async function sendBreakupEmail(to: string, name: string, unsubUrl: string) {
+  const html = wrap(`
+    ${h1('Should we close your file?')}
+    ${p(`${name}, this is the last email we'll send unless you tell us otherwise. It's been a while, and we'd rather ask than keep nudging into silence.`)}
+    ${p("If you're done, no hard feelings — click unsubscribe below and you won't hear from us again. If there's actually still something you want to build, everything is exactly where you left it.")}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Still interested →', `${APP_URL}/dashboard`, '#3d3d4a')}
+    </div>
+  `, "Should we close your file?", unsubUrl)
+  return resend.emails.send({ from: FROM, to, subject: 'Should we close your file?', html })
 }

@@ -65,7 +65,13 @@ export async function onboardUser({ user, supabase, ipCountry, refCode, origin, 
       if (user.email) {
         const fullName = (user.user_metadata?.full_name as string | undefined);
         const provider = (user.app_metadata?.provider as string | undefined);
-        sendWelcomeEmail(user.email, fullName).catch(() => {});
+        // Branch the welcome-email opener by acquisition source. `_fbc` is the
+        // Meta Pixel's own cookie — it's only ever set when the page loaded
+        // with a `fbclid` param, i.e. a genuine Meta/Instagram ad click — so
+        // this reuses existing ad-attribution plumbing instead of adding new
+        // UTM cookie capture just for email copy.
+        const welcomeSource: import('@/lib/email').WelcomeSource = cleanRefCode ? 'referral' : fbc ? 'paid-ads' : 'organic';
+        sendWelcomeEmail(user.email, fullName, welcomeSource).catch(() => {});
         sendAdminSignupAlert(user.email, provider).catch(() => {});
 
         const { sendMetaEvent } = await import('@/lib/meta-capi');

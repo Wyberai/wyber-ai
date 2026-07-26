@@ -12,6 +12,11 @@ import type { Locale } from './locales';
 export interface HomeStrings {
   navWebApps: string;
   navMobileApps: string;
+  navGallery: string;
+  galleryStripLabel: string;
+  galleryStripCta: string;
+  userBuildsStripLabel: string;
+  userBuildsStripCta: string;
   navJourney: string;
   navPricing: string;
   signIn: string;
@@ -154,6 +159,11 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   en: {
     navWebApps: 'Web Apps',
     navMobileApps: 'Mobile Apps',
+    navGallery: 'Gallery',
+    galleryStripLabel: 'Real apps, real usage',
+    galleryStripCta: 'See the full gallery',
+    userBuildsStripLabel: 'Built and sold by our users',
+    userBuildsStripCta: 'Browse the marketplace',
     navJourney: 'Journey',
     navPricing: 'Pricing',
     signIn: 'Sign in',
@@ -298,6 +308,11 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   hi: {
     navWebApps: 'वेब ऐप्स',
     navMobileApps: 'मोबाइल ऐप्स',
+    navGallery: 'गैलरी',
+    galleryStripLabel: 'असली ऐप्स, असली इस्तेमाल',
+    galleryStripCta: 'पूरी गैलरी देखें',
+    userBuildsStripLabel: 'हमारे यूज़र्स द्वारा बनाए और बेचे गए',
+    userBuildsStripCta: 'मार्केटप्लेस देखें',
     navJourney: 'जर्नी',
     navPricing: 'प्राइसिंग',
     signIn: 'साइन इन',
@@ -442,6 +457,11 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   kn: {
     navWebApps: 'ವೆಬ್ ಆ್ಯಪ್‌ಗಳು',
     navMobileApps: 'ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳು',
+    navGallery: 'ಗ್ಯಾಲರಿ',
+    galleryStripLabel: 'ನಿಜವಾದ ಆ್ಯಪ್‌ಗಳು, ನಿಜವಾದ ಬಳಕೆ',
+    galleryStripCta: 'ಪೂರ್ಣ ಗ್ಯಾಲರಿ ನೋಡಿ',
+    userBuildsStripLabel: 'ನಮ್ಮ ಬಳಕೆದಾರರು ನಿರ್ಮಿಸಿ ಮಾರಾಟ ಮಾಡಿದ್ದು',
+    userBuildsStripCta: 'ಮಾರುಕಟ್ಟೆ ನೋಡಿ',
     navJourney: 'ಜರ್ನಿ',
     navPricing: 'ಬೆಲೆ',
     signIn: 'ಸೈನ್ ಇನ್',
@@ -586,6 +606,11 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   te: {
     navWebApps: 'వెబ్ యాప్‌లు',
     navMobileApps: 'మొబైల్ యాప్‌లు',
+    navGallery: 'గ్యాలరీ',
+    galleryStripLabel: 'నిజమైన యాప్‌లు, నిజమైన వినియోగం',
+    galleryStripCta: 'పూర్తి గ్యాలరీ చూడండి',
+    userBuildsStripLabel: 'మా యూజర్లు నిర్మించి అమ్మినవి',
+    userBuildsStripCta: 'మార్కెట్‌ప్లేస్ చూడండి',
     navJourney: 'జర్నీ',
     navPricing: 'ధర',
     signIn: 'సైన్ ఇన్',
@@ -730,6 +755,11 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   ta: {
     navWebApps: 'வெப் ஆப்ஸ்',
     navMobileApps: 'மொபைல் ஆப்ஸ்',
+    navGallery: 'கேலரி',
+    galleryStripLabel: 'உண்மையான ஆப்ஸ், உண்மையான பயன்பாடு',
+    galleryStripCta: 'முழு கேலரியைப் பாருங்கள்',
+    userBuildsStripLabel: 'எங்கள் யூசர்களால் உருவாக்கப்பட்டு விற்கப்பட்டவை',
+    userBuildsStripCta: 'மார்க்கெட்பிளேஸைப் பாருங்கள்',
     navJourney: 'ஜர்னி',
     navPricing: 'விலை',
     signIn: 'சைன் இன்',

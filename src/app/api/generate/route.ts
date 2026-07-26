@@ -1092,11 +1092,22 @@ async function refundCredits(userId: string, amount: number, reason: string): Pr
   } catch (e) { console.error('[refund] failed', e) }
 }
 
+// Opt-in switch for the Sonnet-first build routing below. Defaults OFF so a
+// bare deploy changes nothing — flip WYBER_SONNET_FIRST_BUILD=true to start
+// the staged rollout once the [generate cache] telemetry is being watched.
+// Every from-scratch build previously forced Opus (Anthropic's slowest tier)
+// unconditionally; that was the single largest untouched latency lever in the
+// pipeline (everything else — tool-use batching, prompt caching, streaming —
+// was already well-optimized). This flag exists so the switch to Sonnet-first
+// can be validated on real traffic before becoming the permanent default.
+const SONNET_FIRST_BUILDS = process.env.WYBER_SONNET_FIRST_BUILD === 'true'
+
 /**
  * Decide which model tier to run on — fully automatic, server-side.
- * Policy (see model-defaults): Opus for first builds, Sonnet for edits, and
- * escalate genuinely complex edits back to Opus via a sub-cent Haiku check.
- * Plan + self-heal passes run on Sonnet (cheap; self-heal is free to the user).
+ * Policy (see model-defaults): Sonnet-first for builds and edits, escalating
+ * to Opus via a sub-cent Haiku check when the request actually warrants it
+ * (a large multi-feature build, or an architecturally complex edit). Plan +
+ * self-heal passes always run on Sonnet (cheap; self-heal is free to the user).
  */
 async function resolveModelTier(opts: {
   actionType: string
@@ -1110,12 +1121,45 @@ async function resolveModelTier(opts: {
   if (stage === 'plan' || selfHeal) return 'fast'
   // Targeted agent-fix passes (free, internal) are small scoped edits → Sonnet.
   if (stage === 'agentFix') return 'fast'
-  // Staged build passes (scaffold/fill) are part of an initial build → keep Opus.
-  if (stage === 'scaffold' || stage === 'fill') return 'default'
-  // From-scratch builds get the best model for a strong first impression.
-  if (isNewBuild || actionType === 'web-build' || actionType === 'mobile-build') return 'default'
+  // Staged build passes (scaffold/fill) and from-scratch builds are all part of
+  // ONE logical build. Classify each stage independently against the SAME
+  // original prompt (cheap, deterministic-ish Haiku call) so every stage of a
+  // simple build agrees on Sonnet and every stage of a genuinely large build
+  // agrees on Opus — no single stage silently forces the slow tier regardless
+  // of what the build actually needs.
+  if (stage === 'scaffold' || stage === 'fill' || isNewBuild || actionType === 'web-build' || actionType === 'mobile-build') {
+    if (!SONNET_FIRST_BUILDS) return 'default' // rollout not yet enabled — old behavior
+    return (await isComplexBuild(prompt)) ? 'default' : 'fast'
+  }
   // It's an edit to an existing app — Sonnet by default, escalate when complex.
   return (await isComplexEdit(prompt, fileContext)) ? 'default' : 'fast'
+}
+
+/**
+ * Sub-cent Haiku classifier: is this from-scratch build request large/complex
+ * enough (a real multi-feature platform with many interconnected systems) to
+ * warrant Opus, or is it the common case (a landing page, a single-purpose
+ * tool, a dashboard) that Sonnet already handles well? Mirrors isComplexEdit's
+ * shape exactly. Fails to LOW (Sonnet) on any error so a misfire never costs
+ * Opus money or time.
+ */
+async function isComplexBuild(prompt: string): Promise<boolean> {
+  try {
+    const res = await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 5,
+      system: `You rate a from-scratch app-build request as LOW or HIGH complexity.
+HIGH = a large multi-feature platform (e.g. "a full marketplace with vendor accounts, inventory, and checkout", "a project management tool with teams, permissions, and Gantt charts", "a multi-tenant SaaS admin panel"), OR explicitly asks for many deeply interconnected screens/modules, OR heavy custom business logic (complex scoring, scheduling, or workflow engines).
+LOW = the common case: a landing page, a single-purpose tool (todo list, habit tracker, CRM, portfolio, blog), a dashboard, a form-based app — even with several screens, as long as they're not a deeply interconnected custom system.
+The bar is the SCOPE of what's being built, not the word count of the request.
+Reply with EXACTLY one word: LOW or HIGH.`,
+      messages: [{ role: 'user', content: prompt.slice(0, 1500) }],
+    })
+    const text = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').toUpperCase()
+    return text.includes('HIGH')
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -1299,6 +1343,11 @@ async function persistGeneratedFiles(projectId: string, generatedText: string): 
 }
 
 export async function POST(req: NextRequest) {
+  // Wall-clock start — the existing [generate cache] telemetry logs tokens and
+  // cache hit/miss but no latency number, and "we're slower than competitors"
+  // is fundamentally a latency claim. Used to validate the Sonnet-first build
+  // rollout (WYBER_SONNET_FIRST_BUILD) actually reduces time-to-done.
+  const requestStartTime = Date.now()
   // Tracks credits actually deducted so any failure path can refund exactly once.
   let deductedCost = 0
   let creditsSettled = false
@@ -1310,9 +1359,12 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json()
-    // NOTE: modelTier is no longer read from the client — the server picks the
-    // model automatically (see resolveModelTier). The field is ignored if sent.
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false } = body
+    // modelTier: quality-tier selection (fast/default/premium/fable) stays
+    // fully automatic server-side (see resolveModelTier) — this field only
+    // matters when it's the explicit 'gpt' choice from the model dropdown,
+    // checked once the caller's plan is known (below, alongside the existing
+    // tierAllowedForPlan gate).
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier } = body
 
     // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
     // Reads the SAME var the client checks (roster.ts AGENT_TEAM_ENABLED) —
@@ -1435,8 +1487,8 @@ export async function POST(req: NextRequest) {
     // chooses. From-scratch builds get Opus for the best first impression; edits
     // run on Sonnet (cheaper, fast) unless a sub-cent Haiku check rates the edit
     // as architecturally complex, in which case we escalate back to Opus.
-    const tier = await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
-    const cost = creditCost(actionType, tier)
+    let tier = await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
+    let cost = creditCost(actionType, tier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
     // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
@@ -1454,13 +1506,102 @@ export async function POST(req: NextRequest) {
       const balance = profile?.credits ?? 0
       const plan = profile?.plan ?? 'free'
 
+      // Explicit provider choice from the model dropdown. Every other tier
+      // stays fully automatic (resolveModelTier above) — 'gpt' is the one
+      // user-selectable exception, and only takes effect if the plan actually
+      // permits it (tierAllowedForPlan is still the real gate right below;
+      // this just feeds it a different tier when the user asked for one).
+      if (modelTier === 'gpt' && tierAllowedForPlan('gpt', plan)) {
+        tier = 'gpt'
+        cost = creditCost(actionType, tier)
+      }
+
       // Enforce plan-based model gate
       if (!tierAllowedForPlan(tier, plan)) {
+        // Explain exactly what upgrading unlocks, throttled to at most once
+        // every 3 days per user (same email_events pattern as the credits
+        // drip) — a hard paywall block is high-intent, but repeated tier
+        // attempts in one session shouldn't fire an email per request.
+        if (profile?.email) {
+          ;(async () => {
+            try {
+              const { data: ev, error: evErr } = await admin.from('email_events')
+                .select('sent_count, last_sent_at').eq('user_id', user.id).eq('kind', 'paywall-hit').single()
+              if (evErr && evErr.code === '42P01') return // migration not applied yet
+              const dueBefore = new Date(Date.now() - 3 * 24 * 3600_000).toISOString()
+              if (ev?.last_sent_at && ev.last_sent_at > dueBefore) return
+              const { data: optRow } = await admin.from('profiles').select('email_opt_out').eq('id', user.id).single()
+              if (optRow?.email_opt_out) return
+              const { sendPaywallHitEmail } = await import('@/lib/email')
+              await sendPaywallHitEmail(profile.email, tier, await userCurrency(admin, user.id))
+              await admin.from('email_events').upsert({ user_id: user.id, kind: 'paywall-hit', sent_count: (ev?.sent_count ?? 0) + 1, last_sent_at: new Date().toISOString() })
+            } catch { /* fire-and-forget */ }
+          })()
+        }
         return new Response(JSON.stringify({
           error: `The ${tier} model requires a higher plan. Please upgrade.`,
           needed: cost,
           balance,
         }), { status: 402 })
+      }
+
+      // ── Isolated OpenAI-backed 'gpt' tier pipeline ──────────────────────
+      // Deliberately separate from the Anthropic tool-use loop below — see
+      // src/lib/model-providers/openai-coding.ts for why. Its own balance
+      // check, its own credit deduction, its own response; never falls
+      // through into the Anthropic-specific code that follows. Only reachable
+      // via an explicit dropdown choice (tierAllowedForPlan gate already
+      // passed above), never an automatic default.
+      if (tier === 'gpt') {
+        if (balance < cost) {
+          return new Response(JSON.stringify({
+            error: `Not enough credits. This action costs ${cost} credit${cost !== 1 ? 's' : ''} and you have ${balance}.`,
+            needed: cost, balance,
+          }), { status: 402 })
+        }
+        let gptNewBalance = balance
+        const { data: gptRpc, error: gptRpcErr } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: cost })
+        if (!gptRpcErr && gptRpc?.new_credits !== undefined) {
+          gptNewBalance = gptRpc.new_credits
+        } else {
+          const { data: updated, error: deductErr } = await admin
+            .from('profiles')
+            .update({ credits: balance - cost, updated_at: new Date().toISOString() })
+            .eq('id', user.id)
+            .gte('credits', cost)
+            .select('credits')
+            .single()
+          if (deductErr || !updated) {
+            return new Response(JSON.stringify({ error: 'Insufficient credits' }), { status: 402 })
+          }
+          gptNewBalance = updated.credits
+        }
+
+        try {
+          const { generateWithOpenAiCoding, OPENAI_OUTPUT_RULE } = await import('@/lib/model-providers/openai-coding')
+          const gptSystemPrompt = (projectType === 'mobile' ? buildMobileSystemPrompt() : buildSystemPrompt()) + '\n\n' + OPENAI_OUTPUT_RULE
+          const result = await generateWithOpenAiCoding({
+            systemPrompt: gptSystemPrompt,
+            userPrompt: prompt,
+            fileContext,
+          })
+          admin.from('credit_usage').insert({
+            user_id: user.id, amount: cost, reason: actionType,
+            credits_before: balance, credits_after: gptNewBalance,
+          }).then(() => {}, () => {})
+          return new Response(result.text, {
+            headers: {
+              'Content-Type': 'text/plain; charset=utf-8',
+              'X-Credits-Used': String(cost),
+              'X-New-Balance': String(gptNewBalance),
+            },
+          })
+        } catch (gptErr) {
+          // Generation failed after credits were already deducted — refund,
+          // same promise the Anthropic path makes on failure.
+          await refundCredits(user.id, cost, 'gpt-generation-failed')
+          return new Response(JSON.stringify({ error: `GPT generation failed: ${String(gptErr)}` }), { status: 500 })
+        }
       }
 
       if (balance < cost) {
@@ -2239,7 +2380,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
                 const finalMsg = await stream.finalMessage()
                 const u = finalMsg.usage as unknown as Record<string, number>
-                console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
+                console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
                 if (finalMsg.stop_reason === 'max_tokens') {
                   // Sub-phase 3: a tool call cut off mid-JSON can't be replayed as
@@ -2553,7 +2694,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
               const finalMsg = await stream.finalMessage()
               const u = finalMsg.usage as unknown as Record<string, number>
-              console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0}`)
+              console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
               // Pass finished cleanly → Sentinel end-of-pass review. A blocking
               // finding spends a bounded corrective turn (the text-tag path has

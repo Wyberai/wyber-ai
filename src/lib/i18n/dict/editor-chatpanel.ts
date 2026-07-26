@@ -91,6 +91,9 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     stopGeneratingTooltip: 'Stop generating',
     autoModelTooltip: 'WyberAi automatically picks the best model: top-tier for new builds, a fast model for quick edits. You only pay for what each change needs.',
     autoModelLabel: 'Auto',
+    costEstimateTooltip: 'Estimated credit cost for this message — the exact amount depends on which model tier the system automatically picks.',
+    gptModelLabel: 'GPT',
+    gptModelTooltip: 'Use OpenAI instead of Claude for this message — an alternative engine for the same build.',
 
     // Per-message actions
     editRegenerateTooltip: 'Edit and regenerate from here',
@@ -227,6 +230,9 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     stopGeneratingTooltip: 'जनरेट करना रोकें',
     autoModelTooltip: 'WyberAi खुद सबसे अच्छा मॉडल चुनता है: नए बिल्ड के लिए टॉप-टियर, छोटे एडिट के लिए तेज़ मॉडल। आप सिर्फ उतना ही पे करते हैं जितना हर बदलाव को चाहिए।',
     autoModelLabel: 'ऑटो',
+    costEstimateTooltip: 'इस मैसेज के लिए अनुमानित क्रेडिट लागत — असली रकम इस पर निर्भर करती है कि सिस्टम कौन-सा मॉडल टियर अपने आप चुनता है।',
+    gptModelLabel: 'GPT',
+    gptModelTooltip: 'इस मैसेज के लिए Claude की जगह OpenAI का इस्तेमाल करें — वही बिल्ड, एक अलग इंजन।',
 
     editRegenerateTooltip: 'यहां से एडिट करके फिर से जनरेट करें',
     saveRegenerateButton: 'सेव करें और फिर से जनरेट करें',
@@ -359,6 +365,9 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     stopGeneratingTooltip: 'ಜನರೇಟ್ ಮಾಡುವುದನ್ನು ನಿಲ್ಲಿಸಿ',
     autoModelTooltip: 'WyberAi ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಉತ್ತಮ ಮಾಡೆಲ್ ಆಯ್ಕೆ ಮಾಡುತ್ತದೆ: ಹೊಸ ಬಿಲ್ಡ್‌ಗಳಿಗೆ ಟಾಪ್-ಟಿಯರ್, ಚಿಕ್ಕ ಎಡಿಟ್‌ಗಳಿಗೆ ವೇಗದ ಮಾಡೆಲ್. ಪ್ರತಿ ಬದಲಾವಣೆಗೆ ಬೇಕಾದಷ್ಟೇ ನೀವು ಪಾವತಿಸುತ್ತೀರಿ.',
     autoModelLabel: 'ಆಟೋ',
+    costEstimateTooltip: 'ಈ ಸಂದೇಶಕ್ಕೆ ಅಂದಾಜು ಕ್ರೆಡಿಟ್ ವೆಚ್ಚ — ನಿಖರವಾದ ಮೊತ್ತವು ಸಿಸ್ಟಮ್ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಯಾವ ಮಾಡೆಲ್ ಟಿಯರ್ ಆಯ್ಕೆ ಮಾಡುತ್ತದೆ ಎಂಬುದರ ಮೇಲೆ ಅವಲಂಬಿತವಾಗಿದೆ.',
+    gptModelLabel: 'GPT',
+    gptModelTooltip: 'ಈ ಸಂದೇಶಕ್ಕೆ Claude ಬದಲು OpenAI ಬಳಸಿ — ಅದೇ ಬಿಲ್ಡ್‌ಗೆ ಒಂದು ಪರ್ಯಾಯ ಎಂಜಿನ್.',
 
     editRegenerateTooltip: 'ಇಲ್ಲಿಂದ ಎಡಿಟ್ ಮಾಡಿ ಮತ್ತೆ ಜನರೇಟ್ ಮಾಡಿ',
     saveRegenerateButton: 'ಸೇವ್ ಮಾಡಿ ಮತ್ತೆ ಜನರೇಟ್ ಮಾಡಿ',
@@ -491,6 +500,9 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     stopGeneratingTooltip: 'జనరేట్ చేయడం ఆపండి',
     autoModelTooltip: 'WyberAi స్వయంచాలకంగా అత్యుత్తమ మోడల్‌ను ఎంచుకుంటుంది: కొత్త బిల్డ్‌లకు టాప్-టియర్, చిన్న ఎడిట్‌లకు వేగవంతమైన మోడల్. ప్రతి మార్పుకు అవసరమైనంత మాత్రమే మీరు చెల్లిస్తారు.',
     autoModelLabel: 'ఆటో',
+    costEstimateTooltip: 'ఈ మెసేజ్‌కి అంచనా క్రెడిట్ ఖర్చు — ఖచ్చితమైన మొత్తం సిస్టమ్ స్వయంచాలకంగా ఎంచుకునే మోడల్ టియర్‌పై ఆధారపడి ఉంటుంది.',
+    gptModelLabel: 'GPT',
+    gptModelTooltip: 'ఈ మెసేజ్‌కి Claude బదులు OpenAI వాడండి — అదే బిల్డ్‌కి ప్రత్యామ్నాయ ఇంజిన్.',
 
     editRegenerateTooltip: 'ఇక్కడి నుండి ఎడిట్ చేసి మళ్ళీ జనరేట్ చేయండి',
     saveRegenerateButton: 'సేవ్ చేసి మళ్ళీ జనరేట్ చేయండి',
@@ -623,6 +635,9 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     stopGeneratingTooltip: 'ஜெனரேட் செய்வதை நிறுத்து',
     autoModelTooltip: 'WyberAi தானாகவே சிறந்த மாடலைத் தேர்ந்தெடுக்கிறது: புதிய கட்டமைப்புகளுக்கு டாப்-டையர், சிறிய எடிட்களுக்கு வேகமான மாடல். ஒவ்வொரு மாற்றத்திற்கும் தேவையானதை மட்டும் நீங்கள் செலுத்துகிறீர்கள்.',
     autoModelLabel: 'ஆட்டோ',
+    costEstimateTooltip: 'இந்த மெசேஜுக்கான மதிப்பிடப்பட்ட கிரெடிட் செலவு — சரியான தொகை சிஸ்டம் தானாகத் தேர்ந்தெடுக்கும் மாடல் நிலையைப் பொறுத்தது.',
+    gptModelLabel: 'GPT',
+    gptModelTooltip: 'இந்த மெசேஜுக்கு Claude-க்கு பதிலாக OpenAI-ஐ பயன்படுத்துங்கள் — அதே பில்டுக்கான மாற்று இன்ஜின்.',
 
     editRegenerateTooltip: 'இங்கிருந்து எடிட் செய்து மீண்டும் ஜெனரேட் செய்யுங்கள்',
     saveRegenerateButton: 'சேவ் செய்து மீண்டும் ஜெனரேட் செய்யுங்கள்',

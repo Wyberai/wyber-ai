@@ -1,36 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { generateWithElevenLabs, generateWithOpenAiTts } from '@/lib/audio-gen'
 
 // Internal: called by run engine with X-Internal-User-Id
 // External: called by frontend to list/play voice clips for an employee
 
 function getInternalUserId(req: NextRequest): string | null {
   return req.headers.get('X-Internal-User-Id')
-}
-
-async function generateWithElevenLabs(text: string, apiKey: string): Promise<Buffer> {
-  const voiceId = 'EXAVITQu4vr4xnSDxMaL' // default "Sarah" voice
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'xi-api-key': apiKey },
-    body: JSON.stringify({
-      text: text.slice(0, 2500),
-      model_id: 'eleven_turbo_v2',
-      voice_settings: { stability: 0.5, similarity_boost: 0.75 },
-    }),
-  })
-  if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${await res.text()}`)
-  return Buffer.from(await res.arrayBuffer())
-}
-
-async function generateWithOpenAITTS(text: string, apiKey: string): Promise<Buffer> {
-  const res = await fetch('https://api.openai.com/v1/audio/speech', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model: 'tts-1', voice: 'nova', input: text.slice(0, 4096) }),
-  })
-  if (!res.ok) throw new Error(`OpenAI TTS ${res.status}: ${await res.text()}`)
-  return Buffer.from(await res.arrayBuffer())
 }
 
 // POST — generate and store a voice clip (called by run engine or directly)
@@ -74,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   if (!audioBuffer && oaiKey) {
     try {
-      audioBuffer = await generateWithOpenAITTS(body.text, oaiKey)
+      audioBuffer = await generateWithOpenAiTts(body.text, oaiKey)
       provider = 'openai'
     } catch { /* fall through */ }
   }

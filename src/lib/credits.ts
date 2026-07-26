@@ -3,9 +3,16 @@
  * Keep all cost logic here; routes import from here, never hardcode elsewhere.
  */
 
-export type ModelTier = 'fast' | 'default' | 'premium' | 'fable'
-/** DB plan values: 'free' | 'pro' (Builder) | 'business' (Team) */
-export type PlanId = 'free' | 'pro' | 'business'
+export type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt'
+export type ModelProvider = 'anthropic' | 'openai'
+/**
+ * Real DB plan values written to profiles.plan by the Dodo webhook
+ * (src/app/api/dodo/webhook/route.ts) and the free/cancellation reset
+ * (src/lib/plan-grants.ts FREE_ON_CANCEL). 'business' never existed on Dodo —
+ * it was a leftover from the pre-Dodo Stripe integration and is kept out of
+ * this union on purpose so it can't silently resurface.
+ */
+export type PlanId = 'free' | 'spark' | 'starter' | 'builder' | 'pro' | 'growth' | 'scale'
 export type ActionType =
   | 'small-edit'
   | 'component'
@@ -20,25 +27,53 @@ export type ActionType =
   | 'ai-helper'
   | 'image-gen'
   | 'hero-image-gen'
+  | 'audio-gen'
   | 'execution'
   | 'employee-run'
   | 'gtm-icp-sequence'
   | 'gtm-lead-enrich'
 
-/** Anthropic model IDs for each tier */
+/**
+ * Anthropic model IDs for each tier. Bumped from claude-sonnet-4-6/opus-4-8 to
+ * the current Sonnet 5 / Opus 5 generation — same-or-cheaper pricing, better
+ * agentic-coding performance. Scoped to ONLY this builder tier system; other
+ * subsystems (AI Employees, Agent Canvas, GTM flows) hardcode their own model
+ * strings independently and are a separate, out-of-scope cleanup.
+ */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-sonnet-4-6',
-  default: 'claude-opus-4-8',
-  premium: 'claude-opus-4-8',
+  fast:    'claude-sonnet-5',
+  default: 'claude-opus-5',
+  premium: 'claude-opus-5',
   fable:   'claude-fable-5',
+  // Env-var override, not hardcoded — OpenAI's exact current-generation coding
+  // model id should be confirmed against their live API/docs before this tier
+  // is enabled for real users (see model-providers/openai-coding.ts), rather
+  // than trusting a string picked without API access to verify it.
+  gpt:     process.env.OPENAI_CODING_MODEL_ID || 'gpt-5.1',
 }
 
-/** Cost multiplier relative to default (opus = 1.0) */
+/** Which provider actually serves a given tier — a thin, additive lookup so
+ * MODEL_IDS keeps its existing string-value shape (plan/route.ts and others
+ * already consume MODEL_IDS.<tier> as a bare string) instead of changing that
+ * contract for every existing caller just to add one new provider. */
+export const MODEL_PROVIDERS: Record<ModelTier, ModelProvider> = {
+  fast: 'anthropic', default: 'anthropic', premium: 'anthropic', fable: 'anthropic',
+  gpt: 'openai',
+}
+
+/**
+ * Cost multiplier relative to default (opus = 1.0). `gpt`'s multiplier is a
+ * placeholder equal to `default` — it should be recalibrated once real OpenAI
+ * coding-model pricing is confirmed (this tier's actual per-token cost is not
+ * the same as Anthropic's, so 1.0 is a safe starting assumption, not a
+ * verified figure).
+ */
 export const MODEL_MULTIPLIERS: Record<ModelTier, number> = {
   fast:    0.5,
   default: 1.0,
   premium: 1.0,
   fable:   2.0,
+  gpt:     1.0,
 }
 
 /** Human-readable model info for UI */
@@ -46,11 +81,19 @@ export const MODEL_META: Record<ModelTier, {
   label: string
   tagline: string
   minPlan: PlanId
+  provider: ModelProvider
 }> = {
-  fast:    { label: 'Fast',    tagline: 'Sonnet — quick edits & simple changes', minPlan: 'free' },
-  default: { label: 'Standard', tagline: 'Opus — best quality for every app',   minPlan: 'free' },
-  premium: { label: 'Premium', tagline: 'Opus — same power, priority queue',    minPlan: 'pro' },
-  fable:   { label: 'Fable',   tagline: 'Most powerful — best for large apps',  minPlan: 'business' },
+  // minPlan values matched to the pricing page's own feature bullets (present
+  // in all 5 locales), which are the clearest evidence of actual intent: the
+  // Builder plan advertises "Priority build queue" (= premium's priority
+  // queue), and the Pro plan advertises "Fable model access (most powerful)".
+  fast:    { label: 'Fast',    tagline: 'Sonnet — quick edits & simple changes', minPlan: 'free',    provider: 'anthropic' },
+  default: { label: 'Standard', tagline: 'Opus — best quality for every app',   minPlan: 'free',    provider: 'anthropic' },
+  premium: { label: 'Premium', tagline: 'Opus — same power, priority queue',    minPlan: 'builder', provider: 'anthropic' },
+  fable:   { label: 'Fable',   tagline: 'Most powerful — best for large apps',  minPlan: 'pro',      provider: 'anthropic' },
+  // Visible to everyone (free+) — the point of adding a second provider is for
+  // it to be a real, try-it-now choice, not another paywalled tier.
+  gpt:     { label: 'GPT',     tagline: 'OpenAI — an alternative engine for the same build', minPlan: 'free', provider: 'openai' },
 }
 
 /**
@@ -76,6 +119,15 @@ const BASE_COSTS: Record<ActionType, number> = {
   // MODEL_MULTIPLIERS tier scaling doesn't apply — always cost this at the
   // 'default' tier regardless of the user's selected Claude model).
   'hero-image-gen':    20,
+  // Voiceover/narration generation (ElevenLabs primary, OpenAI TTS fallback —
+  // src/lib/audio-gen.ts). Flat, tier-agnostic price like hero-image-gen,
+  // same reasoning: this calls a TTS provider, not an Anthropic model, so the
+  // usual MODEL_MULTIPLIERS tier scaling doesn't apply. 5cr is an initial
+  // estimate (ElevenLabs runs meaningfully more per-character than OpenAI TTS
+  // — real COGS should be confirmed against actual per-request text length
+  // once this sees real usage, same as hero-image-gen's $0.19/image figure
+  // was measured from production).
+  'audio-gen':          5,
   'execution':          5,
   'employee-run':       5,
   'gtm-icp-sequence':   3,
@@ -118,9 +170,36 @@ export function estimateCost(
   return creditCost(actionMap[sizeHint], tier)
 }
 
+// Exhaustive over PlanId — adding a plan id to the PlanId union without adding
+// it here is a COMPILE ERROR, not a silent runtime fallback to rank 0. This is
+// the direct fix for the bug where every live Dodo plan except the
+// coincidentally-named 'pro' fell through an old free|pro|business lookup to
+// rank 0 (same as a free user), making `premium`/`fable` unreachable by any
+// real paying customer. Ranks below are ordered by the plan's real monthly
+// credit allotment (src/lib/plans.ts PLAN_FACTS / dodo webhook PlanConfig).
+export const PLAN_RANK: Record<PlanId, number> = {
+  free: 0,
+  spark: 0,
+  starter: 1,
+  builder: 2,
+  pro: 3,
+  growth: 4,
+  scale: 5,
+}
+
+// premium → builder+ (rank 2), fable → pro+ (rank 3). Matched to the pricing
+// page's own feature bullets (see MODEL_META above) — Builder advertises
+// "Priority build queue" (premium's actual differentiator), Pro advertises
+// "Fable model access (most powerful)".
+const MIN_TIER_RANK: Record<ModelTier, number> = { fast: 0, default: 0, premium: 2, fable: 3, gpt: 0 }
+
 /** Plans that may use a given model tier */
 export function tierAllowedForPlan(tier: ModelTier, plan: string): boolean {
-  const planRank: Record<string, number> = { free: 0, pro: 1, business: 2 }
-  const minPlanRank: Record<ModelTier, number> = { fast: 0, default: 0, premium: 1, fable: 2 }
-  return (planRank[plan] ?? 0) >= minPlanRank[tier]
+  // `plan` comes from the DB as a raw string, not the PlanId type, so an
+  // unrecognized value (a bad row, a future plan not yet added to PLAN_RANK)
+  // still needs a safe runtime fallback — but PLAN_RANK itself being exhaustive
+  // over PlanId means that fallback can only ever trigger for genuinely
+  // invalid data, not for a real plan someone forgot to wire up.
+  const rank = PLAN_RANK[plan as PlanId] ?? 0
+  return rank >= MIN_TIER_RANK[tier]
 }

@@ -57,6 +57,41 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const uploadTarget = useRef<string | null>(null);
 
+  // Voiceover/narration generation — standalone, not tied to source-code
+  // image directives like the entries above (audio has no {{wyber-image: …}}
+  // equivalent to extract from). Generates a one-off asset the user copies
+  // the URL for and uses however they like (e.g. in a hero video, a demo).
+  const [audioText, setAudioText] = useState('');
+  const [audioBusy, setAudioBusy] = useState(false);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [audioStatus, setAudioStatus] = useState('');
+
+  const generateVoiceover = async () => {
+    if (!resolvedProjectId || audioBusy || !audioText.trim()) return;
+    setAudioBusy(true);
+    setAudioStatus('');
+    try {
+      const res = await fetch('/api/generate-audio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: resolvedProjectId, text: audioText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) { setAudioStatus(data.error || t('voiceoverFailedMsg')); return; }
+      setAudioUrl(data.url);
+      if (typeof data.credits === 'number') setCredits(data.credits);
+      setAudioStatus(t('voiceoverReadyMsg'));
+    } catch {
+      setAudioStatus(t('networkErrorNotCharged'));
+    } finally {
+      setAudioBusy(false);
+    }
+  };
+
+  const copyAudioUrl = () => {
+    if (!audioUrl) return;
+    navigator.clipboard.writeText(audioUrl).then(() => setAudioStatus(t('audioUrlCopiedMsg'))).catch(() => {});
+  };
+
   const persistFiles = (updated: typeof files) => {
     setFiles(updated);
     if (resolvedProjectId) {
@@ -157,6 +192,36 @@ export function ImagesPanel({ projectId }: { projectId?: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <input ref={uploadInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" style={{ display: 'none' }}
         onChange={e => { handleUploadFile(e.target.files?.[0]); e.target.value = ''; }} />
+
+      {/* Voiceover/narration generation — a standalone media generator, not
+          part of the image-directive list below. Same ElevenLabs/OpenAI-TTS
+          providers the AI Employees voice feature already uses in prod. */}
+      <div style={{ margin: '10px 12px 0', padding: 10, border: '1px solid var(--ide-border)', borderRadius: 10, background: 'var(--bg-surface)', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <MicroLabel>{t('generateVoiceoverHeading')}</MicroLabel>
+        <textarea
+          value={audioText}
+          onChange={e => setAudioText(e.target.value)}
+          placeholder={t('voiceoverPromptPlaceholder')}
+          rows={2}
+          style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 11, lineHeight: 1.5, padding: '6px 9px', outline: 'none', resize: 'vertical', fontFamily: 'var(--font-sans)' }}
+        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
+          <GlowButton size="sm" onClick={generateVoiceover} disabled={audioBusy || !audioText.trim()}>
+            {audioBusy ? t('generatingEllipsis') : t('generateVoiceoverButton')}
+          </GlowButton>
+          {audioUrl && (
+            <button onClick={copyAudioUrl}
+              style={{ fontSize: 11, fontWeight: 600, padding: '5px 11px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer' }}>
+              {t('copyAudioUrlButton')}
+            </button>
+          )}
+          {audioStatus && <MicroLabel color="var(--ide-text2)">{audioStatus}</MicroLabel>}
+        </div>
+        {audioUrl && (
+          // eslint-disable-next-line jsx-a11y/media-has-caption
+          <audio controls src={audioUrl} style={{ width: '100%', height: 32 }} />
+        )}
+      </div>
 
       {entries.length === 0 ? (
         <EmptyState

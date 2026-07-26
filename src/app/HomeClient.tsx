@@ -130,6 +130,89 @@ function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: num
   );
 }
 
+/* Real-apps gallery strip — replaces illustrative mockups with actual template
+   names, categories, and genuine use_count numbers pulled from prebuilt_apps
+   (same source /gallery uses). No screenshots yet (future improvement), but
+   the numbers themselves are real, not marketing copy. */
+function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label: string; ctaLabel: string }) {
+  if (apps.length === 0) return null;
+  return (
+    <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+      <Reveal>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
+          <div className="mk-eyebrow">{label}</div>
+          <Link href="/gallery" style={{ fontSize: 13, color: 'var(--brand-accent-hot)', textDecoration: 'none', fontWeight: 500 }}>{ctaLabel} →</Link>
+        </div>
+      </Reveal>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 14 }}>
+        {apps.map((app, i) => {
+          const color = app.preview_color || BRAND;
+          return (
+            <Reveal key={app.id} delay={Math.min(i * 0.04, 0.2)}>
+              <Link href="/gallery" style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
+                <div className="mk-frame" style={{ padding: 18, height: '100%', display: 'flex', flexDirection: 'column', gap: 10, position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color }} />
+                  <div className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{app.category}</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--brand-text)', lineHeight: 1.3 }}>{app.name}</div>
+                  <div style={{ marginTop: 'auto', fontSize: 11, color: color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    {app.use_count.toLocaleString()}
+                  </div>
+                </div>
+              </Link>
+            </Reveal>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/* Genuinely user-built apps — approved marketplace listings with real seller
+   attribution. Distinct from GalleryStrip (admin-seeded templates): this is
+   the actual "someone built and sold this" proof. Hidden entirely (see
+   HomeClient render below) until there's real approved user volume — an
+   empty section would look worse than not having one. */
+function UserBuildsStrip({ builds, label, ctaLabel }: { builds: HomeUserBuild[]; label: string; ctaLabel: string }) {
+  if (builds.length === 0) return null;
+  return (
+    <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+      <Reveal>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
+          <div className="mk-eyebrow">{label}</div>
+          <Link href="/marketplace" style={{ fontSize: 13, color: 'var(--brand-accent-hot)', textDecoration: 'none', fontWeight: 500 }}>{ctaLabel} →</Link>
+        </div>
+      </Reveal>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+        {builds.map((b, i) => {
+          const color = b.preview_color || BRAND;
+          return (
+            <Reveal key={b.id} delay={Math.min(i * 0.04, 0.2)}>
+              <Link href={`/marketplace/${b.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
+                <div className="mk-frame" style={{ overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ position: 'relative', aspectRatio: '16/10', background: `linear-gradient(135deg, ${color}22 0%, var(--brand-bg-raised) 100%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {b.thumbnail_url
+                      ? <img src={b.thumbnail_url} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 26, fontWeight: 700, color, opacity: 0.6 }}>{b.title[0]?.toUpperCase()}</span>}
+                  </div>
+                  <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                    <div className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{b.category}</div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--brand-text)', lineHeight: 1.3 }}>{b.title}</div>
+                    <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: 'var(--brand-text-faint)' }}>
+                      <span>by {b.sellerName}</span>
+                      {b.sales_count > 0 && <span style={{ color }}>{b.sales_count} sold</span>}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </Reveal>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 /* ————— data ————— */
 
 /* MCP console — the developer differentiator: drive WyberAi from your AI editor */
@@ -269,7 +352,10 @@ function buildStages(t: HomeStrings) {
 
 /* ————— page ————— */
 
-export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null }) {
+interface HomeGalleryApp { id: string; name: string; category: string; preview_color: string | null; use_count: number }
+interface HomeUserBuild { id: string; title: string; category: string; preview_color: string | null; thumbnail_url: string | null; sales_count: number; sellerName: string }
+
+export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [] }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[] }) {
   const inr = initialCurrency === 'INR';
   // India-only locale switch — never rendered or read for non-India visitors.
   // Starts 'en' on every render (server and first client paint match, so no
@@ -356,7 +442,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   // route it through localePath so picking a non-English locale doesn't get
   // dropped the moment the visitor leaves the homepage. /space-journey and
   // /pricing have no locale-prefixed variant and self-translate client-side.
-  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark">
@@ -521,7 +607,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
-            { value: '2,400+', label: t.statAppsBuilt },
+            { value: appsBuiltStat ?? '2,400+', label: t.statAppsBuilt },
             { value: '30s', label: t.statAvgBuildTime },
             { value: '4.9/5', label: t.statUserRating },
             { value: '99.9%', label: t.statUptimeTarget, href: '/status' },
@@ -535,6 +621,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           ))}
         </div>
       </section>
+
+      <UserBuildsStrip builds={userBuilds} label={t.userBuildsStripLabel} ctaLabel={t.userBuildsStripCta} />
+      <GalleryStrip apps={galleryApps} label={t.galleryStripLabel} ctaLabel={t.galleryStripCta} />
 
       {/* ── MISSION SEQUENCE — normal flow (scroll-pinning removed Jul 11:
              even 4 presses of hijacked scroll read as "the page is stuck") */}

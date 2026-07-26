@@ -1,5 +1,5 @@
 'use client'
-import { creditCost } from '@/lib/credits';
+import { creditCost, type ActionType } from '@/lib/credits';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, memo, type ReactNode } from 'react';
@@ -380,7 +380,7 @@ const isSpreadsheetFile = (f: File) => /\.xlsx?$/i.test(f.name);
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
-type ModelTier = 'fast' | 'default' | 'premium' | 'fable';
+type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
 // Model selection is fully automatic (server-side): Opus for from-scratch builds,
 // Sonnet for edits, auto-escalating complex edits back to Opus. No user picker.
 
@@ -435,8 +435,12 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const uploadPromisesRef = useRef<Record<string, Promise<unknown>>>({});
   useEffect(() => { attachedFilesRef.current = attachedFiles; }, [attachedFiles]);
   const [dragOver, setDragOver] = useState(false);
-  // Kept for the request body; the server ignores it and picks the model itself.
-  const [modelTier] = useState<ModelTier>('default');
+  // Server-side auto-routing stays the real decision-maker for every tier
+  // EXCEPT this one explicit choice: picking 'gpt' routes to the OpenAI
+  // adapter (src/lib/model-providers/openai-coding.ts) instead of Claude.
+  // Any other value here is advisory only — the server re-picks it via
+  // resolveModelTier() regardless of what's sent.
+  const [modelTier, setModelTier] = useState<ModelTier>('default');
   const [planMode, setPlanMode] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ prompt: string; image: AttachedImage | null } | null>(null);
   // First-build advisory offer: on a brand-new project's first message, ask
@@ -2710,14 +2714,56 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 lang={LOCALE_SPEECH_CODE[locale]}
                 onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
               />
-              {/* Automatic model routing — system picks the best model per task */}
-              <span
-                title={t('autoModelTooltip')}
-                style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:4 }}
-              >
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                {t('autoModelLabel')}
-              </span>
+              {/* Model choice: "Auto" keeps full automatic server-side routing
+                  (the historical default — a real user-facing picker was removed
+                  in the past because manual tier-picking led to systematic
+                  over/underpaying). "GPT" is the one explicit, user-selectable
+                  exception: it routes to the OpenAI adapter instead of Claude
+                  for this turn. Everything else about model selection is
+                  still fully automatic either way. */}
+              <div style={{ display:'inline-flex', background:'#0c0c12', border:'1px solid var(--ide-border)', borderRadius:6, padding:2, gap:2 }}>
+                <button
+                  onClick={() => setModelTier('default')}
+                  title={t('autoModelTooltip')}
+                  style={{ fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:4, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, fontFamily:'var(--font-sans)', background: modelTier !== 'gpt' ? 'var(--accent)' : 'transparent', color: modelTier !== 'gpt' ? '#fff' : 'var(--ide-text3)' }}
+                >
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  {t('autoModelLabel')}
+                </button>
+                <button
+                  onClick={() => setModelTier('gpt')}
+                  title={t('gptModelTooltip')}
+                  style={{ fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:4, border:'none', cursor:'pointer', fontFamily:'var(--font-sans)', background: modelTier === 'gpt' ? 'var(--accent)' : 'transparent', color: modelTier === 'gpt' ? '#fff' : 'var(--ide-text3)' }}
+                >
+                  {t('gptModelLabel')}
+                </button>
+              </div>
+              {/* Pre-generation cost estimate — previously the only cost signal was
+                  the post-hoc TurnReceipt line after a turn finished. Auto mode's
+                  exact tier is picked server-side (auto-escalated on complexity),
+                  so that shows an honest LOW–HIGH range; the explicit GPT choice
+                  has no such ambiguity, so it shows one number. */}
+              {(() => {
+                const estimateAction: ActionType = isFirstBuild ? 'web-build' : 'small-edit';
+                if (modelTier === 'gpt') {
+                  const est = creditCost(estimateAction, 'gpt');
+                  return (
+                    <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
+                      ~{est}cr
+                    </span>
+                  );
+                }
+                const estLow = creditCost(estimateAction, 'fast');
+                const estHigh = creditCost(estimateAction, 'default');
+                return (
+                  <span
+                    title={t('costEstimateTooltip')}
+                    style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}
+                  >
+                    ~{estLow === estHigh ? estLow : `${estLow}–${estHigh}`}cr
+                  </span>
+                );
+              })()}
             </div>
             <button
               onClick={isGenerating ? handleStop : handleSend}

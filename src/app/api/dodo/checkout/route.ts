@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { isAdminEmail } from '@/lib/admin'
 
@@ -96,6 +96,17 @@ export async function POST(req: NextRequest) {
     if (!res.ok) return NextResponse.json({ error: `Dodo: ${JSON.stringify(data)}` }, { status: 500 })
 
     const url = data.checkout_url || data.url || data.payment_link
+
+    // Log the attempt for cart-abandonment recovery (email-drip cron nudges
+    // anyone unconverted 1-24h later). checkout_attempts has RLS with no
+    // policies (service-role only, same posture as email_events) so this
+    // needs the admin client, not the request-scoped one. Fire-and-forget;
+    // table may not exist yet if migration 20260726000000 hasn't been
+    // applied — never block checkout either way.
+    createAdminClient().then(admin =>
+      admin.from('checkout_attempts').insert({ user_id: user.id, plan_key: planKey, currency: chargeCurrency })
+    ).then(() => {}, () => {})
+
     return NextResponse.json({ url })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

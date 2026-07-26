@@ -7,6 +7,7 @@ import { SocialShare } from '@/components/shared/SocialShare';
 import { useT } from '@/lib/i18n/useT';
 import { EDITOR_TOPBAR_STRINGS } from '@/lib/i18n/dict/editor-topbar';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
+import { estimateCost } from '@/lib/credits';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -45,6 +46,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [pushing, setPushing] = useState(false);
   const [pushUrl, setPushUrl] = useState('');
   const [showSupabase, setShowSupabase] = useState(false);
+  const [showCreditPopover, setShowCreditPopover] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   // Flips true when a deploy finishes for an app that was ALREADY live — the
   // share modal stays open and shows "done" instead of silently reopening
@@ -455,7 +457,39 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               bubble (progress + timer) and the preview status strip; a third
               indicator was pure noise (user counted four at once). */}
         </div>
-        <div style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'default' }}>{displayCredits} cr</div>
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowCreditPopover(v => !v)}
+            title={t('creditPopoverBalance')}
+            style={{ fontSize: 11, padding: '3px 9px', borderRadius: 6, background: displayCredits <= 5 ? 'rgba(239,68,68,0.1)' : 'var(--bg-elevated)', color: displayCredits <= 5 ? '#ef4444' : 'var(--ide-text2)', border: '1px solid', borderColor: displayCredits <= 5 ? 'rgba(239,68,68,0.3)' : 'var(--ide-border)', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}
+          >{displayCredits} cr</button>
+          {showCreditPopover && (
+            <>
+              {/* Full-screen invisible overlay to close on outside click — avoids
+                  pulling in an external outside-click hook for one small panel. */}
+              <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setShowCreditPopover(false)} />
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, zIndex: 41, width: 200, background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 10, padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid var(--ide-border)' }}>
+                  <span style={{ fontSize: 11, color: 'var(--ide-text3)' }}>{t('creditPopoverBalance')}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ide-text)' }}>{displayCredits} cr</span>
+                </div>
+                {[
+                  [t('creditPopoverBuild'), estimateCost('fast', 'build'), estimateCost('default', 'build')],
+                  [t('creditPopoverEdit'), estimateCost('fast', 'edit'), estimateCost('default', 'edit')],
+                  [t('creditPopoverImage'), estimateCost('default', 'image'), estimateCost('default', 'image')],
+                ].map(([label, lo, hi]) => (
+                  <div key={label as string} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: 11 }}>
+                    <span style={{ color: 'var(--ide-text3)' }}>{label}</span>
+                    <span style={{ color: 'var(--ide-text2)', fontWeight: 500 }}>~{lo === hi ? lo : `${lo}–${hi}`}cr</span>
+                  </div>
+                ))}
+                <a href="/pricing" target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--ide-border)', fontSize: 11, color: 'var(--accent)', textDecoration: 'none' }}>
+                  {t('viewFullPricing')}
+                </a>
+              </div>
+            </>
+          )}
+        </div>
         <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
         {onToggleCode && Object.keys(files).length > 0 && (
           <button onClick={onToggleCode} title={showCode ? t('hideCode') : t('viewCodeDevMode')}

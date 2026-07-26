@@ -1,0 +1,12 @@
+-- Builder-facing audio generation (voiceover/narration assets for a project),
+-- reusing the same ElevenLabs/OpenAI-TTS providers the AI Employees voice
+-- feature already uses (021_employee_voice_clips.sql) via src/lib/audio-gen.ts.
+-- No new table needed — generated audio just needs a Storage bucket; nothing
+-- is logged per-generation the way employee_voice_clips does, since these are
+-- one-off project assets referenced directly from the app the user is building.
+--
+-- Storage bucket must be created separately (same convention as
+-- 021_employee_voice_clips.sql's employee-voice-clips bucket) — run this in
+-- the Supabase dashboard Storage section, or uncomment if using supabase-js
+-- admin with storage.buckets write access:
+-- insert into storage.buckets (id, name, public) values ('project-audio', 'project-audio', true) on conflict do nothing;
