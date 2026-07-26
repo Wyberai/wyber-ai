@@ -3,7 +3,7 @@ import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useT } from '@/lib/i18n/useT';
 import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 
-export type ProjectType = 'app' | 'mobile' | 'agent' | 'workflow' | 'employee' | 'gtm';
+export type ProjectType = 'app' | 'mobile' | 'website' | 'saas' | 'agent' | 'workflow' | 'employee' | 'gtm';
 
 interface ChooserProps {
   open: boolean;
@@ -17,6 +17,8 @@ const IconMobile = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="n
 const IconEmployee = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><path d="M8 15h.01M12 15h.01M16 15h.01"/></svg>;
 const IconWorkflow = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.5"/><rect x="15" y="9" width="6" height="6" rx="1.5"/><rect x="3" y="15" width="6" height="6" rx="1.5"/><path d="M9 6h3a3 3 0 0 1 3 3M9 18h3a3 3 0 0 0 3-3"/></svg>;
 const IconTarget = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>;
+const IconWebsite = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/><path d="M7 15h4"/><path d="M7 18h8"/><path d="M13 15h4"/></svg>;
+const IconSaas = () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg>;
 
 const CARDS: {
   type: ProjectType;
@@ -42,6 +44,20 @@ const CARDS: {
     color: '#f97316',
   },
   {
+    type: 'website',
+    titleKey: 'cardWebsiteTitle',
+    descKey: 'cardWebsiteDesc',
+    icon: <IconWebsite />,
+    color: '#6366f1',
+  },
+  {
+    type: 'saas',
+    titleKey: 'cardSaasTitle',
+    descKey: 'cardSaasDesc',
+    icon: <IconSaas />,
+    color: '#ec4899',
+  },
+  {
     type: 'employee',
     titleKey: 'cardEmployeeTitle',
     descKey: 'cardEmployeeDesc',
@@ -59,15 +75,6 @@ const CARDS: {
     redirect: '/coming-soon?product=Workflows',
     soon: true,
   },
-  {
-    type: 'gtm',
-    titleKey: 'cardGtmTitle',
-    descKey: 'cardGtmDesc',
-    icon: <IconTarget />,
-    color: '#10b981',
-    redirect: '/coming-soon?product=GTM+Engine',
-    soon: true,
-  },
 ];
 
 export function ProjectTypeChooser({ open, onClose, onPick }: ChooserProps) {
@@ -80,7 +87,7 @@ export function ProjectTypeChooser({ open, onClose, onPick }: ChooserProps) {
       </div>
       <DialogDescription className="dialog-desc">{t('chooserDesc')}</DialogDescription>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxHeight: '70vh', overflowY: 'auto' }}>
         {CARDS.map((c) => (
           <button
             key={c.type}

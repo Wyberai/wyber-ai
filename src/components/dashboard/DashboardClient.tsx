@@ -66,7 +66,9 @@ const IconAgents = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="n
 
 // Project type badge
 const TYPE_META: Record<string, { label: string; color: string }> = {
-  app:      { label: 'Web',      color: '#0EA5E9' },
+  app:      { label: 'Web App',  color: '#0EA5E9' },
+  website:  { label: 'Website',  color: '#6366f1' },
+  saas:     { label: 'SaaS',     color: '#ec4899' },
   mobile:   { label: 'Mobile',   color: '#8b5cf6' },
   agent:    { label: 'Agent',    color: '#10b981' },
   workflow: { label: 'Workflow', color: '#f59e0b' },
@@ -296,17 +298,27 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
   const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;
+  const WEBSITE_KEYWORDS = /\b(landing page|marketing site|marketing website|business website|portfolio site|portfolio website|company site|company website|product website|personal website|blog site|brochure site|one.?page site|one.?page website|coming soon page|event page|restaurant website|agency website)\b/i;
+  const SAAS_KEYWORDS = /\b(saas|saas app|saas product|saas platform|subscription app|subscription platform|admin panel|admin dashboard|multi.?tenant|b2b app|b2b platform|api dashboard|developer dashboard|user management|role.?based|rbac)\b/i;
+
+  const detectType = (prompt: string): import('@/components/dashboard/ProjectTypeChooser').ProjectType => {
+    if (MOBILE_KEYWORDS.test(prompt) || buildMode === 'mobile') return 'mobile';
+    if (SAAS_KEYWORDS.test(prompt)) return 'saas';
+    if (WEBSITE_KEYWORDS.test(prompt)) return 'website';
+    return 'app';
+  };
+
   // A typed prompt ALWAYS builds directly — the type picker is only for the
   // empty "+ New Project" path. Short prompts used to fall into the picker
   // (length gate) which read as a wall of coming-soon tiles mid-flow.
   const openChooser = (prompt?: string, nameOverride?: string) => {
-    if (prompt) { startProject(prompt, MOBILE_KEYWORDS.test(prompt) ? 'mobile' : 'app', nameOverride); return; }
+    if (prompt) { startProject(prompt, detectType(prompt), nameOverride); return; }
     setPendingPrompt(prompt); setShowTypePicker(true);
   };
   const submitPrompt = () => {
     const p = promptInput.trim();
     if (!p) { openChooser(); return; }
-    startProject(p, MOBILE_KEYWORDS.test(p) || buildMode === 'mobile' ? 'mobile' : 'app');
+    startProject(p, detectType(p));
   };
   const startProject = async (prompt?: string, type: ProjectType = 'app', nameOverride?: string) => {
     if (!profile?.id || creating) return;
@@ -358,7 +370,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const COMING_SOON: { label: string; href: string; icon: React.ReactNode; soon?: boolean }[] = [
   ];
 
-  // Web Apps / Mobile Apps filter the project grid (web = anything not mobile).
+  // Web = app + website + saas (anything not mobile). Mobile = mobile only.
   const visibleProjects = view === 'all'
     ? projects
     : projects.filter(p => view === 'mobile'
