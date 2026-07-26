@@ -1016,6 +1016,22 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     // Snapshot current files for undo BEFORE generation
     if (Object.keys(files ?? {}).length > 0) pushCheckpoint((opts?.displayContent ?? userMsg).slice(0, 40) || 'Before edit');
 
+    // Also persist this checkpoint to project_snapshots — the in-memory
+    // checkpoint stack above is capped at 20 and gone on refresh/tab-close,
+    // which silently breaks Undo mid-session. Reuses the same table/endpoint
+    // TopBar's manual "Save Snapshot" already writes to, so it shows up in
+    // that same restore list — no new schema, no new UI. Skipped for silent
+    // self-heal reruns, staged sub-passes, and continuations: those aren't
+    // turn boundaries a user would want to roll back to individually.
+    if (Object.keys(files ?? {}).length > 0 && resolvedProjectId && !opts?.silent && !opts?.continuation && !opts?.stage && !opts?.preserveAgentTurn) {
+      const filesPayload = Object.fromEntries(Object.entries(files).map(([k, v]) => [k, (v as any).content ?? v]));
+      fetch('/api/snapshots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id: resolvedProjectId, label: `Before: ${(opts?.displayContent ?? userMsg).slice(0, 40) || 'edit'}`, files: filesPayload }),
+      }).catch(() => {});
+    }
+
     // Self-heal/autofix runs (silent) are FREE — they repair work the user
     // already paid for. Skip the optimistic client decrement; the server is
     // told `selfHeal: true` below and skips the deduction entirely.
