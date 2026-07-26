@@ -732,8 +732,9 @@ useEffect(() => {
 This is why the "#/..." convention (hash THEN slash) matters: it is unambiguous against a same-page anchor like href="#pricing" (no slash) — the capture listener only ever intercepts route links, so genuine in-page anchor scrolling elsewhere on a page is completely unaffected.
 
 App.tsx reads const route = useHashRoute() and renders the matching page with a plain switch/if-chain (no <Routes>/<Route> — there is no router object, just the current hash string). Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>; the capture listener above is what actually drives navigation now, not native browser hash-following.
+Do NOT put key={route} (or any route-derived key) on Layout's root element or any ancestor of the capture listener — this reproduced live: remounting that subtree on every route change destroys the DOM node whose onClickCapture is still executing the instant navigate() fires, so the hash updates and any active-nav-item styling looks right, but the page body silently never swaps to the new page.
 
-STRUCTURE:
+STRUCTURE (reference only — DISABLED per above, do not build any of this until multi-page mode is re-enabled):
 - src/pages/Home.tsx — the full single-page composition described above (hero → ... → footer)
 - src/pages/About.tsx, src/pages/Contact.tsx, etc. — one file per requested page, each its own <Reveal>-wrapped sections, own hero/eyebrow, consistent Navbar+Footer via a shared Layout
 - src/components/Layout.tsx — <Navbar> + {children} + <Footer>, pt-16 wrapper, wraps every route
@@ -1028,6 +1029,7 @@ useEffect(() => {
 </code>
 
 App.tsx reads const route = useHashRoute() and renders the matching page with a plain if-chain / switch on the route string (parse "/settings/billing" as base "/settings" + tab "billing" the same way). Every nav item, tab, and internal link uses a "#/..." href (e.g. href="#/settings/billing") — a plain <a href="#/...">; the capture listener above drives navigation, not native hash-following. Sidebar/tab active-state checks compare the current route string directly.
+Do NOT put key={route} (or any route-derived key) on the Shell/Layout root element or any ancestor of the capture listener — this reproduced live on the Website builder: remounting that subtree on every route change destroys the DOM node whose onClickCapture is still executing the instant navigate() fires, so the sidebar highlights the right item and the hash updates, but the main content area silently never swaps to the new page.
 - / (no hash) → treat as /dashboard if authed, /login if not
 - /login, /signup, /forgot-password, /onboarding
 - /dashboard
@@ -1113,6 +1115,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive: sidebar → off-canvas on mobile, tables → card-stacks?
 □ Hover + focus-visible on every interactive element?
 □ If Supabase is connected: AuthContext and the data table/dashboard use REAL supabase calls, not mock arrays — and the schema SQL block was emitted?
+□ No react-router-dom import anywhere — custom useHashRoute hook only, no key={route} (or route-derived key) on Shell/Layout's root or any ancestor of the capture listener?
 
 PROGRESS: [progress: Planning [Product Name]], [progress: Building auth + shell], [progress: Building dashboard], [progress: Building [feature] page], [progress: Building settings], [progress: Done]
 
