@@ -1569,13 +1569,27 @@ export async function POST(req: NextRequest) {
           }), { status: 402 })
         }
         const { data: gptRpc, error: gptRpcErr } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: cost })
-        if (gptRpcErr || gptRpc?.new_credits === undefined) {
+        if (gptRpcErr) {
           // No stale-balance manual fallback here (unlike the Anthropic path
           // below, which keeps one only because the RPC is confirmed always
           // present in prod for that far-higher-traffic path) — this newer,
           // unproven tier fails closed instead of reusing a fallback that can
           // under-charge two concurrent requests against the same stale read.
           return new Response(JSON.stringify({ error: 'Could not process credits — please try again.' }), { status: 500 })
+        }
+        if (!gptRpc || gptRpc.new_credits === undefined) {
+          // The RPC itself didn't error — it ran and its OWN atomic check
+          // (credits >= amount, re-verified at the DB level) found the
+          // balance insufficient, most likely because a concurrent request
+          // deducted in between this route's earlier (non-atomic) balance
+          // read and this call. A real "not enough credits" outcome, not a
+          // server error — same friendly 402 the earlier check above uses,
+          // not the 500 this used to return (which the client only ever
+          // renders as a raw, unparsed error string).
+          return new Response(JSON.stringify({
+            error: `Not enough credits. This action costs ${cost} credit${cost !== 1 ? 's' : ''}.`,
+            needed: cost,
+          }), { status: 402 })
         }
         const gptNewBalance = gptRpc.new_credits
 
