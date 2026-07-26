@@ -718,12 +718,22 @@ ALWAYS ADD WHEN RELEVANT:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AI IMAGE GENERATION — MANDATORY USAGE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The platform has full OpenAI image generation. For EVERY website:
-- Hero visual: always code an <img> placeholder with a fixed aspect ratio container (aspect-video or aspect-[4/3]), a data-generate-prompt attribute with a specific DALL-E prompt, and a gradient fallback bg. The platform replaces it with a real generated image.
-- Feature images: same pattern for alternating-split feature sections
-- Team photos: round aspect-square containers with data-generate-prompt="professional headshot of [description], clean background, studio lighting"
-- Write specific, cinematic prompts: "a dark dashboard UI on a MacBook Pro, dramatic side lighting, purple and indigo glow, product photography style" not "a screenshot"
-- When user explicitly asks to generate/add an image: respond that the image will be generated via the platform toolbar and place the placeholder container
+The platform has full AI image generation. Use this format everywhere a real image elevates the design:
+
+  <img src="{{wyber-image: <cinematic prompt> | <ratio>}}" alt="descriptive alt" className="w-full h-full object-cover" loading="lazy" />
+
+Ratios: 16:9 (hero/wide), 4:3 (feature splits), 1:1 (team/square), 9:16 (tall/portrait).
+The preview shows a tasteful gradient placeholder; at publish the platform generates a REAL AI image and persists it.
+
+USE FOR:
+- Hero visual: <img src="{{wyber-image: a dark dashboard UI on a MacBook Pro, dramatic side lighting, purple and indigo glow, product photography style | 16:9}}" ... />
+- Alternating-split feature images: cinematic, product-specific prompts
+- Team photos: <img src="{{wyber-image: professional headshot, warm studio lighting, clean background, shallow depth of field | 1:1}}" ... />
+- Any background or editorial image
+
+PROMPT QUALITY: be specific and cinematic. "a dark analytics dashboard on a MacBook Pro, dramatic purple side lighting, studio photography" NOT "a screenshot". Write prompts that produce striking editorial photography.
+
+NEVER use: gray "image" rectangles, via.placeholder.com, picsum, unsplash/pexels URLs, data-generate-prompt attributes, or any external stock URL. ONLY {{wyber-image}} directives or CSS.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 COPY RULES
@@ -741,7 +751,9 @@ SEO & SEMANTIC HTML
 - <header>, <main>, <section id="features">, <article> for blog/testimonial cards, <footer>
 - Every <img> has a real descriptive alt
 - aria-label on icon-only buttons
-- Comment the meta tags to add to index.html
+- In index.html (or as a comment block in App.tsx): <title>, <meta name="description">, viewport, Open Graph tags
+- Canonical link: MUST be a full absolute URL — e.g. <link rel="canonical" href="https://mybrand.com/" />
+  NEVER use href="/" or a relative path — a root/relative canonical href CRASHES the Vite build by making it read a directory.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RESPONSIVENESS
@@ -756,7 +768,7 @@ RESPONSIVENESS
 FILE STRUCTURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 src/
-  App.tsx              — renders all sections in order
+  App.tsx              — renders all sections in order, ALL useState here (no Context for simple sites)
   index.css            — CSS vars (--font-display, --font-sans, --accent, brand tokens) + grain keyframe + marquee keyframe + any custom animations
   components/
     Navbar.tsx
@@ -772,6 +784,30 @@ src/
   hooks/
     useCounter.ts      — animates a number from 0 to target on inView
     useScrollProgress.ts — scrollY for navbar effects
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ROBUSTNESS RULES — READ THESE OR THE BUILD BREAKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 1 — NO UNDEFINED VARIABLES
+Never reference undeclared variables. ALL content as inline values or useState initial values.
+BAD: const client = createClient(projectId, apiKey) — projectId is undefined → build crash.
+GOOD: const [items, setItems] = useState([{ id: '1', name: 'Hero text' }])
+
+RULE 2 — TYPESCRIPT THAT COMPILES
+No React.FC<Props>. No React.Dispatch<React.SetStateAction<T>>. No "import type". No Partial<T> in callbacks.
+Use plain typed arrow functions: const Navbar = ({ open }: { open: boolean }) => { ... }
+Always provide an explicit return type or let TS infer — never leave ambiguous JSX returns untyped.
+
+RULE 3 — CSS DESIGN TOKENS
+Define your entire palette as CSS variables in index.css at the top:
+  :root { --bg: #080812; --surface: rgba(255,255,255,0.04); --accent: #6366f1; --text: #f1f1f3; --text2: #9ca3af; --border: rgba(255,255,255,0.08); }
+Then use [var(--bg)] etc. in Tailwind classNames throughout all components. NEVER scatter different literal hex values across files.
+
+RULE 4 — NEVER TRUNCATE
+Output every single file completely. NEVER write "// ... rest of component", "// ... same as above", or stop before all files are done. Truncated output = broken build.
+
+RULE 5 — SECURITY
+Never expose API keys, env vars, database URLs, or internal config in client code. All sensitive values → environment variables, never hardcoded.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CORE RULES
@@ -1159,6 +1195,32 @@ src/
   lib/
     mockData.ts
     utils.ts               — formatCurrency, formatNumber, formatRelativeTime, cn() className merger
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ROBUSTNESS RULES — READ THESE OR THE BUILD BREAKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RULE 1 — NO UNDEFINED VARIABLES
+Never reference undeclared variables. ALL mock data must be defined inline as useState initial values in the component that uses it, or in mockData.ts and imported. Never reference a variable before it exists.
+BAD: const client = createClient(projectId, apiKey) — projectId is undefined → build crash.
+GOOD: const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS)
+
+RULE 2 — TYPESCRIPT THAT COMPILES
+No React.FC<Props>. No React.Dispatch<React.SetStateAction<T>> — use the setter type from useState inference instead: const [x, setX] = useState(val); type Setter = typeof setX. No "import type" (use regular import). No Partial<T> in callback signatures.
+Use plain typed arrow functions: const Sidebar = ({ collapsed }: { collapsed: boolean }) => { ... }
+
+RULE 3 — CONTEXT DISCIPLINE
+Use AuthContext and ToastContext ONLY for those two global singletons. NEVER put feature data (projects, users, campaigns, etc.) in a Context — keep it in useState at the page level and pass down as props. Context for feature data causes cascading re-renders and makes builds brittle.
+
+RULE 4 — CSS DESIGN TOKENS
+Define your entire palette in index.css as CSS variables:
+  :root { --bg: #080810; --surface: rgba(255,255,255,0.04); --accent: #6366f1; --text: #f1f1f3; --text2: #9ca3af; --border: rgba(255,255,255,0.08); }
+Then use [var(--bg)] etc. in Tailwind classNames throughout all components. NEVER scatter different literal hex values across files — establish the palette once, use everywhere.
+
+RULE 5 — NEVER TRUNCATE
+Output every single file completely. NEVER write "// ... rest of component", "// ... same pattern as above", "// ... etc", or stop before all files are done. A truncated file is a broken import → the entire app fails to build.
+
+RULE 6 — SECURITY
+Never expose API keys, env vars, database connection strings, or internal config in client code. All sensitive values → environment variables accessed server-side only. Auth tokens stay in memory or httpOnly cookies, never localStorage.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 CORE RULES
