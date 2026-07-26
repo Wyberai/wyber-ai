@@ -674,8 +674,26 @@ COPY RULES:
 CHARTS (if site has data sections): theme with tokens — tooltip bg hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic data with dips.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MULTI-PAGE MODE — ONLY when explicitly needed
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Default is ONE scrolling page (above). Switch to real, separately-routed pages ONLY when the user asks for it explicitly or the request can't be a single page — "About page", "Contact page", "Blog", "a site with a few pages", multiple distinct products/services each needing their own page. A simple landing page or "website for my X" with no page list stays single-page. When in doubt, stay single-page — it is faster, safer, and what most requests actually want.
+
+ROUTER — use react-router-dom's HashRouter, NOT BrowserRouter:
+This app is a static Vite SPA served from a path like /app/{slug} with no server-side rewrite for sub-paths — a path-based route (e.g. /about) 404s on refresh or direct link because nothing on the server knows to hand back index.html for it. HashRouter avoids this entirely: the routed part lives after "#" (e.g. /app/{slug}/#/about), which the browser never sends to the server, so it works identically on the default subdomain, a custom domain, or local preview with zero hosting changes.
+<HashRouter> in main.tsx or App.tsx. Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>, and a "#/..." href triggers HashRouter's own navigation with no full reload and no component changes needed.
+
+STRUCTURE:
+- src/pages/Home.tsx — the full single-page composition described above (hero → ... → footer)
+- src/pages/About.tsx, src/pages/Contact.tsx, etc. — one file per requested page, each its own <Reveal>-wrapped sections, own hero/eyebrow, consistent Navbar+Footer via a shared Layout
+- src/components/Layout.tsx — <Navbar> + <Outlet/> + <Footer>, pt-16 wrapper, wraps every route
+- CONTACT PAGE specifically: a real form (name/email/message) with inline validation. No backend connected (default): on submit, show a success <Card> state — do NOT claim the message was actually sent anywhere. Supabase connected (see SUPABASE CONTEXT below if present): insert into a contact_messages table via supabase.from(), emit that table in the schema SQL block, and only show success after a real non-error response.
+- Each page sets document.title in a useEffect on mount (this is a client SPA with one index.html — there is no per-route server-rendered <head>, so canonical/OG/JSON-LD stay on the Home route only; per-page document.title is the only per-route SEO lever available and IS required)
+- Every internal link between pages uses a "#/..." href, never a bare path like "/about"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FILE STRUCTURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Single-page (default):
 src/
   App.tsx              — all sections in order, ALL useState here (no Context), <ScrollProgress/> at top
   index.css            — :root HSL channel tokens + keyframes (grain, marquee, aurora) + brand flourish vars
@@ -693,6 +711,22 @@ src/
 public/
   robots.txt
   sitemap.xml
+
+Multi-page (only per MULTI-PAGE MODE above):
+src/
+  App.tsx              — <HashRouter><Routes> mapping "/" and each page to <Layout><PageX/></Layout>
+  index.css            — same as single-page
+  components/
+    Layout.tsx          — Navbar + <Outlet/> + Footer
+    (Hero.tsx, Features.tsx, etc. — shared section components used by Home.tsx and other pages as needed)
+  pages/
+    Home.tsx
+    About.tsx
+    Contact.tsx
+    [OtherPage].tsx
+public/
+  robots.txt
+  sitemap.xml           — list every page's real URL (e.g. https://brand.com/#/about), not just "/"
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ROBUSTNESS RULES
@@ -723,6 +757,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive at 375px?
 □ Hover + focus-visible on every interactive element?
 □ Loading="lazy" on below-fold images?
+□ If multi-page: HashRouter (not BrowserRouter), all internal links use "#/..." hrefs, every page sets document.title?
 
 PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + palette], [progress: Building [filename]], [progress: Done]
 
