@@ -83,8 +83,11 @@ function BuildConsole({ rows, accent = BRAND, title }: {
 const WEB_BUILD_ROWS = [
   { done: true,  active: false, label: 'PROMPT RECEIVED',       detail: '"Build a CRM with pipeline view"' },
   { done: true,  active: false, label: 'GENERATING REACT CODE', detail: '14 files · Supabase schema' },
+  { done: true,  active: false, label: 'CREATING DATABASE',     detail: 'RLS policies · 6 tables · indexes' },
+  { done: true,  active: false, label: 'SECURITY SCAN',         detail: 'No leaks found · all policies verified' },
   { done: true,  active: false, label: 'PUSHING TO GITHUB',     detail: 'wyberai/crm-abc123' },
   { done: false, active: true,  label: 'DEPLOYING TO VERCEL',   detail: 'crm-abc123.vercel.app' },
+  { done: false, active: false, label: 'SELF-HEAL ENABLED',     detail: 'Monitoring · auto-fix on error' },
 ];
 
 const MOBILE_BUILD_ROWS = [
@@ -508,7 +511,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
         <div className="mk-stars" aria-hidden />
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 55% at 68% 20%, rgba(14,165,233,0.10) 0%, transparent 62%)', pointerEvents: 'none' }} />
-        <div className="mk-section" style={{ position: 'relative', display: 'grid', gridTemplateColumns: canPin ? '1.1fr 0.9fr' : '1fr', gap: 'clamp(32px,5vw,72px)', alignItems: 'center', paddingTop: 'clamp(72px,10vw,128px)', paddingBottom: 'clamp(64px,9vw,112px)' }}>
+        <div className="mk-section" style={{ position: 'relative', display: 'grid', gridTemplateColumns: canPin ? '1.1fr 0.9fr' : '1fr', gap: 'clamp(32px,5vw,72px)', alignItems: 'flex-start', paddingTop: 'clamp(40px,5vw,72px)', paddingBottom: 'clamp(64px,9vw,112px)' }}>
           <div>
             <Reveal y={16}>
               <div className="mk-eyebrow" style={{ marginBottom: 26 }}>
@@ -591,16 +594,14 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
             </Reveal>
           </div>
           {canPin && (
-            <Reveal delay={0.2} y={32}>
-              <motion.div
-                animate={reduce ? undefined : { y: [0, -8, 0] }}
-                transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ position: 'relative' }}
-              >
-                <div style={{ position: 'absolute', inset: -24, background: 'radial-gradient(ellipse at center, rgba(14,165,233,0.10), transparent 70%)', pointerEvents: 'none' }} />
-                <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />
-              </motion.div>
-            </Reveal>
+            <div style={{ paddingTop: 'clamp(48px,4vw,56px)' }}>
+              <Reveal delay={0.2} y={32}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', inset: -24, background: 'radial-gradient(ellipse at center, rgba(14,165,233,0.14), transparent 70%)', pointerEvents: 'none' }} />
+                  <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />
+                </div>
+              </Reveal>
+            </div>
           )}
         </div>
       </section>
