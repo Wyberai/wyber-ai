@@ -866,7 +866,7 @@ DATA TABLE PAGE:
 - Selected rows: bg-primary/8 with checkbox filled primary
 - Bulk action bar (AnimatePresence slide-down): "[N] selected · Delete · Export · Deselect"
 - Pagination: "1–15 of 247" + prev/next + rows-per-page
-- 15 rows of diverse realistic mock data
+- 15 rows of diverse realistic mock data (or real rows from supabase.from() — see DATA SOURCE below)
 - Detail side-panel (SidePanel): slides from right 420px, tabs (Overview / Activity), field grid, timeline
 
 ADD/EDIT: use kit <Dialog> for modal form. Fields use kit <Input>. Inline validation (error state). Submit shows spinner.
@@ -903,13 +903,18 @@ React Router v6 with <BrowserRouter>:
 - /settings/* — nested routes per tab
 - /notifications
 
-AuthContext: isAuthenticated boolean, user object, login(), logout(). Persist in localStorage.
+AuthContext: isAuthenticated boolean, user object, login(), logout().
+- No backend connected (default): persist the fake session in localStorage.
+- Supabase connected (see SUPABASE CONTEXT below if present): AuthContext wraps REAL supabase.auth — signUp/signInWithPassword/signOut/onAuthStateChange — not a fake boolean. Login/Signup screens call these directly. Session comes from supabase.auth.getSession(), not localStorage.
 ToastContext: addToast() queue, useToast hook. These TWO contexts only — never put feature data in Context.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-REALISTIC MOCK DATA
+DATA SOURCE — MOCK BY DEFAULT, REAL WHEN CONNECTED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-All data as useState with inline initial values or from lib/mockData.ts.
+No backend connected (default): all data as useState with inline initial values or from lib/mockData.ts, using the realistic-data rules below.
+Supabase connected (see SUPABASE CONTEXT below if present): the Dashboard, the data table page, and Analytics fetch REAL rows via supabase.from(...).select() inside useEffect — do NOT hardcode arrays for these. Emit the schema SQL block exactly as that context instructs so the platform provisions the tables automatically. Settings pages (Profile/Team/API Keys) may still read/write real tables the same way; Billing stays mocked (no payment processor is wired here).
+
+REALISTIC MOCK DATA (for the no-backend path, and for any field Supabase doesn't cover):
 - Names: Sarah Chen, Marcus Rivera, Priya Sharma, James O'Brien, Aisha Patel, Tomás Kowalski, Elena Vasquez, Kwame Asante, Mei-Lin Zhou, Arjun Nair
 - Companies: Horizon Labs, Vertex Systems, Meridian Health, Atlas Digital, Quantum IO, Forge Analytics
 - Numbers with decimals: $47,832.50, 94.3%, 2.1x, 12.8k
@@ -974,6 +979,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Every page fully built — no "// TODO" stubs?
 □ Responsive: sidebar → off-canvas on mobile, tables → card-stacks?
 □ Hover + focus-visible on every interactive element?
+□ If Supabase is connected: AuthContext and the data table/dashboard use REAL supabase calls, not mock arrays — and the schema SQL block was emitted?
 
 PROGRESS: [progress: Planning [Product Name]], [progress: Building auth + shell], [progress: Building dashboard], [progress: Building [feature] page], [progress: Building settings], [progress: Done]
 
