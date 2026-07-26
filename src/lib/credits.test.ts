@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { PLAN_RANK, MODEL_META, tierAllowedForPlan, creditCost, estimateCost, type ModelTier, type PlanId } from './credits'
 
-const TIERS: ModelTier[] = ['fast', 'default', 'premium', 'fable']
+const TIERS: ModelTier[] = ['fast', 'default', 'premium', 'fable', 'gpt']
 const PLANS: PlanId[] = ['free', 'spark', 'starter', 'builder', 'pro', 'growth', 'scale']
 
 describe('tierAllowedForPlan', () => {
@@ -30,6 +30,14 @@ describe('tierAllowedForPlan', () => {
   it('falls back to rank 0 (not a crash) for an unrecognized plan string', () => {
     expect(tierAllowedForPlan('fast', 'not-a-real-plan')).toBe(true)
     expect(tierAllowedForPlan('fable', 'not-a-real-plan')).toBe(false)
+  })
+
+  it('gpt is visible to every plan, including free', () => {
+    // Deliberately free+ (credits.ts MODEL_META.gpt comment) — the point of a
+    // second provider is a real try-it-now choice, not another paywalled tier.
+    for (const plan of PLANS) {
+      expect(tierAllowedForPlan('gpt', plan)).toBe(true)
+    }
   })
 
   it('PLAN_RANK is exhaustive over every plan referenced elsewhere in the codebase', () => {

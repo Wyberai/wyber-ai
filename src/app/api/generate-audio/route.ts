@@ -61,17 +61,28 @@ export async function POST(req: NextRequest) {
     const url = urlData.publicUrl
 
     // Charge only after a successful generation + upload (atomic RPC; failure
-    // to charge is logged but never voids the audio the user already has).
+    // to charge is logged but never voids the audio the user already has —
+    // the TTS call was already made and paid for on our side, so clawing back
+    // a delivered asset over a transient DB error would only compound the
+    // loss). One retry first, since a single transient blip is the common
+    // case and shouldn't need to fall all the way to "give it away free".
     let credits: number | null = null
-    try {
-      const { data: result } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: AUDIO_CREDIT_COST })
-      credits = result?.new_credits ?? null
+    let deductErr: unknown = null
+    for (let attempt = 0; attempt < 2 && credits === null; attempt++) {
+      try {
+        const { data: result } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: AUDIO_CREDIT_COST })
+        if (result?.new_credits !== undefined) { credits = result.new_credits; deductErr = null }
+      } catch (e) {
+        deductErr = e
+      }
+    }
+    if (credits !== null) {
       admin.from('credit_usage').insert({
         user_id: user.id, amount: AUDIO_CREDIT_COST, reason: 'audio-gen',
-        credits_before: credits !== null ? credits + AUDIO_CREDIT_COST : null, credits_after: credits,
+        credits_before: credits + AUDIO_CREDIT_COST, credits_after: credits,
       }).then(() => {}, () => {})
-    } catch (e) {
-      console.error('[generate-audio] charge failed (audio already delivered):', e)
+    } else if (deductErr) {
+      console.error('[generate-audio] charge failed after retry (audio already delivered):', deductErr)
     }
 
     return NextResponse.json({ url, provider, creditsCharged: AUDIO_CREDIT_COST, credits })

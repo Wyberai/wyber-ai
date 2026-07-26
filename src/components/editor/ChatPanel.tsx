@@ -1197,6 +1197,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // 'error' = a connector exists but we couldn't reach/use it — warn instead
       // of letting the app silently build with no working database.
       const supabaseStatus = res.headers.get('X-Supabase-Status');
+      const generationTruncated = res.headers.get('X-Generation-Truncated') === '1';
       if (creditsUsed) setLastCreditCost(parseInt(creditsUsed));
       if (creditsUsed) turnCreditsRef.current += parseInt(creditsUsed) || 0;
       if (modelUsed) setLastModel(modelUsed);
@@ -1555,6 +1556,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
           addMessage({
             id: uid(), role: 'assistant',
             content: t('supabaseUnreachableMsg'),
+            timestamp: Date.now(), status: 'done',
+          });
+        }, 300);
+      }
+
+      // GPT-tier turn hit its tool-call iteration cap mid-build — some files
+      // may already be in, but the turn may be incomplete. Charge already
+      // stands (see server); this just tells the user so they can ask for a
+      // follow-up rather than assume the build finished clean.
+      if (generationTruncated && !opts?.silent) {
+        setTimeout(() => {
+          addMessage({
+            id: uid(), role: 'assistant',
+            content: t('gptTruncatedMsg'),
             timestamp: Date.now(), status: 'done',
           });
         }, 300);

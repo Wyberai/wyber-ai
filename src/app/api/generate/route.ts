@@ -1559,23 +1559,16 @@ export async function POST(req: NextRequest) {
             needed: cost, balance,
           }), { status: 402 })
         }
-        let gptNewBalance = balance
         const { data: gptRpc, error: gptRpcErr } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: cost })
-        if (!gptRpcErr && gptRpc?.new_credits !== undefined) {
-          gptNewBalance = gptRpc.new_credits
-        } else {
-          const { data: updated, error: deductErr } = await admin
-            .from('profiles')
-            .update({ credits: balance - cost, updated_at: new Date().toISOString() })
-            .eq('id', user.id)
-            .gte('credits', cost)
-            .select('credits')
-            .single()
-          if (deductErr || !updated) {
-            return new Response(JSON.stringify({ error: 'Insufficient credits' }), { status: 402 })
-          }
-          gptNewBalance = updated.credits
+        if (gptRpcErr || gptRpc?.new_credits === undefined) {
+          // No stale-balance manual fallback here (unlike the Anthropic path
+          // below, which keeps one only because the RPC is confirmed always
+          // present in prod for that far-higher-traffic path) — this newer,
+          // unproven tier fails closed instead of reusing a fallback that can
+          // under-charge two concurrent requests against the same stale read.
+          return new Response(JSON.stringify({ error: 'Could not process credits — please try again.' }), { status: 500 })
         }
+        const gptNewBalance = gptRpc.new_credits
 
         try {
           const { generateWithOpenAiCoding, OPENAI_OUTPUT_RULE } = await import('@/lib/model-providers/openai-coding')
@@ -1585,6 +1578,24 @@ export async function POST(req: NextRequest) {
             userPrompt: prompt,
             fileContext,
           })
+
+          // Same rule the Anthropic path enforces at every one of its own
+          // generationSucceeded() call sites: a turn that produced no real
+          // <file>/<edit> block (a plain answer, or a genuinely empty
+          // response) never gets charged — confirmed live upstream that a
+          // confident zero-block narrative otherwise sails through as a paid
+          // "success".
+          if (!generationSucceeded(result.text, stage)) {
+            await refundCredits(user.id, cost, 'gpt-empty-generation')
+            return new Response(result.text, {
+              headers: {
+                'Content-Type': 'text/plain; charset=utf-8',
+                'X-Credits-Used': '0',
+                'X-New-Balance': String(balance),
+              },
+            })
+          }
+
           admin.from('credit_usage').insert({
             user_id: user.id, amount: cost, reason: actionType,
             credits_before: balance, credits_after: gptNewBalance,
@@ -1594,6 +1605,10 @@ export async function POST(req: NextRequest) {
               'Content-Type': 'text/plain; charset=utf-8',
               'X-Credits-Used': String(cost),
               'X-New-Balance': String(gptNewBalance),
+              // Hit the iteration cap mid-build — real files may already be
+              // in the response, so the charge stands, but the client should
+              // know this turn may be incomplete rather than assume it's done.
+              ...(result.truncated ? { 'X-Generation-Truncated': '1' } : {}),
             },
           })
         } catch (gptErr) {

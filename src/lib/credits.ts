@@ -144,6 +144,12 @@ export function creditCost(action: ActionType, tier: ModelTier = 'default'): num
   // Opus (~$0.52 COGS, measured Jul 3) for the same price as a tweak. Simple
   // Sonnet edit = the public 2cr price; Opus-escalated complex edit = 5cr.
   if (action === 'small-edit') return tier === 'fast' ? 2 : 5
+  // hero-image-gen/audio-gen call an image/TTS provider, never an Anthropic
+  // or OpenAI coding model — MODEL_MULTIPLIERS tier scaling doesn't apply to
+  // them (see BASE_COSTS comments). Forced to 1× here, not just by omitting
+  // the tier argument at call sites, so a future caller that DOES pass a
+  // tier (e.g. 'fable', 2×) can't silently break the documented flat price.
+  if (action === 'hero-image-gen' || action === 'audio-gen') return BASE_COSTS[action]
   const base = BASE_COSTS[action]
   const multiplier = MODEL_MULTIPLIERS[tier]
   return Math.max(1, Math.round(base * multiplier))

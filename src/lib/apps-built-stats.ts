@@ -1,5 +1,14 @@
 import { createServiceClient } from '@/lib/supabase/server';
 
+// In-memory, per-instance cache (same convention as src/lib/rate-limit.ts) —
+// the homepage runs force-dynamic + edge, so every request would otherwise
+// re-run this count query with no caching layer at all. A stat that changes
+// by the minute doesn't need to be live to the second; 5 minutes bounds the
+// query rate without making the number feel stale.
+let cachedCount: number | null = null;
+let cachedAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
 /**
  * Real (never fabricated) count of projects that actually have generated
  * content — same `files is not null` filter the email-drip cron already uses
@@ -9,15 +18,17 @@ import { createServiceClient } from '@/lib/supabase/server';
  * falls back to null so the caller can show nothing rather than a stale lie.
  */
 export async function getAppsBuiltCount(): Promise<number | null> {
+  if (cachedCount !== null && Date.now() - cachedAt < CACHE_TTL_MS) return cachedCount;
   try {
     const supabase = createServiceClient();
     const { count } = await supabase
       .from('projects')
       .select('id', { count: 'exact', head: true })
       .not('files', 'is', null);
-    return count ?? null;
+    if (count !== null) { cachedCount = count; cachedAt = Date.now(); }
+    return count ?? cachedCount;
   } catch {
-    return null;
+    return cachedCount;
   }
 }
 

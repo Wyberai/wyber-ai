@@ -58,6 +58,11 @@ export interface OpenAiCodingResult {
    * to the client exactly like the legacy (non-tool-use) Anthropic path's output. */
   text: string
   usage: { inputTokens: number; outputTokens: number }
+  /** True if the loop hit maxIterations while the model still had pending
+   * tool calls (never reached the natural "no more tool calls" turn) — the
+   * caller should treat this as a possibly-incomplete build, not a clean
+   * finish, even though some real files may already be in `text`. */
+  truncated: boolean
 }
 
 // Same schema the Anthropic path's writeFileTool/editFileTool describe
@@ -109,6 +114,11 @@ export function toolCallToTag(name: string, argsJson: string): string {
   } catch {
     return ''
   }
+  // A literal `"` in a model-supplied path would break the `path="..."`
+  // attribute boundary that downstream FILE_BLOCK_RE parsing relies on —
+  // reject rather than let a malformed tag corrupt parsing (a real path
+  // never legitimately contains a quote character).
+  if (typeof args.path === 'string' && args.path.includes('"')) return ''
   if (name === 'write_file' && typeof args.path === 'string' && typeof args.content === 'string') {
     return `<file path="${args.path}">\n${args.content}\n</file>\n`
   }
@@ -151,6 +161,7 @@ export async function generateWithOpenAiCoding(input: OpenAiCodingInput): Promis
   let output = ''
   let totalInputTokens = 0
   let totalOutputTokens = 0
+  let truncated = true
 
   for (let iter = 0; iter < maxIterations; iter++) {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -181,6 +192,7 @@ export async function generateWithOpenAiCoding(input: OpenAiCodingInput): Promis
       // No more tool calls — this is the closing recap turn (mirrors the
       // Anthropic loop's final non-tool_use stop).
       output += (msg.content ?? '').trim()
+      truncated = false
       break
     }
 
@@ -196,5 +208,5 @@ export async function generateWithOpenAiCoding(input: OpenAiCodingInput): Promis
     }
   }
 
-  return { text: output, usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens } }
+  return { text: output, usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens }, truncated }
 }

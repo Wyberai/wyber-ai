@@ -5,8 +5,9 @@
 -- is logged per-generation the way employee_voice_clips does, since these are
 -- one-off project assets referenced directly from the app the user is building.
 --
--- Storage bucket must be created separately (same convention as
--- 021_employee_voice_clips.sql's employee-voice-clips bucket) — run this in
--- the Supabase dashboard Storage section, or uncomment if using supabase-js
--- admin with storage.buckets write access:
--- insert into storage.buckets (id, name, public) values ('project-audio', 'project-audio', true) on conflict do nothing;
+-- Storage bucket (same convention as 021_employee_voice_clips.sql's
+-- employee-voice-clips bucket: public read, writes only via the service-role
+-- client — src/app/api/generate-audio/route.ts never uploads with the anon
+-- key, so no additional storage.objects RLS policy is needed here, matching
+-- employee-voice-clips which also ships with none).
+insert into storage.buckets (id, name, public) values ('project-audio', 'project-audio', true) on conflict do nothing;

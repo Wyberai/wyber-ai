@@ -69,8 +69,12 @@ export async function getFeaturedUserBuilds(limit = 6): Promise<UserBuild[]> {
     const sellerIds = Array.from(new Set(data.map(l => l.seller_id).filter(Boolean))) as string[];
     const sellerById: Record<string, string> = {};
     if (sellerIds.length) {
-      const { data: profiles } = await supabase.from('profiles').select('id, full_name, email').in('id', sellerIds);
-      profiles?.forEach(p => { sellerById[p.id as string] = (p.full_name as string) || (p.email as string)?.split('@')[0] || 'Builder'; });
+      // full_name only — never fall back to an email-derived handle here.
+      // Approving a marketplace listing is consent to be listed on the
+      // marketplace, not consent to have an email-derived identifier shown
+      // on the public homepage.
+      const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', sellerIds);
+      profiles?.forEach(p => { sellerById[p.id as string] = (p.full_name as string) || 'Builder'; });
     }
 
     return data.map(l => ({
