@@ -45,11 +45,12 @@ export const MODEL_IDS: Record<ModelTier, string> = {
   default: 'claude-opus-5',
   premium: 'claude-opus-5',
   fable:   'claude-fable-5',
-  // Env-var override, not hardcoded — OpenAI's exact current-generation coding
-  // model id should be confirmed against their live API/docs before this tier
-  // is enabled for real users (see model-providers/openai-coding.ts), rather
-  // than trusting a string picked without API access to verify it.
-  gpt:     process.env.OPENAI_CODING_MODEL_ID || 'gpt-5.1',
+  // GPT-5.6 Sol — OpenAI's current flagship for complex reasoning/coding with
+  // Functions tool support, confirmed against OpenAI's live model catalog
+  // (developers.openai.com/api/docs/models, checked 2026-07-26). Still an
+  // env-var override, not hardcoded, so it can be swapped without a deploy
+  // once this tier sees real usage.
+  gpt:     process.env.OPENAI_CODING_MODEL_ID || 'gpt-5.6-sol',
 }
 
 /** Which provider actually serves a given tier — a thin, additive lookup so

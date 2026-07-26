@@ -19,14 +19,20 @@
  * model is done or MAX_ITERATIONS is hit, mirroring the Anthropic path's
  * "iteration 1 writes files, iteration 2 adds the closing recap" shape.
  *
- * ⚠ NOT YET SMOKE-TESTED against a live OpenAI account (no API key available
- * while writing this). The request/response shapes follow OpenAI's documented
- * Chat Completions + function-calling API precisely, but this needs a real
- * test call before any user traffic reaches it — same discipline as the
- * Sonnet-first build rollout (WYBER_SONNET_FIRST_BUILD): verify on staging
- * before it's live for real users. It is already safe to ship as-is because
- * gpt is only reachable via an explicit dropdown choice (credits.ts
- * MODEL_META.gpt), never an automatic default.
+ * ⚠ NOT YET SMOKE-TESTED against a live OpenAI account — a real key exists in
+ * prod (used today for gpt-image-2), but Vercel's env-var protection blocks
+ * pulling its plaintext value out via CLI, so no live end-to-end call has
+ * actually been made from this environment. The model id itself IS confirmed
+ * (gpt-5.6-sol, OpenAI's current flagship for coding/reasoning with Functions
+ * support — checked against developers.openai.com/api/docs/models on
+ * 2026-07-26; the request/response shapes follow OpenAI's documented Chat
+ * Completions + function-calling API precisely), but a real test call is
+ * still the thing that closes the loop before real user traffic depends on
+ * it — same discipline as the Sonnet-first build rollout
+ * (WYBER_SONNET_FIRST_BUILD): verify on staging before it's live for real
+ * users. It is already safe to ship as-is because gpt is only reachable via
+ * an explicit dropdown choice (credits.ts MODEL_META.gpt), never an
+ * automatic default.
  */
 
 // Deliberately a fresh, independently-authored instruction set — NOT a
@@ -150,7 +156,7 @@ interface OpenAiChatCompletionResponse {
 export async function generateWithOpenAiCoding(input: OpenAiCodingInput): Promise<OpenAiCodingResult> {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured')
-  const model = process.env.OPENAI_CODING_MODEL_ID || 'gpt-5.1'
+  const model = process.env.OPENAI_CODING_MODEL_ID || 'gpt-5.6-sol'
   const maxIterations = input.maxIterations ?? 6
 
   const messages: OpenAiMessage[] = [
