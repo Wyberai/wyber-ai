@@ -12,8 +12,10 @@ const PERSONAS = [
 ];
 
 const PRODUCTS = [
-  { id: 'web', icon: '🌐', label: 'Web apps', desc: 'Dashboards, SaaS tools, landing pages, websites — AI builds fresh React code and deploys to a live URL in minutes.' },
-  { id: 'mobile', icon: '📱', label: 'Mobile apps', desc: 'iOS & Android apps with React Native + Expo. Preview on your phone instantly via QR code.' },
+  { id: 'web', icon: '🖥️', label: 'Web app', desc: 'Dashboards, internal tools, CRMs — AI builds full React apps from scratch in minutes.' },
+  { id: 'mobile', icon: '📱', label: 'Mobile app', desc: 'iOS & Android apps with React Native + Expo. Preview on your phone instantly via QR code.' },
+  { id: 'website', icon: '🌐', label: 'Website', desc: 'Landing pages, marketing sites, portfolios — hero images, pricing, testimonials, SEO-ready.' },
+  { id: 'saas', icon: '🚀', label: 'SaaS product', desc: 'Full SaaS with auth, dashboard, billing, settings, and teams — production-ready from scratch.' },
 ];
 
 export default function OnboardingPage() {
@@ -37,19 +39,12 @@ export default function OnboardingPage() {
     }
 
     const routes: Record<string, string> = {
+      web: '/dashboard',
       mobile: '/dashboard?new=mobile',
+      website: '/dashboard?new=website',
+      saas: '/dashboard?new=saas',
     };
-
-    if (routes[product]) { router.push(routes[product]); return; }
-
-    const { data: project } = await supabase.from('projects').insert({
-      user_id: user?.id,
-      name: 'My first app',
-      framework: 'react-vite',
-      files: {},
-      first_prompt: '',
-    }).select().single();
-    router.push(project ? `/project/${project.id}` : '/dashboard');
+    router.push(routes[product] ?? '/dashboard');
   };
 
   const S = {
@@ -77,7 +72,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <>
             <h1 style={S.h1}>Welcome to WyberAi</h1>
-            <p style={S.sub}>Build web and mobile apps with AI. Let's get you set up in 30 seconds.</p>
+            <p style={S.sub}>Build web apps, mobile apps, websites, and SaaS products with AI. Let's get you set up in 30 seconds.</p>
             <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 8, display: 'block' }}>What should we call you?</label>
             <input
               style={S.input}
@@ -124,8 +119,8 @@ export default function OnboardingPage() {
         {/* Step 3: Starting product */}
         {step === 3 && (
           <>
-            <h1 style={S.h1}>Where do you want to start?</h1>
-            <p style={S.sub}>Pick one to begin — you can switch any time from the dashboard.</p>
+            <h1 style={S.h1}>What are you building?</h1>
+            <p style={S.sub}>Pick one to start — you can switch types or create any mix from the dashboard.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
               {PRODUCTS.map(p => (
                 <button key={p.id} onClick={() => setProduct(p.id)}

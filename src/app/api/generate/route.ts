@@ -1568,7 +1568,7 @@ async function resolveModelTier(opts: {
   // simple build agrees on Sonnet and every stage of a genuinely large build
   // agrees on Opus — no single stage silently forces the slow tier regardless
   // of what the build actually needs.
-  if (stage === 'scaffold' || stage === 'fill' || isNewBuild || actionType === 'web-build' || actionType === 'mobile-build') {
+  if (stage === 'scaffold' || stage === 'fill' || isNewBuild || actionType === 'web-build' || actionType === 'mobile-build' || actionType === 'website-build' || actionType === 'saas-build') {
     if (!SONNET_FIRST_BUILDS) return 'default' // rollout not yet enabled — old behavior
     return (await isComplexBuild(prompt)) ? 'default' : 'fast'
   }
@@ -1922,6 +1922,8 @@ export async function POST(req: NextRequest) {
       (!isNewBuild && process.env.WYBER_TOOL_USE_EDIT !== 'off')
     )
     const actionType = projectType === 'mobile' ? 'mobile-build'
+      : projectType === 'website' ? (isNewBuild ? 'website-build' : 'small-edit')
+      : projectType === 'saas' ? (isNewBuild ? 'saas-build' : 'small-edit')
       : isNewBuild ? 'web-build'
       : 'small-edit'
     // Model tier: an explicit choice from the model dropdown (Sonnet/Opus/

@@ -18,6 +18,8 @@ export type ActionType =
   | 'component'
   | 'web-build'
   | 'mobile-build'
+  | 'website-build'
+  | 'saas-build'
   | 'plan'
   | 'security-scan'
   | 'agent-create'
@@ -106,6 +108,8 @@ const BASE_COSTS: Record<ActionType, number> = {
   'component':          8,
   'web-build':         30,
   'mobile-build':      30,
+  'website-build':     30,
+  'saas-build':        30,
   'plan':               5,
   'security-scan':     10,
   'agent-create':       5,

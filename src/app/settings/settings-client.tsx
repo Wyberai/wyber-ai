@@ -67,6 +67,8 @@ function CreditHistory() {
   const reasonLabels: Record<string, string> = {
     'web-build': t('reasonWebBuild'),
     'mobile-build': t('reasonMobileBuild'),
+    'website-build': t('reasonWebsiteBuild'),
+    'saas-build': t('reasonSaaSBuild'),
     'small-edit': t('reasonSmallEdit'),
     'agent-run': t('reasonAgentRun'),
     'ai-employee-run': t('reasonAiEmployeeRun'),
