@@ -83,14 +83,40 @@ function TypeBadge({ type }: { type?: string }) {
   );
 }
 
-const QUICK_PROMPTS = [
-  'Build a landing page with email waitlist and early access form',
-  'Create a SaaS dashboard with subscription billing and usage metrics',
-  'Build a marketplace where freelancers can list services and get hired',
-  'Create a booking app with calendar, payments, and client management',
-  'Build a mobile app for my food delivery startup',
-  'Create a B2B sales CRM for my early-stage startup',
-];
+const QUICK_PROMPTS_BY_TYPE: Record<'app' | 'mobile' | 'website' | 'saas', string[]> = {
+  app: [
+    'Build a CRM for my agency with pipeline, client notes, and invoices',
+    'Create a project management tool with kanban boards and team tasks',
+    'Build an internal HR portal with leave tracking and org chart',
+    'Create a booking app with calendar, payments, and client management',
+    'Build a marketplace where freelancers can list services and get hired',
+    'Create a B2B sales CRM for my early-stage startup',
+  ],
+  mobile: [
+    'Build a food delivery app with real-time tracking and payments',
+    'Create a fitness tracker with workout plans and progress charts',
+    'Build a social app for local community events and meetups',
+    'Create a marketplace app to buy and sell secondhand items locally',
+    'Build a habit tracker with streaks, reminders, and daily analytics',
+    'Create a mobile wallet with spending insights and budget tracking',
+  ],
+  website: [
+    'Build a landing page with email waitlist for my SaaS product',
+    'Create a portfolio website with project showcase and contact form',
+    'Build an agency site with case studies, team, and pricing sections',
+    'Create a product launch page with countdown, features, and waitlist',
+    'Build a restaurant website with menu, reservations, and gallery',
+    'Create a personal blog with newsletter sign-up and article archive',
+  ],
+  saas: [
+    'Build a B2B analytics dashboard with team workspaces and reports',
+    'Create a subscription billing platform with Stripe and usage metering',
+    'Build a developer API dashboard with rate limits and usage analytics',
+    'Create a multi-tenant CRM with role-based permissions and audit logs',
+    'Build an admin panel with user management, roles, and activity feed',
+    'Create a project tracking SaaS with billing, teams, and integrations',
+  ],
+};
 
 // Colors — the same IDE-dark tokens the editor already uses (globals.css),
 // not a third ad hoc palette. Keeping these as named constants (rather than
@@ -121,7 +147,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const [showImport, setShowImport] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
   const [promptInput, setPromptInput] = useState('');
-  const [buildMode, setBuildMode] = useState<'app' | 'mobile'>('app');
+  const [buildMode, setBuildMode] = useState<'app' | 'mobile' | 'website' | 'saas'>('app');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -303,8 +329,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
   const detectType = (prompt: string): import('@/components/dashboard/ProjectTypeChooser').ProjectType => {
     if (MOBILE_KEYWORDS.test(prompt) || buildMode === 'mobile') return 'mobile';
-    if (SAAS_KEYWORDS.test(prompt)) return 'saas';
-    if (WEBSITE_KEYWORDS.test(prompt)) return 'website';
+    if (SAAS_KEYWORDS.test(prompt) || buildMode === 'saas') return 'saas';
+    if (WEBSITE_KEYWORDS.test(prompt) || buildMode === 'website') return 'website';
     return 'app';
   };
 
@@ -561,17 +587,19 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 placeholder={t('promptPlaceholder')} rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
-                  <button onClick={() => setBuildMode('app')} aria-pressed={buildMode === 'app'}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 6, border: buildMode === 'app' ? '1px solid rgba(14,165,233,0.45)' : '1px solid transparent', background: buildMode === 'app' ? 'rgba(14,165,233,0.18)' : 'transparent', color: buildMode === 'app' ? BRAND : '#9a9fad', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                    {t('webAppLabel')}
-                  </button>
-                  <button onClick={() => setBuildMode('mobile')} aria-pressed={buildMode === 'mobile'}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 13px', borderRadius: 6, border: buildMode === 'mobile' ? '1px solid rgba(168,85,247,0.45)' : '1px solid transparent', background: buildMode === 'mobile' ? 'rgba(168,85,247,0.18)' : 'transparent', color: buildMode === 'mobile' ? '#a855f7' : '#9a9fad', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                    {t('mobileAppLabel')}
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
+                  {([
+                    { mode: 'app' as const, label: t('webAppLabel'), color: '#0EA5E9', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
+                    { mode: 'mobile' as const, label: t('mobileAppLabel'), color: '#f97316', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
+                    { mode: 'website' as const, label: t('websiteLabel'), color: '#6366f1', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
+                    { mode: 'saas' as const, label: t('saasLabel'), color: '#ec4899', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg> },
+                  ]).map(({ mode, label, color, icon }) => (
+                    <button key={mode} onClick={() => setBuildMode(mode)} aria-pressed={buildMode === mode}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: buildMode === mode ? `1px solid ${color}72` : '1px solid transparent', background: buildMode === mode ? `${color}2e` : 'transparent', color: buildMode === mode ? color : '#9a9fad', fontSize: 12, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                      {icon}
+                      {label}
+                    </button>
+                  ))}
                 </div>
                 <span style={{ fontSize: 11, color: credits <= 10 ? '#ef4444' : '#3f3f46', fontWeight: credits <= 10 ? 600 : 400 }}>{credits} {t('creditsWord')}</span>
                 <span style={{ fontSize: 11, color: '#3f3f46' }}>{t('enterToBuild')}</span>
@@ -590,7 +618,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
             <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: isMobile ? undefined : 'wrap', flexDirection: isMobile ? 'column' : 'row', justifyContent: isMobile ? undefined : 'center', alignItems: isMobile ? 'stretch' : undefined }}>
               {(suggestions
                 ? suggestions.slice(0, isMobile ? 3 : 4).map(s => ({ key: s.prompt, label: s.title, prompt: s.prompt }))
-                : QUICK_PROMPTS.slice(0, isMobile ? 3 : 4).map(p => ({ key: p, label: p.replace('Build a ', '').replace('Create a ', ''), prompt: p }))
+                : (QUICK_PROMPTS_BY_TYPE[buildMode]).slice(0, isMobile ? 3 : 4).map(p => ({ key: p, label: p.replace('Build a ', '').replace('Create a ', ''), prompt: p }))
               ).map(c => (
                 <button key={c.key} className="dash-chip" onClick={() => { setPromptInput(c.prompt); textareaRef.current?.focus() }}
                   title={c.prompt}

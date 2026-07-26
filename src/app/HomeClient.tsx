@@ -401,7 +401,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   // Read the DOM value, not state: autofill/paste can commit text without
   // React's onChange having run by submit time.
   const heroPromptRef = useRef<HTMLTextAreaElement | null>(null);
-  const [heroTarget, setHeroTarget] = useState<'app' | 'mobile'>('app');
+  const [heroTarget, setHeroTarget] = useState<'app' | 'mobile' | 'website' | 'saas'>('app');
   const submitHeroPrompt = (e: React.FormEvent) => {
     e.preventDefault();
     const p = (heroPromptRef.current?.value ?? heroPrompt).trim();
@@ -543,17 +543,19 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--brand-text)', fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--font-sans)', padding: '8px 10px' }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTop: '1px solid var(--brand-border)', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--brand-border)' }}>
-                    <button type="button" onClick={() => setHeroTarget('app')} aria-pressed={heroTarget === 'app'}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: heroTarget === 'app' ? '1px solid rgba(14,165,233,0.45)' : '1px solid transparent', background: heroTarget === 'app' ? 'rgba(14,165,233,0.18)' : 'transparent', color: heroTarget === 'app' ? 'var(--brand-accent)' : 'var(--brand-text-dim)', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
-                      {t.targetWeb}
-                    </button>
-                    <button type="button" onClick={() => setHeroTarget('mobile')} aria-pressed={heroTarget === 'mobile'}
-                      style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: heroTarget === 'mobile' ? '1px solid rgba(168,85,247,0.45)' : '1px solid transparent', background: heroTarget === 'mobile' ? 'rgba(168,85,247,0.18)' : 'transparent', color: heroTarget === 'mobile' ? '#a855f7' : 'var(--brand-text-dim)', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit' }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                      {t.targetMobile}
-                    </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--brand-border)', flexWrap: 'wrap' }}>
+                    {([
+                      { target: 'app' as const, label: t.targetWeb, color: 'var(--brand-accent)', rgba: 'rgba(14,165,233,0.18)', borderRgba: 'rgba(14,165,233,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
+                      { target: 'mobile' as const, label: t.targetMobile, color: '#f97316', rgba: 'rgba(249,115,22,0.18)', borderRgba: 'rgba(249,115,22,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
+                      { target: 'website' as const, label: t.targetWebsite, color: '#6366f1', rgba: 'rgba(99,102,241,0.18)', borderRgba: 'rgba(99,102,241,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 9h20"/><path d="M7 3v6"/></svg> },
+                      { target: 'saas' as const, label: t.targetSaas, color: '#ec4899', rgba: 'rgba(236,72,153,0.18)', borderRgba: 'rgba(236,72,153,0.45)', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="2" y="3" width="7" height="18" rx="1.5"/><rect x="12" y="3" width="10" height="8" rx="1.5"/><rect x="12" y="14" width="10" height="7" rx="1.5"/></svg> },
+                    ]).map(({ target, label, color, rgba, borderRgba, icon }) => (
+                      <button key={target} type="button" onClick={() => setHeroTarget(target)} aria-pressed={heroTarget === target}
+                        style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px', borderRadius: 6, border: heroTarget === target ? `1px solid ${borderRgba}` : '1px solid transparent', background: heroTarget === target ? rgba : 'transparent', color: heroTarget === target ? color : 'var(--brand-text-dim)', fontSize: 12, fontWeight: 650, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                        {icon}
+                        {label}
+                      </button>
+                    ))}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--brand-text-dim)' }}>
                     <VoiceButton
