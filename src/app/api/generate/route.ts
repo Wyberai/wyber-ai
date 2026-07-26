@@ -686,17 +686,50 @@ Two independent constraints rule out react-router-dom's <BrowserRouter>/<HashRou
 Implement this exact hook (adjust only the route table) and do NOT import react-router-dom:
 <file path="src/hooks/useHashRoute.ts">
 import { useEffect, useState } from 'react'
+
+function normalize(hash: string) {
+  const h = hash.replace(/^#/, '') || '/'
+  return h.startsWith('/') ? h : '/' + h
+}
+
 export function useHashRoute() {
-  const [route, setRoute] = useState(() => window.location.hash.slice(1) || '/')
+  const [route, setRoute] = useState(() => normalize(window.location.hash))
   useEffect(() => {
-    const onHashChange = () => setRoute(window.location.hash.slice(1) || '/')
+    const onHashChange = () => setRoute(normalize(window.location.hash))
     window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    // A page's own in-page anchor scrolling (e.g. a handler for plain "#pricing"
+    // links) can call preventDefault() on a click before the browser updates
+    // location.hash, silently swallowing a "#/..." route link — this poll is a
+    // safety net that catches the hash regardless of whether that happened.
+    const poll = setInterval(() => {
+      const current = normalize(window.location.hash)
+      setRoute(r => (r === current ? r : current))
+    }, 120)
+    return () => { window.removeEventListener('hashchange', onHashChange); clearInterval(poll) }
   }, [])
   return route
 }
+
+export function navigate(path: string) {
+  window.location.hash = path.startsWith('/') ? path : '/' + path
+}
 </file>
-App.tsx reads const route = useHashRoute() and renders the matching page with a plain switch/if-chain (no <Routes>/<Route> — there is no router object, just the current hash string). Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>, and clicking a "#/..." href is a native browser hash update (fires 'hashchange', no history.pushState involved) — no component changes needed.
+Also add ONE capture-phase click listener, once, near the top of App.tsx:
+<code>
+useEffect(() => {
+  const onClick = (e: MouseEvent) => {
+    const a = (e.target as HTMLElement).closest('a[href^="#/"]') as HTMLAnchorElement | null
+    if (!a) return
+    e.preventDefault()
+    navigate(a.getAttribute('href')!.slice(1))
+  }
+  document.addEventListener('click', onClick, true) // capture phase — runs BEFORE any other click handler on the link (e.g. an in-page smooth-scroll handler for plain "#section" anchors), so it always wins the race instead of sometimes losing to whichever handler happens to run first
+  return () => document.removeEventListener('click', onClick, true)
+}, [])
+</code>
+This is why the "#/..." convention (hash THEN slash) matters: it is unambiguous against a same-page anchor like href="#pricing" (no slash) — the capture listener only ever intercepts route links, so genuine in-page anchor scrolling elsewhere on a page is completely unaffected.
+
+App.tsx reads const route = useHashRoute() and renders the matching page with a plain switch/if-chain (no <Routes>/<Route> — there is no router object, just the current hash string). Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>; the capture listener above is what actually drives navigation now, not native browser hash-following.
 
 STRUCTURE:
 - src/pages/Home.tsx — the full single-page composition described above (hero → ... → footer)
@@ -952,17 +985,47 @@ NO react-router-dom. Published apps render inside a sandboxed <iframe srcDoc> wh
 Implement this exact hook and do NOT import react-router-dom:
 <file path="src/hooks/useHashRoute.ts">
 import { useEffect, useState } from 'react'
+
+function normalize(hash: string) {
+  const h = hash.replace(/^#/, '') || '/dashboard'
+  return h.startsWith('/') ? h : '/' + h
+}
+
 export function useHashRoute() {
-  const [route, setRoute] = useState(() => window.location.hash.slice(1) || '/dashboard')
+  const [route, setRoute] = useState(() => normalize(window.location.hash))
   useEffect(() => {
-    const onHashChange = () => setRoute(window.location.hash.slice(1) || '/dashboard')
+    const onHashChange = () => setRoute(normalize(window.location.hash))
     window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    // Safety net: if some other click handler calls preventDefault() on a nav
+    // link before the browser updates location.hash, this poll still catches it.
+    const poll = setInterval(() => {
+      const current = normalize(window.location.hash)
+      setRoute(r => (r === current ? r : current))
+    }, 120)
+    return () => { window.removeEventListener('hashchange', onHashChange); clearInterval(poll) }
   }, [])
   return route
 }
+
+export function navigate(path: string) {
+  window.location.hash = path.startsWith('/') ? path : '/' + path
+}
 </file>
-App.tsx reads const route = useHashRoute() and renders the matching page with a plain if-chain / switch on the route string (parse "/settings/billing" as base "/settings" + tab "billing" the same way). Every nav item, tab, and internal link uses a "#/..." href (e.g. href="#/settings/billing") — a plain <a href="#/...">, no <Link> component, no history.push. Sidebar/tab active-state checks compare the current route string directly.
+Also add ONE capture-phase click listener, once, near the top of App.tsx:
+<code>
+useEffect(() => {
+  const onClick = (e: MouseEvent) => {
+    const a = (e.target as HTMLElement).closest('a[href^="#/"]') as HTMLAnchorElement | null
+    if (!a) return
+    e.preventDefault()
+    navigate(a.getAttribute('href')!.slice(1))
+  }
+  document.addEventListener('click', onClick, true) // capture phase — always wins the race against any other click handler on the same link
+  return () => document.removeEventListener('click', onClick, true)
+}, [])
+</code>
+
+App.tsx reads const route = useHashRoute() and renders the matching page with a plain if-chain / switch on the route string (parse "/settings/billing" as base "/settings" + tab "billing" the same way). Every nav item, tab, and internal link uses a "#/..." href (e.g. href="#/settings/billing") — a plain <a href="#/...">; the capture listener above drives navigation, not native hash-following. Sidebar/tab active-state checks compare the current route string directly.
 - / (no hash) → treat as /dashboard if authed, /login if not
 - /login, /signup, /forgot-password, /onboarding
 - /dashboard
