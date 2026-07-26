@@ -382,10 +382,12 @@ interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
 // The visible picker: Sonnet (fast, default selection), Opus (default tier),
-// Fable, and GPT. 'premium' is intentionally not offered here — it's the
-// same Opus model as 'default' with only a priority-queue difference, not a
-// distinct choice a user would pick by name.
-const PICKABLE_TIERS: ModelTier[] = ['fast', 'default', 'fable', 'gpt'];
+// and Fable. 'premium' is intentionally not offered here — it's the same
+// Opus model as 'default' with only a priority-queue difference, not a
+// distinct choice a user would pick by name. 'gpt' is temporarily pulled
+// from the picker (not deleted — MODEL_IDS.gpt/openai-coding.ts stay intact)
+// pending a working OpenAI key; re-add it here once that's confirmed live.
+const PICKABLE_TIERS: ModelTier[] = ['fast', 'default', 'fable'];
 
 export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
@@ -2770,9 +2772,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 {PICKABLE_TIERS.map(tKey => {
                   const meta = MODEL_META[tKey];
                   const allowed = tierAllowedForPlan(tKey, userPlan);
+                  const tierCost = creditCost(isFirstBuild ? 'web-build' : 'small-edit', tKey);
                   return (
                     <option key={tKey} value={tKey} disabled={!allowed}>
-                      {meta.label}{!allowed ? ` (${meta.minPlan}+)` : ''}
+                      {meta.label} — {tierCost}cr{!allowed ? ` (${meta.minPlan}+)` : ''}
                     </option>
                   );
                 })}

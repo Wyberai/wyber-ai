@@ -545,7 +545,10 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
         {tab === 'models' && (() => {
           const plan = profile?.plan ?? 'free'
           const balance = profile?.credits ?? 0
-          const tiers: ModelTier[] = ['fast', 'default', 'premium', 'fable', 'gpt']
+          // 'gpt' pulled from display pending a working OpenAI key (matches
+          // ChatPanel.tsx's PICKABLE_TIERS) — POWER_BARS below keeps its gpt
+          // entry since that Record type must stay exhaustive over ModelTier.
+          const tiers: ModelTier[] = ['fast', 'default', 'premium', 'fable']
           const POWER_BARS: Record<ModelTier, number> = { fast: 1, default: 2, premium: 3, fable: 4, gpt: 2 }
           const ACTION_ROWS: { labelKey: keyof typeof SETTINGS_STRINGS['en']; hint: Parameters<typeof estimateCost>[1] }[] = [
             { labelKey: 'actionQuickEdit', hint: 'edit' },
