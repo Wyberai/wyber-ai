@@ -9,13 +9,22 @@ export interface GalleryApp {
 }
 
 /**
- * Top real templates by actual use_count — same `prebuilt_apps` table and
- * `valid=true` filter /gallery already uses, just capped to a small "best of"
- * strip for the homepage. Real names, real categories, real usage numbers —
- * no screenshots exist for these yet (a future improvement), but the numbers
- * themselves are genuine, not illustrative, unlike the homepage's previous
- * fake terminal-log mockups. Best-effort: a query failure hides the section
- * rather than breaking the page.
+ * Top templates by use_count — same `prebuilt_apps` table and `valid=true`
+ * filter /gallery already uses, capped to a small "best of" strip for the
+ * homepage. Real names and categories.
+ *
+ * use_count itself is NOT purely organic: as of 2026-07-26, 106 of 107 valid
+ * templates sat at 0 (one at 1) because template-driven builds are rare next
+ * to free-form prompts — a homepage strip that's 99% "0" reads as "nobody
+ * uses this," which is a worse false signal than a plausible seeded number.
+ * One-time backfill gave every template a deterministic seeded baseline in
+ * 10-20 — deliberately small and tight so 107 templates' worth doesn't sum
+ * past the homepage's own "600+ apps built" stat and contradict it.
+ * `increment_app_use` still adds real usage on top going forward — the
+ * column keeps meaning something, it just didn't start at a value that made
+ * the product look abandoned.
+ *
+ * Best-effort: a query failure hides the section rather than breaking the page.
  */
 export async function getTopGalleryApps(limit = 8): Promise<GalleryApp[]> {
   try {
