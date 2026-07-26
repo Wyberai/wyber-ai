@@ -73,9 +73,10 @@ function applyLegacyTokenOverlay(preserved: Record<string, string>, theme: AppTh
   if (theme.radius) { preserved['r'] = theme.radius; preserved['r-lg'] = theme.radius }
 }
 
-/** Extract the first `:root { … }` block's body, with its span in the source. */
-function rootBlock(css: string): { body: string; start: number; end: number } | null {
-  const m = css.match(/:root\s*\{/)
+/** Extract the first block whose opening matches `selector { … }` (brace-depth
+ *  aware, so nested rules inside don't confuse the span), with its source span. */
+function findBlock(css: string, selector: RegExp): { body: string; start: number; end: number } | null {
+  const m = css.match(selector)
   if (!m || m.index === undefined) return null
   const open = m.index + m[0].length
   let depth = 1
@@ -86,6 +87,21 @@ function rootBlock(css: string): { body: string; start: number; end: number } | 
     }
   }
   return null
+}
+
+function rootBlock(css: string): { body: string; start: number; end: number } | null {
+  return findBlock(css, /:root\s*\{/)
+}
+
+/** A project that has ever had "Add dark mode" applied defines its own
+ *  `.dark { --primary: …; … }` override — CSS class selectors beat :root on
+ *  the same-specificity tie, source-order-last, so whenever dark mode is
+ *  active this block's OWN values win over anything written to :root. Apply
+ *  a theme to :root only and the app looks completely unchanged in dark
+ *  mode — the save succeeds, the render doesn't reflect it, and it reads
+ *  exactly like "themes don't work". Must be kept in sync with :root. */
+function darkBlock(css: string): { body: string; start: number; end: number } | null {
+  return findBlock(css, /\.dark\s*\{/)
 }
 
 function parseDecls(body: string): Record<string, string> {
@@ -147,22 +163,41 @@ function serializeRootBody(theme: AppTheme, preserved: Record<string, string>): 
   return lines.join('\n')
 }
 
+/** Rewrite one selector's block (:root or .dark) in place with the given
+ *  theme, preserving whatever declarations the theme doesn't cover. Returns
+ *  the unmodified css if the block isn't present — callers decide whether
+ *  that's expected (:root always gets created; .dark only rewritten if the
+ *  project already has one, see writeAppTheme). */
+function rewriteBlock(css: string, block: { body: string; start: number; end: number }, selector: string, theme: AppTheme): string {
+  const preserved = parseDecls(block.body)
+  applyLegacyTokenOverlay(preserved, theme)
+  const bare = parseBareDecls(block.body)
+  const varLines = serializeRootBody(theme, preserved)
+  const nextBlock = `${selector} {\n${varLines}${bare.length ? '\n' + bare.map(d => `  ${d};`).join('\n') : ''}\n}`
+  return css.slice(0, block.start) + nextBlock + css.slice(block.end)
+}
+
 /**
  * Rewrite src/index.css's :root{} block with the given theme. Declarations the
  * theme doesn't cover are preserved; everything outside the block is untouched.
  * No :root block → one is prepended (after any @tailwind directives).
+ *
+ * If the project also defines a .dark{} override (from a prior "Add dark
+ * mode" edit — see darkBlock's comment for why this matters), that block is
+ * rewritten with the SAME theme values too, so the app looks themed
+ * regardless of which mode is currently active. Never CREATES a .dark block
+ * that wasn't already there — a project with no dark mode stays that way.
  */
 export function writeAppTheme(indexCss: string, theme: AppTheme): string {
-  const css = indexCss ?? ''
-  const block = rootBlock(css)
-  if (block) {
-    const preserved = parseDecls(block.body)
-    applyLegacyTokenOverlay(preserved, theme)
-    const bare = parseBareDecls(block.body)
-    const varLines = serializeRootBody(theme, preserved)
-    const nextBlock = `:root {\n${varLines}${bare.length ? '\n' + bare.map(d => `  ${d};`).join('\n') : ''}\n}`
-    return css.slice(0, block.start) + nextBlock + css.slice(block.end)
-  }
+  let css = indexCss ?? ''
+
+  const dark = darkBlock(css)
+  if (dark) css = rewriteBlock(css, dark, '.dark', theme)
+
+  // Re-find :root — darkBlock may have shifted every later offset.
+  const root = rootBlock(css)
+  if (root) return rewriteBlock(css, root, ':root', theme)
+
   const preserved: Record<string, string> = {}
   applyLegacyTokenOverlay(preserved, theme)
   const newBlock = `:root {\n${serializeRootBody(theme, preserved)}\n}`
@@ -190,7 +225,14 @@ export function themeToCss(theme: AppTheme): string {
   if (theme.fontSans) lines.push(`  --font-sans: '${theme.fontSans}';`)
   if (theme.fontDisplay) lines.push(`  --font-display: '${theme.fontDisplay}';`)
   if (theme.fontMono) lines.push(`  --font-mono: '${theme.fontMono}';`)
-  return `:root {\n${lines.join('\n')}\n}\nbody { font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif; }`
+  const body = lines.join('\n')
+  // Also override .dark with the identical values — same reasoning as
+  // writeAppTheme: a project with "Add dark mode" applied has its own .dark
+  // block, which otherwise wins the cascade over :root while dark mode is
+  // active, making the instant preview look like nothing happened. This
+  // <style> tag is upserted after the app's own stylesheet, so on the
+  // matching .dark selector it wins by source order at equal specificity.
+  return `:root {\n${body}\n}\n.dark {\n${body}\n}\nbody { font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif; }`
 }
 
 /** A palette from Session B's catalog, as an applicable theme. */

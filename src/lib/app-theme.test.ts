@@ -70,6 +70,44 @@ describe('writeAppTheme', () => {
   })
 })
 
+// Regression coverage for the bug found live on a real project: "Add dark
+// mode" leaves the app with its own .dark{} override, which wins the cascade
+// over :root whenever dark mode is active — so applying a theme correctly
+// saved to :root but visibly changed nothing while viewing the app in dark
+// mode. Confirmed live: --primary in :root became the new palette's violet,
+// but .dark's own --primary (a leftover orange) still rendered.
+const DARK_MODE_SAMPLE = `:root {
+  --background: 255 30% 6%;
+  --primary: 199 89% 48%;
+  --radius: 0.75rem;
+}
+.dark {
+  --background: 24 14% 8%;
+  --primary: 20 72% 56%;
+  --gradient-hero: linear-gradient(150deg, hsl(20 72% 56% / 0.14), hsl(35 60% 50% / 0.10));
+}
+body { margin: 0; }`
+
+describe('writeAppTheme — projects with a separate .dark{} block', () => {
+  it('rewrites .dark with the same theme values as :root, not just :root', () => {
+    const out = writeAppTheme(DARK_MODE_SAMPLE, { tokens: { primary: '270 80% 65%' } })
+    const rootIdx = out.indexOf(':root {')
+    const darkIdx = out.indexOf('.dark {')
+    expect(out.slice(rootIdx, darkIdx)).toContain('--primary: 270 80% 65%;')
+    expect(out.slice(darkIdx)).toContain('--primary: 270 80% 65%;')
+  })
+
+  it('preserves .dark-only extra vars (like a custom gradient) it does not touch', () => {
+    const out = writeAppTheme(DARK_MODE_SAMPLE, { tokens: { primary: '270 80% 65%' } })
+    expect(out).toContain('--gradient-hero: linear-gradient(150deg, hsl(20 72% 56% / 0.14), hsl(35 60% 50% / 0.10));')
+  })
+
+  it('never creates a .dark block for a project that never had one', () => {
+    const out = writeAppTheme('@tailwind base;\n:root { --primary: 199 89% 48%; }', { tokens: { primary: '270 80% 65%' } })
+    expect(out).not.toContain('.dark {')
+  })
+})
+
 describe('themeToCss', () => {
   it('serializes an instant-override :root block', () => {
     const css = themeToCss({ tokens: { primary: '270 80% 65%' }, radius: '1rem', fontSans: 'Switzer' })
@@ -77,6 +115,13 @@ describe('themeToCss', () => {
     expect(css).toContain('--primary: 270 80% 65%;')
     expect(css).toContain('--radius: 1rem;')
     expect(css).toContain("--font-sans: 'Switzer';")
+  })
+
+  it('also overrides .dark so the instant preview flash is visible in dark mode', () => {
+    const css = themeToCss({ tokens: { primary: '270 80% 65%' } })
+    expect(css).toContain('.dark {')
+    const darkIdx = css.indexOf('.dark {')
+    expect(css.slice(darkIdx)).toContain('--primary: 270 80% 65%;')
   })
 })
 
