@@ -438,12 +438,16 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   const uploadPromisesRef = useRef<Record<string, Promise<unknown>>>({});
   useEffect(() => { attachedFilesRef.current = attachedFiles; }, [attachedFiles]);
   const [dragOver, setDragOver] = useState(false);
-  // Server-side auto-routing stays the real decision-maker for every tier
-  // EXCEPT this one explicit choice: picking 'gpt' routes to the OpenAI
-  // adapter (src/lib/model-providers/openai-coding.ts) instead of Claude.
-  // Any other value here is advisory only — the server re-picks it via
-  // resolveModelTier() regardless of what's sent.
+  // The dropdown shows and defaults to Sonnet, but that default is NOT sent
+  // to the server as an explicit override — only a tier the user actually
+  // picked is (see tierTouched below, and the request-body construction
+  // that gates on it). This keeps the server's own resolveModelTier()
+  // complexity classifier (a sub-cent Haiku call that escalates genuinely
+  // large/complex builds to Opus) doing its job for anyone who never
+  // touches the picker, instead of silently hard-locking every untouched
+  // build to Sonnet regardless of how complex it turns out to be.
   const [modelTier, setModelTier] = useState<ModelTier>('fast');
+  const [tierTouched, setTierTouched] = useState(false);
   // Plan gating for the model picker — fetched once (same endpoint TopBar's
   // balance refresh already hits after every turn) so locked tiers can be
   // disabled in the dropdown instead of round-tripping to the server only
@@ -1160,7 +1164,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
         signal: genController.signal,
         body: JSON.stringify({
           prompt: userMsg || (img ? 'Build a UI matching this screenshot exactly.' : 'Build this using the attached files.'),
-          framework, fileContext, history, knowledge: knowledgeStr, modelTier,
+          // Only send a tier once the user has actually picked one — otherwise
+          // the server's own complexity-aware auto-routing (resolveModelTier)
+          // stays in control, same as before the picker existed.
+          framework, fileContext, history, knowledge: knowledgeStr, modelTier: tierTouched ? modelTier : undefined,
           userId: resolvedUserId, projectId: resolvedProjectId,
           projectType, selfHeal: isSelfHeal,
           // The server can't infer "first build" from fileContext — the
@@ -1629,7 +1636,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       setProgressSteps([]);
     }
     return succeeded;
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, knowledge, addMessage, updateMessage, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, tierTouched, knowledge, addMessage, updateMessage, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
@@ -2747,14 +2754,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
               />
               {/* Model choice: a real, user-selectable picker. Sonnet (fast) is
-                  the default; Opus/Fable/GPT are one click away, each gated by
-                  plan (a tier the current plan can't reach is disabled, not
-                  hidden — so upgrading is visible, not a secret). The estimate
-                  chip next to it always matches exactly what's selected, so
-                  there's no auto-vs-actual mismatch. */}
+                  the default SHOWN — but until the user actually changes it,
+                  nothing explicit is sent to the server (see tierTouched),
+                  so the server's own complexity-aware auto-routing still
+                  escalates a genuinely large build to Opus on its own.
+                  Opus/Fable/GPT are one click away, each gated by plan (a
+                  tier the current plan can't reach is disabled, not hidden —
+                  so upgrading is visible, not a secret). */}
               <select
                 value={modelTier}
-                onChange={e => setModelTier(e.target.value as ModelTier)}
+                onChange={e => { setModelTier(e.target.value as ModelTier); setTierTouched(true); }}
                 title={t('modelPickerTooltip')}
                 style={{ fontSize:10, fontWeight:600, padding:'2px 6px', borderRadius:6, border:'1px solid var(--ide-border)', cursor:'pointer', fontFamily:'var(--font-sans)', background:'#0c0c12', color:'var(--ide-text)', outline:'none' }}
               >
@@ -2768,14 +2777,24 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   );
                 })}
               </select>
-              {/* Pre-generation cost estimate — matches the selected tier exactly,
-                  no auto-mode ambiguity now that selection is explicit. */}
+              {/* Pre-generation cost estimate — an exact number once the user has
+                  picked a tier; an honest LOW–HIGH range beforehand, since the
+                  actual tier is still up to the server's auto-complexity check. */}
               {(() => {
                 const estimateAction: ActionType = isFirstBuild ? 'web-build' : 'small-edit';
-                const est = creditCost(estimateAction, modelTier);
+                if (tierTouched) {
+                  const est = creditCost(estimateAction, modelTier);
+                  return (
+                    <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
+                      ~{est}cr
+                    </span>
+                  );
+                }
+                const estLow = creditCost(estimateAction, 'fast');
+                const estHigh = creditCost(estimateAction, 'default');
                 return (
                   <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
-                    ~{est}cr
+                    ~{estLow === estHigh ? estLow : `${estLow}–${estHigh}`}cr
                   </span>
                 );
               })()}
