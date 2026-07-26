@@ -1,5 +1,5 @@
 'use client'
-import { creditCost, type ActionType } from '@/lib/credits';
+import { creditCost, tierAllowedForPlan, MODEL_META, type ActionType } from '@/lib/credits';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, memo, type ReactNode } from 'react';
@@ -381,8 +381,11 @@ const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
-// Model selection is fully automatic (server-side): Opus for from-scratch builds,
-// Sonnet for edits, auto-escalating complex edits back to Opus. No user picker.
+// The visible picker: Sonnet (fast, default selection), Opus (default tier),
+// Fable, and GPT. 'premium' is intentionally not offered here — it's the
+// same Opus model as 'default' with only a priority-queue difference, not a
+// distinct choice a user would pick by name.
+const PICKABLE_TIERS: ModelTier[] = ['fast', 'default', 'fable', 'gpt'];
 
 export function ChatPanel({ projectId, userId, projectType }: Props) {
   const {
@@ -440,7 +443,18 @@ export function ChatPanel({ projectId, userId, projectType }: Props) {
   // adapter (src/lib/model-providers/openai-coding.ts) instead of Claude.
   // Any other value here is advisory only — the server re-picks it via
   // resolveModelTier() regardless of what's sent.
-  const [modelTier, setModelTier] = useState<ModelTier>('default');
+  const [modelTier, setModelTier] = useState<ModelTier>('fast');
+  // Plan gating for the model picker — fetched once (same endpoint TopBar's
+  // balance refresh already hits after every turn) so locked tiers can be
+  // disabled in the dropdown instead of round-tripping to the server only
+  // to bounce with an upgrade-required error.
+  const [userPlan, setUserPlan] = useState<string>('free');
+  useEffect(() => {
+    fetch('/api/credits/deduct', { method: 'GET' })
+      .then(r => r.json())
+      .then(data => { if (data.plan) setUserPlan(data.plan); })
+      .catch(() => {});
+  }, []);
   const [planMode, setPlanMode] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<{ prompt: string; image: AttachedImage | null } | null>(null);
   // First-build advisory offer: on a brand-new project's first message, ask
@@ -1208,10 +1222,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // Prebuilt is free — restore the optimistic deduction the store may have applied
         useEditorStore.getState().setCredits(credits);
       } else {
-        // Fetch fresh balance after server deduction
+        // Fetch fresh balance (+ plan, in case of a mid-session upgrade) after server deduction
         fetch('/api/credits/deduct', { method: 'GET' })
           .then(r => r.json())
-          .then(data => { if (data.credits !== undefined) useEditorStore.getState().setCredits(data.credits); })
+          .then(data => {
+            if (data.credits !== undefined) useEditorStore.getState().setCredits(data.credits);
+            if (data.plan) setUserPlan(data.plan);
+          })
           .catch(() => {});
       }
 
@@ -2729,53 +2746,36 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 lang={LOCALE_SPEECH_CODE[locale]}
                 onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
               />
-              {/* Model choice: "Auto" keeps full automatic server-side routing
-                  (the historical default — a real user-facing picker was removed
-                  in the past because manual tier-picking led to systematic
-                  over/underpaying). "GPT" is the one explicit, user-selectable
-                  exception: it routes to the OpenAI adapter instead of Claude
-                  for this turn. Everything else about model selection is
-                  still fully automatic either way. */}
-              <div style={{ display:'inline-flex', background:'#0c0c12', border:'1px solid var(--ide-border)', borderRadius:6, padding:2, gap:2 }}>
-                <button
-                  onClick={() => setModelTier('default')}
-                  title={t('autoModelTooltip')}
-                  style={{ fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:4, border:'none', cursor:'pointer', display:'inline-flex', alignItems:'center', gap:4, fontFamily:'var(--font-sans)', background: modelTier !== 'gpt' ? 'var(--accent)' : 'transparent', color: modelTier !== 'gpt' ? '#fff' : 'var(--ide-text3)' }}
-                >
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                  {t('autoModelLabel')}
-                </button>
-                <button
-                  onClick={() => setModelTier('gpt')}
-                  title={t('gptModelTooltip')}
-                  style={{ fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:4, border:'none', cursor:'pointer', fontFamily:'var(--font-sans)', background: modelTier === 'gpt' ? 'var(--accent)' : 'transparent', color: modelTier === 'gpt' ? '#fff' : 'var(--ide-text3)' }}
-                >
-                  {t('gptModelLabel')}
-                </button>
-              </div>
-              {/* Pre-generation cost estimate — previously the only cost signal was
-                  the post-hoc TurnReceipt line after a turn finished. Auto mode's
-                  exact tier is picked server-side (auto-escalated on complexity),
-                  so that shows an honest LOW–HIGH range; the explicit GPT choice
-                  has no such ambiguity, so it shows one number. */}
+              {/* Model choice: a real, user-selectable picker. Sonnet (fast) is
+                  the default; Opus/Fable/GPT are one click away, each gated by
+                  plan (a tier the current plan can't reach is disabled, not
+                  hidden — so upgrading is visible, not a secret). The estimate
+                  chip next to it always matches exactly what's selected, so
+                  there's no auto-vs-actual mismatch. */}
+              <select
+                value={modelTier}
+                onChange={e => setModelTier(e.target.value as ModelTier)}
+                title={t('modelPickerTooltip')}
+                style={{ fontSize:10, fontWeight:600, padding:'2px 6px', borderRadius:6, border:'1px solid var(--ide-border)', cursor:'pointer', fontFamily:'var(--font-sans)', background:'#0c0c12', color:'var(--ide-text)', outline:'none' }}
+              >
+                {PICKABLE_TIERS.map(tKey => {
+                  const meta = MODEL_META[tKey];
+                  const allowed = tierAllowedForPlan(tKey, userPlan);
+                  return (
+                    <option key={tKey} value={tKey} disabled={!allowed}>
+                      {meta.label}{!allowed ? ` (${meta.minPlan}+)` : ''}
+                    </option>
+                  );
+                })}
+              </select>
+              {/* Pre-generation cost estimate — matches the selected tier exactly,
+                  no auto-mode ambiguity now that selection is explicit. */}
               {(() => {
                 const estimateAction: ActionType = isFirstBuild ? 'web-build' : 'small-edit';
-                if (modelTier === 'gpt') {
-                  const est = creditCost(estimateAction, 'gpt');
-                  return (
-                    <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
-                      ~{est}cr
-                    </span>
-                  );
-                }
-                const estLow = creditCost(estimateAction, 'fast');
-                const estHigh = creditCost(estimateAction, 'default');
+                const est = creditCost(estimateAction, modelTier);
                 return (
-                  <span
-                    title={t('costEstimateTooltip')}
-                    style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}
-                  >
-                    ~{estLow === estHigh ? estLow : `${estLow}–${estHigh}`}cr
+                  <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
+                    ~{est}cr
                   </span>
                 );
               })()}

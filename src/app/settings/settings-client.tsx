@@ -545,8 +545,8 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
         {tab === 'models' && (() => {
           const plan = profile?.plan ?? 'free'
           const balance = profile?.credits ?? 0
-          const tiers: ModelTier[] = ['fast', 'default', 'premium', 'fable']
-          const POWER_BARS: Record<ModelTier, number> = { fast: 1, default: 2, premium: 3, fable: 4 }
+          const tiers: ModelTier[] = ['fast', 'default', 'premium', 'fable', 'gpt']
+          const POWER_BARS: Record<ModelTier, number> = { fast: 1, default: 2, premium: 3, fable: 4, gpt: 2 }
           const ACTION_ROWS: { labelKey: keyof typeof SETTINGS_STRINGS['en']; hint: Parameters<typeof estimateCost>[1] }[] = [
             { labelKey: 'actionQuickEdit', hint: 'edit' },
             { labelKey: 'actionComponentBuild', hint: 'component' },

@@ -80,6 +80,42 @@ describe('themeToCss', () => {
   })
 })
 
+// Every prebuilt gallery template (src/lib/templates/prebuilt/*.ts) ships its
+// own --bg/--surface/--accent/--text token set, read directly as literal
+// colors (`background: var(--bg)`) — not the shadcn set above, which those
+// templates never reference. Regression coverage for the bug where applying
+// a theme to one of these projects silently changed nothing visible.
+const LEGACY_SAMPLE = `:root{--bg:#09090b;--surface:#111113;--elevated:#18181b;--border:rgba(255,255,255,0.07);--text:#fafafa;--text-2:#a1a1aa;--accent:#0EA5E9;--r:8px;--r-lg:12px;font-family:'Space Grotesk',sans-serif}
+body{background:var(--bg);color:var(--text)}`
+
+describe('writeAppTheme — legacy prebuilt-template token names', () => {
+  it('overlays --bg/--accent/--text so a legacy-template project actually changes', () => {
+    const out = writeAppTheme(LEGACY_SAMPLE, { tokens: { background: '0 0% 100%', primary: '260 80% 60%', foreground: '240 10% 4%' } })
+    expect(out).toContain('--bg: hsl(0 0% 100%);')
+    expect(out).toContain('--accent: hsl(260 80% 60%);')
+    expect(out).toContain('--text: hsl(240 10% 4%);')
+  })
+
+  it('preserves a bare (non-custom-property) declaration inside :root, like a direct font-family', () => {
+    const out = writeAppTheme(LEGACY_SAMPLE, { tokens: { primary: '199 89% 48%' } })
+    expect(out).toContain("font-family:'Space Grotesk',sans-serif")
+  })
+
+  it('leaves untouched legacy vars (e.g. --elevated, --border) intact', () => {
+    const out = writeAppTheme(LEGACY_SAMPLE, { tokens: { primary: '199 89% 48%' } })
+    expect(out).toContain('--elevated: #18181b;')
+    expect(out).toContain('--border: rgba(255,255,255,0.07);')
+  })
+})
+
+describe('themeToCss — legacy prebuilt-template token names', () => {
+  it('also emits the legacy overlay for the instant preview flash', () => {
+    const css = themeToCss({ tokens: { background: '0 0% 100%', primary: '260 80% 60%' } })
+    expect(css).toContain('--bg: hsl(0 0% 100%);')
+    expect(css).toContain('--accent: hsl(260 80% 60%);')
+  })
+})
+
 describe('hex ↔ hsl channels', () => {
   it('round-trips the brand accent', () => {
     const hex = hslChannelsToHex('199 89% 48%')

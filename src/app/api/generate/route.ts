@@ -1483,11 +1483,20 @@ export async function POST(req: NextRequest) {
     const actionType = projectType === 'mobile' ? 'mobile-build'
       : isNewBuild ? 'web-build'
       : 'small-edit'
-    // Model tier is decided SERVER-SIDE (fully automatic) — the client no longer
-    // chooses. From-scratch builds get Opus for the best first impression; edits
-    // run on Sonnet (cheaper, fast) unless a sub-cent Haiku check rates the edit
-    // as architecturally complex, in which case we escalate back to Opus.
-    let tier = await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
+    // Model tier: an explicit choice from the model dropdown (Sonnet/Opus/
+    // Fable) is honored directly for real, user-priced turns — the dropdown
+    // shows the exact cost of exactly what will run, so there's no
+    // over/underpaying gap (the failure mode a fully-automatic-only picker
+    // replaced manual selection to avoid, historically). Internal/free
+    // passes (plan output, self-heal, agent-fix) ignore the client's choice
+    // entirely and always stay on resolveModelTier's own fast/free routing —
+    // those aren't a priced choice the user is making. 'gpt' is a different
+    // provider, not a Claude tier, and is handled separately below.
+    const REAL_CLAUDE_TIERS: ModelTier[] = ['fast', 'default', 'premium', 'fable']
+    const explicitClaudeTier = REAL_CLAUDE_TIERS.includes(modelTier) && stage !== 'plan' && !selfHeal && !isInternalPass
+      ? (modelTier as ModelTier)
+      : null
+    let tier = explicitClaudeTier ?? await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
     let cost = creditCost(actionType, tier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).

@@ -41,6 +41,38 @@ export const CURATED_FONTS = {
 
 const strip = (v: string) => v.trim().replace(/^['"]|['"]$/g, '')
 
+// Every prebuilt gallery template (src/lib/templates/prebuilt/*.ts) ships its
+// own hand-rolled token set — --bg/--surface/--accent/--text/--border, read
+// as literal colors directly (`background: var(--bg)`), NOT the shadcn
+// --background/--primary set above (which those templates' markup never
+// references at all). Applying a theme without this mapping silently writes
+// tokens nothing reads: the save succeeds, but the preview shows no change.
+// This overlay writes the legacy names too — wrapped in hsl() since that's
+// what a literal `var(--bg)` usage expects — so a theme apply actually
+// changes something on template-originated projects, not just on
+// from-scratch chat-generated ones (which do use the shadcn set).
+const LEGACY_TOKEN_MAP: Record<string, string> = {
+  background: 'bg',
+  foreground: 'text',
+  card: 'surface',
+  popover: 'surface',
+  muted: 'elevated',
+  'muted-foreground': 'text-2',
+  primary: 'accent',
+  ring: 'accent',
+  input: 'border',
+  border: 'border',
+  destructive: 'error',
+}
+
+function applyLegacyTokenOverlay(preserved: Record<string, string>, theme: AppTheme): void {
+  for (const [slot, legacyName] of Object.entries(LEGACY_TOKEN_MAP)) {
+    const val = theme.tokens[slot]
+    if (val !== undefined) preserved[legacyName] = `hsl(${val})`
+  }
+  if (theme.radius) { preserved['r'] = theme.radius; preserved['r-lg'] = theme.radius }
+}
+
 /** Extract the first `:root { … }` block's body, with its span in the source. */
 function rootBlock(css: string): { body: string; start: number; end: number } | null {
   const m = css.match(/:root\s*\{/)
@@ -62,6 +94,17 @@ function parseDecls(body: string): Record<string, string> {
     out[m[1]] = m[2].trim()
   }
   return out
+}
+
+// Some prebuilt templates set a bare (non-custom-property) declaration
+// directly on :root — e.g. `font-family:'Space Grotesk',sans-serif` inline
+// with the --tokens, instead of via a --font-sans var. serializeRootBody
+// only ever reconstructs `--`-prefixed declarations, so without this a theme
+// apply would silently drop that line. Preserved verbatim, unrelated to
+// whatever theme values change.
+function parseBareDecls(body: string): string[] {
+  return body.replace(/--[\w-]+\s*:\s*[^;}]+;?/g, '')
+    .split(';').map(s => s.trim()).filter(Boolean)
 }
 
 /** Read the app's theme out of its src/index.css. Missing block → empty theme. */
@@ -114,10 +157,15 @@ export function writeAppTheme(indexCss: string, theme: AppTheme): string {
   const block = rootBlock(css)
   if (block) {
     const preserved = parseDecls(block.body)
-    const nextBlock = `:root {\n${serializeRootBody(theme, preserved)}\n}`
+    applyLegacyTokenOverlay(preserved, theme)
+    const bare = parseBareDecls(block.body)
+    const varLines = serializeRootBody(theme, preserved)
+    const nextBlock = `:root {\n${varLines}${bare.length ? '\n' + bare.map(d => `  ${d};`).join('\n') : ''}\n}`
     return css.slice(0, block.start) + nextBlock + css.slice(block.end)
   }
-  const newBlock = `:root {\n${serializeRootBody(theme, {})}\n}`
+  const preserved: Record<string, string> = {}
+  applyLegacyTokenOverlay(preserved, theme)
+  const newBlock = `:root {\n${serializeRootBody(theme, preserved)}\n}`
   const lastDirective = css.lastIndexOf('@tailwind')
   if (lastDirective !== -1) {
     const lineEnd = css.indexOf('\n', lastDirective)
@@ -131,6 +179,13 @@ export function writeAppTheme(indexCss: string, theme: AppTheme): string {
 export function themeToCss(theme: AppTheme): string {
   const lines: string[] = []
   for (const [name, value] of Object.entries(theme.tokens)) lines.push(`  --${name}: ${value};`)
+  // Also emit the legacy prebuilt-template token names (--bg/--accent/--text/…,
+  // see LEGACY_TOKEN_MAP) wrapped in hsl() — those templates read colors via
+  // these var names directly, not the shadcn set above. A no-op on
+  // from-scratch projects, which never reference these names.
+  const legacyOverlay: Record<string, string> = {}
+  applyLegacyTokenOverlay(legacyOverlay, theme)
+  for (const [name, value] of Object.entries(legacyOverlay)) lines.push(`  --${name}: ${value};`)
   if (theme.radius) lines.push(`  --radius: ${theme.radius};`)
   if (theme.fontSans) lines.push(`  --font-sans: '${theme.fontSans}';`)
   if (theme.fontDisplay) lines.push(`  --font-display: '${theme.fontDisplay}';`)
