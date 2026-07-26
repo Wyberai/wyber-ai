@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { generateAndPersistImage } from '@/lib/generate-image-persist'
+import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
 import { rateLimit } from '@/lib/rate-limit'
 
 // Resolve {{wyber-image}} directives into REAL persisted image URLs for the
@@ -12,8 +12,10 @@ import { rateLimit } from '@/lib/rate-limit'
 // Economics: generateAndPersistImage is idempotent (stable storage key per
 // scope+prompt+ratio, cache-checked before calling OpenAI), so each unique
 // image is generated ONCE (~$0.06) and every rebuild/publish after that reuses
-// it for free. Caller sends the extracted directives; nothing is written to
-// the project — the saved source keeps its tokens.
+// it for free — a cache HIT is always free, regardless of the project's free
+// slot. The first real (cache-miss) generation for a project is free; every
+// one after that is billed 1 credit via billBuildImage (see generate-image-
+// persist.ts) — this used to be unconditionally free with no cap at all.
 //
 // Generation can take 10-25s per image; they run in parallel, capped.
 export const maxDuration = 120
@@ -46,7 +48,8 @@ export async function POST(req: NextRequest) {
       try {
         // Scope = projectId, matching the publish path exactly, so preview and
         // publish share one cache entry per image.
-        const url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId)
+        const { url, wasGenerated } = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId)
+        if (wasGenerated) await billBuildImage(admin, user.id, projectId)
         return url ? ([d.token, url] as const) : null
       } catch (e) {
         console.error('[img-resolve] generation failed:', d.prompt.slice(0, 60), e)

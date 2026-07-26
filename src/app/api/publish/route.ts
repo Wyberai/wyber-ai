@@ -5,7 +5,7 @@ import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
-import { generateAndPersistImage } from '@/lib/generate-image-persist'
+import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { notify } from '@/lib/push'
 import { rateLimit } from '@/lib/rate-limit'
@@ -91,7 +91,14 @@ export async function POST(req: NextRequest) {
       let generated = 0
       for (const d of directives) {
         let url: string | null = null
-        try { url = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId) } catch (e) { console.error('[publish] image generation threw:', d.prompt.slice(0, 60), e) }
+        try {
+          const result = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId)
+          url = result.url
+          // First real generation for this project is free; every one after
+          // is 1 credit (billBuildImage) — a cache hit (wasGenerated: false)
+          // never bills, matching the idempotent-reuse guarantee above.
+          if (result.wasGenerated) await billBuildImage(admin, user.id, projectId)
+        } catch (e) { console.error('[publish] image generation threw:', d.prompt.slice(0, 60), e) }
         // Success → substitute the permanent URL and persist it (re-publishing
         // won't regenerate). FAILURE → leave the token in the saved source:
         // sanitizeFiles resolves it to a gradient for THIS publish's build, and

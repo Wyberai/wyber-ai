@@ -131,7 +131,17 @@ export async function persistImage(
   }
 }
 
-/** Generate + persist in one step. Returns a permanent URL or null on any failure.
+/** Result of a generate-or-reuse call. `wasGenerated` tells the caller whether
+ *  a real (billable) OpenAI call actually happened, as opposed to a free
+ *  cache-hit reusing an already-persisted image — callers that gate billing
+ *  (resolve-directives, publish) need this to charge only for real generations. */
+export interface GenerateAndPersistResult {
+  url: string | null
+  wasGenerated: boolean
+}
+
+/** Generate + persist in one step. Returns a permanent URL (or null on any
+ * failure) plus whether a real generation happened.
  *
  * IDEMPOTENT: the storage key is a stable hash of scope+prompt+ratio, and an
  * existing object is reused without calling OpenAI — so the preview, a rebuild,
@@ -143,7 +153,7 @@ export async function generateAndPersistImage(
   size: string,
   scope: string,
   opts?: ImageGenOpts,
-): Promise<string | null> {
+): Promise<GenerateAndPersistResult> {
   const variant = [opts?.variant, opts?.transparent ? 'transparent' : ''].filter(Boolean).join('|')
   const key = imageKey(scope, prompt, size, variant)
 
@@ -155,12 +165,45 @@ export async function generateAndPersistImage(
       const { data } = admin.storage.from(GENERATED_IMAGES_BUCKET).getPublicUrl(key)
       if (data?.publicUrl) {
         const head = await fetch(data.publicUrl, { method: 'HEAD' })
-        if (head.ok) return data.publicUrl
+        if (head.ok) return { url: data.publicUrl, wasGenerated: false }
       }
     } catch { /* fall through to generation */ }
   }
 
   const b64 = await generateImageB64(prompt, size, opts)
-  if (!b64) return null
-  return persistImage(admin, b64, key)
+  if (!b64) return { url: null, wasGenerated: false }
+  const url = await persistImage(admin, b64, key)
+  return { url, wasGenerated: url !== null }
+}
+
+/** After a real (billable) build-time generation — resolve-directives or
+ * publish, never the manual regenerate route (that charges its own explicit
+ * price upfront) — consume this project's one free image slot, or charge 1
+ * credit if that slot is already used.
+ *
+ * Best-effort, same tradeoff the regenerate route already makes for its own
+ * charge: never revoke an image the user is already looking at over a
+ * billing failure. This fires for up to 8 directives in one parallel batch,
+ * where pre-gating each one behind an upfront balance check isn't worth the
+ * complexity for a ~$0.05 COGS line item — unlike regenerate, which is a
+ * single explicit user action worth gating up front. */
+export async function billBuildImage(admin: SupabaseClient, userId: string, projectId: string): Promise<{ free: boolean; charged: boolean }> {
+  try {
+    const { data: gotFreeSlot } = await admin.rpc('consume_free_image_slot', { p_project_id: projectId })
+    if (gotFreeSlot) return { free: true, charged: false }
+  } catch (e) {
+    console.error('[image-billing] free-slot check failed:', e)
+  }
+  try {
+    const { data: result } = await admin.rpc('deduct_credits', { p_user_id: userId, p_amount: 1 })
+    const credits = result?.new_credits ?? null
+    admin.from('credit_usage').insert({
+      user_id: userId, amount: 1, reason: 'build-image-gen',
+      credits_before: credits !== null ? credits + 1 : null, credits_after: credits,
+    }).then(() => {}, () => {})
+    return { free: false, charged: credits !== null }
+  } catch (e) {
+    console.error('[image-billing] charge failed (image already delivered):', e)
+    return { free: false, charged: false }
+  }
 }

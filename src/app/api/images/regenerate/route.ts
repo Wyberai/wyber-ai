@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     }
 
     const nonce = Math.random().toString(36).slice(2, 10)
-    const url = await generateAndPersistImage(admin, prompt.slice(0, 800), ratioToSize(ratio), projectId, {
+    const { url } = await generateAndPersistImage(admin, prompt.slice(0, 800), ratioToSize(ratio), projectId, {
       force: true,
       variant: nonce,
       transparent: !!transparent,
