@@ -678,14 +678,30 @@ MULTI-PAGE MODE — ONLY when explicitly needed
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Default is ONE scrolling page (above). Switch to real, separately-routed pages ONLY when the user asks for it explicitly or the request can't be a single page — "About page", "Contact page", "Blog", "a site with a few pages", multiple distinct products/services each needing their own page. A simple landing page or "website for my X" with no page list stays single-page. When in doubt, stay single-page — it is faster, safer, and what most requests actually want.
 
-ROUTER — use react-router-dom's HashRouter, NOT BrowserRouter:
-This app is a static Vite SPA served from a path like /app/{slug} with no server-side rewrite for sub-paths — a path-based route (e.g. /about) 404s on refresh or direct link because nothing on the server knows to hand back index.html for it. HashRouter avoids this entirely: the routed part lives after "#" (e.g. /app/{slug}/#/about), which the browser never sends to the server, so it works identically on the default subdomain, a custom domain, or local preview with zero hosting changes.
-<HashRouter> in main.tsx or App.tsx. Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>, and a "#/..." href triggers HashRouter's own navigation with no full reload and no component changes needed.
+ROUTER — a tiny custom hash hook, NOT react-router-dom:
+Two independent constraints rule out react-router-dom's <BrowserRouter>/<HashRouter> and any other history-package-based router:
+1. This app is a static Vite SPA served from a path like /app/{slug} with no server-side rewrite for sub-paths — a path-based route (e.g. /about) 404s on refresh or direct link. A hash-based route sidesteps this (the routed part lives after "#", which the browser never sends to the server).
+2. Published apps render inside a sandboxed <iframe srcDoc> — its document.location.href is the literal string "about:srcdoc", not a real URL. react-router-dom's "history" package internally calls new URL(path, window.location.href) to build/validate every route change, which THROWS ("Failed to construct 'URL': Invalid URL") the instant a route changes, because "about:srcdoc" is not a valid base for resolving a relative path. This reproduces 100% of the time on a published app, even though it can look fine in an ordinary top-level browser tab — never trust that as a substitute for testing the ACTUAL /app/{slug} published URL. Reading/writing location.hash directly avoids this entirely — it is a native Location property, not a history-package URL construction, and works identically whether location.href is real or "about:srcdoc".
+
+Implement this exact hook (adjust only the route table) and do NOT import react-router-dom:
+<file path="src/hooks/useHashRoute.ts">
+import { useEffect, useState } from 'react'
+export function useHashRoute() {
+  const [route, setRoute] = useState(() => window.location.hash.slice(1) || '/')
+  useEffect(() => {
+    const onHashChange = () => setRoute(window.location.hash.slice(1) || '/')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+  return route
+}
+</file>
+App.tsx reads const route = useHashRoute() and renders the matching page with a plain switch/if-chain (no <Routes>/<Route> — there is no router object, just the current hash string). Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>, and clicking a "#/..." href is a native browser hash update (fires 'hashchange', no history.pushState involved) — no component changes needed.
 
 STRUCTURE:
 - src/pages/Home.tsx — the full single-page composition described above (hero → ... → footer)
 - src/pages/About.tsx, src/pages/Contact.tsx, etc. — one file per requested page, each its own <Reveal>-wrapped sections, own hero/eyebrow, consistent Navbar+Footer via a shared Layout
-- src/components/Layout.tsx — <Navbar> + <Outlet/> + <Footer>, pt-16 wrapper, wraps every route
+- src/components/Layout.tsx — <Navbar> + {children} + <Footer>, pt-16 wrapper, wraps every route
 - CONTACT PAGE specifically: a real form (name/email/message) with inline validation. No backend connected (default): on submit, show a success <Card> state — do NOT claim the message was actually sent anywhere. Supabase connected (see SUPABASE CONTEXT below if present): insert into a contact_messages table via supabase.from(), emit that table in the schema SQL block, and only show success after a real non-error response.
 - Each page sets document.title in a useEffect on mount (this is a client SPA with one index.html — there is no per-route server-rendered <head>, so canonical/OG/JSON-LD stay on the Home route only; per-page document.title is the only per-route SEO lever available and IS required)
 - Every internal link between pages uses a "#/..." href, never a bare path like "/about"
@@ -714,10 +730,12 @@ public/
 
 Multi-page (only per MULTI-PAGE MODE above):
 src/
-  App.tsx              — <HashRouter><Routes> mapping "/" and each page to <Layout><PageX/></Layout>
+  App.tsx              — const route = useHashRoute(); <Layout>{route === '/about' ? <About/> : route === '/contact' ? <Contact/> : <Home/>}</Layout>
   index.css            — same as single-page
+  hooks/
+    useHashRoute.ts     — see ROUTER above
   components/
-    Layout.tsx          — Navbar + <Outlet/> + Footer
+    Layout.tsx          — Navbar + {children} + Footer
     (Hero.tsx, Features.tsx, etc. — shared section components used by Home.tsx and other pages as needed)
   pages/
     Home.tsx
@@ -757,7 +775,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive at 375px?
 □ Hover + focus-visible on every interactive element?
 □ Loading="lazy" on below-fold images?
-□ If multi-page: HashRouter (not BrowserRouter), all internal links use "#/..." hrefs, every page sets document.title?
+□ If multi-page: custom useHashRoute hook (no react-router-dom import), all internal links use "#/..." hrefs, every page sets document.title?
 
 PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + palette], [progress: Building [filename]], [progress: Done]
 
@@ -788,7 +806,7 @@ TECH STACK — MANDATORY
 - Lucide React — ALWAYS size prop: <Icon size={16} /> (app UIs use 14-16px, not 18+)
 - Recharts for all charts and analytics
 - framer-motion for every transition and micro-interaction
-- React Router v6
+- NO react-router-dom — see ROUTING & AUTH STATE below for why and what to use instead
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DESIGN — FUNDED-SAAS LOOK (#1 PRIORITY)
@@ -929,13 +947,28 @@ NOTIFICATIONS (/notifications):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ROUTING & AUTH STATE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-React Router v6 with <BrowserRouter>:
-- / → redirect to /dashboard (authed) or /login
+NO react-router-dom. Published apps render inside a sandboxed <iframe srcDoc> where document.location.href is the literal string "about:srcdoc", not a real URL. react-router-dom's "history" package internally calls new URL(path, window.location.href) on every route change, which THROWS ("Failed to construct 'URL': Invalid URL") the instant the user navigates — this reproduces 100% of the time on a published app (it can look fine in a plain browser tab, which is not the real environment — never treat that as verification). Reading/writing location.hash sidesteps this entirely: it's a native Location property, not a history-package URL construction, so it works identically whether location.href is real or "about:srcdoc".
+
+Implement this exact hook and do NOT import react-router-dom:
+<file path="src/hooks/useHashRoute.ts">
+import { useEffect, useState } from 'react'
+export function useHashRoute() {
+  const [route, setRoute] = useState(() => window.location.hash.slice(1) || '/dashboard')
+  useEffect(() => {
+    const onHashChange = () => setRoute(window.location.hash.slice(1) || '/dashboard')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+  return route
+}
+</file>
+App.tsx reads const route = useHashRoute() and renders the matching page with a plain if-chain / switch on the route string (parse "/settings/billing" as base "/settings" + tab "billing" the same way). Every nav item, tab, and internal link uses a "#/..." href (e.g. href="#/settings/billing") — a plain <a href="#/...">, no <Link> component, no history.push. Sidebar/tab active-state checks compare the current route string directly.
+- / (no hash) → treat as /dashboard if authed, /login if not
 - /login, /signup, /forgot-password, /onboarding
 - /dashboard
 - /[product-feature] — primary data page with table
 - /analytics
-- /settings/* — nested routes per tab
+- /settings/[tab] — profile/security/notifications/billing/team/api-keys/integrations
 - /notifications
 
 AuthContext: isAuthenticated boolean, user object, login(), logout().
@@ -981,7 +1014,7 @@ src/
     Notifications.tsx
     settings/ — Settings.tsx + ProfileSettings.tsx, SecuritySettings.tsx, NotificationSettings.tsx, BillingSettings.tsx, TeamSettings.tsx, ApiKeysSettings.tsx, IntegrationsSettings.tsx
   hooks/
-    useToast.ts, useLocalStorage.ts, useDebounce.ts
+    useHashRoute.ts, useToast.ts, useLocalStorage.ts, useDebounce.ts
   lib/
     mockData.ts
     utils.ts               — formatCurrency, formatNumber, formatRelativeTime, cn()
