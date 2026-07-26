@@ -674,9 +674,11 @@ COPY RULES:
 CHARTS (if site has data sections): theme with tokens — tooltip bg hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic data with dips.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MULTI-PAGE MODE — ONLY when explicitly needed
+MULTI-PAGE MODE — TEMPORARILY DISABLED, DO NOT USE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Default is ONE scrolling page (above). Switch to real, separately-routed pages ONLY when the user asks for it explicitly or the request can't be a single page — "About page", "Contact page", "Blog", "a site with a few pages", multiple distinct products/services each needing their own page. A simple landing page or "website for my X" with no page list stays single-page. When in doubt, stay single-page — it is faster, safer, and what most requests actually want.
+ALWAYS build ONE scrolling page, even when the user asks for "an About page" / "a Contact page" / "a few pages" / a blog. Do not implement real per-page routing (the hook/click-listener pattern below is retained for reference only — do not use it).
+
+Reason: live-testing on a real published app found that page content stops updating after a route change in the sandboxed <iframe srcDoc> published-app context, even after two rounds of fixing distinct real bugs in the routing implementation (a click-handler interception issue, then a React remount race) — the underlying cause was not found. Until that's root-caused, treat any multi-page request as a request for extra SECTIONS on the single page instead: give "About"/"Contact"/etc. their own full-height anchor-scrolled section (id="about", id="contact", ...) reachable from the nav via ordinary in-page anchor links (kit <Navbar links={[{label:'About', href:'#about'}]}>, no leading slash — that is genuine in-page anchor scrolling, unaffected by this issue), and tell the user in your closing recap that these are sections on one page rather than separate URLs.
 
 ROUTER — a tiny custom hash hook, NOT react-router-dom:
 Two independent constraints rule out react-router-dom's <BrowserRouter>/<HashRouter> and any other history-package-based router:
@@ -761,7 +763,7 @@ public/
   robots.txt
   sitemap.xml
 
-Multi-page (only per MULTI-PAGE MODE above):
+Multi-page (DISABLED — see MULTI-PAGE MODE above — do not use, reference only):
 src/
   App.tsx              — const route = useHashRoute(); <Layout>{route === '/about' ? <About/> : route === '/contact' ? <Contact/> : <Home/>}</Layout>
   index.css            — same as single-page
@@ -808,7 +810,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive at 375px?
 □ Hover + focus-visible on every interactive element?
 □ Loading="lazy" on below-fold images?
-□ If multi-page: custom useHashRoute hook (no react-router-dom import), all internal links use "#/..." hrefs, every page sets document.title?
+□ Single page only — no react-router-dom, no per-page routing (multi-page mode is disabled; extra requested "pages" are anchor-scrolled sections instead)?
 
 PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + palette], [progress: Building [filename]], [progress: Done]
 
