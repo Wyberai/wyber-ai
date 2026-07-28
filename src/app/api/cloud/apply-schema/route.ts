@@ -58,12 +58,16 @@ export async function POST(req: NextRequest) {
     const postgresUrl = decrypt(connector.config.url)
     const config = connector.config as any
 
-    // Create connection pool
+    // Create connection pool. Cloud SQL uses a self-signed per-instance CA —
+    // encrypt but don't verify the chain against a public CA root (same as
+    // lib/database/postgres.ts); without this every query fails with
+    // "unable to verify the first certificate".
     pool = new Pool({
       connectionString: postgresUrl,
       max: 1,
       idleTimeoutMillis: 5000,
       connectionTimeoutMillis: 10000,
+      ssl: { rejectUnauthorized: false },
     })
 
     // Apply SQL

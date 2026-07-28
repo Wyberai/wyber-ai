@@ -42,7 +42,10 @@ export async function GET(req: NextRequest) {
     }
 
     const postgresUrl = decrypt(connector.config.url)
-    pool = new Pool({ connectionString: postgresUrl, max: 1, connectionTimeoutMillis: 5000 })
+    // Cloud SQL's self-signed per-instance CA needs rejectUnauthorized: false
+    // (same as lib/database/postgres.ts) or every connection attempt fails
+    // with "unable to verify the first certificate".
+    pool = new Pool({ connectionString: postgresUrl, max: 1, connectionTimeoutMillis: 5000, ssl: { rejectUnauthorized: false } })
 
     // Test connection
     const result = await pool.query('SELECT NOW()')
