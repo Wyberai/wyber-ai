@@ -48,13 +48,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ status: 'failed', error: result.error })
     }
 
-    // Ready — persist host/port and finish wiring the connector with the
-    // full connection URL now that we know the IP.
-    await admin
-      .from('cloud_databases')
-      .update({ status: 'ready', db_host: result.host, db_port: result.port })
-      .eq('id', cloudDatabaseId)
-
+    // Wire the connector's full connection URL BEFORE marking the row
+    // 'ready' — the poller's early-return above (`status !== 'provisioning'`)
+    // means this block only ever runs once. If it were ordered the other way
+    // and this step failed partway (transient error, cold start), the row
+    // would be stuck permanently 'ready' with no usable connection string,
+    // since nothing would ever retry it. Keeping the row 'provisioning'
+    // until the connector is actually usable makes that failure self-heal
+    // on the next poll instead.
     const { data: connector } = await admin
       .from('project_connectors')
       .select('api_key, config')
@@ -62,17 +63,26 @@ export async function GET(req: NextRequest) {
       .eq('service', 'cloud-database')
       .single()
 
-    if (connector?.api_key) {
-      const password = decrypt(connector.api_key)
-      const url = `postgresql://postgres:${password}@${result.host}:${result.port}/${result.database}?sslmode=require`
-      await admin
-        .from('project_connectors')
-        .update({
-          config: { ...connector.config, url: encrypt(url), host: result.host, port: result.port },
-        })
-        .eq('project_id', db.wyber_project_id)
-        .eq('service', 'cloud-database')
+    if (!connector?.api_key) {
+      // Connector row not visible yet (created alongside cloud_databases in
+      // the same request) — treat as still-provisioning so the poll retries.
+      return NextResponse.json({ status: 'provisioning' })
     }
+
+    const password = decrypt(connector.api_key)
+    const url = `postgresql://postgres:${password}@${result.host}:${result.port}/${result.database}?sslmode=require`
+    await admin
+      .from('project_connectors')
+      .update({
+        config: { ...connector.config, url: encrypt(url), host: result.host, port: result.port },
+      })
+      .eq('project_id', db.wyber_project_id)
+      .eq('service', 'cloud-database')
+
+    await admin
+      .from('cloud_databases')
+      .update({ status: 'ready', db_host: result.host, db_port: result.port })
+      .eq('id', cloudDatabaseId)
 
     return NextResponse.json({ status: 'ready', host: result.host, port: result.port })
   } catch (err) {

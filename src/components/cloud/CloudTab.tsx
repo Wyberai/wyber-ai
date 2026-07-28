@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Database, Lock, FileText, TrendingUp, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 
@@ -42,12 +42,19 @@ export function CloudTab({ projectId }: { projectId: string }) {
   const [error, setError] = useState<string | null>(null)
   const [selectedDatabase, setSelectedDatabase] = useState<CloudDatabase | null>(null)
   const [showProvisionModal, setShowProvisionModal] = useState(false)
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     fetchDatabases()
     fetchUsage()
     fetchLogs()
     fetchSecrets()
+    // Navigating away mid-provisioning (e.g. back to the dashboard) must not
+    // leave pollProvisioning's interval running forever against a stale
+    // closure — it would keep hitting the status endpoint indefinitely.
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    }
   }, [projectId])
 
   const fetchDatabases = async () => {
@@ -121,12 +128,14 @@ export function CloudTab({ projectId }: { projectId: string }) {
 
   // Cloud SQL instance creation takes 5-10 minutes — poll instead of blocking.
   const pollProvisioning = (cloudDatabaseId: string) => {
-    const interval = setInterval(async () => {
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+    pollIntervalRef.current = setInterval(async () => {
       try {
         const res = await fetch(`/api/cloud/create-database/status?cloudDatabaseId=${cloudDatabaseId}`)
         const data = await res.json()
         if (data.status === 'ready' || data.status === 'failed') {
-          clearInterval(interval)
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
           if (data.status === 'failed') setError(`Provisioning failed: ${data.error}`)
           await fetchDatabases()
         }
