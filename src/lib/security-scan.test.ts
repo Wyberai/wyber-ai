@@ -103,6 +103,21 @@ describe('scanForExposedSecrets', () => {
     expect(result.findings[0].name).toBe('SendGrid API key')
   })
 
+  it('flags a raw Postgres connection string (WyberCloud or otherwise)', () => {
+    const result = scanForExposedSecrets({
+      'src/lib/db.ts': { content: `const url = 'postgresql://postgres:S3cretPass@34.12.55.9:5432/mydb?sslmode=require'` },
+    })
+    expect(result.ok).toBe(false)
+    expect(result.findings[0].name).toBe('Database connection string')
+  })
+
+  it('does NOT flag a connection string with no password (env-var placeholder)', () => {
+    const result = scanForExposedSecrets({
+      'src/lib/db.ts': { content: `const url = process.env.DATABASE_URL` },
+    })
+    expect(result.ok).toBe(true)
+  })
+
   it('handles plain-string file values, not just {content} objects', () => {
     const result = scanForExposedSecrets({
       'src/config.ts': `const KEY = 'AKIAABCDEFGHIJKLMNOP'`,

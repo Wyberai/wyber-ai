@@ -17,6 +17,7 @@ const VersionHistory  = dynamic(() => import('./VersionHistory').then(m => ({ de
 const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ default: m.AgentMode })), { ssr: false });
 const FigmaImportPanel = dynamic(() => import('./FigmaImportPanel').then(m => ({ default: m.FigmaImportPanel })), { ssr: false });
 const RlsScanPanel    = dynamic(() => import('./RlsScanPanel').then(m => ({ default: m.RlsScanPanel })), { ssr: false });
+const WyberCloudScanPanel = dynamic(() => import('./WyberCloudScanPanel').then(m => ({ default: m.WyberCloudScanPanel })), { ssr: false });
 const LaunchReadinessPanel = dynamic(() => import('./LaunchReadinessPanel').then(m => ({ default: m.LaunchReadinessPanel })), { ssr: false });
 const FounderChecklistPanel = dynamic(() => import('./FounderChecklistPanel').then(m => ({ default: m.FounderChecklistPanel })), { ssr: false });
 const ImagesPanel     = dynamic(() => import('./ImagesPanel').then(m => ({ default: m.ImagesPanel })), { ssr: false });
@@ -95,6 +96,12 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
   const { files, setFiles } = useEditorStore();
+  // Which data-leak scanner to show in the Security tab: a project's database
+  // connector is one or the other, never both, so whichever is actually
+  // connected wins. Defaults to the Supabase scanner (its own empty state
+  // already explains "connect Supabase to run a scan") when neither is.
+  const connectors = useEditorStore(s => s.connectors);
+  const wyberCloudConnected = connectors?.some(c => c.service === 'cloud-database');
 
   // Resolve tab copy at render time (hooks can't run at module scope) —
   // see ProjectTypeChooser.tsx for the same pattern.
@@ -183,7 +190,9 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
             {active === 'security'   && (
               <div style={scrollStyle}>
-                <RlsScanPanel projectId={projectId || ''} />
+                {wyberCloudConnected
+                  ? <WyberCloudScanPanel projectId={projectId || ''} />
+                  : <RlsScanPanel projectId={projectId || ''} />}
                 <div style={{ height: 1, background: 'var(--ide-border)', margin: '4px 16px' }} />
                 <LaunchReadinessPanel projectId={projectId || ''} />
                 <div style={{ height: 1, background: 'var(--ide-border)', margin: '4px 16px' }} />

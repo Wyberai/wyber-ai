@@ -25,6 +25,12 @@ const SECRET_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Google API key', pattern: /\bAIza[0-9A-Za-z_-]{35}\b/ },
   { name: 'Slack token', pattern: /\bxox[baprs]-[a-zA-Z0-9-]{10,}\b/ },
   { name: 'SendGrid API key', pattern: /\bSG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}\b/ },
+  // A raw Postgres connection string (WyberCloud's own, or any other) carries
+  // its password in plain sight. Unlike a Supabase anon key — public by
+  // design, RLS is the real boundary — there is no safe-to-expose credential
+  // for a direct database connection at all. Any appearance of one in client
+  // code is a full database compromise.
+  { name: 'Database connection string', pattern: /\bpostgres(?:ql)?:\/\/[^\s'"`]+:[^\s'"`@]+@[^\s'"`]+/i },
 ]
 
 export interface SecurityScanResult {

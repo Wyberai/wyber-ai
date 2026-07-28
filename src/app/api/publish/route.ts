@@ -4,6 +4,7 @@ import { sanitizeFiles } from '@/lib/sanitize-files'
 import { runSmokeTest } from '@/lib/smoke-test'
 import { scanForExposedSecrets } from '@/lib/security-scan'
 import { runProjectRlsScan, hasCriticalLeak } from '@/lib/rls-scan-project'
+import { runProjectWyberCloudScan, hasCriticalWyberCloudLeak } from '@/lib/wybercloud-scan-project'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
 import { generateAndPersistImage, billBuildImage } from '@/lib/generate-image-persist'
 import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
@@ -135,6 +136,23 @@ export async function POST(req: NextRequest) {
         if (connected && report) rlsScore = report.score
       } catch (e) {
         console.warn('[publish] RLS gate skipped (scan failed):', String(e))
+      }
+
+      // WyberCloud's counterpart to the RLS gate above: block if a public_*
+      // table ended up holding something a visitor shouldn't be able to write
+      // (a password field, an admin flag). Same fail-open policy on scan errors.
+      try {
+        const { connected, report } = await runProjectWyberCloudScan(supabase, projectId, user.id, 'publish-gate')
+        if (connected && hasCriticalWyberCloudLeak(report)) {
+          return NextResponse.json({
+            blocked: true,
+            kind: 'wybercloud',
+            message: 'Publish blocked: a publicly-writable table in your WyberCloud database has a sensitive-looking column. Fix it, or publish anyway.',
+            report,
+          }, { status: 409 })
+        }
+      } catch (e) {
+        console.warn('[publish] WyberCloud gate skipped (scan failed):', String(e))
       }
     }
 
