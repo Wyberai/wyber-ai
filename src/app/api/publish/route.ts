@@ -21,6 +21,35 @@ import { warmPwaIcons } from '@/lib/pwa/icon'
 // and no URL is ever returned. Match the preview-build ceiling.
 export const maxDuration = 300
 
+async function generateThumbnail(
+  admin: ReturnType<typeof createServiceClient>,
+  projectId: string,
+  publishedUrl: string,
+) {
+  const SHOT_KEY = process.env.SCREENSHOTONE_KEY
+  if (!SHOT_KEY) return
+  const params = new URLSearchParams({
+    access_key: SHOT_KEY,
+    url: publishedUrl,
+    viewport_width: '1280',
+    viewport_height: '720',
+    device_scale_factor: '1',
+    format: 'webp',
+    image_quality: '80',
+    block_ads: 'true',
+    block_cookie_banners: 'true',
+    delay: '2000',
+    cache: 'false',
+    response_type: 'json',
+  })
+  const res = await fetch(`https://api.screenshotone.com/take?${params}`)
+  if (!res.ok) return
+  const data = await res.json()
+  if (data.screenshot_url) {
+    await admin.from('projects').update({ thumbnail_url: data.screenshot_url }).eq('id', projectId)
+  }
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -253,6 +282,10 @@ export async function POST(req: NextRequest) {
     // Warm the PWA icons (regenerates on republish so a fresh thumbnail is
     // picked up). Best-effort — the icon routes lazily generate on a miss.
     warmPwaIcons(admin, { id: projectId, name: project.name, thumbnail_url: project.thumbnail_url }).catch(() => {})
+
+    // Generate a dashboard card thumbnail from the live published URL.
+    // Best-effort — fires after response is returned, failure is silent.
+    generateThumbnail(admin, projectId, publishedUrl).catch(() => {})
 
     // Notify: project published (in-app Activity row + push). Best-effort.
     notify(admin, user.id, 'published', { projectId, url: publishedUrl }).catch(() => {})
