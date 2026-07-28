@@ -10,16 +10,12 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 type PreviewMode = 'snack' | 'inapp'
 
-// Default preview mode. Ships 'inapp' — the in-house react-native-web bundler
-// runs the actual generated code in the phone frame, showing navigation/gestures
-// and falling back to a calm "Preview unavailable" card on any compile/runtime
-// error. The Expo Snack embed (the 'snack' mode) shows a code editor in narrow
-// viewports (the phone frame is ~375 px wide, which collapses the Snack layout
-// to its editor-only mode), so it is available via the toggle for real-device
-// testing but not the default. Set NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=snack to
-// switch back prod-wide. A per-user localStorage choice overrides either way.
+// Default: 'snack' — the phone frame shows a clean Expo Go CTA (QR code +
+// big button) so users can run their actual app on a real device instantly.
+// The in-app (RN-web) bundler mode stays accessible via the toggle.
+// Override prod-wide with NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=inapp.
 const DEFAULT_MODE: PreviewMode =
-  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'snack' ? 'snack' : 'inapp'
+  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'inapp' ? 'inapp' : 'snack'
 
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
@@ -29,33 +25,28 @@ export function MobilePreviewPanel() {
   const [platform, setPlatform] = useState<DeviceOS>('ios')
   const [deviceId, setDeviceId] = useState<string>(DEFAULT_DEVICE_ID)
 
-  // Snack (Expo) path state — embedUrl is the interactive web player we iframe;
-  // snackUrl is the full editor / QR for testing on a real device.
   const [snackUrl, setSnackUrl] = useState<string | null>(null)
   const [embedUrl, setEmbedUrl] = useState<string | null>(null)
   const [snackLoading, setSnackLoading] = useState(false)
 
-  // In-app (RN-web) path state
   const [bundleJs, setBundleJs] = useState<string | null>(null)
   const [bundleLoading, setBundleLoading] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<Record<PreviewMode, string>>({ snack: '', inapp: '' })
 
-  // Restore the user's saved mode, once mounted. Bumped to ":v3" to reset
-  // users who had 'snack' pinned — the Snack embed shows code editor in the
-  // narrow phone frame, making the preview look broken. A fresh explicit
-  // choice persists normally after that.
+  // v4: bumped to reset anyone stuck on the old 'inapp' default that showed
+  // a broken layout, and anyone on 'snack' that showed the code editor.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('wyber:mobile-preview-mode:v3')
+      const saved = localStorage.getItem('wyber:mobile-preview-mode:v4')
       if (saved === 'snack' || saved === 'inapp') setMode(saved)
     } catch { /* private mode */ }
   }, [])
 
   const chooseMode = (m: PreviewMode) => {
     setMode(m)
-    try { localStorage.setItem('wyber:mobile-preview-mode:v3', m) } catch { /* private mode */ }
+    try { localStorage.setItem('wyber:mobile-preview-mode:v4', m) } catch { /* private mode */ }
   }
 
   const hasApp = Object.keys(files ?? {}).some(p =>
@@ -76,14 +67,14 @@ export function MobilePreviewPanel() {
   const filesKey = useCallback((f: Record<string, string>) =>
     Object.keys(f).sort().map(p => `${p}:${f[p].length}`).join('|'), [])
 
-  // Snack: upload to Expo, get a shareable/QR URL for real-device testing.
+  // Always build snack so the Expo Go button/QR is available in both modes.
   const buildSnack = useCallback((force = false) => {
     if (!shouldBuildPreview) return
     const f = plainFiles()
     const key = filesKey(f)
     if (!force && key === lastKeyRef.current.snack && embedUrl) return
     lastKeyRef.current.snack = key
-    setError(null); setSnackLoading(true)
+    setSnackLoading(true)
     fetch('/api/snack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files: f }) })
       .then(r => r.json())
       .then(d => {
@@ -95,9 +86,6 @@ export function MobilePreviewPanel() {
       .finally(() => setSnackLoading(false))
   }, [shouldBuildPreview, plainFiles, filesKey, embedUrl])
 
-  // In-app: compile the RN app to a react-native-web bundle we render inline.
-  // Re-bundles ONLY when files change — platform/device toggles are pure client
-  // re-renders inside DeviceFrame.
   const buildInApp = useCallback((force = false) => {
     if (!shouldBuildPreview) return
     const f = plainFiles()
@@ -115,30 +103,32 @@ export function MobilePreviewPanel() {
       .finally(() => setBundleLoading(false))
   }, [shouldBuildPreview, plainFiles, filesKey, bundleJs])
 
-  // Build the active mode when generation finishes or the user switches mode.
   useEffect(() => {
     if (isGenerating || !shouldBuildPreview) return
-    if (mode === 'snack') buildSnack()
-    else buildInApp()
+    // Always build snack for the Expo Go button regardless of active mode.
+    buildSnack()
+    if (mode === 'inapp') buildInApp()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [files, isGenerating, hasGeneratedFiles, mode])
 
   const refresh = () => {
-    if (mode === 'snack') { setSnackUrl(null); setEmbedUrl(null); buildSnack(true) }
-    else { setBundleJs(null); buildInApp(true) }
+    setSnackUrl(null); setEmbedUrl(null); buildSnack(true)
+    if (mode === 'inapp') { setBundleJs(null); buildInApp(true) }
   }
 
-  const loading = mode === 'snack' ? snackLoading : bundleLoading
-  const ready = mode === 'snack' ? !!embedUrl : !!bundleJs
+  const loading = mode === 'snack' ? snackLoading : (snackLoading || bundleLoading)
+  const ready = mode === 'snack' ? !!snackUrl : !!bundleJs
   const device = getDevice(deviceId)
 
   const statusText = isGenerating
     ? t('statusWritingApp')
     : loading
-      ? (mode === 'snack' ? t('statusStartingLivePreview') : t('statusBuildingPreview'))
+      ? t('statusStartingLivePreview')
       : ready
         ? t('statusPreviewReady')
         : t('statusDescribeApp')
+
+  const phoneHeight = Math.min(812, (typeof window !== 'undefined' ? window.innerHeight : 780) - 80)
 
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
@@ -150,7 +140,7 @@ export function MobilePreviewPanel() {
         <Segmented
           value={mode}
           onChange={v => chooseMode(v as PreviewMode)}
-          options={[{ v: 'snack', label: t('modeLiveExpo') }, { v: 'inapp', label: t('modeInAppBeta') }]}
+          options={[{ v: 'snack', label: 'Expo Go' }, { v: 'inapp', label: 'In-App (beta)' }]}
         />
 
         {/* In-app: platform toggle + device dropdown */}
@@ -161,7 +151,6 @@ export function MobilePreviewPanel() {
               onChange={v => {
                 const os = v as DeviceOS
                 setPlatform(os)
-                // Keep a device that belongs to the chosen OS.
                 if (getDevice(deviceId).os !== os) setDeviceId(devicesForOS(os)[0].id)
               }}
               options={[{ v: 'ios', label: 'iOS' }, { v: 'android', label: 'Android' }]}
@@ -177,11 +166,6 @@ export function MobilePreviewPanel() {
         )}
 
         <span style={{ flex: 1, fontSize: 11, color: '#52525b', fontFamily: 'monospace', minWidth: 80, textAlign: 'right' }}>{statusText}</span>
-
-        {/* Test on a real phone (QR / Expo Go) — the live embed already runs inline. */}
-        {mode === 'snack' && snackUrl && !loading && (
-          <a href={snackUrl} target="_blank" rel="noopener noreferrer" title={t('openInExpoGoTitle')} style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#a1a1aa', textDecoration: 'none', padding: '2px 8px', fontSize: 11 }}>📱 {t('onDeviceLabel')} ↗</a>
-        )}
 
         {shouldBuildPreview && !isGenerating && !loading && (
           <button onClick={refresh} title={t('rebuildPreviewTitle')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>⟳</button>
@@ -211,9 +195,32 @@ export function MobilePreviewPanel() {
           </div>
         )}
 
-        {/* In-app preview (RN-web). Wrapper is an explicit full-size flex box so
-            DeviceFrame always has a real height to scale against (a bare flex:1
-            container can resolve to ~0 in this layout → previously black). */}
+        {/* Expo Go mode — the phone frame shows a QR code + big "Open in Expo Go"
+            button. Expo Snack's embedded iframe always shows its code editor in a
+            narrow phone-frame viewport, so we show the CTA instead. */}
+        {!isGenerating && shouldBuildPreview && mode === 'snack' && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', padding: 16 }}>
+            <div style={{ width: 375, maxWidth: '100%', height: phoneHeight, borderRadius: 40, overflow: 'hidden', boxShadow: '0 0 0 8px #1a1a1a, 0 0 0 9px #333, 0 30px 80px rgba(0,0,0,0.6)', border: '1px solid #222', background: '#000', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+              {/* Phone notch */}
+              <div style={{ height: 28, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 90, height: 20, background: '#0a0a0a', borderRadius: 10 }} />
+              </div>
+              <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                {snackLoading && (
+                  <Centered dark>
+                    <Spinner small />
+                    <span style={{ fontSize: 11, color: '#52525b' }}>Uploading to Expo…</span>
+                  </Centered>
+                )}
+                {error && !snackLoading && <PreviewError error={error} onRetry={refresh} />}
+                {snackUrl && !snackLoading && !error && <ExpoGoCta snackUrl={snackUrl} />}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* In-app preview (RN-web) — shown with a pinned "Test on device" bar so
+            users can always get to the real Expo Go experience. */}
         {!isGenerating && shouldBuildPreview && mode === 'inapp' && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <ErrorBoundary fallbackMessage="The mobile preview hit an error — your app and editor are unaffected">
@@ -223,37 +230,100 @@ export function MobilePreviewPanel() {
                 <DeviceFrame device={device} js={bundleJs} platform={platform} />
               )}
             </ErrorBoundary>
-          </div>
-        )}
 
-        {/* Expo Snack path (test on a real device) */}
-        {!isGenerating && shouldBuildPreview && mode === 'snack' && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#09090b', padding: 16 }}>
-            <div style={{ width: 375, maxWidth: '100%', height: Math.min(812, (typeof window !== 'undefined' ? window.innerHeight : 780) - 80), borderRadius: 40, overflow: 'hidden', boxShadow: '0 0 0 8px #1a1a1a, 0 0 0 9px #333, 0 30px 80px rgba(0,0,0,0.6)', border: '1px solid #222', background: '#000', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: 28, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <div style={{ width: 90, height: 20, background: '#0a0a0a', borderRadius: 10 }} />
-              </div>
-              <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                {snackLoading && <Centered dark><Spinner small /><span style={{ fontSize: 11, color: '#52525b' }}>{t('statusStartingLivePreview')}</span></Centered>}
-                {error && !snackLoading && <PreviewError error={error} onRetry={refresh} />}
-                {/* Interactive live preview — the Expo Snack web player runs the real
-                    RN runtime inline, so the app is genuinely tappable/animated. */}
-                {embedUrl && !snackLoading && !error && (
-                  <iframe
-                    src={embedUrl}
-                    title={t('liveMobilePreviewIframeTitle')}
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', background: '#000' }}
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                    allow="accelerometer; gyroscope; clipboard-write"
-                  />
-                )}
-              </div>
-            </div>
+            {/* Pinned Expo Go prompt — always visible so users know where to go for
+                the real thing. Loads after snack finishes in the background. */}
+            {snackUrl && !bundleLoading && (
+              <a
+                href={snackUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '10px 16px', textDecoration: 'none',
+                  background: 'rgba(9,9,11,0.95)', borderTop: '1px solid rgba(14,165,233,0.2)',
+                  color: '#38bdf8', fontSize: 12, fontWeight: 700, letterSpacing: '-0.01em',
+                }}
+              >
+                📱 Test on real device with Expo Go →
+              </a>
+            )}
           </div>
         )}
       </div>
 
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  )
+}
+
+/** Renders inside the phone frame when snack is ready. */
+function ExpoGoCta({ snackUrl }: { snackUrl: string }) {
+  const qr = `https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(snackUrl)}&margin=8`
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, overflowY: 'auto',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 18, padding: '24px 28px', background: '#0c0c14',
+    }}>
+      {/* Ready pill */}
+      <div style={{
+        background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
+        borderRadius: 20, padding: '5px 14px', display: 'flex', alignItems: 'center', gap: 7,
+      }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e' }} />
+        <span style={{ color: '#86efac', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em' }}>APP READY</span>
+      </div>
+
+      {/* Headline */}
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ color: '#f4f4f5', fontSize: 18, fontWeight: 700, marginBottom: 6, letterSpacing: '-0.03em' }}>
+          Test on your device
+        </div>
+        <div style={{ color: '#71717a', fontSize: 12, lineHeight: 1.6, maxWidth: 220 }}>
+          Open in Expo Go for the full interactive experience on iOS or Android
+        </div>
+      </div>
+
+      {/* Primary CTA */}
+      <a
+        href={snackUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          width: '100%', maxWidth: 270, textDecoration: 'none',
+          background: 'linear-gradient(135deg, #0EA5E9 0%, #6366F1 100%)',
+          color: '#fff', borderRadius: 14, padding: '15px 20px',
+          fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em',
+          boxShadow: '0 8px 28px rgba(14,165,233,0.35)',
+        }}
+      >
+        📱 Open in Expo Go →
+      </a>
+
+      {/* Divider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 270 }}>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+        <span style={{ color: '#3f3f46', fontSize: 10, letterSpacing: '0.08em', fontWeight: 600 }}>OR SCAN</span>
+        <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.07)' }} />
+      </div>
+
+      {/* QR code */}
+      <div style={{ background: '#fff', padding: 10, borderRadius: 14, lineHeight: 0, boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}>
+        <img
+          src={qr}
+          width={130}
+          height={130}
+          alt="Scan to open in Expo Go"
+          style={{ display: 'block', borderRadius: 6 }}
+          loading="lazy"
+        />
+      </div>
+
+      <div style={{ color: '#3f3f46', fontSize: 10, textAlign: 'center', letterSpacing: '0.02em' }}>
+        Scan with Expo Go on iOS or Android
+      </div>
     </div>
   )
 }
