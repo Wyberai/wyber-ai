@@ -10,14 +10,16 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 type PreviewMode = 'snack' | 'inapp'
 
-// Default preview mode. Ships 'snack' — the Expo Snack web player runs the REAL
-// React Native runtime (real navigation/reanimated/gesture), so generated apps
-// are genuinely interactive, not the static/screenshot-like output the in-house
-// react-native-web shim layer produces. The in-house engine stays available as a
-// fallback via the toggle. Set NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=inapp to default
-// back to it prod-wide. A per-user localStorage choice overrides either way.
+// Default preview mode. Ships 'inapp' — the in-house react-native-web bundler
+// runs the actual generated code in the phone frame, showing navigation/gestures
+// and falling back to a calm "Preview unavailable" card on any compile/runtime
+// error. The Expo Snack embed (the 'snack' mode) shows a code editor in narrow
+// viewports (the phone frame is ~375 px wide, which collapses the Snack layout
+// to its editor-only mode), so it is available via the toggle for real-device
+// testing but not the default. Set NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=snack to
+// switch back prod-wide. A per-user localStorage choice overrides either way.
 const DEFAULT_MODE: PreviewMode =
-  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'inapp' ? 'inapp' : 'snack'
+  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'snack' ? 'snack' : 'inapp'
 
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
@@ -40,23 +42,20 @@ export function MobilePreviewPanel() {
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<Record<PreviewMode, string>>({ snack: '', inapp: '' })
 
-  // Restore the user's saved mode (prod opt-in), once mounted. Namespaced
-  // ":v2" — the unversioned key briefly defaulted to 'inapp' for one day
-  // (Jul 15, reverted Jul 16); any browser that touched the panel that day
-  // got 'inapp' permanently pinned in localStorage, silently overriding every
-  // later fix to the in-house engine's interactivity and the default flip
-  // back to Snack. Bumping the key resets everyone to the current default
-  // once; a fresh explicit choice still persists normally after that.
+  // Restore the user's saved mode, once mounted. Bumped to ":v3" to reset
+  // users who had 'snack' pinned — the Snack embed shows code editor in the
+  // narrow phone frame, making the preview look broken. A fresh explicit
+  // choice persists normally after that.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('wyber:mobile-preview-mode:v2')
+      const saved = localStorage.getItem('wyber:mobile-preview-mode:v3')
       if (saved === 'snack' || saved === 'inapp') setMode(saved)
     } catch { /* private mode */ }
   }, [])
 
   const chooseMode = (m: PreviewMode) => {
     setMode(m)
-    try { localStorage.setItem('wyber:mobile-preview-mode:v2', m) } catch { /* private mode */ }
+    try { localStorage.setItem('wyber:mobile-preview-mode:v3', m) } catch { /* private mode */ }
   }
 
   const hasApp = Object.keys(files ?? {}).some(p =>
