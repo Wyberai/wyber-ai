@@ -44,12 +44,14 @@ export async function createCloudSQLInstance(
     tier?: string
     region?: string
     database?: string
+    /** User-chosen root password — falls back to a generated one if omitted. */
+    password?: string
   } = {}
 ) {
   const tier = options.tier || 'db-f1-micro'
   const region = options.region || GCP_REGION
   const database = options.database || 'wyberai_db'
-  const password = generatePassword()
+  const password = options.password || generatePassword()
 
   const sqladminClient = await getSqlAdminClient()
 

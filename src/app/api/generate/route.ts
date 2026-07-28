@@ -631,6 +631,8 @@ Preview shows a brand-gradient placeholder; at publish the platform generates a 
 
 ART-DIRECT every prompt — subject + medium/style + light + palette mood. Not "coffee" but "macro editorial photograph of freshly roasted coffee beans tumbling from a copper scoop, warm amber side-light, deep espresso-brown backdrop, shallow depth of field | 16:9".
 
+HERO IMAGE IS NON-NEGOTIABLE: every hero section MUST include exactly one {{wyber-image}} directive that visually complements the hero headline/copy — art-direct its prompt from the hero's actual subject and copy, not a generic placeholder. A hero with only a CSS gradient/solid background and no image is a build defect, not a valid stylistic choice — the only exception is a design explicitly requested as typographic/brutalist with no imagery anywhere on the page.
+
 USE FOR: hero visual (wrap in <Parallax speed={0.3}>), alternating feature images (in <MediaFrame>), team photos, editorial section images. Wrap in a relative container with a gradient-scrim overlay when text sits on top.
 
 NEVER: gray placeholder boxes, via.placeholder.com, picsum, unsplash/pexels, data-generate-prompt, or any external stock URL — only {{wyber-image}} directives, user uploads, or CSS.
@@ -1250,6 +1252,7 @@ CRAFT — what makes it look senior, not AI-generated:
   Write <img src="{{wyber-image: <art-directed prompt> | <ratio>}}" alt="..." className="..." loading="lazy" /> wherever real imagery elevates the design. The preview shows a tasteful brand-gradient placeholder; AT PUBLISH the platform generates a REAL image and persists it permanently. Ratios: 16:9 (wide/hero), 1:1 (square), 9:16 (tall).
   ART-DIRECT every prompt like a creative director — subject + medium/style + light + palette mood (match your tokens) + composition. Not "coffee" but "macro editorial photograph of freshly roasted coffee beans tumbling from a copper scoop, warm amber side-light, deep espresso-brown backdrop, shallow depth of field | 16:9".
   WHERE: hero visual (image, or a GlassPanel product mock for SaaS), one image per major content section (story/about, feature deep-dives), testimonial/team contexts. Style with rounded corners + border-border + soft shadow; layer text over images only with a gradient scrim for contrast.
+  HERO IMAGE IS NON-NEGOTIABLE: every hero section MUST include exactly one {{wyber-image}} directive that visually complements the hero headline/copy — art-direct its prompt from the hero's actual subject and copy. A hero with only a CSS gradient/solid background is a build defect, not a stylistic choice — the only exception is a design explicitly requested as typographic/brutalist with no imagery anywhere on the page.
   Use an uploaded user asset when one matches. CSS gradients (bg-[image:var(--gradient-hero)]) remain right for abstract backdrops and section washes — but a landing page with ZERO real imagery reads dated; only deliberately typographic/brutalist directions skip imagery entirely.
   NEVER: gray "image" rectangles, via.placeholder, unsplash/pexels or ANY external stock URL — only {{wyber-image}} directives, user uploads, or CSS.
 - Charts (Recharts): theme them with tokens — tooltip contentStyle background hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic curved data with dips, never flat lines.

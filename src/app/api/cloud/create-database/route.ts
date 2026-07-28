@@ -6,14 +6,35 @@ import { encrypt } from '@/lib/secrets-crypto'
 const CLOUD_DB_CREATION_CREDITS = 5
 const GCP_REGION = process.env.GOOGLE_CLOUD_REGION || 'us-central1'
 
+// A Postgres identifier must start with a letter/underscore, contain only
+// letters/digits/underscores, and fit in 63 bytes. Users pick their own
+// database name (this used to be hardcoded to 'wyberai_db' for everyone,
+// which is exactly what showed up when auditing a fresh project) — sanitize
+// rather than trust it verbatim since it goes straight into a CREATE DATABASE
+// statement's identifier position.
+function sanitizeDbName(raw: string | undefined, fallbackSeed: string): string {
+  const base = (raw || fallbackSeed || 'app')
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  const withValidStart = /^[a-z]/.test(base) ? base : `db_${base}`
+  return (withValidStart || 'app_db').slice(0, 63)
+}
+
+const MIN_PASSWORD_LENGTH = 8
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { projectId, dbName, region = GCP_REGION } = await req.json()
+    const { projectId, dbName, dbPassword, region = GCP_REGION } = await req.json()
     if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 })
+    if (dbPassword !== undefined && String(dbPassword).length < MIN_PASSWORD_LENGTH) {
+      return NextResponse.json({ error: `Database password must be at least ${MIN_PASSWORD_LENGTH} characters.` }, { status: 400 })
+    }
 
     const admin = await createAdminClient()
 
@@ -48,6 +69,8 @@ export async function POST(req: NextRequest) {
     // Kick off Cloud SQL instance creation — this is async and takes
     // 5-10 minutes. We store the operation name and poll it from
     // /api/cloud/create-database/status instead of blocking this request.
+    const sanitizedDbName = sanitizeDbName(dbName, project.name)
+
     let gcpInstanceName: string
     let operationName: string | undefined
     let postgresPassword: string
@@ -58,7 +81,8 @@ export async function POST(req: NextRequest) {
 
       const sqlInstance = await createCloudSQLInstance(gcpInstanceName, {
         region,
-        database: 'wyberai_db',
+        database: sanitizedDbName,
+        password: dbPassword,
       })
 
       operationName = sqlInstance.operationName || undefined
@@ -85,7 +109,7 @@ export async function POST(req: NextRequest) {
           user_id: user.id,
           gcp_instance_name: gcpInstanceName,
           operation_name: operationName,
-          db_name: 'wyberai_db',
+          db_name: sanitizedDbName,
           db_user: 'postgres',
           region,
           status: 'provisioning',
@@ -107,7 +131,7 @@ export async function POST(req: NextRequest) {
           user_id: user.id,
           service: 'cloud-database',
           api_key: encryptedPassword,
-          config: { ref: cloudDatabaseId, user: 'postgres', database: 'wyberai_db' },
+          config: { ref: cloudDatabaseId, user: 'postgres', database: sanitizedDbName },
           connected_at: new Date().toISOString(),
         }, { onConflict: 'project_id,service' })
 
@@ -123,6 +147,7 @@ export async function POST(req: NextRequest) {
         success: true,
         cloudDatabaseId,
         gcpInstanceName,
+        dbName: sanitizedDbName,
         status: 'provisioning',
         message: 'Provisioning your free WyberCloud database — this takes 5-10 minutes.',
       })

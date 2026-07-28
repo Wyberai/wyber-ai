@@ -74,7 +74,7 @@ body { margin: 0; padding: 0; }`),
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "typescript": "^5.5.0",
-    "vite": "^5.4.0"
+    "vite": "^5.4.21"
   }
 }`),
     'vite.config.ts': f('vite.config.ts', `import { defineConfig } from 'vite';
@@ -114,7 +114,7 @@ button { padding: 10px 24px; font-size: 16px; border-radius: 8px; border: none; 
   "type": "module",
   "scripts": { "dev": "vite", "build": "vite build" },
   "dependencies": { "vue": "^3.5.0" },
-  "devDependencies": { "@vitejs/plugin-vue": "^5.0.0", "vite": "^5.4.0" }
+  "devDependencies": { "@vitejs/plugin-vue": "^5.0.0", "vite": "^5.4.21" }
 }`),
   },
   'vanilla': {
@@ -202,7 +202,7 @@ export default app;`),
   "name": "app",
   "version": "0.1.0",
   "scripts": { "dev": "vite", "build": "vite build" },
-  "devDependencies": { "@sveltejs/vite-plugin-svelte": "^4.0.0", "svelte": "^5.0.0", "vite": "^5.4.0" }
+  "devDependencies": { "@sveltejs/vite-plugin-svelte": "^4.0.0", "svelte": "^5.0.0", "vite": "^5.4.21" }
 }`),
     'vite.config.js': f('vite.config.js', `import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';

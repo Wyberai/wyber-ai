@@ -118,7 +118,7 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
       'date-fns': '^3.6.0', 'framer-motion': '^11.0.0', zustand: '^4.5.2', axios: '^1.7.2',
     }
     const REQUIRED_DEV: Record<string, string> = {
-      vite: '^5.4.0', '@vitejs/plugin-react': '^4.3.1',
+      vite: '^5.4.21', '@vitejs/plugin-react': '^4.3.1',
       tailwindcss: '^3.4.4', autoprefixer: '^10.4.19', postcss: '^8.4.38',
       typescript: '^5.5.0', '@types/react': '^18.3.0', '@types/react-dom': '^18.3.0',
     }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import semver from 'semver'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 // Real dependency vulnerability scan — queries the free OSV.dev database
@@ -40,9 +41,28 @@ function severityRank(vuln: OsvVuln): 'critical' | 'high' | 'medium' | 'low' {
 }
 
 // package.json version ranges (^1.2.3, ~1.2.3, >=1.2.3) aren't a single
-// version OSV can query directly — resolve to the lowest plausible concrete
-// version so the scan checks something real rather than skipping the package.
-function resolveConcreteVersion(range: string): string | null {
+// version OSV can query directly. A naive "lowest version in the range"
+// resolution (e.g. "^5.4.0" -> "5.4.0") is wrong: npm install actually
+// resolves to the HIGHEST version satisfying the range, which is very
+// often already patched. Scanning the floor instead of what's really
+// installed manufactures false positives on every fresh project — ask the
+// npm registry what a real `npm install` would pick, and only fall back to
+// the floor if that lookup fails (private registry, unpublished range, etc).
+async function resolveInstalledVersion(name: string, range: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://registry.npmjs.org/${encodeURIComponent(name)}`, {
+      headers: { Accept: 'application/vnd.npm.install-v1+json' },
+      signal: AbortSignal.timeout(8000),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      const versions = Object.keys(data.versions || {})
+      const resolved = semver.maxSatisfying(versions, range)
+      if (resolved) return resolved
+    }
+  } catch {
+    // fall through to floor-based resolution below
+  }
   const match = range.match(/(\d+\.\d+\.\d+)/)
   return match ? match[1] : null
 }
@@ -85,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     const results = await Promise.all(
       depEntries.map(async ([name, range]) => {
-        const version = resolveConcreteVersion(String(range))
+        const version = await resolveInstalledVersion(name, String(range))
         if (!version) return { name, version: String(range), vulns: [] as OsvVuln[], skipped: true }
         const vulns = await queryOsv(name, version)
         return { name, version, vulns, skipped: false }

@@ -40,6 +40,7 @@ export function CloudTab({ projectId }: { projectId: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedDatabase, setSelectedDatabase] = useState<CloudDatabase | null>(null)
+  const [showProvisionModal, setShowProvisionModal] = useState(false)
 
   useEffect(() => {
     fetchDatabases()
@@ -96,17 +97,18 @@ export function CloudTab({ projectId }: { projectId: string }) {
     }
   }
 
-  const provisionDatabase = async () => {
+  const provisionDatabase = async (dbName: string, dbPassword: string) => {
     try {
       setLoading(true)
       setError(null)
       const res = await fetch('/api/cloud/create-database', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId }),
+        body: JSON.stringify({ projectId, dbName, dbPassword }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || data.details || 'Provisioning failed')
+      setShowProvisionModal(false)
       await fetchDatabases()
       if (data.cloudDatabaseId) pollProvisioning(data.cloudDatabaseId)
     } catch (err) {
@@ -188,13 +190,106 @@ export function CloudTab({ projectId }: { projectId: string }) {
           </div>
         )}
 
-        {!loading && activeTab === 'overview' && <OverviewTab databases={databases} usage={usage} onProvision={provisionDatabase} />}
-        {!loading && activeTab === 'databases' && <DatabasesTab databases={databases} selectedDatabase={selectedDatabase} onSelect={setSelectedDatabase} onProvision={provisionDatabase} projectId={projectId} />}
+        {!loading && activeTab === 'overview' && <OverviewTab databases={databases} usage={usage} onProvision={() => setShowProvisionModal(true)} />}
+        {!loading && activeTab === 'databases' && <DatabasesTab databases={databases} selectedDatabase={selectedDatabase} onSelect={setSelectedDatabase} onProvision={() => setShowProvisionModal(true)} projectId={projectId} />}
         {!loading && activeTab === 'query' && selectedDatabase && <QueryBuilderTab projectId={projectId} />}
         {!loading && activeTab === 'query' && !selectedDatabase && <EmptyState title="No Database" description="Provision a database to execute queries" />}
         {!loading && activeTab === 'secrets' && <SecretsTab projectId={projectId} secrets={secrets} onRefresh={fetchSecrets} />}
         {!loading && activeTab === 'logs' && <LogsTab logs={logs} />}
         {!loading && activeTab === 'usage' && <UsageTab usage={usage} />}
+      </div>
+
+      {showProvisionModal && (
+        <ProvisionModal
+          onCancel={() => setShowProvisionModal(false)}
+          onCreate={provisionDatabase}
+        />
+      )}
+    </div>
+  )
+}
+
+function ProvisionModal({ onCancel, onCreate }: { onCancel: () => void; onCreate: (dbName: string, password: string) => void }) {
+  const [dbName, setDbName] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [acknowledged, setAcknowledged] = useState(false)
+  const [touched, setTouched] = useState(false)
+
+  const nameValid = /^[a-zA-Z][a-zA-Z0-9_]{0,62}$/.test(dbName)
+  const passwordValid = password.length >= 8
+  const passwordsMatch = password === confirmPassword
+  const canSubmit = nameValid && passwordValid && passwordsMatch && acknowledged
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
+      <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-lg p-6 space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold">Name your database</h3>
+          <p className="text-xs text-slate-400 mt-1">This is your own database — pick a name and password only you know. We store the password encrypted so tools in this editor (Query, table browser) keep working, but nobody else can read it.</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-1">Database name</label>
+          <input
+            autoFocus
+            value={dbName}
+            onChange={e => setDbName(e.target.value)}
+            onBlur={() => setTouched(true)}
+            placeholder="e.g. my_shop_db"
+            className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded text-sm outline-none focus:border-blue-500"
+          />
+          {touched && !nameValid && (
+            <p className="text-xs text-red-400 mt-1">Start with a letter; letters, numbers, and underscores only.</p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-1">Database password</label>
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              className="w-full px-3 py-2 pr-9 bg-slate-950 border border-slate-700 rounded text-sm outline-none focus:border-blue-500"
+            />
+            <button type="button" onClick={() => setShowPassword(s => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200">
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-1">Confirm password</label>
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter the password"
+            className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded text-sm outline-none focus:border-blue-500"
+          />
+          {confirmPassword.length > 0 && !passwordsMatch && (
+            <p className="text-xs text-red-400 mt-1">Passwords don't match.</p>
+          )}
+        </div>
+
+        <label className="flex items-start gap-2 text-xs text-slate-300">
+          <input type="checkbox" checked={acknowledged} onChange={e => setAcknowledged(e.target.checked)} className="mt-0.5" />
+          <span>I've saved this password somewhere safe — I'll need it to connect directly (e.g. from psql or another client).</span>
+        </label>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button onClick={onCancel} className="px-4 py-2 text-sm rounded border border-slate-700 text-slate-300 hover:bg-slate-800">Cancel</button>
+          <button
+            disabled={!canSubmit}
+            onClick={() => onCreate(dbName, password)}
+            className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Provision Database
+          </button>
+        </div>
       </div>
     </div>
   )
