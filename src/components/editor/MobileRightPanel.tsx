@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_MOBILE_STRINGS } from '@/lib/i18n/dict/editor-mobile'
@@ -231,66 +231,150 @@ interface Props {
 
 function DatabaseTab({ projectId }: { projectId?: string }) {
   const t = useT(EDITOR_MOBILE_STRINGS)
+  // WyberCloud state
+  const [cloudDbs, setCloudDbs] = useState<any[]>([])
+  const [cloudLoading, setCloudLoading] = useState(true)
+  const [provisioning, setProvisioning] = useState(false)
+  const [cloudError, setCloudError] = useState<string | null>(null)
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Supabase state
+  const [showSupabase, setShowSupabase] = useState(false)
   const [url, setUrl] = useState('')
   const [anonKey, setAnonKey] = useState('')
   const [connected, setConnected] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [supabaseError, setSupabaseError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!projectId) return
-    fetch(`/api/connectors?projectId=${projectId}`).then(r => r.json()).then(d => {
-      if (d.supabase?.url) { setUrl(d.supabase.url); setAnonKey('••••••••'); setConnected(true) }
-    }).catch(() => {})
+    // Load WyberCloud databases
+    fetch(`/api/cloud/databases?projectId=${projectId}`)
+      .then(r => r.json())
+      .then(d => { setCloudDbs(d.databases || []) })
+      .catch(() => {})
+      .finally(() => setCloudLoading(false))
+    // Load Supabase connector (secondary)
+    fetch(`/api/connectors?projectId=${projectId}`)
+      .then(r => r.json())
+      .then(d => { if (d.supabase?.url) { setUrl(d.supabase.url); setAnonKey('••••••••'); setConnected(true) } })
+      .catch(() => {})
+    return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [projectId])
+
+  const provisionCloud = async () => {
+    if (!projectId) return
+    setProvisioning(true); setCloudError(null)
+    try {
+      const res = await fetch('/api/cloud/create-database', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, dbName: 'app_db', dbPassword: Math.random().toString(36).slice(2, 14) + 'A1!' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Provisioning failed')
+      const refetch = () => fetch(`/api/cloud/databases?projectId=${projectId}`).then(r => r.json()).then(d => setCloudDbs(d.databases || []))
+      await refetch()
+      if (data.cloudDatabaseId) {
+        pollRef.current = setInterval(async () => {
+          const st = await fetch(`/api/cloud/create-database/status?cloudDatabaseId=${data.cloudDatabaseId}`).then(r => r.json())
+          if (st.status === 'ready' || st.status === 'failed') {
+            if (pollRef.current) clearInterval(pollRef.current)
+            if (st.status === 'failed') setCloudError('Provisioning failed — try again.')
+            await refetch()
+          }
+        }, 10_000)
+      }
+    } catch (e: any) { setCloudError(e.message) }
+    setProvisioning(false)
+  }
 
   const handleConnect = async () => {
     if (!url.trim() || !anonKey.trim() || !projectId) return
-    setTesting(true); setError(null)
+    setTesting(true); setSupabaseError(null)
     try {
       const testRes = await fetch(`${url.replace(/\/$/, '')}/rest/v1/`, { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } })
-      if (!testRes.ok) { setError(t('connectionFailedError')); setTesting(false); return }
+      if (!testRes.ok) { setSupabaseError(t('connectionFailedError')); setTesting(false); return }
       await fetch('/api/connectors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId, service: 'supabase', apiKey: anonKey, config: { url } }) })
       setConnected(true)
       window.dispatchEvent(new CustomEvent('wyber-connectors-changed'))
-    } catch { setError(t('networkError')) }
+    } catch { setSupabaseError(t('networkError')) }
     setTesting(false)
   }
 
+  const firstDb = cloudDbs[0]
+
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 4 }}>{t('connectSupabaseTitle')}</div>
-      <div style={{ fontSize: 11, color: '#52525b', marginBottom: 16, lineHeight: 1.5 }}>
-        {t('connectSupabaseDesc')}
+      {/* WyberCloud — primary */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7' }}>WyberCloud</span>
+          <span style={{ fontSize: 9, fontWeight: 700, background: 'rgba(14,165,233,0.12)', color: '#38bdf8', border: '1px solid rgba(14,165,233,0.25)', borderRadius: 4, padding: '1px 5px', letterSpacing: '0.05em' }}>FREE · 2 YRS</span>
+        </div>
+        <div style={{ fontSize: 11, color: '#52525b', marginBottom: 12, lineHeight: 1.5 }}>
+          Managed Postgres, on us — no setup needed.
+        </div>
+
+        {cloudLoading ? (
+          <div style={{ fontSize: 11, color: '#52525b' }}>Checking…</div>
+        ) : firstDb ? (
+          <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: firstDb.status === 'ready' ? '#22c55e' : firstDb.status === 'provisioning' ? '#f59e0b' : '#ef4444', flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: firstDb.status === 'ready' ? '#22c55e' : '#f59e0b' }}>
+                {firstDb.status === 'ready' ? 'Connected' : firstDb.status === 'provisioning' ? 'Setting up…' : 'Failed'}
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: '#71717a' }}>{firstDb.name || firstDb.db_name}</div>
+          </div>
+        ) : (
+          <>
+            {cloudError && <div style={{ fontSize: 11, color: '#ef4444', marginBottom: 8 }}>{cloudError}</div>}
+            <button onClick={provisionCloud} disabled={provisioning}
+              style={{ width: '100%', padding: '10px 0', borderRadius: 8, background: provisioning ? '#1a1a22' : '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: provisioning ? 'not-allowed' : 'pointer' }}>
+              {provisioning ? 'Provisioning…' : '🎁 Get Free Database'}
+            </button>
+          </>
+        )}
       </div>
-      {connected ? (
-        <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 14 }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>{t('connectedLabel')}</div>
-          <div style={{ fontSize: 11, color: '#71717a', wordBreak: 'break-all' }}>{url}</div>
-          <button onClick={() => { setConnected(false); setUrl(''); setAnonKey('') }} style={{ marginTop: 10, background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#71717a', cursor: 'pointer', padding: '4px 10px', fontSize: 10 }}>{t('disconnectBtn')}</button>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 4 }}>{t('projectUrlLabel')}</div>
-            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://xxxxx.supabase.co"
-              style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace' }} />
-          </div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 4 }}>{t('anonKeyLabel')}</div>
-            <input value={anonKey} onChange={e => setAnonKey(e.target.value)} placeholder="eyJhbGciOi..."
-              style={{ width: '100%', padding: '8px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace' }} />
-          </div>
-          {error && <div style={{ fontSize: 11, color: '#ef4444' }}>{error}</div>}
-          <button onClick={handleConnect} disabled={testing || !url.trim() || !anonKey.trim()}
-            style={{ padding: '9px 0', borderRadius: 8, background: testing ? '#1a1a22' : '#0EA5E9', color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: testing ? 'not-allowed' : 'pointer' }}>
-            {testing ? t('testingConnectionBtn') : t('connectSupabaseTitle')}
-          </button>
-          <div style={{ fontSize: 10, color: '#3f3f46', lineHeight: 1.5 }}>
-            {t('supabaseHelperText')}
-          </div>
-        </div>
-      )}
+
+      {/* Supabase — secondary / advanced */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 14 }}>
+        <button onClick={() => setShowSupabase(v => !v)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 5, marginBottom: showSupabase ? 12 : 0 }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: '#52525b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Advanced: connect Supabase</span>
+          <span style={{ fontSize: 11, color: '#3f3f46' }}>{showSupabase ? '▲' : '▼'}</span>
+        </button>
+
+        {showSupabase && (
+          connected ? (
+            <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: 12 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginBottom: 4 }}>{t('connectedLabel')}</div>
+              <div style={{ fontSize: 11, color: '#71717a', wordBreak: 'break-all' }}>{url}</div>
+              <button onClick={() => { setConnected(false); setUrl(''); setAnonKey('') }} style={{ marginTop: 8, background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, color: '#71717a', cursor: 'pointer', padding: '3px 8px', fontSize: 10 }}>{t('disconnectBtn')}</button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 3 }}>{t('projectUrlLabel')}</div>
+                <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://xxxxx.supabase.co"
+                  style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#71717a', marginBottom: 3 }}>{t('anonKeyLabel')}</div>
+                <input value={anonKey} onChange={e => setAnonKey(e.target.value)} placeholder="eyJhbGciOi..."
+                  style={{ width: '100%', padding: '7px 10px', background: '#111118', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, color: '#e4e4e7', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' }} />
+              </div>
+              {supabaseError && <div style={{ fontSize: 11, color: '#ef4444' }}>{supabaseError}</div>}
+              <button onClick={handleConnect} disabled={testing || !url.trim() || !anonKey.trim()}
+                style={{ padding: '8px 0', borderRadius: 8, background: testing ? '#1a1a22' : 'rgba(255,255,255,0.06)', color: '#a1a1aa', fontSize: 12, fontWeight: 700, border: '1px solid rgba(255,255,255,0.08)', cursor: testing ? 'not-allowed' : 'pointer' }}>
+                {testing ? t('testingConnectionBtn') : t('connectSupabaseTitle')}
+              </button>
+            </div>
+          )
+        )}
+      </div>
     </div>
   )
 }
