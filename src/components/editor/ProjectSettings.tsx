@@ -33,7 +33,14 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
   const handleSave = async () => {
     if (!projectId) return;
     setSaving(true);
-    await supabase.from('projects').update({ name: name.trim(), is_public: isPublic, project_type: projectType }).eq('id', projectId);
+    // Keep `framework` in lockstep with `project_type` — a project switched
+    // to 'mobile' here without this stayed on whatever framework it was
+    // scaffolded with (almost always 'react-vite'), so the editor kept
+    // seeding/generating web code for a project billed and prompted as
+    // mobile. This won't retroactively convert existing files, but it
+    // stops a second creation path from reintroducing that same mismatch.
+    const framework = projectType === 'mobile' ? 'react-native' : 'react-vite';
+    await supabase.from('projects').update({ name: name.trim(), is_public: isPublic, project_type: projectType, framework }).eq('id', projectId);
     if (project) setProject({ ...project, name: name.trim(), is_public: isPublic, project_type: projectType });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);

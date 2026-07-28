@@ -358,9 +358,17 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         : prompt
         ? prompt.slice(0, 40).trim()
         : 'New Project ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      // framework must track `type`, not a fixed literal — a hardcoded
+      // 'react-vite' here meant every 'mobile' project still got seeded
+      // with the Vite/web starter (ChatPanel keys its template off
+      // `framework`), so the AI ended up building a web app for a project
+      // billed and system-prompted as mobile. build-from-template and
+      // projects/import already derive this correctly; this was the one
+      // creation path that didn't.
+      const framework = type === 'mobile' ? 'react-native' : 'react-vite';
       const { data, error } = await supabase
         .from('projects')
-        .insert({ name: projectName, framework: 'react-vite', user_id: profile.id, initial_prompt: prompt || '', project_type: type })
+        .insert({ name: projectName, framework, user_id: profile.id, initial_prompt: prompt || '', project_type: type })
         .select('id');
       if (error) throw error;
       if (data?.[0]?.id) {
