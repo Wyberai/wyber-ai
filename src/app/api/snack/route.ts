@@ -96,6 +96,18 @@ export async function POST(req: NextRequest) {
       description?: string
     }
 
+    // Web-scaffold files that the Expo/RN runtime can't handle. Filtering these
+    // out prevents bad dependencies (vite, react-dom) from being auto-detected
+    // and sent to the Snack API, which would cause "Can't resolve" errors in Expo.
+    const WEB_ONLY = [
+      /\.html$/i,
+      /\.css$/i,
+      /vite\.config\./i,
+      /^main\.(tsx?|jsx?)$/i,   // Vite web entry (imports react-dom/client)
+      /tailwind\.config\./i,
+      /postcss\.config\./i,
+    ]
+
     // Build the `code` map: { filename: { type: 'CODE', contents: string } }
     // Strip leading src/ — Snack expects bare filenames like App.tsx, screens/Home.tsx
     const code: Record<string, { type: 'CODE'; contents: string }> = {}
@@ -106,6 +118,8 @@ export async function POST(req: NextRequest) {
       // Skip package.json — deps are provided via manifest.dependencies (prevents
       // the generated package.json from overriding our curated SDK 54 versions)
       if (snackPath === 'package.json') continue
+      // Skip web-only files — they cause unresolvable dependency errors in Expo
+      if (WEB_ONLY.some(p => p.test(snackPath))) continue
       code[snackPath] = { type: 'CODE', contents: content }
       allCode += content + '\n'
     }
