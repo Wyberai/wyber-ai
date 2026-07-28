@@ -76,6 +76,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     // Quick-action suggestion chips
     quickActionDarkMode: 'Add dark mode',
     quickActionConnectSupabase: 'Connect Supabase',
+    quickActionAddWyberCloud: '🎁 Add free database',
     quickActionAddSettings: 'Add settings page',
     quickActionMakeResponsive: 'Make responsive',
     quickActionCrmDashboard: 'CRM dashboard',
@@ -214,6 +215,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
 
     quickActionDarkMode: 'डार्क मोड जोड़ें',
     quickActionConnectSupabase: 'Supabase कनेक्ट करें',
+    quickActionAddWyberCloud: '🎁 फ्री डेटाबेस जोड़ें',
     quickActionAddSettings: 'सेटिंग्स पेज जोड़ें',
     quickActionMakeResponsive: 'रेस्पॉन्सिव बनाएं',
     quickActionCrmDashboard: 'CRM डैशबोर्ड',
@@ -347,6 +349,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
 
     quickActionDarkMode: 'ಡಾರ್ಕ್ ಮೋಡ್ ಸೇರಿಸಿ',
     quickActionConnectSupabase: 'Supabase ಕನೆಕ್ಟ್ ಮಾಡಿ',
+    quickActionAddWyberCloud: '🎁 ಉಚಿತ ಡೇಟಾಬೇಸ್ ಸೇರಿಸಿ',
     quickActionAddSettings: 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಪೇಜ್ ಸೇರಿಸಿ',
     quickActionMakeResponsive: 'ರೆಸ್ಪಾನ್ಸಿವ್ ಮಾಡಿ',
     quickActionCrmDashboard: 'CRM ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
@@ -480,6 +483,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
 
     quickActionDarkMode: 'డార్క్ మోడ్ జోడించండి',
     quickActionConnectSupabase: 'Supabase కనెక్ట్ చేయండి',
+    quickActionAddWyberCloud: '🎁 ఉచిత డేటాబేస్ జోడించండి',
     quickActionAddSettings: 'సెట్టింగ్‌ల పేజీ జోడించండి',
     quickActionMakeResponsive: 'రెస్పాన్సివ్‌గా మార్చండి',
     quickActionCrmDashboard: 'CRM డాష్‌బోర్డ్',
@@ -613,6 +617,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
 
     quickActionDarkMode: 'டார்க் மோட் சேர்க்கவும்',
     quickActionConnectSupabase: 'Supabase இணைக்கவும்',
+    quickActionAddWyberCloud: '🎁 இலவச டேட்டாபேஸ் சேர்க்கவும்',
     quickActionAddSettings: 'செட்டிங்ஸ் பக்கம் சேர்க்கவும்',
     quickActionMakeResponsive: 'ரெஸ்பான்சிவ்வாக மாற்றவும்',
     quickActionCrmDashboard: 'CRM டாஷ்போர்டு',

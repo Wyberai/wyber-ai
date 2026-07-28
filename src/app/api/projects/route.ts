@@ -61,6 +61,32 @@ export async function DELETE(req: NextRequest) {
     const { projectId } = await req.json();
     if (!projectId) return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
 
+    // Deleting the project row cascades to cloud_databases (on delete
+    // cascade), but that only removes our metadata — it does NOT tear down
+    // the actual Cloud SQL instance running in GCP. Without this, every
+    // deleted project leaves a real, billed, still-populated-with-customer-
+    // data Postgres instance running forever. Tear it down first.
+    const admin = await createAdminClient();
+    const { data: cloudDb } = await admin
+      .from('cloud_databases')
+      .select('gcp_instance_name')
+      .eq('wyber_project_id', projectId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (cloudDb?.gcp_instance_name) {
+      try {
+        const { deleteCloudSQLInstance } = await import('@/lib/google-cloud-sql');
+        await deleteCloudSQLInstance(cloudDb.gcp_instance_name);
+      } catch (gcpErr) {
+        console.error('[projects/DELETE] Failed to delete Cloud SQL instance:', gcpErr);
+        return NextResponse.json({
+          error: 'Failed to delete the project\'s WyberCloud database — project was not deleted so this can be retried.',
+          details: String(gcpErr),
+        }, { status: 502 });
+      }
+    }
+
     const { error } = await supabase.from('projects').delete()
       .eq('id', projectId)
       .eq('user_id', user.id);

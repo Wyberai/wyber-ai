@@ -10,6 +10,7 @@ import { syncSupabaseAuthUrl } from '@/lib/sync-supabase-auth-url'
 import { notify } from '@/lib/push'
 import { rateLimit } from '@/lib/rate-limit'
 import { injectPwa } from '@/lib/pwa/install-snippet'
+import { injectAnalytics } from '@/lib/analytics/track-snippet'
 import { extractThemeColor, BRAND_THEME_COLOR } from '@/lib/pwa/manifest'
 import { warmPwaIcons } from '@/lib/pwa/icon'
 
@@ -178,6 +179,7 @@ export async function POST(req: NextRequest) {
     // origin. The manifest/icons themselves are served per-request by
     // serve-custom-domain (subdomains) and /app/[slug]/* (main domain).
     fixedHtml = injectPwa(fixedHtml, { themeColor: extractThemeColor(fixedHtml) || BRAND_THEME_COLOR })
+    fixedHtml = injectAnalytics(fixedHtml, { projectId })
 
     // Reject builds that "succeeded" (got a URL) but ship a blank page or
     // unhandled runtime error — buildData.url alone doesn't guarantee that.

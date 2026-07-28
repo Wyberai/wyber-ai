@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['esbuild'],
+  serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library'],
   productionBrowserSourceMaps: false,
   typescript: {
     ignoreBuildErrors: true,

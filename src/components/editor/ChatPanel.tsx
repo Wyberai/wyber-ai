@@ -504,6 +504,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
 
   const connectors = useEditorStore(s => s.connectors);
   const supabaseConnected = connectors.some(c => c.service === 'supabase');
+  const wyberCloudConnected = connectors.some(c => c.service === 'cloud-database');
   const [pendingRegulated, setPendingRegulated] = useState<{ prompt: string; img: AttachedImage | null; domains: RegulatedDomain[] } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -2724,6 +2725,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             <div style={{ display: 'flex', gap: 4, padding: '6px 10px 0', flexWrap: 'wrap' }}>
               {(Object.keys(files).length > 2 || hasGeneratedFiles
                 ? [
+                    ...(wyberCloudConnected ? [] : [{ label: t('quickActionAddWyberCloud'), action: 'openCloud' as const }]),
                     { label: t('quickActionDarkMode'), prompt: 'Add a dark/light mode toggle with persistent theme. Use CSS variables for all colors.' },
                     ...(supabaseConnected ? [] : [{ label: t('quickActionConnectSupabase'), prompt: 'Connect Supabase for real auth and database. Replace all mock data with live queries.' }]),
                     { label: t('quickActionAddSettings'), prompt: 'Add a Settings page with profile info, notification preferences, and theme toggle.' },
@@ -2735,13 +2737,31 @@ const storeProjectId = useEditorStore.getState().project?.id;
                     { label: t('quickActionProjectManager'), prompt: 'Build a project management app with Kanban board, task details, and team view.' },
                     { label: t('quickActionEcommerceStore'), prompt: 'Build an e-commerce store with product grid, shopping cart, and checkout flow.' },
                   ]
-              ).slice(0, 4).map(s => (
-                <button key={s.label} onClick={() => { setInput(s.prompt); textareaRef.current?.focus() }}
-                  style={{ fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap' }}
-                  onMouseEnter={e => { (e.target as HTMLElement).style.borderColor = '#0EA5E9'; (e.target as HTMLElement).style.color = '#0EA5E9' }}
-                  onMouseLeave={e => { (e.target as HTMLElement).style.borderColor = 'var(--ide-border)'; (e.target as HTMLElement).style.color = 'var(--ide-text3)' }}
+              ).slice(0, 4).map(s => {
+                const isWyberCloud = 'action' in s && s.action === 'openCloud';
+                return (
+                <button
+                  key={s.label}
+                  onClick={() => {
+                    if (isWyberCloud) {
+                      window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'cloud' }));
+                    } else if ('prompt' in s) {
+                      setInput(s.prompt);
+                      textareaRef.current?.focus();
+                    }
+                  }}
+                  style={isWyberCloud ? {
+                    fontSize: 10, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                    transition: 'all 0.15s', whiteSpace: 'nowrap', border: '1px solid transparent',
+                    background: 'linear-gradient(135deg, #60a5fa, #2563eb)', color: 'white', fontWeight: 600,
+                  } : {
+                    fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap',
+                  }}
+                  onMouseEnter={e => { if (!isWyberCloud) { (e.target as HTMLElement).style.borderColor = '#0EA5E9'; (e.target as HTMLElement).style.color = '#0EA5E9'; } else { (e.target as HTMLElement).style.opacity = '0.9'; } }}
+                  onMouseLeave={e => { if (!isWyberCloud) { (e.target as HTMLElement).style.borderColor = 'var(--ide-border)'; (e.target as HTMLElement).style.color = 'var(--ide-text3)'; } else { (e.target as HTMLElement).style.opacity = '1'; } }}
                 >{s.label}</button>
-              ))}
+                );
+              })}
             </div>
           )}
           <textarea
