@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Database, Lock, FileText, TrendingUp, Plus, Trash2, Eye, EyeOff } from 'lucide-react'
 
 function WyberCloudMark({ className = 'w-5 h-5' }: { className?: string }) {
@@ -222,7 +223,11 @@ function ProvisionModal({ onCancel, onCreate }: { onCancel: () => void; onCreate
   const passwordsMatch = password === confirmPassword
   const canSubmit = nameValid && passwordValid && passwordsMatch && acknowledged
 
-  return (
+  // Portal to body: an ancestor panel applies a CSS transform for its
+  // slide-in animation, which creates a containing block for descendants —
+  // a plain `fixed` modal here gets trapped inside that panel's bounds
+  // instead of covering the viewport.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
       <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-lg p-6 space-y-4">
         <div>
@@ -291,7 +296,8 @@ function ProvisionModal({ onCancel, onCreate }: { onCancel: () => void; onCreate
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
