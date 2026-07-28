@@ -2156,7 +2156,7 @@ export async function POST(req: NextRequest) {
       (isNewBuild && process.env.WYBER_TOOL_USE_BUILD !== 'off') ||
       (!isNewBuild && process.env.WYBER_TOOL_USE_EDIT !== 'off')
     )
-    const actionType = projectType === 'mobile' ? 'mobile-build'
+    const actionType = projectType === 'mobile' ? (isNewBuild ? 'mobile-build' : 'small-edit')
       : projectType === 'website' ? (isNewBuild ? 'website-build' : 'small-edit')
       : projectType === 'saas' ? (isNewBuild ? 'saas-build' : 'small-edit')
       : isNewBuild ? 'web-build'
