@@ -131,7 +131,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
       {/* Icon sidebar */}
       <div style={{ width: 44, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--ide-border)', background: 'var(--bg-surface)', padding: '8px 0', gap: 2, flexShrink: 0 }}>
         {TABS.map(tab => {
-          const isCloud = tab.id === 'cloud';
+          const isCloud = tab.id === 'database';
           return (
           <button key={tab.id} onClick={() => setActive(tab.id)} title={`${tab.label} — ${tab.desc}`}
             style={{
@@ -170,7 +170,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
       {/* Panel content */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <PanelHeader
-          icon={active === 'cloud' ? CLOUD_ICON_ACCENT : TAB_ICONS[active]}
+          icon={active === 'database' ? CLOUD_ICON_ACCENT : TAB_ICONS[active]}
           title={TABS.find(tab => tab.id === active)?.label ?? ''}
           desc={TABS.find(tab => tab.id === active)?.desc}
         />
@@ -187,7 +187,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'figma'      && <div style={scrollStyle}><FigmaImportPanel onImport={handleFigmaImport} /></div>}
             {active === 'knowledge'  && <KnowledgePanel projectId={projectId} />}
             {active === 'templates'  && <div style={scrollStyle}><TemplateGallery onClose={() => setActive('chat')} /></div>}
-            {active === 'database'   && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
+            {active === 'database'   && <CloudTab projectId={projectId || ''} />}
             {active === 'security'   && (
               <div style={scrollStyle}>
                 {wyberCloudConnected
@@ -206,7 +206,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'seo'        && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'analytics'  && <div style={scrollStyle}><AnalyticsPanel projectId={projectId || ''} /></div>}
             {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
-            {active === 'cloud'      && <CloudTab projectId={projectId || ''} />}
+            {active === 'cloud'      && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
           </ErrorBoundary>
         </div>
       </div>
