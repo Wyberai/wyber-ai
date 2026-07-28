@@ -1078,7 +1078,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
     const promptLower = (userMsg || '').toLowerCase();
     const CORE_FILES = ['app.tsx', 'app.vue', 'index.html', 'index.css', 'app.css', 'main.tsx'];
-    const allFileEntries = Object.entries(files);
+    // Strip web-scaffold files from react-native context — they score 100 as CORE_FILES
+    // but break mobile generation by causing the model to emit web code instead of RN.
+    const WEB_ONLY_FILES = new Set(['index.html', 'vite.config.ts', 'vite.config.js', 'src/main.tsx', 'src/main.jsx']);
+    const allFileEntries = Object.entries(files).filter(([p]) =>
+      framework !== 'react-native' || !WEB_ONLY_FILES.has(p)
+    );
     const scored = allFileEntries.map(([path, f]) => {
       const pathLower = path.toLowerCase();
       let score = CORE_FILES.some(c => pathLower.endsWith(c)) ? 100 : 0;

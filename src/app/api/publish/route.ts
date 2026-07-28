@@ -167,12 +167,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Publish blocked: exposed secret detected (${summary})` }, { status: 400 })
     }
 
-    // Build the app via Railway
-    const buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: sanitized, projectId }),
-    })
+    // Build the app via Railway — Railway cold-starts can take 60-90s; give it 120s.
+    const buildController = new AbortController()
+    const buildTimeout = setTimeout(() => buildController.abort(), 120_000)
+    let buildRes: Response
+    try {
+      buildRes = await fetch(`https://preview-builder.wyberai.com/build`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: sanitized, projectId }),
+        signal: buildController.signal,
+      })
+    } catch (e: any) {
+      clearTimeout(buildTimeout)
+      if (e?.name === 'AbortError') {
+        return NextResponse.json({ error: 'Build timed out — the build server is starting up. Please try again in a moment.' }, { status: 504 })
+      }
+      return NextResponse.json({ error: 'Build failed: ' + String(e) }, { status: 500 })
+    }
+    clearTimeout(buildTimeout)
 
     const buildData = await buildRes.json()
 

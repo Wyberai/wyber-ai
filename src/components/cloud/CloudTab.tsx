@@ -313,12 +313,14 @@ function ProvisionModal({ onCancel, onCreate }: { onCancel: () => void; onCreate
 function OverviewTab({ databases, usage, onProvision }: any) {
   return (
     <div className="p-6 space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="Databases" value={databases.length} />
-        <MetricCard label="Storage" value={`${(usage?.summary?.peakStorageGB || 0).toFixed(2)} GB`} />
-        <MetricCard label="Est. Cost" value={`$${(usage?.summary?.estimatedCost || 0).toFixed(2)}`} />
-        <MetricCard label="Peak Conn." value={usage?.summary?.peakConnections || 0} />
-      </div>
+      {databases.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricCard label="Databases" value={databases.length} />
+          <MetricCard label="Storage" value={`${(usage?.summary?.peakStorageGB || 0).toFixed(2)} GB`} />
+          <MetricCard label="Est. Cost" value={`$${(usage?.summary?.estimatedCost || 0).toFixed(2)}`} />
+          <MetricCard label="Peak Conn." value={usage?.summary?.peakConnections || 0} />
+        </div>
+      )}
 
       {databases.length === 0 ? (
         <div className="text-center py-12 bg-slate-950 rounded border border-slate-700">

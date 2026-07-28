@@ -85,12 +85,12 @@ function TypeBadge({ type }: { type?: string }) {
 
 const QUICK_PROMPTS_BY_TYPE: Record<'app' | 'mobile' | 'website' | 'saas', string[]> = {
   app: [
-    'Build a CRM for my agency with pipeline, client notes, and invoices',
-    'Create a project management tool with kanban boards and team tasks',
-    'Build an internal HR portal with leave tracking and org chart',
-    'Create a booking app with calendar, payments, and client management',
-    'Build a marketplace where freelancers can list services and get hired',
-    'Create a B2B sales CRM for my early-stage startup',
+    'Build a simple task manager with a to-do list and priority tags',
+    'Create a notes app with folders and a search bar',
+    'Build a habit tracker with a daily checklist and streak counter',
+    'Create a personal budget tracker with income and expense categories',
+    'Build a recipe app where I can save and search my favourite meals',
+    'Create a link saver app with tags and quick search',
   ],
   mobile: [
     'Build a food delivery app with real-time tracking and payments',

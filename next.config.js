@@ -18,6 +18,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      { source: '/auth/login', destination: '/login', permanent: false },
       { source: '/contact-us', destination: '/contact', permanent: true },
       { source: '/dashboard/projects', destination: '/dashboard', permanent: false },
       { source: '/home', destination: '/', permanent: true },

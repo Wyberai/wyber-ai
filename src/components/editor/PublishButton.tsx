@@ -52,7 +52,7 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
   const publish = async (override = false) => {
     setLoading(true); setError(''); setBlock(null);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90_000);
+    const timeout = setTimeout(() => controller.abort(), 150_000);
     try {
       const res = await fetch('/api/publish', {
         method: 'POST',
