@@ -1,0 +1,19 @@
+{
+  "name": "wybercloud-gcp-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Run bridge for WyberCloud's Cloud SQL provisioning. Runs under the wybercloud-provisioner service account's ambient identity (no key file — the org enforces iam.disableServiceAccountKeyCreation), authenticates callers with a shared bearer secret, and wraps the Cloud SQL Admin API for the main app (hosted on Vercel, which has no ambient GCP identity of its own).",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "google-auth-library": "^10.9.1",
+    "googleapis": "^173.0.0"
+  }
+}
