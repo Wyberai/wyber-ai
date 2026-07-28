@@ -1818,6 +1818,11 @@ async function isComplexBuild(prompt: string): Promise<boolean> {
     const res = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 5,
+      // Pinned — without this, the same prompt can flip LOW/HIGH between
+      // calls on borderline requests (confirmed: one real prompt split
+      // roughly 50/50 across 8 identical calls), so the same build could
+      // randomly cost 15cr or 30cr with no relation to actual complexity.
+      temperature: 0,
       system: `You rate a from-scratch app-build request as LOW or HIGH complexity.
 HIGH = a large multi-feature platform (e.g. "a full marketplace with vendor accounts, inventory, and checkout", "a project management tool with teams, permissions, and Gantt charts", "a multi-tenant SaaS admin panel"), OR explicitly asks for many deeply interconnected screens/modules, OR heavy custom business logic (complex scoring, scheduling, or workflow engines).
 LOW = the common case: a landing page, a single-purpose tool (todo list, habit tracker, CRM, portfolio, blog), a dashboard, a form-based app — even with several screens, as long as they're not a deeply interconnected custom system.
@@ -1843,6 +1848,7 @@ async function isComplexEdit(prompt: string, fileContext?: string): Promise<bool
     const res = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 5,
+      temperature: 0, // same determinism fix as isComplexBuild above
       system: `You rate an edit request to an existing app as LOW or HIGH complexity.
 HIGH = building a new feature MODULE or screen (e.g. "build out the analytics module", "create a data table with scoring/filtering", "add an inline-editing spreadsheet"), OR structural changes to auth/routing/state/data-model, OR a large multi-file refactor, OR "rebuild/overhaul everything".
 LOW = a tweak, even if it touches 2-3 files: styling, copy, colors, spacing, layout shuffles, renaming, toggling visibility, fixing a bug in one behavior, or adding one small self-contained element (a button, a field, a link).
