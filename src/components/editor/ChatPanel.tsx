@@ -1416,7 +1416,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // backend doesn't"). OAuth-connected projects get it run automatically
       // via the Management API; anon-key-only connections get the SQL surfaced
       // as an explicit action item instead of buried in generated code.
-      const sqlMatch = full.match(/\/\*\s*SQL TO RUN IN SUPABASE[^\n]*\n([\s\S]*?)\*\//i)
+      const sqlMatch = full.match(/\/\*\s*SQL TO RUN IN (?:SUPABASE|WYBERCLOUD)[^\n]*\n([\s\S]*?)\*\//i)
       // Fallback: tool-use builds sometimes write the schema as a .sql file
       // instead of the chat comment block — only files written THIS turn
       // count, so old schema files never re-trigger on unrelated edits.

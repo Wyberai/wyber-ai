@@ -1648,6 +1648,84 @@ Before finishing, confirm your generated app has:
   } catch { return { context: '', status: 'error' } }
 }
 
+// WyberCloud has no PostgREST/anon-key/RLS layer the way Supabase does, so a
+// published static app can't safely hold raw Postgres credentials or run
+// arbitrary queries. /api/public/cloud-insert is the narrow, safe substitute:
+// INSERT-only, gated to tables named `public_*`, columns validated against
+// the live schema on every call. This context only fires when Supabase is
+// NOT connected (mutually exclusive — see the perRequestParts branch below);
+// a project can use one backend or the other, never both.
+async function getWyberCloudContext(projectId: string): Promise<{ context: string; status: SupabaseStatus }> {
+  if (!projectId) return { context: '', status: 'none' }
+  try {
+    const { createServiceClient } = await import('@/lib/supabase/server')
+    const db = createServiceClient()
+    const { data: cloudDb } = await db
+      .from('cloud_databases')
+      .select('status')
+      .eq('wyber_project_id', projectId)
+      .maybeSingle()
+    if (!cloudDb) return { context: '', status: 'none' }
+    if (cloudDb.status !== 'ready') return { context: '', status: 'none' } // still provisioning — treat as not-yet-connected rather than erroring the build
+
+    return {
+      status: 'ok', context: `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WYBERCLOUD IS CONNECTED — USE IT FOR VISITOR-SUBMITTED DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This project has a real, dedicated WyberCloud Postgres database. If the user asks whether it's connected: YES, it is.
+
+IMPORTANT LIMITATION — be honest about this, don't paper over it: WyberCloud has no built-in login/auth system (unlike Supabase). It's for CAPTURING data anonymous visitors submit — newsletter signups, contact/lead forms, orders, RSVPs, waitlist entries, reviews. It is NOT for building a full logged-in multi-user app with personal accounts. If the request genuinely needs user accounts, say so plainly rather than faking auth with local state.
+
+── STEP 1: Create src/lib/wybercloud.ts FIRST (before any other file) ──
+<file path="src/lib/wybercloud.ts">
+export const WYBERCLOUD_PROJECT_ID = '${projectId}'
+
+export async function publicInsert(table: string, data: Record<string, unknown>): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('https://wyberai.com/api/public/cloud-insert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: WYBERCLOUD_PROJECT_ID, table, data }),
+    })
+    return await res.json()
+  } catch {
+    return { success: false, error: 'Network error' }
+  }
+}
+</file>
+
+── STEP 2: naming convention — this is enforced server-side, not optional ──
+Any table an anonymous visitor writes to MUST be named with a \`public_\` prefix (e.g. \`public_newsletter_subscribers\`, \`public_contact_messages\`, \`public_orders\`). The insert endpoint rejects any other table name outright. Internal/admin-only tables (if any) should NOT use this prefix and are simply unreachable from published pages — that's the point.
+
+── STEP 3: usage pattern ──
+  import { publicInsert } from '../lib/wybercloud'
+  const { success, error } = await publicInsert('public_newsletter_subscribers', { email, signed_up_at: new Date().toISOString() })
+  if (!success) { showToast('Could not save: ' + (error || 'unknown error')); return }
+  // update UI only AFTER a clean write — same honesty rule as Supabase: never optimistic-only
+There is no read-back endpoint for public tables (no live "subscriber count" from the visitor's browser) — don't build a UI element that depends on reading this data back client-side. The project owner can see/query it via the WyberCloud → Query tab in the editor.
+
+── STEP 4: schema SQL block at the end ──
+Output the schema SQL as a comment block at the VERY END. Use this exact format (the marker line must match exactly — the platform parses it):
+/* SQL TO RUN IN WYBERCLOUD:
+create table if not exists public_newsletter_subscribers (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  signed_up_at timestamptz default now()
+);
+*/
+The platform runs this SQL AUTOMATICALLY against the connected WyberCloud database right after your build — so it MUST be idempotent ("create table if not exists"). In your closing recap tell the user their database table was set up automatically; do NOT tell them to run SQL by hand.
+
+── MANDATORY CHECKLIST ──
+[x] src/lib/wybercloud.ts with the real project ID above
+[x] Any visitor-writable table named public_*
+[x] publicInsert(...) checked for { success: false } with a real error shown, never optimistic-only
+[x] SQL block at the end
+` }
+  } catch { return { context: '', status: 'error' } }
+}
+
 // Refund credits when a generation fails or produces nothing.
 // The money invariant: never charge a customer for an empty/failed build.
 // Idempotent-ish via the caller's `settled` guard — only ever called once per request.
@@ -2536,6 +2614,12 @@ ${code}
     const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
     const supabaseContext = supabaseResult.context
     const supabaseStatus = supabaseResult.status
+    // WyberCloud is the alternative backend — only relevant when Supabase
+    // isn't connected (a project uses one or the other, never both).
+    const wyberCloudResult = projectId && !supabaseContext && projectType !== 'mobile'
+      ? await getWyberCloudContext(projectId)
+      : { context: '', status: 'none' as SupabaseStatus }
+    const wyberCloudContext = wyberCloudResult.context
     // Durable rolling memory of this project (no-op until migration 034 is applied).
     const projectMemory = projectId ? await loadProjectMemory(projectId) : ''
     // Merge request-body knowledge (editor) with the persistent stored column
@@ -2602,6 +2686,8 @@ ${code}
     // These vary per project/prompt — keep them out of the system prompt so the cache breakpoint stays byte-stable
     if (supabaseContext) {
       perRequestParts.push(supabaseContext)
+    } else if (wyberCloudContext) {
+      perRequestParts.push(wyberCloudContext)
     } else if (projectType !== 'mobile') {
       // Web, no backend: local-first persistence via the injected wyber-store
       // helper (sanitize-files/engine inject src/wyber-store.ts into every
