@@ -1080,7 +1080,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const CORE_FILES = ['app.tsx', 'app.vue', 'index.html', 'index.css', 'app.css', 'main.tsx'];
     // Strip web-scaffold files from react-native context — they score 100 as CORE_FILES
     // but break mobile generation by causing the model to emit web code instead of RN.
-    const WEB_ONLY_FILES = new Set(['index.html', 'vite.config.ts', 'vite.config.js', 'src/main.tsx', 'src/main.jsx']);
+    // src/App.tsx is the Vite/CRA entry point; RN always uses App.tsx at root.
+    // Filtering src/App.tsx from broken old projects forces the model to regenerate
+    // a proper App.tsx at root with StyleSheet/View/Text instead of following web code.
+    const WEB_ONLY_FILES = new Set([
+      'index.html', 'vite.config.ts', 'vite.config.js',
+      'src/main.tsx', 'src/main.jsx',
+      'src/App.tsx', 'src/App.jsx',
+      'src/index.css', 'src/app.css',
+    ]);
     const allFileEntries = Object.entries(files).filter(([p]) =>
       framework !== 'react-native' || !WEB_ONLY_FILES.has(p)
     );
