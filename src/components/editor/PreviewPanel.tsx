@@ -721,10 +721,13 @@ Change requested: ${editInstruction.trim()}`
       )}
 
       {/* Platform-level storage banner — not baked into generated code */}
-      {html && !building && !connectors.some(c => c.service === 'supabase') && (() => {
+      {html && !building && !connectors.some(c => c.service === 'supabase' || c.service === 'cloud-database') && (() => {
         const allContent = Object.values(files).map(f => (f as { content?: string })?.content ?? '').join('\n')
         const hasData = /useState[<(][^)]*\[\]|initialData\s*[=:]\s*\[|useState\(\[/.test(allContent)
-        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase')
+        // WyberCloud-generated code has no Supabase/Firebase client at all — it
+        // calls the public insert endpoint directly (see getWyberCloudContext
+        // in api/generate/route.ts) — so it needs its own marker here too.
+        const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase') || allContent.includes('/api/public/cloud-insert')
         if (!hasData || hasBackend) return null
         return (
           <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
