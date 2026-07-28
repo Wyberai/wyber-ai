@@ -6,11 +6,20 @@
 // user-agent) which we don't even store beyond the raw user-agent string.
 //
 // Same isolation philosophy as the PWA runtime: dependency-free, wrapped in
-// try/catch, can never break the app it's embedded in. Inert inside the
-// editor's iframe preview (checked via window.top) so building/previewing a
-// project never pollutes its own analytics.
+// try/catch, can never break the app it's embedded in. Inert on the
+// preview-builder host (checked via location.hostname) so building/previewing
+// a project never pollutes its own analytics. This can't be a window.top
+// check — every published app is ALSO served inside a sandboxed srcDoc
+// iframe (src/app/app/[slug]/page.tsx, for XSS isolation), so window.top !==
+// window.self is true there too; a top-check would silently kill tracking
+// on 100% of real published traffic.
 
 export const ANALYTICS_MARKER = '<!--wyber-analytics-->'
+
+const PREVIEW_BUILDER_HOST = (() => {
+  try { return new URL(process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com').hostname }
+  catch { return 'preview-builder.wyberai.com' }
+})()
 
 function buildSnippet(projectId: string): string {
   return String.raw`
@@ -18,7 +27,7 @@ ${ANALYTICS_MARKER}
 <script>
 (function () {
   try {
-    if (window.top !== window.self) return; // inert inside editor preview iframe
+    if (location.hostname === ${JSON.stringify(PREVIEW_BUILDER_HOST)}) return; // inert on the editor's live-preview host
     var KEY = 'wyber:analytics-session';
     var sessionId = sessionStorage.getItem(KEY);
     if (!sessionId) {

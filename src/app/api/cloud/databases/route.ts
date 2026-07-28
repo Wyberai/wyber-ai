@@ -24,32 +24,12 @@ export async function GET(req: NextRequest) {
       .eq('wyber_project_id', projectId)
       .eq('user_id', user.id)
 
-    // Return real databases if query succeeds, otherwise show mock data during testing
-    const result = databases || []
-
-    // If no databases or query failed, show mock data during testing
-    if (result.length === 0 || error) {
-      console.log('[cloud/databases] Returning mock data (error or empty):', error)
-      return NextResponse.json({
-        databases: [
-          {
-            id: 'mock-db-1',
-            wyber_project_id: projectId,
-            user_id: user.id,
-            gcp_instance_name: 'wyberai-test-db',
-            db_host: '34.46.132.7',
-            db_port: 5432,
-            db_name: 'wyberai_db',
-            db_user: 'postgres',
-            region: 'us-central1',
-            status: 'ready',
-            created_at: new Date().toISOString(),
-          }
-        ],
-        count: 1,
-        mock: true,
-      })
+    if (error) {
+      console.error('[cloud/databases] Query failed:', error)
+      return NextResponse.json({ error: error.message, databases: [] }, { status: 500 })
     }
+
+    const result = databases || []
 
     return NextResponse.json({
       databases: result,
