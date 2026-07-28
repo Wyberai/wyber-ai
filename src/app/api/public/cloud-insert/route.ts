@@ -94,9 +94,12 @@ export async function POST(req: NextRequest) {
     try {
       const postgresUrl = decrypt(connector.config.url)
       // Cloud SQL's self-signed per-instance CA needs rejectUnauthorized:
-      // false (same as lib/database/postgres.ts) or every connection fails
-      // with "unable to verify the first certificate".
-      pool = new Pool({ connectionString: postgresUrl, max: 1, connectionTimeoutMillis: 8000, idleTimeoutMillis: 5000, ssl: { rejectUnauthorized: false } })
+      // false (same as lib/database/postgres.ts). The connection string's own
+      // "?sslmode=require" is treated as an alias for "verify-full" by newer
+      // pg-connection-string versions and overrides that explicit ssl option —
+      // strip it so rejectUnauthorized: false actually takes effect.
+      const sslStrippedUrl = postgresUrl.replace(/[?&]sslmode=[^&]*/, '')
+      pool = new Pool({ connectionString: sslStrippedUrl, max: 1, connectionTimeoutMillis: 8000, idleTimeoutMillis: 5000, ssl: { rejectUnauthorized: false } })
 
       // Validate the table exists and get its REAL column set — never trust
       // column names from the request body directly into SQL.

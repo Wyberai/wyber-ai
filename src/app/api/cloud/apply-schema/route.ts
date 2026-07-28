@@ -60,10 +60,15 @@ export async function POST(req: NextRequest) {
 
     // Create connection pool. Cloud SQL uses a self-signed per-instance CA —
     // encrypt but don't verify the chain against a public CA root (same as
-    // lib/database/postgres.ts); without this every query fails with
-    // "unable to verify the first certificate".
+    // lib/database/postgres.ts). NOTE: newer pg-connection-string versions
+    // treat a connection string's own "?sslmode=require" as an alias for
+    // "verify-full" and let it override an explicit ssl option entirely —
+    // confirmed live (every apply-schema call failed with "unable to verify
+    // the first certificate" even with ssl.rejectUnauthorized: false set).
+    // Strip it so the explicit ssl object below actually takes effect.
+    const sslStrippedUrl = postgresUrl.replace(/[?&]sslmode=[^&]*/, '')
     pool = new Pool({
-      connectionString: postgresUrl,
+      connectionString: sslStrippedUrl,
       max: 1,
       idleTimeoutMillis: 5000,
       connectionTimeoutMillis: 10000,
