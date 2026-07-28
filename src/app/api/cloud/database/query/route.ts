@@ -15,12 +15,15 @@ export async function POST(req: NextRequest) {
       const body = await req.json()
       const query = Validation.requireSQL(body.query)
 
-      // Validate query - only allow SELECT, INSERT, UPDATE, DELETE for safety
+      // Validate query - DML plus schema DDL (CREATE/ALTER/DROP TABLE etc.)
+      // are allowed; this is the user's own dedicated database, and until
+      // this was added there was no way at all — automatic or manual — to
+      // create a table in it.
       const upperQuery = query.toUpperCase()
-      if (!['SELECT', 'INSERT', 'UPDATE', 'DELETE'].some(op => upperQuery.startsWith(op))) {
+      if (!['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP', 'TRUNCATE'].some(op => upperQuery.startsWith(op))) {
         throw new CloudError({
           code: 'INVALID_REQUEST',
-          message: 'Only SELECT, INSERT, UPDATE, DELETE queries allowed',
+          message: 'Only SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, TRUNCATE queries allowed',
         })
       }
 
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
               user_id: context.userId,
               wyber_project_id: projectId,
               query: query.substring(0, 1000),
-              type: upperQuery.split(/\s+/)[0] as 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE',
+              type: upperQuery.split(/\s+/)[0],
               rows_affected: result.rowCount || 0,
               executed_at: new Date().toISOString(),
             })

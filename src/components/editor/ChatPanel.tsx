@@ -1430,7 +1430,25 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const schemaSql = (sqlMatch?.[1] ?? sqlFileThisTurn?.content ?? '')
         .replace(/```[\w-]*/g, '')
         .trim()
-      if (schemaSql && resolvedProjectId) {
+      if (schemaSql && resolvedProjectId && wyberCloudConnected && !supabaseConnected) {
+        // WyberCloud-connected project: same schema-comment-block convention,
+        // different backend — apply-schema here always has real credentials
+        // (no OAuth concept), so the only real failure modes are "still
+        // provisioning" (no cloud_databases row yet) and a genuine SQL error.
+        fetch('/api/cloud/apply-schema', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId: resolvedProjectId, sql: schemaSql }),
+        }).then(r => r.json()).then((d: { applied?: boolean; reason?: string; error?: string }) => {
+          if (d.applied) {
+            addMessage({ id: uid(), role: 'assistant', content: t('dbSetupAutoMsgCloud'), timestamp: Date.now(), status: 'done' });
+          } else if (d.reason === 'no-cloud-database' || d.reason === 'no-credentials') {
+            addMessage({ id: uid(), role: 'assistant', content: t('dbCloudNotReadyMsg') + '\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
+          } else if (d.reason === 'sql-error') {
+            addMessage({ id: uid(), role: 'assistant', content: t('dbSqlErrorMsgCloud') + '\n\n```\n' + (d.error || 'unknown') + '\n```\n\n' + t('dbSqlErrorRunInsteadMsgCloud') + '\n\n```sql\n' + schemaSql + '\n```', timestamp: Date.now(), status: 'done' });
+          }
+        }).catch(() => { /* best-effort — the SQL block is still in the transcript */ });
+      } else if (schemaSql && resolvedProjectId) {
         fetch('/api/connectors/supabase/apply-schema', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
