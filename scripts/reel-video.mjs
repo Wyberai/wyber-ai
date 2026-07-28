@@ -14,6 +14,10 @@ if (!inArg || !outArg) { console.error('Usage: node scripts/reel-video.mjs "<inp
 const inPath = path.resolve(inArg)
 const outPath = path.resolve(outArg)
 const fps = parseInt(fpsArg || '30', 10)
+// Optional overrides for non-9:16 exports (square/landscape) — unset, this
+// stays the original 1080x1920 behavior for every existing caller.
+const W = parseInt(process.env.REEL_W || '1080', 10)
+const H = parseInt(process.env.REEL_H || '1920', 10)
 const fileUrl = 'file:///' + inPath.replace(/\\/g, '/').split('/').map(encodeURIComponent).join('/')
 
 // temp frame dir in the OS temp area
@@ -26,7 +30,7 @@ const browser = await puppeteer.launch({
 const page = await browser.newPage()
 // Tell the HTML we're rendering so its real-time self-play loop stays OFF.
 await page.evaluateOnNewDocument(() => { window.__RENDER = true })
-await page.setViewport({ width: 1080, height: 1920, deviceScaleFactor: 1 })
+await page.setViewport({ width: W, height: H, deviceScaleFactor: 1 })
 await page.goto(fileUrl, { waitUntil: 'networkidle2', timeout: 90000 })
 try { await Promise.race([page.evaluate(() => document.fonts.ready), new Promise(r => setTimeout(r, 10000))]) } catch {}
 const interOk = await page.evaluate(() => document.fonts.check('900 60px Inter')).catch(() => false)
@@ -38,7 +42,7 @@ console.log(`rendering ${total} frames @ ${fps}fps (${duration}s)`, interOk ? '(
 for (let i = 0; i < total; i++) {
   const t = i / fps
   await page.evaluate((tt) => window.__seek(tt), t)
-  await page.screenshot({ path: path.join(tmp, `f_${String(i).padStart(4, '0')}.png`), clip: { x: 0, y: 0, width: 1080, height: 1920 } })
+  await page.screenshot({ path: path.join(tmp, `f_${String(i).padStart(4, '0')}.png`), clip: { x: 0, y: 0, width: W, height: H } })
   if (i % 30 === 0) process.stdout.write(`  ${i}/${total}\r`)
 }
 await browser.close()
