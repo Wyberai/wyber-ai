@@ -297,18 +297,32 @@ export function AdminClient({ data }: { data: AdminData }) {
           <div>
             <h2 style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 14px' }}>Recent projects</h2>
             <Table
-              cols={['Name', 'Framework', 'Source', 'Status', 'Created']}
-              rows={data.recentProjects.map(p => [
-                <span style={{ color: '#e4e4e7', fontWeight: 500 }}>{p.name || 'Untitled'}</span>,
-                <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: SKY, fontWeight: 600 }}>{p.framework}</span>,
-                p.created_via === 'mcp'
-                  ? <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: SKY, fontWeight: 700 }}>⚡ MCP</span>
-                  : <span style={{ fontSize: 11, color: '#52525b' }}>Web</span>,
-                p.deployed_url
-                  ? <a href={p.deployed_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: GREEN, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>● Live ↗</a>
-                  : <span style={{ color: '#3f3f46', fontSize: 12 }}>Draft</span>,
-                <span style={{ color: '#52525b' }}>{fmtDate(p.created_at)}</span>,
-              ])}
+              cols={['Name', 'Type', 'Framework', 'Source', 'Status', 'Created']}
+              rows={data.recentProjects.map(p => {
+                const via = p.created_via || 'web';
+                const SOURCE_BADGE: Record<string, { label: string; bg: string; color: string }> = {
+                  mcp:      { label: '⚡ MCP',      bg: 'rgba(14,165,233,0.12)', color: SKY },
+                  template: { label: '📋 Template', bg: 'rgba(168,85,247,0.12)', color: '#a855f7' },
+                  clone:    { label: '🔁 Clone',    bg: 'rgba(245,158,11,0.12)', color: AMBER },
+                  import:   { label: '📥 Import',   bg: 'rgba(34,197,94,0.12)',  color: GREEN },
+                  api:      { label: '🔌 API',      bg: 'rgba(236,72,153,0.12)', color: '#ec4899' },
+                  web:      { label: '🌐 Web',      bg: 'rgba(255,255,255,0.05)', color: '#71717a' },
+                };
+                const TYPE_ICON: Record<string, string> = {
+                  webapp: '🌐 Web app', mobile: '📱 Mobile', website: '🖥️ Website', saas: '☁️ SaaS',
+                };
+                const badge = SOURCE_BADGE[via] ?? { label: via, bg: 'rgba(255,255,255,0.05)', color: '#71717a' };
+                return [
+                  <span style={{ color: '#e4e4e7', fontWeight: 500 }}>{p.name || 'Untitled'}</span>,
+                  <span style={{ fontSize: 11, color: '#a1a1aa' }}>{TYPE_ICON[p.project_type] ?? p.project_type ?? '—'}</span>,
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: SKY, fontWeight: 600 }}>{p.framework}</span>,
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: badge.bg, color: badge.color, fontWeight: 600 }}>{badge.label}</span>,
+                  p.deployed_url
+                    ? <a href={p.deployed_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: GREEN, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>● Live ↗</a>
+                    : <span style={{ color: '#3f3f46', fontSize: 12 }}>Draft</span>,
+                  <span style={{ color: '#52525b' }}>{fmtDate(p.created_at)}</span>,
+                ];
+              })}
             />
           </div>
         )}

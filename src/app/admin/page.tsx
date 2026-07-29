@@ -36,7 +36,7 @@ export default async function AdminPage() {
     db.from('projects').select('*', { count: 'exact', head: true }).eq('created_via', 'mcp'),
     db.from('profiles').select('id,email,plan,credits,created_at').order('created_at', { ascending: false }).limit(50),
     db.from('profiles').select('plan,credits'),
-    db.from('projects').select('id,name,framework,created_at,deployed_url,user_id,created_via').order('created_at', { ascending: false }).limit(30),
+    db.from('projects').select('id,name,framework,project_type,created_at,deployed_url,user_id,created_via').order('created_at', { ascending: false }).limit(30),
     db.from('flows').select('id,name,run_count,last_run_at,created_at,user_id').order('created_at', { ascending: false }).limit(20),
     db.from('ai_employee_waitlist').select('email,created_at').order('created_at', { ascending: false }).limit(100),
     db.from('credit_usage').select('user_id,amount,reason,created_at').order('created_at', { ascending: false }).limit(50),
