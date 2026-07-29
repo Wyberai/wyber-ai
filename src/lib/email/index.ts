@@ -165,6 +165,15 @@ export async function sendAdminSignupAlert(userEmail: string, provider?: string)
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎉 New signup: ${userEmail}`, html })
 }
 
+export async function sendAdminMcpProjectAlert(userEmail: string, projectName: string, framework: string) {
+  const html = wrap(`
+    ${h1('Built via Claude MCP ⚡')}
+    ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just created a project through the Claude MCP connector — someone is building WyberAi apps from inside Claude.`)}
+    ${infoBox([['Project', projectName], ['Framework', framework], ['User', userEmail], ['When', new Date().toUTCString()]])}
+  `, `MCP build: ${projectName}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚡ MCP build: ${projectName} — ${userEmail}`, html })
+}
+
 export async function sendAdminPaymentAlert(userEmail: string, description: string, amount?: string) {
   // Internal-only email to the founder — money printer goes brrr.
   const html = wrap(`

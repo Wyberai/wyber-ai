@@ -7,6 +7,7 @@ import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
 import { Composio } from '@composio/core'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
+import { sendAdminMcpProjectAlert } from '@/lib/email'
 
 // The MCP route itself only does fast DB work (create/list/get/queue) — the
 // heavy builds run in /api/cron/mcp-consumer, so a short ceiling is fine.
@@ -67,10 +68,19 @@ const handler = createMcpHandler(
             framework: args.framework ?? 'react-vite',
             description: args.description,
             user_id: userId,
+            created_via: 'mcp',
           })
           .select('id, name, framework')
           .single()
         if (error) return errorResult(`Could not create project: ${error.message}`)
+
+        // Fire-and-forget admin alert — someone building via the Claude
+        // connector is a stronger signal than a web signup; don't block the
+        // tool response on email delivery.
+        db.from('profiles').select('email').eq('id', userId).single().then(({ data: profile }) => {
+          if (profile?.email) sendAdminMcpProjectAlert(profile.email, args.name, args.framework ?? 'react-vite').catch(() => {})
+        })
+
         return jsonResult({
           project: data,
           message: `Project "${args.name}" created. Use send_message with project_id "${data?.id}" to start building.`,

@@ -9,6 +9,8 @@ interface AdminData {
   totalGenerations: number;
   totalFlows: number;
   waitlistCount: number;
+  totalMcpProjects: number;
+  recentMcpProjects: any[];
   todaySignups: number;
   totalCreditsBurned: number;
   totalCreditsInSystem: number;
@@ -160,6 +162,7 @@ export function AdminClient({ data }: { data: AdminData }) {
           <StatCard label="Generations"       value={fmt(data.totalGenerations)} icon="✨" color={SKY}    />
           <StatCard label="Credits Burned"    value={fmt(data.totalCreditsBurned)} icon="🔥" color={RED}  sub="all time" />
           <StatCard label="AI Emp. Waitlist"  value={data.waitlistCount}         icon="🤖" color={PURPLE} sub="early access" />
+          <StatCard label="Built via MCP"     value={data.totalMcpProjects}      icon="⚡" color={SKY}    sub="Claude connector" />
         </div>
 
         {/* Tabs */}
@@ -234,6 +237,22 @@ export function AdminClient({ data }: { data: AdminData }) {
               />
             </div>
 
+            {/* Recent MCP builds */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 14px', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                Recent builds via Claude MCP
+                <span style={{ fontSize: 10, padding: '1px 7px', borderRadius: 10, background: 'rgba(14,165,233,0.15)', color: SKY, fontWeight: 700 }}>{data.totalMcpProjects}</span>
+              </h2>
+              <Table
+                cols={['Project', 'Framework', 'Created']}
+                rows={data.recentMcpProjects.slice(0, 8).map(p => [
+                  <span style={{ color: '#e4e4e7', fontWeight: 500 }}>{p.name || 'Untitled'}</span>,
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: SKY, fontWeight: 600 }}>{p.framework}</span>,
+                  <span style={{ color: '#52525b' }}>{fmtTime(p.created_at)}</span>,
+                ])}
+              />
+            </div>
+
             {/* Recent credit usage */}
             <div style={{ gridColumn: '1 / -1' }}>
               <h2 style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 14px', letterSpacing: '-0.02em' }}>Recent credit burns</h2>
@@ -278,10 +297,13 @@ export function AdminClient({ data }: { data: AdminData }) {
           <div>
             <h2 style={{ fontSize: 14, fontWeight: 700, color: '#fff', margin: '0 0 14px' }}>Recent projects</h2>
             <Table
-              cols={['Name', 'Framework', 'Status', 'Created']}
+              cols={['Name', 'Framework', 'Source', 'Status', 'Created']}
               rows={data.recentProjects.map(p => [
                 <span style={{ color: '#e4e4e7', fontWeight: 500 }}>{p.name || 'Untitled'}</span>,
                 <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', color: SKY, fontWeight: 600 }}>{p.framework}</span>,
+                p.created_via === 'mcp'
+                  ? <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: SKY, fontWeight: 700 }}>⚡ MCP</span>
+                  : <span style={{ fontSize: 11, color: '#52525b' }}>Web</span>,
                 p.deployed_url
                   ? <a href={p.deployed_url} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: GREEN, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>● Live ↗</a>
                   : <span style={{ color: '#3f3f46', fontSize: 12 }}>Draft</span>,
