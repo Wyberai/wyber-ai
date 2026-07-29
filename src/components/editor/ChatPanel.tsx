@@ -2,7 +2,7 @@
 import { creditCost, tierAllowedForPlan, MODEL_META, type ActionType } from '@/lib/credits';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
-import { useRef, useEffect, useState, useCallback, memo, type ReactNode } from 'react';
+import { useRef, useEffect, useState, useCallback, memo, useMemo, type ReactNode } from 'react';
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { STARTER_TEMPLATES, isPlaceholderApp } from '@/lib/starter-templates';
@@ -22,6 +22,7 @@ import { TurnReceipt } from './agent-team/TurnReceipt';
 import { SecurityReportCard } from './agent-team/SecurityReportCard';
 import { LoopStopCard } from './agent-team/LoopStopCard';
 import { FixOfferCard } from './agent-team/FixOfferCard';
+import { UpgradeModal } from './UpgradeModal';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
 import { VoiceButton } from './VoiceButton';
@@ -409,6 +410,12 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // Locally-dismissed design-quality suggestion chips — component-local only,
   // no store/DB change (the suggestion itself is already non-persisted).
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [buildNudgeDismissed, setBuildNudgeDismissed] = useState(false);
+  const lastBuildMsgId = useMemo(
+    () => [...messages].reverse().find(m => m.status === 'done' && !!m.agentReport)?.id,
+    [messages],
+  );
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -2619,6 +2626,29 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       <TurnReceipt report={msg.agentReport} />
                     </AgentFeedBoundary>
                   )}
+                  {msg.status === 'done' && msg.id === lastBuildMsgId && userPlan === 'free' && !buildNudgeDismissed && (
+                    <div style={{ marginTop:10, padding:'12px 14px', borderRadius:10, border:'1px solid rgba(14,165,233,0.18)', background:'linear-gradient(135deg,rgba(14,165,233,0.06),rgba(14,165,233,0.02))' }}>
+                      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
+                        <div>
+                          <div style={{ fontSize:12, fontWeight:700, color:'#38bdf8', marginBottom:4 }}>Build more, faster.</div>
+                          <div style={{ fontSize:12, color:'var(--ide-text2)', lineHeight:1.5 }}>
+                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Upgrade for {creditsCurrency === 'INR' ? '₹499/mo' : '$29/mo'} and get 150 credits monthly.
+                          </div>
+                        </div>
+                        <button onClick={() => setBuildNudgeDismissed(true)} style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:16, lineHeight:1, padding:2, flexShrink:0 }}>×</button>
+                      </div>
+                      <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                        <button
+                          onClick={() => { track('editor_post_build_nudge_upgrade_clicked'); setUpgradeModalOpen(true); }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:7, border:'none', background:'#0ea5e9', color:'#fff', cursor:'pointer', fontFamily:'inherit' }}
+                        >Upgrade now</button>
+                        <button
+                          onClick={() => setBuildNudgeDismissed(true)}
+                          style={{ fontSize:12, padding:'6px 14px', borderRadius:7, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontFamily:'inherit' }}
+                        >Maybe later</button>
+                      </div>
+                    </div>
+                  )}
                   {(msg.status === 'done' || msg.status === 'error') && (
                     <div style={{ marginTop:5, display:'flex', gap:4 }}>
                       <button
@@ -2645,16 +2675,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       end here — this is the one place a free user is guaranteed
                       to see, mid-session, right after wanting to do more. */}
                   {msg.status === 'error' && msg.content.includes('Not enough credits') && (
-                    <a
-                      href="/pricing"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => track('editor_out_of_credits_upgrade_clicked')}
-                      style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', textDecoration:'none' }}
+                    <button
+                      onClick={() => { track('editor_out_of_credits_upgrade_clicked'); setUpgradeModalOpen(true); }}
+                      style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', cursor:'pointer', fontFamily:'inherit' }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
                       {t('outOfCreditsUpgradeLabel').replace('{price}', creditsCurrency === 'INR' ? '₹499/mo' : '$29/mo')}
-                    </a>
+                    </button>
                   )}
                   {msg.designSuggestion && !dismissedSuggestions.has(msg.id) && (
                     <div style={{ marginTop:6, display:'flex', alignItems:'center', gap:6 }}>
@@ -2917,6 +2944,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         </div>
       </div>
+      <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currency={creditsCurrency} />
     </div>
   );
 }
