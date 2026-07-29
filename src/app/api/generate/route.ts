@@ -80,6 +80,15 @@ function makeJsonFieldStreamer(key: string) {
 // client ceiling in ChatPanel is set 20s past this, keep them in sync.
 export const maxDuration = 800
 
+// A platform timeout kills the function outright — no response, nothing
+// salvaged, the user just sees a dropped connection. The multi-iteration
+// loops below check elapsed time against this soft deadline and break out
+// on their own well before that, so whatever was already generated ships as
+// a normal (if truncated) response — the client's existing fileCut/editCut
+// handling already knows how to tell the user a build got cut short and
+// offer a retry, which is a far better outcome than total loss.
+const SOFT_DEADLINE_MS = 650_000
+
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 // Use central model map — single source of truth
@@ -1942,8 +1951,10 @@ async function updateProjectMemory(opts: {
  * "ProjectFlow"). Cheap Haiku pass, same shape as updateProjectMemory — only
  * called for isNewBuild, from `after()` so it adds zero latency to the build.
  */
+const INVALID_PROMPT_RE = /^(i don'?t |i can'?t |i'm unable|i cannot|build this using|there (are|is) no |no files? (were|was)|i see no )/i
 async function nameNewProject(projectId: string, userPrompt: string): Promise<void> {
   if (!projectId || !userPrompt.trim()) return
+  if (userPrompt.trim().length < 8 || INVALID_PROMPT_RE.test(userPrompt.trim())) return
   try {
     const { createServiceClient } = await import('@/lib/supabase/server')
     const db = createServiceClient()
@@ -3115,6 +3126,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                 const u = finalMsg.usage as unknown as Record<string, number>
                 console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
+                // Bail out before the platform's hard maxDuration kill rather than
+                // starting another iteration we won't get to finish. iter>0 guards
+                // the very first pass, which must always be allowed to complete.
+                if (iter > 0 && Date.now() - requestStartTime > SOFT_DEADLINE_MS) {
+                  console.log(`[generate] iter=${iter} approaching platform timeout (elapsed_ms=${Date.now() - requestStartTime}) — stopping gracefully instead of risking a hard kill`)
+                  break
+                }
+
                 if (finalMsg.stop_reason === 'max_tokens') {
                   // Sub-phase 3: a tool call cut off mid-JSON can't be replayed as
                   // an assistant prefill (same restriction as the legacy path) NOR
@@ -3428,6 +3447,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               const finalMsg = await stream.finalMessage()
               const u = finalMsg.usage as unknown as Record<string, number>
               console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
+
+              // Bail out before the platform's hard maxDuration kill rather than
+              // starting another pass we won't get to finish. pass>0 guards the
+              // very first pass, which must always be allowed to complete.
+              if (pass > 0 && Date.now() - requestStartTime > SOFT_DEADLINE_MS) {
+                console.log(`[generate] pass=${pass} approaching platform timeout (elapsed_ms=${Date.now() - requestStartTime}) — stopping gracefully instead of risking a hard kill`)
+                break
+              }
 
               // Pass finished cleanly → Sentinel end-of-pass review. A blocking
               // finding spends a bounded corrective turn (the text-tag path has

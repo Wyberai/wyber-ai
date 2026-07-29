@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
     if (!projectId || !promptStr) {
       return NextResponse.json({ error: 'projectId and prompt required' }, { status: 400 })
     }
+    const INVALID_PROMPT_RE = /^(i don'?t |i can'?t |i'm unable|i cannot|build this using|there (are|is) no |no files? (were|was)|i see no )/i
+    if (promptStr.length < 8 || INVALID_PROMPT_RE.test(promptStr)) {
+      return NextResponse.json({ skipped: true, reason: 'invalid prompt' })
+    }
 
     const { data: project } = await supabase
       .from('projects')

@@ -443,6 +443,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
 
   const [hasInit, setHasInit] = useState(false);
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
+  const [imageReading, setImageReading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const attachedFilesRef = useRef<AttachedFile[]>([]);
   const uploadPromisesRef = useRef<Record<string, Promise<unknown>>>({});
@@ -832,10 +833,13 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     const kind: AttachedKind = file.type.startsWith('image/') ? 'image' : isTextFile(file) ? 'text' : 'file';
     if (kind === 'image') {
       const reader = new FileReader();
+      setImageReading(true);
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         setAttachedImage({ dataUrl, base64: dataUrl.split(',')[1], mimeType: file.type, name: file.name });
+        setImageReading(false);
       };
+      reader.onerror = () => setImageReading(false);
       reader.readAsDataURL(file);
       setAttachedFiles(prev => [...prev, { localId, name: file.name, mimeType: file.type, kind, size: file.size, uploading: true }]);
       uploadAsset(file, localId);
@@ -859,7 +863,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const removeAttachedFile = useCallback((localId: string) => {
     setAttachedFiles(prev => {
       const target = prev.find(f => f.localId === localId);
-      if (target?.kind === 'image') setAttachedImage(null);
+      if (target?.kind === 'image') { setAttachedImage(null); setImageReading(false); }
       return prev.filter(f => f.localId !== localId);
     });
     delete uploadPromisesRef.current[localId];
@@ -2071,7 +2075,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // No credits<=0 gate here — conversational messages are FREE, so the box
     // stays usable at 0 credits. The build/edit path is blocked separately in
     // executeGeneration with a clear "out of credits" message.
-    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating) return;
+    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating || imageReading) return;
     const userMsg = input.trim();
     const img = attachedImage;
     const hasAttachments = attachedFiles.length > 0;
