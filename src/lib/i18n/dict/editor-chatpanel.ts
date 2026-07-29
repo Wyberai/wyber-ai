@@ -105,6 +105,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     fillFollowUpTooltip: 'Fill the input with a follow-up prompt — you still need to press Send',
     dismissTooltip: 'Dismiss',
     thinkingLabel: 'Thinking…',
+    outOfCreditsUpgradeLabel: 'Upgrade — from {price}',
 
     // Fix-offer labels
     qaFixOfferLabel: 'Found some structural issues in the build — fix them now?',

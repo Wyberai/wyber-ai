@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient, createClient } from '@/lib/supabase/server'
+import { userCurrency } from '@/lib/user-currency'
 
 export async function POST(req: NextRequest) {
   try {
@@ -101,7 +102,8 @@ export async function GET() {
       .order('created_at', { ascending: false })
       .limit(50)
 
-    return NextResponse.json({ credits: profile?.credits ?? 0, plan: profile?.plan ?? 'free', history: history || [] })
+    const currency = await userCurrency(admin, user.id)
+    return NextResponse.json({ credits: profile?.credits ?? 0, plan: profile?.plan ?? 'free', history: history || [], currency })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

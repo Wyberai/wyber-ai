@@ -8,6 +8,7 @@ import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '@/lib/i18n/locales';
 import { PlatformChrome } from '@/components/shared/PlatformChrome';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { PostHogProvider } from '@/components/shared/PostHogProvider';
+import { Analytics } from '@vercel/analytics/react';
 import { Suspense } from 'react'
 
 export const metadata: Metadata = {
@@ -205,6 +206,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}><PlatformChrome /></Suspense>
           </LocaleProvider>
         </PostHogProvider>
+        <Analytics />
       </body>
     </html>
   );

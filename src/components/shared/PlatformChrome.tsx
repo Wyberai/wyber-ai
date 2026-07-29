@@ -6,6 +6,7 @@ import { CookieBanner } from '@/components/shared/CookieBanner'
 import { WyberChatbot } from '@/components/shared/WyberChatbot'
 import { SupportChat } from '@/components/shared/SupportChat'
 import { CommandPalette } from '@/components/shared/CommandPalette'
+import { InstallPrompt } from '@/components/shared/InstallPrompt'
 
 // Routes that serve END-USER apps (published user content). These must stay
 // 100% white-label: no WyberAi cookie banner, command palette, chat widgets,
@@ -48,6 +49,7 @@ export function PlatformChrome() {
       )}
       <CookieBanner />
       <CommandPalette />
+      <InstallPrompt />
       <Suspense fallback={null}><WyberChatbot /></Suspense>
       {/* Logged-in surfaces (dashboard etc.) — AI support + human escalation to Slack */}
       <Suspense fallback={null}><SupportChat /></Suspense>

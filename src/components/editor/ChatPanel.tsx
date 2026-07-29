@@ -456,10 +456,17 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // disabled in the dropdown instead of round-tripping to the server only
   // to bounce with an upgrade-required error.
   const [userPlan, setUserPlan] = useState<string>('free');
+  // India vs US pricing differ by more than currency symbol — they're separate
+  // plan tiers ($29 Starter vs ₹499 Spark) — so the out-of-credits upgrade CTA
+  // below needs the visitor's actual region, not just a $ symbol swap.
+  const [creditsCurrency, setCreditsCurrency] = useState<'USD' | 'INR'>('USD');
   useEffect(() => {
     fetch('/api/credits/deduct', { method: 'GET' })
       .then(r => r.json())
-      .then(data => { if (data.plan) setUserPlan(data.plan); })
+      .then(data => {
+        if (data.plan) setUserPlan(data.plan);
+        if (data.currency === 'INR' || data.currency === 'USD') setCreditsCurrency(data.currency);
+      })
       .catch(() => {});
   }, []);
   const [planMode, setPlanMode] = useState(false);
@@ -2632,6 +2639,22 @@ const storeProjectId = useEditorStore.getState().project?.id;
                         </button>
                       )}
                     </div>
+                  )}
+                  {/* Highest-intent upsell moment: they just tried to build and
+                      got blocked by credits. A plain error bubble was a dead
+                      end here — this is the one place a free user is guaranteed
+                      to see, mid-session, right after wanting to do more. */}
+                  {msg.status === 'error' && msg.content.includes('Not enough credits') && (
+                    <a
+                      href="/pricing"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => track('editor_out_of_credits_upgrade_clicked')}
+                      style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', textDecoration:'none' }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
+                      {t('outOfCreditsUpgradeLabel').replace('{price}', creditsCurrency === 'INR' ? '₹499/mo' : '$29/mo')}
+                    </a>
                   )}
                   {msg.designSuggestion && !dismissedSuggestions.has(msg.id) && (
                     <div style={{ marginTop:6, display:'flex', alignItems:'center', gap:6 }}>
