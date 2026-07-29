@@ -322,6 +322,13 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const credits = profile?.credits ?? 0;
   const plan = profile?.plan ?? 'free';
   const name = profile?.full_name || profile?.email?.split('@')[0] || 'there';
+  const BANNER_KEY = 'wy_low_credits_banner_v1';
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(BANNER_KEY) === '1';
+  });
+  const dismissBanner = () => { setBannerDismissed(true); localStorage.setItem(BANNER_KEY, '1'); };
+  const showLowCreditsBanner = plan === 'free' && credits <= 20 && projects.length >= 2 && !bannerDismissed;
   const totalCredits = plan === 'scale' ? 10000 : plan === 'growth' ? 4000 : plan === 'pro' ? 1500 : plan === 'builder' ? 500 : plan === 'starter' ? 150 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
@@ -566,6 +573,28 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
 
       {/* Main */}
       <main style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', marginTop: isMobile ? 52 : 0, paddingBottom: isMobile ? 56 : 0, width: isMobile ? '100%' : undefined }}>
+
+        {showLowCreditsBanner && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 18px', background: 'linear-gradient(90deg, rgba(245,158,11,0.12), rgba(239,68,68,0.08))', borderBottom: '1px solid rgba(245,158,11,0.25)', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 16 }}>⚡</span>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>You're almost out of credits. </span>
+                <span style={{ fontSize: 13, color: '#a1a1aa' }}>You have {credits} credits left — not enough for another build. Top up and keep going.</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <Link
+                href="/pricing#topups"
+                onClick={() => track('dashboard_low_credits_banner_clicked')}
+                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: '#f59e0b', color: '#000', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              >
+                Get more credits →
+              </Link>
+              <button onClick={dismissBanner} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
+            </div>
+          </div>
+        )}
 
         {/* Hero / prompt area — single-hue sky glow + noise texture. No sky→purple
             gradient: globals.css bans that exact family brand-wide ("the canonical
