@@ -364,7 +364,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         ? nameOverride.slice(0, 60).trim()
         : prompt
         ? prompt.slice(0, 40).trim()
-        : 'New Project ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        : 'New Project';
       // framework must track `type`, not a fixed literal — a hardcoded
       // 'react-vite' here meant every 'mobile' project still got seeded
       // with the Vite/web starter (ChatPanel keys its template off

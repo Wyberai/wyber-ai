@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       promptStr.slice(0, 40).trim(),
       String(project.initial_prompt ?? '').slice(0, 40).trim(),
     ].filter(Boolean)
-    const stillAuto = autoNames.includes(project.name) || /^New Project /.test(project.name ?? '')
+    const stillAuto = autoNames.includes(project.name) || /^New Project( |$)/.test(project.name ?? '')
     if (!stillAuto) return NextResponse.json({ name: project.name, skipped: true })
 
     const res = await client.messages.create({

@@ -1968,7 +1968,7 @@ async function nameNewProject(projectId: string, userPrompt: string): Promise<vo
       userPrompt.slice(0, 40).trim(),
       String(project.initial_prompt ?? '').slice(0, 40).trim(),
     ].filter(Boolean)
-    const stillAuto = autoNames.includes(project.name) || /^New Project /.test(project.name ?? '')
+    const stillAuto = autoNames.includes(project.name) || /^New Project( |$)/.test(project.name ?? '')
     if (!stillAuto) return
     const res = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
