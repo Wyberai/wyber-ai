@@ -90,10 +90,10 @@ export const MODEL_META: Record<ModelTier, {
   // in all 5 locales), which are the clearest evidence of actual intent: the
   // Builder plan advertises "Priority build queue" (= premium's priority
   // queue), and the Pro plan advertises "Fable model access (most powerful)".
-  fast:    { label: 'Sonnet', tagline: 'Fast — quick edits & simple changes',    minPlan: 'free',    provider: 'anthropic' },
-  default: { label: 'Opus',   tagline: 'Best quality for every app',            minPlan: 'free',    provider: 'anthropic' },
+  fast:    { label: 'Sonnet', tagline: 'Fast & smart — great for most apps',     minPlan: 'free',    provider: 'anthropic' },
+  default: { label: 'Opus',   tagline: 'Higher quality for complex apps',       minPlan: 'starter', provider: 'anthropic' },
   premium: { label: 'Opus (priority)', tagline: 'Same power, priority queue',   minPlan: 'builder', provider: 'anthropic' },
-  fable:   { label: 'Fable', tagline: 'Most powerful — best for large apps',    minPlan: 'pro',      provider: 'anthropic' },
+  fable:   { label: 'Fable', tagline: 'Most powerful — best for large apps',    minPlan: 'pro',     provider: 'anthropic' },
   // Visible to everyone (free+) — the point of adding a second provider is for
   // it to be a real, try-it-now choice, not another paywalled tier.
   gpt:     { label: 'GPT',     tagline: 'OpenAI — an alternative engine for the same build', minPlan: 'free', provider: 'openai' },
@@ -198,11 +198,8 @@ export const PLAN_RANK: Record<PlanId, number> = {
   scale: 5,
 }
 
-// premium → builder+ (rank 2), fable → pro+ (rank 3). Matched to the pricing
-// page's own feature bullets (see MODEL_META above) — Builder advertises
-// "Priority build queue" (premium's actual differentiator), Pro advertises
-// "Fable model access (most powerful)".
-const MIN_TIER_RANK: Record<ModelTier, number> = { fast: 0, default: 0, premium: 2, fable: 3, gpt: 0 }
+// Sonnet (fast) = free; Opus (default) = Starter+; premium = Builder+; Fable = Pro+.
+const MIN_TIER_RANK: Record<ModelTier, number> = { fast: 0, default: 1, premium: 2, fable: 3, gpt: 0 }
 
 /** Plans that may use a given model tier */
 export function tierAllowedForPlan(tier: ModelTier, plan: string): boolean {

@@ -2208,33 +2208,40 @@ export async function POST(req: NextRequest) {
         cost = creditCost(actionType, tier)
       }
 
-      // Enforce plan-based model gate
+      // Enforce plan-based model gate.
+      // Explicit user selection → block with upgrade prompt (high-intent paywall hit).
+      // Auto-routed tier (user never touched the picker) → silently downgrade to Sonnet
+      // so free-plan users can still build complex apps, just not at Opus cost.
       if (!tierAllowedForPlan(tier, plan)) {
-        // Explain exactly what upgrading unlocks, throttled to at most once
-        // every 3 days per user (same email_events pattern as the credits
-        // drip) — a hard paywall block is high-intent, but repeated tier
-        // attempts in one session shouldn't fire an email per request.
-        if (profile?.email) {
-          ;(async () => {
-            try {
-              const { data: ev, error: evErr } = await admin.from('email_events')
-                .select('sent_count, last_sent_at').eq('user_id', user.id).eq('kind', 'paywall-hit').single()
-              if (evErr && evErr.code === '42P01') return // migration not applied yet
-              const dueBefore = new Date(Date.now() - 3 * 24 * 3600_000).toISOString()
-              if (ev?.last_sent_at && ev.last_sent_at > dueBefore) return
-              const { data: optRow } = await admin.from('profiles').select('email_opt_out').eq('id', user.id).single()
-              if (optRow?.email_opt_out) return
-              const { sendPaywallHitEmail } = await import('@/lib/email')
-              await sendPaywallHitEmail(profile.email, tier, await userCurrency(admin, user.id))
-              await admin.from('email_events').upsert({ user_id: user.id, kind: 'paywall-hit', sent_count: (ev?.sent_count ?? 0) + 1, last_sent_at: new Date().toISOString() })
-            } catch { /* fire-and-forget */ }
-          })()
+        if (explicitClaudeTier) {
+          // User explicitly chose a tier their plan can't reach — send paywall email
+          // throttled to once every 3 days, then return a 402.
+          if (profile?.email) {
+            ;(async () => {
+              try {
+                const { data: ev, error: evErr } = await admin.from('email_events')
+                  .select('sent_count, last_sent_at').eq('user_id', user.id).eq('kind', 'paywall-hit').single()
+                if (evErr && evErr.code === '42P01') return // migration not applied yet
+                const dueBefore = new Date(Date.now() - 3 * 24 * 3600_000).toISOString()
+                if (ev?.last_sent_at && ev.last_sent_at > dueBefore) return
+                const { data: optRow } = await admin.from('profiles').select('email_opt_out').eq('id', user.id).single()
+                if (optRow?.email_opt_out) return
+                const { sendPaywallHitEmail } = await import('@/lib/email')
+                await sendPaywallHitEmail(profile.email, tier, await userCurrency(admin, user.id))
+                await admin.from('email_events').upsert({ user_id: user.id, kind: 'paywall-hit', sent_count: (ev?.sent_count ?? 0) + 1, last_sent_at: new Date().toISOString() })
+              } catch { /* fire-and-forget */ }
+            })()
+          }
+          return new Response(JSON.stringify({
+            error: `The ${tier} model requires a higher plan. Please upgrade.`,
+            needed: cost,
+            balance,
+          }), { status: 402 })
+        } else {
+          // Auto-routed to a tier this plan can't use — downgrade to Sonnet silently.
+          tier = 'fast'
+          cost = creditCost(actionType, tier)
         }
-        return new Response(JSON.stringify({
-          error: `The ${tier} model requires a higher plan. Please upgrade.`,
-          needed: cost,
-          balance,
-        }), { status: 402 })
       }
 
       // ── Isolated OpenAI-backed 'gpt' tier pipeline ──────────────────────
