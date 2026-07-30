@@ -5,7 +5,6 @@ import { Confetti } from '@/components/shared/Confetti'
 import { sanitizeFiles } from '@/lib/sanitize-files'
 import { isPlaceholderApp } from '@/lib/starter-templates'
 import { extractImageDirectives, replaceTokenInFiles } from '@/lib/image-directives'
-import { injectWyberLoc, injectPreviewBridge } from '@/lib/wyber-preview/bridge'
 import { applyTextEdit, applyClassEdit, stepClass, setColorClass, type StepFamily } from '@/lib/visual-edit-apply'
 import { creditCost } from '@/lib/credits'
 import { persistProjectFiles } from '@/lib/persist-project'
@@ -13,8 +12,8 @@ import { MicroLabel } from './ui'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_PREVIEW_STRINGS } from '@/lib/i18n/dict/editor-preview'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
-
-const BUILDER_URL = process.env.NEXT_PUBLIC_PREVIEW_BUILDER_URL || 'https://preview-builder.wyberai.com'
+import { DEVICES, DEFAULT_DEVICE_ID, getDevice } from '@/lib/devices'
+import { bundleFiles, generateHTML } from '@/lib/wyber-preview/engine'
 
 // Keys only — hooks (useT) can't run at module scope, so the actual translated
 // text is resolved inside the component (see `messages` below), the same
@@ -60,10 +59,15 @@ export function PreviewPanel() {
   const [seconds, setSeconds] = useState(0)
   const [fixing, setFixing] = useState(false)
   const [confettiTrigger, setConfettiTrigger] = useState(0)
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop')
+  const [previewDeviceId, setPreviewDeviceId] = useState(DEFAULT_DEVICE_ID)
+  const contentAreaRef = useRef<HTMLDivElement>(null)
+  const [contentDims, setContentDims] = useState({ w: 800, h: 600 })
   const isFirstBuild = useRef(true)
   const [editMode, setEditMode] = useState(false)
   const [selectedEl, setSelectedEl] = useState<SelectedEl | null>(null)
   const [editInstruction, setEditInstruction] = useState('')
+  const [betaBundler, setBetaBundler] = useState(true)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const prevGenerating = useRef(false)
   const lastBuiltKey = useRef('')
@@ -154,60 +158,59 @@ export function PreviewPanel() {
         } catch { /* gradients remain — never block the build on imagery */ }
       }
 
-      // Selection bridge (transient, build-request only — saved source stays
-      // clean, publish is untouched): tag JSX with data-wyber-loc BEFORE
-      // sanitize (only the user's real files get tagged), append the bridge
-      // <script> AFTER sanitize (index.html is guaranteed to exist by then).
-      // Both transforms fall back to the untouched map on any error.
-      // A thrown fetch (DNS/connection failure, transient builder-infra hiccup)
-      // used to go straight to the catch block below with zero retry — and
-      // since setError() there also feeds the self-heal effect, a network
-      // blip burned one of the 3 self-heal attempts trying to "fix" a
-      // nonexistent code bug instead of just retrying the request. Retry
-      // network-level failures specifically (not HTTP responses that came
-      // back with a real build error — those still go through self-heal as
-      // before) with a short backoff before giving up.
-      const buildBody = JSON.stringify({ files: injectPreviewBridge(sanitizeFiles(injectWyberLoc(buildFiles), { appId: project?.id })), projectId: project?.id })
-      let res: Response | null = null
-      let networkErr: unknown = null
-      for (const delay of [0, 1500, 4000]) {
-        if (delay) await new Promise(r => setTimeout(r, delay))
-        try {
-          res = await fetch(`${BUILDER_URL}/build`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: buildBody,
-          })
-          networkErr = null
-          break
-        } catch (e) { networkErr = e }
+      let builtHtml: string | null = null
+      let buildError: string | null = null
+
+      if (betaBundler) {
+        // Beta: server-side Node.js esbuild via /api/web-bundle
+        const sanitized = sanitizeFiles(buildFiles, { appId: project?.id })
+        const res = await fetch('/api/web-bundle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: sanitized, projectId: project?.id }),
+        })
+        const data = await res.json() as { html?: string; error?: string }
+        builtHtml = data.html || null
+        buildError = data.error || null
+      } else {
+        // Primary: client-side esbuild-wasm bundler
+        const fileMap: Record<string, string> = {}
+        for (const [path, file] of Object.entries(buildFiles)) {
+          const content = (file as { content?: string })?.content
+          if (content) fileMap[path] = content
+        }
+        const { js, css, error: bundleErr } = await bundleFiles(fileMap)
+        if (js) builtHtml = generateHTML(js, css, project?.id || '')
+        buildError = bundleErr || null
       }
-      if (networkErr) throw networkErr
-      const data = await res!.json()
+
       if (timerRef.current) clearInterval(timerRef.current)
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
-      if (data.url) {
-        // The build being replaced rendered without a startup crash (a crash
-        // would have reverted html to the previous good URL already) — keep it
-        // as the fallback for the incoming one.
+      if (builtHtml) {
+        const blobUrl = URL.createObjectURL(new Blob([builtHtml], { type: 'text/html' }))
         if (html) lastGoodUrl.current = html
-        setHtml(data.url + (data.url.includes('?') ? '&' : '?') + 't=' + Date.now())
-        setError(null)
-        if (isFirstBuild.current && Object.keys(files).length > 3) {
-          isFirstBuild.current = false
-          // Only celebrate if user actually generated this app (not loaded from template)
-          const isTemplate = !project?.first_prompt
-          if (!isTemplate) setConfettiTrigger(c => c + 1)
+        setHtml(blobUrl)
+        if (!buildError) {
+          setError(null)
+          if (isFirstBuild.current && Object.keys(files).length > 3) {
+            isFirstBuild.current = false
+            const isTemplate = !project?.first_prompt
+            if (!isTemplate) setConfettiTrigger(c => c + 1)
+          }
+        } else {
+          setError(buildError)
         }
       } else {
-        setError(data.error || t('buildFailedFallback'))
+        setError(buildError || t('buildFailedFallback'))
       }
     } catch (e: any) {
       if (timerRef.current) clearInterval(timerRef.current)
-      setError(t('couldNotReachBuilderPrefix') + e.message)
+      setError('Build error: ' + (e.message || String(e)))
     } finally {
       setBuilding(false)
     }
-  }, [files, hasApp, building, project, html, t])
+  }, [files, hasApp, building, project, html, t, betaBundler])
 
   useEffect(() => { buildRef.current = build }, [build])
 
@@ -410,6 +413,46 @@ export function PreviewPanel() {
     return () => document.removeEventListener('visibilitychange', onVisible)
   }, [])
 
+  // Restore viewMode preference
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('wyber:preview-viewmode')
+      if (saved === 'desktop' || saved === 'mobile') setViewMode(saved)
+    } catch {}
+  }, [])
+
+  // Restore bundler preference (default is server-side; only override if user explicitly chose WASM)
+  useEffect(() => {
+    try {
+      if (localStorage.getItem('wyber:beta-bundler') === 'false') setBetaBundler(false)
+    } catch {}
+  }, [])
+
+  // Force rebuild when bundler mode is toggled so the difference is visible immediately
+  const betaMountedRef = useRef(false)
+  useEffect(() => {
+    if (!betaMountedRef.current) { betaMountedRef.current = true; return }
+    if (hasApp) { lastBuiltKey.current = ''; buildRef.current(true) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [betaBundler])
+
+  // Measure content area for phone frame scaling
+  useEffect(() => {
+    const el = contentAreaRef.current
+    if (!el) return
+    const measure = () => setContentDims({ w: el.clientWidth, h: el.clientHeight })
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // Re-assign iframe src when view mode switches (new iframe element mounts)
+  useEffect(() => {
+    if (iframeRef.current && html) iframeRef.current.src = html
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode])
+
   // Poll for a missed heartbeat. A generous 10s threshold (5x the 2s beat
   // interval) avoids false positives from normal GC pauses or heavy renders;
   // skipped entirely while building/erroring (those already have their own
@@ -474,6 +517,17 @@ export function PreviewPanel() {
   // loop always converges — see the auto-heal effect below.
   const healTotal = useRef(0)
   const { setFiles } = useEditorStore()
+
+  const setViewModeAndPersist = (m: 'desktop' | 'mobile') => {
+    setViewMode(m)
+    try { localStorage.setItem('wyber:preview-viewmode', m) } catch {}
+  }
+
+  const toggleBeta = () => {
+    const next = !betaBundler
+    setBetaBundler(next)
+    try { localStorage.setItem('wyber:beta-bundler', String(next)) } catch {}
+  }
 
   const tryToFix = useCallback(async () => {
     if (!error || fixing) return
@@ -644,6 +698,16 @@ Change requested: ${editInstruction.trim()}`
     iframeRef.current?.contentWindow?.postMessage({ type: 'wyber-edit-mode', on: false }, '*')
   }
 
+  const PHONE_BEZEL = 11
+  const previewDevice = getDevice(previewDeviceId)
+  const phoneFrameW = previewDevice.width + PHONE_BEZEL * 2
+  const phoneFrameH = previewDevice.height + PHONE_BEZEL * 2
+  const phoneScale = contentDims.w > 0 ? Math.min(
+    (contentDims.h - 32) / phoneFrameH,
+    (contentDims.w - 32) / phoneFrameW,
+    1,
+  ) : 1
+
   return (
     <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg-base, #09090b)', position: 'relative' }}>
       <Confetti trigger={confettiTrigger} />
@@ -666,11 +730,37 @@ Change requested: ${editInstruction.trim()}`
           <button onClick={() => build(true)} title={t('rebuildTitle')}
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
         )}
+        {/* Bundler toggle — server-side is default; WASM is the fallback */}
+        <button onClick={toggleBeta} title={betaBundler ? 'Using server bundler — click to switch to in-browser WASM' : 'Using WASM bundler — click to switch back to server'}
+          style={{ background: !betaBundler ? 'rgba(245,158,11,0.1)' : 'none', border: `1px solid ${!betaBundler ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 5, color: !betaBundler ? '#fbbf24' : '#3f3f46', cursor: 'pointer', padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.03em' }}>
+          {!betaBundler ? '⚠ WASM' : '⚡'}
+        </button>
         {/* Real <a>, not window.open: mobile browsers' popup blockers silently
             swallow window.open, which is why "open in new tab" never worked. */}
         {html && !building && !error && (
           <a href={html} target="_blank" rel="noopener noreferrer" title={t('openNewTabTitle')}
             style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
+        )}
+        {/* Desktop / Mobile view toggle — only once a preview exists */}
+        {html && !building && !error && (
+          <>
+            <div style={{ display: 'flex', gap: 1, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 5, padding: 1 }}>
+              <button onClick={() => setViewModeAndPersist('desktop')} title="Desktop view"
+                style={{ background: viewMode === 'desktop' ? 'rgba(255,255,255,0.1)' : 'none', border: 'none', borderRadius: 4, color: viewMode === 'desktop' ? '#d4d4d8' : '#52525b', cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center' }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+              </button>
+              <button onClick={() => setViewModeAndPersist('mobile')} title="Mobile / game view"
+                style={{ background: viewMode === 'mobile' ? 'rgba(255,255,255,0.1)' : 'none', border: 'none', borderRadius: 4, color: viewMode === 'mobile' ? '#d4d4d8' : '#52525b', cursor: 'pointer', padding: '3px 7px', display: 'flex', alignItems: 'center' }}>
+                <svg width="9" height="11" viewBox="0 0 16 22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="1" width="14" height="20" rx="3"/><circle cx="8" cy="18" r="0.5" fill="currentColor"/></svg>
+              </button>
+            </div>
+            {viewMode === 'mobile' && (
+              <select value={previewDeviceId} onChange={e => setPreviewDeviceId(e.target.value)}
+                style={{ background: '#1a1a22', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 10, padding: '2px 4px', cursor: 'pointer', outline: 'none', maxWidth: 120 }}>
+                {DEVICES.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              </select>
+            )}
+          </>
         )}
         {hasApp && !building && !html && !error && (
           <button onClick={() => build(true)}
@@ -816,7 +906,9 @@ Change requested: ${editInstruction.trim()}`
       )}
 
       {/* Content */}
-      <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+      <div ref={contentAreaRef} style={{ flex: 1, minHeight: 0, position: 'relative', background: 'var(--bg-base, #09090b)',
+        ...(viewMode === 'mobile' ? { display: 'flex', alignItems: 'center', justifyContent: 'center' } : {})
+      }}>
         {!hasApp && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -888,12 +980,53 @@ Change requested: ${editInstruction.trim()}`
           </div>
         )}
 
-        <iframe
-          ref={iframeRef}
-          title="Wyber Preview"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed && !revertedToGood) ? 'block' : 'none', background: '#09090b' }}
-        />
+        {viewMode === 'mobile' ? (
+          /* Phone frame wrapper — scales to fit the content area */
+          <div style={{ position: 'relative', flexShrink: 0, width: phoneFrameW * phoneScale, height: phoneFrameH * phoneScale }}>
+            <div style={{
+              width: phoneFrameW, height: phoneFrameH, padding: PHONE_BEZEL,
+              background: '#0a0a0a', overflow: 'hidden',
+              borderRadius: previewDevice.radius + PHONE_BEZEL,
+              boxShadow: '0 0 0 2px #2a2a2e, 0 30px 80px rgba(0,0,0,0.6)',
+              transform: `scale(${phoneScale})`, transformOrigin: 'top left',
+              position: 'absolute', top: 0, left: 0,
+            }}>
+              <iframe ref={iframeRef} title="Wyber Preview"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                style={{ width: previewDevice.width, height: previewDevice.height, border: 'none', borderRadius: previewDevice.radius, background: '#09090b', display: 'block' }} />
+              {/* Dynamic Island */}
+              {previewDevice.notch === 'island' && (
+                <div style={{ position: 'absolute', top: PHONE_BEZEL + 11, left: '50%', transform: 'translateX(-50%)', width: 118, height: 34, background: '#000', borderRadius: 20, pointerEvents: 'none', zIndex: 10 }} />
+              )}
+              {/* Notch */}
+              {previewDevice.notch === 'notch' && (
+                <div style={{ position: 'absolute', top: PHONE_BEZEL, left: '50%', transform: 'translateX(-50%)', width: 150, height: 30, background: '#000', borderBottomLeftRadius: 16, borderBottomRightRadius: 16, pointerEvents: 'none', zIndex: 10 }} />
+              )}
+              {/* Status bar */}
+              <div style={{ position: 'absolute', top: PHONE_BEZEL, left: PHONE_BEZEL, right: PHONE_BEZEL, height: previewDevice.insets.top, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', paddingTop: 4, fontSize: 13, fontWeight: 600, color: previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B', pointerEvents: 'none', zIndex: 9 }}>
+                <span>{previewDevice.os === 'ios' ? '9:41' : '12:30'}</span>
+                <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 11 }}>
+                  <span>●●●</span>
+                  <span>{previewDevice.os === 'ios' ? 'ᯤ' : 'WiFi'}</span>
+                  <span style={{ display: 'inline-block', width: 22, height: 11, border: `1.5px solid ${previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B'}`, borderRadius: 3, position: 'relative' }}>
+                    <span style={{ position: 'absolute', inset: 2, right: '35%', background: previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B', borderRadius: 1 }} />
+                  </span>
+                </span>
+              </div>
+              {/* Home indicator / Android nav pill */}
+              {previewDevice.insets.bottom > 0 && (
+                <div style={{ position: 'absolute', bottom: PHONE_BEZEL + 8, left: '50%', transform: 'translateX(-50%)', width: previewDevice.os === 'ios' ? 134 : 108, height: previewDevice.os === 'ios' ? 5 : 4, borderRadius: 3, background: 'rgba(180,180,190,0.55)', pointerEvents: 'none', zIndex: 9 }} />
+              )}
+            </div>
+          </div>
+        ) : (
+          <iframe
+            ref={iframeRef}
+            title="Wyber Preview"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed && !revertedToGood) ? 'block' : 'none', background: '#09090b' }}
+          />
+        )}
       </div>
       <style>{`
         @keyframes spin{to{transform:rotate(360deg)}}
