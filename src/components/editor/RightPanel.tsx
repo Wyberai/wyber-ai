@@ -17,6 +17,7 @@ const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ 
 const FigmaImportPanel = dynamic(() => import('./FigmaImportPanel').then(m => ({ default: m.FigmaImportPanel })), { ssr: false });
 const RlsScanPanel    = dynamic(() => import('./RlsScanPanel').then(m => ({ default: m.RlsScanPanel })), { ssr: false });
 const WyberCloudScanPanel = dynamic(() => import('./WyberCloudScanPanel').then(m => ({ default: m.WyberCloudScanPanel })), { ssr: false });
+const SupabasePanel   = dynamic(() => import('./SupabasePanel').then(m => ({ default: m.SupabasePanel })), { ssr: false });
 const LaunchReadinessPanel = dynamic(() => import('./LaunchReadinessPanel').then(m => ({ default: m.LaunchReadinessPanel })), { ssr: false });
 const FounderChecklistPanel = dynamic(() => import('./FounderChecklistPanel').then(m => ({ default: m.FounderChecklistPanel })), { ssr: false });
 const ImagesPanel     = dynamic(() => import('./ImagesPanel').then(m => ({ default: m.ImagesPanel })), { ssr: false });
@@ -34,7 +35,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'images' | 'connectors' | 'history' | 'payments' | 'seo' | 'analytics';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'images' | 'connectors' | 'history' | 'cloud' | 'payments' | 'seo' | 'analytics';
 
 const TAB_ICONS: Record<string, JSX.Element> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
@@ -51,6 +52,7 @@ const TAB_ICONS: Record<string, JSX.Element> = {
   seo: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   history: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>,
+  cloud: <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>,
 };
 
 // WyberCloud is the free-database USP, not just another utility tab — it
@@ -86,6 +88,7 @@ const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; de
   { id: 'seo',        labelKey: 'rpTabSeoLabel',        descKey: 'rpTabSeoDesc' },
   { id: 'analytics',  labelKey: 'rpTabAnalyticsLabel',  descKey: 'rpTabAnalyticsDesc' },
   { id: 'history',    labelKey: 'rpTabHistoryLabel',    descKey: 'rpTabHistoryDesc' },
+  { id: 'cloud',      labelKey: 'rpTabCloudLabel',      descKey: 'rpTabCloudDesc' },
 ];
 
 export function RightPanel({ projectId, userId, onClose }: Props) {
@@ -203,6 +206,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'seo'        && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'analytics'  && <div style={scrollStyle}><AnalyticsPanel projectId={projectId || ''} /></div>}
             {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
+            {active === 'cloud'      && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
           </ErrorBoundary>
         </div>
       </div>
