@@ -29,22 +29,30 @@ const TAB_META: { id: Tab; labelKey: keyof typeof SETTINGS_STRINGS['en']; icon: 
   { id: 'danger',        labelKey: 'dangerTab',        icon: '⚠️' },
 ];
 
-// Prices/credits/colors come from the canonical PLAN_FACTS (lib/plans.ts);
-// only the marketing bullet KEYS are local to this page (translated at render).
-const PLANS = ([
-  ['free',    ['threeProjects', 'communitySupport']],
-  ['starter', ['unlimitedProjects', 'communitySupport']],
-  ['builder', ['supabaseCustomDomains', 'prioritySupport']],
-  ['pro',     ['multiUserOrgs', 'prioritySupportSlack']],
-] as const).map(([id, extraKeys]) => {
-  const f = PLAN_FACTS[id];
-  return {
-    id: f.id, name: f.name,
-    price: f.monthlyPrice === null ? '$0' : `$${f.monthlyPrice}`,
-    credits: f.credits, color: f.color,
-    extraKeys, creditsLine: creditsLine(f.id),
-  };
-});
+// Prices/credits/colors come from the canonical PLAN_FACTS (lib/plans.ts).
+// Computed inside the component so isIndia reaches the price formatting.
+function getPlans(isIndia: boolean) {
+  const rows: [string, readonly string[]][] = isIndia
+    ? [
+        ['spark',   ['threeProjects',      'communitySupport']],
+        ['starter', ['unlimitedProjects',  'communitySupport']],
+        ['builder', ['supabaseCustomDomains', 'prioritySupport']],
+        ['pro',     ['multiUserOrgs',      'prioritySupportSlack']],
+      ]
+    : [
+        ['free',    ['threeProjects',      'communitySupport']],
+        ['starter', ['unlimitedProjects',  'communitySupport']],
+        ['builder', ['supabaseCustomDomains', 'prioritySupport']],
+        ['pro',     ['multiUserOrgs',      'prioritySupportSlack']],
+      ];
+  return rows.map(([id, extraKeys]) => {
+    const f = PLAN_FACTS[id];
+    const price = isIndia
+      ? (f.monthlyPriceINR == null ? '₹0' : `₹${f.monthlyPriceINR.toLocaleString('en-IN')}`)
+      : (f.monthlyPrice    == null ? '$0'  : `$${f.monthlyPrice}`);
+    return { id: f.id, name: f.name, price, credits: f.credits, color: f.color, extraKeys, creditsLine: creditsLine(f.id) };
+  });
+}
 
 interface Connection { id: string; toolkit: string; status: string; authScheme: string; connectedAt: string }
 
@@ -271,6 +279,7 @@ function IntegrationsTab() {
 }
 
 export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
+  const plans = getPlans(isIndia ?? false);
   const supabase = createClient();
   const router = useRouter();
   const { locale, setLocale } = useLocale();
@@ -488,7 +497,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <div style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('currentPlanLabel')}</div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800 }}>{PLANS.find(p => p.id === (profile?.plan || 'free'))?.name || 'Free'}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800 }}>{plans.find(p => p.id === (profile?.plan || 'free'))?.name || 'Free'}</div>
                 <div style={{ fontSize: 13, color: '#71717a', marginTop: 2 }}>
                   <span style={{ color: '#0EA5E9', fontWeight: 700 }}>{profile?.credits ?? 0} {t('creditsWord')}</span> {t('remainingThisMonth')}
                 </div>
@@ -499,10 +508,10 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
             <div style={{ marginTop: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#52525b', marginBottom: 5 }}>
                 <span>{t('creditsUsedThisMonth')}</span>
-                <span>{Math.max(0, (PLANS.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0))} / {PLANS.find(p => p.id === (profile?.plan || 'free'))?.credits || 50}</span>
+                <span>{Math.max(0, (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0))} / {plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50}</span>
               </div>
               <div style={{ height: 6, borderRadius: 9999, background: 'rgba(255,255,255,0.06)' }}>
-                <div style={{ height: '100%', borderRadius: 9999, background: '#0EA5E9', width: Math.min(100, ((PLANS.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0)) / (PLANS.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) * 100) + '%', transition: 'width 0.5s ease' }} />
+                <div style={{ height: '100%', borderRadius: 9999, background: '#0EA5E9', width: Math.min(100, ((plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) - (profile?.credits || 0)) / (plans.find(p => p.id === (profile?.plan || 'free'))?.credits || 50) * 100) + '%', transition: 'width 0.5s ease' }} />
               </div>
               <div style={{ fontSize: 11, color: '#52525b', marginTop: 4 }}>{t('resetsOnFirst')}</div>
             </div>
@@ -510,7 +519,7 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
 
           {/* Plan cards */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-            {PLANS.map(p => (
+            {plans.map(p => (
               <div key={p.id} style={{ padding: 16, borderRadius: 10, background: '#111113', border: `1px solid ${p.id === (profile?.plan || 'free') ? p.color + '50' : 'rgba(255,255,255,0.07)'}` }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: p.color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
                   {p.id === (profile?.plan || 'free') && '✓ '}{p.name}
