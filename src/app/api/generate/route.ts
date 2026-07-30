@@ -1771,15 +1771,10 @@ async function refundCredits(userId: string, amount: number, reason: string): Pr
   } catch (e) { console.error('[refund] failed', e) }
 }
 
-// Opt-in switch for the Sonnet-first build routing below. Defaults OFF so a
-// bare deploy changes nothing — flip WYBER_SONNET_FIRST_BUILD=true to start
-// the staged rollout once the [generate cache] telemetry is being watched.
-// Every from-scratch build previously forced Opus (Anthropic's slowest tier)
-// unconditionally; that was the single largest untouched latency lever in the
-// pipeline (everything else — tool-use batching, prompt caching, streaming —
-// was already well-optimized). This flag exists so the switch to Sonnet-first
-// can be validated on real traffic before becoming the permanent default.
-const SONNET_FIRST_BUILDS = process.env.WYBER_SONNET_FIRST_BUILD === 'true'
+// Sonnet-first build routing — ON by default, disable with WYBER_SONNET_FIRST_BUILD=false.
+// Simple builds (landing pages, dashboards, tools) route to Sonnet (~5× cheaper than Opus);
+// a sub-cent Haiku classifier upgrades complex requests to Opus automatically.
+const SONNET_FIRST_BUILDS = process.env.WYBER_SONNET_FIRST_BUILD !== 'false'
 
 /**
  * Decide which model tier to run on — fully automatic, server-side.
@@ -2149,10 +2144,9 @@ export async function POST(req: NextRequest) {
     const isNewBuild = typeof isFirstBuild === 'boolean'
       ? isFirstBuild
       : (!fileContext || fileContext.length < 200)
-    // Opt-in extended thinking: only on a genuinely fresh, one-shot build (not
-    // edits, not self-heal repairs) — the one case where seeing the model's
-    // architecture reasoning is worth the extra latency on every call.
-    const useThinking = stage === 'full' && isNewBuild && !selfHeal
+    // Extended thinking: only on genuinely complex new builds (Opus tier) — not on
+    // Sonnet builds where it adds cost with no quality gain for simple apps.
+    const useThinking = stage === 'full' && isNewBuild && !selfHeal && tier === 'default'
     // Tool-use (Phase 5): real write_file/edit_file tool calls instead of
     // <file>/<edit> text tags. Started on new builds only (the 'fill' stage
     // this was originally scoped for turned out to be disabled dead code —
@@ -2984,11 +2978,9 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
         readable = new ReadableStream({
           async start(controller) {
-            // Simple Sonnet edits (2cr) get 3 iterations — measured sessions
-            // showed tweak-sized requests ballooning into 6 file-writing turns,
-            // which is what made cheap edits expensive ($15/M output adds up).
-            // Complex edits (Opus, 5cr) and builds keep the full budget.
-            const MAX_TOOL_ITERATIONS = actionType === 'small-edit' && resolvedTier === 'fast' ? 3 : 6
+            // Sonnet (fast tier) gets 3 iterations — enough for simple builds and edits,
+            // prevents runaway loops at $3/M output. Opus keeps 6 for complex multi-file work.
+            const MAX_TOOL_ITERATIONS = resolvedTier === 'fast' ? 3 : 6
             emitAgent(controller, { agent: 'coder', status: 'start', detail: isNewBuild ? 'building your app' : 'making the change' })
             emitAgent(controller, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
             // Blocking findings per path, pending hand-back as failed tool_results.
