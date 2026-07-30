@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')
   const state = req.nextUrl.searchParams.get('state')
 
-  if (!code) return NextResponse.redirect('/dashboard?error=github_denied')
+  if (!code) return NextResponse.redirect(new URL('/dashboard?error=github_denied', req.url))
 
   try {
     // Exchange code for token
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     // Save to Supabase
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.redirect('/login')
+    if (!user) return NextResponse.redirect(new URL('/login', req.url))
 
     await supabase.from('github_connections').upsert({
       user_id: user.id,
@@ -47,9 +47,9 @@ export async function GET(req: NextRequest) {
     try { projectId = JSON.parse(Buffer.from(state || '', 'base64').toString()).projectId } catch {}
 
     const redirect = projectId ? `/project/${projectId}?github=connected` : '/dashboard?github=connected'
-    return NextResponse.redirect(redirect)
+    return NextResponse.redirect(new URL(redirect, req.url))
   } catch (err) {
     console.error('GitHub OAuth error:', err)
-    return NextResponse.redirect('/dashboard?error=github_failed')
+    return NextResponse.redirect(new URL('/dashboard?error=github_failed', req.url))
   }
 }

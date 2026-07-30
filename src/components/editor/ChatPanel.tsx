@@ -2636,16 +2636,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
                         <div>
                           <div style={{ fontSize:12, fontWeight:700, color:'#38bdf8', marginBottom:4 }}>Build more, faster.</div>
                           <div style={{ fontSize:12, color:'var(--ide-text2)', lineHeight:1.5 }}>
-                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Upgrade for {creditsCurrency === 'INR' ? '₹499/mo' : '$29/mo'} and get 150 credits monthly.
+                            You're on free — {credits} credit{credits === 1 ? '' : 's'} left. Go annual from {creditsCurrency === 'INR' ? '₹399/mo' : '$23/mo'} and <span style={{ color:'#22c55e', fontWeight:700 }}>save 20%</span> — 150 credits/mo.
                           </div>
                         </div>
                         <button onClick={() => setBuildNudgeDismissed(true)} style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:16, lineHeight:1, padding:2, flexShrink:0 }}>×</button>
                       </div>
                       <div style={{ display:'flex', gap:8, marginTop:10 }}>
                         <button
-                          onClick={() => { track('editor_post_build_nudge_upgrade_clicked'); setUpgradeModalOpen(true); }}
-                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:7, border:'none', background:'#0ea5e9', color:'#fff', cursor:'pointer', fontFamily:'inherit' }}
-                        >Upgrade now</button>
+                          onClick={() => { track('editor_post_build_nudge_upgrade_clicked', { billing: 'annual' }); setUpgradeModalOpen(true); }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:7, border:'none', background:'linear-gradient(135deg,#0ea5e9,#7c3aed)', color:'#fff', cursor:'pointer', fontFamily:'inherit' }}
+                        >Upgrade — Save 20%</button>
                         <button
                           onClick={() => setBuildNudgeDismissed(true)}
                           style={{ fontSize:12, padding:'6px 14px', borderRadius:7, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontFamily:'inherit' }}
@@ -2684,7 +2684,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', cursor:'pointer', fontFamily:'inherit' }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
-                      {t('outOfCreditsUpgradeLabel').replace('{price}', creditsCurrency === 'INR' ? '₹499/mo' : '$29/mo')}
+                      {creditsCurrency === 'INR' ? 'Upgrade — from ₹399/mo annual (save 20%)' : 'Upgrade — from $23/mo annual (save 20%)'}
                     </button>
                   )}
                   {msg.designSuggestion && !dismissedSuggestions.has(msg.id) && (

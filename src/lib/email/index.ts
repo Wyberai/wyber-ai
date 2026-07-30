@@ -478,6 +478,23 @@ export async function sendTopupEmail(to: string, credits: number, newBalance: nu
   return resend.emails.send({ from: FROM_NOTIF, to, subject: `${credits} credits added to WyberAi ✓`, html })
 }
 
+// ── 6a2. Goodwill bonus credits (admin-granted, no purchase) ─────────────────
+export async function sendBonusCreditEmail(to: string, credits: number, newBalance: number) {
+  const html = wrap(`
+    ${h1(`${credits} credits, on us 🎁`)}
+    ${p(`Thanks for building with WyberAi early on — we've added <strong style="color:#f0f0f4">${credits} bonus credits</strong> to your account, no strings attached.`)}
+    ${infoBox([
+      ['Bonus credits', `+${credits}`],
+      ['New balance', newBalance.toLocaleString()],
+    ], '#0EA5E944')}
+    <div style="text-align:center;margin:0 0 24px">
+      ${btn('Back to your project →', `${APP_URL}/dashboard`)}
+    </div>
+  `, `${credits} bonus credits added to your account`)
+
+  return resend.emails.send({ from: FROM_NOTIF, to, subject: `A little something extra — ${credits} credits on us 🎁`, html })
+}
+
 // ── 6b. Payment failed (dunning) ──────────────────────────────────────────────
 // Meme matrix: Hulk Hogan's twin-referee meltdown — "they took the belt right
 // off our waist!" The bank ran a dirty finish on the transaction.
