@@ -12,7 +12,6 @@ const KnowledgePanel  = dynamic(() => import('./KnowledgePanel').then(m => ({ de
 const TemplateGallery = dynamic(() => import('../templates/TemplateGallery').then(m => ({ default: m.TemplateGallery })), { ssr: false });
 const ThemePanel      = dynamic(() => import('../themes/ThemePanel').then(m => ({ default: m.ThemePanel })), { ssr: false });
 const ConnectorsPanel = dynamic(() => import('./ConnectorsPanel').then(m => ({ default: m.ConnectorsPanel })), { ssr: false });
-const SupabasePanel   = dynamic(() => import('./SupabasePanel').then(m => ({ default: m.SupabasePanel })), { ssr: false });
 const VersionHistory  = dynamic(() => import('./VersionHistory').then(m => ({ default: m.VersionHistory })), { ssr: false });
 const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ default: m.AgentMode })), { ssr: false });
 const FigmaImportPanel = dynamic(() => import('./FigmaImportPanel').then(m => ({ default: m.FigmaImportPanel })), { ssr: false });
@@ -35,7 +34,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'images' | 'connectors' | 'history' | 'cloud' | 'payments' | 'seo' | 'analytics';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'images' | 'connectors' | 'history' | 'payments' | 'seo' | 'analytics';
 
 const TAB_ICONS: Record<string, JSX.Element> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
@@ -52,7 +51,6 @@ const TAB_ICONS: Record<string, JSX.Element> = {
   seo: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   history: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>,
-  cloud: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/></svg>,
 };
 
 // WyberCloud is the free-database USP, not just another utility tab — it
@@ -88,7 +86,6 @@ const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; de
   { id: 'seo',        labelKey: 'rpTabSeoLabel',        descKey: 'rpTabSeoDesc' },
   { id: 'analytics',  labelKey: 'rpTabAnalyticsLabel',  descKey: 'rpTabAnalyticsDesc' },
   { id: 'history',    labelKey: 'rpTabHistoryLabel',    descKey: 'rpTabHistoryDesc' },
-  { id: 'cloud',      labelKey: 'rpTabCloudLabel',      descKey: 'rpTabCloudDesc' },
 ];
 
 export function RightPanel({ projectId, userId, onClose }: Props) {
@@ -206,7 +203,6 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'seo'        && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'analytics'  && <div style={scrollStyle}><AnalyticsPanel projectId={projectId || ''} /></div>}
             {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
-            {active === 'cloud'      && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
           </ErrorBoundary>
         </div>
       </div>
