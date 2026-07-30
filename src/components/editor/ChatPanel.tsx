@@ -552,6 +552,10 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // Lifted out of executeGeneration's local scope so a user-facing "Stop" button
   // can abort an in-flight generation from outside that closure.
   const abortControllerRef = useRef<AbortController | null>(null);
+  // Auto-reload timer set after a network-drop mid-build (server keeps running
+  // and saves files, so we reload once they should be persisted). Cleared if
+  // the user starts a new build before the timer fires.
+  const dropReloadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Distinguishes a user-pressed Stop from the 320s auto-timeout hitting the
   // same AbortController, so the resulting message can be honest about which.
   const userStoppedRef = useRef(false);
@@ -1188,6 +1192,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // limit so a legitimately-still-running build isn't cut off early. Lives in
     // a ref (not a local const) so the user-facing Stop button can reach it.
     userStoppedRef.current = false;
+    if (dropReloadTimerRef.current) { clearTimeout(dropReloadTimerRef.current); dropReloadTimerRef.current = null; }
     const genController = new AbortController();
     abortControllerRef.current = genController;
     const genTimeout = setTimeout(() => genController.abort(), 820_000);
@@ -1692,6 +1697,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
           ? t('connectionDroppedMsg')
           : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('unknownErrorLabel')}`;
         updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
+        if (isNetworkDrop) {
+          if (dropReloadTimerRef.current) clearTimeout(dropReloadTimerRef.current);
+          dropReloadTimerRef.current = setTimeout(() => {
+            dropReloadTimerRef.current = null;
+            window.location.reload();
+          }, 35_000);
+        }
         persistMessage('assistant', errMsg);
       }
     } finally {

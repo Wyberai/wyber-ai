@@ -142,7 +142,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     sessionExpiredBuildMsg: '**Your session expired.** [Log in again](/login), then come back to this project — nothing was lost, just re-send your last message.',
     stoppedByUserMsg: '**Stopped.** You cancelled this build before it finished — check if your credits were deducted before trying again, and reload the project to see what (if anything) landed.',
     buildTimedOutMsg: '**This build timed out** after taking too long to respond. It may have finished on the server even though this connection gave up waiting — check if your credits were deducted before trying again, and reload the project to see if the changes landed.',
-    connectionDroppedMsg: '**Your connection dropped mid-build** (this happens when the computer sleeps or wifi blips). The build kept running on the server and gets saved to your project automatically — **wait ~30 seconds, then reload this page** and your files should be here. Only retry if nothing landed after reloading.',
+    connectionDroppedMsg: '**Your connection dropped mid-build** (this happens when the computer sleeps or wifi blips). The build kept running on the server and is saved to your project automatically — **this page will reload in ~35 seconds** to pick up your files. If nothing lands after reload, then retry.',
     errorPrefix: '**Error:**',
     unknownErrorLabel: 'Unknown error',
     buildHandoffFallbackMsg: 'That change needs a build — say "go ahead" and I\'ll run it.',
