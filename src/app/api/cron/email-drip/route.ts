@@ -16,7 +16,6 @@ function planLabelFromKey(key: string): string {
   return base.charAt(0).toUpperCase() + base.slice(1)
 }
 import { unsubscribeUrl } from '@/lib/email/unsubscribe'
-import { userCurrency } from '@/lib/user-currency'
 
 export const maxDuration = 120
 
