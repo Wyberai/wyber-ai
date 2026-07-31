@@ -2046,7 +2046,7 @@ export async function POST(req: NextRequest) {
     // matters when it's the explicit 'gpt' choice from the model dropdown,
     // checked once the caller's plan is known (below, alongside the existing
     // tierAllowedForPlan gate).
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier } = body
 
     // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
     // Reads the SAME var the client checks (roster.ts AGENT_TEAM_ENABLED) —
@@ -2832,8 +2832,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         const list = (stageFiles as string[]).join(', ')
         perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in on their own shortly. Output each file as a complete <file> block.${stagedAutomationNote}`)
       } else if (stage === 'fill') {
-        const list = (stageFiles as string[]).join(', ')
-        perRequestParts.push(`\n\n=== FILL PASS ===\nBuild ONLY these files this pass, as complete <file> blocks: ${list}\nThe app shell already exists. Do NOT re-output App.tsx, index.css, or any file not in this list. Just output the listed files, fully implemented.${stagedAutomationNote}`)
+        const paths = stageFiles as string[]
+        const purposes = stagePurposes as string[]
+        const items = paths.map((p, i) => purposes[i] ? `- ${p}: ${purposes[i]}` : `- ${p}`).join('\n')
+        perRequestParts.push(`\n\n=== FILL PASS ===\nThe app shell (navigation, theme, routing) is already built. Now build ONLY these feature files — output each as a COMPLETE <file> block with fully working code, no stubs, no TODO placeholders:\n${items}\nDo NOT re-output App.tsx, index.css, or any scaffold file not listed above. Write real, working implementations for the files listed.${stagedAutomationNote}`)
       } else if (stage === 'agentFix') {
         perRequestParts.push(`\n\n=== TARGETED FIX PASS ===\nApply ONLY the specific fix described in the request, using <edit> blocks (or a full <file> rewrite only if the file is small). Do not restyle, refactor, or touch anything else.`)
       }

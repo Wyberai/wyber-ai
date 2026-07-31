@@ -526,7 +526,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -1001,7 +1001,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1241,6 +1241,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // fill/agentFix, counted by the hourly free-pass guard).
           stage: opts?.stage || undefined,
           stageFiles: opts?.stageFiles?.length ? opts.stageFiles : undefined,
+          stagePurposes: opts?.stagePurposes?.length ? opts.stagePurposes : undefined,
           internalPass: opts?.internalPass || undefined,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
@@ -1796,9 +1797,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // Let React flush the previous pass's setFiles so the ref-latest closure
       // sees the newest files as fileContext (same reason autofix delays).
       await new Promise(r => setTimeout(r, 300));
+      const batchPaths = batch.map(f => f.path);
+      const batchPurposes = batch.map(f => f.purpose);
       let batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
-        stage: 'fill', stageFiles: batch.map(f => f.path), internalPass: true,
+        stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
         finalPass: i === staged.fillBatches.length - 1,
       });
       // Retry once on failure — transient API errors, network blips, and
@@ -1809,7 +1812,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         await new Promise(r => setTimeout(r, 1200));
         batchOk = await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
-          stage: 'fill', stageFiles: batch.map(f => f.path), internalPass: true,
+          stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
           finalPass: i === staged.fillBatches.length - 1,
         });
       }
