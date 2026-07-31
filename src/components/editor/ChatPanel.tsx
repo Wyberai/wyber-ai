@@ -1770,8 +1770,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const totalPassesPlanned = staged.fillBatches.length + 1;
     agentPassCountRef.current += 1;
     useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
+    const scaffoldPurposes = staged.scaffoldPaths.map(p => staged.files.find(f => f.path === p)?.purpose ?? '');
     const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
-      paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, finalPass: !hasFills,
+      paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, stagePurposes: scaffoldPurposes, finalPass: !hasFills,
     });
     // A failed scaffold means there's no skeleton for fill batches to build
     // on — piling more passes on top of a pass that produced no real files
@@ -1817,12 +1818,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
         });
       }
       if (batchOk === false) {
-        const remaining = staged.fillBatches.length - i - 1;
+        const missingFiles = staged.fillBatches.slice(i).flat();
+        const nameList = missingFiles.slice(0, 3).map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || f.path).join(', ');
+        const extra = missingFiles.length > 3 ? ` +${missingFiles.length - 3} more` : '';
         pushAgentEvents({
           agent: 'orchestrator', status: 'stuck',
-          detail: remaining > 0
-            ? t('fillBatchStoppedMsg').replace('{count}', String(remaining)).replace('{plural}', remaining === 1 ? '' : 'es')
-            : t('lastFillBatchStoppedMsg'),
+          detail: `Build incomplete — ${missingFiles.length} screen${missingFiles.length === 1 ? '' : 's'} couldn't be generated (${nameList}${extra}). Type "complete the build" to finish.`,
         });
         break;
       }

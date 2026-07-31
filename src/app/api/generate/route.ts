@@ -2804,7 +2804,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     }
 
     if (stage === 'plan') {
-      staticSystemPrompt = "You are a software architect. Given an app request, output ONLY a JSON array of the files needed to build it. Each item must be {\"path\":\"src/...\",\"purpose\":\"short feature description\"}. List shell files (src/index.css, src/App.tsx, src/components/Sidebar.tsx) FIRST, then one file per feature. Aim for 5-9 files. Output ONLY the raw JSON array starting with [ and ending with ]. No prose, no markdown, no code fences."
+      const isMobilePlan = projectType === 'mobile'
+      const planExamples = isMobilePlan
+        ? '"App.tsx", "src/navigation/AppNavigator.tsx", "src/screens/HomeScreen.tsx"'
+        : '"src/index.css", "src/App.tsx", "src/components/Layout.tsx"'
+      const planCount = isMobilePlan ? '8-14' : '6-10'
+      staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module. Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
       stageMaxTokens = 2000
     } else {
       const basePrompt = projectType === 'mobile'
@@ -2829,8 +2834,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // reads as the AI ignoring the user and talking to itself.
       const stagedAutomationNote = "\nThis pass is one link in an automated chain the platform already planned — it runs back-to-back with the next pass, with no user reply in between. Your closing sentence must be a plain, past-tense statement of what you built. NEVER end with a question or an offer awaiting a yes/no (no \"Want me to build X next?\", no \"should I continue?\") — nobody is there to answer it, and the next pass will run regardless of what you ask. NEVER reference internal build mechanics like \"this pass\"/\"next pass\"/\"later passes\" — describe the app in plain language a user would recognize, not the pipeline building it."
       if (stage === 'scaffold') {
-        const list = (stageFiles as string[]).join(', ')
-        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these files this pass: ${list}\nThese form the app shell. Build the layout, navigation, theme and routing so the app renders a working skeleton. For feature areas not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in on their own shortly. Output each file as a complete <file> block.${stagedAutomationNote}`)
+        const sPaths = stageFiles as string[]
+        const sPurposes = stagePurposes as string[]
+        const sItems = sPaths.map((p, i) => sPurposes[i] ? `- ${p}: ${sPurposes[i]}` : `- ${p}`).join('\n')
+        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these shell files this pass:\n${sItems}\nBuild the layout, navigation, theme and routing so the app renders a working skeleton. For feature screens not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in on their own shortly. Output each file as a complete <file> block.${stagedAutomationNote}`)
       } else if (stage === 'fill') {
         const paths = stageFiles as string[]
         const purposes = stagePurposes as string[]
