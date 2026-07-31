@@ -1,0 +1,215 @@
+# ──────────────────────────────────────────────────────────────────────────
+# WyberAi — Real Device Preview Builder
+# Place this file in your mobile-builds repo at:
+#   .github/workflows/build-preview.yml
+#
+# Required repository secrets (Settings → Secrets → Actions):
+#   EXPO_TOKEN            — expo.dev access token (Account Settings → Access Tokens)
+#   APPETIZE_API_TOKEN    — appetize.io API token
+#   APPETIZE_WEBHOOK_SECRET — same value as env var on WyberAi server
+# ──────────────────────────────────────────────────────────────────────────
+name: Build Real Device Preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: WyberAi project ID
+        required: true
+        type: string
+      files_url:
+        description: URL to fetch project files JSON
+        required: true
+        type: string
+      callback_url:
+        description: WyberAi webhook URL for build result
+        required: true
+        type: string
+
+jobs:
+  build-android:
+    name: Build Android APK → Appetize
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Notify WyberAi — build started
+        run: |
+          curl -sf -X POST "${{ github.event.inputs.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -H "x-appetize-secret: ${{ secrets.APPETIZE_WEBHOOK_SECRET }}" \
+            -d "{\"projectId\":\"${{ github.event.inputs.project_id }}\",\"status\":\"building\"}" || true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@latest
+
+      - name: Fetch project files from WyberAi
+        id: fetch-files
+        run: |
+          curl -sf "${{ github.event.inputs.files_url }}" -o project_data.json
+          echo "Fetched $(cat project_data.json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(len(d.get("files",{})))') files"
+
+      - name: Scaffold Expo project
+        run: |
+          mkdir -p wyber_app
+          cd wyber_app
+
+          # Write all project files from the JSON
+          python3 << 'PYEOF'
+          import json, os, pathlib
+
+          with open('../project_data.json') as f:
+              data = json.load(f)
+
+          project_name = data.get('projectName', 'WyberAi App')
+          files = data.get('files', {})
+
+          for path, value in files.items():
+              # value may be a string or a dict {content: "...", ...}
+              if isinstance(value, dict):
+                  content = value.get('content', '')
+              else:
+                  content = value or ''
+              # Strip leading src/ (RN apps don't use src/ layout)
+              if path.startswith('src/'):
+                  path = path[4:]
+              # Write file
+              full_path = pathlib.Path(path)
+              full_path.parent.mkdir(parents=True, exist_ok=True)
+              full_path.write_text(content)
+              print(f'  wrote {path}')
+          PYEOF
+
+          # Write package.json with pinned Expo SDK 54 deps
+          cat > package.json << 'JSON'
+          {
+            "name": "wyberai-preview",
+            "version": "1.0.0",
+            "main": "App.tsx",
+            "scripts": { "start": "expo start" },
+            "dependencies": {
+              "expo": "~54.0.0",
+              "expo-status-bar": "~2.2.3",
+              "expo-constants": "~17.1.6",
+              "expo-linear-gradient": "~14.1.4",
+              "expo-blur": "~14.1.4",
+              "expo-haptics": "~14.1.4",
+              "@expo/vector-icons": "~14.0.4",
+              "@react-navigation/native": "^7.0.0",
+              "@react-navigation/native-stack": "^7.0.0",
+              "@react-navigation/bottom-tabs": "^7.0.0",
+              "@react-navigation/stack": "^7.0.0",
+              "@react-navigation/drawer": "^7.0.0",
+              "react-native-screens": "~4.9.2",
+              "react-native-safe-area-context": "~4.14.0",
+              "react-native-gesture-handler": "~2.24.0",
+              "react-native-reanimated": "~3.17.4",
+              "react-native-svg": "~15.11.2",
+              "@react-native-async-storage/async-storage": "~2.1.2",
+              "react": "18.3.1",
+              "react-native": "0.76.9"
+            },
+            "devDependencies": {
+              "@babel/core": "^7.26.0",
+              "typescript": "~5.8.3"
+            }
+          }
+          JSON
+
+          # Write app.json
+          PROJECT_ID="${{ github.event.inputs.project_id }}"
+          BUNDLE_SUFFIX=$(echo "$PROJECT_ID" | tr -dc 'a-z0-9' | head -c 16)
+          cat > app.json << JSON_EOF
+          {
+            "expo": {
+              "name": "WyberAi Preview",
+              "slug": "wyberai-preview-${BUNDLE_SUFFIX}",
+              "version": "1.0.0",
+              "orientation": "portrait",
+              "android": {
+                "package": "com.wyberai.preview.${BUNDLE_SUFFIX}",
+                "adaptiveIcon": { "backgroundColor": "#09090b" }
+              },
+              "sdkVersion": "54.0.0"
+            }
+          }
+          JSON_EOF
+
+          # Write eas.json
+          cat > eas.json << 'EAS_EOF'
+          {
+            "build": {
+              "preview": {
+                "distribution": "internal",
+                "android": { "buildType": "apk" }
+              }
+            }
+          }
+          EAS_EOF
+
+      - name: Install npm dependencies
+        working-directory: wyber_app
+        run: npm install --legacy-peer-deps
+
+      - name: Build Android APK via EAS
+        working-directory: wyber_app
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build --platform android --profile preview --non-interactive --no-wait \
+            --json > ../build_start.json 2>&1 || true
+          cat ../build_start.json
+          BUILD_ID=$(cat ../build_start.json | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d[0]["id"])' 2>/dev/null || echo "")
+          echo "EAS_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+
+      - name: Wait for EAS build to complete
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "Polling EAS build $EAS_BUILD_ID"
+          for i in $(seq 1 40); do
+            sleep 30
+            STATUS=$(eas build:view "$EAS_BUILD_ID" --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("status",""))' 2>/dev/null || echo "")
+            echo "  attempt $i — status: $STATUS"
+            if [ "$STATUS" = "FINISHED" ]; then
+              APK_URL=$(eas build:view "$EAS_BUILD_ID" --json 2>/dev/null | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("artifacts",{}).get("buildUrl",""))' 2>/dev/null || echo "")
+              echo "APK_URL=$APK_URL" >> $GITHUB_ENV
+              echo "BUILD_OK=1" >> $GITHUB_ENV
+              break
+            fi
+            if [ "$STATUS" = "ERRORED" ] || [ "$STATUS" = "CANCELED" ]; then
+              echo "BUILD_FAILED=1" >> $GITHUB_ENV
+              break
+            fi
+          done
+
+      - name: Upload APK to Appetize
+        if: env.BUILD_OK == '1'
+        run: |
+          APPETIZE_KEY=$(curl -sf -X POST "https://api.appetize.io/v1/apps" \
+            -u "${{ secrets.APPETIZE_API_TOKEN }}:" \
+            -F "url=$APK_URL" \
+            -F "platform=android" | python3 -c 'import json,sys; print(json.load(sys.stdin)["publicKey"])')
+          echo "APPETIZE_KEY=$APPETIZE_KEY" >> $GITHUB_ENV
+          echo "Appetize key: $APPETIZE_KEY"
+
+      - name: Notify WyberAi — success
+        if: env.APPETIZE_KEY != ''
+        run: |
+          curl -sf -X POST "${{ github.event.inputs.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -H "x-appetize-secret: ${{ secrets.APPETIZE_WEBHOOK_SECRET }}" \
+            -d "{\"projectId\":\"${{ github.event.inputs.project_id }}\",\"appetizeBuildId\":\"$APPETIZE_KEY\"}"
+
+      - name: Notify WyberAi — failure
+        if: env.BUILD_OK != '1' || env.APPETIZE_KEY == ''
+        run: |
+          curl -sf -X POST "${{ github.event.inputs.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -H "x-appetize-secret: ${{ secrets.APPETIZE_WEBHOOK_SECRET }}" \
+            -d "{\"projectId\":\"${{ github.event.inputs.project_id }}\",\"error\":\"Build failed — check GitHub Actions logs\"}" || true

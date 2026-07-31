@@ -195,7 +195,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
             </Suspense>
           </div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', flexDirection: 'column', display: mobileView === 'preview' ? 'flex' : 'none' }}>
-            <MobilePreviewPanel />
+            <MobilePreviewPanel projectId={initialProject?.id} />
           </div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'store' ? 'block' : 'none' }}>
             <MobileRightPanel projectId={initialProject?.id} projectName={initialProject?.name} />
@@ -230,7 +230,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
 
         {/* Center: Preview */}
         <div style={{ flex: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <MobilePreviewPanel />
+          <MobilePreviewPanel projectId={initialProject?.id} />
         </div>
 
         {/* Right: Store Listing + Publish Guide */}
