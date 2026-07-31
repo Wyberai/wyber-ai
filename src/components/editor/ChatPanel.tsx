@@ -2040,6 +2040,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
   // the exact same path without duplicating it a third time (pendingRegulated
   // already duplicates it once, for its own "continue" button).
   const proceedPastPlanOffer = useCallback(async (userMsg: string, img: AttachedImage | null, hasAttachments: boolean, paletteId?: string | null) => {
+    // ── Mobile generation maintenance gate ──────────────────────────────
+    // Mobile builder is undergoing upgrades. Block new mobile builds and
+    // edits with a friendly notice until the pipeline is verified stable.
+    if (projectType === 'mobile') {
+      addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+      addMessage({ id: uid(), role: 'assistant', content: '🔧 **Mobile generation is being upgraded**\n\nWe\'re improving the mobile build pipeline to deliver more complete, higher-quality apps. New builds are temporarily paused — check back shortly and it\'ll be better than ever.', timestamp: Date.now(), status: 'done' });
+      return;
+    }
     // ── Regulated-domain notice (non-blocking) ──────────────────────────
     // Only on new builds; skip if user already acknowledged this prompt.
     const isNewBuild = Object.keys(files ?? {}).length === 0;
