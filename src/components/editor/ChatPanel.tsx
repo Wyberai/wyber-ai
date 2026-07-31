@@ -411,6 +411,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // no store/DB change (the suggestion itself is already non-persisted).
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeTrigger, setUpgradeTrigger] = useState<'nudge' | 'out-of-credits'>('nudge');
   const [buildNudgeDismissed, setBuildNudgeDismissed] = useState(false);
   const lastBuildMsgId = useMemo(
     () => [...messages].reverse().find(m => m.status === 'done' && !!m.agentReport)?.id,
@@ -2655,7 +2656,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       </div>
                       <div style={{ display:'flex', gap:8, marginTop:10 }}>
                         <button
-                          onClick={() => { track('editor_post_build_nudge_upgrade_clicked', { billing: 'annual' }); setUpgradeModalOpen(true); }}
+                          onClick={() => { track('editor_post_build_nudge_upgrade_clicked', { billing: 'annual' }); setUpgradeTrigger('nudge'); setUpgradeModalOpen(true); }}
                           style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:7, border:'none', background:'linear-gradient(135deg,#0ea5e9,#7c3aed)', color:'#fff', cursor:'pointer', fontFamily:'inherit' }}
                         >Upgrade — Save 20%</button>
                         <button
@@ -2692,7 +2693,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       to see, mid-session, right after wanting to do more. */}
                   {msg.status === 'error' && msg.content.includes('Not enough credits') && (
                     <button
-                      onClick={() => { track('editor_out_of_credits_upgrade_clicked'); setUpgradeModalOpen(true); }}
+                      onClick={() => { track('editor_out_of_credits_upgrade_clicked'); setUpgradeTrigger('out-of-credits'); setUpgradeModalOpen(true); }}
                       style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', cursor:'pointer', fontFamily:'inherit' }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
@@ -2960,7 +2961,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         </div>
       </div>
-      <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currency={creditsCurrency} />
+      <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currency={creditsCurrency} trigger={upgradeTrigger} />
     </div>
   );
 }

@@ -560,12 +560,13 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {plan === 'free' && (
           <div style={{ padding: '10px', borderTop: `1px solid ${BORDER}` }}>
             <Link href="/pricing" className="dash-upgrade-card"
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 9, background: `rgba(14,165,233,0.1)`, border: `1px solid rgba(14,165,233,0.2)`, textDecoration: 'none' }}>
-              <IconBolt />
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: BRAND }}>{t('upgradeToStarter')}</div>
-                <div style={{ fontSize: 10, color: DIM }}>{creditsLine('starter')}</div>
+              onClick={() => track('dashboard_sidebar_upgrade_clicked')}
+              style={{ display: 'block', padding: '11px 13px', borderRadius: 10, background: 'linear-gradient(135deg,rgba(14,165,233,0.14),rgba(124,58,237,0.1))', border: '1px solid rgba(14,165,233,0.3)', textDecoration: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontSize: 12, fontWeight: 800, color: '#fafafa' }}>Go Annual — Save 20%</div>
+                <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.25)', color: '#22c55e', whiteSpace: 'nowrap' }}>BEST VALUE</span>
               </div>
+              <div style={{ fontSize: 10, color: '#71717a' }}>150 credits/mo · 2 months free</div>
             </Link>
           </div>
         )}
@@ -579,17 +580,17 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontSize: 16 }}>⚡</span>
               <div>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>You're almost out of credits. </span>
-                <span style={{ fontSize: 13, color: '#a1a1aa' }}>You have {credits} credits left — not enough for another build. Top up and keep going.</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#fafafa' }}>You&apos;re almost out of credits. </span>
+                <span style={{ fontSize: 13, color: '#a1a1aa' }}>You have {credits} credits left. Annual plan = 150/mo + 2 months free — pays for itself in one build.</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               <Link
-                href="/pricing#topups"
-                onClick={() => track('dashboard_low_credits_banner_clicked')}
-                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: '#f59e0b', color: '#000', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                href="/pricing"
+                onClick={() => track('dashboard_low_credits_banner_annual_clicked')}
+                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', color: '#fff', textDecoration: 'none', whiteSpace: 'nowrap' }}
               >
-                Get more credits →
+                Get Annual Plan →
               </Link>
               <button onClick={dismissBanner} style={{ background: 'none', border: 'none', color: '#52525b', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 2 }}>×</button>
             </div>

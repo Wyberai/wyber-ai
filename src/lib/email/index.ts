@@ -1176,6 +1176,39 @@ export async function sendWinBackEmail(to: string, name: string, remaining: numb
   return resend.emails.send({ from: FROM, to, subject: 'Still there? 👋', html })
 }
 
+// ── 32. Unused credits — 3+ days old, 0 builds, credits ≥ 45 ───────────────
+// Targets the "stuck at 55" cohort: signed up, never built, credits sitting idle.
+// Aggressive annual CTA — they haven't experienced the product yet so the ask
+// is activation first, but annual pricing is the clear path forward shown.
+export async function sendUnusedCreditsEmail(to: string, name: string, credits: number, unsubUrl: string, currency: Currency = 'USD') {
+  const annualFrom = currency === 'INR' ? '₹399/mo' : '$23/mo'
+  const annualDesc = currency === 'INR'
+    ? '50–150 credits/mo — 2 months free'
+    : '150 credits/mo — 2 months free'
+  const html = wrap(`
+    ${h1('You have credits just sitting there.')}
+    ${p(`${name} — you have <strong style="color:#f0f0f4">${credits} free credits</strong> in your account and haven't used a single one. That's a full working app you haven't built yet.`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Pick any idea</strong> — landing page, dashboard, booking tool, anything</td></tr>
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;<strong style="color:#f0f0f4">Type one sentence</strong> — no code, no setup, no account to create</td></tr>
+      <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;<strong style="color:#f0f0f4">See it live in ~60 seconds</strong> — real URL, shareable immediately</td></tr>
+    </table>
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Use your free credits now →', `${APP_URL}/dashboard`)}
+    </div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;background:#1a1a26;border-radius:10px">
+      <tr><td style="padding:16px 20px">
+        <div style="font-size:11px;font-weight:700;color:#f97316;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Annual Plan</div>
+        <div style="font-size:18px;font-weight:800;color:#f0f0f4;margin-bottom:4px">${annualDesc}</div>
+        <div style="font-size:13px;color:#8888a0">From ${annualFrom}. Unlimited projects. Cancel any time.</div>
+        <div style="margin-top:12px"><a href="${APP_URL}/pricing" style="font-size:12px;font-weight:700;color:#0ea5e9;text-decoration:none">See annual plans →</a></div>
+      </td></tr>
+    </table>
+    ${p("Once you've built your first thing, you'll wonder what took you so long.")}
+  `, `You have ${credits} credits doing nothing`, unsubUrl)
+  return resend.emails.send({ from: FROM, to, subject: `${name}, your ${credits} free credits are doing nothing`, html })
+}
+
 // ── 31. Breakup email — 45–60 days silent, last touch, no meme on purpose ──
 export async function sendBreakupEmail(to: string, name: string, unsubUrl: string) {
   const html = wrap(`

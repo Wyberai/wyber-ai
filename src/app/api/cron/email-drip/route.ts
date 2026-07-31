@@ -4,10 +4,11 @@ import {
   sendCreditsExhaustedEmail, sendGettingStartedNudgeEmail, sendPublishNudgeEmail,
   sendQuickStartNudgeEmail, sendNextStepNurtureEmail, sendSocialProofEmail,
   sendFeatureSpotlightEmail, sendReferralNudgeEmail, sendEarlyCreditWarningEmail,
-  sendWinBackEmail, sendBreakupEmail, sendCheckoutAbandonedEmail,
+  sendWinBackEmail, sendBreakupEmail, sendCheckoutAbandonedEmail, sendUnusedCreditsEmail,
 } from '@/lib/email'
 import type { FeatureSpotlightKey } from '@/lib/email'
 import type { Currency } from '@/lib/currency'
+import { userCurrency } from '@/lib/user-currency'
 
 function planLabelFromKey(key: string): string {
   if (key.startsWith('topup_')) return `${key.replace('topup_', '')} credits`
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
   const results = {
     creditsDrip: 0, gettingStarted: 0, publishNudge: 0,
     quickStart: 0, nextStep: 0, socialProof: 0, featureSpotlight: 0, referralNudge: 0,
-    earlyCreditWarn: 0, checkoutAbandoned: 0, winBack: 0, breakup: 0, errors: 0,
+    earlyCreditWarn: 0, checkoutAbandoned: 0, winBack: 0, breakup: 0, unusedCredits: 0, errors: 0,
   }
 
   // Load prior sends once; keyed lookups below. If the tracking table doesn't
@@ -99,14 +100,16 @@ export async function GET(req: NextRequest) {
       } catch { results.errors++ }
     }
 
-    // ── 2a. Quick-start nudge (18–36h old, never generated an app) — touch 1 ─
-    const eighteenHoursAgo = new Date(now - 18 * 3600_000).toISOString()
-    const thirtySixHoursAgo = new Date(now - 36 * 3600_000).toISOString()
+    // ── 2a. Quick-start nudge (4–12h old, never generated an app) — touch 1 ─
+    // Window tightened from 18–36h to 4–12h: by 18h the user has already mentally
+    // churned. 4h catches them while the signup intent is still warm.
+    const fourHoursAgo = new Date(now - 4 * 3600_000).toISOString()
+    const twelveHoursAgo = new Date(now - 12 * 3600_000).toISOString()
     const { data: brandNew } = await admin
       .from('profiles')
       .select('id, email, full_name, email_opt_out, created_at')
-      .lt('created_at', eighteenHoursAgo)
-      .gt('created_at', thirtySixHoursAgo)
+      .lt('created_at', fourHoursAgo)
+      .gt('created_at', twelveHoursAgo)
       .eq('email_opt_out', false)
       .limit(300)
     for (const u of brandNew ?? []) {
@@ -293,6 +296,11 @@ export async function GET(req: NextRequest) {
       if (results.earlyCreditWarn >= BATCH) break
       if (!u.email) continue
       if (events.get(`${u.id}:early-credit-warn`)) continue // once, ever
+      // Only warn users who have actually built something — fresh signups start
+      // at 50 credits, so "credits <= 50" without this check fires immediately
+      // on day 1 before they've even tried the product.
+      const { count: builtCount } = await admin.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', u.id)
+      if ((builtCount ?? 0) === 0) continue
       try {
         await sendEarlyCreditWarningEmail(u.email, u.credits)
         await markSent(u.id, 'early-credit-warn')
@@ -300,17 +308,18 @@ export async function GET(req: NextRequest) {
       } catch { results.errors++ }
     }
 
-    // ── 4b. Checkout abandoned (started checkout 1–24h ago, never converted) ──
-    // checkout_attempts may not exist yet (migration 20260726000000 pending);
-    // a missing-table error here just means zero rows come back — skip quietly.
+    // ── 4b. Checkout abandoned (1–72h ago, never converted) ──────────────────
+    // Window extended to 72h to catch procrastinators. The once-ever guard means
+    // each user only gets one abandoned-cart email regardless of the window.
+    // checkout_attempts may not exist yet — skip quietly on missing table.
     const oneHourAgo = new Date(now - 3600_000).toISOString()
-    const twentyFourHoursAgo = new Date(now - 24 * 3600_000).toISOString()
+    const seventyTwoHoursAgo = new Date(now - 72 * 3600_000).toISOString()
     const { data: abandoned } = await admin
       .from('checkout_attempts')
       .select('id, user_id, plan_key, currency, created_at')
       .eq('converted', false)
       .lt('created_at', oneHourAgo)
-      .gt('created_at', twentyFourHoursAgo)
+      .gt('created_at', seventyTwoHoursAgo)
       .order('created_at', { ascending: false })
       .limit(300)
     const seenCheckoutOwner = new Set<string>()
@@ -331,6 +340,34 @@ export async function GET(req: NextRequest) {
         await sendCheckoutAbandonedEmail(owner.email, planLabelFromKey(attempt.plan_key), (attempt.currency as Currency) || 'USD')
         await markSent(attempt.user_id, 'checkout-abandoned')
         results.checkoutAbandoned++
+      } catch { results.errors++ }
+    }
+
+    // ── 4c. Unused credits (3–10 days old, 0 builds, credits ≥ 45) ───────────
+    // The "stuck at 55" cohort: signed up, never triggered a build, free credits
+    // accumulating. One hard-sell email with the annual plan front and centre.
+    const threeDaysAgoStrict = new Date(now - 3 * 24 * 3600_000).toISOString()
+    const tenDaysAgo = new Date(now - 10 * 24 * 3600_000).toISOString()
+    const { data: idleSignups } = await admin
+      .from('profiles')
+      .select('id, email, full_name, credits, email_opt_out, created_at')
+      .eq('plan', 'free')
+      .gte('credits', 45)
+      .lt('created_at', threeDaysAgoStrict)
+      .gt('created_at', tenDaysAgo)
+      .eq('email_opt_out', false)
+      .limit(300)
+    for (const u of idleSignups ?? []) {
+      if (results.unusedCredits >= BATCH) break
+      if (!u.email) continue
+      if (events.get(`${u.id}:unused-credits`)) continue // once, ever
+      const { count: builtCount } = await admin.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', u.id)
+      if ((builtCount ?? 0) > 0) continue // they built something — not this cohort
+      try {
+        const cur = await userCurrency(admin, u.id)
+        await sendUnusedCreditsEmail(u.email, (u.full_name as string | null)?.split(' ')[0] || u.email.split('@')[0], u.credits, unsubscribeUrl(u.email), cur)
+        await markSent(u.id, 'unused-credits')
+        results.unusedCredits++
       } catch { results.errors++ }
     }
 
@@ -400,6 +437,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ ...results, error: String(err) }, { status: 500 })
   }
 
-  console.log('[email-drip]', JSON.stringify(results))
+  console.log('[email-drip]', JSON.stringify({ ...results, unusedCredits: results.unusedCredits }))
   return NextResponse.json(results)
 }
