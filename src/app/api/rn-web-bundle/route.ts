@@ -535,6 +535,13 @@ export async function bundleRnApp(files: Record<string, unknown> | null | undefi
       format: 'esm',
       write: false,
       minify: false,
+      // treeShaking:false prevents esbuild from reordering module initialization
+      // for dead-code elimination — the reordering is what causes the
+      // "Cannot access 'eS' before initialization" TDZ crash in circular-import
+      // graphs (esbuild wraps circular ESM exports in a lazy var that gets
+      // referenced before its __esm() initializer runs).
+      treeShaking: false,
+      ignoreAnnotations: true,
       jsx: 'automatic',
       jsxImportSource: 'react',
       loader: { '.tsx': 'tsx', '.ts': 'ts', '.jsx': 'jsx', '.js': 'js', '.json': 'json' },

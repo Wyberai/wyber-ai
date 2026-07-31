@@ -2043,7 +2043,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // ── Mobile generation maintenance gate ──────────────────────────────
     // Mobile builder is undergoing upgrades. Block new mobile builds and
     // edits with a friendly notice until the pipeline is verified stable.
-    if (projectType === 'mobile') {
+    // Localhost is exempt so the fix can be tested before re-enabling prod.
+    if (projectType === 'mobile' && typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
       addMessage({ id: uid(), role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
       addMessage({ id: uid(), role: 'assistant', content: '🔧 **Mobile generation is being upgraded**\n\nWe\'re improving the mobile build pipeline to deliver more complete, higher-quality apps. New builds are temporarily paused — check back shortly and it\'ll be better than ever.', timestamp: Date.now(), status: 'done' });
       return;
