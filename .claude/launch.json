@@ -39,6 +39,12 @@
       "port": 5199
     },
     {
+      "name": "jobpulse-verify",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\jobpulse", "--", "--port", "5200"],
+      "port": 5200
+    },
+    {
       "name": "session-a-worktree",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyberai-session-a", "--", "-p", "3012"],

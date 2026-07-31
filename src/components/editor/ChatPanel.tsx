@@ -14,7 +14,7 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, forgeLine } from '@/lib/staged-plan';
+import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -526,7 +526,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[] }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -719,7 +719,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       // continuation: this is the user's own build still in flight (cut stream,
       // missing entry file, failed patches) → visible bubble + persisted receipt.
       // Untagged events (runtime-error self-heals from the preview) stay silent.
-      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation })
+      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, completenessRetryFor: detail.completenessRetryFor })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
     // Connector/theme panels send prompts via this event
@@ -1001,7 +1001,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[] }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1155,6 +1155,36 @@ const storeProjectId = useEditorStore.getState().project?.id;
       : '';
     const fileContext = manifest + fullBlock + outlineBlock;
     const history = windowedHistory(messages.filter(m => m.status==='done')).map(m => ({ role:m.role, content:m.content }));
+
+    // Edit-completeness check: on every genuine, visible, user-initiated edit
+    // turn (never on self-heal/continuation/staged/internal passes — those
+    // already set silent/continuation/stage/preserveAgentTurn, which this
+    // mirrors exactly), fire a cheap, edit-aware plan pass concurrently with
+    // the real generation below. It's compared against what actually got
+    // written once this pass finishes (see the completeness block after
+    // newFiles/editBlocks are parsed) — catches the case where the model
+    // cleanly narrows the scope of a multi-part edit and stops, which no
+    // other safety net here (fileCut/editCut, isPlaceholderApp, QA checks)
+    // is positioned to see. Best-effort: any failure just means the check
+    // silently doesn't run this turn — it must never block or error the
+    // real edit it's riding alongside.
+    // Mirror server's hasExisting check (fileContext.length > 200) — a placeholder
+    // App.tsx makes Object.keys(files).length > 0 true on first builds, which
+    // would fire the completeness check against an isFirstBuild:false plan and
+    // generate spurious "5 parts still unfinished" messages. Real file context
+    // is always >200 chars; a lone placeholder stub never is.
+    const isEditCompletenessEligible = !opts?.silent && !opts?.continuation && !opts?.stage
+      && !opts?.preserveAgentTurn && fileContext.length > 200;
+    const editPlanPromise: Promise<PlannedFile[]> | null = isEditCompletenessEligible
+      ? fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: userMsg, stage: 'plan', fileContext, projectType,
+            userId: resolvedUserId, projectId: resolvedProjectId, isFirstBuild: false,
+          }),
+        }).then(r => r.ok ? r.text() : '').then(parsePlanManifest).catch(() => [] as PlannedFile[])
+      : null;
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
     let knowledgeStr = knowledge || '';
@@ -1406,7 +1436,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // placeholder had grown past 200 chars) detects it; ask for exactly the
       // missing file via the free self-heal lane.
       const appAfter = (updatedFiles['src/App.tsx'] || updatedFiles['src/App.jsx'] || updatedFiles['App.tsx']) as { content?: string } | undefined
+      // Both flags gate the completeness check below (4c) — it's the lowest-
+      // priority of the three follow-up passes this turn can trigger, so it
+      // must not fire on top of one of these (a single retry per turn keeps
+      // the "silent free pass" contract simple and avoids compounding fixes).
+      let placeholderRetryFired = false
+      let qaRetryFired = false
+      let editIncompleteReported = false
       if (newFiles.length >= 2 && !isSelfHeal && !fileCut && !editCut && isPlaceholderApp(appAfter?.content)) {
+        placeholderRetryFired = true
         const entry = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
@@ -1430,6 +1468,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           && (newFiles.length > 0 || editBlocks.length > 0)) {
         const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
         if (qaIssues.length > 0) {
+          qaRetryFired = true
           // Deliberately silent, same as the runtime self-heal above: this is
           // still a free, invisible fix pass, but it no longer pushes each
           // finding + a "structural issue(s) found — fixing" summary into the
@@ -1444,6 +1483,61 @@ const storeProjectId = useEditorStore.getState().project?.id;
           }, 700)
         } else {
           pushAgentEvents({ agent: 'qa', status: 'done', detail: t('qaPassedMsg') })
+        }
+      }
+
+      // 4c. Edit-completeness check (see the concurrent plan-pass fired
+      // alongside fileContext above): lowest priority of this turn's
+      // follow-up passes — only runs if nothing higher-priority already
+      // claimed this pass, and only for eligible turns (editPlanPromise is
+      // non-null exactly when isEditCompletenessEligible was true). Diffs
+      // the edit-aware plan manifest against what this pass actually wrote/
+      // edited; if anything planned is missing, retries once via the same
+      // wyber-autofix continuation the other safety nets above use.
+      if (editPlanPromise && !fileCut && !editCut && !placeholderRetryFired && !qaRetryFired
+          && (newFiles.length > 0 || editBlocks.length > 0)) {
+        const planned = await editPlanPromise
+        if (planned.length >= EDIT_COMPLETENESS_MIN_FILES) {
+          const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
+          const missing = diffPlannedAgainstWritten(planned, writtenPaths)
+          if (missing.length > 0) {
+            const nameList = missing.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
+            const extra = missing.length > 3 ? ` +${missing.length - 3} more` : ''
+            const detail = missing.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('wyber-autofix', {
+                detail: {
+                  continuation: true,
+                  completenessRetryFor: missing,
+                  prompt: `Your previous response addressed part of the request but left ${missing.length} planned file${missing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied.`,
+                },
+              }))
+            }, 600)
+          }
+        }
+      }
+
+      // 4d. Verify a completeness retry (4c) actually finished the job —
+      // runs only on the retry pass itself (opts.completenessRetryFor is
+      // only ever set by 4c's own dispatch, forwarded through autofixHandler).
+      // One retry is the budget: if it's still incomplete after this, tell
+      // the user plainly what's left rather than silently retrying forever
+      // or, worse, reporting done with a real gap — the exact failure mode
+      // this whole check exists to close.
+      if (opts?.completenessRetryFor?.length && !fileCut && !editCut) {
+        const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
+        const stillMissing = diffPlannedAgainstWritten(opts.completenessRetryFor, writtenPaths)
+        if (stillMissing.length > 0 && isVisible) {
+          const nameList = stillMissing.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
+          const extra = stillMissing.length > 3 ? ` +${stillMissing.length - 3} more` : ''
+          editIncompleteReported = true
+          setTimeout(() => {
+            const msg = t('editIncompleteMsg')
+              .replace('{count}', String(stillMissing.length))
+              .replace('{names}', nameList + extra)
+            addMessage({ id: uid(), role: 'assistant', content: msg, timestamp: Date.now(), status: 'done' })
+            persistMessage('assistant', msg)
+          }, 300)
         }
       }
 
@@ -1548,7 +1642,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // refund (see generate/route.ts), so this case is never silently charged either.
       const hasRealChange = newFiles.length > 0 || editBlocks.length > 0;
       if (!hasRealChange) {
-        if (isVisible) {
+        if (isVisible && !editIncompleteReported) {
           const emittedNothing = full.trim().length === 0;
           const errMsg = (fileCut || editCut)
             ? t('streamCutOffMsg')

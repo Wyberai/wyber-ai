@@ -11,6 +11,7 @@ const ChatPanel       = dynamic(() => import('./ChatPanel').then(m => ({ default
 const KnowledgePanel  = dynamic(() => import('./KnowledgePanel').then(m => ({ default: m.KnowledgePanel })), { ssr: false });
 const TemplateGallery = dynamic(() => import('../templates/TemplateGallery').then(m => ({ default: m.TemplateGallery })), { ssr: false });
 const ThemePanel      = dynamic(() => import('../themes/ThemePanel').then(m => ({ default: m.ThemePanel })), { ssr: false });
+const SuggestionsPanel = dynamic(() => import('../suggestions/SuggestionsPanel').then(m => ({ default: m.SuggestionsPanel })), { ssr: false });
 const ConnectorsPanel = dynamic(() => import('./ConnectorsPanel').then(m => ({ default: m.ConnectorsPanel })), { ssr: false });
 const VersionHistory  = dynamic(() => import('./VersionHistory').then(m => ({ default: m.VersionHistory })), { ssr: false });
 const AgentMode       = dynamic(() => import('../agent/AgentMode').then(m => ({ default: m.AgentMode })), { ssr: false });
@@ -35,7 +36,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'images' | 'connectors' | 'history' | 'cloud' | 'payments' | 'seo' | 'analytics';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'cloud' | 'payments' | 'seo' | 'analytics';
 
 const TAB_ICONS: Record<string, JSX.Element> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
@@ -46,6 +47,7 @@ const TAB_ICONS: Record<string, JSX.Element> = {
   database: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
   security: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>,
   themes: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10M12 2a15.3 15.3 0 00-4 10 15.3 15.3 0 004 10M2 12h20"/></svg>,
+  suggestions: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.8 5.5L19 10l-5.2 1.5L12 17l-1.8-5.5L5 10l5.2-1.5z"/><path d="M19 3v4M17 5h4"/></svg>,
   images: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>,
   connectors: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 13.5l7 3.5M15.5 7l-7 3.5"/></svg>,
   payments: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
@@ -82,6 +84,7 @@ const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; de
   { id: 'database',   labelKey: 'rpTabDatabaseLabel',   descKey: 'rpTabDatabaseDesc' },
   { id: 'security',   labelKey: 'rpTabSecurityLabel',   descKey: 'rpTabSecurityDesc' },
   { id: 'themes',     labelKey: 'rpTabThemesLabel',     descKey: 'rpTabThemesDesc' },
+  { id: 'suggestions', labelKey: 'rpTabSuggestionsLabel', descKey: 'rpTabSuggestionsDesc' },
   { id: 'images',     labelKey: 'rpTabImagesLabel',     descKey: 'rpTabImagesDesc' },
   { id: 'connectors', labelKey: 'rpTabConnectorsLabel', descKey: 'rpTabConnectorsDesc' },
   { id: 'payments',   labelKey: 'rpTabPaymentsLabel',   descKey: 'rpTabPaymentsDesc' },
@@ -102,6 +105,20 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
   // already explains "connect Supabase to run a scan") when neither is.
   const connectors = useEditorStore(s => s.connectors);
   const wyberCloudConnected = connectors?.some(c => c.service === 'cloud-database');
+
+  // One-time badge dot on the Suggestions tab, shown the first time a project
+  // has something built (hasGeneratedFiles flips true) and cleared for good
+  // once the user actually opens the tab — not a permanent identity marker
+  // like Cloud's, just a "there's something new here" nudge.
+  const hasGeneratedFiles = useEditorStore(s => s.hasGeneratedFiles);
+  const [showSuggestionsBadge, setShowSuggestionsBadge] = useState(false);
+  useEffect(() => {
+    if (!hasGeneratedFiles || !projectId) return;
+    try {
+      const key = `wyber_suggestions_seen_${projectId}`;
+      if (!localStorage.getItem(key)) setShowSuggestionsBadge(true);
+    } catch { /* private mode */ }
+  }, [hasGeneratedFiles, projectId]);
 
   // Resolve tab copy at render time (hooks can't run at module scope) —
   // see ProjectTypeChooser.tsx for the same pattern.
@@ -133,7 +150,13 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
         {TABS.map(tab => {
           const isCloud = tab.id === 'database';
           return (
-          <button key={tab.id} onClick={() => setActive(tab.id)} title={`${tab.label} — ${tab.desc}`}
+          <button key={tab.id} onClick={() => {
+            setActive(tab.id);
+            if (tab.id === 'suggestions') {
+              setShowSuggestionsBadge(false);
+              if (projectId) { try { localStorage.setItem(`wyber_suggestions_seen_${projectId}`, '1'); } catch { /* private mode */ } }
+            }
+          }} title={`${tab.label} — ${tab.desc}`}
             style={{
               width: 38, height: 38, borderRadius: 9, border: isCloud ? '1px solid rgba(37,99,235,0.35)' : 'none',
               background: active === tab.id
@@ -153,6 +176,12 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
               <span style={{
                 position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%',
                 background: '#22c55e', border: '1.5px solid var(--bg-surface)',
+              }} />
+            )}
+            {tab.id === 'suggestions' && showSuggestionsBadge && (
+              <span style={{
+                position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%',
+                background: 'var(--brand-accent, #0EA5E9)', border: '1.5px solid var(--bg-surface)',
               }} />
             )}
           </button>
@@ -200,6 +229,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
               </div>
             )}
             {active === 'themes'     && <div style={scrollStyle}><ThemePanel /></div>}
+            {active === 'suggestions' && <div style={scrollStyle}><SuggestionsPanel /></div>}
             {active === 'images'     && <div style={scrollStyle}><ImagesPanel projectId={projectId} /></div>}
             {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'payments'   && <div style={scrollStyle}><PaymentsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}

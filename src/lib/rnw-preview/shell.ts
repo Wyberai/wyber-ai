@@ -56,6 +56,7 @@ export function buildPreviewHtml(js: string, opts: PreviewShellOpts = {}): strin
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Preview</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script type="importmap">${importmap}</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { forgeLine, buildStagedPlan, parsePlanManifest, type PlannedFile } from './staged-plan'
+import { forgeLine, buildStagedPlan, parsePlanManifest, diffPlannedAgainstWritten, type PlannedFile } from './staged-plan'
 
 describe('forgeLine', () => {
   it('uses a normal purpose as-is', () => {
@@ -56,6 +56,40 @@ describe('buildStagedPlan', () => {
     expect(plan.shouldStage).toBe(true)
     expect(plan.scaffoldPaths).toEqual(['src/App.tsx', 'src/index.css', 'src/components/Sidebar.tsx'])
     expect(plan.fillBatches.flat().map(f => f.path)).toEqual(['src/components/A.tsx', 'src/components/B.tsx'])
+  })
+})
+
+describe('diffPlannedAgainstWritten', () => {
+  it('returns empty when every planned path was written', () => {
+    const planned: PlannedFile[] = [
+      { path: 'src/screens/HistoryScreen.tsx', purpose: 'history calendar' },
+      { path: 'src/screens/SettingsScreen.tsx', purpose: 'settings' },
+    ]
+    expect(diffPlannedAgainstWritten(planned, ['src/screens/HistoryScreen.tsx', 'src/screens/SettingsScreen.tsx', 'App.tsx'])).toEqual([])
+  })
+
+  it('returns the subset that was never written, preserving purpose', () => {
+    const planned: PlannedFile[] = [
+      { path: 'src/screens/HistoryScreen.tsx', purpose: 'history calendar' },
+      { path: 'src/screens/SettingsScreen.tsx', purpose: 'settings screen' },
+      { path: 'App.tsx', purpose: 'wire new screens into navigation' },
+    ]
+    const missing = diffPlannedAgainstWritten(planned, ['src/screens/HistoryScreen.tsx'])
+    expect(missing).toEqual([
+      { path: 'src/screens/SettingsScreen.tsx', purpose: 'settings screen' },
+      { path: 'App.tsx', purpose: 'wire new screens into navigation' },
+    ])
+  })
+
+  it('matches exact paths only — a near-miss path is NOT treated as a match', () => {
+    const planned: PlannedFile[] = [{ path: 'src/screens/SettingsScreen.tsx', purpose: 'settings' }]
+    // Different casing/prefix — must not be silently accepted as "handled".
+    const missing = diffPlannedAgainstWritten(planned, ['screens/SettingsScreen.tsx', 'src/Screens/SettingsScreen.tsx'])
+    expect(missing).toEqual(planned)
+  })
+
+  it('returns empty for an empty planned array', () => {
+    expect(diffPlannedAgainstWritten([], ['App.tsx'])).toEqual([])
   })
 })
 

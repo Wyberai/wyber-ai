@@ -11,24 +11,18 @@ import { useTheme } from '@/lib/theme';
 import { useEditorStore } from '@/store/editor';
 import { PALETTES, type Palette } from '@/lib/design-palettes';
 import {
-  parseAppTheme, writeAppTheme, themeToCss, paletteToTheme,
+  parseAppTheme, paletteToTheme,
   hexToHslChannels, hslChannelsToHex,
   DARK_SCAFFOLD, LIGHT_SCAFFOLD, CURATED_FONTS, type AppTheme,
 } from '@/lib/app-theme';
 import { GlowButton, MicroLabel, EmptyState } from '@/components/editor/ui';
-import { persistProjectFiles } from '@/lib/persist-project';
+import { previewTheme, applyThemeToProject } from '@/lib/theme-apply';
 
 const sw = (channels: string | undefined): string => channels ? `hsl(${channels})` : 'transparent';
 
-// Send the override into the preview iframe. PreviewPanel owns the iframe ref
-// and forwards this window event (same pattern as wyber-request-edit-mode).
-function previewTheme(theme: AppTheme) {
-  window.dispatchEvent(new CustomEvent('wyber-apply-theme', { detail: { css: themeToCss(theme) } }));
-}
-
 export function ThemePanel() {
   const { theme: ideTheme, toggle: toggleIde } = useTheme();
-  const { files, setFiles, project } = useEditorStore();
+  const { files } = useEditorStore();
 
   const indexCssFile = files['src/index.css'] as { content?: string } | undefined;
   const hasApp = Object.keys(files).length >= 2 && indexCssFile !== undefined;
@@ -45,27 +39,19 @@ export function ThemePanel() {
     fontDisplay: current.fontDisplay ?? 'General Sans',
   };
 
-  // The one write path: instant preview → rewrite index.css → setFiles (auto
-  // rebuild) → PATCH /api/projects. No LLM anywhere.
+  // The one write path (shared with SuggestionsPanel — see theme-apply.ts):
+  // instant preview → rewrite index.css → setFiles (auto rebuild) → PATCH
+  // /api/projects. No LLM anywhere.
   const applyTheme = async (theme: AppTheme, id: string) => {
     if (!hasApp || saving) return;
     setSaving(id);
     try {
-      previewTheme(theme);
-      const nextCss = writeAppTheme(indexCssFile?.content ?? '', theme);
-      const updated = {
-        ...files,
-        'src/index.css': { path: 'src/index.css', content: nextCss, language: 'css' },
-      };
-      setFiles(updated as typeof files);
-      // persistProjectFiles returns false on a conflict or an exhausted retry
-      // — it already posts its own chat warning in that case. Only flash the
-      // "Applied" confirmation on an actual confirmed save, so this panel
-      // never claims success for a change that didn't reach the server (that
-      // silent-lie was the root cause of themes reverting after publish).
-      const saved = project?.id
-        ? await persistProjectFiles(project.id, updated, project.userId)
-        : true;
+      // applyThemeToProject only resolves true on an actual confirmed save
+      // (persistProjectFiles already posts its own chat warning on a
+      // conflict/exhausted retry) — only flash "Applied" on that, so this
+      // panel never claims success for a change that didn't reach the server
+      // (that silent-lie was the root cause of themes reverting after publish).
+      const saved = await applyThemeToProject(theme);
       if (saved) {
         setSavedFlash(id);
         setTimeout(() => setSavedFlash(prev => (prev === id ? null : prev)), 1600);

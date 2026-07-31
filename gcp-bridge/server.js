@@ -82,12 +82,19 @@ app.post('/instances', async (req, res) => {
           settings: {
             tier: 'db-f1-micro',
             availabilityType: 'ZONAL',
-            backupConfiguration: { enabled: true, startTime: '03:00', transactionLogRetentionDays: 7 },
+            backupConfiguration: {
+              enabled: true,
+              startTime: '03:00',
+              transactionLogRetentionDays: 7,
+              pointInTimeRecoveryEnabled: true,
+              backupRetentionSettings: { retentionUnit: 'COUNT', retainedBackups: 7 },
+            },
             ipConfiguration: {
               ipv4Enabled: true,
               authorizedNetworks: [{ name: 'all', value: '0.0.0.0/0' }],
               sslMode: 'ENCRYPTED_ONLY',
             },
+            deletionProtectionEnabled: true,
           },
           rootPassword: finalPassword,
         },

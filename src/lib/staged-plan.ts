@@ -146,6 +146,25 @@ function looksLikeInternalNote(purpose: string): boolean {
     || /framework provides/i.test(purpose)
 }
 
+// Manifests of 0-1 files aren't worth diffing — a single-file edit request is
+// either fully addressed or the model just did something different, and
+// retrying on that thin a signal produces more false positives than value.
+export const EDIT_COMPLETENESS_MIN_FILES = 2
+
+/**
+ * Given an edit-plan manifest and the paths actually written/edited this
+ * pass, return the planned files that were never addressed. Exact-path
+ * comparison (trimmed) — same precision level parsePlanManifest already
+ * normalizes paths to, and the same Set-membership approach qa-checks.ts
+ * uses for its own path checks. Deliberately no fuzzy/near-miss matching:
+ * a false "still missing" is a wasted free retry pass; a false "handled"
+ * from over-eager matching would silently defeat the whole check.
+ */
+export function diffPlannedAgainstWritten(planned: PlannedFile[], writtenPaths: string[]): PlannedFile[] {
+  const written = new Set(writtenPaths.map((p) => p.trim()))
+  return planned.filter((f) => !written.has(f.path.trim()))
+}
+
 export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): string {
   if (phase === 'scaffold') return 'Laying the foundation — shell, theme, and navigation'
   // Prefer the most descriptive purpose in the batch, skipping any that read

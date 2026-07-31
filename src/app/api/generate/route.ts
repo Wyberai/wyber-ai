@@ -2810,7 +2810,20 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         ? '"App.tsx", "src/navigation/AppNavigator.tsx", "src/screens/HomeScreen.tsx"'
         : '"src/index.css", "src/App.tsx", "src/components/Layout.tsx"'
       const planCount = isMobilePlan ? '8-14' : '6-10'
-      staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module. Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
+      if (hasExisting) {
+        // Edit-completeness plan (see ChatPanel.tsx's concurrent plan-pass on
+        // every edit turn): the request is an EDIT against files already
+        // shown above as "Current files" — the model must list every file
+        // that needs to be created OR modified to fully satisfy every
+        // distinct part of the request, including wiring/navigation/entry
+        // files (e.g. App.tsx to register a new screen), not just new files.
+        // This manifest is diffed against what the edit actually writes —
+        // kept deliberately conservative so that diff doesn't fire retries
+        // for files the model correctly decided not to touch.
+        staticSystemPrompt = `You are a software architect reviewing an EDIT request against an existing app (its current files are included above). Output ONLY a JSON array of the files that must be CREATED or MODIFIED to fully satisfy every distinct part of the request. Each item: {"path":"...","purpose":"one sentence describing exactly what changes in this file, or what it implements if new"}. If the request has multiple distinct asks (e.g. "add screens A, B, C and wire them into navigation"), make sure every ask has a corresponding planned file — including whichever existing file(s) (e.g. ${isMobilePlan ? 'App.tsx or the navigator' : 'src/App.tsx or the router'}) must be edited to wire new things in. List ONLY files that are actually necessary — do not include files that might optionally be touched. Output ONLY the raw JSON array. No prose, no markdown fences.`
+      } else {
+        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module. Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
+      }
       stageMaxTokens = 2000
     } else {
       const basePrompt = projectType === 'mobile'

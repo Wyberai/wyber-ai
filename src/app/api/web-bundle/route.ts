@@ -26,9 +26,19 @@ const EXTERNAL_DEPS: Record<string, string> = {
   'lenis':              'https://esm.sh/lenis@1.1.14',
 }
 
+// Only normalises the leading slash. Deliberately does NOT append a default
+// extension: it's called both to register real files (which already carry
+// their actual extension, e.g. 'src/wyber-store.ts') and to resolve import
+// specifiers (which usually don't). Forcing '.tsx' here for an extensionless
+// import ran ahead of the onResolve `tries` fallback below and pre-committed
+// every extensionless import to '.tsx' before '.ts'/'.js'/index.* ever got a
+// chance — silently breaking any import of a real '.ts' module (wyber-store
+// is 'src/wyber-store.ts', so `import ... from './wyber-store'` resolved to
+// the wrong, nonexistent 'wyber-store.tsx' and fell through to being treated
+// as an external esm.sh package instead, producing an unresolvable URL that
+// took down the whole bundle before React ever mounted).
 function normalise(p: string): string {
   if (!p.startsWith('/')) p = '/' + p
-  if (!p.includes('.')) p += '.tsx'
   return p
 }
 
