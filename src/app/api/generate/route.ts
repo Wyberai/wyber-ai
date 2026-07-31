@@ -653,6 +653,41 @@ DESIGN SYSTEM — define BEFORE components, stay cohesive AND fresh:
 - Contrast is NON-NEGOTIABLE. Light theme: dark text on light surfaces. Dark theme: reverse.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY QUALITY BOILERPLATE — COPY THESE PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+If these patterns are missing, the build fails the Aug 2026 standard. No exceptions.
+
+TYPOGRAPHY — exact Tailwind classes. NEVER use text-4xl/text-5xl/text-3xl for hero or headline type:
+  Hero h1:    className="text-[clamp(52px,8vw,96px)] leading-[1.05] tracking-[-0.04em] font-display font-semibold text-foreground"
+  Section h2: className="text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-[-0.03em] font-display font-semibold text-foreground"
+  Sub h3:     className="text-[clamp(18px,2.5vw,26px)] leading-[1.2] tracking-[-0.02em] font-display font-medium text-foreground"
+  Eyebrow:    className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
+  Body:       className="text-base leading-[1.65] text-muted-foreground max-w-[60ch]"
+  KPI stat:   className="text-[clamp(36px,4vw,56px)] leading-none tracking-[-0.03em] tabular-nums font-display font-bold text-foreground"
+
+ANIMATION EASING — mandatory (ease="easeOut" is 2021, never use it):
+  const EASE_EXPO = [0.23, 1, 0.32, 1]           // cinematic deceleration — all section reveals
+  const EASE_BACK = [0.34, 1.56, 0.64, 1]         // playful overshoot — badge/chip entrances
+  const SPRING = { type: 'spring', stiffness: 400, damping: 30 }  // button + toggle interactions
+  Standard section reveal:
+    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.55, ease: EASE_EXPO }}>
+
+GRADIENT-BORDER CARD (for featured pricing, callout panels, highlight cards):
+  Add to index.css :root: --gradient-active: linear-gradient(135deg, hsl(var(--primary)/0.4), hsl(var(--accent)/0.2));
+  <div className="p-px bg-[image:var(--gradient-active)] rounded-[calc(var(--radius)+1px)]">
+    <div className="bg-card rounded-[var(--radius)] p-6">{/* content */}</div>
+  </div>
+
+PALETTE PRESETS — pick one and customize, never invent from nothing:
+  Dark/Precision (dev,analytics,infra):  --background:220 16% 4%; --primary:240 80% 62%; --accent:280 70% 55%; --card:220 14% 7%; --border:220 10% 14%; --muted:220 12% 10%; --muted-foreground:220 8% 50%; --radius:0.75rem
+  Dark/Emerald (fintech,health,climate): --background:160 25% 4%; --primary:155 75% 44%; --accent:175 70% 38%; --card:160 20% 7%; --border:160 15% 13%; --muted:160 18% 9%; --muted-foreground:160 10% 48%; --radius:0.75rem
+  Dark/Amber (creative,media,lifestyle): --background:30 20% 5%; --primary:38 90% 52%; --accent:55 85% 48%; --card:30 16% 8%; --border:30 12% 15%; --muted:30 14% 10%; --muted-foreground:30 8% 48%; --radius:1rem
+  Dark/Rose (beauty,luxury,fashion):     --background:340 18% 5%; --primary:345 80% 58%; --accent:20 85% 52%; --card:340 14% 8%; --border:340 10% 15%; --muted:340 12% 10%; --muted-foreground:340 8% 48%; --radius:1rem
+  Light/Paper (HR,wellness,food,local):  --background:40 15% 97%; --foreground:40 12% 8%; --primary:25 85% 52%; --accent:45 80% 48%; --card:40 12% 100%; --border:40 10% 88%; --muted:40 8% 94%; --muted-foreground:40 8% 45%; --radius:0.875rem
+  Light/Steel (legal,enterprise,B2B):   --background:220 15% 98%; --foreground:220 15% 8%; --primary:220 70% 45%; --accent:240 65% 55%; --card:220 12% 100%; --border:220 12% 88%; --muted:220 10% 95%; --muted-foreground:220 10% 45%; --radius:0.5rem
+  All dark presets: also add --foreground:220 8% 96%; --popover:same as card; --popover-foreground:same as foreground; --primary-foreground:0 0% 100%; --secondary:same as muted; --secondary-foreground:same as foreground; --accent-foreground:0 0% 100%; --destructive:0 75% 55%; --destructive-foreground:0 0% 100%; --input:same as card; --ring:same as primary
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AI IMAGE GENERATION — MANDATORY
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Use this format wherever real imagery elevates the design:
@@ -923,6 +958,99 @@ DESIGN SYSTEM — same token system as webapps, applied to SaaS surfaces:
 WYBER UI KIT — IMPORT THESE, DON'T HAND-ROLL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${WYBER_UI_KIT_PROMPT}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY QUALITY BOILERPLATE — COPY THESE PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+If these patterns are missing, the build fails the Aug 2026 standard. No exceptions.
+
+TYPOGRAPHY — exact Tailwind classes. NEVER use text-4xl/text-5xl for dashboard headings:
+  Page title h1:  className="text-[clamp(22px,2vw,30px)] leading-[1.15] tracking-[-0.03em] font-display font-semibold text-foreground"
+  Section h2:     className="text-[clamp(18px,1.5vw,22px)] leading-[1.2] tracking-[-0.02em] font-display font-semibold text-foreground"
+  KPI stat:       className="text-[clamp(28px,3vw,42px)] leading-none tracking-[-0.04em] tabular-nums font-display font-bold text-foreground"
+  KPI label:      className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+  Table header:   className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground"
+  Auth headline:  className="text-[clamp(26px,3vw,36px)] leading-[1.1] tracking-[-0.03em] font-display font-semibold text-foreground"
+  Eyebrow/badge:  className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
+
+ANIMATION EASING — mandatory (ease="easeOut" is 2021, never use it):
+  const EASE_EXPO = [0.23, 1, 0.32, 1]           // cinematic deceleration — all panel/page reveals
+  const SPRING = { type: 'spring', stiffness: 400, damping: 30 }  // button + toggle + sidebar
+  Standard entrance: initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: EASE_EXPO }}
+  Slide-in panel:    initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.35, ease: EASE_EXPO }}
+
+GRADIENT-BORDER CARD (for KPI cards, highlighted panels, featured settings sections):
+  <div className="p-px bg-[image:var(--gradient-active)] rounded-[calc(var(--radius)+1px)]">
+    <div className="bg-card rounded-[var(--radius)] p-5">{/* content */}</div>
+  </div>
+
+PALETTE PRESETS — pick one and customize:
+  Dark/Precision (dev,infra,analytics):  --background:220 16% 4%; --primary:240 80% 62%; --accent:280 70% 55%; --card:220 14% 7%; --border:220 10% 14%; --muted:220 12% 10%; --muted-foreground:220 8% 50%; --radius:0.625rem
+  Dark/Emerald (fintech,banking,crypto): --background:160 25% 4%; --primary:155 75% 44%; --accent:175 70% 38%; --card:160 20% 7%; --border:160 15% 13%; --muted:160 18% 9%; --muted-foreground:160 10% 48%; --radius:0.625rem
+  Dark/Sky (sales,CRM,marketing):        --background:210 22% 5%; --primary:205 85% 52%; --accent:230 80% 58%; --card:210 18% 8%; --border:210 12% 15%; --muted:210 15% 10%; --muted-foreground:210 8% 48%; --radius:0.75rem
+  Dark/Rose (creator,community,brand):   --background:340 18% 5%; --primary:345 80% 58%; --accent:20 85% 52%; --card:340 14% 8%; --border:340 10% 15%; --muted:340 12% 10%; --muted-foreground:340 8% 48%; --radius:0.75rem
+  Light/Clean (HR,ops,enterprise):       --background:220 15% 98%; --foreground:220 15% 8%; --primary:220 70% 45%; --accent:240 65% 55%; --card:220 12% 100%; --border:220 12% 88%; --muted:220 10% 95%; --muted-foreground:220 10% 45%; --radius:0.5rem
+  All presets need: --foreground:220 8% 96%; --popover:same as card; --popover-foreground:same as foreground; --primary-foreground:0 0% 100%; --secondary:same as muted; --secondary-foreground:same as foreground; --accent-foreground:0 0% 100%; --destructive:0 75% 55%; --destructive-foreground:0 0% 100%; --input:same as card; --ring:same as primary
+
+AUTH SCREEN TEMPLATE — copy this exact structure, customize image prompt + copy:
+// Login.tsx — same split-panel pattern for Signup.tsx and Onboarding.tsx
+export default function Login() {
+  return (
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Left: cinematic brand panel */}
+      <div className="relative hidden lg:flex flex-col overflow-hidden grain">
+        <img
+          src="{{wyber-image: YOUR_ART_DIRECTED_9_16_PROMPT | 9:16}}"
+          alt="Brand atmosphere"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/15" />
+        <div className="relative z-10 p-8">
+          <span className="font-display font-bold text-white text-lg tracking-[-0.02em]">YourBrand</span>
+        </div>
+        <div className="relative z-10 mt-auto p-8">
+          <p className="text-white/90 text-lg font-display leading-snug tracking-[-0.01em] max-w-xs">
+            "Switched from [competitor]. Best decision this quarter."
+          </p>
+          <div className="flex items-center gap-3 mt-4">
+            <img src="{{wyber-image: professional headshot confident executive warm studio lighting | 1:1}}" alt="Customer" className="w-9 h-9 rounded-full object-cover border-2 border-white/20" />
+            <div>
+              <p className="text-white/90 text-sm font-medium">Sarah Chen</p>
+              <p className="text-white/50 text-xs font-mono">Head of Ops · Horizon Labs</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Right: form panel */}
+      <div className="flex items-center justify-center bg-background p-8 lg:p-12">
+        <div className="w-full max-w-sm space-y-6">
+          <div>
+            <h1 className="text-[clamp(26px,3vw,36px)] leading-[1.1] tracking-[-0.03em] font-display font-semibold text-foreground">Welcome back</h1>
+            <p className="text-muted-foreground text-sm mt-1.5">Sign in to continue</p>
+          </div>
+          <div className="p-px bg-[image:var(--gradient-active)] rounded-[calc(var(--radius)+1px)]">
+            <div className="bg-card rounded-[var(--radius)] p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Email</label>
+                <div className="p-px bg-[image:var(--gradient-active)] rounded-lg">
+                  <input type="email" placeholder="you@company.com" className="w-full bg-input rounded-[calc(var(--radius)-2px)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Password</label>
+                <div className="p-px bg-[image:var(--gradient-active)] rounded-lg">
+                  <input type="password" placeholder="••••••••" className="w-full bg-input rounded-[calc(var(--radius)-2px)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+              </div>
+              <button className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-medium hover:opacity-90 transition-opacity">Sign in</button>
+            </div>
+          </div>
+          <p className="text-center text-sm text-muted-foreground">No account? <a href="#/signup" className="text-primary hover:underline font-medium">Create one</a></p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 AI IMAGE GENERATION — MANDATORY
@@ -1308,6 +1436,40 @@ THE DESIGN SYSTEM — how you stay cohesive AND fresh:
   .grain::after { content:''; position:absolute; inset:-50%; width:200%; height:200%; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); opacity:0.04; animation:grain 8s steps(10) infinite; pointer-events:none; }
   Add grain class + relative + overflow-hidden to dark hero sections and major panels for tactile depth.
 - CONTRAST IS NON-NEGOTIABLE: every text token must be legible on its surface. primary-foreground must read on primary; never white-on-white or dark-on-dark. Light theme → dark text on light surfaces; dark theme → the reverse.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY QUALITY BOILERPLATE — COPY THESE PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+If these patterns are missing, the build fails the Aug 2026 standard. No exceptions.
+
+TYPOGRAPHY — exact Tailwind classes. NEVER use text-4xl/text-5xl/text-3xl for primary headings:
+  Hero h1:         className="text-[clamp(52px,8vw,96px)] leading-[1.05] tracking-[-0.04em] font-display font-semibold text-foreground"
+  Section h2:      className="text-[clamp(32px,4vw,56px)] leading-[1.1] tracking-[-0.03em] font-display font-semibold text-foreground"
+  Dashboard h1:    className="text-[clamp(22px,2vw,30px)] leading-[1.15] tracking-[-0.03em] font-display font-semibold text-foreground"
+  Subsection h3:   className="text-[clamp(18px,2.5vw,26px)] leading-[1.2] tracking-[-0.02em] font-display font-medium text-foreground"
+  Eyebrow/label:   className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground"
+  Body copy:       className="text-base leading-[1.65] text-muted-foreground max-w-[60ch]"
+  KPI stat:        className="text-[clamp(28px,3vw,42px)] leading-none tracking-[-0.04em] tabular-nums font-display font-bold text-foreground"
+
+ANIMATION EASING — mandatory (ease="easeOut" is 2021, never use it):
+  const EASE_EXPO = [0.23, 1, 0.32, 1]           // cinematic deceleration — section/panel reveals
+  const EASE_BACK = [0.34, 1.56, 0.64, 1]         // playful overshoot — badge/card entrances
+  const SPRING = { type: 'spring', stiffness: 400, damping: 30 }  // button + toggle interactions
+  Section reveal: initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.55, ease: EASE_EXPO }}
+
+GRADIENT-BORDER CARD (for featured content, pricing callouts, highlight panels):
+  Add to index.css: --gradient-active: linear-gradient(135deg, hsl(var(--primary)/0.4), hsl(var(--accent)/0.2));
+  <div className="p-px bg-[image:var(--gradient-active)] rounded-[calc(var(--radius)+1px)]">
+    <div className="bg-card rounded-[var(--radius)] p-6">{/* content */}</div>
+  </div>
+
+PALETTE PRESETS — pick one and customize, never invent blank values:
+  Dark/Precision (dev,tools,productivity):  --background:220 16% 4%; --primary:240 80% 62%; --accent:280 70% 55%; --card:220 14% 7%; --border:220 10% 14%; --muted:220 12% 10%; --muted-foreground:220 8% 50%; --radius:0.75rem
+  Dark/Amber (creative,content,lifestyle):  --background:30 20% 5%; --primary:38 90% 52%; --accent:55 85% 48%; --card:30 16% 8%; --border:30 12% 15%; --muted:30 14% 10%; --muted-foreground:30 8% 48%; --radius:1rem
+  Dark/Emerald (finance,health,data):       --background:160 25% 4%; --primary:155 75% 44%; --accent:175 70% 38%; --card:160 20% 7%; --border:160 15% 13%; --muted:160 18% 9%; --muted-foreground:160 10% 48%; --radius:0.75rem
+  Light/Paper (editorial,journal,wellness): --background:40 15% 97%; --foreground:40 12% 8%; --primary:25 85% 52%; --accent:45 80% 48%; --card:40 12% 100%; --border:40 10% 88%; --muted:40 8% 94%; --muted-foreground:40 8% 45%; --radius:0.875rem
+  Light/Steel (business,enterprise,B2B):    --background:220 15% 98%; --foreground:220 15% 8%; --primary:220 70% 45%; --accent:240 65% 55%; --card:220 12% 100%; --border:220 12% 88%; --muted:220 10% 95%; --muted-foreground:220 10% 45%; --radius:0.5rem
+  All dark presets need: --foreground:220 8% 96%; --primary-foreground:0 0% 100%; --secondary:same as muted; --secondary-foreground:same as foreground; --accent-foreground:0 0% 100%; --destructive:0 75% 55%; --destructive-foreground:0 0% 100%; --input:same as card; --ring:same as primary; --popover:same as card; --popover-foreground:same as foreground
 
 CRAFT — what makes it look senior, not AI-generated:
 - Strong type hierarchy: large display/headline (use font-display), calm readable body, small uppercase tracked labels (text-xs uppercase tracking-wider text-muted-foreground).
