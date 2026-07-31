@@ -306,6 +306,16 @@ export async function DELETE(req: NextRequest) {
     const { projectId } = await req.json()
     const admin = createServiceClient()
 
+    // Verify ownership BEFORE touching storage — an authenticated non-owner
+    // could otherwise delete another user's published CDN files.
+    const { data: owned } = await admin
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (!owned) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
     await admin.storage.from('published-apps').remove([
       `${projectId}/index.html`,
       `${projectId}/icon-192.png`,

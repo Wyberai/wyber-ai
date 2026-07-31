@@ -2,9 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { AWARD_CREDITS, AWARD_LABEL, type AwardPlace } from '@/lib/challenge'
 import { sendChallengeWinnerEmail } from '@/lib/email'
-
-// Same allowlist as /admin so whoever runs the command center can judge.
-const ADMIN_EMAILS = ['hello@wyberai.com', 'sumit@reconsignal.com', 'sumit.sutar259@gmail.com', 'admin@reconsignal.com']
+import { isAdminEmail } from '@/lib/admin'
 
 // Award (or revoke) a weekly prize with one click. Awarding grants the prize
 // credits to the entrant atomically via adjust_credits; revoking takes them
@@ -12,7 +10,7 @@ const ADMIN_EMAILS = ['hello@wyberai.com', 'sumit@reconsignal.com', 'sumit.sutar
 export async function POST(req: NextRequest) {
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
-  if (!user || !ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())) {
+  if (!user || !isAdminEmail(user.email)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

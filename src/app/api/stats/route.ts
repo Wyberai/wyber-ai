@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
-export const revalidate = 60; // Cache for 60 seconds
+export const revalidate = 60;
 
 export async function GET() {
   try {
-    const supabase = await createAdminClient();
+    const supabase = await createClient();
 
     const [
       { count: projectCount },
@@ -20,18 +20,12 @@ export async function GET() {
     ]);
 
     return NextResponse.json({
-      projects: (projectCount ?? 0),
-      users: (userCount ?? 0),
-      templates: (templateCount ?? 0),
-      deployments: (deployCount ?? 0),
+      projects: projectCount ?? 0,
+      users: userCount ?? 0,
+      templates: templateCount ?? 0,
+      deployments: deployCount ?? 0,
     });
   } catch {
-    // Return fallback on error
-    return NextResponse.json({
-      projects: 1000,
-      users: 500,
-      templates: 50,
-      deployments: 200,
-    });
+    return NextResponse.json({ projects: 1000, users: 500, templates: 50, deployments: 200 });
   }
 }
