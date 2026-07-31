@@ -41,10 +41,19 @@ const SCAFFOLD_HINTS = [
 function isScaffoldFile(path: string): boolean {
   const lower = path.toLowerCase()
   const basename = lower.split('/').pop() ?? lower
-  // Match on basename or full path-suffix, not substring — prevents files like
-  // src/navigation/ProfileScreen.tsx from being promoted to scaffold just
-  // because their parent directory contains 'nav'.
-  return SCAFFOLD_HINTS.some((h) => basename === h || basename.startsWith(h + '.') || lower.endsWith('/' + h))
+  const segments = lower.split('/')
+  return SCAFFOLD_HINTS.some((h) =>
+    // basename fully matches or starts with hint: app.tsx, nav.tsx, theme.ts
+    basename === h || basename.startsWith(h + '.') ||
+    // basename contains hint as a substring: AppNavigator (has 'nav'),
+    // ThemeContext (has 'theme'), BottomTabRouter (has 'router')
+    // — checked on the filename only, NOT on directory names, so
+    // src/navigation/HomeScreen.tsx doesn't match 'nav' (basename='homescreen.tsx')
+    basename.includes(h) ||
+    // hint is an exact path SEGMENT: src/nav/x.ts → segments=['src','nav','x.ts']
+    // 'nav' matches; 'navigation' does NOT match 'nav' (exact comparison)
+    segments.includes(h)
+  )
 }
 
 /**
