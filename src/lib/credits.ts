@@ -34,6 +34,7 @@ export type ActionType =
   | 'employee-run'
   | 'gtm-icp-sequence'
   | 'gtm-lead-enrich'
+  | 'preview-access'
 
 /**
  * Anthropic model IDs for each tier. Bumped from claude-sonnet-4-6/opus-4-8 to
@@ -137,7 +138,17 @@ const BASE_COSTS: Record<ActionType, number> = {
   'employee-run':       5,
   'gtm-icp-sequence':   3,
   'gtm-lead-enrich':    1,
+  // Charged to the project OWNER (not the viewer) once per viewer per project
+  // per calendar day when someone opens a QR/mobile preview — see
+  // /api/preview-access. Flat, tier-agnostic like hero-image-gen/audio-gen:
+  // this isn't a model call at all, it's a bundling/hosting cost.
+  'preview-access':     2,
 }
+
+// Game previews cost more than app previews (heavier bundle, audio-unlock,
+// landscape lock) — a second flat price, not a MODEL_MULTIPLIERS tier, so it
+// lives beside BASE_COSTS rather than inside creditCost()'s tier logic.
+export const PREVIEW_ACCESS_GAME_COST = 5
 
 /**
  * Compute the credit cost for an action + model tier.
@@ -154,7 +165,7 @@ export function creditCost(action: ActionType, tier: ModelTier = 'default'): num
   // them (see BASE_COSTS comments). Forced to 1× here, not just by omitting
   // the tier argument at call sites, so a future caller that DOES pass a
   // tier (e.g. 'fable', 2×) can't silently break the documented flat price.
-  if (action === 'hero-image-gen' || action === 'audio-gen') return BASE_COSTS[action]
+  if (action === 'hero-image-gen' || action === 'audio-gen' || action === 'preview-access') return BASE_COSTS[action]
   const base = BASE_COSTS[action]
   const multiplier = MODEL_MULTIPLIERS[tier]
   return Math.max(1, Math.round(base * multiplier))

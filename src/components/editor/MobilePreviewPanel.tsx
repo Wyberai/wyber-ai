@@ -7,6 +7,11 @@ import { DEFAULT_DEVICE_ID, devicesForOS, getDevice, type DeviceOS } from '@/lib
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_MOBILE_STRINGS } from '@/lib/i18n/dict/editor-mobile'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
+import { creditCost, PREVIEW_ACCESS_GAME_COST } from '@/lib/credits'
+import { detectGame } from '@/lib/game-detect'
+
+// Base (app, not game) preview-access charge.
+const PREVIEW_ACCESS_APP_COST = creditCost('preview-access')
 
 // ── Mode system ────────────────────────────────────────────────────────────────
 // inapp      → RNW bundle rendered in-browser (instant, zero deps)
@@ -23,8 +28,31 @@ interface Props {
 }
 
 export function MobilePreviewPanel({ projectId }: Props) {
-  const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
+  const { files, isGenerating, hasGeneratedFiles, credits, setCredits } = useEditorStore()
   const t = useT(EDITOR_MOBILE_STRINGS)
+
+  // The QR gate below reads `credits` from the store, which is only ever set
+  // from the page's initial server-rendered profile or after this tab's own
+  // spends — a top-up completed in another tab (or on mobile) never reaches
+  // it otherwise, so the gate would stay locked until a full reload. Refresh
+  // on refocus, the cheapest place a stale balance actually matters here.
+  useEffect(() => {
+    async function refreshCredits() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+        const { data } = await supabase.from('profiles').select('credits').eq('id', user.id).single()
+        if (typeof data?.credits === 'number') setCredits(data.credits)
+      } catch { /* best-effort */ }
+    }
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible') refreshCredits()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [setCredits])
 
   const [mode, setMode] = useState<PreviewMode>(DEFAULT_MODE)
   const [platform, setPlatform] = useState<DeviceOS>('ios')
@@ -324,6 +352,8 @@ export function MobilePreviewPanel({ projectId }: Props) {
               bundling={deviceBundling}
               bundleUrl={deviceBundleUrl}
               phoneHeight={phoneHeight}
+              credits={credits}
+              files={files}
             />
           </div>
         )}
@@ -352,16 +382,24 @@ export function MobilePreviewPanel({ projectId }: Props) {
 // ── WyberAi Go panel ─────────────────────────────────────────────────────────
 
 function WyberAiGoCta({
-  projectId, hasApp, bundling, bundleUrl, phoneHeight,
+  projectId, hasApp, bundling, bundleUrl, phoneHeight, credits, files,
 }: {
   projectId?: string
   hasApp: boolean
   bundling: boolean
   bundleUrl: string | null
   phoneHeight: number
+  credits: number
+  files: Record<string, { content?: string }>
 }) {
   const deepLink = projectId ? `wyberai://project/${projectId}` : null
   const qrData = deepLink ? `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(deepLink)}&margin=10&color=0-0-0&bgcolor=ffffff` : null
+  // Must match what the server will actually charge (same heuristic, same
+  // shared module) — a mismatch here is exactly what let the QR show
+  // "unlocked" while the server still charged the higher game rate and
+  // 402'd the viewer mid-scan.
+  const previewAccessCost = detectGame(files) ? PREVIEW_ACCESS_GAME_COST : PREVIEW_ACCESS_APP_COST
+  const creditsLocked = credits < previewAccessCost
 
   return (
     <div style={{
@@ -393,7 +431,34 @@ function WyberAiGoCta({
         </div>
 
         {/* QR code + instructions */}
-        {hasApp && deepLink && qrData && (
+        {hasApp && deepLink && qrData && creditsLocked ? (
+          <>
+            {/* Locked state — builder is out of credits, so sharing this
+                preview would charge a viewer's scan against a balance that
+                can't cover it. Blurred placeholder instead of a QR that 402s. */}
+            <div style={{ position: 'relative', width: 180, height: 180, borderRadius: 14, background: '#fff', filter: 'blur(6px)', opacity: 0.35 }} />
+            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: -140 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="11" width="14" height="9" rx="2" stroke="#f4f4f5" strokeWidth="1.8" />
+                  <path d="M8 11V7a4 4 0 018 0v4" stroke="#f4f4f5" strokeWidth="1.8" />
+                </svg>
+              </div>
+            </div>
+            <div style={{ color: '#f4f4f5', fontSize: 13, fontWeight: 700, textAlign: 'center', marginTop: 4 }}>
+              Add credits to share previews
+            </div>
+            <div style={{ color: '#71717a', fontSize: 11.5, textAlign: 'center', maxWidth: 240, lineHeight: 1.5 }}>
+              Each preview scan costs {previewAccessCost} credits from your balance — top up to let people open this on their phone again.
+            </div>
+            <a
+              href="/pricing"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none', background: '#0EA5E9', borderRadius: 10, padding: '10px 18px', color: '#fff', fontSize: 13, fontWeight: 700 }}
+            >
+              Add Credits
+            </a>
+          </>
+        ) : hasApp && deepLink && qrData && (
           <>
             {/* QR */}
             <div style={{ background: '#fff', padding: 10, borderRadius: 14, lineHeight: 0, boxShadow: '0 4px 24px rgba(0,0,0,0.5)' }}>
@@ -428,24 +493,16 @@ function WyberAiGoCta({
           </>
         )}
 
-        {/* Download CTA */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-          <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center', marginBottom: -4 }}>
-            Don't have WyberAi yet?
+        {/* Play Store CTA — shown once the app is live */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)', borderRadius: 20, padding: '4px 12px' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9' }} />
+            <span style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>COMING TO GOOGLE PLAY</span>
           </div>
-          <a
-            href="https://play.google.com/store/apps/details?id=com.wyberai.app"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              textDecoration: 'none', background: '#1a1a22', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 10, padding: '10px 16px', color: '#d4d4d8', fontSize: 12, fontWeight: 600,
-            }}
-          >
-            <PlayStoreIcon />
-            Get WyberAi on Google Play
-          </a>
+          <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center', lineHeight: 1.5 }}>
+            The WyberAi mobile app is in development.<br />
+            Side-load the APK from the latest GitHub Actions build to test.
+          </div>
         </div>
 
         {/* Pre-bundle info */}

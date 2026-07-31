@@ -3,6 +3,17 @@ import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { shouldSkip, inferLanguage, inferFramework } from '../import/route';
 import { sanitizeFiles } from '@/lib/sanitize-files';
 
+// Optional token for private repos / higher GitHub API rate limits — same
+// `github_connections` table the real "Connect GitHub" flow writes to
+// (src/app/api/auth/github/callback/route.ts). This used to read
+// `profiles.github_token`, a column nothing writes to anymore (see the fix
+// in src/app/api/github/route.ts), so a connected account's private-repo
+// imports always silently fell back to unauthenticated requests.
+async function getGithubToken(admin: Awaited<ReturnType<typeof createAdminClient>>, userId: string): Promise<string | undefined> {
+  const { data } = await admin.from('github_connections').select('access_token').eq('user_id', userId).maybeSingle();
+  return data?.access_token ?? undefined;
+}
+
 // Same guards as the zip importer (src/app/api/projects/import/route.ts) —
 // a blob path from GitHub's tree API shouldn't contain a traversal segment,
 // but defense-in-depth costs nothing here, and the total-size cap bounds
@@ -53,9 +64,8 @@ export async function POST(req: NextRequest) {
 
   const { owner, repo, branch } = parsed;
 
-  // Fetch the user's stored GitHub token if available
-  const { data: profile } = await supabase.from('profiles').select('github_token').eq('id', user.id).single();
-  const token = profile?.github_token ?? undefined;
+  const admin = await createAdminClient();
+  const token = await getGithubToken(admin, user.id);
 
   // Try main, then master if branch not found
   const branchesToTry = branch === 'main' ? ['main', 'master'] : [branch];
@@ -119,7 +129,6 @@ export async function POST(req: NextRequest) {
   // imported repo has no such guarantee on its own.
   const sanitized = isMobile ? files : sanitizeFiles(files);
 
-  const admin = await createAdminClient();
   const { data: project, error } = await admin
     .from('projects')
     .insert({ user_id: user.id, name: projectName, framework, files: sanitized, project_type, is_public: false })

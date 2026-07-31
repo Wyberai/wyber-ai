@@ -29,7 +29,11 @@ export function GitHubPanel({ userId, projectId, githubRepo, lastCommitSha }: Pr
   };
 
   const connectGitHub = () => {
-    window.location.href = `/api/auth/github?next=/project/${projectId}`;
+    // /api/auth/github reads `projectId` (not `next`) to encode the post-OAuth
+    // redirect target — this used to send the wrong param name, so connecting
+    // GitHub from inside a project always bounced back to the dashboard
+    // instead of returning here.
+    window.location.href = `/api/auth/github?projectId=${projectId}`;
   };
 
   const createRepo = async () => {

@@ -80,6 +80,16 @@ export async function notifyPush(
   payload?: Record<string, unknown> | null,
 ): Promise<void> {
   try {
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('notification_prefs')
+      .eq('id', userId)
+      .maybeSingle()
+    // Absent key = enabled (default-on) — a prefs object that predates a given
+    // event type must never silently go silent for it.
+    const prefs = (profile?.notification_prefs ?? {}) as Record<string, boolean>
+    if (prefs[type] === false) return
+
     const { data: tokens } = await admin
       .from('device_tokens')
       .select('token')

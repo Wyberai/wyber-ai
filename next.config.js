@@ -58,4 +58,34 @@ const nextConfig = {
     ]
   },
 }
-module.exports = nextConfig
+
+const { withSentryConfig } = require('@sentry/nextjs')
+
+module.exports = withSentryConfig(nextConfig, {
+  // For all available options, see:
+  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
+  org: 'signalpulse-technologies',
+  project: 'javascript-nextjs',
+
+  // Only print logs for uploading source maps in CI.
+  silent: !process.env.CI,
+
+  // Upload a larger set of source maps for prettier stack traces (increases build time).
+  widenClientFileUpload: true,
+
+  // Uncomment to route browser requests to Sentry through a Next.js rewrite to
+  // circumvent ad-blockers. Increases server load/hosting bill — left off by
+  // default (the wizard's interactive prompt for this couldn't complete
+  // non-interactively; revisit once EXPO_PUBLIC_SENTRY_DSN-equivalent traffic
+  // volume makes ad-blocker loss worth the tradeoff).
+  // tunnelRoute: "/monitoring",
+
+  webpack: {
+    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
+    automaticVercelMonitors: true,
+    treeshake: {
+      // Automatically tree-shake Sentry logger statements to reduce bundle size.
+      removeDebugLogging: true,
+    },
+  },
+})

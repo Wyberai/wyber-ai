@@ -8,7 +8,7 @@ import { useLocale } from '@/lib/i18n/LocaleProvider'
 import { I18N_ENABLED } from '@/lib/i18n/locales'
 import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
-import { creditCost, type ActionType, type ModelTier } from '@/lib/credits'
+import { creditCost, PREVIEW_ACCESS_GAME_COST, type ActionType, type ModelTier } from '@/lib/credits'
 
 const BRAND = '#0EA5E9'
 
@@ -124,6 +124,7 @@ const CREDIT_TABLE: { actionKey: string; icon: string; action?: ActionType; tier
   { actionKey: 'creditActionImageGen',    icon: '🎨', action: 'image-gen',   tier: 'default' },
   { actionKey: 'creditActionHeroImageRegen', icon: '✨', action: 'hero-image-gen', tier: 'default' },
   { actionKey: 'creditActionAudioGen',    icon: '🎙️', action: 'audio-gen',   tier: 'default' },
+  { actionKey: 'creditActionPreviewAccess', icon: '📱', action: 'preview-access', tier: 'default' },
   { actionKey: 'creditActionDeploy',      icon: '🚀', free: true },
   { actionKey: 'creditActionGithub',      icon: '📦', free: true },
   { actionKey: 'creditActionAutoFix',     icon: '🔧', free: true },
@@ -389,13 +390,24 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
                 const costLabel = row.free
                   ? t('costFree' as any)
                   : t('creditsAmount' as any).replace('{count}', String(creditCost(row.action!, row.tier)))
+                // Preview-access charges more for game projects — surfaced
+                // here as a second line so the flat cost badge above doesn't
+                // silently misrepresent what a game preview actually costs.
+                const gameNote = row.action === 'preview-access'
+                  ? t('creditActionPreviewAccessGameNote' as any).replace('{count}', String(PREVIEW_ACCESS_GAME_COST))
+                  : null
                 return (
-                  <div key={row.actionKey} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px', background: 'var(--brand-bg-raised)', borderRadius: 9, gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 16 }}>{row.icon}</span>
-                      <span style={{ fontSize: 13, color: '#a1a1aa' }}>{t(row.actionKey as any)}</span>
+                  <div key={row.actionKey} style={{ display: 'flex', flexDirection: 'column', gap: 2, padding: '11px 14px', background: 'var(--brand-bg-raised)', borderRadius: 9 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 16 }}>{row.icon}</span>
+                        <span style={{ fontSize: 13, color: '#a1a1aa' }}>{t(row.actionKey as any)}</span>
+                      </div>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: BRAND, whiteSpace: 'nowrap', background: 'rgba(14,165,233,0.08)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(14,165,233,0.15)' }}>{costLabel}</span>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: BRAND, whiteSpace: 'nowrap', background: 'rgba(14,165,233,0.08)', padding: '3px 10px', borderRadius: 20, border: '1px solid rgba(14,165,233,0.15)' }}>{costLabel}</span>
+                    {gameNote ? (
+                      <div style={{ fontSize: 11, color: '#3f3f46', paddingLeft: 26 }}>{gameNote}</div>
+                    ) : null}
                   </div>
                 )
               })}
