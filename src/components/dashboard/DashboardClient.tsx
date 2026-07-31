@@ -337,9 +337,14 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const SAAS_KEYWORDS = /\b(saas|saas app|saas product|saas platform|subscription app|subscription platform|admin panel|admin dashboard|multi.?tenant|b2b app|b2b platform|api dashboard|developer dashboard|user management|role.?based|rbac)\b/i;
 
   const detectType = (prompt: string): import('@/components/dashboard/ProjectTypeChooser').ProjectType => {
-    if (MOBILE_KEYWORDS.test(prompt) || buildMode === 'mobile') return 'mobile';
-    if (SAAS_KEYWORDS.test(prompt) || buildMode === 'saas') return 'saas';
-    if (WEBSITE_KEYWORDS.test(prompt) || buildMode === 'website') return 'website';
+    // User's explicit tab selection always wins. Only 'app' mode falls back to keyword detection.
+    if (buildMode === 'mobile') return 'mobile';
+    if (buildMode === 'saas') return 'saas';
+    if (buildMode === 'website') return 'website';
+    // Keyword detection as fallback when user is in default 'app' mode
+    if (MOBILE_KEYWORDS.test(prompt)) return 'mobile';
+    if (SAAS_KEYWORDS.test(prompt)) return 'saas';
+    if (WEBSITE_KEYWORDS.test(prompt)) return 'website';
     return 'app';
   };
 
