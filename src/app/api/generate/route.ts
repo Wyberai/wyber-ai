@@ -2144,9 +2144,6 @@ export async function POST(req: NextRequest) {
     const isNewBuild = typeof isFirstBuild === 'boolean'
       ? isFirstBuild
       : (!fileContext || fileContext.length < 200)
-    // Extended thinking: only on genuinely complex new builds (Opus tier) — not on
-    // Sonnet builds where it adds cost with no quality gain for simple apps.
-    const useThinking = stage === 'full' && isNewBuild && !selfHeal && tier === 'default'
     // Tool-use (Phase 5): real write_file/edit_file tool calls instead of
     // <file>/<edit> text tags. Started on new builds only (the 'fill' stage
     // this was originally scoped for turned out to be disabled dead code —
@@ -2180,6 +2177,10 @@ export async function POST(req: NextRequest) {
       ? (modelTier as ModelTier)
       : null
     let tier = explicitClaudeTier ?? await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
+    // Extended thinking: only on genuinely complex new builds (Opus tier) — not on
+    // Sonnet builds where it adds cost with no quality gain for simple apps.
+    // NOTE: must be declared AFTER tier is resolved (tier is a let, not a const).
+    const useThinking = stage === 'full' && isNewBuild && !selfHeal && tier === 'default'
     let cost = creditCost(actionType, tier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
@@ -2849,7 +2850,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // Internal passes are free to the user — clamp their output budget so a
       // forged request can't extract a large free generation.
       if (isInternalPass) {
-        stageMaxTokens = Math.min(stageMaxTokens, stage === 'fill' ? 24000 : 8000)
+        stageMaxTokens = Math.min(stageMaxTokens, stage === 'fill' ? (tier === 'premium' ? 32000 : 24000) : 8000)
       }
       if (stage === 'full') {
         staticSystemPrompt += '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'

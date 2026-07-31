@@ -63,7 +63,7 @@ export function MobilePreviewPanel() {
   }, [files])
 
   const filesKey = useCallback((f: Record<string, string>) =>
-    Object.keys(f).sort().map(p => `${p}:${f[p].length}`).join('|'), [])
+    Object.keys(f).sort().map(p => `${p}:${f[p].length}:${f[p].slice(-8)}`).join('|'), [])
 
   // Always build snack so the Expo Go button/QR is available in both modes.
   const buildSnack = useCallback((force = false) => {
@@ -72,7 +72,7 @@ export function MobilePreviewPanel() {
     const key = filesKey(f)
     if (!force && key === lastKeyRef.current.snack && embedUrl) return
     lastKeyRef.current.snack = key
-    setSnackLoading(true)
+    setError(null); setSnackLoading(true)
     fetch('/api/snack', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ files: f }) })
       .then(r => r.json())
       .then(d => {

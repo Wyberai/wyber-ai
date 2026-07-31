@@ -40,7 +40,11 @@ const SCAFFOLD_HINTS = [
 
 function isScaffoldFile(path: string): boolean {
   const lower = path.toLowerCase()
-  return SCAFFOLD_HINTS.some((h) => lower.endsWith('/' + h) || lower.endsWith(h) || lower.includes('/' + h))
+  const basename = lower.split('/').pop() ?? lower
+  // Match on basename or full path-suffix, not substring — prevents files like
+  // src/navigation/ProfileScreen.tsx from being promoted to scaffold just
+  // because their parent directory contains 'nav'.
+  return SCAFFOLD_HINTS.some((h) => basename === h || basename.startsWith(h + '.') || lower.endsWith('/' + h))
 }
 
 /**
@@ -52,8 +56,9 @@ export function parsePlanManifest(raw: string): PlannedFile[] {
   if (!raw) return []
   // Strip markdown fences
   let text = raw.replace(/```json/gi, '').replace(/```/g, '').trim()
-  // Find the outermost JSON array
-  const start = text.indexOf('[')
+  // Find the JSON array — anchor on [{" to skip any prose lists before the manifest
+  const anchor = text.indexOf('[{')
+  const start = anchor !== -1 ? anchor : text.indexOf('[')
   const end = text.lastIndexOf(']')
   if (start === -1 || end === -1 || end <= start) return []
   text = text.slice(start, end + 1)
@@ -85,10 +90,16 @@ export function buildStagedPlan(files: PlannedFile[]): StagedPlan {
   const scaffold = files.filter((f) => isScaffoldFile(f.path))
   const fill = files.filter((f) => !isScaffoldFile(f.path))
 
-  // Safety: if nothing matched scaffold hints, force the first file (usually App)
-  // into scaffold so the preview still gets a shell.
+  // Safety: if nothing matched scaffold hints, find the best candidate for a
+  // shell file (App.tsx / index.* / main.*) rather than blindly taking fill[0]
+  // which may be a data model or feature screen.
   if (scaffold.length === 0 && fill.length > 0) {
-    scaffold.push(fill.shift() as PlannedFile)
+    const shellIdx = fill.findIndex(f => {
+      const base = f.path.split('/').pop()?.toLowerCase() ?? ''
+      return base.startsWith('app.') || base.startsWith('index.') || base.startsWith('main.')
+    })
+    const picked = shellIdx >= 0 ? fill.splice(shellIdx, 1)[0] : fill.shift()
+    scaffold.push(picked as PlannedFile)
   }
 
   // Group fill files into small batches
@@ -117,7 +128,13 @@ export function buildStagedPlan(files: PlannedFile[]): StagedPlan {
 // the DO NOT CREATE - platform injected local-first storage", leaking
 // planning metadata into the user-facing progress line. Filter those out.
 function looksLikeInternalNote(purpose: string): boolean {
-  return /^do not\b/i.test(purpose) || /platform.injected/i.test(purpose) || /already (exists|provided)/i.test(purpose)
+  return /^do not\b/i.test(purpose)
+    || /platform.injected/i.test(purpose)
+    || /already (exists|provided)/i.test(purpose)
+    || /^skip\b/i.test(purpose)
+    || /injected by/i.test(purpose)
+    || /handled by (platform|framework|wyber)/i.test(purpose)
+    || /framework provides/i.test(purpose)
 }
 
 export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): string {

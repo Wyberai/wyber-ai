@@ -76,7 +76,11 @@ var makeStub = function () {
   });
   return proxy;
 };
-module.exports = makeStub();
+var _stub = makeStub();
+module.exports = _stub;
+// Named-export aliases so ESM destructuring (import { X } from 'module') works
+// through the CJS-to-ESM interop layer without resolving to undefined.
+module.exports.default = _stub;
 `
 
 // Explicit allowlist — ONLY modules that genuinely can't run in a WebView. Web-safe
@@ -616,7 +620,9 @@ export async function bundleRnApp(files: Record<string, unknown> | null | undefi
       return { ok: false, error: msg, kind: 'compile' }
     }
 
-    return { ok: true, js: result.outputFiles?.[0]?.text ?? '' }
+    const js = result.outputFiles?.[0]?.text ?? ''
+    if (!js) return { ok: false, error: 'Bundler produced empty output', kind: 'compile' }
+    return { ok: true, js }
   } catch (err) {
     return { ok: false, error: String(err), kind: 'server' }
   }
