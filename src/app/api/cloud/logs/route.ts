@@ -31,51 +31,11 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query
 
     if (error) {
-      console.log('[cloud/logs] Error or returning mock data:', error)
+      console.error('[cloud/logs] Query error:', error)
+      return NextResponse.json({ error: 'Failed to fetch logs' }, { status: 500 })
     }
 
-    const result = data || []
-
-    // Return mock logs during testing if none exist or error occurred
-    if (result.length === 0 || error) {
-      return NextResponse.json([
-        {
-          id: 'mock-log-1',
-          wyber_project_id: projectId,
-          user_id: user.id,
-          type: 'query',
-          query: 'SELECT * FROM users LIMIT 10',
-          duration_ms: 45,
-          status: 'success',
-          executed_at: new Date(Date.now() - 300000).toISOString(),
-          created_at: new Date(Date.now() - 300000).toISOString(),
-        },
-        {
-          id: 'mock-log-2',
-          wyber_project_id: projectId,
-          user_id: user.id,
-          type: 'mutation',
-          query: 'INSERT INTO logs (message) VALUES ($1)',
-          duration_ms: 12,
-          status: 'success',
-          executed_at: new Date(Date.now() - 600000).toISOString(),
-          created_at: new Date(Date.now() - 600000).toISOString(),
-        },
-        {
-          id: 'mock-log-3',
-          wyber_project_id: projectId,
-          user_id: user.id,
-          type: 'query',
-          query: 'SELECT COUNT(*) FROM projects',
-          duration_ms: 8,
-          status: 'success',
-          executed_at: new Date(Date.now() - 900000).toISOString(),
-          created_at: new Date(Date.now() - 900000).toISOString(),
-        },
-      ])
-    }
-
-    return NextResponse.json(result)
+    return NextResponse.json(data ?? [])
   } catch (err) {
     console.error('[cloud/logs] Error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })

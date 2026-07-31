@@ -59,10 +59,21 @@ function generatePassword() {
 
 app.get('/health', (req, res) => res.json({ ok: true }))
 
+// All Cloud SQL instance names created by WyberAI follow this pattern.
+// Rejecting anything that doesn't match prevents the bridge from being
+// used to provision or delete instances outside of the WyberAI namespace,
+// even if BRIDGE_SECRET is compromised.
+const INSTANCE_NAME_RE = /^wyberai-[a-z0-9]{8}-[a-z0-9-]{1,40}$/
+
+function isValidInstanceName(name) {
+  return typeof name === 'string' && INSTANCE_NAME_RE.test(name)
+}
+
 // POST /instances { instanceName, region?, database?, password? }
 app.post('/instances', async (req, res) => {
   const { instanceName, region, database, password } = req.body || {}
   if (!instanceName) return res.status(400).json({ error: 'instanceName is required' })
+  if (!isValidInstanceName(instanceName)) return res.status(400).json({ error: 'Invalid instanceName format' })
 
   const finalRegion = region || GCP_REGION
   const finalDatabase = database || 'wyberai_db'
@@ -175,6 +186,9 @@ app.get('/operations/:operationName', async (req, res) => {
 
 // DELETE /instances/:instanceName
 app.delete('/instances/:instanceName', async (req, res) => {
+  if (!isValidInstanceName(req.params.instanceName)) {
+    return res.status(400).json({ error: 'Invalid instanceName format' })
+  }
   try {
     const sqladminClient = await getSqlAdminClient()
     console.log(`[bridge] Deleting instance: ${req.params.instanceName}`)
@@ -188,6 +202,9 @@ app.delete('/instances/:instanceName', async (req, res) => {
 
 // GET /instances/:instanceName
 app.get('/instances/:instanceName', async (req, res) => {
+  if (!isValidInstanceName(req.params.instanceName)) {
+    return res.status(400).json({ error: 'Invalid instanceName format' })
+  }
   try {
     const sqladminClient = await getSqlAdminClient()
     const result = await sqladminClient.instances.get({ project: GCP_PROJECT, instance: req.params.instanceName })

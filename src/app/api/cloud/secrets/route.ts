@@ -23,30 +23,11 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.log('[cloud/secrets] Error or returning mock data:', error)
+      console.error('[cloud/secrets] Query error:', error)
+      return NextResponse.json({ error: 'Failed to fetch secrets' }, { status: 500 })
     }
 
-    const result = data || []
-
-    // Return mock secrets during testing if none exist or error occurred
-    if (result.length === 0 || error) {
-      return NextResponse.json([
-        {
-          id: 'mock-secret-1',
-          key: 'DATABASE_URL',
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          updated_at: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: 'mock-secret-2',
-          key: 'API_KEY',
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-          updated_at: new Date(Date.now() - 3600000).toISOString(),
-        },
-      ])
-    }
-
-    return NextResponse.json(result)
+    return NextResponse.json(data ?? [])
   } catch (err) {
     console.error('[cloud/secrets] Error:', err)
     return NextResponse.json({ error: String(err) }, { status: 500 })

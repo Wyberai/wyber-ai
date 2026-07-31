@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { getPostgresConnection } from '@/lib/database/postgres'
 import { getCloudDatabaseCredentials } from '@/lib/cloud/get-db-credentials'
 
@@ -57,26 +57,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const admin = await createAdminClient()
+    const credentials = await getCloudDatabaseCredentials(projectId, user.id)
+    if (!credentials) return NextResponse.json({ error: 'Database credentials not found' }, { status: 404 })
 
-    // Get cloud database connection details
-    const { data: database, error: dbError } = await admin
-      .from('cloud_databases')
-      .select('*')
-      .eq('wyber_project_id', projectId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (dbError) return NextResponse.json({ error: 'Database not found' }, { status: 404 })
-
-    // Connect to user's database
-    const connection = await getPostgresConnection({
-      host: database.db_host,
-      port: database.db_port,
-      database: database.db_name,
-      user: database.db_user,
-      password: database.db_password
-    })
+    const connection = await getPostgresConnection(credentials)
 
     // Build UPDATE query
     const columns = Object.keys(record)
@@ -112,26 +96,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const admin = await createAdminClient()
+    const credentials = await getCloudDatabaseCredentials(projectId, user.id)
+    if (!credentials) return NextResponse.json({ error: 'Database credentials not found' }, { status: 404 })
 
-    // Get cloud database connection details
-    const { data: database, error: dbError } = await admin
-      .from('cloud_databases')
-      .select('*')
-      .eq('wyber_project_id', projectId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (dbError) return NextResponse.json({ error: 'Database not found' }, { status: 404 })
-
-    // Connect to user's database
-    const connection = await getPostgresConnection({
-      host: database.db_host,
-      port: database.db_port,
-      database: database.db_name,
-      user: database.db_user,
-      password: database.db_password
-    })
+    const connection = await getPostgresConnection(credentials)
 
     const query = `DELETE FROM "${schema}"."${table}" WHERE "${idColumn}" = $1`
     await connection.query(query, [id])
