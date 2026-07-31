@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     audio_url: audioUrl,
     provider,
     created_at: new Date().toISOString(),
-  }).then(() => {}).catch(() => {})
+  }).then(() => {}, () => {})
 
   if (!audioBuffer) {
     return NextResponse.json({

@@ -1763,9 +1763,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
     // Forge: scaffold — the single charged pass; shell/theme/nav so the
     // preview renders a skeleton right away.
-    agentPassCountRef.current += 1;
-    useAgentTurnStore.getState().setPasses(agentPassCountRef.current, MAX_INTERNAL_PASSES);
     const hasFills = staged.fillBatches.length > 0;
+    // Show actual planned total (scaffold + fills), not the ceiling MAX_INTERNAL_PASSES,
+    // so the progress counter reads "2 of 4" not "2 of 8" for a 4-pass plan.
+    const totalPassesPlanned = staged.fillBatches.length + 1;
+    agentPassCountRef.current += 1;
+    useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
     const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, finalPass: !hasFills,
     });
@@ -1788,21 +1791,28 @@ const storeProjectId = useEditorStore.getState().project?.id;
       }
       const batch = staged.fillBatches[i];
       agentPassCountRef.current += 1;
-      useAgentTurnStore.getState().setPasses(agentPassCountRef.current, MAX_INTERNAL_PASSES);
+      useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
       pushAgentEvents({ agent: 'coder', status: 'progress', detail: forgeLine(batch, 'fill'), pass: agentPassCountRef.current });
       // Let React flush the previous pass's setFiles so the ref-latest closure
       // sees the newest files as fileContext (same reason autofix delays).
       await new Promise(r => setTimeout(r, 300));
-      const batchOk = await executeGenerationRef.current?.(userMsg, null, {
+      let batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
         stage: 'fill', stageFiles: batch.map(f => f.path), internalPass: true,
         finalPass: i === staged.fillBatches.length - 1,
       });
-      // A batch that produced no real files means this pass silently failed
-      // (a "Nothing was actually changed" case, or an error swallowed inside
-      // executeGeneration). Continuing the loop would build the NEXT batch on
-      // top of the same incomplete state and could still report as if every
-      // batch had landed — stop and tell the user what's missing instead.
+      // Retry once on failure — transient API errors, network blips, and
+      // rare empty model responses succeed on a second attempt. Silently
+      // retry before giving up so a single bad request doesn't leave the
+      // app with missing screens.
+      if (batchOk === false) {
+        await new Promise(r => setTimeout(r, 1200));
+        batchOk = await executeGenerationRef.current?.(userMsg, null, {
+          silent: true, continuation: true,
+          stage: 'fill', stageFiles: batch.map(f => f.path), internalPass: true,
+          finalPass: i === staged.fillBatches.length - 1,
+        });
+      }
       if (batchOk === false) {
         const remaining = staged.fillBatches.length - i - 1;
         pushAgentEvents({

@@ -175,21 +175,21 @@ Create theme.ts as the single source of truth and import it in every file. NEVER
 
 <file path="theme.ts">
 export const theme = {
-  // choose these per app (example shown — REPLACE with your design pass)
-  bg: '#0B0B0F',            // screen background (light apps: e.g. '#FBFAF8')
-  surface: '#16161D',       // cards, inputs, list items
-  elevated: '#22222C',      // modals, pressed states
-  border: 'rgba(255,255,255,0.08)',
-  borderActive: 'rgba(255,255,255,0.18)',
-  text: '#FAFAFA',          // primary text (light apps: near-black)
-  textSecondary: '#A1A1AA',
-  textMuted: '#71717A',
+  // choose these per app (example = light base — REPLACE with your design pass)
+  bg: '#FAFAFA',            // screen background (dark apps: e.g. '#0B0B0F')
+  surface: '#FFFFFF',       // cards, inputs, list items
+  elevated: '#F4F4F5',      // modals, pressed states
+  border: 'rgba(0,0,0,0.08)',
+  borderActive: 'rgba(0,0,0,0.18)',
+  text: '#09090B',          // primary text (dark apps: '#FAFAFA')
+  textSecondary: '#52525B',
+  textMuted: '#A1A1AA',
   accent: '#6366F1',        // YOUR brand hue — change it
-  accentLight: 'rgba(99,102,241,0.14)',
+  accentLight: 'rgba(99,102,241,0.12)',
   onAccent: '#FFFFFF',      // text/icon on top of accent
-  success: '#22C55E', successBg: 'rgba(34,197,94,0.12)',
-  warning: '#F59E0B', warningBg: 'rgba(245,158,11,0.12)',
-  danger: '#EF4444', dangerBg: 'rgba(239,68,68,0.12)',
+  success: '#22C55E', successBg: 'rgba(34,197,94,0.10)',
+  warning: '#F59E0B', warningBg: 'rgba(245,158,11,0.10)',
+  danger: '#EF4444', dangerBg: 'rgba(239,68,68,0.10)',
   radius: 16,
 } as const
 </file>

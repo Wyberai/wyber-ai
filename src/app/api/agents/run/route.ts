@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const userId = user.id
 
     const { agentId, projectId, input, config, triggeredBy } = await req.json()
     if (!agentId || !projectId) {
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
     const { data: profile, error: profileErr } = await admin
       .from('profiles')
       .select('credits, email')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single()
 
     if (profileErr || !profile) {
@@ -74,16 +75,16 @@ export async function POST(req: NextRequest) {
       const { data: updated, error } = await admin
         .from('profiles')
         .update({ credits: Math.max(0, creditBalance - amount), updated_at: new Date().toISOString() })
-        .eq('id', user.id)
+        .eq('id', userId)
         .gte('credits', amount)
         .select('credits')
         .single()
       if (error || !updated) return false
       creditBalance = updated.credits
       admin.from('credit_usage').insert({
-        user_id: user.id, amount, reason: 'agent-execution',
+        user_id: userId, amount, reason: 'agent-execution',
         credits_before: before, credits_after: creditBalance,
-      }).then(() => {}).catch(() => {})
+      }).then(() => {}, () => {})
       return true
     }
 
@@ -95,14 +96,14 @@ export async function POST(req: NextRequest) {
       const { data: updated } = await admin
         .from('profiles')
         .update({ credits: creditBalance + amount, updated_at: new Date().toISOString() })
-        .eq('id', user.id)
+        .eq('id', userId)
         .select('credits')
         .single()
       if (updated) creditBalance = updated.credits
       admin.from('credit_usage').insert({
-        user_id: user.id, amount: -amount, reason,
+        user_id: userId, amount: -amount, reason,
         credits_before: before, credits_after: creditBalance,
-      }).then(() => {}).catch(() => {})
+      }).then(() => {}, () => {})
     }
 
     // Get agent definition
@@ -211,7 +212,7 @@ Execute now. Return a structured summary of what you did and what you found.`
       .insert({
         agent_id: agentId,
         project_id: projectId,
-        user_id: user.id,
+        user_id: userId,
         status: 'running',
         input: input || null,
         triggered_by: triggeredBy ?? 'manual',

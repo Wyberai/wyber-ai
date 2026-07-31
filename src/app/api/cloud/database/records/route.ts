@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getPostgresConnection } from '@/lib/database/postgres'
 import { getCloudDatabaseCredentials } from '@/lib/cloud/get-db-credentials'
 

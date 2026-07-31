@@ -10,12 +10,10 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 
 type PreviewMode = 'snack' | 'inapp'
 
-// Default: 'snack' — the phone frame shows a clean Expo Go CTA (QR code +
-// big button) so users can run their actual app on a real device instantly.
-// The in-app (RN-web) bundler mode stays accessible via the toggle.
-// Override prod-wide with NEXT_PUBLIC_INAPP_MOBILE_PREVIEW=inapp.
-const DEFAULT_MODE: PreviewMode =
-  process.env.NEXT_PUBLIC_INAPP_MOBILE_PREVIEW === 'inapp' ? 'inapp' : 'snack'
+// Default: 'inapp' — the in-house RN-web bundler runs the app directly in
+// the phone frame so users can navigate and interact without leaving the editor.
+// Expo Go QR/button remains available via the toggle for real-device testing.
+const DEFAULT_MODE: PreviewMode = 'inapp'
 
 export function MobilePreviewPanel() {
   const { files, isGenerating, hasGeneratedFiles } = useEditorStore()
@@ -39,14 +37,14 @@ export function MobilePreviewPanel() {
   // a broken layout, and anyone on 'snack' that showed the code editor.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('wyber:mobile-preview-mode:v4')
+      const saved = localStorage.getItem('wyber:mobile-preview-mode:v5')
       if (saved === 'snack' || saved === 'inapp') setMode(saved)
     } catch { /* private mode */ }
   }, [])
 
   const chooseMode = (m: PreviewMode) => {
     setMode(m)
-    try { localStorage.setItem('wyber:mobile-preview-mode:v4', m) } catch { /* private mode */ }
+    try { localStorage.setItem('wyber:mobile-preview-mode:v5', m) } catch { /* private mode */ }
   }
 
   const hasApp = Object.keys(files ?? {}).some(p =>
@@ -140,7 +138,7 @@ export function MobilePreviewPanel() {
         <Segmented
           value={mode}
           onChange={v => chooseMode(v as PreviewMode)}
-          options={[{ v: 'snack', label: 'Expo Go' }, { v: 'inapp', label: 'In-App (beta)' }]}
+          options={[{ v: 'inapp', label: 'In-App' }, { v: 'snack', label: 'Expo Go' }]}
         />
 
         {/* In-app: platform toggle + device dropdown */}

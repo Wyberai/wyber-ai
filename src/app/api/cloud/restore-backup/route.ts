@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
         project_id: cloudDb.id,
         amount: 0,
         reason: 'cloud-database-restore',
-      }).catch(e => console.warn('Failed to log restore event:', e))
+      }).then(undefined, e => console.warn('Failed to log restore event:', e))
 
       return NextResponse.json({
         success: true,

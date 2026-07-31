@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   // ── AI agent nodes with no instructions ───────────────────────────────────
   for (const node of aiNodes) {
-    if (!node.data.config?.instructions && !node.data.subtitle) {
+    if (!node.data.config?.instructions && !(node.data as unknown as { subtitle?: string }).subtitle) {
       issues.push({
         nodeId: node.id, nodeLabel: node.data.label,
         severity: 'warning',

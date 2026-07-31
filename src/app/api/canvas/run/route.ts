@@ -297,7 +297,7 @@ async function saveAgentMemory(
       p_user_id: userId,
       p_source_id: sourceId,
       p_node_id: nodeId,
-    }).then(() => {}).catch(() => {})
+    }).then(() => {}, () => {})
   } catch { /* memory save is best-effort */ }
 }
 
@@ -644,7 +644,7 @@ export async function POST(req: NextRequest) {
       admin.from('credit_usage').insert({
         user_id: user.id, amount: runCost, reason: 'canvas-execution',
         credits_before: balance, credits_after: balance - runCost,
-      }).then(() => {}).catch(() => {})
+      }).then(() => {}, () => {})
     }
 
     const ordered = topoSort(nodes, edges)
@@ -734,7 +734,7 @@ export async function POST(req: NextRequest) {
     if (sourceType === 'flow') {
       const { data: flowMeta } = await db.from('flows').select('name').eq('id', sourceId).single()
       flowName = flowMeta?.name ?? 'Workflow'
-      db.rpc('increment_flow_run_count', { flow_id: sourceId }).catch(() => {})
+      void db.rpc('increment_flow_run_count', { flow_id: sourceId }).then(() => {}, () => {})
     }
 
     // ── Refund AI nodes that errored ─────────────────────────────────
@@ -753,7 +753,7 @@ export async function POST(req: NextRequest) {
           refundAdmin.from('credit_usage').insert({
             user_id: user.id, amount: -refund, reason: 'canvas-execution-refund',
             credits_before: curBal, credits_after: curBal + refund,
-          }).then(() => {}).catch(() => {})
+          }).then(() => {}, () => {})
         } catch (e) { console.error('[canvas/run] refund failed', e) }
       }
     }
@@ -772,7 +772,7 @@ export async function POST(req: NextRequest) {
       steps: steps as unknown as Record<string, unknown>[],
       duration_ms: totalDurationMs,
       triggered_by: triggeredBy,
-    }).then(() => {}).catch(() => {})
+    }).then(() => {}, () => {})
 
     // Email notification (fire-and-forget)
     const admin = await createAdminClient()

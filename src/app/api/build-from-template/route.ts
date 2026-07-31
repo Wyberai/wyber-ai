@@ -206,7 +206,7 @@ export async function POST(req: NextRequest) {
     } catch {}
 
     // Increment use_count — fire and forget
-    admin.rpc('increment_use_count', { template_id: templateId }).then(() => {}).catch(() => {})
+    void admin.rpc('increment_use_count', { template_id: templateId }).then(() => {}, () => {})
 
     // NOTE: no `prompt` in the response — template loads are instant, not AI rebuilds.
     return NextResponse.json({ projectId: project.id })

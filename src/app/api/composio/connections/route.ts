@@ -16,13 +16,8 @@ export async function GET() {
     const composio = new Composio({ apiKey: adminKey })
     const result = await composio.connectedAccounts.list({ userIds: [user.id] })
 
-    const connections = (result.items ?? []).map((a: {
-      id: string
-      toolkit: { slug: string }
-      status: string
-      authConfig: { authScheme: string; isComposioManaged: boolean }
-      createdAt: string
-    }) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const connections = (result.items ?? []).map((a: any) => ({
       id: a.id,
       toolkit: a.toolkit?.slug ?? '',
       status: a.status,

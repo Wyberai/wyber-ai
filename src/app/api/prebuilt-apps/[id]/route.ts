@@ -3,14 +3,15 @@ import { createAdminClient } from '@/lib/supabase/server'
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const admin = await createAdminClient()
     const { data: app, error } = await admin
       .from('prebuilt_apps')
       .select('id, name, description, category, keywords, preview_color')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     if (error || !app) {
