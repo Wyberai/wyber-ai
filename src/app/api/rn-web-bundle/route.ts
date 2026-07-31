@@ -243,14 +243,44 @@ function makeNavigator(kind){
 
     // Tab navigators get a working bottom bar; stack/drawer move via calls only.
     var showTabs = (kind === 'tab') && screens.length > 1
+    // Resolve per-screen tabBar options: screenOptions (object or function called
+    // with the screen's route) merged with per-screen options prop. This lets
+    // tabBarIcon, tabBarLabel, tabBarActiveTintColor, and tabBarStyle flow through
+    // from the generated app's navigator exactly as they would in a real build.
+    function getTabOpts(s){
+      var base = props.screenOptions
+        ? (typeof props.screenOptions === 'function'
+            ? (props.screenOptions({ route: { name: s.name, key: s.name, params: {} }, navigation: controller }) || {})
+            : props.screenOptions)
+        : {}
+      var own = s.options
+        ? (typeof s.options === 'function'
+            ? (s.options({ route: { name: s.name, key: s.name, params: {} }, navigation: controller }) || {})
+            : s.options)
+        : {}
+      return Object.assign({}, base, own)
+    }
+    var nav0opts = screens.length ? getTabOpts(screens[0]) : {}
+    var activeTint = nav0opts.tabBarActiveTintColor || '#0EA5E9'
+    var inactiveTint = nav0opts.tabBarInactiveTintColor || '#9AA0A6'
+    var tabBarBg = (nav0opts.tabBarStyle && (nav0opts.tabBarStyle.backgroundColor || nav0opts.tabBarStyle.background)) || '#fafafa'
+    var tabBorderCol = (nav0opts.tabBarStyle && nav0opts.tabBarStyle.borderTopColor) || '#e5e5e5'
     return React.createElement(NavContext.Provider, { value: controller },
       React.createElement(View, { style: { flex: 1, backgroundColor: '#ffffff' } },
         header,
         React.createElement(View, { style: { flex: 1 } }, React.createElement(ScreenErrorBoundary, { key: idx }, body)),
-        showTabs ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#e5e5e5', backgroundColor: '#fafafa' } },
+        showTabs ? React.createElement(View, { style: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: tabBorderCol, backgroundColor: tabBarBg } },
           screens.map(function(s, i){
-            return React.createElement(Pressable, { key: s.name || i, onPress: function(){ go(s.name) }, style: { flex: 1, paddingVertical: 10, alignItems: 'center' } },
-              React.createElement(Text, { numberOfLines: 1, style: { fontSize: 12, color: (i === idx ? '#0EA5E9' : '#9AA0A6'), fontWeight: (i === idx ? '700' : '400') } }, s.name || ('Tab ' + (i + 1))))
+            var isActive = i === idx
+            var color = isActive ? activeTint : inactiveTint
+            var tOpts = getTabOpts(s)
+            var iconEl = tOpts.tabBarIcon ? tOpts.tabBarIcon({ focused: isActive, color: color, size: 22 }) : null
+            var rawLabel = typeof tOpts.tabBarLabel === 'string' ? tOpts.tabBarLabel
+              : (typeof tOpts.tabBarLabel === 'function' ? tOpts.tabBarLabel({ focused: isActive, color: color })
+              : (tOpts.title || s.name || ('Tab ' + (i + 1))))
+            return React.createElement(Pressable, { key: s.name || i, onPress: function(){ go(s.name) }, style: { flex: 1, paddingVertical: 8, alignItems: 'center', justifyContent: 'center' } },
+              iconEl,
+              React.createElement(Text, { numberOfLines: 1, style: { fontSize: 10, marginTop: iconEl ? 2 : 0, color: color, fontWeight: isActive ? '600' : '400' } }, rawLabel))
           })) : null))
   }
   function Screen(){ return null }
@@ -458,6 +488,27 @@ export function createMultiStyleIconSet(){ return Icon }
 export var Ionicons = Icon, MaterialIcons = Icon, MaterialCommunityIcons = Icon, FontAwesome = Icon, FontAwesome5 = Icon, FontAwesome6 = Icon, Feather = Icon, AntDesign = Icon, Entypo = Icon, EvilIcons = Icon, Foundation = Icon, Octicons = Icon, SimpleLineIcons = Icon, Zocial = Icon, Fontisto = Icon
 export default Icon`
 
+// localStorage-backed AsyncStorage shim. Generated apps use AsyncStorage for
+// session persistence; without a shim it tries esm.sh (slow / unreliable).
+// This gives working read/write in preview — data survives the iframe session.
+const ASYNC_STORAGE_SHIM_SOURCE = `
+var _store = (function(){ try { return window.localStorage } catch(e) { return null } })()
+function _k(k){ return '__rn_as__' + k }
+var AsyncStorage = {
+  getItem: function(k,cb){ var v=_store?_store.getItem(_k(k)):null; if(cb)cb(null,v); return Promise.resolve(v) },
+  setItem: function(k,v,cb){ try{if(_store)_store.setItem(_k(k),String(v))}catch(e){}; if(cb)cb(null); return Promise.resolve() },
+  removeItem: function(k,cb){ try{if(_store)_store.removeItem(_k(k))}catch(e){}; if(cb)cb(null); return Promise.resolve() },
+  clear: function(cb){ try{if(_store){for(var i=_store.length-1;i>=0;i--){var k=_store.key(i);if(k&&k.indexOf('__rn_as__')===0)_store.removeItem(k)}}}catch(e){}; if(cb)cb(null); return Promise.resolve() },
+  getAllKeys: function(cb){ var ks=[]; try{if(_store){for(var i=0;i<_store.length;i++){var k=_store.key(i);if(k&&k.indexOf('__rn_as__')===0)ks.push(k.slice(9))}}}catch(e){}; if(cb)cb(null,ks); return Promise.resolve(ks) },
+  multiGet: function(keys,cb){ var p=keys.map(function(k){return[k,_store?_store.getItem('__rn_as__'+k):null]}); if(cb)cb(null,p); return Promise.resolve(p) },
+  multiSet: function(pairs,cb){ pairs.forEach(function(p){try{if(_store)_store.setItem('__rn_as__'+p[0],String(p[1]))}catch(e){}}); if(cb)cb(null); return Promise.resolve() },
+  multiRemove: function(keys,cb){ keys.forEach(function(k){try{if(_store)_store.removeItem('__rn_as__'+k)}catch(e){}}); if(cb)cb(null); return Promise.resolve() },
+  flushGetRequests: function(){}, mergeItem: function(k,v,cb){ if(cb)cb(null); return Promise.resolve() }, multiMerge: function(pairs,cb){ if(cb)cb(null); return Promise.resolve() },
+}
+module.exports = AsyncStorage
+module.exports.default = AsyncStorage
+`
+
 // Specifier prefixes that resolve to an inlined nav/safe-area shim instead of
 // esm.sh. Prefix match so subpaths (e.g. `@react-navigation/native/lib/...`)
 // also route to the shim.
@@ -474,6 +525,7 @@ const SHIM_MODULES: Record<string, string> = {
   'react-native-reanimated': REANIMATED_SHIM_SOURCE,
   '@expo/vector-icons': ICON_SHIM_SOURCE,
   'react-native-vector-icons': ICON_SHIM_SOURCE,
+  '@react-native-async-storage/async-storage': ASYNC_STORAGE_SHIM_SOURCE,
 }
 
 function shimSourceFor(spec: string): string | null {

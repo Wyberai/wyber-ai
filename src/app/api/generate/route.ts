@@ -306,6 +306,24 @@ TYPESCRIPT: Use interfaces at top of files. No React.FC, no import type.
 STATE: All useState in App.tsx or screen-level. Pass down as props. No Context/Redux.
 NO WEB: No useRouter, no Link, no div/span/button. Always navigation.navigate().
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IN-APP PREVIEW — CRITICAL RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WyberAi has a built-in React Native Web preview — no Expo Go, no queue, instant render.
+All of react-navigation, @expo/vector-icons, gesture-handler, reanimated, and AsyncStorage
+are shimmed and WORK in preview. These rules ensure every screen renders and navigation works:
+
+✓ ALWAYS wrap in a <NavigationContainer> + navigator. A bare App.tsx with all screens
+  rendered inline has NO navigation — the user sees one frozen screen with no way to move.
+✓ ALWAYS use createBottomTabNavigator for apps with 3+ sections. Set screenOptions with
+  tabBarIcon, tabBarActiveTintColor (theme.accent), tabBarInactiveTintColor (theme.textMuted),
+  and tabBarStyle {{ backgroundColor: theme.bg, borderTopColor: theme.border }} — the
+  preview tab bar renders real icons and honours your theme colors exactly.
+✓ @react-native-async-storage/async-storage is shimmed to localStorage — use it freely.
+✓ Use ScrollView + .map() for lists when possible; FlatList works but ScrollView is safer.
+✗ NEVER put all screen content directly in App.tsx without a navigator.
+✗ NEVER use expo-router or any web router — @react-navigation only.
+
 OUTPUT FORMAT:
 <file path="App.tsx">...</file>
 <file path="screens/HomeScreen.tsx">...</file>
