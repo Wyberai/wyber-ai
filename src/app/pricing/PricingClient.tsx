@@ -122,6 +122,7 @@ const CREDIT_TABLE: { actionKey: string; icon: string; action?: ActionType; tier
   { actionKey: 'creditActionComplexEdit', icon: '🧩', action: 'small-edit',  tier: 'default' },
   { actionKey: 'creditActionBuildPlan',   icon: '🗺️', action: 'plan',        tier: 'default' },
   { actionKey: 'creditActionImageGen',    icon: '🎨', action: 'image-gen',   tier: 'default' },
+  { actionKey: 'creditActionHeroImageRegen', icon: '✨', action: 'hero-image-gen', tier: 'default' },
   { actionKey: 'creditActionAudioGen',    icon: '🎙️', action: 'audio-gen',   tier: 'default' },
   { actionKey: 'creditActionDeploy',      icon: '🚀', free: true },
   { actionKey: 'creditActionGithub',      icon: '📦', free: true },
