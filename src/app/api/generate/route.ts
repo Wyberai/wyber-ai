@@ -2,7 +2,7 @@ import { NextRequest, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
-import { MODEL_IDS, creditCost, tierAllowedForPlan, type ModelTier } from '@/lib/credits'
+import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
@@ -2037,8 +2037,12 @@ async function resolveModelTier(opts: {
   stage: string
   prompt: string
   fileContext?: string
+  // Set when the caller already ran isComplexBuild for this same request (the
+  // stage:'full' new-build case also needs this result to gate the
+  // claude-parallel fast path) — reuses it instead of a second Haiku call.
+  precomputedBuildComplexity?: boolean
 }): Promise<ModelTier> {
-  const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext } = opts
+  const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext, precomputedBuildComplexity } = opts
   if (stage === 'plan' || selfHeal) return 'fast'
   // Targeted agent-fix passes (free, internal) are small scoped edits → Sonnet.
   if (stage === 'agentFix') return 'fast'
@@ -2050,7 +2054,8 @@ async function resolveModelTier(opts: {
   // of what the build actually needs.
   if (stage === 'scaffold' || stage === 'fill' || isNewBuild || actionType === 'web-build' || actionType === 'mobile-build' || actionType === 'website-build' || actionType === 'saas-build') {
     if (!SONNET_FIRST_BUILDS) return 'default' // rollout not yet enabled — old behavior
-    return (await isComplexBuild(prompt)) ? 'default' : 'fast'
+    const isComplex = precomputedBuildComplexity ?? await isComplexBuild(prompt)
+    return isComplex ? 'default' : 'fast'
   }
   // It's an edit to an existing app — Sonnet by default, escalate when complex.
   return (await isComplexEdit(prompt, fileContext)) ? 'default' : 'fast'
@@ -2281,6 +2286,15 @@ export async function POST(req: NextRequest) {
   let deductedCost = 0
   let creditsSettled = false
   let refundUserId = ''
+  // Real token usage across every model call this request makes (one or more
+  // — the tool-use/sequential loops can run several iterations, claude-
+  // parallel dispatches several pages). Purely for the generation_usage_log
+  // analytics insert below — never read by creditCost/the tiered pricing
+  // above, which by design only ever uses signals known BEFORE generation.
+  let totalInputTokens = 0
+  let totalOutputTokens = 0
+  let totalCacheCreationTokens = 0
+  let totalCacheReadTokens = 0
   const settleRefund = async (reason: string) => {
     if (creditsSettled || deductedCost <= 0) return
     creditsSettled = true
@@ -2293,7 +2307,7 @@ export async function POST(req: NextRequest) {
     // matters when it's the explicit 'gpt' choice from the model dropdown,
     // checked once the caller's plan is known (below, alongside the existing
     // tierAllowedForPlan gate).
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false } = body
 
     // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
     // Reads the SAME var the client checks (roster.ts AGENT_TEAM_ENABLED) —
@@ -2423,12 +2437,33 @@ export async function POST(req: NextRequest) {
     const explicitClaudeTier = REAL_CLAUDE_TIERS.includes(modelTier) && stage !== 'plan' && !selfHeal && !isInternalPass
       ? (modelTier as ModelTier)
       : null
-    let tier = explicitClaudeTier ?? await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext })
+    // Hoisted once for the stage:'full' new-build case so the claude-parallel
+    // fast-path gate further down (search "Fast path: parallel-Claude") can
+    // reuse this exact result instead of a second Haiku call — same signal
+    // driving both the model-tier pick and the fast-path eligibility check.
+    const newBuildComplexity = (!explicitClaudeTier && stage === 'full' && isNewBuild && !selfHeal && SONNET_FIRST_BUILDS)
+      ? await isComplexBuild(prompt)
+      : undefined
+    let tier = explicitClaudeTier ?? await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext, precomputedBuildComplexity: newBuildComplexity })
     // Extended thinking: only on genuinely complex new builds (Opus tier) — not on
     // Sonnet builds where it adds cost with no quality gain for simple apps.
     // NOTE: must be declared AFTER tier is resolved (tier is a let, not a const).
     const useThinking = stage === 'full' && isNewBuild && !selfHeal && tier === 'default'
-    let cost = creditCost(actionType, tier)
+    // Tiered build pricing (see resolveBuildTier/BUILD_TIER_COSTS in
+    // credits.ts): only the two charged-build request shapes need a size —
+    // the staged 'scaffold' pass prices off the real Atlas plan file count
+    // the client sends (totalPlannedFiles), and the unstaged one-shot 'full'
+    // new-build fallback prices off the SAME isComplexBuild result already
+    // computed above (newBuildComplexity) rather than a second signal. Every
+    // other stage/action (edits, fills, plan, self-heal) leaves buildTier
+    // undefined and creditCost falls through to its existing pricing.
+    const buildTier = isNewBuild && (stage === 'full' || stage === 'scaffold')
+      ? resolveBuildTier({
+          totalPlannedFiles: typeof totalPlannedFiles === 'number' ? totalPlannedFiles : undefined,
+          isComplex: newBuildComplexity,
+        })
+      : undefined
+    let cost = creditCost(actionType, tier, buildTier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
     // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
@@ -3378,9 +3413,19 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // just falls through to the existing, unmodified sequential loop
       // below — this is a speed layer, never a reliability regression. Not
       // attempted for edits (isNewBuild=false): edits already touch few
-      // files and aren't the slow case this targets.
+      // files and aren't the slow case this targets. Also skipped for
+      // HIGH-complexity builds (newBuildComplexity === true, the same signal
+      // resolveModelTier already used to pick Opus) — this path's page
+      // planner is a blind, hardcoded-archetype match capped at a handful of
+      // pages, with no awareness of how many files a large/complex request
+      // actually needs. A big multi-feature build routed here would "succeed"
+      // having written only a few files, since nothing here checks coverage
+      // against the real request — it only checks that no individual page
+      // got cut off mid-generation. HIGH-complexity one-shot builds go
+      // straight to the sequential loop below instead, which has real
+      // max_tokens continuation and no fixed page ceiling.
       let handledByParallel = false
-      if (useToolUse && isNewBuild && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
+      if (useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
           const { runClaudeParallel, classifyClaudeParallelFailure } = await import('@/lib/model-providers/claude-parallel')
           // runClaudeParallel is fully awaited before ANY response stream
@@ -3425,6 +3470,8 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               },
             })
             handledByParallel = true
+            totalInputTokens += parallelResult.usage.inputTokens
+            totalOutputTokens += parallelResult.usage.outputTokens
             console.log(`[generate cache] claude-parallel model=${MODELS[resolvedTier]} pagesFromTemplate=${parallelResult.pagesFromTemplate} pagesFullGen=${parallelResult.pagesFullGen} output=${parallelResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
           }
         } catch (parallelErr) {
@@ -3504,6 +3551,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               // budget by the corrective iterations they consume (capped at
               // MAX_SECURITY_FIX_ITERATIONS) so a veto never eats a build pass.
               for (let iter = 0; iter <= MAX_TOOL_ITERATIONS + securityFixesUsed; iter++) {
+                const iterStartedAt = Date.now()
                 for await (const event of stream) {
                   if (event.type === 'content_block_start') {
                     if (event.content_block.type === 'thinking') {
@@ -3603,13 +3651,26 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
                 const finalMsg = await stream.finalMessage()
                 const u = finalMsg.usage as unknown as Record<string, number>
+                totalInputTokens += u.input_tokens ?? 0
+                totalOutputTokens += u.output_tokens ?? 0
+                totalCacheCreationTokens += u.cache_creation_input_tokens ?? 0
+                totalCacheReadTokens += u.cache_read_input_tokens ?? 0
                 console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
                 // Bail out before the platform's hard maxDuration kill rather than
                 // starting another iteration we won't get to finish. iter>0 guards
                 // the very first pass, which must always be allowed to complete.
-                if (iter > 0 && Date.now() - requestStartTime > SOFT_DEADLINE_MS) {
-                  console.log(`[generate] iter=${iter} approaching platform timeout (elapsed_ms=${Date.now() - requestStartTime}) — stopping gracefully instead of risking a hard kill`)
+                // Confirmed live (Vercel runtime error logs): a plain "elapsed so
+                // far > 650s" check isn't enough — an iteration starting just under
+                // that line can itself run well past the remaining ~150s buffer
+                // (a big multi-file write, especially with extended thinking), and
+                // the check only runs BETWEEN iterations, so it never gets a chance
+                // to stop that one before the platform kills the whole function at
+                // 800s. Using the iteration that JUST finished as a predictor for
+                // how long the next one is likely to take closes that gap.
+                const thisIterMs = Date.now() - iterStartedAt
+                if (iter > 0 && Date.now() - requestStartTime + thisIterMs > SOFT_DEADLINE_MS) {
+                  console.log(`[generate] iter=${iter} approaching platform timeout (elapsed_ms=${Date.now() - requestStartTime}, lastIterMs=${thisIterMs}) — stopping gracefully instead of risking a hard kill`)
                   break
                 }
 
@@ -3921,6 +3982,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           }, HEARTBEAT_INTERVAL_MS)
           try {
             for (let pass = 0; pass <= MAX_CONTINUATIONS + securityFixesUsed; pass++) {
+              const passStartedAt = Date.now()
               for await (const event of stream) {
                 if (event.type === 'content_block_start' && event.content_block.type === 'thinking') {
                   inThinkingBlock = true
@@ -3940,13 +4002,24 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
               const finalMsg = await stream.finalMessage()
               const u = finalMsg.usage as unknown as Record<string, number>
+              totalInputTokens += u.input_tokens ?? 0
+              totalOutputTokens += u.output_tokens ?? 0
+              totalCacheCreationTokens += u.cache_creation_input_tokens ?? 0
+              totalCacheReadTokens += u.cache_read_input_tokens ?? 0
               console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
               // Bail out before the platform's hard maxDuration kill rather than
               // starting another pass we won't get to finish. pass>0 guards the
               // very first pass, which must always be allowed to complete.
-              if (pass > 0 && Date.now() - requestStartTime > SOFT_DEADLINE_MS) {
-                console.log(`[generate] pass=${pass} approaching platform timeout (elapsed_ms=${Date.now() - requestStartTime}) — stopping gracefully instead of risking a hard kill`)
+              // Same fix as the tool-use loop above (confirmed live via Vercel
+              // runtime error logs: real "Task timed out after 800 seconds" kills
+              // on this route) — predict the next pass's duration from the one
+              // that just finished instead of only checking elapsed-so-far, since
+              // a pass starting just under the old static threshold could itself
+              // run past the remaining buffer with nothing able to stop it.
+              const thisPassMs = Date.now() - passStartedAt
+              if (pass > 0 && Date.now() - requestStartTime + thisPassMs > SOFT_DEADLINE_MS) {
+                console.log(`[generate] pass=${pass} approaching platform timeout (elapsed_ms=${Date.now() - requestStartTime}, lastPassMs=${thisPassMs}) — stopping gracefully instead of risking a hard kill`)
                 break
               }
 
@@ -4134,6 +4207,110 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           systemPrompt: staticSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
           claudeText: generatedText, claudeElapsedMs: Date.now() - requestStartTime,
         })
+      })
+    }
+
+    // Usage-log analytics insert (generation_usage_log) — see the migration's
+    // header comment. Fires whenever this request actually made a real model
+    // call (totalOutputTokens > 0 covers claude-parallel/tool-use/sequential
+    // alike, including free passes) so BUILD_TIER_COSTS above can eventually
+    // be calibrated against measured COGS instead of the estimate it ships
+    // with today. Never wired into cost/creditCost — purely observational.
+    if (totalOutputTokens > 0 || totalInputTokens > 0) {
+      after(async () => {
+        // $/MTok, checked against Anthropic's published pricing 2026-08-01
+        // (Sonnet's intro rate runs through 2026-08-31, then reverts to
+        // $3/$15 — recalibrate this table then too). gpt/wybercode don't
+        // bill through Anthropic; left at 0 rather than guessed.
+        const RATE_PER_MTOK: Record<string, { input: number; output: number }> = {
+          fast: { input: 2, output: 10 },
+          default: { input: 5, output: 25 },
+          premium: { input: 5, output: 25 },
+          fable: { input: 10, output: 50 },
+          gpt: { input: 0, output: 0 },
+          wybercode: { input: 0, output: 0 },
+        }
+        const rate = RATE_PER_MTOK[resolvedTier] ?? RATE_PER_MTOK.default
+        const costUsd = (totalInputTokens / 1_000_000) * rate.input + (totalOutputTokens / 1_000_000) * rate.output
+        try {
+          const { createServiceClient } = await import('@/lib/supabase/server')
+          const admin = createServiceClient()
+          await admin.from('generation_usage_log').insert({
+            user_id: userId || null,
+            project_id: projectId || null,
+            build_id: buildId || null,
+            action_type: actionType,
+            stage,
+            model_tier: resolvedTier,
+            model_id: MODELS[resolvedTier] ?? String(resolvedTier),
+            input_tokens: totalInputTokens,
+            output_tokens: totalOutputTokens,
+            cache_creation_input_tokens: totalCacheCreationTokens,
+            cache_read_input_tokens: totalCacheReadTokens,
+            cost_usd: Number(costUsd.toFixed(4)),
+            credits_charged: selfHeal || isInternalPass || stage === 'plan' ? 0 : cost,
+            build_tier: buildTier ?? null,
+            planned_files: typeof totalPlannedFiles === 'number' ? totalPlannedFiles : null,
+          })
+
+          // Overage safety valve (see computeOverageCharge in credits.ts) —
+          // only ever runs on the request that closes out a charged build's
+          // full chain (buildTier set, finalPass true: either the one-shot
+          // fallback, or the last request of a staged scaffold+fills build).
+          // Sums REAL usage across every request tagged with this buildId —
+          // not just this one — since a staged build's total cost is the
+          // charged scaffold pass plus every free fill batch it authorized.
+          if (finalPass && buildTier && buildId && userId) {
+            // Idempotency: finalPass can legitimately fire twice for the same
+            // buildId (a fill batch's primary attempt AND its own missing-
+            // file catch-up call both marked finalPass on the last batch) —
+            // a prior sentinel row means this buildId was already charged.
+            const { data: alreadyCharged } = await admin
+              .from('generation_usage_log')
+              .select('id')
+              .eq('build_id', buildId)
+              .eq('action_type', 'build-overage')
+              .limit(1)
+              .maybeSingle()
+            if (!alreadyCharged) {
+              const { data: rows } = await admin
+                .from('generation_usage_log')
+                .select('output_tokens')
+                .eq('build_id', buildId)
+                .neq('action_type', 'build-overage')
+              const totalBuildOutputTokens = (rows ?? []).reduce((sum, r: { output_tokens: number }) => sum + (r.output_tokens || 0), 0)
+              const overage = computeOverageCharge({
+                buildTier, modelTier: resolvedTier, actualOutputTokens: totalBuildOutputTokens,
+              })
+              let chargedOverage = 0
+              if (overage > 0) {
+                const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: userId, p_amount: overage })
+                // Best-effort: an insufficient/stale balance just means we
+                // collect less, never blocks or reverses a build that
+                // already shipped. The sentinel row below still records the
+                // attempt either way, so this buildId is never re-checked.
+                if (overageRpc?.new_credits !== undefined) chargedOverage = overage
+              }
+              // Sentinel row — marks this buildId as resolved regardless of
+              // whether anything was actually collected, so a second
+              // finalPass firing (or a retried request) never double-charges.
+              await admin.from('generation_usage_log').insert({
+                user_id: userId, project_id: projectId || null, build_id: buildId,
+                action_type: 'build-overage', stage: 'full', model_tier: resolvedTier,
+                model_id: MODELS[resolvedTier] ?? String(resolvedTier),
+                output_tokens: totalBuildOutputTokens, credits_charged: chargedOverage, build_tier: buildTier,
+              })
+              if (chargedOverage > 0 && projectId) {
+                await admin.from('project_messages').insert({
+                  project_id: projectId,
+                  role: 'assistant',
+                  content: `This build ran heavier than a typical ${buildTier} build (~${Math.round(totalBuildOutputTokens / 1000)}K tokens generated) — an extra ${chargedOverage} credit${chargedOverage === 1 ? '' : 's'} was charged to cover it.`,
+                  files_changed: [],
+                })
+              }
+            }
+          }
+        } catch { /* analytics-only, never worth failing the request over */ }
       })
     }
 

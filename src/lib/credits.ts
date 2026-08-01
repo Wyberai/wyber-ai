@@ -72,11 +72,31 @@ export const MODEL_PROVIDERS: Record<ModelTier, ModelProvider> = {
 }
 
 /**
- * Cost multiplier relative to default (opus = 1.0). `gpt`'s multiplier is a
- * placeholder equal to `default` — it should be recalibrated once real OpenAI
- * coding-model pricing is confirmed (this tier's actual per-token cost is not
- * the same as Anthropic's, so 1.0 is a safe starting assumption, not a
- * verified figure).
+ * Cost multiplier relative to fast/Sonnet (1.0 there would mean "same price
+ * as Sonnet" — despite the name, these are relative to BASE_COSTS, which is
+ * itself calibrated at the Sonnet rate; see creditCost()). Only governs the
+ * actions that still use flat BASE_COSTS × multiplier pricing — builds
+ * (web-build/mobile-build/website-build/saas-build) moved to tiered pricing
+ * (BUILD_TIER_COSTS above) and no longer read this at all; small-edit never
+ * did. Remaining consumers: component, security-scan, agent-create/run,
+ * workflow-create/run, ai-helper, execution, employee-run, gtm-icp-sequence,
+ * gtm-lead-enrich.
+ *
+ * default/premium (Opus) bumped 1.0 → 2.5: checked against Anthropic's
+ * published per-token pricing 2026-08-01 — Sonnet $2/$10, Opus $5/$25 per
+ * MTok, a ~2.5× ratio, not the old 1.0x-vs-0.5x (2×) this table implied.
+ * TODO: Sonnet's $2/$10 is intro pricing through 2026-08-31; it reverts to
+ * $3/$15 after, dropping the real ratio to ~1.67×. Recalibrate this constant
+ * then (or make it env/date-gated) rather than let it go stale silently.
+ *
+ * fable left at 2.0 for now even though Fable's real ratio to Sonnet at
+ * current pricing ($10/$50 vs $2/$10) is closer to ~5× on output tokens —
+ * lower priority than the Opus fix (Fable is a smaller, Pro-only surface);
+ * flagged here rather than silently left wrong.
+ *
+ * `gpt`'s multiplier is a placeholder equal to `default` — it should be
+ * recalibrated once real OpenAI coding-model pricing is confirmed (this
+ * tier's actual per-token cost is not the same as Anthropic's).
  *
  * `wybercode`'s multiplier is a placeholder too, and for a structurally
  * different reason: self-hosted GPUs are a FIXED cost regardless of usage,
@@ -92,10 +112,10 @@ export const MODEL_PROVIDERS: Record<ModelTier, ModelProvider> = {
  */
 export const MODEL_MULTIPLIERS: Record<ModelTier, number> = {
   fast:    0.5,
-  default: 1.0,
-  premium: 1.0,
+  default: 2.5,
+  premium: 2.5,
   fable:   2.0,
-  gpt:     1.0,
+  gpt:     2.5,
   wybercode: 0.25,
 }
 
@@ -174,16 +194,148 @@ const BASE_COSTS: Record<ActionType, number> = {
 // lives beside BASE_COSTS rather than inside creditCost()'s tier logic.
 export const PREVIEW_ACCESS_GAME_COST = 5
 
+export type BuildSizeTier = 'small' | 'medium' | 'large' | 'xl'
+const BUILD_ACTIONS: ActionType[] = ['web-build', 'mobile-build', 'website-build', 'saas-build']
+
+/**
+ * Tiered build pricing — replaces the old flat 30cr-per-build price
+ * (BASE_COSTS × MODEL_MULTIPLIERS) with a price keyed on real build size,
+ * mirroring the pattern 'small-edit' already uses above: hardcoded by
+ * (action-is-a-build, size, tier), bypassing MODEL_MULTIPLIERS entirely. The
+ * flat price meant a 2-file landing page and a 32-file platform cost the
+ * same 30cr, and Opus's 1.0× multiplier (vs Sonnet's 0.5×) implied only a 2×
+ * cost ratio when real Anthropic pricing runs ~2.5× (Sonnet $2/$10, Opus
+ * $5/$25 per MTok, checked 2026-08-01, intro pricing through 2026-08-31) —
+ * together these meant a large Opus build could cost real dollars far above
+ * what it was charged (confirmed: a 32-file Opus build measured ~$17 COGS,
+ * charged only 30cr).
+ *
+ * Calibration (estimate — recalibrate once generation_usage_log has real
+ * data, same caveat as calibrateWyberCodeMultiplier below): anchored to the
+ * SAME measured data point 'small-edit' already uses — $0.52 Opus COGS for a
+ * complex edit implies ~21K output tokens at current pricing ($25/MTok), and
+ * that edit is priced at 5cr, i.e. ~9.6cr per dollar of Opus COGS. Applying
+ * that same rate to representative total-output-token budgets per size tier
+ * (covering the WHOLE staged build a scaffold pass buys — the charged
+ * scaffold pass plus every free fill batch it authorizes, not just the
+ * first call): small ≈20K tokens (≈$0.50 Opus COGS), medium ≈60K (≈$1.50),
+ * large ≈160K (≈$4), xl ≈400K (≈$10) — then rounded to clean numbers. XL at
+ * 130cr (≈$25 revenue at the Starter rate) still comfortably covers the
+ * measured $17 outlier above, unlike the old flat 30cr (≈$5.80). Sonnet
+ * ('fast') prices scale down from Opus by roughly its real ~2.5× cheaper
+ * per-token rate, not the old flat 0.5×.
+ */
+const BUILD_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = {
+  small:  { fast: 15, default: 25 },
+  medium: { fast: 25, default: 45 },
+  large:  { fast: 40, default: 80 },
+  xl:     { fast: 60, default: 130 },
+}
+
+/**
+ * Buckets a build into a BuildSizeTier from signals already computed BEFORE
+ * generation starts — never from actual token usage, so the price stays
+ * fixed and known upfront (no credit-hold / true-up flow). Prefers the real
+ * planned file count from the Atlas staged-plan pass when one exists (a
+ * concrete signal); falls back to the isComplexBuild HIGH/LOW Haiku
+ * classifier for one-shot builds with no plan (a screenshot build, or one
+ * whose plan pass failed/came back too small to stage).
+ */
+export function resolveBuildTier(opts: { totalPlannedFiles?: number; isComplex?: boolean }): BuildSizeTier {
+  const { totalPlannedFiles, isComplex } = opts
+  if (typeof totalPlannedFiles === 'number' && totalPlannedFiles > 0) {
+    if (totalPlannedFiles > 20) return 'xl'
+    if (totalPlannedFiles > 10) return 'large'
+    if (totalPlannedFiles > 4) return 'medium'
+    return 'small'
+  }
+  return isComplex ? 'large' : 'small'
+}
+
+const BUILD_TIER_ORDER: BuildSizeTier[] = ['small', 'medium', 'large', 'xl']
+
+/**
+ * Representative total output-token budget each tier's fixed price above is
+ * calibrated against (see the BUILD_TIER_COSTS comment) — used ONLY to
+ * detect a build that ran well outside what its tier assumed, never to set
+ * the sticker price itself (that stays fixed and known before generation,
+ * per the tiered-not-metered decision). A single fixed number per tier can
+ * never fully cover the real spread within that tier — a "Large" build
+ * scaled from the measured $17-COGS/32-file data point down to ~18 files
+ * still lands close to the 80cr sticker price at only ~1.5x margin, so nudge
+ * this budget down before the multiplier below if real data shows Large/XL
+ * running hot more often than not.
+ */
+const BUILD_TIER_TOKEN_BUDGET: Record<BuildSizeTier, number> = {
+  small: 20_000,
+  medium: 60_000,
+  large: 160_000,
+  xl: 400_000,
+}
+
+// A build running more than this multiple of its tier's assumed token budget
+// gets a capped top-up on top of the fixed sticker price. This is the one
+// thing a fixed-tier price structurally cannot do alone: protect against a
+// build that lands well outside what its tier assumed — the measured
+// $17-COGS-for-30cr case that motivated moving off flat pricing in the first
+// place. Below this line, price stays exactly the fixed number shown
+// upfront, no exceptions — this is a safety valve for the tail, not a
+// reintroduction of usage metering for the common case.
+const OVERAGE_THRESHOLD_MULTIPLIER = 1.75
+
+function tierPrice(t: BuildSizeTier, modelTier: ModelTier): number {
+  const costs = BUILD_TIER_COSTS[t]
+  return modelTier === 'fast' ? costs.fast : costs.default
+}
+
+/**
+ * Capped top-up credit charge for a build whose REAL output-token usage
+ * (summed across the whole staged build — the charged scaffold pass plus
+ * every free fill batch it authorized, not just the first call) ran
+ * significantly hotter than its tier assumed. Returns 0 when usage is within
+ * OVERAGE_THRESHOLD_MULTIPLIER of the tier's assumed budget — the fixed
+ * sticker price already shown to the user is the final price for the
+ * overwhelming majority of builds.
+ *
+ * The top-up is capped at the jump to the next tier's price (or, for xl,
+ * the same large→xl increment, since there's no tier above it to borrow
+ * from) so a single build can never be charged an unbounded amount — this
+ * is deliberately a bounded safety valve, not open-ended metering.
+ */
+export function computeOverageCharge(opts: {
+  buildTier: BuildSizeTier
+  modelTier: ModelTier
+  actualOutputTokens: number
+}): number {
+  const { buildTier, modelTier, actualOutputTokens } = opts
+  const budget = BUILD_TIER_TOKEN_BUDGET[buildTier]
+  if (actualOutputTokens <= budget * OVERAGE_THRESHOLD_MULTIPLIER) return 0
+  const isTop = buildTier === 'xl'
+  const capFrom = isTop ? 'large' : buildTier
+  const capToIndex = isTop ? BUILD_TIER_ORDER.length - 1 : BUILD_TIER_ORDER.indexOf(buildTier) + 1
+  const capTo = BUILD_TIER_ORDER[capToIndex]
+  const cap = tierPrice(capTo, modelTier) - tierPrice(capFrom, modelTier)
+  return Math.max(1, cap)
+}
+
 /**
  * Compute the credit cost for an action + model tier.
  * Always at least 1 credit.
  */
-export function creditCost(action: ActionType, tier: ModelTier = 'default'): number {
+export function creditCost(action: ActionType, tier: ModelTier = 'default', buildTier?: BuildSizeTier): number {
   // Edits are priced explicitly, not by multiplier. The 0.5× fast discount made
   // simple edits 1cr (below Sonnet COGS), while complexity-escalated edits ran
   // Opus (~$0.52 COGS, measured Jul 3) for the same price as a tweak. Simple
   // Sonnet edit = the public 2cr price; Opus-escalated complex edit = 5cr.
   if (action === 'small-edit') return tier === 'fast' ? 2 : 5
+  // Tiered build pricing (see BUILD_TIER_COSTS above) — only applies when the
+  // caller actually resolved a size tier; omitting buildTier (an older client,
+  // or a call site not yet updated) falls through to the flat price below so
+  // this ships without a hard cutover.
+  if (buildTier && BUILD_ACTIONS.includes(action)) {
+    const costs = BUILD_TIER_COSTS[buildTier]
+    return tier === 'fast' ? costs.fast : costs.default
+  }
   // hero-image-gen/audio-gen call an image/TTS provider, never an Anthropic
   // or OpenAI coding model — MODEL_MULTIPLIERS tier scaling doesn't apply to
   // them (see BASE_COSTS comments). Forced to 1× here, not just by omitting

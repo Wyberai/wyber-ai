@@ -526,7 +526,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[] }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -1019,7 +1019,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[] }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1214,7 +1214,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // manifest it already fetched via opts.knownPlan so this doesn't pay for
     // a second plan call on top of the one that already ran; only re-fetches
     // if that manifest is empty (the plan pass itself errored).
-    const isNewBuildCompletenessEligible = !!opts?.preserveAgentTurn && !opts?.silent && !opts?.continuation && !opts?.stage;
+    // Also eligible without preserveAgentTurn whenever this IS a first build —
+    // startGeneration skips runAgenticBuild entirely for screenshot/attachment
+    // builds (the plan pass can't see an image), which used to mean these
+    // builds got zero completeness coverage. They can't be staged, but they
+    // can still get this post-hoc diff-and-repair pass.
+    const isNewBuildCompletenessEligible = (!!opts?.preserveAgentTurn || isFirstBuild) && !opts?.silent && !opts?.continuation && !opts?.stage;
     const newBuildPlanPromise: Promise<PlannedFile[]> | null = isNewBuildCompletenessEligible
       ? (opts?.knownPlan && opts.knownPlan.length > 0
           ? Promise.resolve(opts.knownPlan)
@@ -1316,6 +1321,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
           stage: opts?.stage || undefined,
           stageFiles: opts?.stageFiles?.length ? opts.stageFiles : undefined,
           stagePurposes: opts?.stagePurposes?.length ? opts.stagePurposes : undefined,
+          // Real Atlas plan file count (scaffold stage only) — lets the
+          // server price this build's tier off the actual plan instead of
+          // the coarser LOW/HIGH complexity classifier. See resolveBuildTier
+          // in credits.ts.
+          totalPlannedFiles: opts?.totalPlannedFiles,
+          // Groups every request belonging to one staged build (scaffold +
+          // its fill batches) so the server can sum real usage across the
+          // whole build for the overage safety valve (computeOverageCharge
+          // in credits.ts) instead of just this one request. finalPass marks
+          // the terminating request of that chain — where the sum + any
+          // top-up actually fires.
+          buildId: opts?.buildId || undefined,
+          finalPass: opts?.finalPass || undefined,
           internalPass: opts?.internalPass || undefined,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
@@ -1486,6 +1504,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // the "silent free pass" contract simple and avoids compounding fixes).
       let placeholderRetryFired = false
       let qaRetryFired = false
+      // Set by 4c below when it finds missing planned files and dispatches a
+      // repair pass — gates the terminal render further down so this pass
+      // shows an honest "still finishing" state instead of "Done — check the
+      // preview" while that repair is still in flight.
+      let completenessRetryFired = false
       let editIncompleteReported = false
       if (newFiles.length >= 2 && !isSelfHeal && !fileCut && !editCut && isPlaceholderApp(appAfter?.content)) {
         placeholderRetryFired = true
@@ -1546,9 +1569,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
           const missing = diffPlannedAgainstWritten(planned, writtenPaths)
           if (missing.length > 0) {
+            completenessRetryFired = true
             const nameList = missing.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
             const extra = missing.length > 3 ? ` +${missing.length - 3} more` : ''
             const detail = missing.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
+            pushAgentEvents({ agent: 'orchestrator', status: 'progress', detail: `Finishing ${missing.length} remaining file${missing.length === 1 ? '' : 's'}...` })
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('wyber-autofix', {
                 detail: {
@@ -1731,7 +1756,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const agentReport = attachReport
         ? buildAgentReport(turnAgentEventsRef.current, agentPassCountRef.current, turnCreditsRef.current || undefined, t)
         : undefined;
-      if (isVisible) {
+      // completenessRetryFired means 4c above just dispatched a repair pass
+      // for real planned files this turn never wrote — showing "Done — check
+      // the preview" here would be the exact false-ready message this check
+      // exists to prevent. Leave this bubble in an honest in-progress state;
+      // the repair pass (a new, visible bubble via the same wyber-autofix
+      // continuation path used elsewhere) renders its own terminal "done" —
+      // or the existing "still missing" message (4d) — once it resolves.
+      if (isVisible && completenessRetryFired) {
+        updateMessage(assistantId, { status: 'streaming' });
+      } else if (isVisible) {
         updateMessage(assistantId, {
           content: finalContent,
           status:'done',
@@ -1885,25 +1919,41 @@ const storeProjectId = useEditorStore.getState().project?.id;
     turnCreditsRef.current = 0;
     useAgentTurnStore.getState().resetTurn();
     pushAgentEvents({ agent: 'planner', status: 'start', detail: t('mappingBuildMsg') });
+    // One id for every request in this build's chain (scaffold + its fill
+    // batches, or the one-shot fallback) — lets the server sum real usage
+    // across the WHOLE build for the overage safety valve instead of just
+    // whichever single request happens to carry finalPass. See
+    // computeOverageCharge in credits.ts.
+    const buildId = uid();
 
     // Atlas: the plan pass — a JSON file manifest, free (stage:'plan' skips
-    // billing server-side). Best-effort: any failure falls back to one-shot.
-    let staged: ReturnType<typeof buildStagedPlan> | null = null;
-    try {
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: userMsg, stage: 'plan', projectType,
-          userId: resolvedUserId, projectId: resolvedProjectId,
-          isFirstBuild: true,
-        }),
-      });
-      if (res.ok) {
-        const manifest = parsePlanManifest(await res.text());
-        if (manifest.length) staged = buildStagedPlan(manifest);
-      }
-    } catch { /* plan pass is best-effort */ }
+    // billing server-side). One retry on failure/empty manifest before
+    // dropping to one-shot — same idiom as the fill-batch retry below
+    // (transient API errors and network blips are common enough on a single
+    // shot that giving up on staging entirely after one miss was needlessly
+    // losing the reliable path for builds that would have staged fine on a
+    // second try). Retrying costs only latency, never credits.
+    const fetchPlanManifest = async (): Promise<PlannedFile[]> => {
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: userMsg, stage: 'plan', projectType,
+            userId: resolvedUserId, projectId: resolvedProjectId,
+            isFirstBuild: true,
+          }),
+        });
+        if (!res.ok) return [];
+        return parsePlanManifest(await res.text());
+      } catch { return [] }
+    };
+    let manifest = await fetchPlanManifest();
+    if (!manifest.length) {
+      await new Promise(r => setTimeout(r, 800));
+      manifest = await fetchPlanManifest();
+    }
+    const staged: ReturnType<typeof buildStagedPlan> | null = manifest.length ? buildStagedPlan(manifest) : null;
 
     if (!staged || !staged.shouldStage) {
       pushAgentEvents({ agent: 'planner', status: 'done', detail: staged ? t('compactBuildMsg') : t('buildingOnePassMsg') });
@@ -1911,7 +1961,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // succeeded but came back under STAGE_THRESHOLD) so the one-shot
       // completeness check doesn't pay for a second plan call — see
       // isNewBuildCompletenessEligible in executeGeneration.
-      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files });
+      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId });
       return;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) });
@@ -1927,6 +1977,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const scaffoldPurposes = staged.scaffoldPaths.map(p => staged.files.find(f => f.path === p)?.purpose ?? '');
     const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, stagePurposes: scaffoldPurposes, finalPass: !hasFills,
+      totalPlannedFiles: staged.files.length, buildId,
     });
     // A failed scaffold means there's no skeleton for fill batches to build
     // on — piling more passes on top of a pass that produced no real files
@@ -1965,7 +2016,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       let batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
         stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-        finalPass: i === staged.fillBatches.length - 1,
+        finalPass: i === staged.fillBatches.length - 1, buildId,
       });
       // Retry once on failure — transient API errors, network blips, and
       // rare empty model responses succeed on a second attempt. Silently
@@ -1976,7 +2027,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         batchOk = await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-          finalPass: i === staged.fillBatches.length - 1,
+          finalPass: i === staged.fillBatches.length - 1, buildId,
         });
       }
       if (batchOk === false) {
@@ -2003,7 +2054,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: missingBatch.map(f => f.path), stagePurposes: missingBatch.map(f => f.purpose),
-          internalPass: true, finalPass: i === staged.fillBatches.length - 1,
+          internalPass: true, finalPass: i === staged.fillBatches.length - 1, buildId,
         });
         await new Promise(r => setTimeout(r, 300));
         stillMissing = stillMissing.filter(p => filesNow()[p] === undefined);
@@ -2043,7 +2094,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       await runAgenticBuild(content, img, paletteId);
       return;
     }
-    await executeGeneration(content, img, paletteId ? { paletteId } : undefined);
+    // finalPass + a fresh buildId mark this as a complete, one-request build
+    // chain for the overage safety valve (harmless on edits — buildTier is
+    // only ever resolved server-side for isNewBuild requests, so the check
+    // simply never fires for a plain edit here).
+    await executeGeneration(content, img, { ...(paletteId ? { paletteId } : {}), finalPass: true, buildId: uid() });
   }, [executeGeneration, runAgenticBuild]);
 
   const handleUndo = useCallback(() => {
