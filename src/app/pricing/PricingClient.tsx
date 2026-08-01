@@ -9,6 +9,7 @@ import { I18N_ENABLED } from '@/lib/i18n/locales'
 import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
 import { creditCost, PREVIEW_ACCESS_GAME_COST, type ActionType, type ModelTier } from '@/lib/credits'
+import { track } from '@/lib/track'
 
 const BRAND = '#0EA5E9'
 
@@ -295,6 +296,25 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
   // popup was blocked anyway.
   const startCheckout = async (planKey: string) => {
     if (!user) { window.location.href = '/login?next=/pricing'; return }
+    // Fires the instant the button is clicked — before the checkout fetch —
+    // so this high-intent moment is captured even if checkout itself fails
+    // or the popup gets blocked. Nothing tracked this click's plan/price
+    // signal before today: the pricing page had zero events beyond the
+    // sitewide PageView, meaning neither internal funnel analytics nor
+    // Meta's ad-delivery algorithm had ever seen who was even trying to pay.
+    const matchedPlan = PLANS.find(p => planKey.startsWith(p.planKey?.replace(/_monthly$/, '') ?? '\0'))
+    const isAnnual = planKey.endsWith('_annual')
+    const value = matchedPlan
+      ? (currency === 'INR'
+          ? (isAnnual ? matchedPlan.annualPriceINR : matchedPlan.monthlyPriceINR)
+          : (isAnnual ? matchedPlan.annualPrice : matchedPlan.monthlyPrice))
+      : undefined
+    track('checkout_initiated', { planKey, currency, value })
+    ;(window as unknown as { fbq?: (...a: unknown[]) => void }).fbq?.('track', 'InitiateCheckout', {
+      content_name: planKey,
+      currency,
+      value,
+    })
     setLoading(planKey)
     const tab = window.open('about:blank', '_blank')
     try {
