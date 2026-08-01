@@ -13,13 +13,17 @@ const EXTERNAL_DEPS: Record<string, string> = {
   'react-dom':          'https://esm.sh/react-dom@18.3.1',
   'react-dom/client':   'https://esm.sh/react-dom@18.3.1/client',
   'react/jsx-runtime':  'https://esm.sh/react@18.3.1/jsx-runtime',
-  'lucide-react':       'https://esm.sh/lucide-react@0.383.0',
-  'recharts':           'https://esm.sh/recharts@2.12.0',
+  // ?deps=react@18.3.1,... pins these packages' own internal react/react-dom
+  // resolution to this exact versioned URL — see wyber-preview/engine.ts for
+  // the full explanation (two separate React module instances loaded at
+  // once → null hook dispatcher → preview crashes on first render).
+  'lucide-react':       'https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1',
+  'recharts':           'https://esm.sh/recharts@2.12.0?deps=react@18.3.1,react-dom@18.3.1',
   'clsx':               'https://esm.sh/clsx@2.1.1',
-  'react-router-dom':   'https://esm.sh/react-router-dom@6.28.0',
-  'framer-motion':      'https://esm.sh/framer-motion@11.0.0',
+  'react-router-dom':   'https://esm.sh/react-router-dom@6.28.0?deps=react@18.3.1,react-dom@18.3.1',
+  'framer-motion':      'https://esm.sh/framer-motion@11.0.0?deps=react@18.3.1,react-dom@18.3.1',
   'date-fns':           'https://esm.sh/date-fns@3.6.0',
-  'zustand':            'https://esm.sh/zustand@4.5.2',
+  'zustand':            'https://esm.sh/zustand@4.5.2?deps=react@18.3.1',
   'axios':              'https://esm.sh/axios@1.7.2',
   'gsap':               'https://esm.sh/gsap@3.12.5',
   'gsap/ScrollTrigger': 'https://esm.sh/gsap@3.12.5/ScrollTrigger',

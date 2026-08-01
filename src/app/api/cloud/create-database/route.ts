@@ -24,6 +24,20 @@ function sanitizeDbName(raw: string | undefined, fallbackSeed: string): string {
 
 const MIN_PASSWORD_LENGTH = 8
 
+// String(err) on a Supabase PostgrestError or other plain thrown object
+// produces the literal string "[object Object]" — useless in both the API
+// response and server logs. Prefer a real message field, fall back to a
+// JSON dump for anything else.
+function errMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  if (err && typeof err === 'object') {
+    const withMessage = err as { message?: unknown }
+    if (typeof withMessage.message === 'string') return withMessage.message
+    try { return JSON.stringify(err) } catch { /* fall through */ }
+  }
+  return String(err)
+}
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = await createClient()
@@ -66,6 +80,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 })
     }
 
+    // Guard against a double-click (or two tabs) firing this twice before the
+    // first request's row exists yet — each call kicks off a REAL, billable
+    // GCP Cloud SQL instance before ever touching this table, so without this
+    // check a duplicate submit silently provisions a second real instance
+    // that never gets a cloud_databases row (the second insert collides and
+    // throws), leaving an orphaned, untracked GCP resource. Client-side
+    // button disabling helps but isn't authoritative (races, multiple tabs).
+    const { data: existing } = await admin
+      .from('cloud_databases')
+      .select('id, status')
+      .eq('wyber_project_id', projectId)
+      .in('status', ['provisioning', 'ready'])
+      .limit(1)
+      .maybeSingle()
+
+    if (existing) {
+      return NextResponse.json({
+        error: existing.status === 'ready'
+          ? 'This project already has a database.'
+          : 'A database is already being provisioned for this project.',
+      }, { status: 409 })
+    }
+
     // Kick off Cloud SQL instance creation — this is async and takes
     // 5-10 minutes. We store the operation name and poll it from
     // /api/cloud/create-database/status instead of blocking this request.
@@ -91,7 +128,7 @@ export async function POST(req: NextRequest) {
       console.error('[cloud-create-database] Google Cloud SQL provisioning failed:', gcpErr)
       return NextResponse.json({
         error: 'Failed to provision database on Google Cloud SQL',
-        details: String(gcpErr),
+        details: errMessage(gcpErr),
       }, { status: 502 })
     }
 
@@ -155,13 +192,13 @@ export async function POST(req: NextRequest) {
       console.error('[cloud-create-database] Database insertion failed:', err)
       return NextResponse.json({
         error: 'Failed to store database credentials',
-        details: String(err),
+        details: errMessage(err),
       }, { status: 500 })
     }
   } catch (err) {
     console.error('[cloud-create-database] Unexpected error:', err)
     return NextResponse.json({
-      error: String(err),
+      error: errMessage(err),
     }, { status: 500 })
   }
 }

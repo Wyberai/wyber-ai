@@ -76,6 +76,11 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   const [snapshots, setSnapshots] = useState<Array<{ id: string; label: string; created_at: string }>>([]);
   const [snapshotLoading, setSnapshotLoading] = useState(false);
   const [savingSnapshot, setSavingSnapshot] = useState(false);
+  // window.prompt() used to gather this — silently blocked/suppressed in some
+  // browser/security contexts (and always jarring next to this modal's own
+  // styling), so "Save current version" fired the request with a swallowed
+  // label at best and did nothing at worst. Inline input instead.
+  const [snapshotLabel, setSnapshotLabel] = useState('');
   const [restoringId, setRestoringId] = useState<string | null>(null);
   const [showTeam, setShowTeam] = useState(false);
   const [collaborators, setCollaborators] = useState<Array<{ id: string; collaborator_email: string; role: string; status: string; invited_at: string }>>([]);
@@ -537,13 +542,22 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
               <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ide-text)' }}>{t('versionHistory')}</span>
               <button onClick={() => setShowSnapshots(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ide-text3)', fontSize: 20, lineHeight: 1 }}>×</button>
             </div>
-            <button
-              onClick={() => { const label = prompt(t('labelForVersionPrompt')) ?? ''; saveSnapshot(label); }}
-              disabled={savingSnapshot}
-              style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', alignSelf: 'flex-start' }}
-            >
-              {savingSnapshot ? tc('saving') : t('saveCurrentVersion')}
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={snapshotLabel}
+                onChange={e => setSnapshotLabel(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !savingSnapshot) { saveSnapshot(snapshotLabel); setSnapshotLabel(''); } }}
+                placeholder={t('labelForVersionPrompt')}
+                style={{ flex: 1, background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 8, padding: '8px 12px', fontSize: 13, color: 'var(--ide-text)' }}
+              />
+              <button
+                onClick={() => { saveSnapshot(snapshotLabel); setSnapshotLabel(''); }}
+                disabled={savingSnapshot}
+                style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: savingSnapshot ? 'not-allowed' : 'pointer', opacity: savingSnapshot ? 0.6 : 1, flexShrink: 0 }}
+              >
+                {savingSnapshot ? tc('saving') : t('saveCurrentVersion')}
+              </button>
+            </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {snapshotLoading && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>{tc('loading')}</div>}
               {!snapshotLoading && snapshots.length === 0 && <div style={{ fontSize: 13, color: 'var(--ide-text3)', padding: 12 }}>{t('noSavedVersions')}</div>}

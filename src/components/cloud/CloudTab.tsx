@@ -105,8 +105,12 @@ export function CloudTab({ projectId }: { projectId: string }) {
     }
   }
 
+  const [provisioning, setProvisioning] = useState(false)
+
   const provisionDatabase = async (dbName: string, dbPassword: string) => {
+    if (provisioning) return
     try {
+      setProvisioning(true)
       setLoading(true)
       setError(null)
       const res = await fetch('/api/cloud/create-database', {
@@ -123,6 +127,7 @@ export function CloudTab({ projectId }: { projectId: string }) {
       setError(String(err))
     } finally {
       setLoading(false)
+      setProvisioning(false)
     }
   }
 
@@ -213,13 +218,14 @@ export function CloudTab({ projectId }: { projectId: string }) {
         <ProvisionModal
           onCancel={() => setShowProvisionModal(false)}
           onCreate={provisionDatabase}
+          submitting={provisioning}
         />
       )}
     </div>
   )
 }
 
-function ProvisionModal({ onCancel, onCreate }: { onCancel: () => void; onCreate: (dbName: string, password: string) => void }) {
+function ProvisionModal({ onCancel, onCreate, submitting }: { onCancel: () => void; onCreate: (dbName: string, password: string) => void; submitting: boolean }) {
   const [dbName, setDbName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -297,11 +303,11 @@ function ProvisionModal({ onCancel, onCreate }: { onCancel: () => void; onCreate
         <div className="flex justify-end gap-2 pt-2">
           <button onClick={onCancel} className="px-4 py-2 text-sm rounded border border-slate-700 text-slate-300 hover:bg-slate-800">Cancel</button>
           <button
-            disabled={!canSubmit}
+            disabled={!canSubmit || submitting}
             onClick={() => onCreate(dbName, password)}
             className="px-4 py-2 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Provision Database
+            {submitting ? 'Provisioning…' : 'Provision Database'}
           </button>
         </div>
       </div>

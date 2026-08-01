@@ -1108,7 +1108,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   const t = useT(EDITOR_CANVAS_STRINGS)
   const tc = useT(COMMON_STRINGS)
   const [saved, setSaved] = useState(false)
-  const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project')
+  const [loadingCanvas, setLoadingCanvas] = useState(saveTarget === 'project' || saveTarget === 'flow')
   const [chatWidth] = useState(380)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
@@ -1176,7 +1176,7 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
   // On project change: reset store state from previous project, then load the new one.
   useEffect(() => {
     useAgentStore.getState().resetForProject()
-    setLoadingCanvas(saveTarget === 'project')
+    setLoadingCanvas(saveTarget === 'project' || saveTarget === 'flow')
     hydrateFromSession(projectId)
 
     if (saveTarget === 'project') {
@@ -1185,6 +1185,22 @@ export function AgentCanvas({ projectId, projectName, canvasType, initialProfile
         .then(({ canvas_data }) => {
           if (canvas_data?.nodes?.length) {
             useAgentStore.setState({ nodes: canvas_data.nodes, edges: canvas_data.edges ?? [], selectedNodeId: null })
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingCanvas(false))
+    } else if (saveTarget === 'flow') {
+      // This branch never existed — a flow created from a template (or any
+      // flow with previously-saved steps) always opened to a blank canvas,
+      // because nothing here ever loaded the flow's own nodes/edges columns.
+      // /flows/[id]/page.tsx fetches the flow row server-side but only
+      // passes name/webhookUrl/profile as props — the actual node/edge data
+      // was fetched and then silently dropped.
+      fetch(`/api/flows/${projectId}`)
+        .then(r => r.json())
+        .then(({ flow }) => {
+          if (flow?.nodes?.length) {
+            useAgentStore.setState({ nodes: flow.nodes, edges: flow.edges ?? [], selectedNodeId: null })
           }
         })
         .catch(() => {})

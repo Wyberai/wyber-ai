@@ -42,13 +42,17 @@ export async function POST(req: NextRequest) {
     if (!process.env.OPENAI_API_KEY) return NextResponse.json({ urls: {} })
 
     const admin = createServiceClient()
+    // Paying customers get top-of-the-line ('high') image quality; free-tier
+    // build images stay 'medium' — the cheaper COGS default.
+    const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single()
+    const quality = profile?.plan && profile.plan !== 'free' ? 'high' : 'medium'
     const batch = directives.slice(0, MAX_DIRECTIVES) as { token: string; prompt: string; ratio: string }[]
     const results = await Promise.all(batch.map(async d => {
       if (!d?.token || !d?.prompt) return null
       try {
         // Scope = projectId, matching the publish path exactly, so preview and
         // publish share one cache entry per image.
-        const { url, wasGenerated } = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId)
+        const { url, wasGenerated } = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId, { quality })
         if (wasGenerated) await billBuildImage(admin, user.id, projectId)
         return url ? ([d.token, url] as const) : null
       } catch (e) {

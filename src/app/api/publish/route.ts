@@ -119,11 +119,15 @@ export async function POST(req: NextRequest) {
     let projectFiles = project.files || {}
     const directives = extractImageDirectives(projectFiles)
     if (directives.length > 0) {
+      // Paying customers get top-of-the-line ('high') image quality; free-tier
+      // build images stay 'medium' — the cheaper COGS default.
+      const { data: publishProfile } = await admin.from('profiles').select('plan').eq('id', user.id).single()
+      const quality = publishProfile?.plan && publishProfile.plan !== 'free' ? 'high' : 'medium'
       let generated = 0
       for (const d of directives) {
         let url: string | null = null
         try {
-          const result = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId)
+          const result = await generateAndPersistImage(admin, d.prompt, d.ratio, projectId, { quality })
           url = result.url
           // First real generation for this project is free; every one after
           // is 1 credit (billBuildImage) — a cache hit (wasGenerated: false)

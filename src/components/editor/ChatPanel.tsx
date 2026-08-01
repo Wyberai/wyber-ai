@@ -15,6 +15,7 @@ import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, pickRouterFile, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
+import { resolveBuildTier } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -526,7 +527,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW' }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -1019,7 +1020,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW' }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1335,6 +1336,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
           buildId: opts?.buildId || undefined,
           finalPass: opts?.finalPass || undefined,
           internalPass: opts?.internalPass || undefined,
+          // Echoes back the 'plan' stage's own complexity classification (see
+          // X-Build-Complexity response header below) so every later
+          // scaffold/fill/wire request of this SAME build reuses it instead
+          // of each stage paying for its own fresh Haiku classification call.
+          buildComplexity: opts?.buildComplexity || undefined,
           image: img ? { base64: img.base64, mimeType: img.mimeType } : undefined,
           assets: assets.length ? assets : undefined,
           attachedText: attachedTextPayload.length ? attachedTextPayload : undefined,
@@ -1452,7 +1458,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
           }));
         }, 600);
       }
-      let updatedFiles = { ...files };
+      // Reads the LIVE store, not the `files` closure captured when this
+      // useCallback was last recreated — critical now that fill batches run
+      // concurrently (see runAgenticBuild). setFiles() below is a full
+      // REPLACE, not a merge: two concurrent batches both starting from the
+      // same stale snapshot would have the second call's setFiles silently
+      // erase the first batch's just-written files. Everything from here to
+      // the setFiles() call a few lines down is synchronous (no await) — in
+      // JS's single-threaded event loop that makes this whole read-merge-write
+      // span atomic relative to a sibling batch's own span, so reading fresh
+      // here is sufficient; no additional locking is needed.
+      let updatedFiles = { ...(useEditorStore.getState().files ?? {}) };
       const langMap: Record<string,string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
       // 1. Apply full <file> blocks (new files or full rewrites)
       if (newFiles.length > 0) {
@@ -1947,6 +1963,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // shot that giving up on staging entirely after one miss was needlessly
     // losing the reliable path for builds that would have staged fine on a
     // second try). Retrying costs only latency, never credits.
+    // Set by fetchPlanManifest from the plan pass's own X-Build-Complexity
+    // response header — echoed back on every later staged request below so
+    // scaffold/fill/wire reuse this one classification instead of each
+    // paying for a fresh Haiku call against the identical prompt.
+    let buildComplexity: 'HIGH' | 'LOW' | undefined;
     const fetchPlanManifest = async (): Promise<PlannedFile[]> => {
       try {
         const res = await fetch('/api/generate', {
@@ -1959,6 +1980,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
           }),
         });
         if (!res.ok) return [];
+        const header = res.headers.get('X-Build-Complexity');
+        if (header === 'HIGH' || header === 'LOW') buildComplexity = header;
         return parsePlanManifest(await res.text());
       } catch { return [] }
     };
@@ -1969,16 +1992,64 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
     const staged: ReturnType<typeof buildStagedPlan> | null = manifest.length ? buildStagedPlan(manifest) : null;
 
+    // Show the real credit cost BEFORE spending anything — the plan pass is
+    // free and already knows the real file count, so the tiered price (see
+    // BUILD_TIER_COSTS in credits.ts) is fully knowable right here, not just
+    // discoverable after a 402 from the server mid-build. Reuses creditCost/
+    // resolveBuildTier — the exact same functions the server charges from —
+    // so this is never just an estimate that can drift from the real price.
+    // modelTier reflects the picker ONLY when the user actually touched it —
+    // resolveModelTier server-side (route.ts) auto-escalates an untouched
+    // pick to 'default' (Opus) for a HIGH-complexity build (its own docstring
+    // cites "a full marketplace with vendor accounts" as the textbook HIGH
+    // example), same signal as buildComplexity above. Quoting 'fast' pricing
+    // here regardless used to under-quote a HIGH build by more than 2× on
+    // the xl tier (60cr shown, 130cr actually charged — BUILD_TIER_COSTS) —
+    // the exact "quoted low, charged high" gap that started this whole
+    // credit-estimate feature. effectiveModelTier mirrors the server's own
+    // explicitClaudeTier / resolveModelTier branching exactly.
+    const effectiveModelTier: ModelTier = tierTouched ? modelTier : (buildComplexity === 'HIGH' ? 'default' : 'fast');
+    const plannedFileCount = staged?.files.length ?? manifest.length;
+    const estimateBuildTier = plannedFileCount > 0 ? resolveBuildTier({ totalPlannedFiles: plannedFileCount }) : undefined;
+    if (estimateBuildTier) {
+      const buildActionType: ActionType = projectType === 'mobile' ? 'mobile-build'
+        : projectType === 'website' ? 'website-build'
+        : projectType === 'saas' ? 'saas-build'
+        : 'web-build';
+      const estimatedCost = creditCost(buildActionType, effectiveModelTier, estimateBuildTier);
+      if (credits < estimatedCost) {
+        // "Not enough credits" (verbatim) is what the message-renderer below
+        // matches on to show the Upgrade button — same reusable upsell moment
+        // a post-hoc 402 already triggers, just surfaced before any credits
+        // are spent instead of after a failed build.
+        const shortMsg = `This build needs ~${estimatedCost} credits (${estimateBuildTier} tier, ${plannedFileCount} files planned) — you have ${credits}. Not enough credits for this action. Add credits, upgrade, or describe something smaller and I'll check again.`;
+        const msgId = uid();
+        addMessage({ id: msgId, role: 'assistant', content: shortMsg, timestamp: Date.now(), status: 'error' });
+        persistMessage('assistant', shortMsg);
+        pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(plannedFileCount)) });
+        return;
+      }
+    }
+    // Folded into the SAME persistent 'done' event below (not a standalone
+    // 'progress' push) — the agent feed only ever shows the latest event per
+    // agent, so a separate push here would flash for a moment and then get
+    // silently overwritten by the "X files planned" done event a few lines
+    // down, before the user ever really saw it.
+    const costSuffix = estimateBuildTier ? ` — ~${creditCost(
+      projectType === 'mobile' ? 'mobile-build' : projectType === 'website' ? 'website-build' : projectType === 'saas' ? 'saas-build' : 'web-build',
+      effectiveModelTier, estimateBuildTier,
+    )}cr` : '';
+
     if (!staged || !staged.shouldStage) {
-      pushAgentEvents({ agent: 'planner', status: 'done', detail: staged ? t('compactBuildMsg') : t('buildingOnePassMsg') });
+      pushAgentEvents({ agent: 'planner', status: 'done', detail: (staged ? t('compactBuildMsg') : t('buildingOnePassMsg')) + costSuffix });
       // Forward the manifest already fetched above (if the plan pass
       // succeeded but came back under STAGE_THRESHOLD) so the one-shot
       // completeness check doesn't pay for a second plan call — see
       // isNewBuildCompletenessEligible in executeGeneration.
-      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId });
+      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity });
       return;
     }
-    pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) });
+    pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) + costSuffix });
 
     // Forge: scaffold — the single charged pass; shell/theme/nav so the
     // preview renders a skeleton right away.
@@ -1991,7 +2062,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const scaffoldPurposes = staged.scaffoldPaths.map(p => staged.files.find(f => f.path === p)?.purpose ?? '');
     const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, stagePurposes: scaffoldPurposes, finalPass: !hasFills,
-      totalPlannedFiles: staged.files.length, buildId,
+      totalPlannedFiles: staged.files.length, buildId, buildComplexity,
     });
     // A failed scaffold means there's no skeleton for fill batches to build
     // on — piling more passes on top of a pass that produced no real files
@@ -2041,7 +2112,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       let batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
         stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-        finalPass: !willWire && i === staged.fillBatches.length - 1, buildId,
+        finalPass: !willWire && i === staged.fillBatches.length - 1, buildId, buildComplexity,
         // Only THIS first attempt is quiet-retry-eligible — an empty result
         // here is about to be silently retried below, so it shouldn't show
         // the user an alarming "nothing changed" bubble for something that
@@ -2058,7 +2129,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         batchOk = await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-          finalPass: !willWire && i === staged.fillBatches.length - 1, buildId,
+          finalPass: !willWire && i === staged.fillBatches.length - 1, buildId, buildComplexity,
         });
       }
       if (batchOk === false) {
@@ -2085,7 +2156,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: missingBatch.map(f => f.path), stagePurposes: missingBatch.map(f => f.purpose),
-          internalPass: true, finalPass: !willWire && i === staged.fillBatches.length - 1, buildId,
+          internalPass: true, finalPass: !willWire && i === staged.fillBatches.length - 1, buildId, buildComplexity,
         });
         await new Promise(r => setTimeout(r, 300));
         stillMissing = stillMissing.filter(p => filesNow()[p] === undefined);
@@ -2119,7 +2190,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'wire', stageFiles: [routerPath], stagePurposes: builtScreens.map(f => `${f.path}: ${f.purpose}`),
-          internalPass: true, finalPass: true, buildId,
+          internalPass: true, finalPass: true, buildId, buildComplexity,
         });
       }
     }

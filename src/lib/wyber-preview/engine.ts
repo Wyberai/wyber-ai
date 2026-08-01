@@ -43,13 +43,22 @@ const EXTERNAL_DEPS: Record<string, string> = {
   'react-dom':              'https://esm.sh/react-dom@18.3.1',
   'react-dom/client':       'https://esm.sh/react-dom@18.3.1/client',
   'react/jsx-runtime':      'https://esm.sh/react@18.3.1/jsx-runtime',
-  'lucide-react':           'https://esm.sh/lucide-react@0.383.0',
-  'recharts':               'https://esm.sh/recharts@2.12.0',
+  // ?deps=react@18.3.1,react-dom@18.3.1 pins these packages' OWN internal
+  // react/react-dom resolution to the exact same versioned URL as the 'react'/
+  // 'react-dom' entries above. Without it, esm.sh lets each package resolve
+  // its react peer dependency independently — confirmed live: react-router-dom
+  // pulled in a separate react@19.2.8 bundle alongside this app's pinned
+  // 18.3.1, so two distinct React module instances existed at once and any
+  // hook called through react-router-dom (useRef, etc.) hit a null dispatcher
+  // ("Cannot read properties of null (reading 'useRef')"), crashing the whole
+  // preview. Applies to every CDN package here that itself depends on react.
+  'lucide-react':           'https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1',
+  'recharts':               'https://esm.sh/recharts@2.12.0?deps=react@18.3.1,react-dom@18.3.1',
   'clsx':                   'https://esm.sh/clsx@2.1.1',
-  'react-router-dom':       'https://esm.sh/react-router-dom@6.28.0',
-  'framer-motion':          'https://esm.sh/framer-motion@11.0.0',
+  'react-router-dom':       'https://esm.sh/react-router-dom@6.28.0?deps=react@18.3.1,react-dom@18.3.1',
+  'framer-motion':          'https://esm.sh/framer-motion@11.0.0?deps=react@18.3.1,react-dom@18.3.1',
   'date-fns':               'https://esm.sh/date-fns@3.6.0',
-  'zustand':                'https://esm.sh/zustand@4.5.2',
+  'zustand':                'https://esm.sh/zustand@4.5.2?deps=react@18.3.1',
   'axios':                  'https://esm.sh/axios@1.7.2',
   // Scroll/motion physics for landing pages. Subpath entries are explicit
   // because the importmap only prefix-maps keys ending in '/'.

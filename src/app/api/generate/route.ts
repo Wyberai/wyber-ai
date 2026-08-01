@@ -2309,7 +2309,15 @@ export async function POST(req: NextRequest) {
     // matters when it's the explicit 'gpt' choice from the model dropdown,
     // checked once the caller's plan is known (below, alongside the existing
     // tierAllowedForPlan gate).
-    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false } = body
+    const { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false, buildComplexity } = body
+    // Set by the client from the 'plan' stage's response header (see
+    // X-Build-Complexity below) and echoed back on every subsequent staged
+    // request (scaffold/fill/wire) of the SAME build — reuses the one Haiku
+    // classification call the plan pass already made instead of every later
+    // stage re-running isComplexBuild against the identical prompt. Only
+    // trusted for 'HIGH'/'LOW'; anything else falls through to a fresh call.
+    const knownBuildComplexity: boolean | undefined =
+      buildComplexity === 'HIGH' ? true : buildComplexity === 'LOW' ? false : undefined
 
     // ── Agent team (flag-gated, see WYBER_TOOL_USE_BUILD precedent) ─────
     // Reads the SAME var the client checks (roster.ts AGENT_TEAM_ENABLED) —
@@ -2451,10 +2459,22 @@ export async function POST(req: NextRequest) {
     // fast-path gate further down (search "Fast path: parallel-Claude") can
     // reuse this exact result instead of a second Haiku call — same signal
     // driving both the model-tier pick and the fast-path eligibility check.
-    const newBuildComplexity = (!explicitClaudeTier && stage === 'full' && isNewBuild && !selfHeal && SONNET_FIRST_BUILDS)
+    // knownBuildComplexity (from the client-echoed plan-stage result) short-
+    // circuits this for scaffold/fill/wire too — those used to each pay for
+    // their own fresh isComplexBuild call against the identical prompt.
+    const newBuildComplexity = knownBuildComplexity !== undefined
+      ? knownBuildComplexity
+      : (!explicitClaudeTier && stage === 'full' && isNewBuild && !selfHeal && SONNET_FIRST_BUILDS)
       ? await isComplexBuild(prompt)
       : undefined
     let tier = explicitClaudeTier ?? await resolveModelTier({ actionType, isNewBuild, selfHeal, stage, prompt, fileContext, precomputedBuildComplexity: newBuildComplexity })
+    // Surfaced to the client (X-Build-Complexity header, see the final
+    // Response below) only when the 'plan' stage below computes its own
+    // fresh classification — the client then echoes it back as
+    // `buildComplexity` on every later scaffold/fill/wire request of this
+    // same build so THIS function's knownBuildComplexity short-circuit above
+    // can skip a redundant isComplexBuild call on every one of those passes.
+    let responseBuildComplexity: boolean | undefined = knownBuildComplexity
     // Extended thinking: only on genuinely complex new builds (Opus tier) — not on
     // Sonnet builds where it adds cost with no quality gain for simple apps.
     // NOTE: must be declared AFTER tier is resolved (tier is a let, not a const).
@@ -3013,6 +3033,134 @@ ${code}
 
     const resolvedTier = tier
     const model = MODELS[resolvedTier] ?? MODELS.default
+
+    // Records real usage to generation_usage_log and runs the overage safety
+    // valve (see computeOverageCharge in credits.ts) — the mechanism meant to
+    // catch a build that ran far hotter than its tier assumed (the motivating
+    // case: a 32-file Opus build measured ~$17 real COGS, charged only 30cr).
+    //
+    // MUST be called from inside each ReadableStream's own completion point
+    // (finally block, after controller.close()) — NOT from the bottom of this
+    // function, right before `return new Response(readable, ...)`. That used
+    // to be the only call site, and it ran the instant a stream was
+    // CONSTRUCTED, not after the stream's body actually finished executing —
+    // so totalOutputTokens/totalInputTokens (mutated inside the stream bodies
+    // below) were always still 0 when this ran. Confirmed live: generation_
+    // usage_log had zero rows across a full audit's worth of real builds
+    // despite the insert working fine when tested directly, and the overage
+    // valve depends entirely on rows in this table. usageLogged guards against
+    // double-logging for the one path (claude-parallel) that still accumulates
+    // tokens synchronously before any stream body runs.
+    let usageLogged = false
+    const logUsageAndCheckOverage = async () => {
+      if (usageLogged) return
+      if (!(totalOutputTokens > 0 || totalInputTokens > 0)) return
+      usageLogged = true
+      // $/MTok, checked against Anthropic's published pricing 2026-08-01
+      // (Sonnet's intro rate runs through 2026-08-31, then reverts to
+      // $3/$15 — recalibrate this table then too). gpt/wybercode don't
+      // bill through Anthropic; left at 0 rather than guessed.
+      const RATE_PER_MTOK: Record<string, { input: number; output: number }> = {
+        fast: { input: 2, output: 10 },
+        default: { input: 5, output: 25 },
+        premium: { input: 5, output: 25 },
+        fable: { input: 10, output: 50 },
+        gpt: { input: 0, output: 0 },
+        wybercode: { input: 0, output: 0 },
+      }
+      const rate = RATE_PER_MTOK[resolvedTier] ?? RATE_PER_MTOK.default
+      const costUsd = (totalInputTokens / 1_000_000) * rate.input + (totalOutputTokens / 1_000_000) * rate.output
+      try {
+        const { createServiceClient } = await import('@/lib/supabase/server')
+        const admin = createServiceClient()
+        // user.id (session-authenticated) — NEVER the request body's userId
+        // field — for anything that writes data or moves credits here.
+        const authedUserId = user?.id ?? null
+        await admin.from('generation_usage_log').insert({
+          user_id: authedUserId,
+          project_id: projectId || null,
+          build_id: buildId || null,
+          action_type: actionType,
+          stage,
+          model_tier: resolvedTier,
+          model_id: MODELS[resolvedTier] ?? String(resolvedTier),
+          input_tokens: totalInputTokens,
+          output_tokens: totalOutputTokens,
+          cache_creation_input_tokens: totalCacheCreationTokens,
+          cache_read_input_tokens: totalCacheReadTokens,
+          cost_usd: Number(costUsd.toFixed(4)),
+          credits_charged: selfHeal || isInternalPass || stage === 'plan' ? 0 : cost,
+          build_tier: buildTier ?? null,
+          planned_files: typeof totalPlannedFiles === 'number' ? totalPlannedFiles : null,
+        })
+
+        // Overage safety valve — deliberately NOT gated on finalPass
+        // (client-supplied, and a client that simply never sends
+        // finalPass:true would otherwise permanently disable this check for
+        // itself) — runs on every request in a charged build's chain instead,
+        // checking the REAL cumulative usage across every request tagged with
+        // this buildId so far. The idempotency check below still ensures it
+        // only ever charges once per build regardless of how many requests it
+        // runs on, so checking early/often is free, not repeated cost.
+        if (buildTier && buildId && authedUserId) {
+          // Idempotency: a prior sentinel row means this buildId was already
+          // charged — covers both finalPass firing twice for the same build
+          // AND this check now running on every request. Bounded to the last
+          // 6 hours rather than forever: buildId is a client-generated,
+          // freeform string, and an unbounded lookback would let a client
+          // that always sends the SAME id permanently disable this check for
+          // itself after the first sentinel row exists.
+          const idempotencyWindowStart = new Date(Date.now() - 6 * 3600_000).toISOString()
+          const { data: alreadyCharged } = await admin
+            .from('generation_usage_log')
+            .select('id')
+            .eq('build_id', buildId)
+            .eq('action_type', 'build-overage')
+            .gte('created_at', idempotencyWindowStart)
+            .limit(1)
+            .maybeSingle()
+          if (!alreadyCharged) {
+            const { data: rows } = await admin
+              .from('generation_usage_log')
+              .select('output_tokens')
+              .eq('build_id', buildId)
+              .neq('action_type', 'build-overage')
+            const totalBuildOutputTokens = (rows ?? []).reduce((sum, r: { output_tokens: number }) => sum + (r.output_tokens || 0), 0)
+            const overage = computeOverageCharge({
+              buildTier, modelTier: resolvedTier, actualOutputTokens: totalBuildOutputTokens,
+            })
+            let chargedOverage = 0
+            if (overage > 0) {
+              const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: overage })
+              // Best-effort: an insufficient/stale balance just means we
+              // collect less, never blocks or reverses a build that already
+              // shipped. The sentinel row below still records the attempt
+              // either way, so this buildId is never re-checked.
+              if (overageRpc?.new_credits !== undefined) chargedOverage = overage
+            }
+            // Sentinel row — marks this buildId as resolved regardless of
+            // whether anything was actually collected, so a second finalPass
+            // firing (or a retried request) never double-charges.
+            await admin.from('generation_usage_log').insert({
+              user_id: authedUserId, project_id: projectId || null, build_id: buildId,
+              action_type: 'build-overage', stage: 'full', model_tier: resolvedTier,
+              model_id: MODELS[resolvedTier] ?? String(resolvedTier),
+              output_tokens: totalBuildOutputTokens, credits_charged: chargedOverage, build_tier: buildTier,
+            })
+            if (chargedOverage > 0 && projectId) {
+              await admin.from('project_messages').insert({
+                project_id: projectId,
+                role: 'assistant',
+                content: `This build ran heavier than a typical ${buildTier} build (~${Math.round(totalBuildOutputTokens / 1000)}K tokens generated) — an extra ${chargedOverage} credit${chargedOverage === 1 ? '' : 's'} was charged to cover it.`,
+                files_changed: [],
+              })
+            }
+          }
+        }
+      } catch (e) {
+        console.error('[generation_usage_log] insert/overage-check failed:', e)
+      }
+    }
     // 'fast' was 8000 with no documented rationale (vs 64000-96000 for the
     // other tiers) — every continuation call below reuses this SAME cap
     // (max_tokens: stageMaxTokens), so any 'fast'-tier edit whose real output
@@ -3027,26 +3175,34 @@ ${code}
     // natural end_turn; a higher ceiling doesn't make it write more).
     const maxTokens = resolvedTier === 'fast' ? 24000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
-    // Inject Supabase context if user has connected their project
-    const supabaseResult = projectId ? await getSupabaseContext(projectId, projectType) : { context: '', status: 'none' as SupabaseStatus }
+    // These five lookups are all independent reads (none depends on another's
+    // result) but used to run as five sequential awaits — on every single
+    // staged pass (scaffold, every fill batch, wire) of every build. Firing
+    // them together cuts that to the slowest single read instead of the sum
+    // of all five. WyberCloud is fetched unconditionally alongside Supabase
+    // (previously gated on `!supabaseContext` before firing) and just thrown
+    // away below when Supabase turns out to be connected — trading one wasted
+    // read in the Supabase-connected case for zero added latency in the much
+    // more common WyberCloud-or-neither case.
+    const [supabaseResult, wyberCloudResultRaw, projectMemory, storedKnowledge, templateRefRaw] = await Promise.all([
+      projectId ? getSupabaseContext(projectId, projectType) : Promise.resolve({ context: '', status: 'none' as SupabaseStatus }),
+      projectId ? getWyberCloudContext(projectId, projectType) : Promise.resolve({ context: '', status: 'none' as SupabaseStatus }),
+      projectId ? loadProjectMemory(projectId) : Promise.resolve(''),
+      projectId ? loadProjectKnowledge(projectId) : Promise.resolve(''),
+      !hasExisting ? getTemplateReference(prompt) : Promise.resolve(''),
+    ])
     const supabaseContext = supabaseResult.context
     const supabaseStatus = supabaseResult.status
     // WyberCloud is the alternative backend — only relevant when Supabase
     // isn't connected (a project uses one or the other, never both). Applies
     // to web, website, AND mobile (React Native) — fetch/JSON work the same
     // everywhere, getWyberCloudContext only varies the file path/import style.
-    const wyberCloudResult = projectId && !supabaseContext
-      ? await getWyberCloudContext(projectId, projectType)
-      : { context: '', status: 'none' as SupabaseStatus }
-    const wyberCloudContext = wyberCloudResult.context
-    // Durable rolling memory of this project (no-op until migration 034 is applied).
-    const projectMemory = projectId ? await loadProjectMemory(projectId) : ''
+    const wyberCloudContext = !supabaseContext ? wyberCloudResultRaw.context : ''
     // Merge request-body knowledge (editor) with the persistent stored column
     // (settable via MCP) so both apply on every build.
-    const storedKnowledge = projectId ? await loadProjectKnowledge(projectId) : ''
     const mergedKnowledge = [String(knowledge ?? '').trim(), storedKnowledge].filter(Boolean).join('\n\n')
     const knowledgeContext = mergedKnowledge ? `\n\n${mergedKnowledge}` : ''
-    const templateRef = !hasExisting ? await getTemplateReference(prompt) : ''
+    const templateRef = templateRefRaw
     const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach. EXCEPTION — complex builds: if this build spans MORE than ~5 files, your one opening sentence must set expectations instead, e.g. "This is a complex build across multiple files — I\'m generating them in batches; the preview updates when the last file lands." (still one sentence, still followed immediately by the file output).\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with a recap of WHAT you changed and ONE suggested next step. For 1-2 file changes: 1-2 friendly sentences, e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". For changes spanning 3+ files: a short bullet list — one line per meaningful change, stating the OUTCOME ("Dashboard chart now scrolls horizontally on narrow screens"), not the action taken — then the next-step sentence. When you make no code change, still close with a helpful next step.\n10. NEVER NARRATE BETWEEN BLOCKS. After the opening sentence, output the <file>/<edit> blocks back-to-back with ZERO prose between them. Everything you write outside the blocks is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" or "Let me tighten the button row:" turns that answer into unreadable rambling that trails off mid-thought. If you want to signal progress, use [progress: short label] markers (they render as a live ticker, never as chat text). ALL explanation belongs in the closing recap (rule 9), written AFTER the last block, in past tense, describing the finished result.'
 
     // Tool-use variant of the output rule (Phase 5) — same voice/behavior rules
@@ -3232,6 +3388,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           : (planIsComplex ? '18-30' : '6-10')
         staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
       }
+      // Only the from-scratch branch above actually ran isComplexBuild — the
+      // hasExisting (edit-completeness) branch leaves planIsComplex at its
+      // false initializer with no real classification behind it, so it must
+      // NOT be surfaced as a real "LOW" verdict for that case.
+      if (!hasExisting) responseBuildComplexity = planIsComplex
       // A 6-10 file manifest fits comfortably in 2000 tokens; a 18-32 file
       // complex-build manifest doesn't (~60-80 tokens/entry incl. JSON
       // overhead × 30 files ≈ 2000-2400 tokens alone) — found live: a real
@@ -3919,6 +4080,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               generatedText = assistantSoFar
               controller.close()
               if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
+              await logUsageAndCheckOverage()
             }
           },
         })
@@ -4111,6 +4273,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // No real file/edit block produced → generation failed (whether or not
             // text was emitted); give the credits back.
             if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
+            await logUsageAndCheckOverage()
           }
         },
       })
@@ -4173,6 +4336,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           finally {
             controller.close()
             if (!generationSucceeded(generatedText, stage)) await settleRefund('empty-generation')
+            await logUsageAndCheckOverage()
           }
         },
       })
@@ -4245,120 +4409,11 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // alike, including free passes) so BUILD_TIER_COSTS above can eventually
     // be calibrated against measured COGS instead of the estimate it ships
     // with today. Never wired into cost/creditCost — purely observational.
-    if (totalOutputTokens > 0 || totalInputTokens > 0) {
-      after(async () => {
-        // $/MTok, checked against Anthropic's published pricing 2026-08-01
-        // (Sonnet's intro rate runs through 2026-08-31, then reverts to
-        // $3/$15 — recalibrate this table then too). gpt/wybercode don't
-        // bill through Anthropic; left at 0 rather than guessed.
-        const RATE_PER_MTOK: Record<string, { input: number; output: number }> = {
-          fast: { input: 2, output: 10 },
-          default: { input: 5, output: 25 },
-          premium: { input: 5, output: 25 },
-          fable: { input: 10, output: 50 },
-          gpt: { input: 0, output: 0 },
-          wybercode: { input: 0, output: 0 },
-        }
-        const rate = RATE_PER_MTOK[resolvedTier] ?? RATE_PER_MTOK.default
-        const costUsd = (totalInputTokens / 1_000_000) * rate.input + (totalOutputTokens / 1_000_000) * rate.output
-        try {
-          const { createServiceClient } = await import('@/lib/supabase/server')
-          const admin = createServiceClient()
-          // user.id (session-authenticated) — NEVER the request body's userId
-          // field — for anything that writes data or moves credits here.
-          // body.userId is only ever safe for the pre-existing notify() call
-          // above (a best-effort push, no financial/data consequence); this
-          // block deducts real credits, so it must use the identity the
-          // server itself verified, not a client-supplied string a user
-          // could set to someone else's id.
-          const authedUserId = user?.id ?? null
-          await admin.from('generation_usage_log').insert({
-            user_id: authedUserId,
-            project_id: projectId || null,
-            build_id: buildId || null,
-            action_type: actionType,
-            stage,
-            model_tier: resolvedTier,
-            model_id: MODELS[resolvedTier] ?? String(resolvedTier),
-            input_tokens: totalInputTokens,
-            output_tokens: totalOutputTokens,
-            cache_creation_input_tokens: totalCacheCreationTokens,
-            cache_read_input_tokens: totalCacheReadTokens,
-            cost_usd: Number(costUsd.toFixed(4)),
-            credits_charged: selfHeal || isInternalPass || stage === 'plan' ? 0 : cost,
-            build_tier: buildTier ?? null,
-            planned_files: typeof totalPlannedFiles === 'number' ? totalPlannedFiles : null,
-          })
-
-          // Overage safety valve (see computeOverageCharge in credits.ts).
-          // Deliberately NOT gated on finalPass (client-supplied, and a
-          // client that simply never sends finalPass:true would otherwise
-          // permanently disable this check for itself) — runs on every
-          // request in a charged build's chain instead, checking the REAL
-          // cumulative usage across every request tagged with this buildId
-          // so far. The idempotency check below still ensures it only ever
-          // charges once per build regardless of how many requests it runs
-          // on, so checking early/often is free, not repeated cost.
-          if (buildTier && buildId && authedUserId) {
-            // Idempotency: a prior sentinel row means this buildId was
-            // already charged — covers both finalPass firing twice for the
-            // same build AND this check now running on every request.
-            // Bounded to the last 6 hours (generous for even a very slow
-            // build) rather than forever: buildId is a client-generated,
-            // freeform string, and an unbounded lookback would let a client
-            // that always sends the SAME id permanently disable this check
-            // for itself after the first sentinel row exists, regardless of
-            // how many genuinely separate builds follow.
-            const idempotencyWindowStart = new Date(Date.now() - 6 * 3600_000).toISOString()
-            const { data: alreadyCharged } = await admin
-              .from('generation_usage_log')
-              .select('id')
-              .eq('build_id', buildId)
-              .eq('action_type', 'build-overage')
-              .gte('created_at', idempotencyWindowStart)
-              .limit(1)
-              .maybeSingle()
-            if (!alreadyCharged) {
-              const { data: rows } = await admin
-                .from('generation_usage_log')
-                .select('output_tokens')
-                .eq('build_id', buildId)
-                .neq('action_type', 'build-overage')
-              const totalBuildOutputTokens = (rows ?? []).reduce((sum, r: { output_tokens: number }) => sum + (r.output_tokens || 0), 0)
-              const overage = computeOverageCharge({
-                buildTier, modelTier: resolvedTier, actualOutputTokens: totalBuildOutputTokens,
-              })
-              let chargedOverage = 0
-              if (overage > 0) {
-                const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: overage })
-                // Best-effort: an insufficient/stale balance just means we
-                // collect less, never blocks or reverses a build that
-                // already shipped. The sentinel row below still records the
-                // attempt either way, so this buildId is never re-checked.
-                if (overageRpc?.new_credits !== undefined) chargedOverage = overage
-              }
-              // Sentinel row — marks this buildId as resolved regardless of
-              // whether anything was actually collected, so a second
-              // finalPass firing (or a retried request) never double-charges.
-              await admin.from('generation_usage_log').insert({
-                user_id: authedUserId, project_id: projectId || null, build_id: buildId,
-                action_type: 'build-overage', stage: 'full', model_tier: resolvedTier,
-                model_id: MODELS[resolvedTier] ?? String(resolvedTier),
-                output_tokens: totalBuildOutputTokens, credits_charged: chargedOverage, build_tier: buildTier,
-              })
-              if (chargedOverage > 0 && projectId) {
-                await admin.from('project_messages').insert({
-                  project_id: projectId,
-                  role: 'assistant',
-                  content: `This build ran heavier than a typical ${buildTier} build (~${Math.round(totalBuildOutputTokens / 1000)}K tokens generated) — an extra ${chargedOverage} credit${chargedOverage === 1 ? '' : 's'} was charged to cover it.`,
-                  files_changed: [],
-                })
-              }
-            }
-          }
-        } catch { /* analytics-only, never worth failing the request over */ }
-      })
-    }
+    // Fallback for the one path (claude-parallel) that accumulates tokens
+    // synchronously above rather than inside a stream body — everything else
+    // logs from its own stream's finally block (see logUsageAndCheckOverage's
+    // definition for why). usageLogged prevents a double-fire either way.
+    await logUsageAndCheckOverage()
 
     return new Response(readable, {
       headers: {
@@ -4368,6 +4423,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         'X-Credits-Used': String(selfHeal || isInternalPass ? 0 : cost),
         'X-Credits-Tier': resolvedTier,
         'X-Supabase-Status': supabaseStatus,
+        'X-Build-Complexity': responseBuildComplexity === undefined ? '' : (responseBuildComplexity ? 'HIGH' : 'LOW'),
       },
     })
   } catch (err) {
