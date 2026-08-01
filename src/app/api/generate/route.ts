@@ -3142,6 +3142,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const planExamples = isMobilePlan
         ? '"App.tsx", "src/navigation/AppNavigator.tsx", "src/screens/HomeScreen.tsx"'
         : '"src/index.css", "src/App.tsx", "src/components/Layout.tsx"'
+      let planIsComplex = false
       if (hasExisting) {
         // Edit-completeness plan (see ChatPanel.tsx's concurrent plan-pass on
         // every edit turn): the request is an EDIT against files already
@@ -3166,13 +3167,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         // for model-tier routing (isComplexBuild) — HIGH examples explicitly
         // include "a full marketplace with vendor accounts, inventory, and
         // checkout", which is this exact class of request.
-        const planIsComplex = await isComplexBuild(prompt)
+        planIsComplex = await isComplexBuild(prompt)
         const planCount = isMobilePlan
           ? (planIsComplex ? '20-32' : '8-14')
           : (planIsComplex ? '18-30' : '6-10')
         staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
       }
-      stageMaxTokens = 2000
+      // A 6-10 file manifest fits comfortably in 2000 tokens; a 18-32 file
+      // complex-build manifest doesn't (~60-80 tokens/entry incl. JSON
+      // overhead × 30 files ≈ 2000-2400 tokens alone) — found live: a real
+      // food-delivery-suite plan call truncated mid-JSON-array at 2000
+      // tokens, which parsePlanManifest can't recover a trailing partial
+      // object from, so the manifest silently comes back empty and
+      // runAgenticBuild falls through to one-shot — exactly defeating the
+      // point of scaling planCount up in the first place.
+      stageMaxTokens = planIsComplex ? 6000 : 2000
     } else {
       const basePrompt = projectType === 'mobile'
         ? buildMobileSystemPrompt()
@@ -3211,7 +3220,16 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // Internal passes are free to the user — clamp their output budget so a
       // forged request can't extract a large free generation.
       if (isInternalPass) {
-        stageMaxTokens = Math.min(stageMaxTokens, stage === 'fill' ? (tier === 'premium' ? 32000 : 24000) : 8000)
+        // Scaffold used to be a flat 8000 tokens regardless of how many shell
+        // files it was asked for — fine for the common 1-2 file scaffold, but
+        // found live: a complex build's scaffold (Layout, Sidebar, BottomNav,
+        // RoleSwitcher, index.css — 5 files) hit max_tokens at 8000 and wrote
+        // only 1 of them, the exact same "budget capped below what was asked"
+        // mistake the plan-stage token fix above just closed, one level down
+        // the pipeline. Scale per scaffold file, same per-file rate as fill.
+        const scaffoldTokens = Math.min(tier === 'premium' ? 32000 : 24000, Math.max(8000, (stageFiles as string[]).length * 8000))
+        const capForStage = stage === 'fill' ? (tier === 'premium' ? 32000 : 24000) : stage === 'scaffold' ? scaffoldTokens : 8000
+        stageMaxTokens = Math.min(stageMaxTokens, capForStage)
       }
       if (stage === 'full') {
         // This "prefer fewer files" instruction only ever fires for a genuine
