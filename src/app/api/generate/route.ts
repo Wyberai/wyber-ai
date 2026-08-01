@@ -3383,9 +3383,27 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       if (useToolUse && isNewBuild && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
           const { runClaudeParallel, classifyClaudeParallelFailure } = await import('@/lib/model-providers/claude-parallel')
-          const parallelResult = await runClaudeParallel({
-            systemPrompt: staticSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
-          })
+          // runClaudeParallel is fully awaited before ANY response stream
+          // opens — unlike the sequential path below (which starts streaming
+          // real bytes, plus a heartbeat, the instant its own turn begins),
+          // this whole call is one silent gap from the client's perspective:
+          // no headers, no bytes, no heartbeat. Its own page-generation calls
+          // and template-retrieval lookups are individually bounded, but
+          // nothing bounds the AGGREGATE wait if several run slower than
+          // expected — exactly the unbounded-silent-gap shape this same
+          // commit added SSE heartbeats to eliminate on the sequential path.
+          // Race it against a hard ceiling so a slow parallel attempt can
+          // never block longer than the sequential path would anyway; on
+          // timeout this falls through exactly like any other failure below.
+          const CLAUDE_PARALLEL_TIMEOUT_MS = Number(process.env.CLAUDE_PARALLEL_TIMEOUT_MS) || 20000
+          const parallelResult = await Promise.race([
+            runClaudeParallel({
+              systemPrompt: staticSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
+            }),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error(`claude-parallel exceeded ${CLAUDE_PARALLEL_TIMEOUT_MS}ms`)), CLAUDE_PARALLEL_TIMEOUT_MS)
+            ),
+          ])
           const failure = classifyClaudeParallelFailure(parallelResult)
           if (failure) {
             console.log(`[generate] claude-parallel low-confidence (${failure}) — falling back to sequential loop`)

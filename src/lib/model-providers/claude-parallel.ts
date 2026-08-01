@@ -41,7 +41,7 @@ const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 1
 // low threshold errs toward "attempt a patch" while the library is small.
 const MATCH_SCORE_THRESHOLD = Number(process.env.CLAUDE_PARALLEL_MATCH_THRESHOLD) || 0.02
 
-export type ClaudeParallelFailureReason = 'error' | 'empty-output'
+export type ClaudeParallelFailureReason = 'error' | 'empty-output' | 'truncated-page'
 
 export interface ClaudeParallelResult extends CodeGenResult {
   pagesFromTemplate: number
@@ -188,8 +188,20 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
 }
 
 /** Reused by route.ts to decide whether to fall through to the existing
- * sequential loop instead of shipping this result. */
+ * sequential loop instead of shipping this result.
+ *
+ * `result.truncated` (set per-page in runOnePage/the shell pass whenever a
+ * page turn hits stop_reason==='max_tokens', PAGE_MAX_TOKENS=16000) used to
+ * be computed and then never read here — the exact same class of bug this
+ * session spent all night fixing elsewhere (a model silently cutting off
+ * mid-file with nothing catching it), just reintroduced fresh in this
+ * morning's new code path. A build where every page happens to contain the
+ * word "file" would ship with a truncated page instead of falling back to
+ * the proven, if slower, sequential loop that already handles max_tokens
+ * continuation correctly.
+ */
 export function classifyClaudeParallelFailure(result: ClaudeParallelResult): ClaudeParallelFailureReason | null {
   if (!/<(file|edit) path="/.test(result.text)) return 'empty-output'
+  if (result.truncated) return 'truncated-page'
   return null
 }

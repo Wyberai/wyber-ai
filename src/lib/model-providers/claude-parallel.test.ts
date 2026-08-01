@@ -35,4 +35,11 @@ describe('classifyClaudeParallelFailure', () => {
   it('passes output containing a real edit block', () => {
     expect(classifyClaudeParallelFailure(fakeResult({ text: '<edit path="src/App.tsx">...</edit>' }))).toBeNull()
   })
+
+  it('flags a truncated page even when it contains a valid file block', () => {
+    // A page that hit stop_reason==='max_tokens' still opened a real <file>
+    // tag before cutting off mid-content — the empty-output check alone
+    // would wave this through as a success and ship the cut-off file.
+    expect(classifyClaudeParallelFailure(fakeResult({ text: '<file path="src/App.tsx">incomplete...', truncated: true }))).toBe('truncated-page')
+  })
 })
