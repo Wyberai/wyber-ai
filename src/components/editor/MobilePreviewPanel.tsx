@@ -23,6 +23,12 @@ type AppetizeStatus = 'idle' | 'queued' | 'building' | 'ready' | 'error'
 const DEFAULT_MODE: PreviewMode = 'inapp'
 const POLL_INTERVAL_MS = 6000
 
+// Fixed, always-overwritten path — the wyberai-mobile repo's Android Release
+// workflow publishes here on every successful build (see .github/workflows/
+// android-release.yml in that repo), so this URL never changes and never
+// expires, unlike a GitHub Actions artifact link.
+const WYBERAI_APP_APK_URL = 'https://api.wyberai.com/storage/v1/object/public/app-releases/android/wyberai-latest.apk'
+
 interface Props {
   projectId?: string
 }
@@ -493,15 +499,22 @@ function WyberAiGoCta({
           </>
         )}
 
-        {/* Play Store CTA — shown once the app is live */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 4 }}>
+        {/* Download CTA — real APK, not yet on Google Play */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 4 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.18)', borderRadius: 20, padding: '4px 12px' }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9' }} />
             <span style={{ color: '#7dd3fc', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>COMING TO GOOGLE PLAY</span>
           </div>
-          <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center', lineHeight: 1.5 }}>
-            The WyberAi mobile app is in development.<br />
-            Side-load the APK from the latest GitHub Actions build to test.
+          <a
+            href={WYBERAI_APP_APK_URL}
+            download
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, textDecoration: 'none', background: '#18181b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 9, padding: '8px 16px', color: '#e4e4e7', fontSize: 12.5, fontWeight: 600 }}
+          >
+            <PlayStoreIcon />
+            Download the app (Android APK)
+          </a>
+          <div style={{ color: '#3f3f46', fontSize: 10.5, textAlign: 'center', lineHeight: 1.5, maxWidth: 260 }}>
+            Not on Google Play yet — this installs directly. Your phone may ask you to allow installs from this source once.
           </div>
         </div>
 
