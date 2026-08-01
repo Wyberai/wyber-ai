@@ -2457,9 +2457,23 @@ export async function POST(req: NextRequest) {
     // computed above (newBuildComplexity) rather than a second signal. Every
     // other stage/action (edits, fills, plan, self-heal) leaves buildTier
     // undefined and creditCost falls through to its existing pricing.
+    // Only trust the client's totalPlannedFiles for the staged 'scaffold'
+    // pass, where it can be floor-checked against stageFiles — the file list
+    // this SAME request is explicitly asking the model to write, so it can't
+    // honestly claim fewer total planned files than that. For the one-shot
+    // 'full' fallback there's nothing to cross-check a claimed count against,
+    // so a request could otherwise just assert totalPlannedFiles:1 to buy the
+    // cheapest tier regardless of real complexity — that path always prices
+    // off newBuildComplexity (server-computed) instead. Undercounting within
+    // the scaffold case (a real total far larger than declared) is still
+    // caught after the fact by the overage safety valve above, which prices
+    // off measured tokens, not this claimed number.
+    const trustedTotalPlannedFiles = stage === 'scaffold' && typeof totalPlannedFiles === 'number' && Number.isFinite(totalPlannedFiles)
+      ? Math.max(totalPlannedFiles, Array.isArray(stageFiles) ? stageFiles.length : 0)
+      : undefined
     const buildTier = isNewBuild && (stage === 'full' || stage === 'scaffold')
       ? resolveBuildTier({
-          totalPlannedFiles: typeof totalPlannedFiles === 'number' ? totalPlannedFiles : undefined,
+          totalPlannedFiles: trustedTotalPlannedFiles,
           isComplex: newBuildComplexity,
         })
       : undefined
@@ -4235,8 +4249,16 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         try {
           const { createServiceClient } = await import('@/lib/supabase/server')
           const admin = createServiceClient()
+          // user.id (session-authenticated) — NEVER the request body's userId
+          // field — for anything that writes data or moves credits here.
+          // body.userId is only ever safe for the pre-existing notify() call
+          // above (a best-effort push, no financial/data consequence); this
+          // block deducts real credits, so it must use the identity the
+          // server itself verified, not a client-supplied string a user
+          // could set to someone else's id.
+          const authedUserId = user?.id ?? null
           await admin.from('generation_usage_log').insert({
-            user_id: userId || null,
+            user_id: authedUserId,
             project_id: projectId || null,
             build_id: buildId || null,
             action_type: actionType,
@@ -4253,23 +4275,32 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             planned_files: typeof totalPlannedFiles === 'number' ? totalPlannedFiles : null,
           })
 
-          // Overage safety valve (see computeOverageCharge in credits.ts) —
-          // only ever runs on the request that closes out a charged build's
-          // full chain (buildTier set, finalPass true: either the one-shot
-          // fallback, or the last request of a staged scaffold+fills build).
-          // Sums REAL usage across every request tagged with this buildId —
-          // not just this one — since a staged build's total cost is the
-          // charged scaffold pass plus every free fill batch it authorized.
-          if (finalPass && buildTier && buildId && userId) {
-            // Idempotency: finalPass can legitimately fire twice for the same
-            // buildId (a fill batch's primary attempt AND its own missing-
-            // file catch-up call both marked finalPass on the last batch) —
-            // a prior sentinel row means this buildId was already charged.
+          // Overage safety valve (see computeOverageCharge in credits.ts).
+          // Deliberately NOT gated on finalPass (client-supplied, and a
+          // client that simply never sends finalPass:true would otherwise
+          // permanently disable this check for itself) — runs on every
+          // request in a charged build's chain instead, checking the REAL
+          // cumulative usage across every request tagged with this buildId
+          // so far. The idempotency check below still ensures it only ever
+          // charges once per build regardless of how many requests it runs
+          // on, so checking early/often is free, not repeated cost.
+          if (buildTier && buildId && authedUserId) {
+            // Idempotency: a prior sentinel row means this buildId was
+            // already charged — covers both finalPass firing twice for the
+            // same build AND this check now running on every request.
+            // Bounded to the last 6 hours (generous for even a very slow
+            // build) rather than forever: buildId is a client-generated,
+            // freeform string, and an unbounded lookback would let a client
+            // that always sends the SAME id permanently disable this check
+            // for itself after the first sentinel row exists, regardless of
+            // how many genuinely separate builds follow.
+            const idempotencyWindowStart = new Date(Date.now() - 6 * 3600_000).toISOString()
             const { data: alreadyCharged } = await admin
               .from('generation_usage_log')
               .select('id')
               .eq('build_id', buildId)
               .eq('action_type', 'build-overage')
+              .gte('created_at', idempotencyWindowStart)
               .limit(1)
               .maybeSingle()
             if (!alreadyCharged) {
@@ -4284,7 +4315,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               })
               let chargedOverage = 0
               if (overage > 0) {
-                const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: userId, p_amount: overage })
+                const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: overage })
                 // Best-effort: an insufficient/stale balance just means we
                 // collect less, never blocks or reverses a build that
                 // already shipped. The sentinel row below still records the
@@ -4295,7 +4326,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               // whether anything was actually collected, so a second
               // finalPass firing (or a retried request) never double-charges.
               await admin.from('generation_usage_log').insert({
-                user_id: userId, project_id: projectId || null, build_id: buildId,
+                user_id: authedUserId, project_id: projectId || null, build_id: buildId,
                 action_type: 'build-overage', stage: 'full', model_tier: resolvedTier,
                 model_id: MODELS[resolvedTier] ?? String(resolvedTier),
                 output_tokens: totalBuildOutputTokens, credits_charged: chargedOverage, build_tier: buildTier,
