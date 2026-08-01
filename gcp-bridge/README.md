@@ -42,8 +42,20 @@ environment variables (Production + Preview).
 - `GET /operations/:operationName?instanceName=...&database=...` — poll a creation operation, creates the named database once the instance is up
 - `DELETE /instances/:instanceName` — tear down an instance
 - `GET /instances/:instanceName` — instance details
+- `GET /storage/object?bucket=...&path=...` — read one WyberCode template file
+- `POST /storage/object` `{ bucket, path, content }` — write/overwrite one WyberCode template file
+- `GET /storage/list?bucket=...&prefix=...` — list template file paths under a prefix
 
-All except `/health` require `Authorization: Bearer <BRIDGE_SECRET>`.
+All except `/health` require `Authorization: Bearer <BRIDGE_SECRET>`. The
+`/storage/*` routes additionally reject any bucket not in
+`WYBERCODE_TEMPLATE_BUCKETS` (comma-separated, defaults to
+`wyberai-wybercode-templates`) — same "can't be used outside our own
+namespace even if the secret leaks" discipline `INSTANCE_NAME_RE` gives the
+Cloud SQL routes.
 
-Mirrors the logic in `src/lib/google-cloud-sql.ts` in the main repo — if that
-file's Cloud SQL Admin API calls change, update `server.js` to match.
+Mirrors the logic in `src/lib/google-cloud-sql.ts` and
+`src/lib/template-library/` in the main repo — if either changes, update
+`server.js` to match. Requires the `roles/storage.objectAdmin` IAM binding on
+`wybercloud-provisioner@wyberai.iam.gserviceaccount.com` for the template
+bucket(s) — grant it before the `/storage/*` routes will work; the SQL
+routes are unaffected either way.

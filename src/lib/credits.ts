@@ -3,8 +3,8 @@
  * Keep all cost logic here; routes import from here, never hardcode elsewhere.
  */
 
-export type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt'
-export type ModelProvider = 'anthropic' | 'openai'
+export type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt' | 'wybercode'
+export type ModelProvider = 'anthropic' | 'openai' | 'wybercode'
 /**
  * Real DB plan values written to profiles.plan by the Dodo webhook
  * (src/app/api/dodo/webhook/route.ts) and the free/cancellation reset
@@ -54,6 +54,11 @@ export const MODEL_IDS: Record<ModelTier, string> = {
   // env-var override, not hardcoded, so it can be swapped without a deploy
   // once this tier sees real usage.
   gpt:     process.env.OPENAI_CODING_MODEL_ID || 'gpt-5.6-sol',
+  // Placeholder label — wybercode.ts actually calls two separate self-hosted
+  // model ids (WYBERCODE_PATCH_MODEL_ID / WYBERCODE_FULLGEN_MODEL_ID)
+  // depending on whether a page is a template patch or a full generation.
+  // This entry exists so MODEL_IDS stays exhaustive over ModelTier.
+  wybercode: 'wybercode (self-hosted, two-tier)',
 }
 
 /** Which provider actually serves a given tier — a thin, additive lookup so
@@ -63,6 +68,7 @@ export const MODEL_IDS: Record<ModelTier, string> = {
 export const MODEL_PROVIDERS: Record<ModelTier, ModelProvider> = {
   fast: 'anthropic', default: 'anthropic', premium: 'anthropic', fable: 'anthropic',
   gpt: 'openai',
+  wybercode: 'wybercode',
 }
 
 /**
@@ -71,6 +77,18 @@ export const MODEL_PROVIDERS: Record<ModelTier, ModelProvider> = {
  * coding-model pricing is confirmed (this tier's actual per-token cost is not
  * the same as Anthropic's, so 1.0 is a safe starting assumption, not a
  * verified figure).
+ *
+ * `wybercode`'s multiplier is a placeholder too, and for a structurally
+ * different reason: self-hosted GPUs are a FIXED cost regardless of usage,
+ * not a per-token API bill, so "COGS per build" only becomes measurable once
+ * real GKE/vLLM throughput numbers exist (see the plan's Phase 7 — amortized
+ * $/hour ÷ real tokens/sec ÷ real shadow-run token counts). Deliberately set
+ * low here (below fast/Sonnet) rather than at 1.0 like gpt/premium's
+ * placeholders: driving volume onto owned infra is the entire point of this
+ * tier, and pricing it at parity with an Anthropic-billed tier would work
+ * against that before real COGS data even exists to justify a higher number.
+ * Recalibrate with calibrateWyberCodeMultiplier() below once Phase 3/4 have
+ * real measurements — do not ship this 0.25 to a real rollout unexamined.
  */
 export const MODEL_MULTIPLIERS: Record<ModelTier, number> = {
   fast:    0.5,
@@ -78,6 +96,7 @@ export const MODEL_MULTIPLIERS: Record<ModelTier, number> = {
   premium: 1.0,
   fable:   2.0,
   gpt:     1.0,
+  wybercode: 0.25,
 }
 
 /** Human-readable model info for UI */
@@ -98,6 +117,11 @@ export const MODEL_META: Record<ModelTier, {
   // Visible to everyone (free+) — the point of adding a second provider is for
   // it to be a real, try-it-now choice, not another paywalled tier.
   gpt:     { label: 'GPT',     tagline: 'OpenAI — an alternative engine for the same build', minPlan: 'free', provider: 'openai' },
+  // Free-tier visible on purpose (mirrors gpt) — also reachable via automatic
+  // rollout (see wybercode.ts shouldAutoRouteToWyberCode), independent of
+  // this manual dropdown entry. Kill-switched off by default in production
+  // until the Phase 3 GKE/vLLM infra actually exists (WYBERCODE_ENABLED).
+  wybercode: { label: 'WyberCode', tagline: 'Our own coding engine — fast & free while in beta', minPlan: 'free', provider: 'wybercode' },
 }
 
 /**
@@ -210,7 +234,7 @@ export const PLAN_RANK: Record<PlanId, number> = {
 }
 
 // Sonnet (fast) = free; Opus (default) = Starter+; premium = Builder+; Fable = Pro+.
-const MIN_TIER_RANK: Record<ModelTier, number> = { fast: 0, default: 1, premium: 2, fable: 3, gpt: 0 }
+const MIN_TIER_RANK: Record<ModelTier, number> = { fast: 0, default: 1, premium: 2, fable: 3, gpt: 0, wybercode: 0 }
 
 /** Plans that may use a given model tier */
 export function tierAllowedForPlan(tier: ModelTier, plan: string): boolean {
@@ -221,4 +245,42 @@ export function tierAllowedForPlan(tier: ModelTier, plan: string): boolean {
   // invalid data, not for a real plan someone forgot to wire up.
   const rank = PLAN_RANK[plan as PlanId] ?? 0
   return rank >= MIN_TIER_RANK[tier]
+}
+
+/**
+ * Derive a real wybercode multiplier from measured GPU-hour COGS, replacing
+ * the MODEL_MULTIPLIERS.wybercode placeholder above. Pure function — plug in
+ * real numbers once the plan's Phase 3 load test and Phase 4 shadow-run data
+ * exist; this is intentionally NOT wired into creditCost() automatically,
+ * since a multiplier change should be a deliberate, reviewed decision, not a
+ * side effect of some other code path recomputing it live.
+ *
+ * marginTarget mirrors the same margin discipline credits.ts already applies
+ * to measured Anthropic COGS (see the "$0.52 COGS" comment on 'small-edit'
+ * above) — default 3x is a starting assumption, not a verified figure.
+ */
+export function calibrateWyberCodeMultiplier(opts: {
+  /** Blended $/hour across both GPU node pools (patch-tier + full-gen-tier),
+   * at realistic utilization — not raw on-demand list price. */
+  amortizedDollarsPerGpuHour: number
+  /** Measured tokens/sec under vLLM continuous batching at production-like
+   * concurrency — NOT a synthetic single-stream benchmark. */
+  measuredTokensPerSecond: number
+  /** Average output tokens per build, measured from real shadow-run data
+   * (blended across template-hit patch calls and full-gen fallback calls). */
+  avgOutputTokensPerBuild: number
+  /** What a 'web-build' action (BASE_COSTS['web-build'] = 30) should cost in
+   * real dollars to hit the target margin over COGS. */
+  marginTarget?: number
+  /** What $1 of platform revenue corresponds to in credits, for converting a
+   * dollar COGS figure into a multiplier relative to BASE_COSTS. */
+  dollarsPerCredit: number
+}): number {
+  const { amortizedDollarsPerGpuHour, measuredTokensPerSecond, avgOutputTokensPerBuild, dollarsPerCredit } = opts
+  const marginTarget = opts.marginTarget ?? 3
+  const dollarsPerToken = amortizedDollarsPerGpuHour / 3600 / measuredTokensPerSecond
+  const cogsPerBuild = dollarsPerToken * avgOutputTokensPerBuild
+  const targetCreditsPerBuild = (cogsPerBuild * marginTarget) / dollarsPerCredit
+  const multiplier = targetCreditsPerBuild / BASE_COSTS['web-build']
+  return Math.max(0, multiplier)
 }

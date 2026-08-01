@@ -1,0 +1,74 @@
+[
+  {
+    "archetype": "dashboard",
+    "framework": "react-web",
+    "file": "dashboard.tsx",
+    "description": "Dashboard overview page with a date-range filter, a row of stat cards showing revenue/users/conversion/tickets with trend deltas, a recent activity feed, and a quick-links panel."
+  },
+  {
+    "archetype": "auth-login",
+    "framework": "react-web",
+    "file": "auth-login.tsx",
+    "description": "Login page with a centered card, email and password fields, forgot-password link, sign-in button, and a link to sign up."
+  },
+  {
+    "archetype": "auth-signup",
+    "framework": "react-web",
+    "file": "auth-signup.tsx",
+    "description": "Signup / register / create account page with a centered card, name, email, and password fields, terms notice, and a link to sign in."
+  },
+  {
+    "archetype": "auth-forgot-password",
+    "framework": "react-web",
+    "file": "auth-forgot-password.tsx",
+    "description": "Forgot password / reset password page with an email field, a send-reset-link button, and a confirmation state once the link is sent."
+  },
+  {
+    "archetype": "settings",
+    "framework": "react-web",
+    "file": "settings.tsx",
+    "description": "Account settings page with tabs for Profile, Notifications, and Billing — profile fields, notification toggle switches, and a current-plan summary with a manage-plan button."
+  },
+  {
+    "archetype": "pricing",
+    "framework": "react-web",
+    "file": "pricing.tsx",
+    "description": "Pricing / plans / subscription page with a monthly-vs-annual toggle and three pricing tiers (Starter, Pro, Enterprise) with a highlighted featured plan and feature lists."
+  },
+  {
+    "archetype": "profile",
+    "framework": "react-web",
+    "file": "profile.tsx",
+    "description": "User profile / my account page with an avatar, editable name/username/bio fields, a save button, and stat counts for posts/followers/following."
+  },
+  {
+    "archetype": "list-detail",
+    "framework": "react-web",
+    "file": "list-detail.tsx",
+    "description": "List with detail / directory / catalog page: a searchable list of items on the left with status badges, and a detail panel on the right showing the selected item's fields."
+  },
+  {
+    "archetype": "onboarding",
+    "framework": "react-web",
+    "file": "onboarding.tsx",
+    "description": "Onboarding / welcome / get-started walkthrough with a multi-step wizard, progress dots, back/continue navigation, and a skip option."
+  },
+  {
+    "archetype": "checkout",
+    "framework": "react-web",
+    "file": "checkout.tsx",
+    "description": "Checkout / cart / payment page with a card-details form (cardholder, card number, expiry, CVC), an order summary with line items, and a total-due pay button."
+  },
+  {
+    "archetype": "empty-error",
+    "framework": "react-web",
+    "file": "empty-error.tsx",
+    "description": "Generic empty state / error page / 404 page / not-found page with an icon, a short title and description, and a recovery action button."
+  },
+  {
+    "archetype": "home",
+    "framework": "react-web",
+    "file": "home.tsx",
+    "description": "Home / landing page with a navbar, hero headline with call-to-action buttons, a feature grid, customer testimonials, a call-to-action section, and a footer."
+  }
+]

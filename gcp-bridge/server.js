@@ -14,6 +14,7 @@
 const express = require('express')
 const { google } = require('googleapis')
 const { GoogleAuth } = require('google-auth-library')
+const { Storage } = require('@google-cloud/storage')
 
 const app = express()
 app.use(express.json())
@@ -48,6 +49,30 @@ async function getSqlAdminClient() {
   const authClient = await auth.getClient()
   sqlAdminClient = google.sqladmin({ version: 'v1', auth: authClient })
   return sqlAdminClient
+}
+
+// Runs under the same ambient Cloud Run service-account identity as the SQL
+// admin client above — no key file, same reason. Backs the WyberCode template
+// library (src/lib/template-library/ in the main repo): source-of-truth code
+// for retrieved page/component templates lives in GCS, Vercel has no ambient
+// GCP identity to read it directly, so it goes through this bridge like
+// everything else GCP-side.
+let storageClient = null
+function getStorageClient() {
+  if (!storageClient) storageClient = new Storage()
+  return storageClient
+}
+
+// Bucket names WyberCode templates are allowed to live in — same "reject
+// outside our own namespace even if the secret leaks" discipline as
+// INSTANCE_NAME_RE above.
+const ALLOWED_TEMPLATE_BUCKETS = new Set(
+  (process.env.WYBERCODE_TEMPLATE_BUCKETS || 'wyberai-wybercode-templates').split(',').map(s => s.trim()).filter(Boolean)
+)
+const TEMPLATE_PATH_RE = /^[a-zA-Z0-9/_.-]{1,512}$/
+
+function isValidTemplateRequest(bucket, path) {
+  return ALLOWED_TEMPLATE_BUCKETS.has(bucket) && typeof path === 'string' && TEMPLATE_PATH_RE.test(path) && !path.includes('..')
 }
 
 function generatePassword() {
@@ -211,6 +236,52 @@ app.get('/instances/:instanceName', async (req, res) => {
     return res.json(result.data)
   } catch (err) {
     console.error('[bridge] get /instances failed:', err)
+    return res.status(502).json({ error: String(err) })
+  }
+})
+
+// ── WyberCode template-library storage ─────────────────────────────────────
+// Object bodies are plain UTF-8 source text (React/RN source files), so JSON
+// in/out is fine — no base64/binary handling needed for this use case.
+
+// GET /storage/object?bucket=...&path=... → { content: string }
+app.get('/storage/object', async (req, res) => {
+  const { bucket, path } = req.query
+  if (!isValidTemplateRequest(bucket, path)) return res.status(400).json({ error: 'Invalid bucket/path' })
+  try {
+    const [content] = await getStorageClient().bucket(bucket).file(path).download()
+    return res.json({ content: content.toString('utf-8') })
+  } catch (err) {
+    if (String(err?.message || err).includes('No such object')) return res.status(404).json({ error: 'Not found' })
+    console.error('[bridge] get /storage/object failed:', err)
+    return res.status(502).json({ error: String(err) })
+  }
+})
+
+// POST /storage/object { bucket, path, content } — create or overwrite one object.
+app.post('/storage/object', async (req, res) => {
+  const { bucket, path, content } = req.body || {}
+  if (!isValidTemplateRequest(bucket, path)) return res.status(400).json({ error: 'Invalid bucket/path' })
+  if (typeof content !== 'string') return res.status(400).json({ error: 'content must be a string' })
+  try {
+    await getStorageClient().bucket(bucket).file(path).save(content, { contentType: 'text/plain; charset=utf-8' })
+    return res.json({ ok: true })
+  } catch (err) {
+    console.error('[bridge] post /storage/object failed:', err)
+    return res.status(502).json({ error: String(err) })
+  }
+})
+
+// GET /storage/list?bucket=...&prefix=... → { paths: string[] }
+app.get('/storage/list', async (req, res) => {
+  const { bucket, prefix } = req.query
+  if (!ALLOWED_TEMPLATE_BUCKETS.has(bucket)) return res.status(400).json({ error: 'Invalid bucket' })
+  if (prefix && (!TEMPLATE_PATH_RE.test(prefix) || prefix.includes('..'))) return res.status(400).json({ error: 'Invalid prefix' })
+  try {
+    const [files] = await getStorageClient().bucket(bucket).getFiles({ prefix: prefix || '' })
+    return res.json({ paths: files.map(f => f.name) })
+  } catch (err) {
+    console.error('[bridge] get /storage/list failed:', err)
     return res.status(502).json({ error: String(err) })
   }
 })

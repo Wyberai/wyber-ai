@@ -560,6 +560,24 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // Distinguishes a user-pressed Stop from the 320s auto-timeout hitting the
   // same AbortController, so the resulting message can be honest about which.
   const userStoppedRef = useRef(false);
+  // Whether the tab was backgrounded at any point during the CURRENT
+  // generation attempt — the only real corroborating signal for "the
+  // computer slept / tab was backgrounded", which is what
+  // connectionDroppedMsg claims happened. Reset at the start of each
+  // generation (see genController setup below), set true by the
+  // visibilitychange listener. A TypeError from fetch() is ALSO exactly
+  // what a server-side stream kill (platform maxDuration, proxy idle-kill,
+  // a crashed request) looks like — without this signal, every one of
+  // those got mislabeled "your wifi/sleep" too, even mid-afternoon on a
+  // plugged-in desktop that never left the foreground.
+  const wasHiddenDuringGenRef = useRef(false);
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.hidden) wasHiddenDuringGenRef.current = true;
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, []);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
 
@@ -1223,6 +1241,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // limit so a legitimately-still-running build isn't cut off early. Lives in
     // a ref (not a local const) so the user-facing Stop button can reach it.
     userStoppedRef.current = false;
+    wasHiddenDuringGenRef.current = document.hidden;
     if (dropReloadTimerRef.current) { clearTimeout(dropReloadTimerRef.current); dropReloadTimerRef.current = null; }
     const genController = new AbortController();
     abortControllerRef.current = genController;
@@ -1780,17 +1799,28 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // server broke". Give it a specific, actionable message instead.
         const isSessionExpired = err instanceof Error && err.message === 'SESSION_EXPIRED';
         // fetch() surfaces a dropped connection (sleep/suspend, wifi drop, VPN
-        // blip) as a bare TypeError — the build usually FINISHES on the server
-        // and rescue-persist saves it, so point the user at reload, not retry.
-        const isNetworkDrop = !isAbort && err instanceof TypeError;
+        // blip) as a bare TypeError — but that's ALSO exactly what a
+        // server-side stream kill looks like (platform maxDuration timeout,
+        // a reverse proxy idle-killing a connection while we sit blocked on
+        // a slow LLM call, a crashed request). A bare TypeError alone isn't
+        // evidence of which one happened — only corroborate "your device"
+        // when there's real signal for it (offline, or backgrounded at some
+        // point this generation); otherwise say so honestly instead of
+        // blaming wifi/sleep on a desk-bound, foregrounded, online session.
+        const isStreamTypeError = !isAbort && err instanceof TypeError;
+        const isActualNetworkDrop = isStreamTypeError && (!navigator.onLine || wasHiddenDuringGenRef.current);
+        const isServerStreamLoss = isStreamTypeError && !isActualNetworkDrop;
+        const isNetworkDrop = isActualNetworkDrop || isServerStreamLoss;
         const errMsg = isSessionExpired
           ? t('sessionExpiredBuildMsg')
           : isAbort
           ? (userStoppedRef.current
               ? t('stoppedByUserMsg')
               : t('buildTimedOutMsg'))
-          : isNetworkDrop
+          : isActualNetworkDrop
           ? t('connectionDroppedMsg')
+          : isServerStreamLoss
+          ? t('serverStreamLostMsg')
           : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('unknownErrorLabel')}`;
         updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
         if (isNetworkDrop) {

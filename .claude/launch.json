@@ -29,8 +29,8 @@
     {
       "name": "wyberai-mobile-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--prefix", "C:\\Users\\sumit\\wyberai-mobile", "--", "--port", "8090"],
-      "port": 8090
+      "runtimeArgs": ["run", "web", "--prefix", "C:\\Users\\sumit\\wyberai-mobile", "--", "--port", "8099"],
+      "port": 8099
     },
     {
       "name": "jobpulse",

@@ -12,6 +12,7 @@ import { WYBER_UI_KIT_PROMPT } from '@/lib/wyber-ui-kit'
 import { WYBER_STORE_PROMPT } from '@/lib/wyber-store'
 import { formatAgentEvent, type AgentEvent } from '@/lib/agents/events'
 import { reviewEmittedFile, createFindingIdGenerator, type SecurityRuleFinding } from '@/lib/agents/security-rules'
+import { shouldAutoRouteToWyberCode } from '@/lib/model-providers/wybercode'
 
 // A build/edit turn only did something real if it produced an actual <file> or
 // <edit> block — not just because the model streamed text. Without this check,
@@ -88,6 +89,18 @@ export const maxDuration = 800
 // handling already knows how to tell the user a build got cut short and
 // offer a retry, which is a far better outcome than total loss.
 const SOFT_DEADLINE_MS = 650_000
+
+// Keeps the connection alive during silent gaps between iterations (Sentinel
+// review, opening the next messages.stream() call) so an idle-timing proxy in
+// front of the platform never mistakes "model is thinking" for a dead
+// connection — independent of the maxDuration/Fluid-Compute question above.
+// Shaped exactly like a real `[agent:{...}]` marker (see lib/agents/events.ts)
+// but with an agent id that's deliberately NOT in AGENT_IDS, so
+// extractAgentEvents silently ignores it (no stray UI event) while
+// stripAgentEvents still removes it from displayed/persisted text — reuses
+// the existing safe out-of-band channel instead of inventing a new one.
+const HEARTBEAT_INTERVAL_MS = 15_000
+const HEARTBEAT_BYTES = new TextEncoder().encode('\n[agent:{"agent":"heartbeat","status":"progress"}]\n')
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -2430,6 +2443,24 @@ export async function POST(req: NextRequest) {
         cost = creditCost(actionType, tier)
       }
 
+      // WyberCode: explicit dropdown choice, or automatic rollout (kill
+      // switch + percentage + plan gated — see shouldAutoRouteToWyberCode).
+      // Captured BEFORE any override so a WyberCode failure/low-confidence
+      // result can cleanly fall back to whatever tier this request would
+      // have used anyway — see the isolated pipeline below, which never
+      // touches the Anthropic path either way.
+      const originalTierBeforeWyberCode = tier
+      if (modelTier === 'wybercode' && tierAllowedForPlan('wybercode', plan)) {
+        tier = 'wybercode'
+        cost = creditCost(actionType, tier)
+      } else if (
+        !explicitClaudeTier && modelTier !== 'gpt' && modelTier !== 'wybercode' &&
+        shouldAutoRouteToWyberCode({ userId: user.id, plan, stage, selfHeal, isInternalPass })
+      ) {
+        tier = 'wybercode'
+        cost = creditCost(actionType, tier)
+      }
+
       // Enforce plan-based model gate.
       // Explicit user selection → block with upgrade prompt (high-intent paywall hit).
       // Auto-routed tier (user never touched the picker) → silently downgrade to Sonnet
@@ -2463,6 +2494,74 @@ export async function POST(req: NextRequest) {
           // Auto-routed to a tier this plan can't use — downgrade to Sonnet silently.
           tier = 'fast'
           cost = creditCost(actionType, tier)
+        }
+      }
+
+      // ── Isolated WyberCode pipeline ──────────────────────────────────────
+      // Same isolation discipline as the 'gpt' block below: own balance
+      // check, own credit deduction, own response — except on failure or a
+      // low-confidence result, where it refunds and falls through UNCHANGED
+      // into the normal Claude flow (tier reset to originalTierBeforeWyberCode)
+      // instead of erroring out. WyberCode is best-effort infra layered on
+      // top of the existing pipeline; it must never be the reason a build
+      // fails outright. Not reachable until WYBERCODE_ENABLED is set AND
+      // WYBERCODE_*_INFERENCE_URL point at a real backend (see the plan) —
+      // until then shouldAutoRouteToWyberCode always returns false and this
+      // tier is only reachable via an explicit dropdown pick, which will
+      // itself immediately fail closed to Claude (see wybercode.ts).
+      if (tier === 'wybercode') {
+        if (balance < cost) {
+          return new Response(JSON.stringify({
+            error: `Not enough credits. This action costs ${cost} credit${cost !== 1 ? 's' : ''} and you have ${balance}.`,
+            needed: cost, balance,
+          }), { status: 402 })
+        }
+        const { data: wcRpc, error: wcRpcErr } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: cost })
+        if (wcRpcErr || !wcRpc || wcRpc.new_credits === undefined) {
+          // Couldn't even charge for it — don't let a credits-RPC hiccup be
+          // the reason a build fails; just run the normal Claude flow.
+          tier = originalTierBeforeWyberCode
+          cost = creditCost(actionType, tier)
+        } else {
+          const wcNewBalance = wcRpc.new_credits
+          try {
+            const { runWyberCode, classifyWyberCodeFailure } = await import('@/lib/model-providers/wybercode')
+            const wcSystemPrompt = projectType === 'mobile' ? buildMobileSystemPrompt()
+              : projectType === 'website' ? buildWebsiteSystemPrompt()
+              : projectType === 'saas' ? buildSaasSystemPrompt()
+              : buildSystemPrompt()
+            const result = await runWyberCode({
+              systemPrompt: wcSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
+            })
+            const failure = classifyWyberCodeFailure(result)
+            if (failure) {
+              console.log(`[generate] wybercode fallback (${failure}) — refunding and retrying on Claude`)
+              await refundCredits(user.id, cost, `wybercode-fallback-${failure}`)
+              tier = originalTierBeforeWyberCode
+              cost = creditCost(actionType, tier)
+            } else {
+              admin.from('credit_usage').insert({
+                user_id: user.id, amount: cost, reason: actionType,
+                credits_before: balance, credits_after: wcNewBalance,
+              }).then(() => {}, () => {})
+              return new Response(result.text, {
+                headers: {
+                  'Content-Type': 'text/plain; charset=utf-8',
+                  'X-Credits-Used': String(cost),
+                  'X-New-Balance': String(wcNewBalance),
+                  'X-Model-Provider': 'wybercode',
+                  'X-Wybercode-Pages-From-Template': String(result.pagesFromTemplate),
+                  'X-Wybercode-Pages-Full-Gen': String(result.pagesFullGen),
+                  ...(result.truncated ? { 'X-Generation-Truncated': '1' } : {}),
+                },
+              })
+            }
+          } catch (wcErr) {
+            console.log('[generate] wybercode threw, falling back to Claude:', String(wcErr))
+            await refundCredits(user.id, cost, 'wybercode-error')
+            tier = originalTierBeforeWyberCode
+            cost = creditCost(actionType, tier)
+          }
         }
       }
 
@@ -3107,7 +3206,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
     // Try Anthropic primary, fallback to Vertex AI Gemini on failure
     let usedModel = model
-    let readable: ReadableStream<Uint8Array>
+    // Definite-assignment assertion: always set by exactly one of the
+    // parallel fast-path, tool-use, legacy, or Gemini-fallback branches
+    // below before the final `return new Response(readable, ...)` — TS's
+    // control-flow analysis can't stitch that guarantee across the
+    // handledByParallel wrapper, but it holds at runtime.
+    let readable!: ReadableStream<Uint8Array>
     // Full assistant output, captured for the post-response memory distillation
     // and for the generationSucceeded() check below.
     let generatedText = ''
@@ -3205,6 +3309,52 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     }
 
     try {
+      // ── Fast path: parallel-Claude for new builds ───────────────────────
+      // Reuses the retrieve-then-patch + parallel-page-dispatch architecture
+      // (see src/lib/model-providers/claude-parallel.ts) to cut wall-clock
+      // build time — the "5-10 minutes then network error" complaint this
+      // was built to fix. ON by default (kill switch: CLAUDE_PARALLEL_BUILD=off);
+      // safe to default on because ANY failure/low-confidence result here
+      // just falls through to the existing, unmodified sequential loop
+      // below — this is a speed layer, never a reliability regression. Not
+      // attempted for edits (isNewBuild=false): edits already touch few
+      // files and aren't the slow case this targets.
+      let handledByParallel = false
+      if (useToolUse && isNewBuild && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
+        try {
+          const { runClaudeParallel, classifyClaudeParallelFailure } = await import('@/lib/model-providers/claude-parallel')
+          const parallelResult = await runClaudeParallel({
+            systemPrompt: staticSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
+          })
+          const failure = classifyClaudeParallelFailure(parallelResult)
+          if (failure) {
+            console.log(`[generate] claude-parallel low-confidence (${failure}) — falling back to sequential loop`)
+          } else {
+            generatedText = parallelResult.text
+            const parallelText = parallelResult.text
+            readable = new ReadableStream({
+              start(controller) {
+                const chunkSize = 200
+                let i = 0
+                const push = () => {
+                  if (i < parallelText.length) {
+                    controller.enqueue(encoder.encode(parallelText.slice(i, i + chunkSize)))
+                    i += chunkSize
+                    setTimeout(push, 5)
+                  } else { controller.close() }
+                }
+                push()
+              },
+            })
+            handledByParallel = true
+            console.log(`[generate cache] claude-parallel model=${MODELS[resolvedTier]} pagesFromTemplate=${parallelResult.pagesFromTemplate} pagesFullGen=${parallelResult.pagesFullGen} output=${parallelResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+          }
+        } catch (parallelErr) {
+          console.log('[generate] claude-parallel threw, falling back to sequential loop:', String(parallelErr))
+        }
+      }
+
+      if (!handledByParallel) {
       if (useToolUse) {
         // ── Tool-use prototype (Phase 5 sub-phase 1) ──────────────────────
         // Real write_file(path, content) tool calls instead of <file> text
@@ -3259,6 +3409,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // One-shot: forced follow-up when a new build ends without its
             // entry file (see the end_turn branch below).
             let entryRetried = false
+            // See HEARTBEAT_BYTES above. Skipped while a file/edit body or a
+            // reasoning block is actively streaming — those bytes are literal
+            // file content or displayed reasoning prose, not a safe place to
+            // interleave an out-of-band marker.
+            const heartbeatTimer = setInterval(() => {
+              if (toolOpened || inThinkingBlock) return
+              try { controller.enqueue(HEARTBEAT_BYTES) } catch { /* stream closing */ }
+            }, HEARTBEAT_INTERVAL_MS)
             try {
               // `<=` — one pass past MAX_TOOL_ITERATIONS is reserved for the
               // entry-file guarantee: even when the continuation budget is
@@ -3588,6 +3746,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               }
             } catch (err) { console.error('Tool-use stream error:', err) }
             finally {
+              clearInterval(heartbeatTimer)
               emitAgent(controller, { agent: 'coder', status: 'done' })
               sentinelDone(controller)
               generatedText = assistantSoFar
@@ -3668,6 +3827,20 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             } catch (e) { console.error('[sentinel] legacy review failed', e) }
             return vetoes
           }
+          // See HEARTBEAT_BYTES above. The 'plan' stage streams a raw JSON
+          // manifest the client parses directly — never inject a marker there.
+          // Otherwise skipped while inside an open <file>/<edit> tag or a
+          // reasoning block, since those bytes are literal file content or
+          // displayed prose, not a safe place to interleave an out-of-band marker.
+          const insideOpenTag = () => {
+            const opens = (assistantSoFar.match(/<(?:file|edit) path="/g) || []).length
+            const closes = (assistantSoFar.match(/<\/(?:file|edit)>/g) || []).length
+            return opens > closes
+          }
+          const heartbeatTimer = stage === 'plan' ? null : setInterval(() => {
+            if (insideOpenTag() || inThinkingBlock) return
+            try { controller.enqueue(HEARTBEAT_BYTES) } catch { /* stream closing */ }
+          }, HEARTBEAT_INTERVAL_MS)
           try {
             for (let pass = 0; pass <= MAX_CONTINUATIONS + securityFixesUsed; pass++) {
               for await (const event of stream) {
@@ -3747,6 +3920,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             }
           } catch (err) { console.error('Stream error:', err) }
           finally {
+            if (heartbeatTimer) clearInterval(heartbeatTimer)
             if (emitLegacyAgents) {
               legacyReview() // advisory sweep for anything not yet reviewed (e.g. max_tokens exit)
               emitAgent(controller, { agent: 'coder', status: 'done' })
@@ -3761,6 +3935,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         },
       })
       }
+      } // end if (!handledByParallel)
     } catch (anthropicErr) {
       console.error('[generate] Anthropic failed, trying Vertex AI Gemini fallback:', String(anthropicErr))
 
@@ -3860,6 +4035,29 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         await notify(createServiceClient(), userId, 'build_complete', { projectId }).catch(() => {})
       }
     })
+
+    // WyberCode shadow-mode (plan Phase 5): replay this SAME Claude-served
+    // turn through WyberCode with zero user-facing impact, purely to log a
+    // comparison row — see src/lib/model-providers/shadow.ts. Only makes
+    // sense for a genuine Claude-served build/edit turn (excludes plan/
+    // self-heal/internal passes, and excludes wybercode/gpt tiers, which
+    // aren't "Claude" output to compare against). No-ops entirely unless
+    // WYBERCODE_SHADOW_MODE=true, and separately fails closed to nothing if
+    // the WyberCode inference infra doesn't exist yet (see shadow.ts).
+    if (
+      process.env.WYBERCODE_SHADOW_MODE === 'true' &&
+      generationSucceeded(generatedText, stage) && !selfHeal && !isInternalPass &&
+      stage !== 'plan' && (tier === 'fast' || tier === 'default' || tier === 'premium' || tier === 'fable')
+    ) {
+      after(async () => {
+        const { runShadowComparison } = await import('@/lib/model-providers/shadow')
+        await runShadowComparison({
+          projectId, userId, stage, actionType,
+          systemPrompt: staticSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
+          claudeText: generatedText, claudeElapsedMs: Date.now() - requestStartTime,
+        })
+      })
+    }
 
     return new Response(readable, {
       headers: {

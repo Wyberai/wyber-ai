@@ -556,11 +556,12 @@ export default function SettingsPage({ isIndia }: { isIndia?: boolean }) {
         {tab === 'models' && (() => {
           const plan = profile?.plan ?? 'free'
           const balance = profile?.credits ?? 0
-          // 'gpt' pulled from display pending a working OpenAI key (matches
-          // ChatPanel.tsx's PICKABLE_TIERS) — POWER_BARS below keeps its gpt
-          // entry since that Record type must stay exhaustive over ModelTier.
+          // 'gpt' and 'wybercode' pulled from display pending a working OpenAI
+          // key / real WyberCode inference infra (matches ChatPanel.tsx's
+          // PICKABLE_TIERS) — POWER_BARS below keeps entries for both since
+          // that Record type must stay exhaustive over ModelTier.
           const tiers: ModelTier[] = ['fast', 'default', 'premium', 'fable']
-          const POWER_BARS: Record<ModelTier, number> = { fast: 1, default: 2, premium: 3, fable: 4, gpt: 2 }
+          const POWER_BARS: Record<ModelTier, number> = { fast: 1, default: 2, premium: 3, fable: 4, gpt: 2, wybercode: 1 }
           const ACTION_ROWS: { labelKey: keyof typeof SETTINGS_STRINGS['en']; hint: Parameters<typeof estimateCost>[1] }[] = [
             { labelKey: 'actionQuickEdit', hint: 'edit' },
             { labelKey: 'actionComponentBuild', hint: 'component' },
