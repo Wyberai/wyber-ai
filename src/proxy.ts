@@ -1,8 +1,38 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { NON_ENGLISH_LOCALES } from '@/lib/i18n/locales'
+import { OWNER_COOKIE, isOwnerToken } from '@/lib/owner-preview'
 
 export async function proxy(request: NextRequest) {
   const rawPath = request.nextUrl.pathname
+
+  // ── Site-wide maintenance gate (temporary, flip MAINTENANCE_MODE off when
+  // done) ──────────────────────────────────────────────────────────────────
+  // Deliberately does NOT touch /app/ (other users' already-published apps),
+  // /m/ (shareable mobile previews), /api/ (payment webhooks, cron jobs, MCP
+  // consumer — real scheduled/external traffic that has nothing to do with
+  // new signups and must keep running), or static assets — only the
+  // marketing site, auth, dashboard, and builder are gated. The owner cookie
+  // (same one /api/owner-preview already sets) bypasses this entirely so
+  // work can continue on the live site while everyone else sees the
+  // upgrading page.
+  if (process.env.MAINTENANCE_MODE === 'true') {
+    const isExempt =
+      rawPath.startsWith('/app/') ||
+      rawPath.startsWith('/m/') ||
+      rawPath.startsWith('/api/') ||
+      rawPath.startsWith('/_next') ||
+      rawPath.startsWith('/maintenance') ||
+      rawPath.includes('.')
+    if (!isExempt) {
+      const isOwner = await isOwnerToken(request.cookies.get(OWNER_COOKIE)?.value)
+      if (!isOwner) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/maintenance'
+        url.search = ''
+        return NextResponse.rewrite(url)
+      }
+    }
+  }
   // Locale-prefixed public pages (app/[locale]/vs/..., .../blog/..., etc.) must
   // pass the SAME public-path allowlist below as their English /vs/... siblings —
   // otherwise /hi/vs/lovable doesn't match startsWith('/vs') and falls through
