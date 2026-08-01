@@ -526,7 +526,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[] }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[] }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -1019,7 +1019,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[] }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[] }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1203,6 +1203,31 @@ const storeProjectId = useEditorStore.getState().project?.id;
           }),
         }).then(r => r.ok ? r.text() : '').then(parsePlanManifest).catch(() => [] as PlannedFile[])
       : null;
+
+    // New-build completeness check: mirrors the edit check above exactly, but
+    // for the ONE path that used to fall through every safety net — a first
+    // build that runAgenticBuild's plan pass judged too small to stage
+    // (< STAGE_THRESHOLD files, opts.preserveAgentTurn) or whose plan pass
+    // failed outright. Previously the only guarantee here was "the entry file
+    // exists" (A4) — a model that planned 6 screens and wrote 2 was never
+    // caught (A5, docs/failure-modes.md). runAgenticBuild forwards whatever
+    // manifest it already fetched via opts.knownPlan so this doesn't pay for
+    // a second plan call on top of the one that already ran; only re-fetches
+    // if that manifest is empty (the plan pass itself errored).
+    const isNewBuildCompletenessEligible = !!opts?.preserveAgentTurn && !opts?.silent && !opts?.continuation && !opts?.stage;
+    const newBuildPlanPromise: Promise<PlannedFile[]> | null = isNewBuildCompletenessEligible
+      ? (opts?.knownPlan && opts.knownPlan.length > 0
+          ? Promise.resolve(opts.knownPlan)
+          : fetch('/api/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                prompt: userMsg, stage: 'plan', projectType,
+                userId: resolvedUserId, projectId: resolvedProjectId, isFirstBuild: true,
+              }),
+            }).then(r => r.ok ? r.text() : '').then(parsePlanManifest).catch(() => [] as PlannedFile[]))
+      : null;
+    const completenessPlanPromise = editPlanPromise ?? newBuildPlanPromise;
 
     // Knowledge from store (per-project, Lovable-style), with localStorage fallback
     let knowledgeStr = knowledge || '';
@@ -1505,17 +1530,18 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
 
-      // 4c. Edit-completeness check (see the concurrent plan-pass fired
-      // alongside fileContext above): lowest priority of this turn's
-      // follow-up passes — only runs if nothing higher-priority already
-      // claimed this pass, and only for eligible turns (editPlanPromise is
-      // non-null exactly when isEditCompletenessEligible was true). Diffs
-      // the edit-aware plan manifest against what this pass actually wrote/
+      // 4c. Completeness check (see the concurrent plan-pass fired alongside
+      // fileContext above): lowest priority of this turn's follow-up passes —
+      // only runs if nothing higher-priority already claimed this pass, and
+      // only for eligible turns (completenessPlanPromise is non-null exactly
+      // when isEditCompletenessEligible OR isNewBuildCompletenessEligible was
+      // true — a real edit, or a first build that fell through to one-shot).
+      // Diffs the plan manifest against what this pass actually wrote/
       // edited; if anything planned is missing, retries once via the same
       // wyber-autofix continuation the other safety nets above use.
-      if (editPlanPromise && !fileCut && !editCut && !placeholderRetryFired && !qaRetryFired
+      if (completenessPlanPromise && !fileCut && !editCut && !placeholderRetryFired && !qaRetryFired
           && (newFiles.length > 0 || editBlocks.length > 0)) {
-        const planned = await editPlanPromise
+        const planned = await completenessPlanPromise
         if (planned.length >= EDIT_COMPLETENESS_MIN_FILES) {
           const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
           const missing = diffPlannedAgainstWritten(planned, writtenPaths)
@@ -1881,7 +1907,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
     if (!staged || !staged.shouldStage) {
       pushAgentEvents({ agent: 'planner', status: 'done', detail: staged ? t('compactBuildMsg') : t('buildingOnePassMsg') });
-      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true });
+      // Forward the manifest already fetched above (if the plan pass
+      // succeeded but came back under STAGE_THRESHOLD) so the one-shot
+      // completeness check doesn't pay for a second plan call — see
+      // isNewBuildCompletenessEligible in executeGeneration.
+      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files });
       return;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) });
@@ -1910,6 +1940,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
     // Forge: fill batches — free internal passes, visible as continuation
     // bubbles (the established multi-part-build UX). Budget-capped.
+    // Files that a batch was asked for but never actually wrote — see
+    // docs/failure-modes.md A5: a batch call can come back with no stream
+    // error at all while still having silently skipped one of its files
+    // (shipped as a stub or just dropped), and until now nothing checked for
+    // that here — only the single entry file (App.tsx) was ever force-
+    // verified (A4). Accumulated across all batches and reported once at the
+    // end, rather than aborting the whole remaining plan over one thin miss.
+    const unresolvedFiles: PlannedFile[] = [];
     for (let i = 0; i < staged.fillBatches.length; i++) {
       if (agentPassCountRef.current >= MAX_INTERNAL_PASSES) {
         pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('passBudgetReachedMsg') });
@@ -1951,6 +1989,36 @@ const storeProjectId = useEditorStore.getState().project?.id;
         });
         break;
       }
+      // Batch call reported success — but "no stream error" isn't the same as
+      // "wrote every file it was asked for." Verify against the actual
+      // project files, and give one targeted retry for exactly what's still
+      // missing before accepting the gap.
+      const filesNow = () => (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
+      let stillMissing = batchPaths.filter(p => filesNow()[p] === undefined);
+      if (stillMissing.length > 0 && agentPassCountRef.current < MAX_INTERNAL_PASSES) {
+        agentPassCountRef.current += 1;
+        useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
+        await new Promise(r => setTimeout(r, 300));
+        const missingBatch = batch.filter(f => stillMissing.includes(f.path));
+        await executeGenerationRef.current?.(userMsg, null, {
+          silent: true, continuation: true,
+          stage: 'fill', stageFiles: missingBatch.map(f => f.path), stagePurposes: missingBatch.map(f => f.purpose),
+          internalPass: true, finalPass: i === staged.fillBatches.length - 1,
+        });
+        await new Promise(r => setTimeout(r, 300));
+        stillMissing = stillMissing.filter(p => filesNow()[p] === undefined);
+      }
+      if (stillMissing.length > 0) {
+        unresolvedFiles.push(...batch.filter(f => stillMissing.includes(f.path)));
+      }
+    }
+    if (unresolvedFiles.length > 0) {
+      const nameList = unresolvedFiles.slice(0, 3).map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || f.path).join(', ');
+      const extra = unresolvedFiles.length > 3 ? ` +${unresolvedFiles.length - 3} more` : '';
+      pushAgentEvents({
+        agent: 'orchestrator', status: 'stuck',
+        detail: `Build finished, but ${unresolvedFiles.length} planned screen${unresolvedFiles.length === 1 ? '' : 's'} came back as placeholder${unresolvedFiles.length === 1 ? '' : 's'} (${nameList}${extra}). Type "finish ${unresolvedFiles.length === 1 ? 'it' : 'them'}" to complete the build.`,
+      });
     }
   }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents]);
 

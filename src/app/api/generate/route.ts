@@ -1355,12 +1355,13 @@ TYPE 4 — QUESTION: "how", "what", "pricing", "compare" → Answer in 2-4 sente
 
 RULE: Max 1 clarifying question. Clear requests → build immediately, zero questions.
 
-CRITICAL — WEBSITE vs DASHBOARD DETECTION:
+CRITICAL — WEBSITE vs DASHBOARD vs MULTI-ROLE SUITE DETECTION:
 When user says "website", "landing page", "homepage", "marketing site", "business website", "company site", or describes a business/product/service:
 → Build a WEBSITE/LANDING PAGE — NOT a dashboard. A website has: hero section, features, about, pricing/services, testimonials, contact, footer. Full-page scrolling layout. No sidebar, no dashboard panels.
 When user says "dashboard", "admin panel", "management", "CRM", "tracker", "analytics":
 → Build an APP/DASHBOARD with sidebar navigation, data tables, stats cards, charts.
-NEVER confuse these two. A rice export business needs a WEBSITE with hero + products + about + contact. A sales team needs a CRM DASHBOARD.
+When the request implies TWO OR MORE distinct user roles/sides interacting with each other — food delivery (customer + restaurant + driver), a marketplace (buyer + seller), a booking platform (customer + provider), ride-hailing, or the user explicitly says "suite", "full suite", "platform", "multi-role", "with an admin panel too" — this is a MULTI-ROLE SUITE, not a single website or a single dashboard, even though the request may only use the word "app". See MULTI-ROLE SUITE in APP STRUCTURE below. Treat this signal as taking priority over "app"/"tool" defaulting to the single-website structure — a request naming multiple sides of a marketplace is never just a landing page.
+NEVER confuse these three. A rice export business needs a WEBSITE with hero + products + about + contact. A sales team needs a CRM DASHBOARD. "A full suite food delivery app" needs a MULTI-ROLE SUITE with a real customer ordering flow, restaurant order management, driver delivery view, and admin overview — not a landing page describing food delivery.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ADVISORY (vague requests only)
@@ -1622,6 +1623,13 @@ IF WEBSITE / LANDING / MARKETING (top nav + sections — NO sidebar):
 4. src/components/Hero.tsx — bold headline (font-display), subcopy, primary + secondary CTA, a real gradient/SVG visual (no placeholder box)
 5+. Features, Pricing/Services, Testimonials/About, Contact, Footer — full-bleed scrolling sections
 Must include: strong hero, ≥3 content sections, real copy (not lorem), responsive layout, footer with links. Apply the SEO block fully.
+
+IF MULTI-ROLE SUITE (2+ distinct interacting roles — food delivery, marketplace, booking platform, ride-hailing, etc.):
+Real multi-page URL routing is platform-disabled right now (a sandboxed-preview routing bug, unrelated to this app), so roles switch via PLAIN REACT STATE, never a router:
+3. src/App.tsx holds one extra piece of top-level state — const [activeRole, setActiveRole] = useState with a union of the roles named in the request (e.g. 'customer' | 'restaurant' | 'driver' | 'admin') — plus a small, persistent role switcher (a corner control, e.g. "Viewing as: Customer", or a compact pill/tab bar) that calls setActiveRole. This is a demo/preview app, not a real multi-tenant backend with separate logins — an honest, always-visible role switch is the expected pattern here, not a workaround.
+4. src/components/roles/{RoleName}Portal.tsx — ONE file per role, each a COMPLETE, self-contained mini-app for that role: its own internal nav/layout (a local tab bar or its own sidebar if that role's surface is dashboard-shaped), its own screens as internal sections or local tab state — never a route, never a shared screen doing double duty across roles.
+5. App.tsx renders the active role's portal via a plain conditional keyed on activeRole (CustomerPortal / RestaurantPortal / ...) — exactly like the dashboard pattern's currentSection switch above, just one level higher.
+Must include: every role the request names or implies gets its own portal with REAL, working core flows, not a label — e.g. food delivery: customer (browse restaurants/menu, cart, checkout, live order-status tracker), restaurant (incoming orders queue with accept/reject, menu management), driver (available deliveries list, active delivery with status steps), admin (orders overview, users, basic stats). A marketplace: buyer (browse/search, cart, checkout, order history), seller (listings management, incoming orders), admin (users, listings moderation). Shared data (e.g. the same orders list) lives in App.tsx state and is read/written by whichever role's actions affect it, so switching roles shows a consistent, connected world — a customer's placed order should be visible in the restaurant's incoming-orders queue. Do NOT stub any named role as "Coming soon" — Rule #1 (COMPLETENESS) applies to every role's portal file same as any other planned file.
 
 LAYOUT PATTERN (dashboard — semantic tokens, NOT literal colors):
 <div className="flex h-screen bg-background text-foreground">
@@ -3129,7 +3137,6 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       const planExamples = isMobilePlan
         ? '"App.tsx", "src/navigation/AppNavigator.tsx", "src/screens/HomeScreen.tsx"'
         : '"src/index.css", "src/App.tsx", "src/components/Layout.tsx"'
-      const planCount = isMobilePlan ? '8-14' : '6-10'
       if (hasExisting) {
         // Edit-completeness plan (see ChatPanel.tsx's concurrent plan-pass on
         // every edit turn): the request is an EDIT against files already
@@ -3142,7 +3149,23 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         // for files the model correctly decided not to touch.
         staticSystemPrompt = `You are a software architect reviewing an EDIT request against an existing app (its current files are included above). Output ONLY a JSON array of the files that must be CREATED or MODIFIED to fully satisfy every distinct part of the request. Each item: {"path":"...","purpose":"one sentence describing exactly what changes in this file, or what it implements if new"}. If the request has multiple distinct asks (e.g. "add screens A, B, C and wire them into navigation"), make sure every ask has a corresponding planned file — including whichever existing file(s) (e.g. ${isMobilePlan ? 'App.tsx or the navigator' : 'src/App.tsx or the router'}) must be edited to wire new things in. List ONLY files that are actually necessary — do not include files that might optionally be touched. Output ONLY the raw JSON array. No prose, no markdown fences.`
       } else {
-        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module. Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
+        // File-count target used to be a flat "6-10" ("8-14" mobile) no matter
+        // what was asked — a "todo app" and "a full multi-role marketplace
+        // suite" got the same budget, capped low because a from-scratch build
+        // that planned more than that used to leave non-entry files as
+        // stubs with nothing catching it (docs/failure-modes.md A5). Now that
+        // ChatPanel's staged pipeline verifies every planned file actually
+        // landed and retries what didn't (see runAgenticBuild), it's safe to
+        // scale the target with actual scope instead of capping it to hide
+        // that gap. Reuses the same sub-cent Haiku classifier already used
+        // for model-tier routing (isComplexBuild) — HIGH examples explicitly
+        // include "a full marketplace with vendor accounts, inventory, and
+        // checkout", which is this exact class of request.
+        const planIsComplex = await isComplexBuild(prompt)
+        const planCount = isMobilePlan
+          ? (planIsComplex ? '20-32' : '8-14')
+          : (planIsComplex ? '18-30' : '6-10')
+        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
       }
       stageMaxTokens = 2000
     } else {
@@ -3186,7 +3209,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         stageMaxTokens = Math.min(stageMaxTokens, stage === 'fill' ? (tier === 'premium' ? 32000 : 24000) : 8000)
       }
       if (stage === 'full') {
-        staticSystemPrompt += '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
+        // This "prefer fewer files" instruction only ever fires for a genuine
+        // one-shot build (below the staged pipeline's threshold, or the agent
+        // team disabled/unavailable) or an edit — never scaffold/fill, which
+        // get their own file list above. isNewBuild + tier here reuses the
+        // SAME isComplexBuild classification resolveModelTier already ran to
+        // pick Sonnet vs Opus for this request, at no extra cost. A request
+        // that classified as complex enough for Opus gets room to actually
+        // build what it planned instead of being squeezed into a handful of
+        // giant files — that squeeze was never a quality choice, it was a
+        // workaround for files silently going unfinished (A5), which the
+        // completeness-retry check in ChatPanel now catches directly.
+        const isComplexFullBuild = isNewBuild && (tier === 'default' || tier === 'premium' || tier === 'fable')
+        staticSystemPrompt += isComplexFullBuild
+          ? '\n\n=== BUILD EFFICIENCY ===\n1. This is a large multi-feature build — completeness matters more than minimizing file count. Use as many files as the app genuinely needs (a real multi-role or multi-module app can legitimately need 15-30+ files); do not compress it into a handful of giant files just to save output.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. Finish every file you open before starting another — a working 20-file app beats a 6-file app missing half its screens.'
+          : '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
       }
     }
 
