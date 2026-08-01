@@ -2045,7 +2045,9 @@ async function resolveModelTier(opts: {
   const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext, precomputedBuildComplexity } = opts
   if (stage === 'plan' || selfHeal) return 'fast'
   // Targeted agent-fix passes (free, internal) are small scoped edits → Sonnet.
-  if (stage === 'agentFix') return 'fast'
+  // 'wire' is the same shape: a small, mechanical rewrite of one already-known
+  // file (swap placeholder JSX for real imports) — no complexity judgment call.
+  if (stage === 'agentFix' || stage === 'wire') return 'fast'
   // Staged build passes (scaffold/fill) and from-scratch builds are all part of
   // ONE logical build. Classify each stage independently against the SAME
   // original prompt (cheap, deterministic-ish Haiku call) so every stage of a
@@ -2324,17 +2326,25 @@ export async function POST(req: NextRequest) {
     // Off = byte-identical current behavior.
     const agentTeamOn = process.env.NEXT_PUBLIC_AGENT_TEAM === 'true'
     // `internalPass` marks a follow-up pass of an already-charged turn (fill
-    // batches after a charged scaffold, or a targeted agent fix). Honored ONLY
-    // for those two bounded stages so a crafted request can never get a full
-    // build for free — and every internal pass is counted by the free-lane
-    // hourly guard below.
-    const isInternalPass = agentTeamOn && internalPass === true && (stage === 'fill' || stage === 'agentFix')
+    // batches after a charged scaffold, a targeted agent fix, or the final
+    // wire-the-real-screens-in pass). Honored ONLY for those bounded stages so
+    // a crafted request can never get a full build for free — and every
+    // internal pass is counted by the free-lane hourly guard below.
+    const isInternalPass = agentTeamOn && internalPass === true && (stage === 'fill' || stage === 'agentFix' || stage === 'wire')
     // Internal fills are batch-bounded by design (buildStagedPlan batches of 2);
     // reject oversized lists so "fill" can't be abused as a free full build.
     if (isInternalPass && stage === 'fill') {
       const nFiles = Array.isArray(stageFiles) ? stageFiles.length : 0
       if (nFiles === 0 || nFiles > 3) {
         return new Response(JSON.stringify({ error: 'Invalid fill batch.' }), { status: 400 })
+      }
+    }
+    // The wire pass only ever rewrites the single router/shell file — reject
+    // anything else so "wire" can't be abused as a free full build either.
+    if (isInternalPass && stage === 'wire') {
+      const nFiles = Array.isArray(stageFiles) ? stageFiles.length : 0
+      if (nFiles !== 1) {
+        return new Response(JSON.stringify({ error: 'Invalid wire pass.' }), { status: 400 })
       }
     }
 
@@ -2502,7 +2512,7 @@ export async function POST(req: NextRequest) {
       // this just feeds it a different tier when the user asked for one).
       if (modelTier === 'gpt' && tierAllowedForPlan('gpt', plan)) {
         tier = 'gpt'
-        cost = creditCost(actionType, tier)
+        cost = creditCost(actionType, tier, buildTier)
       }
 
       // WyberCode: explicit dropdown choice, or automatic rollout (kill
@@ -2514,13 +2524,13 @@ export async function POST(req: NextRequest) {
       const originalTierBeforeWyberCode = tier
       if (modelTier === 'wybercode' && tierAllowedForPlan('wybercode', plan)) {
         tier = 'wybercode'
-        cost = creditCost(actionType, tier)
+        cost = creditCost(actionType, tier, buildTier)
       } else if (
         !explicitClaudeTier && modelTier !== 'gpt' && modelTier !== 'wybercode' &&
         shouldAutoRouteToWyberCode({ userId: user.id, plan, stage, selfHeal, isInternalPass })
       ) {
         tier = 'wybercode'
-        cost = creditCost(actionType, tier)
+        cost = creditCost(actionType, tier, buildTier)
       }
 
       // Enforce plan-based model gate.
@@ -2555,7 +2565,7 @@ export async function POST(req: NextRequest) {
         } else {
           // Auto-routed to a tier this plan can't use — downgrade to Sonnet silently.
           tier = 'fast'
-          cost = creditCost(actionType, tier)
+          cost = creditCost(actionType, tier, buildTier)
         }
       }
 
@@ -2583,7 +2593,7 @@ export async function POST(req: NextRequest) {
           // Couldn't even charge for it — don't let a credits-RPC hiccup be
           // the reason a build fails; just run the normal Claude flow.
           tier = originalTierBeforeWyberCode
-          cost = creditCost(actionType, tier)
+          cost = creditCost(actionType, tier, buildTier)
         } else {
           const wcNewBalance = wcRpc.new_credits
           try {
@@ -2600,7 +2610,7 @@ export async function POST(req: NextRequest) {
               console.log(`[generate] wybercode fallback (${failure}) — refunding and retrying on Claude`)
               await refundCredits(user.id, cost, `wybercode-fallback-${failure}`)
               tier = originalTierBeforeWyberCode
-              cost = creditCost(actionType, tier)
+              cost = creditCost(actionType, tier, buildTier)
             } else {
               admin.from('credit_usage').insert({
                 user_id: user.id, amount: cost, reason: actionType,
@@ -2622,7 +2632,7 @@ export async function POST(req: NextRequest) {
             console.log('[generate] wybercode threw, falling back to Claude:', String(wcErr))
             await refundCredits(user.id, cost, 'wybercode-error')
             tier = originalTierBeforeWyberCode
-            cost = creditCost(actionType, tier)
+            cost = creditCost(actionType, tier, buildTier)
           }
         }
       }
@@ -3263,6 +3273,10 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         const purposes = stagePurposes as string[]
         const items = paths.map((p, i) => purposes[i] ? `- ${p}: ${purposes[i]}` : `- ${p}`).join('\n')
         perRequestParts.push(`\n\n=== FILL PASS ===\nThe app shell (navigation, theme, routing) is already built. Now build ONLY these feature files — output each as a COMPLETE <file> block with fully working code, no stubs, no TODO placeholders:\n${items}\nDo NOT re-output App.tsx, index.css, or any scaffold file not listed above. Write real, working implementations for the files listed.${stagedAutomationNote}`)
+      } else if (stage === 'wire') {
+        const routerPath = (stageFiles as string[])[0]
+        const screenList = (stagePurposes as string[]).map((s) => `- ${s}`).join('\n')
+        perRequestParts.push(`\n\n=== WIRE-UP PASS ===\nThe scaffold pass rendered a "Coming up next..." placeholder in ${routerPath} for every screen, and those screens have now ALL been built as complete, working files:\n${screenList}\nRewrite ${routerPath} ONLY: import the real screen components above and render them in place of their placeholders. Do not change navigation structure, theme, or any other scaffold file, and do not invent a new app/project name — keep whatever name/title is already in this file. Output ONLY ${routerPath} as a complete <file> block.${stagedAutomationNote}`)
       } else if (stage === 'agentFix') {
         perRequestParts.push(`\n\n=== TARGETED FIX PASS ===\nApply ONLY the specific fix described in the request, using <edit> blocks (or a full <file> rewrite only if the file is small). Do not restyle, refactor, or touch anything else.`)
       }
@@ -3950,6 +3964,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               agent: 'coder', status: 'start',
               detail: stage === 'scaffold' ? 'building the app shell'
                 : stage === 'fill' ? 'building feature files'
+                : stage === 'wire' ? 'wiring the real screens into the app shell'
                 : stage === 'agentFix' ? 'applying a targeted fix'
                 : isNewBuild ? 'building your app' : 'making the change',
             })

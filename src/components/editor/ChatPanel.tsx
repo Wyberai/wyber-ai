@@ -14,7 +14,7 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
+import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, pickRouterFile, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -526,7 +526,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -1019,7 +1019,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1712,7 +1712,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // refund (see generate/route.ts), so this case is never silently charged either.
       const hasRealChange = newFiles.length > 0 || editBlocks.length > 0;
       if (!hasRealChange) {
-        if (isVisible && !editIncompleteReported) {
+        // An internal pass the orchestrator is about to silently retry (see
+        // the fill-batch loop's quietRetryEligible on its first attempt only)
+        // shouldn't show the user a scary "nothing changed"/error bubble for
+        // what usually resolves itself one retry later — that reads as the
+        // build breaking when it's actually still healthy. Only surface the
+        // message if this was NOT a quiet-retry-eligible attempt (i.e. the
+        // retry itself also came back empty, or this was a user-visible turn
+        // to begin with).
+        if (isVisible && !editIncompleteReported && !opts?.quietRetryEligible) {
           const emittedNothing = full.trim().length === 0;
           const errMsg = (fileCut || editCut)
             ? t('streamCutOffMsg')
@@ -1721,6 +1729,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
             : t('nothingChangedMsg');
           updateMessage(assistantId, { content: errMsg, status: (fileCut || editCut) ? 'done' : 'error', retryPrompt: userMsg, retryLane: 'build' });
           persistMessage('assistant', errMsg);
+        } else if (isVisible && opts?.quietRetryEligible) {
+          // Close out the streaming bubble this pass added with no visible
+          // text rather than an alarming error message — the orchestrator is
+          // about to silently retry, and there's no ChatMessage field to fully
+          // remove a bubble, so an empty closed-out one is the least-bad option.
+          updateMessage(assistantId, { content: '', status: 'done' });
         }
         setLiveReasoning('');
         return false;
@@ -1998,6 +2012,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // that here — only the single entry file (App.tsx) was ever force-
     // verified (A4). Accumulated across all batches and reported once at the
     // end, rather than aborting the whole remaining plan over one thin miss.
+    // The scaffold pass is explicitly told (see api/generate/route.ts's
+    // SCAFFOLD PASS prompt) to render a "Coming up next..." placeholder for
+    // every screen not built yet, and fill passes are explicitly forbidden
+    // from touching App.tsx/scaffold files — so unless something goes back
+    // afterward, those placeholders ship forever even once the real screens
+    // exist as complete, working files. willWire gates the final wiring pass
+    // added below; when it's going to run, the last fill batch should NOT
+    // claim finalPass (that pass, not the last fill batch, is the true end
+    // of the chain — completeness QA and the overage safety valve key off it).
+    const routerPath = pickRouterFile(staged.scaffoldPaths);
+    const willWire = !!routerPath;
     const unresolvedFiles: PlannedFile[] = [];
     for (let i = 0; i < staged.fillBatches.length; i++) {
       if (agentPassCountRef.current >= MAX_INTERNAL_PASSES) {
@@ -2016,7 +2041,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
       let batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
         stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-        finalPass: i === staged.fillBatches.length - 1, buildId,
+        finalPass: !willWire && i === staged.fillBatches.length - 1, buildId,
+        // Only THIS first attempt is quiet-retry-eligible — an empty result
+        // here is about to be silently retried below, so it shouldn't show
+        // the user an alarming "nothing changed" bubble for something that
+        // usually resolves itself one retry later. If the retry also comes
+        // back empty, that call below omits this flag and reports normally.
+        quietRetryEligible: true,
       });
       // Retry once on failure — transient API errors, network blips, and
       // rare empty model responses succeed on a second attempt. Silently
@@ -2027,7 +2058,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         batchOk = await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-          finalPass: i === staged.fillBatches.length - 1, buildId,
+          finalPass: !willWire && i === staged.fillBatches.length - 1, buildId,
         });
       }
       if (batchOk === false) {
@@ -2054,7 +2085,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: missingBatch.map(f => f.path), stagePurposes: missingBatch.map(f => f.purpose),
-          internalPass: true, finalPass: i === staged.fillBatches.length - 1, buildId,
+          internalPass: true, finalPass: !willWire && i === staged.fillBatches.length - 1, buildId,
         });
         await new Promise(r => setTimeout(r, 300));
         stillMissing = stillMissing.filter(p => filesNow()[p] === undefined);
@@ -2070,6 +2101,27 @@ const storeProjectId = useEditorStore.getState().project?.id;
         agent: 'orchestrator', status: 'stuck',
         detail: `Build finished, but ${unresolvedFiles.length} planned screen${unresolvedFiles.length === 1 ? '' : 's'} came back as placeholder${unresolvedFiles.length === 1 ? '' : 's'} (${nameList}${extra}). Type "finish ${unresolvedFiles.length === 1 ? 'it' : 'them'}" to complete the build.`,
       });
+    }
+    // Wire the real screens into the app shell — see willWire's comment above.
+    // Only the screens actually confirmed present now (not ones that stayed
+    // unresolved) get listed, so the model isn't told to import files that
+    // don't exist.
+    if (routerPath && agentPassCountRef.current < MAX_INTERNAL_PASSES) {
+      const filesNow = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
+      const builtScreens = staged.files.filter(f =>
+        !staged.scaffoldPaths.includes(f.path) && filesNow[f.path] !== undefined
+      );
+      if (builtScreens.length > 0) {
+        agentPassCountRef.current += 1;
+        useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
+        pushAgentEvents({ agent: 'coder', status: 'progress', detail: 'Wiring the real screens into the app shell', pass: agentPassCountRef.current });
+        await new Promise(r => setTimeout(r, 300));
+        await executeGenerationRef.current?.(userMsg, null, {
+          silent: true, continuation: true,
+          stage: 'wire', stageFiles: [routerPath], stagePurposes: builtScreens.map(f => `${f.path}: ${f.purpose}`),
+          internalPass: true, finalPass: true, buildId,
+        });
+      }
     }
   }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents]);
 

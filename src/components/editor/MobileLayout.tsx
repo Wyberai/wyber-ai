@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { ChatPanel } from './ChatPanel'
 import { MobilePreviewPanel } from './MobilePreviewPanel'
@@ -62,8 +62,25 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
     mq.addEventListener('change', apply)
     return () => mq.removeEventListener('change', apply)
   }, [])
+  // A multi-pass staged build is a SEQUENCE of separate generation calls
+  // (scaffold, each fill batch, the wire-up pass), each independently
+  // flipping isGenerating true→false→true as it starts/finishes — not one
+  // continuous true span. Auto-switching on every true transition yanked the
+  // user back to Preview after every single pass, even if they deliberately
+  // switched to Chat to read the agent-team progress mid-build. Only treat
+  // this as "a new build/turn just started" (and worth auto-switching for)
+  // when the previous idle gap was long enough to be a real pause between
+  // user turns, not the ~300-1500ms gap between internal passes.
+  const lastIdleAt = useRef(0)
+  const wasGenerating = useRef(false)
   useEffect(() => {
-    if (isNarrow && isGenerating) setMobileView('preview')
+    if (isGenerating) {
+      const idleGap = lastIdleAt.current ? Date.now() - lastIdleAt.current : Infinity
+      if (isNarrow && !wasGenerating.current && idleGap > 3000) setMobileView('preview')
+    } else {
+      lastIdleAt.current = Date.now()
+    }
+    wasGenerating.current = isGenerating
   }, [isGenerating, isNarrow])
 
   const saveRename = async () => {

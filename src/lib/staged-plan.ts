@@ -126,6 +126,26 @@ export function buildStagedPlan(files: PlannedFile[]): StagedPlan {
 }
 
 /**
+ * The scaffold pass is explicitly told to render a "Coming up next..."
+ * placeholder for every screen not in its own file list (see the SCAFFOLD
+ * PASS prompt in api/generate/route.ts) — and fill passes are explicitly
+ * forbidden from touching App.tsx/scaffold files, so nothing ever goes back
+ * to replace those placeholders once the real screens exist. This finds the
+ * scaffold file that actually renders route/section content (App.tsx-like),
+ * as opposed to theme/sidebar/index.css files that never reference a
+ * placeholder — the one the final "wire the real screens in" pass needs to
+ * target. Same basename heuristic buildStagedPlan already uses for its
+ * shell-file fallback.
+ */
+export function pickRouterFile(scaffoldPaths: string[]): string | undefined {
+  const byBasename = (prefix: string) => scaffoldPaths.find((p) => {
+    const base = p.split('/').pop()?.toLowerCase() ?? ''
+    return base.startsWith(prefix)
+  })
+  return byBasename('app.') ?? byBasename('main.')
+}
+
+/**
  * Turn a batch's files into a short, human "Forge log" line for the chat UI.
  * Uses the feature purpose, not the filename, so it reads like a craftsman
  * narrating rather than a compiler logging.
@@ -165,11 +185,25 @@ export function diffPlannedAgainstWritten(planned: PlannedFile[], writtenPaths: 
   return planned.filter((f) => !written.has(f.path.trim()))
 }
 
+// Atlas writes purposes as internal file-manifest documentation ("Reusable
+// card component displaying a numeric metric, label, and colored icon (used
+// for status/priority counts on Dashboard)") — accurate for planning, but it
+// reads as leaked internal notes when echoed verbatim as a chat status line.
+// Only a short, single-clause purpose passes as a natural "Building the X"
+// sentence; anything longer or with a parenthetical aside falls back to the
+// plain filename instead of being truncated (a chopped-off purpose reads even
+// worse than the friendly-name fallback).
+const FORGE_PURPOSE_MAX_LEN = 60
+
 export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): string {
   if (phase === 'scaffold') return 'Laying the foundation — shell, theme, and navigation'
   // Prefer the most descriptive purpose in the batch, skipping any that read
-  // like an internal note rather than a feature description.
-  const withPurpose = batch.find((f) => f.purpose && f.purpose.length > 4 && !looksLikeInternalNote(f.purpose))
+  // like an internal note or planning-doc prose rather than a short feature
+  // description a user would recognize.
+  const withPurpose = batch.find((f) =>
+    f.purpose && f.purpose.length > 4 && f.purpose.length <= FORGE_PURPOSE_MAX_LEN
+    && !f.purpose.includes('(') && !looksLikeInternalNote(f.purpose)
+  )
   if (withPurpose) {
     // Clean the purpose into a short phrase
     const p = withPurpose.purpose.replace(/^(the|a|an)\s+/i, '').replace(/\.$/, '')
