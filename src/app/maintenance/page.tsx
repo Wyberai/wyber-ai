@@ -1,3 +1,5 @@
+import { WyberLogo } from '@/components/shared/WyberLogo'
+
 export const metadata = {
   title: 'WyberAi — leveling up',
   robots: { index: false, follow: false },
@@ -19,7 +21,10 @@ export default function MaintenancePage() {
         fontFamily: 'system-ui, sans-serif',
       }}
     >
-      <div style={{ maxWidth: 480 }}>
+      <div style={{ maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ marginBottom: 28 }}>
+          <WyberLogo markSize={40} wordmarkSize={20} theme="onDark" />
+        </div>
         <h1 style={{ fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', marginBottom: 12 }}>
           We&apos;re leveling up WyberAi
         </h1>
