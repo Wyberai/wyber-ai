@@ -755,11 +755,11 @@ COPY RULES:
 CHARTS (if site has data sections): theme with tokens — tooltip bg hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic data with dips.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-MULTI-PAGE MODE — TEMPORARILY DISABLED, DO NOT USE
+MULTI-PAGE MODE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ALWAYS build ONE scrolling page, even when the user asks for "an About page" / "a Contact page" / "a few pages" / a blog. Do not implement real per-page routing (the hook/click-listener pattern below is retained for reference only — do not use it).
+Use real per-page routing (the hook/click-listener pattern below) when the user asks for "an About page" / "a Contact page" / "a few pages" / a blog — i.e. multiple genuinely distinct pages. A single-purpose landing page with no other pages requested stays single-page (see FILE STRUCTURE's single-page default) — multi-page is for when more than one page was actually asked for.
 
-Reason: live-testing on a real published app found that page content stops updating after a route change in the sandboxed <iframe srcDoc> published-app context, even after two rounds of fixing distinct real bugs in the routing implementation (a click-handler interception issue, then a React remount race) — the underlying cause was not found. Until that's root-caused, treat any multi-page request as a request for extra SECTIONS on the single page instead: give "About"/"Contact"/etc. their own full-height anchor-scrolled section (id="about", id="contact", ...) reachable from the nav via ordinary in-page anchor links (kit <Navbar links={[{label:'About', href:'#about'}]}>, no leading slash — that is genuine in-page anchor scrolling, unaffected by this issue), and tell the user in your closing recap that these are sections on one page rather than separate URLs.
+History: this was disabled for a period after live-testing on a real published app found page content stuck after a route change inside the sandboxed <iframe srcDoc> published-app context. Root-caused since: the actual defect was a React onClickCapture prop living inside a subtree that got remounted on route change, destroying the DOM node whose handler was still executing (see the key={route} rule below — already correct in this prompt, this is what makes it safe). Re-verified live against the exact sandboxed srcDoc/allow-same-origin context this ships to. Two rules below are non-negotiable BECAUSE of that history — follow them exactly, don't improvise a different navigation wiring:
 
 ROUTER — a tiny custom hash hook, NOT react-router-dom:
 Two independent constraints rule out react-router-dom's <BrowserRouter>/<HashRouter> and any other history-package-based router:
@@ -813,9 +813,12 @@ useEffect(() => {
 This is why the "#/..." convention (hash THEN slash) matters: it is unambiguous against a same-page anchor like href="#pricing" (no slash) — the capture listener only ever intercepts route links, so genuine in-page anchor scrolling elsewhere on a page is completely unaffected.
 
 App.tsx reads const route = useHashRoute() and renders the matching page with a plain switch/if-chain (no <Routes>/<Route> — there is no router object, just the current hash string). Kit <Navbar links={[{label:'About', href:'#/about'}, ...]}> — its links already render as plain <a href>; the capture listener above is what actually drives navigation now, not native browser hash-following.
-Do NOT put key={route} (or any route-derived key) on Layout's root element or any ancestor of the capture listener — this reproduced live: remounting that subtree on every route change destroys the DOM node whose onClickCapture is still executing the instant navigate() fires, so the hash updates and any active-nav-item styling looks right, but the page body silently never swaps to the new page.
 
-STRUCTURE (reference only — DISABLED per above, do not build any of this until multi-page mode is re-enabled):
+RULE — NEVER wire nav links with onClick/onClickCapture: every internal nav link is a plain <a href="#/about">, nothing else. Do NOT add onClick={() => navigate('/about')} (or onClickCapture) to a Link/Navbar item, even though it would work in an ordinary browser tab — this was the actual root cause of the original "page stops updating" defect: a React onClick handler lives inside the component subtree it's attached to, and if any ancestor of that element gets keyed/remounted on route change (see the key={route} rule right below), React destroys that exact DOM node mid-dispatch, silently eating the navigation. The single document-level capture listener above is immune to this because it's registered outside the React tree entirely — it can never be destroyed by a remount of anything React renders. Let it be the ONLY thing that ever calls navigate().
+
+RULE — key={route} placement: Do NOT put key={route} (or any route-derived key) on Layout's root element, Navbar, or any ancestor of the capture listener's effect (i.e. never above the point where App.tsx's own useEffect registers the document click listener) — remounting that subtree on route change destroys the DOM node an in-flight click is still bubbling through, so the hash updates and any active-nav-item styling looks right, but the page body silently never swaps to the new page. It IS safe and expected to key the routed PAGE CONTENT itself for transitions — e.g. <AnimatePresence mode="wait"><motion.div key={route}>{page}</motion.div></AnimatePresence> wrapping ONLY what Layout renders as {children}, never Layout or Navbar. Verified live: AnimatePresence-wrapped route content swaps correctly on navigation in the actual sandboxed srcDoc context.
+
+STRUCTURE (when multi-page mode applies — see above):
 - src/pages/Home.tsx — the full single-page composition described above (hero → ... → footer)
 - src/pages/About.tsx, src/pages/Contact.tsx, etc. — one file per requested page, each its own <Reveal>-wrapped sections, own hero/eyebrow, consistent Navbar+Footer via a shared Layout
 - src/components/Layout.tsx — <Navbar> + {children} + <Footer>, pt-16 wrapper, wraps every route
@@ -845,7 +848,7 @@ public/
   robots.txt
   sitemap.xml
 
-Multi-page (DISABLED — see MULTI-PAGE MODE above — do not use, reference only):
+Multi-page (when the request implies more than one distinct page — see MULTI-PAGE MODE above):
 src/
   App.tsx              — const route = useHashRoute(); <Layout>{route === '/about' ? <About/> : route === '/contact' ? <Contact/> : <Home/>}</Layout>
   index.css            — same as single-page
@@ -1234,7 +1237,9 @@ useEffect(() => {
 </code>
 
 App.tsx reads const route = useHashRoute() and renders the matching page with a plain if-chain / switch on the route string (parse "/settings/billing" as base "/settings" + tab "billing" the same way). Every nav item, tab, and internal link uses a "#/..." href (e.g. href="#/settings/billing") — a plain <a href="#/...">; the capture listener above drives navigation, not native hash-following. Sidebar/tab active-state checks compare the current route string directly.
-Do NOT put key={route} (or any route-derived key) on the Shell/Layout root element or any ancestor of the capture listener — this reproduced live on the Website builder: remounting that subtree on every route change destroys the DOM node whose onClickCapture is still executing the instant navigate() fires, so the sidebar highlights the right item and the hash updates, but the main content area silently never swaps to the new page.
+
+RULE — NEVER wire nav items with onClick/onClickCapture: every sidebar item, tab, and internal link is a plain <a href="#/...">, nothing else — do NOT add onClick={() => navigate(...)} to a nav item even though it works fine in an ordinary tab. A React click handler lives inside the subtree it's attached to; if any ancestor gets keyed/remounted on route change (see below), that exact DOM node is destroyed mid-dispatch and the navigation silently disappears. The document-level capture listener above is immune to this — it lives outside the React tree and can never be destroyed by anything React remounts. Let it be the ONLY thing that calls navigate().
+Do NOT put key={route} (or any route-derived key) on the Shell/Layout root element, Sidebar, or any ancestor of the capture listener's effect — this reproduced live on the Website builder: remounting that subtree on every route change destroys the DOM node whose click handler was still executing, so the sidebar highlights the right item and the hash updates, but the main content area silently never swaps to the new page. It IS safe to key the routed CONTENT area itself (e.g. wrapping just the main-content children in <AnimatePresence mode="wait"><motion.div key={route}>) — never Shell, Sidebar, or anything above where the capture listener is registered.
 - / (no hash) → treat as /dashboard if authed, /login if not
 - /login, /signup, /forgot-password, /onboarding
 - /dashboard
@@ -1322,7 +1327,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Responsive: sidebar → off-canvas on mobile, tables → card-stacks?
 □ Hover + focus-visible on every interactive element?
 □ If Supabase is connected: AuthContext and the data table/dashboard use REAL supabase calls, not mock arrays — and the schema SQL block was emitted?
-□ No react-router-dom import anywhere — custom useHashRoute hook only, no key={route} (or route-derived key) on Shell/Layout's root or any ancestor of the capture listener?
+□ No react-router-dom import anywhere — custom useHashRoute hook only, every nav item a plain <a href="#/...">, zero onClick/onClickCapture navigation handlers, no key={route} (or route-derived key) on Shell/Layout's root or any ancestor of the capture listener?
 
 PROGRESS: [progress: Planning [Product Name]], [progress: Building auth + shell], [progress: Building dashboard], [progress: Building [feature] page], [progress: Building settings], [progress: Done]
 
