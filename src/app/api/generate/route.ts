@@ -2025,10 +2025,13 @@ const SONNET_FIRST_BUILDS = process.env.WYBER_SONNET_FIRST_BUILD !== 'false'
 
 /**
  * Decide which model tier to run on — fully automatic, server-side.
- * Policy (see model-defaults): Sonnet-first for builds and edits, escalating
- * to Opus via a sub-cent Haiku check when the request actually warrants it
- * (a large multi-feature build, or an architecturally complex edit). Plan +
- * self-heal passes always run on Sonnet (cheap; self-heal is free to the user).
+ * Policy: automatic routing NEVER escalates to Opus/Premium/Fable, no matter
+ * how complex a request reads. Opus only ever runs when the user explicitly
+ * picks it from the model dropdown — that's `explicitClaudeTier` above this
+ * function's call site, which bypasses resolveModelTier entirely. This was
+ * previously a Haiku-classifier auto-escalation (large/complex builds and
+ * edits silently routed to Opus); removed on purpose so nothing can incur
+ * Opus cost/latency without the user choosing it.
  */
 async function resolveModelTier(opts: {
   actionType: string
@@ -2037,30 +2040,9 @@ async function resolveModelTier(opts: {
   stage: string
   prompt: string
   fileContext?: string
-  // Set when the caller already ran isComplexBuild for this same request (the
-  // stage:'full' new-build case also needs this result to gate the
-  // claude-parallel fast path) — reuses it instead of a second Haiku call.
   precomputedBuildComplexity?: boolean
 }): Promise<ModelTier> {
-  const { actionType, isNewBuild, selfHeal, stage, prompt, fileContext, precomputedBuildComplexity } = opts
-  if (stage === 'plan' || selfHeal) return 'fast'
-  // Targeted agent-fix passes (free, internal) are small scoped edits → Sonnet.
-  // 'wire' is the same shape: a small, mechanical rewrite of one already-known
-  // file (swap placeholder JSX for real imports) — no complexity judgment call.
-  if (stage === 'agentFix' || stage === 'wire') return 'fast'
-  // Staged build passes (scaffold/fill) and from-scratch builds are all part of
-  // ONE logical build. Classify each stage independently against the SAME
-  // original prompt (cheap, deterministic-ish Haiku call) so every stage of a
-  // simple build agrees on Sonnet and every stage of a genuinely large build
-  // agrees on Opus — no single stage silently forces the slow tier regardless
-  // of what the build actually needs.
-  if (stage === 'scaffold' || stage === 'fill' || isNewBuild || actionType === 'web-build' || actionType === 'mobile-build' || actionType === 'website-build' || actionType === 'saas-build') {
-    if (!SONNET_FIRST_BUILDS) return 'default' // rollout not yet enabled — old behavior
-    const isComplex = precomputedBuildComplexity ?? await isComplexBuild(prompt)
-    return isComplex ? 'default' : 'fast'
-  }
-  // It's an edit to an existing app — Sonnet by default, escalate when complex.
-  return (await isComplexEdit(prompt, fileContext)) ? 'default' : 'fast'
+  return 'fast'
 }
 
 /**
@@ -2087,32 +2069,6 @@ LOW = the common case: a landing page, a single-purpose tool (todo list, habit t
 The bar is the SCOPE of what's being built, not the word count of the request.
 Reply with EXACTLY one word: LOW or HIGH.`,
       messages: [{ role: 'user', content: prompt.slice(0, 1500) }],
-    })
-    const text = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').toUpperCase()
-    return text.includes('HIGH')
-  } catch {
-    return false
-  }
-}
-
-/**
- * Sub-cent Haiku classifier: is this edit architecturally complex (multi-file,
- * auth/routing/state/data-model, large refactor) and worth escalating to Opus?
- * Fails to LOW (Sonnet) on any error so a misfire never costs Opus money.
- */
-async function isComplexEdit(prompt: string, fileContext?: string): Promise<boolean> {
-  try {
-    const fileCount = fileContext ? (fileContext.match(/<file /g)?.length ?? 0) : 0
-    const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 5,
-      temperature: 0, // same determinism fix as isComplexBuild above
-      system: `You rate an edit request to an existing app as LOW or HIGH complexity.
-HIGH = building a new feature MODULE or screen (e.g. "build out the analytics module", "create a data table with scoring/filtering", "add an inline-editing spreadsheet"), OR structural changes to auth/routing/state/data-model, OR a large multi-file refactor, OR "rebuild/overhaul everything".
-LOW = a tweak, even if it touches 2-3 files: styling, copy, colors, spacing, layout shuffles, renaming, toggling visibility, fixing a bug in one behavior, or adding one small self-contained element (a button, a field, a link).
-The bar is WHAT IS BEING BUILT, not how many files exist in the project.
-Reply with EXACTLY one word: LOW or HIGH.`,
-      messages: [{ role: 'user', content: `Files in project: ${fileCount}\nRequest: ${prompt.slice(0, 1500)}` }],
     })
     const text = res.content.filter(b => b.type === 'text').map(b => (b.type === 'text' ? b.text : '')).join('').toUpperCase()
     return text.includes('HIGH')

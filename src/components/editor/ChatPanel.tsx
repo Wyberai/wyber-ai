@@ -2095,24 +2095,37 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const routerPath = pickRouterFile(staged.scaffoldPaths);
     const willWire = !!routerPath;
     const unresolvedFiles: PlannedFile[] = [];
-    for (let i = 0; i < staged.fillBatches.length; i++) {
-      if (agentPassCountRef.current >= MAX_INTERNAL_PASSES) {
-        pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('passBudgetReachedMsg') });
-        break;
-      }
-      const batch = staged.fillBatches[i];
+
+    // Dispatched concurrently rather than one-at-a-time — verified safe in a
+    // dedicated experiment (scripts/_verify-concurrent-fill-sonnet.mjs): 35/35
+    // clean concurrent Sonnet calls, ~6x wall-clock win over sequential, zero
+    // empty batches. Each batch still gets its own retry-once-on-stream-
+    // failure and its own targeted per-file completeness retry below; a batch
+    // that never lands its files doesn't block or cancel any other batch —
+    // they were never depending on each other's output at dispatch time, so
+    // there's nothing sequential ordering was protecting once budget for all
+    // of them is confirmed upfront.
+    const affordable = Math.max(0, MAX_INTERNAL_PASSES - agentPassCountRef.current);
+    const batchesToRun = staged.fillBatches.slice(0, affordable);
+    if (staged.fillBatches.length > affordable) {
+      pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('passBudgetReachedMsg') });
+    }
+
+    const runFillBatch = async (batch: PlannedFile[], i: number): Promise<{ hardFailed: boolean; missing: PlannedFile[] }> => {
+      // Small stagger — not required for correctness (verified clean even at
+      // near-simultaneous dispatch) but keeps progress bubbles landing in a
+      // readable order instead of all at once.
+      await new Promise(r => setTimeout(r, i * 150));
       agentPassCountRef.current += 1;
       useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
       pushAgentEvents({ agent: 'coder', status: 'progress', detail: forgeLine(batch, 'fill'), pass: agentPassCountRef.current });
-      // Let React flush the previous pass's setFiles so the ref-latest closure
-      // sees the newest files as fileContext (same reason autofix delays).
-      await new Promise(r => setTimeout(r, 300));
       const batchPaths = batch.map(f => f.path);
       const batchPurposes = batch.map(f => f.purpose);
+      const isLastBatch = i === batchesToRun.length - 1;
       let batchOk = await executeGenerationRef.current?.(userMsg, null, {
         silent: true, continuation: true,
         stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-        finalPass: !willWire && i === staged.fillBatches.length - 1, buildId, buildComplexity,
+        finalPass: !willWire && isLastBatch, buildId, buildComplexity,
         // Only THIS first attempt is quiet-retry-eligible — an empty result
         // here is about to be silently retried below, so it shouldn't show
         // the user an alarming "nothing changed" bubble for something that
@@ -2129,18 +2142,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
         batchOk = await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-          finalPass: !willWire && i === staged.fillBatches.length - 1, buildId, buildComplexity,
+          finalPass: !willWire && isLastBatch, buildId, buildComplexity,
         });
       }
       if (batchOk === false) {
-        const missingFiles = staged.fillBatches.slice(i).flat();
-        const nameList = missingFiles.slice(0, 3).map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || f.path).join(', ');
-        const extra = missingFiles.length > 3 ? ` +${missingFiles.length - 3} more` : '';
-        pushAgentEvents({
-          agent: 'orchestrator', status: 'stuck',
-          detail: `Build incomplete — ${missingFiles.length} screen${missingFiles.length === 1 ? '' : 's'} couldn't be generated (${nameList}${extra}). Type "complete the build" to finish.`,
-        });
-        break;
+        return { hardFailed: true, missing: batch };
       }
       // Batch call reported success — but "no stream error" isn't the same as
       // "wrote every file it was asked for." Verify against the actual
@@ -2156,13 +2162,27 @@ const storeProjectId = useEditorStore.getState().project?.id;
         await executeGenerationRef.current?.(userMsg, null, {
           silent: true, continuation: true,
           stage: 'fill', stageFiles: missingBatch.map(f => f.path), stagePurposes: missingBatch.map(f => f.purpose),
-          internalPass: true, finalPass: !willWire && i === staged.fillBatches.length - 1, buildId, buildComplexity,
+          internalPass: true, finalPass: !willWire && isLastBatch, buildId, buildComplexity,
         });
         await new Promise(r => setTimeout(r, 300));
         stillMissing = stillMissing.filter(p => filesNow()[p] === undefined);
       }
-      if (stillMissing.length > 0) {
-        unresolvedFiles.push(...batch.filter(f => stillMissing.includes(f.path)));
+      return { hardFailed: false, missing: batch.filter(f => stillMissing.includes(f.path)) };
+    };
+
+    if (batchesToRun.length > 0) {
+      const results = await Promise.all(batchesToRun.map((batch, i) => runFillBatch(batch, i)));
+      const hardFailedFiles = results.filter(r => r.hardFailed).flatMap(r => r.missing);
+      for (const r of results) {
+        if (!r.hardFailed) unresolvedFiles.push(...r.missing);
+      }
+      if (hardFailedFiles.length > 0) {
+        const nameList = hardFailedFiles.slice(0, 3).map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || f.path).join(', ');
+        const extra = hardFailedFiles.length > 3 ? ` +${hardFailedFiles.length - 3} more` : '';
+        pushAgentEvents({
+          agent: 'orchestrator', status: 'stuck',
+          detail: `Build incomplete — ${hardFailedFiles.length} screen${hardFailedFiles.length === 1 ? '' : 's'} couldn't be generated (${nameList}${extra}). Type "complete the build" to finish.`,
+        });
       }
     }
     if (unresolvedFiles.length > 0) {
