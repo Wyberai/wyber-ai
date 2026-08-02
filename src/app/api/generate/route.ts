@@ -2463,7 +2463,19 @@ export async function POST(req: NextRequest) {
           isComplex: newBuildComplexity,
         })
       : undefined
-    let cost = creditCost(actionType, tier, buildTier)
+    // Pricing is decoupled from which model literally executes the build.
+    // resolveModelTier's automatic routing always resolves to 'fast' (Sonnet)
+    // now — generation never auto-escalates to Opus (real Claude-API cost is
+    // the user's own bill; automation must never touch it without an
+    // explicit dropdown pick). But a genuinely large/complex build still
+    // carries the higher BUILD_TIER_COSTS price bucket as a size/value
+    // premium — that's a pricing decision, independent of engine choice, and
+    // does not collapse just because the underlying model got cheaper.
+    // Confirmed explicitly: keep charging the premium. Only applies to
+    // automatic (non-explicit-dropdown) tiered build pricing — an explicit
+    // user tier pick already prices off its own real tier.
+    const pricingTier: ModelTier = (!explicitClaudeTier && buildTier && newBuildComplexity === true) ? 'default' : tier
+    let cost = creditCost(actionType, pricingTier, buildTier)
 
     // Fetch profile and enforce balance (skip for 'plan' stage — no generation happens).
     // Self-heal/autofix passes are FREE (they repair an already-paid turn), so they
@@ -2488,7 +2500,7 @@ export async function POST(req: NextRequest) {
       // this just feeds it a different tier when the user asked for one).
       if (modelTier === 'gpt' && tierAllowedForPlan('gpt', plan)) {
         tier = 'gpt'
-        cost = creditCost(actionType, tier, buildTier)
+        cost = creditCost(actionType, pricingTier, buildTier)
       }
 
       // WyberCode: explicit dropdown choice, or automatic rollout (kill
@@ -2500,13 +2512,13 @@ export async function POST(req: NextRequest) {
       const originalTierBeforeWyberCode = tier
       if (modelTier === 'wybercode' && tierAllowedForPlan('wybercode', plan)) {
         tier = 'wybercode'
-        cost = creditCost(actionType, tier, buildTier)
+        cost = creditCost(actionType, pricingTier, buildTier)
       } else if (
         !explicitClaudeTier && modelTier !== 'gpt' && modelTier !== 'wybercode' &&
         shouldAutoRouteToWyberCode({ userId: user.id, plan, stage, selfHeal, isInternalPass })
       ) {
         tier = 'wybercode'
-        cost = creditCost(actionType, tier, buildTier)
+        cost = creditCost(actionType, pricingTier, buildTier)
       }
 
       // Enforce plan-based model gate.
@@ -2541,7 +2553,7 @@ export async function POST(req: NextRequest) {
         } else {
           // Auto-routed to a tier this plan can't use — downgrade to Sonnet silently.
           tier = 'fast'
-          cost = creditCost(actionType, tier, buildTier)
+          cost = creditCost(actionType, pricingTier, buildTier)
         }
       }
 
@@ -2569,7 +2581,7 @@ export async function POST(req: NextRequest) {
           // Couldn't even charge for it — don't let a credits-RPC hiccup be
           // the reason a build fails; just run the normal Claude flow.
           tier = originalTierBeforeWyberCode
-          cost = creditCost(actionType, tier, buildTier)
+          cost = creditCost(actionType, pricingTier, buildTier)
         } else {
           const wcNewBalance = wcRpc.new_credits
           try {
@@ -2586,7 +2598,7 @@ export async function POST(req: NextRequest) {
               console.log(`[generate] wybercode fallback (${failure}) — refunding and retrying on Claude`)
               await refundCredits(user.id, cost, `wybercode-fallback-${failure}`)
               tier = originalTierBeforeWyberCode
-              cost = creditCost(actionType, tier, buildTier)
+              cost = creditCost(actionType, pricingTier, buildTier)
             } else {
               admin.from('credit_usage').insert({
                 user_id: user.id, amount: cost, reason: actionType,
@@ -2608,7 +2620,7 @@ export async function POST(req: NextRequest) {
             console.log('[generate] wybercode threw, falling back to Claude:', String(wcErr))
             await refundCredits(user.id, cost, 'wybercode-error')
             tier = originalTierBeforeWyberCode
-            cost = creditCost(actionType, tier, buildTier)
+            cost = creditCost(actionType, pricingTier, buildTier)
           }
         }
       }
