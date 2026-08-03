@@ -14,7 +14,8 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, pickRouterFile, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
+import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, pickRouterFile, wireLooksApplied, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
+import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
@@ -527,7 +528,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW' }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -1020,7 +1021,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW' }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1097,7 +1098,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
     console.warn('Blocked generation: project mismatch');
     return false;
   }
-    const assistantId = uid();
+    // A caller running a multi-pass chain (runAgenticBuild's scaffold/fill/wire)
+    // supplies one id up front and reuses it across every pass, so the whole
+    // chain reads as ONE message instead of a new bubble per internal pass —
+    // see ownsBubble below.
+    const assistantId = opts?.sharedBubbleId ?? uid();
     // Continuation runs (batch 2+ of a build whose stream was cut, a missing
     // entry file, patches that didn't apply) are the user's own build still in
     // flight — they MUST stay visible: a streaming bubble while they run and a
@@ -1106,7 +1111,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // "is it done?" answered from a history that ended mid-build. Only pure
     // self-heals (runtime-error repairs fired from the preview) stay invisible.
     const isVisible = !opts?.silent || !!opts?.continuation;
-    if (isVisible) {
+    // ownsBubble gates the actual chat-bubble mechanics (create/finalize/error/
+    // isGenerating) specifically — narrower than isVisible, which still governs
+    // every OTHER real-turn side effect (credits, design suggestion, rename,
+    // truncation warnings) unchanged. A sharedBubbleId caller owns the bubble
+    // itself, so an internal pass with one attached never creates its own
+    // message, never overwrites the shared one with its own per-pass narration,
+    // and never toggles the chain's isGenerating off mid-flight.
+    const ownsBubble = isVisible && !opts?.sharedBubbleId;
+    if (ownsBubble) {
       addMessage({ id: assistantId, role:'assistant', content:'', timestamp:Date.now(), status:'streaming' });
       // isGenerating drives the Stop button, the elapsed timer, the TopBar
       // "Building…" pill, the double-send guard, and the preview's rebuild-on-
@@ -1793,9 +1806,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // the repair pass (a new, visible bubble via the same wyber-autofix
       // continuation path used elsewhere) renders its own terminal "done" —
       // or the existing "still missing" message (4d) — once it resolves.
-      if (isVisible && completenessRetryFired) {
+      if (ownsBubble && completenessRetryFired) {
         updateMessage(assistantId, { status: 'streaming' });
-      } else if (isVisible) {
+      } else if (ownsBubble) {
         updateMessage(assistantId, {
           content: finalContent,
           status:'done',
@@ -1880,7 +1893,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       succeeded = true;
     } catch (err: unknown) {
-      if (isVisible) {
+      // Gated on ownsBubble, not isVisible: an internal chain pass (fill/wire)
+      // that errors is about to be retried by the caller (runAgenticBuild) —
+      // writing a raw error into the shared bubble here would flash a
+      // confusing "error" onto a build that's still in flight and about to
+      // recover on retry. The caller writes the shared bubble's error state
+      // itself, only once retries are truly exhausted.
+      if (ownsBubble) {
         const isAbort = err instanceof Error && err.name === 'AbortError';
         // A session that expires mid-use (long-lived tab, token revoked) used
         // to hit the generic fallback below and show a raw '{"error":
@@ -1927,8 +1946,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       wakeLock?.release().catch(() => {});
       if (abortControllerRef.current === genController) abortControllerRef.current = null;
       // Only the run that set isGenerating clears it — an invisible self-heal
-      // finishing in the background must not flip a visible build's state off.
-      if (isVisible) setIsGenerating(false);
+      // (or a sharedBubbleId chain pass, which never set it in the first
+      // place) finishing in the background must not flip a visible build's
+      // state off early.
+      if (ownsBubble) setIsGenerating(false);
       clearStreamingContent();
       setProgressSteps([]);
     }
@@ -2051,6 +2072,30 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) + costSuffix });
 
+    // One chat bubble for the ENTIRE staged chain (scaffold, every fill
+    // batch, the wire pass) instead of one bubble per internal pass. A
+    // single user request ("create a revops dashboard") used to come back as
+    // a stream of separate messages — "Scaffolding...", "Wired the pipeline
+    // data model...", "Built the Accounts, Forecast, Settings screens...",
+    // "Wired the real screens..." — each with its own "Show details" file
+    // list. That's implementation detail, not something the user asked to
+    // see: one line in, it should read back as one short response out.
+    // executeGeneration still runs every pass exactly as before (staging,
+    // retries, verification) — sharedBubbleId just tells it not to create or
+    // finalize its own message; this function owns the one bubble and writes
+    // the final summary once the whole chain is actually done. The
+    // "Building…" pill/elapsed timer (driven by isGenerating, set once here
+    // and cleared once at the end) is what tells the user something is still
+    // in flight for the whole chain — not a wall of intermediate bubbles.
+    const chainId = uid();
+    addMessage({ id: chainId, role: 'assistant', content: '', timestamp: Date.now(), status: 'streaming' });
+    setIsGenerating(true);
+    const finishChain = (content: string, filesChanged: string[]) => {
+      updateMessage(chainId, { content, status: 'done', filesChanged });
+      persistMessage('assistant', content, filesChanged);
+      setIsGenerating(false);
+    };
+
     // Forge: scaffold — the single charged pass; shell/theme/nav so the
     // preview renders a skeleton right away.
     const hasFills = staged.fillBatches.length > 0;
@@ -2062,27 +2107,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const scaffoldPurposes = staged.scaffoldPaths.map(p => staged.files.find(f => f.path === p)?.purpose ?? '');
     const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, stagePurposes: scaffoldPurposes, finalPass: !hasFills,
-      totalPlannedFiles: staged.files.length, buildId, buildComplexity,
+      totalPlannedFiles: staged.files.length, buildId, buildComplexity, sharedBubbleId: chainId,
     });
     // A failed scaffold means there's no skeleton for fill batches to build
     // on — piling more passes on top of a pass that produced no real files
     // (or errored) just multiplies wasted model calls on top of broken state.
-    // executeGeneration already surfaced the failure to the user (an error
-    // bubble or a "nothing changed" message); stop here instead.
     if (!scaffoldOk) {
-      pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('scaffoldFailedMsg') });
+      finishChain(t('scaffoldFailedMsg'), []);
       return;
     }
 
-    // Forge: fill batches — free internal passes, visible as continuation
-    // bubbles (the established multi-part-build UX). Budget-capped.
-    // Files that a batch was asked for but never actually wrote — see
-    // docs/failure-modes.md A5: a batch call can come back with no stream
-    // error at all while still having silently skipped one of its files
-    // (shipped as a stub or just dropped), and until now nothing checked for
-    // that here — only the single entry file (App.tsx) was ever force-
-    // verified (A4). Accumulated across all batches and reported once at the
-    // end, rather than aborting the whole remaining plan over one thin miss.
     // The scaffold pass is explicitly told (see api/generate/route.ts's
     // SCAFFOLD PASS prompt) to render a "Coming up next..." placeholder for
     // every screen not built yet, and fill passes are explicitly forbidden
@@ -2094,7 +2128,6 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // of the chain — completeness QA and the overage safety valve key off it).
     const routerPath = pickRouterFile(staged.scaffoldPaths);
     const willWire = !!routerPath;
-    const unresolvedFiles: PlannedFile[] = [];
 
     // Dispatched concurrently rather than one-at-a-time — verified safe in a
     // dedicated experiment (scripts/_verify-concurrent-fill-sonnet.mjs): 35/35
@@ -2111,9 +2144,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       pushAgentEvents({ agent: 'orchestrator', status: 'stuck', detail: t('passBudgetReachedMsg') });
     }
 
-    const runFillBatch = async (batch: PlannedFile[], i: number): Promise<{ hardFailed: boolean; missing: PlannedFile[] }> => {
+    const runFillBatch = async (batch: PlannedFile[], i: number): Promise<PlannedFile[]> => {
       // Small stagger — not required for correctness (verified clean even at
-      // near-simultaneous dispatch) but keeps progress bubbles landing in a
+      // near-simultaneous dispatch) but keeps progress events landing in a
       // readable order instead of all at once.
       await new Promise(r => setTimeout(r, i * 150));
       agentPassCountRef.current += 1;
@@ -2122,99 +2155,110 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const batchPaths = batch.map(f => f.path);
       const batchPurposes = batch.map(f => f.purpose);
       const isLastBatch = i === batchesToRun.length - 1;
-      let batchOk = await executeGenerationRef.current?.(userMsg, null, {
-        silent: true, continuation: true,
+      const dispatch = () => executeGenerationRef.current?.(userMsg, null, {
+        silent: true, continuation: true, sharedBubbleId: chainId,
         stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
         finalPass: !willWire && isLastBatch, buildId, buildComplexity,
-        // Only THIS first attempt is quiet-retry-eligible — an empty result
-        // here is about to be silently retried below, so it shouldn't show
-        // the user an alarming "nothing changed" bubble for something that
-        // usually resolves itself one retry later. If the retry also comes
-        // back empty, that call below omits this flag and reports normally.
-        quietRetryEligible: true,
       });
+      let batchOk = await dispatch();
       // Retry once on failure — transient API errors, network blips, and
       // rare empty model responses succeed on a second attempt. Silently
       // retry before giving up so a single bad request doesn't leave the
       // app with missing screens.
       if (batchOk === false) {
         await new Promise(r => setTimeout(r, 1200));
-        batchOk = await executeGenerationRef.current?.(userMsg, null, {
-          silent: true, continuation: true,
-          stage: 'fill', stageFiles: batchPaths, stagePurposes: batchPurposes, internalPass: true,
-          finalPass: !willWire && isLastBatch, buildId, buildComplexity,
-        });
+        batchOk = await dispatch();
       }
-      if (batchOk === false) {
-        return { hardFailed: true, missing: batch };
-      }
+      if (batchOk === false) return batch;
       // Batch call reported success — but "no stream error" isn't the same as
       // "wrote every file it was asked for." Verify against the actual
-      // project files, and give one targeted retry for exactly what's still
-      // missing before accepting the gap.
+      // project files before accepting it.
       const filesNow = () => (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
-      let stillMissing = batchPaths.filter(p => filesNow()[p] === undefined);
-      if (stillMissing.length > 0 && agentPassCountRef.current < MAX_INTERNAL_PASSES) {
-        agentPassCountRef.current += 1;
-        useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
-        await new Promise(r => setTimeout(r, 300));
-        const missingBatch = batch.filter(f => stillMissing.includes(f.path));
-        await executeGenerationRef.current?.(userMsg, null, {
-          silent: true, continuation: true,
-          stage: 'fill', stageFiles: missingBatch.map(f => f.path), stagePurposes: missingBatch.map(f => f.purpose),
-          internalPass: true, finalPass: !willWire && isLastBatch, buildId, buildComplexity,
-        });
-        await new Promise(r => setTimeout(r, 300));
-        stillMissing = stillMissing.filter(p => filesNow()[p] === undefined);
-      }
-      return { hardFailed: false, missing: batch.filter(f => stillMissing.includes(f.path)) };
+      return batchPaths.filter(p => filesNow()[p] === undefined).map(p => batch.find(f => f.path === p)!);
     };
 
     if (batchesToRun.length > 0) {
       const results = await Promise.all(batchesToRun.map((batch, i) => runFillBatch(batch, i)));
-      const hardFailedFiles = results.filter(r => r.hardFailed).flatMap(r => r.missing);
-      for (const r of results) {
-        if (!r.hardFailed) unresolvedFiles.push(...r.missing);
-      }
-      if (hardFailedFiles.length > 0) {
-        const nameList = hardFailedFiles.slice(0, 3).map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || f.path).join(', ');
-        const extra = hardFailedFiles.length > 3 ? ` +${hardFailedFiles.length - 3} more` : '';
-        pushAgentEvents({
-          agent: 'orchestrator', status: 'stuck',
-          detail: `Build incomplete — ${hardFailedFiles.length} screen${hardFailedFiles.length === 1 ? '' : 's'} couldn't be generated (${nameList}${extra}). Type "complete the build" to finish.`,
+      let stillNeedsWork = results.flat();
+      // One more silent, consolidated attempt at everything still missing
+      // across every batch — the build should recover on its own, not hand
+      // the user a "type X to finish" chore. Budget-gated so a pathological
+      // plan can't spiral; a typical build uses ~4-5 of the 8-pass budget,
+      // leaving room for this sweep.
+      if (stillNeedsWork.length > 0 && agentPassCountRef.current < MAX_INTERNAL_PASSES) {
+        agentPassCountRef.current += 1;
+        useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
+        await new Promise(r => setTimeout(r, 300));
+        await executeGenerationRef.current?.(userMsg, null, {
+          silent: true, continuation: true, sharedBubbleId: chainId,
+          stage: 'fill', stageFiles: stillNeedsWork.map(f => f.path), stagePurposes: stillNeedsWork.map(f => f.purpose),
+          internalPass: true, finalPass: !willWire, buildId, buildComplexity,
         });
+        const filesNow = () => (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
+        stillNeedsWork = stillNeedsWork.filter(f => filesNow()[f.path] === undefined);
       }
+      // Whatever is still missing after that doesn't block the close-out
+      // below — the final summary only ever lists screens that actually
+      // landed, so it never claims something that isn't there.
     }
-    if (unresolvedFiles.length > 0) {
-      const nameList = unresolvedFiles.slice(0, 3).map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') || f.path).join(', ');
-      const extra = unresolvedFiles.length > 3 ? ` +${unresolvedFiles.length - 3} more` : '';
-      pushAgentEvents({
-        agent: 'orchestrator', status: 'stuck',
-        detail: `Build finished, but ${unresolvedFiles.length} planned screen${unresolvedFiles.length === 1 ? '' : 's'} came back as placeholder${unresolvedFiles.length === 1 ? '' : 's'} (${nameList}${extra}). Type "finish ${unresolvedFiles.length === 1 ? 'it' : 'them'}" to complete the build.`,
-      });
-    }
-    // Wire the real screens into the app shell — see willWire's comment above.
-    // Only the screens actually confirmed present now (not ones that stayed
-    // unresolved) get listed, so the model isn't told to import files that
-    // don't exist.
-    if (routerPath && agentPassCountRef.current < MAX_INTERNAL_PASSES) {
+    // Wire the real screens into the app shell.
+    // Step 1: Try deterministic wire (fast, text-based swap of placeholder names).
+    // Step 2: Verify it worked — only claim success if the screens are actually wired.
+    if (routerPath) {
       const filesNow = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
       const builtScreens = staged.files.filter(f =>
         !staged.scaffoldPaths.includes(f.path) && filesNow[f.path] !== undefined
       );
       if (builtScreens.length > 0) {
-        agentPassCountRef.current += 1;
-        useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
-        pushAgentEvents({ agent: 'coder', status: 'progress', detail: 'Wiring the real screens into the app shell', pass: agentPassCountRef.current });
-        await new Promise(r => setTimeout(r, 300));
-        await executeGenerationRef.current?.(userMsg, null, {
-          silent: true, continuation: true,
-          stage: 'wire', stageFiles: [routerPath], stagePurposes: builtScreens.map(f => `${f.path}: ${f.purpose}`),
-          internalPass: true, finalPass: true, buildId, buildComplexity,
-        });
+        const routerFile = ((useEditorStore.getState().files ?? {}) as Record<string, { content?: string }>)[routerPath];
+        const routerBefore = routerFile?.content;
+        if (routerBefore) {
+          const screenNames = builtScreens.map(f => ({
+            path: f.path,
+            name: f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? f.path,
+          }));
+          const wireResult = deterministicWire(routerBefore, screenNames);
+
+          // Always write the result, even if incomplete — it's better than nothing.
+          if (wireResult.swappedCount > 0) {
+            useEditorStore.getState().setFile(routerPath, wireResult.routerContent);
+          }
+
+          // Verify: does the router ACTUALLY reference all the built screens?
+          const routerAfter = wireResult.swappedCount > 0 ? wireResult.routerContent : routerBefore;
+          const verification = wireLooksApplied(routerBefore, routerAfter, staged.files.filter(f => !staged.scaffoldPaths.includes(f.path)));
+
+          if (verification.applied) {
+            pushAgentEvents({
+              agent: 'coder',
+              status: 'progress',
+              detail: `Wired ${screenNames.length} screens into the router`,
+            });
+          } else if (verification.missing.length > 0) {
+            // Screens were built but not wired into the router. Report honestly.
+            // The summary below will only list screens actually in the file store,
+            // so it won't claim these were rendered.
+            pushAgentEvents({
+              agent: 'coder',
+              status: 'progress',
+              detail: `Built ${screenNames.length} screens, but wiring incomplete — check the preview for "Coming up next..."`,
+            });
+          }
+        }
       }
     }
-  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents]);
+
+    const filesAtClose = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
+    const liveScreens = staged.files.filter(f => !staged.scaffoldPaths.includes(f.path) && filesAtClose[f.path] !== undefined);
+    const screenNames = liveScreens.map(f => f.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? f.path);
+    const screenList = screenNames.length <= 1
+      ? screenNames[0]
+      : `${screenNames.slice(0, -1).join(', ')} and ${screenNames[screenNames.length - 1]}`;
+    const summary = screenNames.length > 0
+      ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live.\nCheck the preview, or tell me what to change next.`
+      : t('doneCheckPreviewMsg');
+    finishChain(summary, liveScreens.map(f => f.path));
+  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents, addMessage, updateMessage, persistMessage, setIsGenerating, t]);
 
   // The ONE entry point for "start a build/edit now" — the agentic staged
   // path for first builds (flag-gated), the classic single request otherwise.
