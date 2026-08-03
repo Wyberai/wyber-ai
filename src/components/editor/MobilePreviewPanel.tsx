@@ -13,12 +13,19 @@ import { detectGame } from '@/lib/game-detect'
 // Base (app, not game) preview-access charge.
 const PREVIEW_ACCESS_APP_COST = creditCost('preview-access')
 
+// APK/IPA build cost (premium feature)
+const APK_BUILD_COST = 50
+const IPA_BUILD_COST = 50
+
 // ── Mode system ────────────────────────────────────────────────────────────────
 // inapp      → RNW bundle rendered in-browser (instant, zero deps)
 // wyberaigo  → WyberAi companion app: QR deep-link, pre-bundles for fast load
 // appetize   → Cloud Android device (Appetize — keep for existing builds)
-type PreviewMode = 'inapp' | 'wyberaigo' | 'appetize'
+// apk        → Build real Android APK (50 credits) — premium feature
+// ipa        → Build real iOS IPA (50 credits) — premium feature
+type PreviewMode = 'inapp' | 'wyberaigo' | 'appetize' | 'apk' | 'ipa'
 type AppetizeStatus = 'idle' | 'queued' | 'building' | 'ready' | 'error'
+type BuildStatus = 'idle' | 'queued' | 'building' | 'ready' | 'error'
 
 const DEFAULT_MODE: PreviewMode = 'inapp'
 const POLL_INTERVAL_MS = 6000
@@ -79,6 +86,15 @@ export function MobilePreviewPanel({ projectId }: Props) {
   const [appetizeError, setAppetizeError] = useState<string | null>(null)
   const appetizePollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // ── APK/IPA build state ──────────────────────────────────────────────
+  const [apkStatus, setApkStatus] = useState<BuildStatus>('idle')
+  const [apkUrl, setApkUrl] = useState<string | null>(null)
+  const [apkError, setApkError] = useState<string | null>(null)
+  const [ipaStatus, setIpaStatus] = useState<BuildStatus>('idle')
+  const [ipaUrl, setIpaUrl] = useState<string | null>(null)
+  const [ipaError, setIpaError] = useState<string | null>(null)
+  const [buildLoading, setBuildLoading] = useState(false)
+
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<string>('')
 
@@ -86,7 +102,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('wyber:mobile-preview-mode:v8')
-      if (saved === 'inapp' || saved === 'wyberaigo' || saved === 'appetize') setMode(saved)
+      if (saved === 'inapp' || saved === 'wyberaigo' || saved === 'appetize' || saved === 'apk' || saved === 'ipa') setMode(saved as PreviewMode)
     } catch { /* private mode */ }
   }, [])
 
