@@ -543,7 +543,11 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const turnAgentEventsRef = useRef<AgentEvent[]>([]);
   // Internal passes used this turn (fills, fixes) — the anti-runaway budget.
   const agentPassCountRef = useRef(0);
-  const MAX_INTERNAL_PASSES = 8;
+  // Budget for internal staging passes (scaffold + fill batches + wire).
+  // Typical app: 1 scaffold + 3 fill batches + 1 wire = 5 passes.
+  // Large app (20 files): 1 scaffold + 7 fill batches (3 files each) + 1 wire = 9 passes.
+  // Set to 12 to allow for retries and missing-file recovery passes without hitting the ceiling.
+  const MAX_INTERNAL_PASSES = 12;
   // Credits actually charged this turn across passes (fills report 0).
   const turnCreditsRef = useRef(0);
   const agentEvents = useAgentTurnStore(s => s.events);
