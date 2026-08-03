@@ -195,6 +195,40 @@ export function diffPlannedAgainstWritten(planned: PlannedFile[], writtenPaths: 
 // worse than the friendly-name fallback).
 const FORGE_PURPOSE_MAX_LEN = 60
 
+// Derive the identifier a router file references for a screen: the basename
+// minus extension, e.g. 'src/screens/DealsPipeline.tsx' -> 'DealsPipeline'.
+// Matches how the scaffold/fill passes name their default export.
+function screenIdentifier(path: string): string {
+  return path.split('/').pop()?.replace(/\.(tsx|jsx|ts|js)$/, '') ?? path
+}
+
+/**
+ * Every other stage in the staged pipeline verifies its own output against
+ * the real project files (see the fill-batch retry/report logic in
+ * ChatPanel.tsx) — the wire pass, which rewrites the router file to replace
+ * scaffold placeholders with the real screens, had no equivalent check.
+ * Confirmed live: the wire pass's closing chat line claimed the screens were
+ * wired in while App.tsx kept rendering the scaffold's placeholders — nothing
+ * caught the gap because nothing compared the claim to the file. This is a
+ * cheap heuristic, not an AST check: the router file must (a) have actually
+ * changed from its pre-wire content and (b) mention every screen's component
+ * identifier somewhere in its text (import or JSX usage). Good enough to
+ * catch "the model didn't touch it" or "wired some but dropped one" without
+ * false-positiving on harmless formatting differences a stricter diff would
+ * flag.
+ */
+export function wireLooksApplied(
+  before: string,
+  after: string | undefined,
+  screens: PlannedFile[]
+): { applied: boolean; missing: string[] } {
+  if (!after || after.trim() === before.trim()) {
+    return { applied: false, missing: screens.map((s) => s.path) }
+  }
+  const missing = screens.filter((s) => !after.includes(screenIdentifier(s.path))).map((s) => s.path)
+  return { applied: missing.length === 0, missing }
+}
+
 export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): string {
   if (phase === 'scaffold') return 'Laying the foundation — shell, theme, and navigation'
   // Prefer the most descriptive purpose in the batch, skipping any that read

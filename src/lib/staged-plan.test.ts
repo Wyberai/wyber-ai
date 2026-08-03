@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { forgeLine, buildStagedPlan, parsePlanManifest, diffPlannedAgainstWritten, type PlannedFile } from './staged-plan'
+import { forgeLine, buildStagedPlan, parsePlanManifest, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile } from './staged-plan'
 
 describe('forgeLine', () => {
   it('uses a normal purpose as-is', () => {
@@ -90,6 +90,48 @@ describe('diffPlannedAgainstWritten', () => {
 
   it('returns empty for an empty planned array', () => {
     expect(diffPlannedAgainstWritten([], ['App.tsx'])).toEqual([])
+  })
+})
+
+describe('wireLooksApplied', () => {
+  const screens: PlannedFile[] = [
+    { path: 'src/screens/DealsPipeline.tsx', purpose: 'kanban board' },
+    { path: 'src/screens/Forecast.tsx', purpose: 'forecast chart' },
+  ]
+
+  // Regression: confirmed live — a wire pass streamed a confident "Wired the
+  // real screens into the router" chat line while App.tsx came back
+  // byte-identical to its pre-wire (scaffold-placeholder) content. Nothing
+  // checked before this.
+  it('is not applied when the router content is unchanged', () => {
+    const before = 'function App() { return <ComingSoon /> }'
+    expect(wireLooksApplied(before, before, screens)).toEqual({
+      applied: false,
+      missing: ['src/screens/DealsPipeline.tsx', 'src/screens/Forecast.tsx'],
+    })
+  })
+
+  it('is not applied when the router content changed but the write never landed', () => {
+    const before = 'function App() { return <ComingSoon /> }'
+    expect(wireLooksApplied(before, undefined, screens)).toEqual({
+      applied: false,
+      missing: ['src/screens/DealsPipeline.tsx', 'src/screens/Forecast.tsx'],
+    })
+  })
+
+  it('is applied when the router imports and references every screen', () => {
+    const before = 'function App() { return <ComingSoon /> }'
+    const after = `import DealsPipeline from './screens/DealsPipeline'\nimport Forecast from './screens/Forecast'\nfunction App() { return <DealsPipeline /> }`
+    expect(wireLooksApplied(before, after, screens)).toEqual({ applied: true, missing: [] })
+  })
+
+  it('flags exactly the screen that never got referenced when only one was dropped', () => {
+    const before = 'function App() { return <ComingSoon /> }'
+    const after = `import DealsPipeline from './screens/DealsPipeline'\nfunction App() { return <DealsPipeline /> }`
+    expect(wireLooksApplied(before, after, screens)).toEqual({
+      applied: false,
+      missing: ['src/screens/Forecast.tsx'],
+    })
   })
 })
 
