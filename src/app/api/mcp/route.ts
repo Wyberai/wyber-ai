@@ -123,6 +123,7 @@ const handler = createMcpHandler(
       {
         project_id: z.string().describe('Project ID'),
         message: z.string().describe('What to build or change'),
+        project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).optional().describe('Type of project (default: auto-detect from framework)'),
       },
       // destructiveHint: a build can rewrite the project's existing files. Each
       // queued build also consumes WyberAi credits from the connected account.
@@ -147,6 +148,7 @@ const handler = createMcpHandler(
             project_id: args.project_id,
             user_id: userId,
             message: args.message,
+            project_type: args.project_type,
             status: 'queued',
           })
           .select('id')
@@ -527,7 +529,7 @@ const handler = createMcpHandler(
       },
     )
   },
-  { serverInfo: { name: 'wyber-ai', version: '2.3.1' } },
+  { serverInfo: { name: 'wyber-ai', version: '2.4.0' } },
   {
     // The handler matches the request path against this endpoint. Our route
     // lives at /api/mcp, so the full path must be configured here (basePath

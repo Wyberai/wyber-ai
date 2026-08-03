@@ -44,7 +44,7 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
     .update({ status: 'processing' })
     .eq('id', messageId)
     .eq('status', 'queued')
-    .select('id, project_id, user_id, message')
+    .select('id, project_id, user_id, message, project_type')
     .single()
 
   if (!claimed) return // already claimed by another tick, or not queued
@@ -68,7 +68,8 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
 
     const files = (project.files as Record<string, FileVal>) ?? {}
     const isFirstBuild = Object.keys(files).length === 0
-    const projectType = project.framework === 'react-native' ? 'mobile' : 'web'
+    // Use explicit project_type if provided, otherwise derive from framework
+    const projectType = claimed.project_type || (project.framework === 'react-native' ? 'mobile' : 'web-app')
     const fileContext = isFirstBuild ? '' : serializeFileContext(files)
 
     // ── Run the build via /api/generate (internal, cookie-less bypass) ──
