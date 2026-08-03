@@ -17,12 +17,6 @@ const BRAND = '#0EA5E9';
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-/* Generate consistent random usage count per app ID (not re-randomized on re-render) */
-function randomizeUsageCount(appId: string): number {
-  const hash = Array.from(appId).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return Math.floor((hash % 450) + 50); // 50-500
-}
-
 /* ————— shared atoms ————— */
 
 const IcoCheck = ({ color = '#22c55e' }: { color?: string }) => (
@@ -165,7 +159,7 @@ function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label
                   <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--brand-text)', lineHeight: 1.3 }}>{app.name}</div>
                   <div style={{ marginTop: 'auto', fontSize: 11, color: color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    {randomizeUsageCount(app.id).toLocaleString()}
+                    {app.use_count.toLocaleString()}
                   </div>
                 </div>
               </Link>
