@@ -897,10 +897,10 @@ function MobileBuildIdle({
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 260 }}>
-        {platform === 'apk'
+        {(platform === 'apk'
           ? [{ icon: '🤖', label: 'Real Android APK (compilable)' }, { icon: '🔗', label: 'GitHub authentication required' }, { icon: '📥', label: 'Download & install on device' }]
           : [{ icon: '🍏', label: 'Real iOS IPA (compilable)' }, { icon: '🔗', label: 'GitHub authentication required' }, { icon: '📦', label: 'Upload to TestFlight' }]
-        }.map(f => (
+        ).map(f => (
           <div key={f.icon} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 14 }}>{f.icon}</span>
             <span style={{ fontSize: 12, color: '#a1a1aa' }}>{f.label}</span>
