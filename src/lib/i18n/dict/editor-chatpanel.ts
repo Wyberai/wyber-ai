@@ -20,17 +20,17 @@ import type { Locale } from '../locales';
 export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = {
   en: {
     // Build progress ticker
-    planningAppMsg: 'Planning your app...',
-    settingUpDesignMsg: 'Setting up the design system...',
-    writingComponentsMsg: 'Writing components...',
-    wiringInteractionsMsg: 'Wiring up interactions...',
-    addingDataMsg: 'Adding realistic data...',
-    polishingUiMsg: 'Polishing the UI...',
-    almostThereMsg: 'Almost there...',
-    applyingChangesMsg: 'Applying your changes...',
-    updatingComponentsMsg: 'Updating components...',
-    refiningCodeMsg: 'Refining the code...',
-    almostDoneMsg: 'Almost done...',
+    planningAppMsg: '🧠 Planning the architecture — coffee not included',
+    settingUpDesignMsg: '🎨 Setting up design tokens — almost as fun as waiting',
+    writingComponentsMsg: '⚡ Writing components — fingers flying (no typos so far)',
+    wiringInteractionsMsg: '🔌 Wiring up interactions — magic is happening',
+    addingDataMsg: '📊 Adding realistic data — your app is getting smarter',
+    polishingUiMsg: '✨ Polishing the UI — can you see the shine yet?',
+    almostThereMsg: '🏁 Almost there! — be patient like a potato',
+    applyingChangesMsg: '🔄 Applying your changes — hold tight',
+    updatingComponentsMsg: '🎯 Updating components — precision mode engaged',
+    refiningCodeMsg: '🔬 Refining the code — making it pristine',
+    almostDoneMsg: '⏰ Almost done! — gravity is pulling us down',
 
     // Header toolbar
     undoTooltip: 'Undo last change',
