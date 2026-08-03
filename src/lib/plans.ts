@@ -20,6 +20,8 @@ export interface PlanFacts {
   color: string
   /** INR/UPI-only India entry plan — hidden on USD storefront. */
   inrOnly?: boolean
+  /** Hide this plan for India/INR users only. */
+  hideForINR?: boolean
 }
 
 export const PLAN_FACTS: Record<PlanFacts['id'], PlanFacts> = {
@@ -27,11 +29,12 @@ export const PLAN_FACTS: Record<PlanFacts['id'], PlanFacts> = {
     id: 'free', name: 'Free',
     monthlyPrice: null, annualPrice: null, monthlyPriceINR: null, annualPriceINR: null,
     credits: 50, color: '#52525b',
+    hideForINR: true, // India users must start with Spark (100 credits/month for ₹499)
   },
   spark: {
     id: 'spark', name: 'Spark', inrOnly: true,
     monthlyPrice: 6, annualPrice: 5, monthlyPriceINR: 499, annualPriceINR: 399,
-    credits: 50, color: '#f59e0b',
+    credits: 100, color: '#f59e0b', // Limited-time offer: 100 credits (was 50)
   },
   starter: {
     id: 'starter', name: 'Starter',

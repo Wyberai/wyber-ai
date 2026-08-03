@@ -582,6 +582,31 @@ For secure storage of tokens: import * as SecureStore from 'expo-secure-store'
   await SecureStore.setItemAsync('token', value)
   const token = await SecureStore.getItemAsync('token')
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+APK & IPA BUILD OPTIONS — PREMIUM FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PREVIEW: Every mobile app includes an in-browser React Native Web preview (instant, real-time, interactive — no waiting, no Expo Go). This is ALWAYS free and included.
+
+EXPO PREVIEW: Users can optionally open the app in Expo Go on a real device via QR code scan. This is ALWAYS free and included.
+
+REAL APK (ANDROID) — PREMIUM FEATURE (50 credits per build):
+When a user wants a real, installable Android APK file they can distribute or install directly on Android devices:
+- The platform uses Expo's EAS Build service (managed build, no local toolchain needed)
+- Generates a signed .apk file ready for direct install or Play Store submission
+- User can either: (1) download the .apk and distribute directly (install from "unknown sources" on Android), or (2) submit directly to Google Play Store
+- Instructions for direct install: "Settings → Security → Unknown sources (enable) → download the .apk → tap to install"
+- APK is platform-specific to Android; a separate build for iOS is required
+
+REAL IPA (IOS) — PREMIUM FEATURE (50 credits per build):
+When a user wants a real iOS app file for iPhone/iPad:
+- The platform uses EAS Build to generate a signed .ipa file
+- For direct installation, user needs Apple Testflight account or provisioning certificate
+- Instructions: "Download the .ipa, then use Xcode (free, Mac only) or Apple Configurator 2 to install on your device, or upload to Testflight for testing with others"
+- Instructions for App Store submission: "Upload the .ipa via App Store Connect, follow Apple's review guidelines (2-3 days typical), then publish"
+- IPA is platform-specific to iOS; a separate build for Android is required
+
+NEVER MENTION: "Download our mobile app", "Get it on the App Store", or any suggestion that a prebuilt WyberAi app exists. The user's BUILD IS the app.
+
 After ALL files, output one line starting with "Built:"
 `
 }
@@ -1568,10 +1593,40 @@ BAD: React.FC<Props>, React.Dispatch<React.SetStateAction<T>>, import type, Part
 ━━━ RULE #4 — STATE ARCHITECTURE ━━━
 ALL useState in App.tsx. Pass data as props, handlers as callbacks. Max 2 levels. No Context/Redux.
 
-━━━ RULE #5 — CHARTS (RECHARTS) ━━━
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-Always ResponsiveContainer. Theme the tooltip with tokens: contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--card-foreground))' }} and grid/axis stroke 'hsl(var(--border))'. Color series with hsl(var(--primary)) / hsl(var(--accent)).
-Data with realistic trends — include dips for realism, never flat lines.
+━━━ RULE #5 — DATA-DRIVEN DASHBOARDS & CHARTS (RECHARTS) ━━━
+CHART EMPHASIS: when building dashboards, analytics, or data tools — include MULTIPLE chart types and data visualizations:
+- Overview: summary cards with KPIs, trend indicators (↑/↓), period comparison ("+12.3% vs last month")
+- Time-series: LineChart for trends (revenue, users, engagement over time)
+- Comparison: BarChart for categories or product comparisons
+- Distribution: AreaChart for stacked data, PieChart for percentages
+- Details: Tables for raw data with sorting/filtering
+
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart } from 'recharts'
+Always ResponsiveContainer. Theme tooltip: contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--card-foreground))' }}, and grid/axis stroke 'hsl(var(--border))'. Color series with hsl(var(--primary)) / hsl(var(--accent)).
+Data: realistic trends with dips (never flat lines). Include month-over-month growth, seasonal patterns, anomalies. 6-12 months of data minimum for time-series.
+
+EXAMPLE STRUCTURE (analytics/reporting dashboard):
+KPI row: Revenue, Users, Conversion %, Churn Rate — with sparklines or trend badges
+Charts section:
+  - Top: Revenue LineChart (6-12 months) + MRR forecast
+  - Middle: Users BarChart by source (Organic, Referral, Paid) vs Users LineChart (concurrent)
+  - Bottom: Conversion funnel BarChart or Sankey + Retention cohort table
+
+━━━ RULE #5B — DATA CONNECTORS & INTEGRATIONS ━━━
+When the request implies bringing in external data (spreadsheets, APIs, databases, SaaS platforms), include an INTEGRATIONS PANEL:
+Pattern:
+- Integration list component showing connected services (Stripe, Google Analytics, Supabase, Airtable, etc.)
+- Each shows: service icon, connection status (✓ Connected / setup required), last synced, edit/disconnect buttons
+- For each connected service, display relevant data in the main dashboard (e.g., Stripe data → revenue chart, GA data → user trends)
+- If CSV/file import is implied, add file-upload drop zone with progress indicator
+- Modal form to add new integrations: select service → auth flow → scope selection → sync frequency
+
+EXAMPLE: SaaS Dashboard with Stripe + GA connectors
+- Top nav: "Integrations" button → modal with list of connected services + "Add integration" CTA
+- Dashboard uses data FROM those services: Stripe revenue in KPI row, GA users in chart, etc.
+- Settings page: "Connected Services" section with edit/disconnect UI
+
+This makes dashboards feel ALIVE with real data, not toy data.
 
 ━━━ RULE #6 — ICONS (LUCIDE-REACT) ━━━
 Always available. ALWAYS set size prop. Never use emoji as production icons.

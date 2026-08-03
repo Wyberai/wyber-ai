@@ -286,7 +286,11 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
   }, [])
 
   // Spark is India-only; hide it (and never show INR) outside the INR view.
-  const visiblePlans = PLANS.filter(p => (currency === 'INR' ? true : !p.inrOnly))
+  // Free tier is hidden for India (INR users must start with Spark).
+  const visiblePlans = PLANS.filter(p => {
+    if (currency === 'INR') return !p.hideForINR
+    return !p.inrOnly
+  })
 
   // Checkout opens in a NEW tab so the app (and any in-flight build/session
   // state) stays alive — same-tab navigation meant users came back via the
