@@ -1,5 +1,5 @@
 'use client'
-import { creditCost, tierAllowedForPlan, MODEL_META, type ActionType } from '@/lib/credits';
+import { creditCost, type ActionType } from '@/lib/credits';
 import { track } from '@/lib/track';
 import { useEditorStore } from '@/store/editor';
 import { useRef, useEffect, useState, useCallback, memo, useMemo, type ReactNode } from 'react';
@@ -388,7 +388,6 @@ type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
 // distinct choice a user would pick by name. 'gpt' is temporarily pulled
 // from the picker (not deleted — MODEL_IDS.gpt/openai-coding.ts stay intact)
 // pending a working OpenAI key; re-add it here once that's confirmed live.
-const PICKABLE_TIERS: ModelTier[] = ['fast', 'default', 'fable'];
 
 export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: Props) {
   const {
@@ -458,8 +457,6 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // large/complex builds to Opus) doing its job for anyone who never
   // touches the picker, instead of silently hard-locking every untouched
   // build to Sonnet regardless of how complex it turns out to be.
-  const [modelTier, setModelTier] = useState<ModelTier>('fast');
-  const [tierTouched, setTierTouched] = useState(false);
   // Plan gating for the model picker — fetched once (same endpoint TopBar's
   // balance refresh already hits after every turn) so locked tiers can be
   // disabled in the dropdown instead of round-tripping to the server only
@@ -1319,7 +1316,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // Only send a tier once the user has actually picked one — otherwise
           // the server's own complexity-aware auto-routing (resolveModelTier)
           // stays in control, same as before the picker existed.
-          framework, fileContext, history, knowledge: knowledgeStr, modelTier: tierTouched ? modelTier : undefined,
+          framework, fileContext, history, knowledge: knowledgeStr,
           userId: resolvedUserId, projectId: resolvedProjectId,
           projectType, selfHeal: isSelfHeal,
           // The server can't infer "first build" from fileContext — the
@@ -1956,7 +1953,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       setProgressSteps([]);
     }
     return succeeded;
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, modelTier, tierTouched, knowledge, addMessage, updateMessage, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
@@ -2021,17 +2018,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // discoverable after a 402 from the server mid-build. Reuses creditCost/
     // resolveBuildTier — the exact same functions the server charges from —
     // so this is never just an estimate that can drift from the real price.
-    // modelTier reflects the picker ONLY when the user actually touched it —
-    // resolveModelTier server-side (route.ts) auto-escalates an untouched
-    // pick to 'default' (Opus) for a HIGH-complexity build (its own docstring
-    // cites "a full marketplace with vendor accounts" as the textbook HIGH
-    // example), same signal as buildComplexity above. Quoting 'fast' pricing
-    // here regardless used to under-quote a HIGH build by more than 2× on
-    // the xl tier (60cr shown, 130cr actually charged — BUILD_TIER_COSTS) —
-    // the exact "quoted low, charged high" gap that started this whole
-    // credit-estimate feature. effectiveModelTier mirrors the server's own
-    // explicitClaudeTier / resolveModelTier branching exactly.
-    const effectiveModelTier: ModelTier = tierTouched ? modelTier : (buildComplexity === 'HIGH' ? 'default' : 'fast');
+    // Always Haiku (fast tier)
+    const effectiveModelTier: ModelTier = 'fast';
     const plannedFileCount = staged?.files.length ?? manifest.length;
     const estimateBuildTier = plannedFileCount > 0 ? resolveBuildTier({ totalPlannedFiles: plannedFileCount }) : undefined;
     if (estimateBuildTier) {
@@ -3348,49 +3336,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 lang={LOCALE_SPEECH_CODE[locale]}
                 onTranscript={txt => setInput(prev => prev ? prev + ' ' + txt : txt)}
               />
-              {/* Model choice: a real, user-selectable picker. Sonnet (fast) is
-                  the default SHOWN — but until the user actually changes it,
-                  nothing explicit is sent to the server (see tierTouched),
-                  so the server's own complexity-aware auto-routing still
-                  escalates a genuinely large build to Opus on its own.
-                  Opus/Fable/GPT are one click away, each gated by plan (a
-                  tier the current plan can't reach is disabled, not hidden —
-                  so upgrading is visible, not a secret). */}
-              <select
-                value={modelTier}
-                onChange={e => { setModelTier(e.target.value as ModelTier); setTierTouched(true); }}
-                title={t('modelPickerTooltip')}
-                style={{ fontSize:10, fontWeight:600, padding:'2px 6px', borderRadius:6, border:'1px solid var(--ide-border)', cursor:'pointer', fontFamily:'var(--font-sans)', background:'#0c0c12', color:'var(--ide-text)', outline:'none' }}
-              >
-                {PICKABLE_TIERS.map(tKey => {
-                  const meta = MODEL_META[tKey];
-                  const allowed = tierAllowedForPlan(tKey, userPlan);
-                  const tierCost = creditCost(isFirstBuild ? 'web-build' : 'small-edit', tKey);
-                  return (
-                    <option key={tKey} value={tKey} disabled={!allowed}>
-                      {meta.label} — {tierCost}cr{!allowed ? ` (${meta.minPlan}+)` : ''}
-                    </option>
-                  );
-                })}
-              </select>
-              {/* Pre-generation cost estimate — an exact number once the user has
-                  picked a tier; an honest LOW–HIGH range beforehand, since the
-                  actual tier is still up to the server's auto-complexity check. */}
+              {/* Cost estimate — Haiku only */}
               {(() => {
-                const estimateAction: ActionType = isFirstBuild ? 'web-build' : 'small-edit';
-                if (tierTouched) {
-                  const est = creditCost(estimateAction, modelTier);
-                  return (
-                    <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
-                      ~{est}cr
-                    </span>
-                  );
-                }
-                const estLow = creditCost(estimateAction, 'fast');
-                const estHigh = creditCost(estimateAction, 'default');
+                const est = creditCost(isFirstBuild ? 'web-build' : 'small-edit', 'fast');
                 return (
                   <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
-                    ~{estLow === estHigh ? estLow : `${estLow}–${estHigh}`}cr
+                    ~{est}cr
                   </span>
                 );
               })()}
