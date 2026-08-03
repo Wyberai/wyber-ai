@@ -87,13 +87,17 @@ export function MobilePreviewPanel({ projectId }: Props) {
   const appetizePollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // ── APK/IPA build state ──────────────────────────────────────────────
+  const [apkBuildId, setApkBuildId] = useState<string | null>(null)
   const [apkStatus, setApkStatus] = useState<BuildStatus>('idle')
   const [apkUrl, setApkUrl] = useState<string | null>(null)
   const [apkError, setApkError] = useState<string | null>(null)
+  const [ipaBuildId, setIpaBuildId] = useState<string | null>(null)
   const [ipaStatus, setIpaStatus] = useState<BuildStatus>('idle')
   const [ipaUrl, setIpaUrl] = useState<string | null>(null)
   const [ipaError, setIpaError] = useState<string | null>(null)
   const [buildLoading, setBuildLoading] = useState(false)
+  const apkPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const ipaPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<string>('')
@@ -146,6 +150,132 @@ export function MobilePreviewPanel({ projectId }: Props) {
     }
     return stopAppetizePoll
   }, [mode, appetizeStatus, fetchAppetizeStatus, stopAppetizePoll])
+
+  // ── APK/IPA build polling ────────────────────────────────────────────────
+
+  const stopApkPoll = useCallback(() => {
+    if (apkPollRef.current) { clearInterval(apkPollRef.current); apkPollRef.current = null }
+  }, [])
+
+  const stopIpaPoll = useCallback(() => {
+    if (ipaPollRef.current) { clearInterval(ipaPollRef.current); ipaPollRef.current = null }
+  }, [])
+
+  const fetchBuildStatus = useCallback(async (buildId: string, platform: 'apk' | 'ipa') => {
+    if (!buildId) return
+    try {
+      const r = await fetch(`/api/mobile/status?buildId=${buildId}&platform=${platform}`)
+      if (!r.ok) return
+      const d = await r.json() as { status: BuildStatus; buildUrl?: string; errorMessage?: string }
+      if (platform === 'apk') {
+        setApkStatus(d.status)
+        if (d.buildUrl) setApkUrl(d.buildUrl)
+        if (d.errorMessage) setApkError(d.errorMessage)
+        if (d.status === 'ready' || d.status === 'error') stopApkPoll()
+      } else {
+        setIpaStatus(d.status)
+        if (d.buildUrl) setIpaUrl(d.buildUrl)
+        if (d.errorMessage) setIpaError(d.errorMessage)
+        if (d.status === 'ready' || d.status === 'error') stopIpaPoll()
+      }
+    } catch { /* ignore network blips */ }
+  }, [stopApkPoll, stopIpaPoll])
+
+  // Polling setup for APK
+  useEffect(() => {
+    if (mode !== 'apk') { stopApkPoll(); return }
+    if (apkStatus === 'queued' || apkStatus === 'building') {
+      if (apkBuildId && !apkPollRef.current) {
+        apkPollRef.current = setInterval(() => fetchBuildStatus(apkBuildId, 'apk'), POLL_INTERVAL_MS)
+      }
+    } else {
+      stopApkPoll()
+    }
+    return stopApkPoll
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, apkStatus, apkBuildId])
+
+  // Polling setup for IPA
+  useEffect(() => {
+    if (mode !== 'ipa') { stopIpaPoll(); return }
+    if (ipaStatus === 'queued' || ipaStatus === 'building') {
+      if (ipaBuildId && !ipaPollRef.current) {
+        ipaPollRef.current = setInterval(() => fetchBuildStatus(ipaBuildId, 'ipa'), POLL_INTERVAL_MS)
+      }
+    } else {
+      stopIpaPoll()
+    }
+    return stopIpaPoll
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, ipaStatus, ipaBuildId])
+
+  // ── APK/IPA build triggers ───────────────────────────────────────────────
+
+  const triggerApkBuild = async () => {
+    if (!projectId) return
+    if (credits < APK_BUILD_COST) {
+      setApkError(`Insufficient credits: need ${APK_BUILD_COST}, have ${credits}`)
+      return
+    }
+    setBuildLoading(true)
+    setApkError(null)
+    try {
+      const r = await fetch('/api/mobile/build-apk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+      })
+      const d = await r.json() as { error?: string; buildId?: string; status?: string }
+      if (!r.ok) {
+        const err = d.error || 'Failed to start build'
+        setApkError(err)
+        if (r.status === 402) setCredits(credits) // Trigger refresh
+        return
+      }
+      if (d.buildId) {
+        setApkBuildId(d.buildId)
+        setApkStatus(d.status as BuildStatus ?? 'queued')
+        setCredits(credits - APK_BUILD_COST)
+      }
+    } catch (e) {
+      setApkError(String(e))
+    } finally {
+      setBuildLoading(false)
+    }
+  }
+
+  const triggerIpaBuild = async () => {
+    if (!projectId) return
+    if (credits < IPA_BUILD_COST) {
+      setIpaError(`Insufficient credits: need ${IPA_BUILD_COST}, have ${credits}`)
+      return
+    }
+    setBuildLoading(true)
+    setIpaError(null)
+    try {
+      const r = await fetch('/api/mobile/build-ipa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+      })
+      const d = await r.json() as { error?: string; buildId?: string; status?: string }
+      if (!r.ok) {
+        const err = d.error || 'Failed to start build'
+        setIpaError(err)
+        if (r.status === 402) setCredits(credits) // Trigger refresh
+        return
+      }
+      if (d.buildId) {
+        setIpaBuildId(d.buildId)
+        setIpaStatus(d.status as BuildStatus ?? 'queued')
+        setCredits(credits - IPA_BUILD_COST)
+      }
+    } catch (e) {
+      setIpaError(String(e))
+    } finally {
+      setBuildLoading(false)
+    }
+  }
 
   // ── File helpers ──────────────────────────────────────────────────────────
 
@@ -289,6 +419,8 @@ export function MobilePreviewPanel({ projectId }: Props) {
             { v: 'inapp',      label: 'In-App' },
             { v: 'wyberaigo',  label: '📱 WyberAi Go' },
             { v: 'appetize',   label: '✦ Cloud Device' },
+            { v: 'apk',        label: '🔨 APK Build', badge: '50 cr' },
+            { v: 'ipa',        label: '🍎 IPA Build', badge: '50 cr' },
           ]}
         />
 
@@ -391,6 +523,50 @@ export function MobilePreviewPanel({ projectId }: Props) {
               <AppetizeError error={appetizeError} onRetry={triggerAppetizeBuild} loading={appetizeTriggerLoading} />
             ) : (
               <AppetizeIdle onBuild={triggerAppetizeBuild} loading={appetizeTriggerLoading} hasProject={!!projectId} />
+            )}
+          </div>
+        )}
+
+        {/* ── APK Build ── */}
+        {!isGenerating && mode === 'apk' && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
+            {apkStatus === 'ready' && apkUrl ? (
+              <MobileBuildReady platform="apk" buildUrl={apkUrl} />
+            ) : apkStatus === 'queued' || apkStatus === 'building' ? (
+              <MobileBuildProgress status={apkStatus} />
+            ) : apkStatus === 'error' ? (
+              <MobileBuildError error={apkError} onRetry={triggerApkBuild} loading={buildLoading} />
+            ) : (
+              <MobileBuildIdle
+                platform="apk"
+                cost={APK_BUILD_COST}
+                onBuild={triggerApkBuild}
+                loading={buildLoading}
+                hasProject={!!projectId}
+                hasCredits={credits >= APK_BUILD_COST}
+              />
+            )}
+          </div>
+        )}
+
+        {/* ── IPA Build ── */}
+        {!isGenerating && mode === 'ipa' && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#09090b' }}>
+            {ipaStatus === 'ready' && ipaUrl ? (
+              <MobileBuildReady platform="ipa" buildUrl={ipaUrl} />
+            ) : ipaStatus === 'queued' || ipaStatus === 'building' ? (
+              <MobileBuildProgress status={ipaStatus} />
+            ) : ipaStatus === 'error' ? (
+              <MobileBuildError error={ipaError} onRetry={triggerIpaBuild} loading={buildLoading} />
+            ) : (
+              <MobileBuildIdle
+                platform="ipa"
+                cost={IPA_BUILD_COST}
+                onBuild={triggerIpaBuild}
+                loading={buildLoading}
+                hasProject={!!projectId}
+                hasCredits={credits >= IPA_BUILD_COST}
+              />
             )}
           </div>
         )}
@@ -670,21 +846,239 @@ function AppetizeError({ error, onRetry, loading }: { error: string | null; onRe
   )
 }
 
+// ── Mobile build sub-components ────────────────────────────────────────────
+
+function MobileBuildIdle({
+  platform, cost, onBuild, loading, hasProject, hasCredits,
+}: {
+  platform: 'apk' | 'ipa'
+  cost: number
+  onBuild: () => void
+  loading: boolean
+  hasProject: boolean
+  hasCredits: boolean
+}) {
+  const platformName = platform === 'apk' ? 'Android APK' : 'iOS IPA'
+  const platformIcon = platform === 'apk' ? '🔨' : '🍎'
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '24px 28px' }}>
+      <div style={{ position: 'relative' }}>
+        <svg width="72" height="72" viewBox="0 0 72 72" fill="none">
+          <rect x="18" y="5" width="36" height="62" rx="7" stroke="rgba(14,165,233,0.3)" strokeWidth="1.5" fill="rgba(14,165,233,0.04)" />
+          <rect x="29" y="10" width="14" height="3" rx="1.5" fill="rgba(14,165,233,0.4)" />
+          <circle cx="36" cy="63" r="3" fill="rgba(14,165,233,0.3)" />
+          <rect x="22" y="18" width="28" height="36" rx="3" fill="rgba(14,165,233,0.07)" stroke="rgba(14,165,233,0.18)" strokeWidth="0.8" />
+        </svg>
+        <div style={{ position: 'absolute', top: -4, right: -8, background: 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)', borderRadius: 8, padding: '2px 7px', fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: '0.06em' }}>PREMIUM</div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ color: '#f4f4f5', fontSize: 18, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>{platformIcon} {platformName} Build</div>
+        <div style={{ color: '#71717a', fontSize: 12, lineHeight: 1.7, maxWidth: 240 }}>
+          {platform === 'apk'
+            ? 'Compile to a real Android APK. Sign in with your GitHub account to start building.'
+            : 'Compile to a real iOS IPA. Requires TestFlight or Apple Developer account.'}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 260 }}>
+        {platform === 'apk'
+          ? [{ icon: '🤖', label: 'Real Android APK (compilable)' }, { icon: '🔗', label: 'GitHub authentication required' }, { icon: '📥', label: 'Download & install on device' }]
+          : [{ icon: '🍏', label: 'Real iOS IPA (compilable)' }, { icon: '🔗', label: 'GitHub authentication required' }, { icon: '📦', label: 'Upload to TestFlight' }]
+        }.map(f => (
+          <div key={f.icon} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 14 }}>{f.icon}</span>
+            <span style={{ fontSize: 12, color: '#a1a1aa' }}>{f.label}</span>
+          </div>
+        ))}
+      </div>
+      {hasProject ? (
+        <>
+          <button
+            onClick={onBuild}
+            disabled={loading || !hasCredits}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              width: '100%',
+              maxWidth: 260,
+              padding: '14px 20px',
+              borderRadius: 14,
+              border: 'none',
+              background: loading || !hasCredits ? '#1c1c2e' : 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)',
+              color: loading || !hasCredits ? '#52525b' : '#fff',
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: loading || !hasCredits ? 'not-allowed' : 'pointer',
+              letterSpacing: '-0.02em',
+              boxShadow: loading || !hasCredits ? 'none' : '0 8px 28px rgba(14,165,233,0.3)',
+            }}
+          >
+            {loading ? (
+              <>
+                <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                Starting build…
+              </>
+            ) : (
+              `${platformIcon} Build ${platformName} (${cost} credits)`
+            )}
+          </button>
+          {!hasCredits && <div style={{ color: '#fca5a5', fontSize: 11, textAlign: 'center' }}>Insufficient credits (need {cost})</div>}
+        </>
+      ) : (
+        <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center' }}>Save your project first to build</div>
+      )}
+      <div style={{ color: '#3f3f46', fontSize: 10, textAlign: 'center' }}>~5–10 min build time · Uses Expo EAS</div>
+    </div>
+  )
+}
+
+function MobileBuildProgress({ status }: { status: 'queued' | 'building' }) {
+  const steps = [
+    { id: 'pack', label: 'Packaging source code', done: status === 'building' },
+    { id: 'compile', label: 'Compiling native code', done: false },
+    { id: 'up', label: 'Finalizing build', done: false },
+  ]
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: 32 }}>
+      <div style={{ position: 'relative', width: 64, height: 64 }}>
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+          <rect x="16" y="4" width="32" height="56" rx="6" stroke="rgba(14,165,233,0.4)" strokeWidth="1.5" fill="rgba(14,165,233,0.06)" />
+          <rect x="26" y="9" width="12" height="2.5" rx="1.25" fill="rgba(14,165,233,0.5)" />
+          <circle cx="32" cy="55" r="2.5" fill="rgba(14,165,233,0.4)" />
+          <rect x="20" y="16" width="24" height="30" rx="2" fill="rgba(14,165,233,0.08)" stroke="rgba(14,165,233,0.2)" strokeWidth="0.8" />
+        </svg>
+        <div style={{ position: 'absolute', bottom: -4, right: -4, width: 22, height: 22, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ color: '#e4e4e7', fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em', marginBottom: 8 }}>
+          {status === 'queued' ? 'Build queued' : 'Compiling your app…'}
+        </div>
+        <div style={{ color: '#52525b', fontSize: 12, lineHeight: 1.6, maxWidth: 240 }}>
+          Building a native executable. This takes about 5–10 minutes.
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%', maxWidth: 260 }}>
+        {steps.map(s => (
+          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+              background: s.done ? 'rgba(34,197,94,0.15)' : 'rgba(14,165,233,0.1)',
+              border: `1px solid ${s.done ? 'rgba(34,197,94,0.4)' : 'rgba(14,165,233,0.25)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {s.done && <span style={{ fontSize: 10, color: '#22c55e' }}>✓</span>}
+            </div>
+            <span style={{ fontSize: 12, color: s.done ? '#86efac' : '#52525b' }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MobileBuildReady({ platform, buildUrl }: { platform: 'apk' | 'ipa'; buildUrl: string }) {
+  const platformName = platform === 'apk' ? 'Android APK' : 'iOS IPA'
+  const instructions = platform === 'apk'
+    ? ['Connect your Android device via USB or enable Developer Mode', 'Download the file, transfer to device', 'Install & allow installation from unknown sources']
+    : ['Download the file to your Mac', 'Open in Xcode or Apple Configurator', 'Deploy to your device or simulator']
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '24px 28px', overflowY: 'auto' }}>
+      <div style={{ width: 360, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+        <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', borderRadius: 20, padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
+          <span style={{ color: '#86efac', fontSize: 12, fontWeight: 700, letterSpacing: '0.04em' }}>BUILD COMPLETE</span>
+        </div>
+
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ color: '#f4f4f5', fontSize: 20, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>Ready to download</div>
+          <div style={{ color: '#71717a', fontSize: 13, lineHeight: 1.6 }}>Your {platformName} is compiled and ready for installation.</div>
+        </div>
+
+        <a
+          href={buildUrl}
+          download
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            textDecoration: 'none',
+            background: 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)',
+            borderRadius: 12,
+            padding: '14px 24px',
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 700,
+            boxShadow: '0 8px 24px rgba(14,165,233,0.3)',
+            cursor: 'pointer',
+          }}
+        >
+          <span>⬇️</span>
+          Download {platformName}
+        </a>
+
+        <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.07)', marginTop: 8 }} />
+
+        <div style={{ width: '100%' }}>
+          <div style={{ color: '#a1a1aa', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>INSTALLATION STEPS</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {instructions.map((step, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                  <span style={{ color: '#0EA5E9', fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
+                </div>
+                <span style={{ color: '#a1a1aa', fontSize: 12, lineHeight: 1.5 }}>{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MobileBuildError({ error, onRetry, loading }: { error: string | null; onRetry: () => void; loading: boolean }) {
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
+      <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✕</div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ color: '#fca5a5', fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Build failed</div>
+        {error && <div style={{ color: '#71717a', fontSize: 11, fontFamily: 'monospace', maxWidth: 260, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{error}</div>}
+      </div>
+      <button onClick={onRetry} disabled={loading} style={{ background: '#0EA5E9', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}>
+        {loading ? 'Retrying…' : 'Retry Build'}
+      </button>
+    </div>
+  )
+}
+
 // ── Shared sub-components ────────────────────────────────────────────────────
 
 function Segmented({ value, onChange, options }: {
-  value: string; onChange: (v: string) => void; options: { v: string; label: string }[]
+  value: string; onChange: (v: string) => void; options: { v: string; label: string; badge?: string }[]
 }) {
   return (
-    <div style={{ display: 'inline-flex', background: '#0c0c12', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: 2, gap: 2 }}>
+    <div style={{ display: 'inline-flex', background: '#0c0c12', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: 2, gap: 2, flexWrap: 'wrap' }}>
       {options.map(o => (
-        <button key={o.v} onClick={() => onChange(o.v)} style={{
-          fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 4, border: 'none', cursor: 'pointer',
-          background: value === o.v
-            ? (o.v === 'appetize' ? 'linear-gradient(135deg, #7c3aed 0%, #0EA5E9 100%)' : '#0EA5E9')
-            : 'transparent',
-          color: value === o.v ? '#fff' : '#71717a',
-        }}>{o.label}</button>
+        <div key={o.v} style={{ position: 'relative' }}>
+          <button onClick={() => onChange(o.v)} style={{
+            fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 4, border: 'none', cursor: 'pointer',
+            background: value === o.v
+              ? (o.v === 'appetize' ? 'linear-gradient(135deg, #7c3aed 0%, #0EA5E9 100%)' : '#0EA5E9')
+              : 'transparent',
+            color: value === o.v ? '#fff' : '#71717a',
+          }}>{o.label}</button>
+          {o.badge && (
+            <div style={{
+              position: 'absolute', top: -6, right: -6, background: '#f59e0b', color: '#000', fontSize: 8, fontWeight: 700,
+              borderRadius: 10, padding: '2px 5px', letterSpacing: '0.05em', whiteSpace: 'nowrap',
+            }}>
+              {o.badge}
+            </div>
+          )}
+        </div>
       ))}
     </div>
   )
