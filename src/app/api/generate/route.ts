@@ -3396,7 +3396,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         const sPaths = stageFiles as string[]
         const sPurposes = stagePurposes as string[]
         const sItems = sPaths.map((p, i) => sPurposes[i] ? `- ${p}: ${sPurposes[i]}` : `- ${p}`).join('\n')
-        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these shell files this pass:\n${sItems}\nBuild the layout, navigation, theme and routing so the app renders a working skeleton. For feature screens not in this list, render a lightweight placeholder ("Coming up next...") — they will be filled in on their own shortly. Output each file as a complete <file> block.${stagedAutomationNote}`)
+        perRequestParts.push(`\n\n=== SCAFFOLD PASS ===\nBuild ONLY these shell files this pass:\n${sItems}\nBuild the layout, navigation, theme and routing so the app renders a working skeleton. For any screens NOT listed above that should appear in the router, create placeholder components using this exact pattern:\n  - Component name: [ScreenName]Placeholder (e.g., OverviewPlaceholder, PipelinePlaceholder)\n  - Render with: <div style={{padding:24}}>Coming up next...</div>\nThese placeholders are temporary and will be automatically replaced with real screens later. Output each file as a complete <file> block.${stagedAutomationNote}`)
       } else if (stage === 'fill') {
         const paths = stageFiles as string[]
         const purposes = stagePurposes as string[]
@@ -3661,9 +3661,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
 
         readable = new ReadableStream({
           async start(controller) {
-            // Sonnet (fast tier) gets 3 iterations — enough for simple builds and edits,
-            // prevents runaway loops at $3/M output. Opus keeps 6 for complex multi-file work.
-            const MAX_TOOL_ITERATIONS = resolvedTier === 'fast' ? 3 : 6
+            // Iteration budget: balance completeness vs latency.
+            // New builds: Sonnet gets 3, Opus gets 6 (needs exploration).
+            // Simple edits (small prompt, <5 files touched): Sonnet gets 1-2 (30-90s max).
+            // Complex edits (restyle, multi-file): Sonnet gets 3 (up to 2.5 mins).
+            const isSimpleEdit = !isNewBuild && !selfHeal && prompt.length < 150 && (fileContext?.length ?? 0) < 50000;
+            const MAX_TOOL_ITERATIONS = isSimpleEdit && resolvedTier === 'fast' ? 1 : (resolvedTier === 'fast' ? 3 : 6)
             emitAgent(controller, { agent: 'coder', status: 'start', detail: isNewBuild ? 'building your app' : 'making the change' })
             emitAgent(controller, { agent: 'security', status: 'start', detail: 'reviewing every file as it lands' })
             // Blocking findings per path, pending hand-back as failed tool_results.
