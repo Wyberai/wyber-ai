@@ -11,7 +11,7 @@
 | **Wire Verification** | ✅ | ✅ | ✅ | ✅ | Applies to all builds (ChatPanel.tsx wire stage) |
 | **Bigger Apps Support** | ✅ | ✅ | ✅ | ✅ | Pass budget increase (MAX_INTERNAL_PASSES 8→12) works for all frameworks |
 | **Edit Speed** | ✅ | ✅ | ✅ | ✅ | Simple edit detection in generate/route.ts (prompt + context limits) |
-| **Deploy Speed** | ✅ | ❌ | ❌ | ⚠️ | Vercel-specific optimization; mobile/SaaS use different infrastructure |
+| **Deploy Speed** | ✅ | ❌ | ✅ | ✅ | Vercel-specific optimization; all React-Vite projects (web/website/SaaS) deploy to Vercel |
 | **Publish Speed** | ✅ | ✅ | ✅ | ✅ | Framework-agnostic security scan caching (publish/route.ts) |
 
 ---
@@ -73,7 +73,7 @@ const MAX_TOOL_ITERATIONS = isSimpleEdit && resolvedTier === 'fast' ? 1 : (resol
 
 ---
 
-### ✅ Deploy Speed Optimization (Web Only)
+### ✅ Deploy Speed Optimization (Web, Website, SaaS)
 **File:** `src/app/api/deploy/route.ts:133-250`
 
 Caches RLS scan results within 1-hour window:
@@ -87,29 +87,29 @@ const { data: lastDeploy } = await supabase
 ```
 
 **Framework Support:**
-- ✅ React/Vite (primary)
+- ✅ React/Vite (web projects)
+- ✅ Website projects (React/Vite with marketing-focused system prompt)
+- ✅ SaaS projects (React/Vite frontend with full-stack system prompt)
 - ✅ React (JSX/TS)
 - ✅ Vue (Vite)
 - ❌ Mobile (Expo/React Native) — uses GitHub Actions for `.aab` builds
-- ❌ SaaS (custom backends) — typically self-hosted or Railway
-- ⚠️ Website (depends) — may use Vercel, may use custom hosting
+- ❌ Agent (code-generation only, no deployment)
 
-**Why:** The deploy endpoint is **hardcoded for Vercel**:
+**Why:** The deploy endpoint works for any **React-Vite project**:
 - Calls Vercel API (`api.vercel.com`) to create projects and trigger builds
-- Uses `getBuildScaffold(framework)` which only knows about web frameworks
+- Scaffolds React/Vite/Vue build configs
 - Requires `VERCEL_TOKEN` environment variable
 - Generates `vercel.json` with CORS headers for iframe embedding
 
-**Mobile Deployment Path:**
-Mobile apps build `.aab` files via GitHub Actions in the `wyberai-mobile` repository, not via the `/api/deploy` endpoint. The build pipeline is entirely separate.
+**Key fact:** Website and SaaS projects are generated as React-Vite apps (same framework as "web" projects). The only difference is the system prompt guides what kind of app to build (marketing site vs full SaaS with auth). The deployed artifact is still a React-Vite bundle on Vercel.
 
-**SaaS Deployment Path:**
-SaaS projects typically deploy via custom Node/Python backends (Railway, Heroku, self-hosted), not Vercel. The `/api/deploy` endpoint is not suitable for these.
+**Mobile Deployment Path:**
+Mobile apps build `.aab` files via GitHub Actions in the `wyberai-mobile` repository, not via `/api/deploy`. The build pipeline is entirely separate (React Native, Expo build process).
 
 **Impact:**
 - **First deploy:** 15-45s (RLS scan runs async after response)
 - **Subsequent deploys (within 1 hour):** <10s (cached scan result used)
-- **Mobile/SaaS:** N/A (different infrastructure)
+- **Mobile/Agent:** N/A (different deployment methods)
 
 ---
 
@@ -175,14 +175,24 @@ Publish:    60-90 sec (cached security scans)
 TOTAL:      2-3 min per iteration (build + publish only)
 ```
 
-### SaaS Project (Node Backend + Custom Hosting)
+### SaaS Project (React-Vite Frontend + Vercel)
 ```
 Build:      4-5 min (wire verification, larger batches)
 Edit:       60 sec (simple edit optimization)
-Deploy:     N/A (self-hosted or custom CI/CD)
+Deploy:     <10 sec (cached RLS scan)
 Publish:    60-90 sec (cached security scans)
 ──────────────────────
-TOTAL:      2-3 min per iteration (build + publish only)
+TOTAL:      2-3 min per iteration (after first hour)
+```
+
+### Website Project (React-Vite Static Site + Vercel)
+```
+Build:      4-5 min (wire verification, larger batches)
+Edit:       60 sec (simple edit optimization)
+Deploy:     <10 sec (cached RLS scan)
+Publish:    60-90 sec (cached security scans)
+──────────────────────
+TOTAL:      2-3 min per iteration (after first hour)
 ```
 
 ---
@@ -194,10 +204,10 @@ TOTAL:      2-3 min per iteration (build + publish only)
 | Wire Verification | **All** | Framework-agnostic build stage |
 | Bigger Apps | **All** | Pass budget is app-level, not platform-specific |
 | Edit Speed | **All** | Based on prompt + context size, not deployment target |
-| Deploy Speed | **Web only** | Vercel API integration (hardcoded framework support) |
+| Deploy Speed | **Web, Website, SaaS** | All use React-Vite; deploy to Vercel via `/api/deploy` |
 | Publish Speed | **All** | Build server is the bottleneck; scans are framework-agnostic |
 
-**Bottom line:** Users on mobile/SaaS projects get 4 out of 5 optimizations. The one missing (deploy caching) is specific to Vercel and not applicable to other deployment infrastructure.
+**Bottom line:** All project types except mobile get all 5 optimizations. Mobile projects build via GitHub Actions (`.aab` files) instead of Vercel, so they skip the deploy caching optimization but get the other 4.
 
 ---
 
