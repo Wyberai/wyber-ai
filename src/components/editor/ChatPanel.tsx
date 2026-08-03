@@ -11,7 +11,8 @@ import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
 import { assessDesignFreshness } from '@/lib/design-quality-check';
 import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/agents/events';
-import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
+// Disable agent team completely for simple per-file generation
+const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, type PlannedFile } from '@/lib/staged-plan';
