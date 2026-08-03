@@ -2238,14 +2238,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
               status: 'progress',
               detail: `Wired ${screenNames.length} screens into the router`,
             });
-          } else if (verification.missing.length > 0) {
-            // Screens were built but not wired into the router. Report honestly.
-            // The summary below will only list screens actually in the file store,
-            // so it won't claim these were rendered.
+          } else {
+            // Log diagnostics for debugging
+            console.log('[wire-pass] Diagnostics:', {
+              swappedCount: wireResult.swappedCount,
+              screenCount: screenNames.length,
+              missingScreens: verification.missing,
+              routerPath,
+              hasPlaceholders: routerBefore?.includes('Placeholder'),
+            });
             pushAgentEvents({
               agent: 'coder',
               status: 'progress',
-              detail: `Built ${screenNames.length} screens, but wiring incomplete — check the preview for "Coming up next..."`,
+              detail: wireResult.swappedCount === 0
+                ? `Built ${screenNames.length} screens, but router has no placeholders to swap`
+                : `Built ${screenNames.length} screens, but wiring incomplete — missing: ${verification.missing.map(m => m.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '')).join(', ')}`,
             });
           }
         }
