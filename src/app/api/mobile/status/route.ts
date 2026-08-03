@@ -94,8 +94,13 @@ export async function GET(req: NextRequest) {
 
       // Map EAS statuses to our statuses
       if (easBuild.status === 'FINISHED') {
-        newStatus = 'ready'
-        buildUrl = easBuild.artifacts?.buildUrl || null
+        if (easBuild.artifacts?.buildUrl) {
+          newStatus = 'ready'
+          buildUrl = easBuild.artifacts.buildUrl
+        } else {
+          newStatus = 'error'
+          errorMessage = 'Build succeeded but no download URL returned from EAS'
+        }
       } else if (easBuild.status === 'ERRORED' || easBuild.status === 'CANCELED') {
         newStatus = 'error'
         errorMessage = `Build ${easBuild.status}`

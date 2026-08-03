@@ -229,7 +229,15 @@ export function MobilePreviewPanel({ projectId }: Props) {
       if (!r.ok) {
         const err = d.error || 'Failed to start build'
         setApkError(err)
-        if (r.status === 402) setCredits(credits) // Trigger refresh
+        if (r.status === 402) {
+          const { createClient } = await import('@/lib/supabase/client')
+          const supabase = createClient()
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase.from('profiles').select('credits').eq('id', user.id).single()
+            if (typeof data?.credits === 'number') setCredits(data.credits)
+          }
+        }
         return
       }
       if (d.buildId) {
@@ -262,7 +270,15 @@ export function MobilePreviewPanel({ projectId }: Props) {
       if (!r.ok) {
         const err = d.error || 'Failed to start build'
         setIpaError(err)
-        if (r.status === 402) setCredits(credits) // Trigger refresh
+        if (r.status === 402) {
+          const { createClient } = await import('@/lib/supabase/client')
+          const supabase = createClient()
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data } = await supabase.from('profiles').select('credits').eq('id', user.id).single()
+            if (typeof data?.credits === 'number') setCredits(data.credits)
+          }
+        }
         return
       }
       if (d.buildId) {
