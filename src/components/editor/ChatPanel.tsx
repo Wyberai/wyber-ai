@@ -14,8 +14,6 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 import { AGENT_TEAM_ENABLED } from '@/lib/agents/roster';
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, forgeLine, diffPlannedAgainstWritten, pickRouterFile, wireLooksApplied, EDIT_COMPLETENESS_MIN_FILES, type PlannedFile } from '@/lib/staged-plan';
-import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
