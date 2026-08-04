@@ -44,10 +44,10 @@ export type ActionType =
  * strings independently and are a separate, out-of-scope cleanup.
  */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-haiku-4-5-20251001',
-  default: 'claude-haiku-4-5-20251001',
-  premium: 'claude-haiku-4-5-20251001',
-  fable:   'claude-haiku-4-5-20251001',
+  fast:    'claude-sonnet-5',
+  default: 'claude-opus-5',
+  premium: 'claude-opus-5',
+  fable:   'claude-fable-5',
   // GPT-5.6 Sol — OpenAI's current flagship for complex reasoning/coding with
   // Functions tool support, confirmed against OpenAI's live model catalog
   // (developers.openai.com/api/docs/models, checked 2026-07-26). Still an
