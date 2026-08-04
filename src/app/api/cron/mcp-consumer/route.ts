@@ -3,9 +3,9 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { processQueuedMessage } from '@/lib/mcp/build-runner'
 
 // Each tick runs real builds (via /api/generate) end-to-end, so give it the
-// same ceiling as the publish/preview builds. We process a small batch
-// sequentially to stay inside that budget.
-export const maxDuration = 300
+// same ceiling as the publish/preview builds. Builds take 8-10 minutes +
+// Vercel overhead, so raise from 300s. We process a small batch sequentially.
+export const maxDuration = 900
 
 // How many queued builds to drain per minute-tick. Kept low because each build
 // is a full generation; the queue drains over successive ticks.
