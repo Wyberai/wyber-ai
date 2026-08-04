@@ -505,7 +505,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>{t.bannerLabel}</span>
         <span style={{ color: 'var(--brand-text-dim)' }}>
           {inr && locale === 'en'
-            ? '🇮🇳 Independence Day special: 50% off all plans with code WYBER50 through August 15'
+            ? '🌏 Independence Day special: 50% off all plans with code WYBER50 through August 15'
             : t.bannerText}
         </span>
         <span style={{ color: 'var(--brand-accent-hot)', fontSize: 12 }}>{t.bannerCta}</span>
