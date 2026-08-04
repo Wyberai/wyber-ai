@@ -133,14 +133,31 @@ const handler = createMcpHandler(
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
 
-        // Verify ownership before queueing so a bad project_id fails fast.
+        // Verify ownership + get user credits before queueing
         const { data: project } = await db
           .from('projects')
-          .select('id')
+          .select('id, files')
           .eq('id', args.project_id)
           .eq('user_id', userId)
           .single()
         if (!project) return errorResult('Project not found')
+
+        const { data: profile } = await db
+          .from('profiles')
+          .select('credits')
+          .eq('id', userId)
+          .single()
+
+        const availableCredits = profile?.credits ?? 0
+        const isFirstBuild = !project.files || Object.keys(project.files as Record<string, unknown>).length === 0
+        const estimatedCost = isFirstBuild ? 200 : 80  // First build ~200cr, edits ~80cr
+
+        if (availableCredits < estimatedCost) {
+          return errorResult(
+            `Not enough credits to build. This will cost approximately ${estimatedCost} credits, but you only have ${availableCredits} available. ` +
+            `Upgrade your plan or top up credits at https://wyberai.com/pricing`
+          )
+        }
 
         const { data, error } = await db
           .from('mcp_messages')
@@ -158,7 +175,9 @@ const handler = createMcpHandler(
         return jsonResult({
           message_id: data?.id,
           status: 'queued',
-          note: 'Build queued. Poll get_message_status with this message_id until status is "done" (usually under 2 minutes), then get_project to see the result.',
+          estimated_cost: estimatedCost,
+          available_credits: availableCredits,
+          note: `Build queued (${availableCredits - estimatedCost} credits remaining after this build). Poll get_message_status with this message_id until status is "done" (usually 1-2 minutes).`,
         })
       },
     )
