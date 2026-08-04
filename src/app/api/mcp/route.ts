@@ -26,6 +26,63 @@ function errorResult(message: string) {
   return { content: [{ type: 'text' as const, text: message }], isError: true }
 }
 
+/** Build upsell message for insufficient credits */
+function insufficientCreditsMessage(needed: number, have: number, currency: 'USD' | 'INR' = 'USD'): string {
+  const shortage = needed - have
+  const starterCredits = 150
+  const builderCredits = 500
+
+  if (currency === 'INR') {
+    return `You need ${needed} credits but have only ${have} (${shortage} short).
+
+**Upgrade to get more credits:**
+• **Spark** (₹499/mo): 50cr/mo — limited to small builds
+• **Starter** (₹1,499/mo): 150cr/mo — ~5 builds/month
+• **Builder** (₹3,999/mo): 500cr/mo — ~16 builds/month ← Recommended
+
+**Save 20% with annual billing!**
+Starter: ₹1,199/mo annual | Builder: ₹3,199/mo annual
+
+Upgrade now: https://wyberai.com/pricing
+
+Or top-up credits: https://wyberai.com/credits`
+  }
+
+  return `You need ${needed} credits but have only ${have} (${shortage} short).
+
+**Upgrade to get more credits:**
+• **Starter** ($29/mo): 150cr/mo — ~5 builds/month
+• **Builder** ($79/mo): 500cr/mo — ~16 builds/month ← Recommended
+
+**Save 20% with annual billing!**
+Starter: $23/mo annual | Builder: $63/mo annual
+
+Upgrade now: https://wyberai.com/pricing
+
+Or top-up credits: https://wyberai.com/credits`
+}
+
+/** Build post-build upsell message */
+function postBuildUpsell(projectType: string): string {
+  const baseMsg = `**What's next?**
+
+✅ Your app is built and live!
+
+Post-build options:
+- **Publish to web** (free) — get a public URL
+- **Buy custom domain** ($9–15/year) — your own domain
+- **Enable Supabase** (free) — real database instead of mock data
+- **Upgrade to Opus** — faster builds, higher quality (available in Builder plan)`
+
+  if (projectType === 'mobile') {
+    return `${baseMsg}
+- **Export APK** (50 credits) — download and install on Android devices
+- **Export IPA** (? credits) — for iOS via TestFlight`
+  }
+
+  return baseMsg
+}
+
 const handler = createMcpHandler(
   (server) => {
     server.tool(
