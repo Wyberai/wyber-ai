@@ -44,10 +44,10 @@ export type ActionType =
  * strings independently and are a separate, out-of-scope cleanup.
  */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-sonnet-5',
-  default: 'claude-opus-5',
-  premium: 'claude-opus-5',
-  fable:   'claude-fable-5',
+  fast:    'claude-haiku-4-5-20251001',
+  default: 'claude-haiku-4-5-20251001',
+  premium: 'claude-haiku-4-5-20251001',
+  fable:   'claude-haiku-4-5-20251001',
   // GPT-5.6 Sol — OpenAI's current flagship for complex reasoning/coding with
   // Functions tool support, confirmed against OpenAI's live model catalog
   // (developers.openai.com/api/docs/models, checked 2026-07-26). Still an
@@ -323,10 +323,8 @@ export function computeOverageCharge(opts: {
  * Always at least 1 credit.
  */
 export function creditCost(action: ActionType, tier: ModelTier = 'default', buildTier?: BuildSizeTier): number {
-  // Edits are priced explicitly, not by multiplier. The 0.5× fast discount made
-  // simple edits 1cr (below Sonnet COGS), while complexity-escalated edits ran
-  // Opus (~$0.52 COGS, measured Jul 3) for the same price as a tweak. Simple
-  // Sonnet edit = the public 2cr price; Opus-escalated complex edit = 5cr.
+  // Edits are priced explicitly, not by multiplier. Same pricing for all users.
+  // Small edits: 2cr (fast) or 5cr (default)
   if (action === 'small-edit') return tier === 'fast' ? 2 : 5
   // Tiered build pricing (see BUILD_TIER_COSTS above) — only applies when the
   // caller actually resolved a size tier; omitting buildTier (an older client,
