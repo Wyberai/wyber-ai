@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1000,
       system: `You are a UI/UX design advisor. Given a user's app idea, generate exactly 3 distinct design directions as JSON.
 Each direction must have: id, name, description, primaryColor (hex), accentColor (hex), bgColor (hex), fontStyle ("serif"|"sans"|"mono"), mood (1 word), layoutStyle ("minimal"|"bold"|"playful"|"professional"|"dark").

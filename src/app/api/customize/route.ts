@@ -39,7 +39,7 @@ RULES:
     const userPrompt = `EXISTING CODE:\n${fileSnapshot}\n\nCUSTOMIZATION:\n${customPrompt}\n\nAccent: ${accent}\nApp name: ${appName}`
 
     const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 6000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           config: {
             ...n.config,
             ...(toolkit ? { mode: 'composio', toolkit } : {}),
-            ...(n.type === 'ai' ? { model: 'claude-sonnet-4-6', instructions: n.config?.instructions || '' } : {}),
+            ...(n.type === 'ai' ? { model: 'claude-haiku-4-5-20251001', instructions: n.config?.instructions || '' } : {}),
           },
           status: 'idle',
         },

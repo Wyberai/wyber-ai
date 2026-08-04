@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     const recentMessages = messages.slice(-10)
 
     const stream = await anthropic.messages.stream({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       // 400 truncated any answer with real steps in it mid-sentence.
       max_tokens: 1000,
       system: SYSTEM,

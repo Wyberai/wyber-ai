@@ -13,8 +13,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // upload") and asking users for things it already had — the chat lane is the
 // product's voice, and with prompt caching on the file context the real cost
 // per turn is cents, not dollars.
-const CLASSIFY_MODEL = 'claude-sonnet-4-6'
-const REPLY_MODEL = 'claude-sonnet-4-6'
+const CLASSIFY_MODEL = 'claude-haiku-4-5-20251001'
+const REPLY_MODEL = 'claude-haiku-4-5-20251001'
 
 /**
  * Conversational assist endpoint for the builder.

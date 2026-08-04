@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     if (!messages?.length) return new Response('No messages', { status: 400 })
 
     const stream = await client.messages.stream({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       // 400 cut multi-step troubleshooting answers off mid-sentence.
       max_tokens: 1500,
       system: SYSTEM,

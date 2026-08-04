@@ -37,17 +37,17 @@ export type ActionType =
   | 'preview-access'
 
 /**
- * Anthropic model IDs for each tier. Bumped from claude-sonnet-4-6/opus-4-8 to
+ * Anthropic model IDs for each tier. Bumped from claude-haiku-4-5-20251001/opus-4-8 to
  * the current Sonnet 5 / Opus 5 generation — same-or-cheaper pricing, better
  * agentic-coding performance. Scoped to ONLY this builder tier system; other
  * subsystems (AI Employees, Agent Canvas, GTM flows) hardcode their own model
  * strings independently and are a separate, out-of-scope cleanup.
  */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-sonnet-5',
-  default: 'claude-opus-5',
-  premium: 'claude-opus-5',
-  fable:   'claude-fable-5',
+  fast:    'claude-haiku-4-5-20251001',
+  default: 'claude-haiku-4-5-20251001',
+  premium: 'claude-haiku-4-5-20251001',
+  fable:   'claude-haiku-4-5-20251001',
   // GPT-5.6 Sol — OpenAI's current flagship for complex reasoning/coding with
   // Functions tool support, confirmed against OpenAI's live model catalog
   // (developers.openai.com/api/docs/models, checked 2026-07-26). Still an
