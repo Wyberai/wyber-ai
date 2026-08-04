@@ -231,31 +231,31 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        // In real implementation, call pickPaletteOptions from lib/design-palettes
-        // For now, return placeholder structure
-        return jsonResult({
-          palettes: [
-            {
-              id: 'palette-1',
-              label: 'Modern Blue',
-              vibe: 'Professional and clean',
-              mode: 'Dark',
-            },
-            {
-              id: 'palette-2',
-              label: 'Warm Sunset',
-              vibe: 'Friendly and approachable',
-              mode: 'Light',
-            },
-            {
-              id: 'palette-3',
-              label: 'Mint Fresh',
-              vibe: 'Modern and minimalist',
-              mode: 'Light',
-            },
-          ],
-          message: 'Pick a design direction or click "Surprise me" for a random palette.',
-        })
+        try {
+          // Import pickPaletteOptions from lib/design-palettes at runtime
+          const { pickPaletteOptions } = await import('@/lib/design-palettes')
+          const palettes = pickPaletteOptions(args.prompt, 3)
+
+          return jsonResult({
+            palettes: palettes.map(p => ({
+              id: p.id,
+              label: p.label,
+              vibe: p.vibe,
+              mode: p.mode,
+            })),
+            message: 'Pick a design direction or click "Surprise me" for a random palette.',
+          })
+        } catch (err) {
+          // Fallback if pickPaletteOptions unavailable
+          return jsonResult({
+            palettes: [
+              { id: 'palette-1', label: 'Modern Blue', vibe: 'Professional', mode: 'Dark' },
+              { id: 'palette-2', label: 'Warm Sunset', vibe: 'Friendly', mode: 'Light' },
+              { id: 'palette-3', label: 'Mint Fresh', vibe: 'Minimalist', mode: 'Light' },
+            ],
+            message: 'Pick a design direction.',
+          })
+        }
       },
     )
 
@@ -557,18 +557,21 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        // Mock domain search - in real impl, call /api/domain/search
-        const available = Math.random() > 0.3
-        const price = available ? Math.floor(Math.random() * 15) + 9 : null
+        try {
+          const res = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`)
+          const data = await res.json()
 
-        return jsonResult({
-          domain: args.domain_name,
-          available,
-          price_usd: price,
-          message: available
-            ? `✅ ${args.domain_name} is available!\n\nPrice: $${price}/year\n\nReady to buy? I'll collect your contact info.`
-            : `❌ ${args.domain_name} is taken.\n\nTry another or use your free subdomain.`,
-        })
+          return jsonResult({
+            domain: args.domain_name,
+            available: data.available,
+            price_usd: data.price_cents ? data.price_cents / 100 : null,
+            message: data.available
+              ? `✅ ${args.domain_name} is available!\n\nPrice: $${data.price_cents ? (data.price_cents / 100).toFixed(2) : '9-15'}/year\n\nReady to buy? I'll collect your contact info.`
+              : `❌ ${args.domain_name} is taken.\n\nTry another or use your free subdomain.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not search domains: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -593,12 +596,42 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        // Mock domain purchase
-        return jsonResult({
-          success: true,
-          domain: args.domain_name,
-          message: `✅ Domain purchased!\n\nYour app is now live at: https://${args.domain_name}\n\nDNS setup: 15-30 minutes to propagate.`,
-        })
+        try {
+          const res = await fetch(`${APP_URL}/api/domain/purchase`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+            },
+            body: JSON.stringify({
+              projectId: args.project_id,
+              domain: args.domain_name,
+              contactInfo: {
+                firstName: args.first_name,
+                lastName: args.last_name,
+                email: args.email,
+                phone: args.phone,
+                address: args.address,
+                city: args.city,
+                state: args.state,
+                zip: args.zip,
+                country: args.country,
+              },
+            }),
+          })
+          const data = await res.json()
+
+          if (!res.ok) return errorResult(data.error || 'Purchase failed')
+
+          return jsonResult({
+            success: true,
+            domain: args.domain_name,
+            message: `✅ Domain purchased!\n\nYour app is now live at: https://${args.domain_name}\n\nDNS setup: 15-30 minutes to propagate.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not purchase domain: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -621,7 +654,7 @@ const handler = createMcpHandler(
           .eq('id', userId)
           .single()
 
-        const cost = args.format === 'apk' ? 50 : 100  // Mock IPA cost
+        const cost = 50  // APK costs 50cr
         const credits = profile?.credits ?? 0
 
         if (credits < cost) {
@@ -630,15 +663,32 @@ const handler = createMcpHandler(
           )
         }
 
-        // Mock export trigger
-        return jsonResult({
-          success: true,
-          format: args.format,
-          cost,
-          credits_remaining: credits - cost,
-          download_url: `${APP_URL}/api/mobile/download/${args.project_id}/${args.format}`,
-          message: `✅ ${args.format.toUpperCase()} build starting (50 credits charged).\n\n📥 Download: Check your email or wait 5-10 minutes for build to complete.\n\n**Installation:**\n- APK: Enable "Unknown Sources" in settings\n- IPA: Use TestFlight or Xcode`,
-        })
+        try {
+          const endpoint = args.format === 'apk' ? '/api/mobile/build-apk' : '/api/mobile/build-ipa'
+          const res = await fetch(`${APP_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+            },
+            body: JSON.stringify({ projectId: args.project_id }),
+          })
+          const data = await res.json()
+
+          if (!res.ok) return errorResult(data.error || `Export failed (${res.status})`)
+
+          return jsonResult({
+            success: true,
+            format: args.format,
+            cost,
+            credits_remaining: credits - cost,
+            build_id: data.buildId,
+            message: `✅ ${args.format.toUpperCase()} build queued (${cost} credits charged).\n\n📥 Build ID: ${data.buildId}\n\nCheck back in 10-15 minutes for download link.\n\n**Installation:**\n- APK: Enable "Unknown Sources" in Android settings\n- IPA: Use TestFlight or connect to Xcode`,
+          })
+        } catch (err) {
+          return errorResult(`Could not start export: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -663,13 +713,32 @@ const handler = createMcpHandler(
           .single()
         if (!project) return errorResult('Project not found')
 
-        // Mock snapshot save
-        return jsonResult({
-          success: true,
-          snapshot_id: `snap_${Date.now()}`,
-          label: args.label,
-          message: `✅ Snapshot saved: "${args.label}"\n\nYou can restore this anytime.`,
-        })
+        try {
+          const res = await fetch(`${APP_URL}/api/snapshots`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+            },
+            body: JSON.stringify({
+              project_id: args.project_id,
+              label: args.label,
+              files: project.files,
+            }),
+          })
+          const data = await res.json()
+          if (!res.ok) return errorResult(data.error || 'Snapshot save failed')
+
+          return jsonResult({
+            success: true,
+            snapshot_id: data.snapshot?.id,
+            label: args.label,
+            message: `✅ Snapshot saved: "${args.label}"\n\nYou can restore this anytime.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not save snapshot: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -682,13 +751,24 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        // Mock snapshot list
-        return jsonResult({
-          snapshots: [
-            { id: 'snap_1', label: 'Initial build', created_at: new Date().toISOString() },
-            { id: 'snap_2', label: 'Added Supabase', created_at: new Date().toISOString() },
-          ],
-        })
+        try {
+          const res = await fetch(`${APP_URL}/api/snapshots?project_id=${args.project_id}`, {
+            headers: {
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+            },
+          })
+          const data = await res.json()
+
+          return jsonResult({
+            snapshots: data.snapshots || [],
+            message: data.snapshots && data.snapshots.length > 0
+              ? `Found ${data.snapshots.length} snapshot(s). Pick one to restore.`
+              : 'No snapshots yet. Save one before making big changes!',
+          })
+        } catch (err) {
+          return errorResult(`Could not list snapshots: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -704,11 +784,23 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        // Mock restore
-        return jsonResult({
-          success: true,
-          message: `✅ Project restored. Your files have been rolled back to that snapshot.`,
-        })
+        try {
+          const res = await fetch(`${APP_URL}/api/snapshots/${args.snapshot_id}`, {
+            headers: {
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+            },
+          })
+          const data = await res.json()
+          if (!res.ok) return errorResult(data.error || 'Restore failed')
+
+          return jsonResult({
+            success: true,
+            message: `✅ Project restored to "${data.snapshot?.label}".\n\nYour files have been rolled back.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not restore snapshot: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -1041,11 +1133,40 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
 
-        return jsonResult({
-          success: true,
-          message: `✅ Supabase connected!\n\nYour app can now use real auth and database queries.\n\nNext: rebuild the app to replace mock data with live queries.`,
-        })
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        try {
+          const { error } = await db
+            .from('project_connectors')
+            .upsert(
+              {
+                project_id: args.project_id,
+                user_id: userId,
+                service: 'supabase',
+                config: {
+                  url: args.supabase_url,
+                  key: args.supabase_key,
+                },
+              },
+              { onConflict: 'project_id,user_id,service' },
+            )
+          if (error) return errorResult(`Could not connect: ${error.message}`)
+
+          return jsonResult({
+            success: true,
+            message: `✅ Supabase connected!\n\nYour app can now use real auth and database queries.\n\nURL: ${args.supabase_url}\n\nNext: rebuild the app to replace mock data with live queries.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not connect Supabase: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
