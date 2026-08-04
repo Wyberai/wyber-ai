@@ -5,6 +5,8 @@ import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
 import { getProjectSupabase } from '@/lib/mcp/project-db'
 import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
+import { creditCost, resolveBuildTier, type ActionType, type ModelTier } from '@/lib/credits'
+import { PLAN_FACTS } from '@/lib/plans'
 import { Composio } from '@composio/core'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 import { sendAdminMcpProjectAlert } from '@/lib/email'
@@ -119,9 +121,11 @@ const handler = createMcpHandler(
 
     server.tool(
       'get_build_cost',
-      'Get the estimated cost to build a project without queuing it. Shows cost and asks for approval before actually building.',
+      'Get the estimated cost to build a project based on type and size. Shows cost before queuing.',
       {
         project_id: z.string().describe('Project ID'),
+        project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).describe('Type of project'),
+        estimated_files: z.number().optional().describe('Estimated number of files (optional — defaults to small/15 files)'),
       },
       { title: 'Check build cost', readOnlyHint: true, openWorldHint: false },
       async (args, extra) => {
@@ -129,31 +133,54 @@ const handler = createMcpHandler(
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
 
+        const { data: profile } = await db
+          .from('profiles')
+          .select('credits, plan')
+          .eq('id', userId)
+          .single()
+        if (!profile) return errorResult('Account not found')
+
         const { data: project } = await db
           .from('projects')
-          .select('id, files')
+          .select('files')
           .eq('id', args.project_id)
           .eq('user_id', userId)
           .single()
-        if (!project) return errorResult('Project not found')
 
-        const { data: profile } = await db
-          .from('profiles')
-          .select('credits')
-          .eq('id', userId)
-          .single()
+        // Determine model tier from plan
+        const planRank: Record<string, number> = { free: 0, spark: 0, starter: 1, builder: 2, pro: 3, growth: 4, scale: 5 }
+        const userPlanRank = planRank[profile.plan as string] ?? 0
+        // Default to 'default' (Opus) for Starter+, 'fast' (Sonnet) for free
+        const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
 
-        const availableCredits = profile?.credits ?? 0
-        const isFirstBuild = !project.files || Object.keys(project.files as Record<string, unknown>).length === 0
-        const estimatedCost = isFirstBuild ? 200 : 80
+        // Estimate build tier from file count
+        const estimatedFiles = args.estimated_files ?? 15
+        const buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+
+        // Calculate cost based on project type + tier
+        const actionTypeMap: Record<string, ActionType> = {
+          'web-app': 'web-build',
+          'mobile': 'mobile-build',
+          'website': 'website-build',
+          'saas': 'saas-build',
+        }
+        const actionType = actionTypeMap[args.project_type]
+        const estimatedCost = creditCost(actionType, modelTier, buildTier)
+
+        const availableCredits = profile.credits ?? 0
+        const isFirstBuild = !project?.files || Object.keys((project?.files as Record<string, unknown>) ?? {}).length === 0
 
         return jsonResult({
           estimated_cost: estimatedCost,
           available_credits: availableCredits,
           can_afford: availableCredits >= estimatedCost,
           is_first_build: isFirstBuild,
+          project_type: args.project_type,
+          build_tier: buildTier,
+          model_tier: modelTier,
+          plan: profile.plan,
           message: availableCredits >= estimatedCost
-            ? `Ready to build. This will cost ${estimatedCost} credits (you'll have ${availableCredits - estimatedCost} left).`
+            ? `Ready to build ${args.project_type}. This will cost ${estimatedCost} credits (you'll have ${availableCredits - estimatedCost} left).`
             : `Insufficient credits. Need ${estimatedCost}, have ${availableCredits}. Upgrade at https://wyberai.com/pricing`,
         })
       },
@@ -161,21 +188,20 @@ const handler = createMcpHandler(
 
     server.tool(
       'send_message',
-      'Queue a build/change for a project. Returns a message_id immediately; the build runs asynchronously (8-10 mins) — poll get_message_status until it is "done".',
+      'Queue a build or edit for a project. Returns immediately; build runs asynchronously (8-10 mins). Check status with get_message_status.',
       {
         project_id: z.string().describe('Project ID'),
         message: z.string().describe('What to build or change'),
-        project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).optional().describe('Type of project (default: web-app)'),
+        project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).describe('Type of project'),
+        estimated_files: z.number().optional().describe('Estimated number of files (for cost calculation)'),
       },
-      // destructiveHint: a build can rewrite the project's existing files. Each
-      // queued build also consumes WyberAi credits from the connected account.
       { title: 'Build or edit the app', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
 
-        // Verify ownership + get user credits before queueing
+        // Get project + user credits
         const { data: project } = await db
           .from('projects')
           .select('id, files, name')
@@ -186,28 +212,48 @@ const handler = createMcpHandler(
 
         const { data: profile } = await db
           .from('profiles')
-          .select('credits')
+          .select('credits, plan')
           .eq('id', userId)
           .single()
+        if (!profile) return errorResult('Account not found')
 
-        const availableCredits = profile?.credits ?? 0
+        const availableCredits = profile.credits ?? 0
         const isFirstBuild = !project.files || Object.keys(project.files as Record<string, unknown>).length === 0
-        const estimatedCost = isFirstBuild ? 200 : 80
+
+        // Determine model tier from plan
+        const planRank: Record<string, number> = { free: 0, spark: 0, starter: 1, builder: 2, pro: 3, growth: 4, scale: 5 }
+        const userPlanRank = planRank[profile.plan as string] ?? 0
+        const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
+
+        // Estimate build tier
+        const estimatedFiles = args.estimated_files ?? (isFirstBuild ? 15 : 8)
+        const buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+
+        // Calculate actual cost
+        const actionTypeMap: Record<string, ActionType> = {
+          'web-app': 'web-build',
+          'mobile': 'mobile-build',
+          'website': 'website-build',
+          'saas': 'saas-build',
+        }
+        const actionType = actionTypeMap[args.project_type]
+        const estimatedCost = creditCost(actionType, modelTier, buildTier)
 
         if (availableCredits < estimatedCost) {
           return errorResult(
-            `Not enough credits to build. This will cost approximately ${estimatedCost} credits, but you only have ${availableCredits} available. ` +
-            `Upgrade your plan or top up credits at https://wyberai.com/pricing`
+            `Not enough credits to build. This will cost ${estimatedCost} credits, but you only have ${availableCredits} available. ` +
+            `Upgrade at https://wyberai.com/pricing`
           )
         }
 
+        // Queue the build
         const { data, error } = await db
           .from('mcp_messages')
           .insert({
             project_id: args.project_id,
             user_id: userId,
             message: args.message,
-            project_type: args.project_type || 'web-app',
+            project_type: args.project_type,
             status: 'queued',
           })
           .select('id')
@@ -220,10 +266,10 @@ const handler = createMcpHandler(
         return jsonResult({
           message_id: data?.id,
           status: 'queued',
-          estimated_cost: estimatedCost,
+          deducted_credits: estimatedCost,
           remaining_credits: remaining,
           status_url: statusUrl,
-          note: `🏗️ Building ${project.name}...\nThis typically takes 8-10 minutes.\n\n📊 Live Progress: ${statusUrl}\n\nI'll update you when it's ready!`,
+          note: `🏗️ Building your ${args.project_type}...\n⏱️ This typically takes 8-10 minutes.\n\n📊 Live Progress: ${statusUrl}\n\nI'll update you when it's ready!`,
         })
       },
     )
