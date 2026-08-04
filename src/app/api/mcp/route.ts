@@ -179,12 +179,30 @@ const handler = createMcpHandler(
           .eq('user_id', userId)
           .single()
         if (!data) return errorResult('Message not found')
-        return jsonResult({
+
+        // If there's a credit-limit error, inject an interactive checkout modal
+        // via MCP resource. Pattern: error contains "Not enough credits" + extract
+        // cost/balance from error message or from profiles table.
+        let checkoutUrl: string | null = null
+        if (data.status === 'error' && data.error?.includes('Not enough credits')) {
+          const costMatch = data.error.match(/costs? (\d+)/)
+          const balanceMatch = data.error.match(/have (\d+)/)
+          const cost = costMatch ? parseInt(costMatch[1], 10) : 100
+          const balance = balanceMatch ? parseInt(balanceMatch[1], 10) : 0
+
+          // Build the checkout resource URL for MCP Apps to render
+          checkoutUrl = `${APP_URL}/api/mcp/resources/checkout?user_id=${userId}&cost=${cost}&balance=${balance}`
+        }
+
+        const response = {
           message_id: data.id,
           status: data.status,
           response: data.response,
           error: data.error,
-        })
+          ...(checkoutUrl && { checkout_url: checkoutUrl }),
+        }
+
+        return jsonResult(response)
       },
     )
 
