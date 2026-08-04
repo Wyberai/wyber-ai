@@ -503,7 +503,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {/* ── BUILD CHALLENGE BANNER ──────────────────────────────────── */}
       <Link href="/challenge" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '9px 20px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid var(--brand-border)', textDecoration: 'none', color: 'var(--brand-text)', fontSize: 12.5, fontWeight: 500 }}>
         <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>{t.bannerLabel}</span>
-        <span style={{ color: 'var(--brand-text-dim)' }}>{t.bannerText}</span>
+        <span style={{ color: 'var(--brand-text-dim)' }}>
+          {inr && locale === 'en'
+            ? '🇮🇳 Independence Day special: 50% off all plans with code WYBER50 through August 15'
+            : t.bannerText}
+        </span>
         <span style={{ color: 'var(--brand-accent-hot)', fontSize: 12 }}>{t.bannerCta}</span>
       </Link>
 
