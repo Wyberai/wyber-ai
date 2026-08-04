@@ -1,32 +1,32 @@
-import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
-import { Footer } from '@/components/shared/FooterClient';
-import Link from 'next/link';
-import type { Metadata } from 'next';
+import { NavbarClient as Navbar } from '@/components/shared/NavbarClient'
+import { Footer } from '@/components/shared/FooterClient'
+import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'WyberAi MCP Server — build & ship apps from Claude, Cursor & Claude Code',
   description: 'WyberAi ships a real remote MCP server with 20 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps — without leaving your AI editor.',
-};
+}
 
 const GROUPS: { label: string; accent?: boolean; tools: [string, string][] }[] = [
   { label: 'Build', tools: [['create_project', 'Start a new app from a prompt'], ['send_message', 'Kick off a build or change'], ['publish_project', 'Ship it to a live URL']] },
-  { label: 'Inspect', tools: [['list_projects', 'See your workspace'], ['get_project', 'Project details'], ['list_files', 'The app’s file tree'], ['read_file', 'Read any source file'], ['get_account', 'Credits & plan'], ['get_message_status', 'Track a running build']] },
+  { label: 'Inspect', tools: [['list_projects', 'See your workspace'], ['get_project', 'Project details'], ['list_files', 'The app file tree'], ['read_file', 'Read any source file'], ['get_account', 'Credits & plan'], ['get_message_status', 'Track a running build']] },
   { label: 'Database', tools: [['execute_sql', 'Run SQL on the connected DB'], ['get_database_status', 'Is Supabase connected?']] },
-  { label: 'Security — the edge', accent: true, tools: [['run_security_scan', 'Attacker-view RLS scan of the live DB — finds tables that leak data']] },
+  { label: 'Security', accent: true, tools: [['run_security_scan', 'Attacker-view RLS scan of the live DB']] },
   { label: 'Manage', tools: [['rename_project', 'Rename'], ['duplicate_project', 'Copy'], ['delete_project', 'Delete'], ['list_versions', 'Version history'], ['restore_version', 'Roll back a bad build']] },
-  { label: 'Knowledge & Connectors', tools: [['get_project_knowledge', 'Read project standards'], ['set_project_knowledge', 'Set brand/standards the builder follows'], ['list_connectors', 'Browse 250+ connectors']] },
-];
+  { label: 'Knowledge & Connectors', tools: [['get_project_knowledge', 'Read project standards'], ['set_project_knowledge', 'Set brand standards'], ['list_connectors', 'Browse 250+ connectors']] },
+]
 
 const FAQ: [string, string][] = [
   ['What is MCP?', 'The Model Context Protocol is an open standard that lets AI clients like Claude call external tools. WyberAi runs a remote MCP server, so any MCP-capable assistant can operate your WyberAi workspace directly.'],
-  ['Which clients can I use?', 'Anything that speaks MCP over Streamable HTTP — Claude.ai, Claude Code, Cursor, and more. Add it as a custom connector with your API key.'],
+  ['Which clients can I use?', 'Anything that speaks MCP over Streamable HTTP: Claude.ai, Claude Code, Cursor, and more. Add it as a custom connector with your API key.'],
   ['Is it included in my plan?', 'Yes. The MCP server is available on every plan, including the free tier (50 credits). Reads are free; builds spend credits at the same rates as the web editor.'],
-  ['Do I need OAuth or an API key?', 'Today you connect with a WyberAi API key (created in Settings → API Keys) sent as an x-api-key header. It’s scoped to your account and revocable anytime.'],
-];
+  ['Do I need OAuth or an API key?', 'Today you connect with a WyberAi API key (created in Settings > API Keys) sent as an x-api-key header. Its scoped to your account and revocable anytime.'],
+]
 
 const s = {
   code: { display: 'block', padding: '14px 16px', borderRadius: 12, background: 'var(--bg2)', border: '1px solid var(--border)', fontFamily: 'var(--font-mono, monospace)', fontSize: 13, color: 'var(--sky)', overflowX: 'auto' as const, whiteSpace: 'pre' as const },
-};
+}
 
 export default function McpPage() {
   return (
@@ -36,19 +36,19 @@ export default function McpPage() {
       {/* Hero */}
       <div className="wy-section" style={{ paddingBottom: 0 }}>
         <div className="wy-sec-tag">MCP Server</div>
-        <h1 className="wy-h2">Build real apps <em>from your AI editor</em></h1>
+        <h1 className="wy-h2">Build apps <em>from Claude chat</em></h1>
         <p style={{ fontSize: 17, color: 'var(--text2)', maxWidth: 580, lineHeight: 1.75, marginBottom: 20 }}>
-          WyberAi ships a real remote MCP server — 20 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps, all from Claude, Cursor, or Claude Code. No other app builder lets you do this.
+          WyberAi ships a real remote MCP server with 20 tools to build, deploy, and manage apps all from Claude, Cursor, or Claude Code without leaving your editor.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 36 }}>
-          <Link href="/api-keys" className="wy-btn-primary">Get your MCP key →</Link>
+          <Link href="/api-keys" className="wy-btn-primary">Get your MCP key</Link>
           <Link href="/docs/integrations/claude-mcp" className="wy-btn-ghost">Read the docs</Link>
         </div>
         <div style={{ maxWidth: 620, marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8, fontWeight: 600 }}>Add it to Claude Code in one line:</div>
-          <code style={s.code}>claude mcp add --transport http wyberai https://wyberai.com/api/mcp --header &quot;x-api-key: wyb_YOUR_KEY&quot;</code>
+          <code style={s.code}>claude mcp add --transport http wyberai https://wyberai.com/api/mcp --header "x-api-key: wyb_YOUR_KEY"</code>
           <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 10 }}>
-            Or in Claude.ai: Settings → Connectors → Add custom connector → <span style={{ color: 'var(--text2)' }}>https://wyberai.com/api/mcp</span>. Coming soon to the Claude connectors directory.
+            Or in Claude.ai: Settings {'>'}  Connectors {'>'}  Add custom connector. Coming soon to the Claude connectors directory.
           </div>
         </div>
       </div>
@@ -75,10 +75,10 @@ export default function McpPage() {
 
       {/* Security edge callout */}
       <div className="wy-section" style={{ paddingTop: 8 }}>
-        <div style={{ padding: '40px', borderRadius: 20, background: 'linear-gradient(135deg, var(--sky3), var(--bg2))', border: '1px solid var(--border)' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,34px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.025em', marginBottom: 12 }}>The only app-builder MCP that audits what it built</h2>
+        <div style={{ padding: 40, borderRadius: 20, background: 'linear-gradient(135deg, var(--sky3), var(--bg2))', border: '1px solid var(--border)' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.025em', marginBottom: 12 }}>The only app-builder MCP that audits what it built</h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', lineHeight: 1.7, maxWidth: 640 }}>
-            <span style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--sky)', fontSize: 14 }}>run_security_scan</span> probes your project’s live database with the public anon key — exactly what an attacker does — and reports every table that leaks data. Ship from your editor, then verify it’s actually safe, in the same conversation.
+            <span style={{ fontFamily: 'var(--font-mono, monospace)', color: 'var(--sky)', fontSize: 14 }}>run_security_scan</span> probes your projects live database with the public anon key and reports every table that leaks data. Ship from your editor, then verify its actually safe.
           </p>
         </div>
       </div>
@@ -98,14 +98,14 @@ export default function McpPage() {
 
       {/* Closing CTA */}
       <div className="wy-section" style={{ paddingTop: 8 }}>
-        <div style={{ padding: '48px', borderRadius: 20, background: 'linear-gradient(135deg, var(--sky3), var(--bg2))', border: '1px solid var(--border)', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(24px,3.5vw,40px)', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.025em', marginBottom: 12 }}>Drive WyberAi from Claude</h2>
+        <div style={{ padding: 48, borderRadius: 20, background: 'linear-gradient(135deg, var(--sky3), var(--bg2))', border: '1px solid var(--border)', textAlign: 'center' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.025em', marginBottom: 12 }}>Drive WyberAi from Claude</h2>
           <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 28 }}>Create your API key and connect in under a minute. Free tier included.</p>
-          <Link href="/api-keys" className="wy-btn-primary">Get your MCP key →</Link>
+          <Link href="/api-keys" className="wy-btn-primary">Get your MCP key</Link>
         </div>
       </div>
 
       <Footer />
     </div>
-  );
+  )
 }
