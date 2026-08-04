@@ -152,7 +152,7 @@ function buildCanvas(agentName: string, requiredTools: string, outcome: string, 
       label: agentName,
       subtitle: outcome?.slice(0, 100) || '',
       config: {
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         instructions: `You are ${agentName}.\n\nProblem: ${problem || ''}\n\nOutcome: ${outcome || ''}\n\nAnalyze inputs carefully and take precise, high-quality actions.`,
       },
       status: 'idle',

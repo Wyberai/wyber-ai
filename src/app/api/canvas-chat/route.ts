@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
         const send = (text: string) => controller.enqueue(encoder.encode(text))
         try {
           const anthropicStream = await client.messages.stream({
-            model: 'claude-sonnet-4-6',
+            model: 'claude-haiku-4-5-20251001',
             max_tokens: 400,
             system: systemWithContext,
             messages: messages.slice(-6).map((m: any) => ({

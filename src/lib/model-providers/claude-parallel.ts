@@ -34,7 +34,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // Sonnet, not Opus — matches the existing Sonnet-first policy
 // (WYBER_SONNET_FIRST_BUILD in route.ts) and keeps each small, page-scoped
 // call cheap; there's no reason a single page needs Opus-level reasoning.
-const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-sonnet-5'
+const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-haiku-4-5-20251001'
 const MAX_PARALLEL_PAGES = Number(process.env.CLAUDE_PARALLEL_MAX_PAGES) || 6
 const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 16000
 // ts_rank scores are small — see the identical comment in wybercode.ts. A

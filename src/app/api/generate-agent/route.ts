@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     if (!prompt) return NextResponse.json({ error: 'Prompt required' }, { status: 400 })
 
     const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 2000,
       system: SYSTEM,
       messages: [{ role: 'user', content: `Configure an agent for: ${prompt}` }],

@@ -37,7 +37,7 @@ export type ActionType =
   | 'preview-access'
 
 /**
- * Anthropic model IDs for each tier. Bumped from claude-sonnet-4-6/opus-4-8 to
+ * Anthropic model IDs for each tier. Bumped from claude-haiku-4-5-20251001/opus-4-8 to
  * the current Sonnet 5 / Opus 5 generation — same-or-cheaper pricing, better
  * agentic-coding performance. Scoped to ONLY this builder tier system; other
  * subsystems (AI Employees, Agent Canvas, GTM flows) hardcode their own model

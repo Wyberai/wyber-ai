@@ -47,7 +47,7 @@ const TEMPLATES: Template[] = [
     nodes: [
       { id: 'trigger-1', type: 'trigger', position: { x: 80, y: 200 }, data: { label: 'Daily 8 AM', subtitle: '', config: { type: 'schedule', cron_expression: '0 8 * * *' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 360, y: 200 }, data: { label: 'Fetch CRM tasks', subtitle: '', config: { mode: 'composio', toolkit: 'HUBSPOT' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Summarise tasks', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Summarise these CRM tasks into a crisp morning briefing. List the top 3 priority actions.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Summarise tasks', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Summarise these CRM tasks into a crisp morning briefing. List the top 3 priority actions.' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 920, y: 200 }, data: { label: 'Send to Slack', subtitle: '', config: { mode: 'composio', toolkit: 'SLACK' }, status: 'idle' } },
     ],
     edges: [
@@ -62,7 +62,7 @@ const TEMPLATES: Template[] = [
     category: 'Sales', icon: '📅',
     nodes: [
       { id: 'trigger-1', type: 'webhook', position: { x: 80, y: 200 }, data: { label: 'Demo form webhook', subtitle: '', config: {}, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Qualify lead', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Score this lead 1-10. If score >= 7, output JSON {qualified: true}. Otherwise {qualified: false, reason: "..."}.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Qualify lead', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Score this lead 1-10. If score >= 7, output JSON {qualified: true}. Otherwise {qualified: false, reason: "..."}.' }, status: 'idle' } },
       { id: 'condition-1', type: 'condition', position: { x: 640, y: 200 }, data: { label: 'Is qualified?', subtitle: '', config: { rule: 'qualified === true' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 920, y: 120 }, data: { label: 'Send calendar link', subtitle: '', config: { mode: 'http', method: 'POST', url: 'https://api.calendly.com/scheduling_links' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 920, y: 280 }, data: { label: 'Send nurture email', subtitle: '', config: { mode: 'composio', toolkit: 'GMAIL' }, status: 'idle' } },
@@ -82,7 +82,7 @@ const TEMPLATES: Template[] = [
     category: 'Support', icon: '🎫',
     nodes: [
       { id: 'trigger-1', type: 'trigger', position: { x: 80, y: 200 }, data: { label: 'New Gmail email', subtitle: '', config: { type: 'email' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Classify & prioritise', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Classify this support email. Output JSON: {priority: "urgent"|"normal"|"low", category: "billing"|"bug"|"feature"|"other", summary: "one sentence"}' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Classify & prioritise', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Classify this support email. Output JSON: {priority: "urgent"|"normal"|"low", category: "billing"|"bug"|"feature"|"other", summary: "one sentence"}' }, status: 'idle' } },
       { id: 'condition-1', type: 'condition', position: { x: 640, y: 200 }, data: { label: 'Urgent?', subtitle: '', config: { rule: 'priority === "urgent"' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 920, y: 120 }, data: { label: 'Alert #urgent-support', subtitle: '', config: { mode: 'composio', toolkit: 'SLACK' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 920, y: 280 }, data: { label: 'Add to #support', subtitle: '', config: { mode: 'composio', toolkit: 'SLACK' }, status: 'idle' } },
@@ -100,7 +100,7 @@ const TEMPLATES: Template[] = [
     category: 'Support', icon: '✍️',
     nodes: [
       { id: 'trigger-1', type: 'trigger', position: { x: 80, y: 200 }, data: { label: 'New Gmail email', subtitle: '', config: { type: 'email' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Draft reply', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Write a friendly, helpful reply to this support email. Be concise. Sign off as "The Wyber Team".' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Draft reply', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Write a friendly, helpful reply to this support email. Be concise. Sign off as "The Wyber Team".' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 640, y: 200 }, data: { label: 'Save as Gmail draft', subtitle: '', config: { mode: 'composio', toolkit: 'GMAIL' }, status: 'idle' } },
       { id: 'output-1', type: 'output', position: { x: 920, y: 200 }, data: { label: 'Draft ready', subtitle: 'Review before sending', config: {}, status: 'idle' } },
     ],
@@ -118,7 +118,7 @@ const TEMPLATES: Template[] = [
     category: 'Marketing', icon: '📢',
     nodes: [
       { id: 'trigger-1', type: 'webhook', position: { x: 80, y: 200 }, data: { label: 'CMS publish webhook', subtitle: '', config: {}, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Write social posts', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Write 3 social posts for this blog article: (1) LinkedIn — professional, 150 words, (2) X/Twitter — punchy, under 280 chars, (3) Short teaser for email. Output as JSON {linkedin, twitter, email_teaser}.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Write social posts', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Write 3 social posts for this blog article: (1) LinkedIn — professional, 150 words, (2) X/Twitter — punchy, under 280 chars, (3) Short teaser for email. Output as JSON {linkedin, twitter, email_teaser}.' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 640, y: 120 }, data: { label: 'Post to LinkedIn', subtitle: '', config: { mode: 'composio', toolkit: 'LINKEDIN' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 640, y: 280 }, data: { label: 'Post to X', subtitle: '', config: { mode: 'composio', toolkit: 'TWITTER' }, status: 'idle' } },
     ],
@@ -135,7 +135,7 @@ const TEMPLATES: Template[] = [
     nodes: [
       { id: 'trigger-1', type: 'trigger', position: { x: 80, y: 200 }, data: { label: 'Every Monday 9 AM', subtitle: '', config: { type: 'schedule', cron_expression: '0 9 * * 1' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 360, y: 200 }, data: { label: 'Fetch competitor pages', subtitle: '', config: { mode: 'http', method: 'GET', url: 'https://r.jina.ai/https://competitor.com/blog' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Analyse changes', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Summarise the most important competitor updates this week. What new features, pricing changes, or messaging shifts do you notice? Be specific and actionable.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Analyse changes', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Summarise the most important competitor updates this week. What new features, pricing changes, or messaging shifts do you notice? Be specific and actionable.' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 920, y: 200 }, data: { label: 'Post to Slack', subtitle: '', config: { mode: 'composio', toolkit: 'SLACK' }, status: 'idle' } },
     ],
     edges: [
@@ -152,7 +152,7 @@ const TEMPLATES: Template[] = [
     category: 'Ops', icon: '🚨',
     nodes: [
       { id: 'trigger-1', type: 'webhook', position: { x: 80, y: 200 }, data: { label: 'Error webhook', subtitle: '', config: {}, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Analyse error', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Analyse this error. Output JSON: {severity: "critical"|"high"|"medium", root_cause: "...", fix_suggestion: "...", title: "concise ticket title"}' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Analyse error', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Analyse this error. Output JSON: {severity: "critical"|"high"|"medium", root_cause: "...", fix_suggestion: "...", title: "concise ticket title"}' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 640, y: 120 }, data: { label: 'Create Linear ticket', subtitle: '', config: { mode: 'composio', toolkit: 'LINEAR' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 640, y: 280 }, data: { label: 'Alert Slack', subtitle: '', config: { mode: 'composio', toolkit: 'SLACK' }, status: 'idle' } },
     ],
@@ -169,7 +169,7 @@ const TEMPLATES: Template[] = [
     nodes: [
       { id: 'trigger-1', type: 'trigger', position: { x: 80, y: 200 }, data: { label: 'Daily 7 AM', subtitle: '', config: { type: 'schedule', cron_expression: '0 7 * * *' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 360, y: 200 }, data: { label: 'Fetch metrics API', subtitle: '', config: { mode: 'http', method: 'GET', url: 'https://your-api.com/metrics' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Write digest', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Write a concise daily metrics digest for the CEO. Highlight notable changes vs yesterday. Flag anything requiring action. Keep it under 150 words.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Write digest', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Write a concise daily metrics digest for the CEO. Highlight notable changes vs yesterday. Flag anything requiring action. Keep it under 150 words.' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 920, y: 200 }, data: { label: 'Send email', subtitle: '', config: { mode: 'composio', toolkit: 'GMAIL' }, status: 'idle' } },
     ],
     edges: [
@@ -201,7 +201,7 @@ const TEMPLATES: Template[] = [
     nodes: [
       { id: 'trigger-1', type: 'webhook', position: { x: 80, y: 200 }, data: { label: 'GitHub webhook', subtitle: 'pull_request.opened', config: {}, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 360, y: 200 }, data: { label: 'Fetch PR diff', subtitle: '', config: { mode: 'composio', toolkit: 'GITHUB' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Review code', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Review this PR diff. Comment on: (1) potential bugs, (2) security issues, (3) performance concerns, (4) what looks good. Be constructive and specific.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Review code', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Review this PR diff. Comment on: (1) potential bugs, (2) security issues, (3) performance concerns, (4) what looks good. Be constructive and specific.' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 920, y: 200 }, data: { label: 'Post PR comment', subtitle: '', config: { mode: 'composio', toolkit: 'GITHUB' }, status: 'idle' } },
     ],
     edges: [
@@ -232,7 +232,7 @@ const TEMPLATES: Template[] = [
     category: 'Productivity', icon: '📝',
     nodes: [
       { id: 'trigger-1', type: 'webhook', position: { x: 80, y: 200 }, data: { label: 'Transcript webhook', subtitle: 'From Otter.ai, Fireflies, etc.', config: {}, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Extract action items', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'Extract action items from this meeting transcript. For each item output: {owner, task, due_date, priority}. Return a JSON array.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 360, y: 200 }, data: { label: 'Extract action items', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'Extract action items from this meeting transcript. For each item output: {owner, task, due_date, priority}. Return a JSON array.' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 640, y: 120 }, data: { label: 'Create Notion tasks', subtitle: '', config: { mode: 'composio', toolkit: 'NOTION' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 640, y: 280 }, data: { label: 'Email summary', subtitle: '', config: { mode: 'composio', toolkit: 'GMAIL' }, status: 'idle' } },
     ],
@@ -267,7 +267,7 @@ const TEMPLATES: Template[] = [
     nodes: [
       { id: 'trigger-1', type: 'trigger', position: { x: 80, y: 200 }, data: { label: 'Daily 9 AM', subtitle: '', config: { type: 'schedule', cron_expression: '0 9 * * *' }, status: 'idle' } },
       { id: 'tool-1', type: 'tool', position: { x: 360, y: 200 }, data: { label: 'Fetch low-usage users', subtitle: '', config: { mode: 'http', method: 'GET', url: 'https://your-api.com/users?last_active_days_ago=7' }, status: 'idle' } },
-      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Score churn risk', subtitle: '', config: { model: 'claude-sonnet-4-6', instructions: 'For each user, output a churn risk score 1-10 and the top reason. Return JSON array. Flag anyone above 7 as high risk.' }, status: 'idle' } },
+      { id: 'aiagent-1', type: 'aiagent', position: { x: 640, y: 200 }, data: { label: 'Score churn risk', subtitle: '', config: { model: 'claude-haiku-4-5-20251001', instructions: 'For each user, output a churn risk score 1-10 and the top reason. Return JSON array. Flag anyone above 7 as high risk.' }, status: 'idle' } },
       { id: 'condition-1', type: 'condition', position: { x: 920, y: 200 }, data: { label: 'Any high risk?', subtitle: '', config: { rule: 'high_risk_count > 0' }, status: 'idle' } },
       { id: 'tool-2', type: 'tool', position: { x: 1200, y: 200 }, data: { label: 'Alert CSM in Slack', subtitle: '', config: { mode: 'composio', toolkit: 'SLACK' }, status: 'idle' } },
     ],

@@ -375,7 +375,7 @@ async function handleWyberTool(
     // routed to /api/canvas-chat, which expected a different shape → crashed.)
     try {
       const res = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2048,
         messages: [{ role: 'user', content: `${input.context ? `Context:\n${input.context}\n\n` : ''}${input.message as string}` }],
       })
@@ -392,7 +392,7 @@ async function handleWyberTool(
     try {
       const type = (input.type as string) || 'document'
       const res = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 4096,
         messages: [{ role: 'user', content: `Produce a polished, finished ${type} from this brief. Output only the deliverable itself (no preamble).\n\nBRIEF:\n${input.prompt as string}` }],
       })
@@ -727,7 +727,7 @@ async function runSubAgent(opts: {
   for (let iter = 0; iter < maxIters; iter++) {
     iterations++
     const res = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 4096,
       // Cache the sub-agent's system prompt across its own iteration loop.
       system: [{ type: 'text', text: `${systemPrompt}\n\nYou are operating as a sub-agent deployed by a manager. Do the task focused and well, then report back a concise result (what you did + key outputs). Use tools where they help.`, cache_control: { type: 'ephemeral' } }],
@@ -974,7 +974,7 @@ No text outside the JSON.`
         break
       }
       const response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 8192,
         // Cache the large, stable system prompt (role profile + company knowledge
         // + tool context) across the up-to-15 iterations. The cache breakpoint on

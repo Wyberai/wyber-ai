@@ -9,7 +9,7 @@ import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// Cost per Anthropic call in this route (model is always claude-sonnet-4-6 = default tier)
+// Cost per Anthropic call in this route (model is always claude-haiku-4-5-20251001 = default tier)
 const ITER_COST = creditCost('execution', 'default') // 2 credits
 
 export async function POST(req: NextRequest) {
@@ -238,7 +238,7 @@ Execute now. Return a structured summary of what you did and what you found.`
     let response: Anthropic.Message
     try {
       response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 4096,
         system: cachedSystem,
         tools: claudeTools,
@@ -313,7 +313,7 @@ Execute now. Return a structured summary of what you did and what you found.`
 
       try {
         currentResponse = await anthropic.messages.create({
-          model: 'claude-sonnet-4-6',
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: 4096,
           system: cachedSystem,
           tools: claudeTools,
