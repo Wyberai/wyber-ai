@@ -118,22 +118,17 @@ const handler = createMcpHandler(
     )
 
     server.tool(
-      'send_message',
-      'Queue a build/change for a project. Returns a message_id immediately; the build runs asynchronously — poll get_message_status until it is "done".',
+      'get_build_cost',
+      'Get the estimated cost to build a project without queuing it. Shows cost and asks for approval before actually building.',
       {
         project_id: z.string().describe('Project ID'),
-        message: z.string().describe('What to build or change'),
-        project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).optional().describe('Type of project (default: auto-detect from framework)'),
       },
-      // destructiveHint: a build can rewrite the project's existing files. Each
-      // queued build also consumes WyberAi credits from the connected account.
-      { title: 'Build or edit the app', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+      { title: 'Check build cost', readOnlyHint: true, openWorldHint: false },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
 
-        // Verify ownership + get user credits before queueing
         const { data: project } = await db
           .from('projects')
           .select('id, files')
@@ -150,7 +145,54 @@ const handler = createMcpHandler(
 
         const availableCredits = profile?.credits ?? 0
         const isFirstBuild = !project.files || Object.keys(project.files as Record<string, unknown>).length === 0
-        const estimatedCost = isFirstBuild ? 200 : 80  // First build ~200cr, edits ~80cr
+        const estimatedCost = isFirstBuild ? 200 : 80
+
+        return jsonResult({
+          estimated_cost: estimatedCost,
+          available_credits: availableCredits,
+          can_afford: availableCredits >= estimatedCost,
+          is_first_build: isFirstBuild,
+          message: availableCredits >= estimatedCost
+            ? `Ready to build. This will cost ${estimatedCost} credits (you'll have ${availableCredits - estimatedCost} left).`
+            : `Insufficient credits. Need ${estimatedCost}, have ${availableCredits}. Upgrade at https://wyberai.com/pricing`,
+        })
+      },
+    )
+
+    server.tool(
+      'send_message',
+      'Queue a build/change for a project. Returns a message_id immediately; the build runs asynchronously (8-10 mins) — poll get_message_status until it is "done".',
+      {
+        project_id: z.string().describe('Project ID'),
+        message: z.string().describe('What to build or change'),
+        project_type: z.enum(['web-app', 'mobile', 'website', 'saas']).optional().describe('Type of project (default: web-app)'),
+      },
+      // destructiveHint: a build can rewrite the project's existing files. Each
+      // queued build also consumes WyberAi credits from the connected account.
+      { title: 'Build or edit the app', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+
+        // Verify ownership + get user credits before queueing
+        const { data: project } = await db
+          .from('projects')
+          .select('id, files, name')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        const { data: profile } = await db
+          .from('profiles')
+          .select('credits')
+          .eq('id', userId)
+          .single()
+
+        const availableCredits = profile?.credits ?? 0
+        const isFirstBuild = !project.files || Object.keys(project.files as Record<string, unknown>).length === 0
+        const estimatedCost = isFirstBuild ? 200 : 80
 
         if (availableCredits < estimatedCost) {
           return errorResult(
@@ -165,26 +207,30 @@ const handler = createMcpHandler(
             project_id: args.project_id,
             user_id: userId,
             message: args.message,
-            project_type: args.project_type,
+            project_type: args.project_type || 'web-app',
             status: 'queued',
           })
           .select('id')
           .single()
         if (error) return errorResult(`Could not queue message: ${error.message}`)
 
+        const statusUrl = `${APP_URL}/mcp/build/${data?.id}`
+        const remaining = availableCredits - estimatedCost
+
         return jsonResult({
           message_id: data?.id,
           status: 'queued',
           estimated_cost: estimatedCost,
-          available_credits: availableCredits,
-          note: `Build queued (${availableCredits - estimatedCost} credits remaining after this build). Poll get_message_status with this message_id until status is "done" (usually 1-2 minutes).`,
+          remaining_credits: remaining,
+          status_url: statusUrl,
+          note: `🏗️ Building ${project.name}...\nThis typically takes 8-10 minutes.\n\n📊 Live Progress: ${statusUrl}\n\nI'll update you when it's ready!`,
         })
       },
     )
 
     server.tool(
       'get_message_status',
-      'Check the status of a queued build (from send_message): queued | processing | done | error.',
+      'Check the status of a queued build (from send_message): queued | processing | done | error. Returns live URL when complete.',
       { message_id: z.string().describe('The message_id returned by send_message') },
       { title: 'Check build status', readOnlyHint: true, openWorldHint: false },
       async (args, extra) => {
@@ -193,23 +239,32 @@ const handler = createMcpHandler(
         const db = createServiceClient()
         const { data } = await db
           .from('mcp_messages')
-          .select('id, status, response, error, created_at, processed_at')
+          .select('id, status, response, error, published_url, created_at, processed_at')
           .eq('id', args.message_id)
           .eq('user_id', userId)
           .single()
         if (!data) return errorResult('Message not found')
 
+        // Calculate elapsed time for progress display
+        const createdAt = new Date(data.created_at).getTime()
+        const now = new Date().getTime()
+        const elapsedMin = Math.floor((now - createdAt) / 60000)
+        const elapsedSec = Math.floor(((now - createdAt) % 60000) / 1000)
+
+        let progressMsg = ''
+        if (data.status === 'queued') {
+          progressMsg = `⏳ Queued for ${elapsedMin}m ${elapsedSec}s. Builds typically take 8-10 minutes total.`
+        } else if (data.status === 'processing') {
+          progressMsg = `🔨 Building for ${elapsedMin}m ${elapsedSec}s. This is normal — generation takes time.`
+        }
+
         // If there's a credit-limit error, inject an interactive checkout modal
-        // via MCP resource. Pattern: error contains "Not enough credits" + extract
-        // cost/balance from error message or from profiles table.
         let checkoutUrl: string | null = null
         if (data.status === 'error' && data.error?.includes('Not enough credits')) {
           const costMatch = data.error.match(/costs? (\d+)/)
           const balanceMatch = data.error.match(/have (\d+)/)
           const cost = costMatch ? parseInt(costMatch[1], 10) : 100
           const balance = balanceMatch ? parseInt(balanceMatch[1], 10) : 0
-
-          // Build the checkout resource URL for MCP Apps to render
           checkoutUrl = `${APP_URL}/api/mcp/resources/checkout?user_id=${userId}&cost=${cost}&balance=${balance}`
         }
 
@@ -218,6 +273,8 @@ const handler = createMcpHandler(
           status: data.status,
           response: data.response,
           error: data.error,
+          published_url: data.published_url,
+          progress: progressMsg,
           ...(checkoutUrl && { checkout_url: checkoutUrl }),
         }
 

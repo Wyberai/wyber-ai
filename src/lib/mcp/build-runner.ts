@@ -127,11 +127,29 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
       .update({ files: merged, updated_at: new Date().toISOString() })
       .eq('id', project.id)
 
+    // Auto-publish the project so Claude immediately has a live URL
+    const publishRes = await fetch(`${baseUrl}/api/publish`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Scheduler-User-Id': claimed.user_id,
+        'X-Scheduler-Secret': process.env.CRON_SECRET!,
+      },
+      body: JSON.stringify({ projectId: project.id }),
+    })
+
+    let publishedUrl = null
+    if (publishRes.ok) {
+      const publishData = await publishRes.json().catch(() => ({}))
+      publishedUrl = (publishData as { url?: string }).url
+    }
+
     const changed = newFiles.length + editBlocks.length
     await db.from('mcp_messages')
       .update({
         status: 'done',
-        response: `Build complete — ${changed} file change(s) applied. Project now has ${Object.keys(merged).length} file(s).`,
+        response: `✅ Build complete — ${changed} file change(s). ${publishedUrl ? `Live: ${publishedUrl}` : 'Project updated.'}`,
+        published_url: publishedUrl,
         processed_at: new Date().toISOString(),
       })
       .eq('id', claimed.id)
