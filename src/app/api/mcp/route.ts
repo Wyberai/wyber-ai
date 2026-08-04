@@ -1,5 +1,6 @@
 import { createMcpHandler, withMcpAuth } from 'mcp-handler'
 import { z } from 'zod'
+import { headers } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase/server'
 import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
 import { getProjectSupabase } from '@/lib/mcp/project-db'
@@ -7,6 +8,7 @@ import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
 import { creditCost, resolveBuildTier, type ActionType, type ModelTier } from '@/lib/credits'
 import { PLAN_FACTS } from '@/lib/plans'
+import { currencyForCountry } from '@/lib/currency'
 import { Composio } from '@composio/core'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 import { sendAdminMcpProjectAlert } from '@/lib/email'
@@ -24,6 +26,30 @@ function jsonResult(payload: unknown) {
 
 function errorResult(message: string) {
   return { content: [{ type: 'text' as const, text: message }], isError: true }
+}
+
+/** Get user's currency: from profile.country if set, fallback to IP geolocation header, then USD */
+async function getUserCurrency(userId: string): Promise<'USD' | 'INR'> {
+  try {
+    const db = createServiceClient()
+    const { data: profile } = await db
+      .from('profiles')
+      .select('country')
+      .eq('id', userId)
+      .single()
+
+    // If profile has country set, use it
+    if (profile?.country) {
+      return currencyForCountry(profile.country)
+    }
+
+    // Fallback: try to detect from request IP
+    const headersList = await headers()
+    const ipCountry = headersList.get('x-vercel-ip-country') || headersList.get('cf-ipcountry')
+    return currencyForCountry(ipCountry)
+  } catch {
+    return 'USD' // Safe default
+  }
 }
 
 /** Build upsell message for insufficient credits */
@@ -291,7 +317,7 @@ const handler = createMcpHandler(
         const planRank: Record<string, number> = { free: 0, spark: 0, starter: 1, builder: 2, pro: 3, growth: 4, scale: 5 }
         const userPlanRank = planRank[profile.plan as string] ?? 0
         const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
-        const currency = profile.country === 'IN' ? 'INR' : 'USD'
+        const currency = await getUserCurrency(userId)
 
         // Calculate cost
         const estimatedFiles = args.estimated_files ?? 15
@@ -383,7 +409,7 @@ const handler = createMcpHandler(
         const estimatedCost = creditCost(actionType, modelTier, buildTier)
 
         if (availableCredits < estimatedCost) {
-          const currency = profile.country === 'IN' ? 'INR' : 'USD'
+          const currency = await getUserCurrency(userId)
           return errorResult(insufficientCreditsMessage(estimatedCost, availableCredits, currency))
         }
 
