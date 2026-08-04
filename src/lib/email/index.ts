@@ -1221,3 +1221,23 @@ export async function sendBreakupEmail(to: string, name: string, unsubUrl: strin
   `, "Should we close your file?", unsubUrl)
   return resend.emails.send({ from: FROM, to, subject: 'Should we close your file?', html })
 }
+
+// ── 32. Milestone celebration — 1000 creators ──
+export async function sendMilestoneEmail(to: string, name?: string, unsubUrl?: string) {
+  const greeting = name ? `${name}, we hit 1,000 creators 🎉` : 'We hit 1,000 creators 🎉'
+  const html = wrap(`
+    ${h1(greeting)}
+    ${p('A thousand people building with WyberAi. That\'s not luck — that\'s you and everyone before you proving that AI-native app building works.')}
+    ${infoBox([
+      ['Your reward', '50% off any plan'],
+      ['Use code', '<strong style="color:#f0f0f4">WYBER50</strong> at checkout'],
+      ['Valid until', 'August 15, 2026']
+    ], '#0EA5E955')}
+    ${p('This 50% discount applies to any plan upgrade or credit top-up. Whether you\'re building your first app or scaling your tenth, this is our thank you for being part of the community.')}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Upgrade now →', `${APP_URL}/pricing`)}
+    </div>
+    ${p('See you on the other side of WYBER50.')}
+  `, 'We hit 1,000 creators', unsubUrl)
+  return resend.emails.send({ from: FROM, to, subject: '🎉 We hit 1,000 creators — 50% off for you', html })
+}
