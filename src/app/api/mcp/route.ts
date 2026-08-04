@@ -94,16 +94,21 @@ function postBuildUpsell(projectType: string): string {
 
 ✅ Your app is built and live!
 
-Post-build options:
+**Post-build options:**
 - **Publish to web** (free) — get a public URL
 - **Buy custom domain** ($9–15/year) — your own domain
-- **Enable Supabase** (free) — real database instead of mock data
+
+**Choose storage:**
+- **Connect Supabase** (free) — bring your own database
+- **Connect WyberCloud** (free tier) — our hosted database, zero setup
+
+**More:**
 - **Upgrade to Opus** — faster builds, higher quality (available in Builder plan)`
 
   if (projectType === 'mobile') {
     return `${baseMsg}
 - **Export APK** (50 credits) — download and install on Android devices
-- **Export IPA** (? credits) — for iOS via TestFlight`
+- **Export IPA** (50 credits) — for iOS via TestFlight`
   }
 
   return baseMsg
@@ -433,6 +438,9 @@ const handler = createMcpHandler(
           status: 'queued',
           cost_charged: estimatedCost,
           credits_remaining: availableCredits - estimatedCost,
+          estimated_files: estimatedFiles,
+          build_tier: buildTier,
+          model_tier: modelTier,
           status_url: statusUrl,
           message: `🏗️ Building your ${args.project_type}...\n⏱️ Estimated time: 8-10 minutes\n\n📊 Live Progress: ${statusUrl}\n\nI'll let you know when it's done!`,
         })
@@ -809,6 +817,16 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+
+        // Verify project ownership
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
 
         try {
           const res = await fetch(`${APP_URL}/api/snapshots/${args.snapshot_id}`, {
@@ -1192,6 +1210,52 @@ const handler = createMcpHandler(
           })
         } catch (err) {
           return errorResult(`Could not connect Supabase: ${String(err).slice(0, 100)}`)
+        }
+      },
+    )
+
+    server.tool(
+      'connect_wybercloud',
+      'Connect WyberCloud (our hosted database) for easy backend without setup. Zero-config option.',
+      {
+        project_id: z.string().describe('Project ID'),
+      },
+      { title: 'Connect WyberCloud', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      async (args, extra) => {
+        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
+        if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
+
+        const { data: project } = await db
+          .from('projects')
+          .select('id')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+
+        try {
+          const { error } = await db
+            .from('project_connectors')
+            .upsert(
+              {
+                project_id: args.project_id,
+                user_id: userId,
+                service: 'wybercloud',
+                config: {
+                  enabled: true,
+                },
+              },
+              { onConflict: 'project_id,user_id,service' },
+            )
+          if (error) return errorResult(`Could not connect: ${error.message}`)
+
+          return jsonResult({
+            success: true,
+            message: `✅ WyberCloud connected!\n\nYour app now uses our hosted database.\n\n**Included:**\n- Zero-config setup\n- Automatic backups\n- 5GB free tier\n- Scales as you grow\n\nNext: rebuild the app to use real data instead of mocks.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not connect WyberCloud: ${String(err).slice(0, 100)}`)
         }
       },
     )
