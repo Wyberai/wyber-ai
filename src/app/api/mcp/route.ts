@@ -28,7 +28,7 @@ function errorResult(message: string) {
   return { content: [{ type: 'text' as const, text: message }], isError: true }
 }
 
-/** Get user's currency: from profile.country if set, fallback to IP geolocation header, then USD */
+/** Get user's currency: from profile.country if set, then USD default */
 async function getUserCurrency(userId: string): Promise<'USD' | 'INR'> {
   try {
     const db = createServiceClient()
@@ -42,14 +42,10 @@ async function getUserCurrency(userId: string): Promise<'USD' | 'INR'> {
     if (profile?.country) {
       return currencyForCountry(profile.country)
     }
-
-    // Fallback: try to detect from request IP
-    const headersList = await headers()
-    const ipCountry = headersList.get('x-vercel-ip-country') || headersList.get('cf-ipcountry')
-    return currencyForCountry(ipCountry)
   } catch {
-    return 'USD' // Safe default
+    /* fall through to default */
   }
+  return 'USD' // Safe default
 }
 
 /** Build upsell message for insufficient credits */
