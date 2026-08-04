@@ -15,7 +15,7 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, type PlannedFile } from '@/lib/staged-plan';
+import { parsePlanManifest, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES } from '@/lib/staged-plan';
 import { resolveBuildTier } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
