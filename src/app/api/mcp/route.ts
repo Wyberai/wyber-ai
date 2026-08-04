@@ -1257,31 +1257,6 @@ const handler = createMcpHandler(
     )
 
     server.tool(
-      'set_project_knowledge',
-      'Set design standards, brand guidelines, and coding patterns for this project. Persists across all builds.',
-      {
-        project_id: z.string().describe('Project ID'),
-        knowledge: z.string().describe('Design/brand standards (plain text, max 8000 chars)'),
-      },
-      { title: 'Set project knowledge', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-      async (args, extra) => {
-        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
-        if (!userId) return errorResult('Unauthorized')
-        const db = createServiceClient()
-        const { error } = await db
-          .from('projects')
-          .update({ knowledge: args.knowledge.slice(0, 8000) })
-          .eq('id', args.project_id)
-          .eq('user_id', userId)
-        if (error) return errorResult(`Could not save: ${error.message}`)
-        return jsonResult({
-          ok: true,
-          message: `✅ Project knowledge saved. The builder will follow these standards on every build.`,
-        })
-      },
-    )
-
-    server.tool(
       'invite_collaborator',
       'Invite someone to edit or view this project.',
       {
