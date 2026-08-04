@@ -338,7 +338,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'एक US-रजिस्टर्ड कंपनी · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI से पेमेंट करें',
 
-    bannerLabel: '🇮🇳 स्वतंत्रता दिवस विशेष',
+    bannerLabel: 'स्वतंत्रता दिवस विशेष',
     bannerText: 'कोड WYBER50 से 50% छूट, सभी प्लान पर 15 अगस्त तक',
     bannerCta: 'अभी दावा करें →',
     statAppsBuilt: 'बने ऐप्स',
@@ -489,7 +489,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'US-ನೋಂದಾಯಿತ ಕಂಪನಿ · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI ಮೂಲಕ ಪಾವತಿಸಿ',
 
-    bannerLabel: '🇮🇳 ಸ್ವಾತಂತ್ರ್ಯ ದಿವಸ ವಿಶೇಷ',
+    bannerLabel: 'ಸ್ವಾತಂತ್ರ್ಯ ದಿವಸ ವಿಶೇಷ',
     bannerText: 'ಕೋಡ್ WYBER50 ನೊಂದಿಗೆ 50% ರಿಯಾಯಿತಿ, ಎಲ್ಲಾ ಯೋಜನೆಗಳಲ್ಲಿ ಆಗಸ್ಟ್ 15 ರವರೆಗೆ',
     bannerCta: 'ಈಗ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ →',
     statAppsBuilt: 'ನಿರ್ಮಿಸಿದ ಆ್ಯಪ್‌ಗಳು',
@@ -640,7 +640,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'US-రిజిస్టర్డ్ కంపెనీ · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI తో పే చేయండి',
 
-    bannerLabel: '🇮🇳 స్వాతంత్ర్య దిన ప్రత్యేకం',
+    bannerLabel: 'స్వాతంత్ర్య దిన ప్రత్యేకం',
     bannerText: 'కోడ్ WYBER50 తో 50% డిస్కౌంట్, అన్ని ప్లాన్‌లలో ఆగస్టు 15 వరకు',
     bannerCta: 'ఇప్పుడు క్లెయిమ్ చేయండి →',
     statAppsBuilt: 'నిర్మించిన యాప్‌లు',
@@ -791,7 +791,7 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'US-பதிவு செய்யப்பட்ட நிறுவனம் · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI மூலம் பணம் செலுத்துங்கள்',
 
-    bannerLabel: '🇮🇳 சுதந்திர தினம் சிறப்பு',
+    bannerLabel: 'சுதந்திர தினம் சிறப்பு',
     bannerText: 'கோடு WYBER50 உடன் 50% தள்ளுபடி, அனைத்து திட்டங்களிலும் ஆகஸ்ட் 15 வரை',
     bannerCta: 'இப்போது உரிமை கோரவும் →',
     statAppsBuilt: 'உருவாக்கப்பட்ட ஆப்ஸ்',

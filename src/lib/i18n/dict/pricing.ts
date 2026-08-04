@@ -26,7 +26,7 @@ export const PRICING_STRINGS: Record<Locale, Record<string, string>> = {
     navWeeklyChallenge: 'Weekly Challenge',
     navDashboard: 'Dashboard →',
     navGetStarted: 'Get started →',
-    heroBadge: 'Simple, transparent pricing',
+    heroBadge: '50% off all plans through August 15',
     heroTitleLine1: 'Build apps with AI.',
     heroTitleLine2: 'Pay only for what you use.',
     heroSubtitle: 'Every plan unlocks ALL features — web apps AND mobile apps, same credits, same workspace. No project limits, no feature gates. 50 free credits on signup.',
