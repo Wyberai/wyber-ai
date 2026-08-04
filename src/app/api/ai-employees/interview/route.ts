@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     const recentMessages = messages.slice(-12)
 
     const stream = await anthropic.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 900,
       system: buildInterviewPrompt(role),
       messages: recentMessages.length ? recentMessages : [{ role: 'user', content: "Hi — thanks for coming in. Introduce yourself for the role." }],

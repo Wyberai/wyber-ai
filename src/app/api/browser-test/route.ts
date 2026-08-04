@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 800,
       system: 'You are a QA engineer. Generate browser test scenarios for a web app. Return ONLY a JSON array of test objects with: name (string), description (string), type ("navigation"|"click"|"form"|"responsive"|"visual"). Max 6 tests.',
       messages: [{ role: 'user', content: `App URL: ${url}\nGenerate browser tests for this app.` }],

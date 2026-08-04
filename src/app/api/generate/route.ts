@@ -2111,7 +2111,7 @@ async function resolveModelTier(opts: {
 async function isComplexBuild(prompt: string): Promise<boolean> {
   try {
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 5,
       // Pinned — without this, the same prompt can flip LOW/HIGH between
       // calls on borderline requests (confirmed: one real prompt split
@@ -2189,7 +2189,7 @@ async function updateProjectMemory(opts: {
       .trim()
       .slice(0, 1200)
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 700,
       system: `You maintain a compact long-term memory of a web/mobile app a user is building with an AI builder. Merge the new turn into the existing memory. Keep ONLY durable facts that help future edits: what the app is, its main screens/features, the data model/schema, design conventions, integrations (e.g. Supabase), and standing user preferences. Drop one-off chatter. Terse note form, <=900 characters. Output ONLY the updated memory text — no preamble, no markdown headers.`,
       messages: [{
@@ -2231,7 +2231,7 @@ async function nameNewProject(projectId: string, userPrompt: string): Promise<vo
     const stillAuto = autoNames.includes(project.name) || /^New Project( |$)/.test(project.name ?? '')
     if (!stillAuto) return
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 20,
       system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, not the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
       messages: [{ role: 'user', content: userPrompt.slice(0, 500) }],

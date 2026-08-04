@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4000,
         system: `You are an expert at converting Figma designs to React/Next.js code. Given a Figma file structure, generate a production-ready React component with inline styles. Extract colors, typography, spacing, layout, and component structure. Return ONLY the React component code, no explanation, no markdown. Export as default.`,
         messages: [{ role: 'user', content: `Convert this Figma design to React. File: "${fileName}"\n\nStructure:\n${JSON.stringify(pages[0] || {}, null, 2).slice(0, 8000)}` }],

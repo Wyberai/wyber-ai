@@ -103,7 +103,7 @@ async function executeAiAgent(
   sourceId?: string,
 ): Promise<{ output: unknown; log: string[]; toolResults: Record<string, unknown> }> {
   const instructions = node.data.config.instructions || node.data.subtitle || 'Process the input and respond.'
-  const model = node.data.config.model || 'claude-haiku-4-5-20251001'
+  const model = node.data.config.model || 'claude-sonnet-4-6'
   const upstreamContext = Object.keys(state).length
     ? `\n\nUpstream data:\n${JSON.stringify(state, null, 2)}`
     : ''
@@ -272,7 +272,7 @@ async function saveAgentMemory(
     const db = createServiceClient()
     // Build concise summary with AI
     const summaryRes = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 400,
       messages: [{
         role: 'user',

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY!, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2000,
       system: `You are an SEO and AEO (AI Engine Optimization) expert. Analyze a web app and return a JSON audit with these exact fields:
 {
