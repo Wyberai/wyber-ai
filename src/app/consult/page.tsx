@@ -25,22 +25,22 @@ const WHAT_HAPPENS = [
     desc: 'What features matter on day one vs later. What\'s your timeline. What budget range you\'re working with. We\'ve scoped hundreds of these.',
   },
   {
-    icon: '📋',
-    title: 'You get a firm quote',
-    desc: 'Before the call ends: a price, a delivery date, and exactly what\'s included. Not a range — a number.',
+    icon: '📊',
+    title: 'You get a full breakdown — within 24 hrs',
+    desc: 'Credits needed to build it, tools and integrations required, and exactly what the MVP should include. Clear, specific, actionable.',
   },
   {
     icon: '🛠️',
-    title: 'We build it (if you want)',
-    desc: 'Take the quote and build it yourself on WyberAi, or hire us to build it for you. No pressure either way.',
+    title: 'Build it yourself or let us help',
+    desc: 'Use the breakdown to build on WyberAi yourself — or have us build it for you. Either way, you leave knowing exactly what to do next.',
   },
 ]
 
 const OBJECTIONS = [
   { q: 'Is this actually free?', a: 'Yes. No card, no payment. The only ask is that you\'re seriously thinking about building something — slots are limited and we want to spend them on real ideas.' },
-  { q: 'Do I need to have everything figured out?', a: 'No. Half the value of this call is helping you figure out what to build first. Come with a rough idea, we\'ll help you make it concrete.' },
-  { q: 'Am I obligated to hire WyberAi afterward?', a: 'Not at all. Take the quote and do whatever you want with it — build it yourself, hire someone else, or come back to us when you\'re ready.' },
-  { q: 'How long does it actually take?', a: '15 minutes on Google Meet. We respect your time — we\'ve done enough of these to know exactly what to ask.' },
+  { q: 'What exactly do I get after the call?', a: 'Within 24 hours: a breakdown of how many WyberAi credits your app needs, which tools and integrations are required, and what the right MVP scope looks like. Enough to build it yourself — or hand it to us.' },
+  { q: 'Do I need to have everything figured out?', a: 'No. Half the value of this call is helping you figure out what to build first. Come with a rough idea — we\'ll make it concrete.' },
+  { q: 'Am I obligated to hire WyberAi afterward?', a: 'Not at all. Use the breakdown to build on WyberAi yourself, hire someone else, or come back to us when you\'re ready. No pressure either way.' },
 ]
 
 const s = {
@@ -86,7 +86,7 @@ export default function ConsultPage() {
           </h1>
 
           <p style={{ fontSize: 'clamp(15px,2vw,18px)', color: s.muted, maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.75 }}>
-            Book a free 15-min call with our Founder. Tell us your idea — we&apos;ll scope it, quote it, and give you a clear path forward. <strong style={{ color: s.text }}>No commitment. No pitch. Just honest advice.</strong>
+            Book a free 15-min call with our Founder. Tell us your idea — we&apos;ll scope it and send you a full breakdown within 24 hours: credits needed, tools required, and a clear MVP plan. <strong style={{ color: s.text }}>No commitment. No pitch. Just the right advice.</strong>
           </p>
 
           {/* Trust badges */}
@@ -130,7 +130,7 @@ export default function ConsultPage() {
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Sumeet Sutar</div>
             <div style={{ fontSize: 13, color: s.sky, fontWeight: 600, marginBottom: 10 }}>Founder · WyberAi</div>
             <p style={{ fontSize: 14, color: s.muted, lineHeight: 1.7, margin: 0 }}>
-              You&apos;re not talking to a sales rep or an AI chatbot — you&apos;re talking directly to the person who built WyberAi. I&apos;ve scoped and shipped hundreds of apps. I&apos;ll tell you exactly what&apos;s realistic, what it&apos;ll cost, and how long it takes.
+              You&apos;re not talking to a sales rep or an AI chatbot — you&apos;re talking directly to the person who built WyberAi. Tell me your idea, and within 24 hours I&apos;ll send you a precise breakdown: credits needed, tools required, and exactly what the right MVP scope looks like.
             </p>
           </div>
           <div style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: '16px 22px', textAlign: 'center', flexShrink: 0 }}>
