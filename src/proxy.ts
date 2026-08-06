@@ -90,6 +90,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/security') ||
     path.startsWith('/changelog') ||
     path.startsWith('/setup-call') ||
+    // Free founder consultation landing page — ad traffic, must be public.
+    path.startsWith('/consult') ||
     path.startsWith('/complexity-guide') ||
     path.startsWith('/learn') ||
     path.startsWith('/coming-soon') ||
