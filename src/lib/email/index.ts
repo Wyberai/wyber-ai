@@ -1241,3 +1241,65 @@ export async function sendMilestoneEmail(to: string, name?: string, unsubUrl?: s
   `, 'We hit 1,000 creators', unsubUrl)
   return resend.emails.send({ from: FROM, to, subject: '🎉 We hit 1,000 creators — 50% off for you', html })
 }
+
+// ── Free US scoping-call lifecycle (src/app/api/cal/webhook, src/app/api/cron/consultation-reminders) ──
+// Four emails around one free, US-only consultation booking: confirmation the
+// moment Cal.com fires BOOKING_CREATED, a day-before nudge, a 30-minutes-before
+// nudge, and a thank-you once Cal.com fires MEETING_ENDED. Deliberately plain/
+// warm rather than meme-toned (unlike most of this file) — this is a real
+// scheduled human call, not a lifecycle nudge.
+
+function formatMeetingTime(startIso: string): string {
+  return new Date(startIso).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+  })
+}
+
+export async function sendConsultationConfirmEmail(to: string, name: string | null, startIso: string, meetLink?: string) {
+  const when = formatMeetingTime(startIso)
+  const html = wrap(`
+    ${h1(`You're booked${name ? `, ${name}` : ''} 🎉`)}
+    ${p(`Your free scoping call is confirmed for <strong style="color:#f0f0f4">${when}</strong>.`)}
+    ${infoBox([
+      ['When', when],
+      ['Duration', '60 minutes'],
+      ['Where', meetLink ? `<a href="${meetLink}" style="color:#0EA5E9">Google Meet link</a>` : 'Google Meet (link in your calendar invite)'],
+    ], '#0EA5E944')}
+    ${p('Come with a real description of what you want to build — the more specific, the more useful the call. We\'ll give you a firm quote and delivery date if you decide to move forward.')}
+    ${p('Need to reschedule or cancel? Use the link in your calendar invite.')}
+  `, 'Your free scoping call is confirmed')
+  return resend.emails.send({ from: FROM, to, subject: `Confirmed: your free scoping call — ${when}`, html })
+}
+
+export async function sendConsultationReminder1DayEmail(to: string, name: string | null, startIso: string, meetLink?: string) {
+  const when = formatMeetingTime(startIso)
+  const html = wrap(`
+    ${h1(`Tomorrow: your scoping call${name ? `, ${name}` : ''}`)}
+    ${p(`Just a heads up — your free scoping call is tomorrow, <strong style="color:#f0f0f4">${when}</strong>.`)}
+    ${meetLink ? `<div style="text-align:center;margin:0 0 24px">${btn('Join link →', meetLink)}</div>` : ''}
+    ${p('Jot down what you want to build before the call so we can make the most of the 60 minutes.')}
+  `, 'Your scoping call is tomorrow')
+  return resend.emails.send({ from: FROM, to, subject: `Reminder: your scoping call is tomorrow (${when})`, html })
+}
+
+export async function sendConsultationReminder30MinEmail(to: string, name: string | null, meetLink?: string) {
+  const html = wrap(`
+    ${h1(`Starting soon${name ? `, ${name}` : ''} ⏰`)}
+    ${p('Your free scoping call starts in about 30 minutes.')}
+    ${meetLink ? `<div style="text-align:center;margin:0 0 24px">${btn('Join now →', meetLink)}</div>` : ''}
+  `, 'Your call starts in 30 minutes')
+  return resend.emails.send({ from: FROM, to, subject: 'Starting in 30 minutes — your WyberAi scoping call', html })
+}
+
+export async function sendConsultationThankYouEmail(to: string, name: string | null) {
+  const html = wrap(`
+    ${h1(`Thanks for the call${name ? `, ${name}` : ''}`)}
+    ${p('Thanks for walking us through your idea today. We\'ll follow up by email with a firm quote and delivery date if we discussed moving forward — reply here anytime if you have questions in the meantime.')}
+    ${p('In the meantime, feel free to explore WyberAi and try building it yourself — it\'s free to start.')}
+    <div style="text-align:center;margin:0 0 24px">
+      ${btn('Start building free →', `${APP_URL}/signup`)}
+    </div>
+  `, 'Thanks for the call')
+  return resend.emails.send({ from: FROM, to, subject: 'Thanks for the call — next steps', html })
+}

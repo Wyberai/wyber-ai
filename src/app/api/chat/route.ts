@@ -1,9 +1,11 @@
+import { randomUUID } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const ANON_COOKIE = 'wyb_anon_id'
 
 const SYSTEM = `You are the WyberAi assistant — a helpful companion that helps users build, ship, and automate with the platform.
 
@@ -37,7 +39,13 @@ PRICING (3 plans):
 
 DONE-FOR-YOU BUILDS:
 - Simple: $199 / 24 hours | Medium: $399 / 3 days | Complex: $799 / 1 week
-- Book at wyberai.com/setup-call
+- Free scoping call available (US only): book at wyberai.com/setup-call — no charge, just describe your idea and we give you a firm quote + delivery date. Only worth booking if you're seriously considering building something, not just browsing.
+
+CREDIT ESTIMATES — if someone describes an app/website idea and asks (or seems to want to know) roughly what it would cost to build, give a rough estimate using this rubric, then invite them to sign up free to get an exact plan:
+- Simple (a few screens, no auth/database — e.g. landing page, portfolio, single-tool app): ~15-25 credits
+- Medium (auth + database, several screens — e.g. SaaS MVP, booking system, CRM): ~25-45 credits
+- Complex (multi-role, payments, many screens/integrations — e.g. full SaaS, marketplace): ~40-130 credits
+Credits are roughly $0.15-0.20 each depending on plan. Always frame this as a ROUGH estimate ("roughly", "ballpark") — the exact cost depends on details you don't have yet, and an exact number requires either signing up for a real build plan or booking the free scoping call above.
 
 COMPARED TO COMPETITORS:
 - vs Lovable: Wyber generates fresh code from scratch (not templates), does web apps AND mobile apps AND websites AND full SaaS, self-heals build errors, and you own the code on GitHub. Starts at $29/mo.
@@ -64,11 +72,26 @@ NEVER:
 
 export async function POST(req: NextRequest) {
   try {
+    // Logged-in users rate-limit on their real user id (higher limit — they're
+    // a known, accountable identity). Anonymous website visitors (the whole
+    // point of this route per the system prompt above, which was previously
+    // unreachable — this endpoint 401'd anyone not logged in) rate-limit on a
+    // first-party cookie instead, since IP alone over/under-blocks (shared
+    // mobile carrier NAT, VPNs) and under-blocks a determined abuser less
+    // than a cookie does (clearing cookies is more friction than a fresh IP).
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { allowed } = rateLimit(`chat:${user.id}`, 20, 60000)
+    let anonId = req.cookies.get(ANON_COOKIE)?.value
+    let setAnonCookie = false
+    if (!user && !anonId) {
+      anonId = randomUUID()
+      setAnonCookie = true
+    }
+
+    const rateLimitKey = user ? `chat:${user.id}` : `chat:anon:${anonId}`
+    const rateLimitMax = user ? 20 : 8
+    const { allowed } = rateLimit(rateLimitKey, rateLimitMax, 60000)
     if (!allowed) return NextResponse.json({ error: 'Too many requests. Please wait a minute.' }, { status: 429 })
 
     const { messages } = await req.json()
@@ -100,12 +123,16 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return new Response(readable, {
+    const response = new Response(readable, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
       },
     })
+    if (setAnonCookie && anonId) {
+      response.headers.append('Set-Cookie', `${ANON_COOKIE}=${anonId}; Path=/; Max-Age=31536000; SameSite=Lax; HttpOnly`)
+    }
+    return response
   } catch (err) {
     console.error('Chat API error:', err)
     return new Response('Something went wrong', { status: 500 })

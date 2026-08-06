@@ -73,8 +73,14 @@ export function WyberChatbot() {
   const [hasGreeted, setHasGreeted] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [humanMode, setHumanMode] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
+  const [speaking, setSpeaking] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const audioElRef = useRef<HTMLAudioElement | null>(null)
 
   // Check path on mount and re-check on every client-side navigation
   useEffect(() => {
@@ -95,14 +101,14 @@ export function WyberChatbot() {
       if (!hasGreeted) {
         setMessages([{
           role: 'assistant',
-          content: "Hi! I'm the WyberAi assistant. I can help you understand what Wyber does, how pricing works, or how to get started. What would you like to know?"
+          content: "Hi! I'm the WyberAi assistant. Type or tap the mic to talk — tell me about an app idea and I'll give you a rough cost estimate, or ask about pricing and how to get started."
         }])
         setHasGreeted(true)
       }
     }
   }, [open, hasGreeted])
 
-  const send = async (text?: string) => {
+  const send = async (text?: string, spokenInput = false) => {
     const content = (text || input).trim()
     if (!content || loading) return
     const userMsg: Message = { role: 'user', content }
@@ -131,10 +137,75 @@ export function WyberChatbot() {
           return updated
         })
       }
+      // Only speak the reply back if the user asked by voice — a typed
+      // question shouldn't suddenly start talking at them.
+      if (spokenInput && assistantContent) speakReply(assistantContent)
     } catch {
       setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, something went wrong. Please try again or email hello@wyberai.com" }])
     }
     setLoading(false)
+  }
+
+  const speakReply = async (text: string) => {
+    try {
+      setSpeaking(true)
+      const res = await fetch('/api/chat/speak', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) { setSpeaking(false); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = audioElRef.current ?? new Audio()
+      audioElRef.current = audio
+      audio.src = url
+      audio.onended = () => { setSpeaking(false); URL.revokeObjectURL(url) }
+      audio.onerror = () => setSpeaking(false)
+      await audio.play()
+    } catch {
+      setSpeaking(false)
+    }
+  }
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : ''
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+      audioChunksRef.current = []
+      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' })
+        if (blob.size < 500) return // essentially silent — nothing worth transcribing
+        setTranscribing(true)
+        try {
+          const form = new FormData()
+          form.append('audio', blob, 'audio.webm')
+          const res = await fetch('/api/chat/transcribe', { method: 'POST', body: form })
+          const data = await res.json()
+          if (res.ok && data.text?.trim()) {
+            send(data.text, true)
+          } else {
+            setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, I couldn't catch that — could you try again or type it instead?" }])
+          }
+        } catch {
+          setMessages(prev => [...prev, { role: 'assistant', content: "Sorry, voice input isn't working right now — please type your question." }])
+        }
+        setTranscribing(false)
+      }
+      mediaRecorderRef.current = recorder
+      recorder.start()
+      setRecording(true)
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: "I need microphone access to hear you — check your browser's permission for this site, or just type instead." }])
+    }
+  }
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop()
+    setRecording(false)
   }
 
   if (isHidden) return null
@@ -181,8 +252,18 @@ export function WyberChatbot() {
             <div ref={bottomRef} />
           </div>
           <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: 8 }}>
-            <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Ask anything about Wyber..." disabled={loading} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-            <button onClick={() => send()} disabled={loading || !input.trim()} style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: loading || !input.trim() ? '#27272a' : '#0EA5E9', color: '#fff', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <input ref={inputRef} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder={recording ? 'Listening...' : transcribing ? 'Transcribing...' : 'Ask anything about Wyber...'} disabled={loading || recording || transcribing} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 12px', color: '#fafafa', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
+            <button
+              onClick={() => recording ? stopRecording() : startRecording()}
+              disabled={loading || transcribing}
+              title={recording ? 'Stop recording' : 'Ask by voice'}
+              style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: recording ? '#ef4444' : speaking ? 'rgba(14,165,233,0.25)' : 'rgba(255,255,255,0.06)', color: '#fff', cursor: loading || transcribing ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: recording ? 'micPulse 1.2s ease infinite' : 'none' }}
+            >
+              {transcribing
+                ? <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#a1a1aa" strokeWidth="2.5" strokeDasharray="14 8" /></svg>
+                : <svg width="14" height="14" viewBox="0 0 24 24" fill={recording ? 'white' : 'none'} stroke={recording ? 'white' : '#a1a1aa'} strokeWidth="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/></svg>}
+            </button>
+            <button onClick={() => send()} disabled={loading || recording || transcribing || !input.trim()} style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: loading || !input.trim() ? '#27272a' : '#0EA5E9', color: '#fff', cursor: loading || !input.trim() ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5,12 12,5 19,12"/></svg>
             </button>
           </div>
@@ -195,7 +276,7 @@ export function WyberChatbot() {
       <button onClick={() => setOpen(v => !v)} style={{ position: 'fixed', bottom: 20, right: 20, width: 56, height: 56, borderRadius: '50%', border: 'none', background: '#0EA5E9', boxShadow: '0 8px 32px rgba(14,165,233,0.4)', cursor: 'pointer', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }} aria-label="Chat with WyberAi">
         {open ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>}
       </button>
-      <style>{`@keyframes chatSlideUp{from{opacity:0;transform:translateY(12px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}`}</style>
+      <style>{`@keyframes chatSlideUp{from{opacity:0;transform:translateY(12px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.5)}50%{box-shadow:0 0 0 8px rgba(239,68,68,0)}}`}</style>
     </>
   )
 }

@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
@@ -9,22 +10,41 @@ const TIERS = [
   { name:'Complex', delivery:'1 week',           color:'#8b5cf6', icon:'🏗️', examples:'Full SaaS with payments, multi-role apps, marketplace platforms' },
 ]
 
-const STEPS = [
-  { n:'01', icon:'💳', title:'Pay $99 consultation fee', desc:'Secures your slot and covers the scoping call. Credited toward your build if you proceed.' },
-  { n:'02', icon:'📅', title:'Pick a time',              desc:'Book any slot — available 24/7 including weekends.' },
-  { n:'03', icon:'💬', title:'We scope your app',        desc:'60 minutes on Google Meet. You describe, we ask the right questions, we give you a firm quote and delivery date.' },
-  { n:'04', icon:'🛠️', title:'We build & deliver',       desc:'GitHub repo, live Vercel URL, walkthrough video. 7-day support included.' },
-]
+// Free is a US-only, English-only offer for now (matches the pricing/homepage
+// "done for you" sections, both gated with currency!=='INR' / !inr). This page
+// has no such gate of its own — it's linked from /contact and /complexity-guide
+// too — so eligibility is computed here from IP country rather than hardcoded,
+// keeping India visitors at the original $99 paid flow regardless of entry point.
+function getSteps(isFree: boolean) {
+  return [
+    isFree
+      ? { n:'01', icon:'🎙️', title:'Tell us it\'s a real project', desc:'This call is free — please only book if you\'re seriously considering building something. Slots are limited.' }
+      : { n:'01', icon:'💳', title:'Pay $99 consultation fee', desc:'Secures your slot and covers the scoping call. Credited toward your build if you proceed.' },
+    { n:'02', icon:'📅', title:'Pick a time',              desc:'Book any slot — available 24/7 including weekends.' },
+    { n:'03', icon:'💬', title:'We scope your app',        desc:'60 minutes on Google Meet. You describe, we ask the right questions, we give you a firm quote and delivery date.' },
+    { n:'04', icon:'🛠️', title:'We build & deliver',       desc:'GitHub repo, live Vercel URL, walkthrough video. 7-day support included.' },
+  ]
+}
 
-const FAQ = [
-  { q:'Is the $99 refundable?',             a:'Yes — fully refunded if we decide on the call that your project isn\'t a fit.' },
-  { q:'Is it credited toward the build?',   a:'Yes. If you proceed with a build, the $99 consultation fee is applied toward your total — you only pay the remaining balance.' },
-  { q:'What can be built in a session?',    a:'Anything WyberAi can generate — SaaS dashboards, landing pages, booking systems, CRMs, e-commerce stores, internal tools.' },
-  { q:'Do I need a WyberAi account?',      a:'No. We build on our end and hand over the code via GitHub.' },
-  { q:'Can I request a specific stack?',    a:'Our default is Next.js + Supabase + Vercel. Other stacks on request — mention it when booking.' },
-]
+function getFaq(isFree: boolean) {
+  return [
+    isFree
+      ? { q:'Is this really free?', a:'Yes — no payment, no card required. We ask that you only book if you\'re seriously considering building something, since slots are limited and we want to spend them on real projects.' }
+      : { q:'Is the $99 refundable?', a:'Yes — fully refunded if we decide on the call that your project isn\'t a fit.' },
+    isFree
+      ? { q:'Am I obligated to buy a build afterward?', a:'Not at all. Take the quote and build it yourself with WyberAi, or hire us — no pressure either way.' }
+      : { q:'Is it credited toward the build?', a:'Yes. If you proceed with a build, the $99 consultation fee is applied toward your total — you only pay the remaining balance.' },
+    { q:'What can be built in a session?',    a:'Anything WyberAi can generate — SaaS dashboards, landing pages, booking systems, CRMs, e-commerce stores, internal tools.' },
+    { q:'Do I need a WyberAi account?',      a:'No. We build on our end and hand over the code via GitHub.' },
+    { q:'Can I request a specific stack?',    a:'Our default is Next.js + Supabase + Vercel. Other stacks on request — mention it when booking.' },
+  ]
+}
 
-export default function SetupCallPage() {
+export default async function SetupCallPage() {
+  const country = (await headers()).get('x-vercel-ip-country')
+  const isFree = true // free globally — cost recovered during build
+  const STEPS = getSteps(isFree)
+  const FAQ = getFaq(isFree)
   const s = { bg:'#09090b', card:'#111113', border:'rgba(255,255,255,0.08)', text:'#fafafa', muted:'#71717a', sky:'#0EA5E9' }
 
   return (
@@ -53,12 +73,16 @@ export default function SetupCallPage() {
         </div>
 
         {/* Consultation fee banner */}
-        <div style={{ background:'rgba(14,165,233,0.06)', border:'1px solid rgba(14,165,233,0.2)', borderRadius:14, padding:'18px 24px', marginBottom:28, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+        <div style={{ background: isFree ? 'rgba(34,197,94,0.06)' : 'rgba(14,165,233,0.06)', border: `1px solid ${isFree ? 'rgba(34,197,94,0.25)' : 'rgba(14,165,233,0.2)'}`, borderRadius:14, padding:'18px 24px', marginBottom:28, display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
           <div>
-            <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>$99 consultation fee</div>
-            <div style={{ fontSize:12, color:s.muted }}>You'll receive a payment link after booking to confirm your slot. Credited toward your build.</div>
+            <div style={{ fontSize:14, fontWeight:700, marginBottom:2 }}>{isFree ? 'Free consultation' : '$99 consultation fee'}</div>
+            <div style={{ fontSize:12, color:s.muted }}>
+              {isFree
+                ? "No payment, no card required. Please only book if you're seriously considering building something — slots are limited."
+                : "You'll receive a payment link after booking to confirm your slot. Credited toward your build."}
+            </div>
           </div>
-          <div style={{ fontSize:22, fontWeight:800, color:s.sky, fontFamily: 'var(--font-display)' }}>$99</div>
+          <div style={{ fontSize:22, fontWeight:800, color: isFree ? '#22c55e' : s.sky, fontFamily: 'var(--font-display)' }}>{isFree ? 'Free' : '$99'}</div>
         </div>
 
         {/* Cal.com embed — always visible */}
