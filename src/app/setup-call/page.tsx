@@ -21,7 +21,7 @@ function getSteps(isFree: boolean) {
       ? { n:'01', icon:'🎙️', title:'Tell us it\'s a real project', desc:'This call is free — please only book if you\'re seriously considering building something. Slots are limited.' }
       : { n:'01', icon:'💳', title:'Pay $99 consultation fee', desc:'Secures your slot and covers the scoping call. Credited toward your build if you proceed.' },
     { n:'02', icon:'📅', title:'Pick a time',              desc:'Book any slot — available 24/7 including weekends.' },
-    { n:'03', icon:'💬', title:'We scope your app',        desc:'60 minutes on Google Meet. You describe, we ask the right questions, we give you a firm quote and delivery date.' },
+    { n:'03', icon:'💬', title:'We scope your app',        desc:'15 minutes on Google Meet. You describe, we ask the right questions, we give you a firm quote and delivery date.' },
     { n:'04', icon:'🛠️', title:'We build & deliver',       desc:'GitHub repo, live Vercel URL, walkthrough video. 7-day support included.' },
   ]
 }
@@ -65,7 +65,7 @@ export default async function SetupCallPage() {
         <div style={{ textAlign:'center', marginBottom:48 }}>
           <div style={{ display:'inline-block', padding:'4px 14px', borderRadius:20, background:'rgba(14,165,233,0.1)', border:'1px solid rgba(14,165,233,0.2)', fontSize:11, fontWeight:700, color:s.sky, letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:16 }}>Done-for-you builds</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize:'clamp(28px,5vw,46px)', fontWeight:800, letterSpacing:'-0.04em', lineHeight:1.1, marginBottom:16 }}>Tell us what you need.<br/>We build it for you.</h1>
-          <p style={{ fontSize:15, color:s.muted, maxWidth:480, margin:'0 auto 20px', lineHeight:1.75 }}>Start with a 60-minute consultation. We scope, quote, and agree on a delivery date — then build and hand it over.</p>
+          <p style={{ fontSize:15, color:s.muted, maxWidth:480, margin:'0 auto 20px', lineHeight:1.75 }}>Start with a 15-minute consultation. We scope, quote, and agree on a delivery date — then build and hand it over.</p>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'8px 18px', borderRadius:20, background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)' }}>
             <div style={{ width:7, height:7, borderRadius:'50%', background:'#22c55e' }}/>
             <span style={{ fontSize:12, color:'#22c55e', fontWeight:600 }}>Available 24/7 · Google Meet · Worldwide</span>

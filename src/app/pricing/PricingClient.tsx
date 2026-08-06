@@ -492,7 +492,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
                 <span style={{ fontSize: 28 }}>📞</span>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: '#fafafa' }}>Free Scoping Call</div>
-                  <div style={{ fontSize: 12, color: '#52525b' }}>60 min · Google Meet · no charge</div>
+                  <div style={{ fontSize: 12, color: '#52525b' }}>15 min · Google Meet · no charge</div>
                 </div>
               </div>
               <p style={{ fontSize: 13, color: '#71717a', margin: 0, maxWidth: 460 }}>Tell us what you need. We scope it and give you a firm quote. Please only book if you&apos;re seriously considering building something — slots are limited and we want to spend them on real projects.</p>
