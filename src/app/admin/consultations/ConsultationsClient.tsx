@@ -101,6 +101,7 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
   const [note, setNote] = useState(meeting.breakdown_payload?.note ?? '')
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(alreadySent)
+  const [sendError, setSendError] = useState<string | null>(null)
 
   const setComplexityAndCredits = (c: string) => {
     setComplexity(c)
@@ -112,25 +113,26 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
   const toggleTool = (t: string) => setTools(ts => ts.includes(t) ? ts.filter(x => x !== t) : [...ts, t])
 
   const sendBreakdown = async () => {
+    const lo = Number(creditsLow), hi = Number(creditsHigh)
+    if (lo >= hi) { setSendError('Credits low must be less than credits high.'); return }
     setSending(true)
+    setSendError(null)
     try {
       const res = await fetch(`/api/admin/consultations/${meeting.id}/send-breakdown`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          complexity,
-          tools,
-          credits_low: Number(creditsLow),
-          credits_high: Number(creditsHigh),
-          note,
-        }),
+        body: JSON.stringify({ complexity, tools, credits_low: lo, credits_high: hi, note }),
       })
-      const data = await res.json() as { ok: boolean; sent_at: string }
-      if (data.ok) {
+      const data = await res.json() as { ok?: boolean; sent_at?: string; error?: string }
+      if (data.ok && data.sent_at) {
         setSent(true)
         setOpen(false)
-        onSent(data.sent_at, { complexity, tools, credits_low: Number(creditsLow), credits_high: Number(creditsHigh), note })
+        onSent(data.sent_at, { complexity, tools, credits_low: lo, credits_high: hi, note })
+      } else {
+        setSendError(data.error ?? 'Send failed — try again.')
       }
+    } catch {
+      setSendError('Network error — check connection and retry.')
     } finally {
       setSending(false)
     }
@@ -223,8 +225,13 @@ function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt
               style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
           </div>
 
+          {sendError && (
+            <div style={{ fontSize: 12, color: RED, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 12px' }}>
+              {sendError}
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-            <button onClick={() => setOpen(false)}
+            <button onClick={() => { setOpen(false); setSendError(null) }}
               style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #2a2a35', background: 'transparent', color: MUTED, fontSize: 13, cursor: 'pointer' }}>
               Cancel
             </button>

@@ -1304,6 +1304,10 @@ export async function sendConsultationThankYouEmail(to: string, name: string | n
   return resend.emails.send({ from: FROM, to, subject: 'Thanks for the call — breakdown coming shortly', html })
 }
 
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
 export async function sendFounderBriefingEmail(
   attendeeName: string | null,
   attendeeEmail: string,
@@ -1319,8 +1323,8 @@ export async function sendFounderBriefingEmail(
   const answersHtml = rows.length
     ? rows.map(([k, v], i) => `
         ${i > 0 ? '<hr style="border:none;border-top:1px solid #2e2e38;margin:10px 0"/>' : ''}
-        <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">${k}</div>
-        <div style="font-size:14px;color:#f0f0f4;line-height:1.65">${String(v).replace(/\n/g, '<br/>')}</div>
+        <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">${esc(k)}</div>
+        <div style="font-size:14px;color:#f0f0f4;line-height:1.65">${esc(String(v)).replace(/\n/g, '<br/>')}</div>
       `).join('')
     : `<div style="font-size:14px;color:#8888a0">No intake answers — ask on the call.</div>`
 

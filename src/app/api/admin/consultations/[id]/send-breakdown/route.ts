@@ -35,13 +35,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Meeting not found' }, { status: 404 })
   }
 
-  await sendBreakdownEmail(meeting.attendee_email, meeting.attendee_name || null, {
-    complexity,
-    tools: tools ?? [],
-    credits_low,
-    credits_high,
-    note: note ?? '',
-  })
+  try {
+    await sendBreakdownEmail(meeting.attendee_email, meeting.attendee_name || null, {
+      complexity,
+      tools: tools ?? [],
+      credits_low,
+      credits_high,
+      note: note ?? '',
+    })
+  } catch (emailErr) {
+    console.error('Breakdown email delivery failed:', String(emailErr))
+    return NextResponse.json({ error: 'Email delivery failed — check Resend config' }, { status: 500 })
+  }
 
   const sentAt = new Date().toISOString()
   const payload = { complexity, tools: tools ?? [], credits_low, credits_high, note: note ?? '' }
