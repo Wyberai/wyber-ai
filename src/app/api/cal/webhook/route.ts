@@ -30,10 +30,11 @@ function getAdmin() {
 
 function verifySignature(body: string, signature: string | null, secret: string): boolean {
   if (!signature) return false
+  // Cal.com sends "sha256=<hex>" — strip the prefix before comparing.
+  const raw = signature.startsWith('sha256=') ? signature.slice(7) : signature
   const expected = crypto.createHmac('sha256', secret).update(body).digest('hex')
-  // Constant-time compare — both must be same length or timingSafeEqual throws.
-  if (expected.length !== signature.length) return false
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
+  if (expected.length !== raw.length) return false
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(raw))
 }
 
 type CalBookingPayload = {
