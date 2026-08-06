@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import {
   sendConsultationConfirmEmail,
   sendConsultationThankYouEmail,
+  sendFounderBriefingEmail,
   sendAdminPaymentAlert,
 } from '@/lib/email'
 
@@ -44,6 +45,34 @@ type CalBookingPayload = {
   endTime?: string
   metadata?: { videoCallUrl?: string }
   location?: string
+  // Cal.com v2: custom question responses keyed by field slug
+  responses?: Record<string, { label?: string; value?: unknown }>
+  // Cal.com legacy: flat key-value list
+  customInputs?: { label: string; value: unknown }[]
+}
+
+function extractIntakeAnswers(p: CalBookingPayload): Record<string, string> | null {
+  const skip = new Set(['name', 'email', 'guests', 'location', 'notes', 'title'])
+  const out: Record<string, string> = {}
+
+  if (p.responses) {
+    for (const [key, entry] of Object.entries(p.responses)) {
+      if (skip.has(key.toLowerCase())) continue
+      const label = entry.label || key
+      const raw = entry.value
+      if (raw == null || raw === '') continue
+      out[label] = Array.isArray(raw) ? raw.join(', ') : String(raw)
+    }
+  }
+
+  if (p.customInputs) {
+    for (const { label, value } of p.customInputs) {
+      if (!value || skip.has(label.toLowerCase())) continue
+      out[label] = String(value)
+    }
+  }
+
+  return Object.keys(out).length ? out : null
 }
 
 export async function POST(req: NextRequest) {
@@ -82,6 +111,7 @@ export async function POST(req: NextRequest) {
       if (!p.startTime || !attendee?.email) {
         return NextResponse.json({ received: true, warning: 'incomplete booking payload' })
       }
+      const intakeAnswers = extractIntakeAnswers(p)
       const { error } = await admin.from('consultation_meetings').upsert({
         cal_booking_uid: uid,
         attendee_name: attendee.name || null,
@@ -89,12 +119,14 @@ export async function POST(req: NextRequest) {
         scheduled_start: p.startTime,
         scheduled_end: p.endTime || null,
         status: 'scheduled',
+        intake_answers: intakeAnswers,
         raw_payload: event,
         updated_at: new Date().toISOString(),
       }, { onConflict: 'cal_booking_uid' })
       if (error) throw error
 
       sendConsultationConfirmEmail(attendee.email, attendee.name || null, p.startTime, p.metadata?.videoCallUrl).catch(() => {})
+      sendFounderBriefingEmail(attendee.name || null, attendee.email, p.startTime, intakeAnswers).catch(() => {})
       sendAdminPaymentAlert(attendee.email, 'Free scoping call booked').catch(() => {})
       return NextResponse.json({ received: true })
     }

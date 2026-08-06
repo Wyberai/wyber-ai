@@ -18,6 +18,26 @@ const STATUS_COLOR: Record<string, string> = {
 
 const STATUS_LABELS = ['scheduled', 'completed', 'no_show', 'cancelled', 'rescheduled']
 
+const TOOLS_LIST = [
+  'User Auth', 'Database (CRUD)', 'File / Image Storage', 'Payment Processing',
+  'AI / LLM Features', 'Email / SMS', 'Real-time Updates', 'API Integration',
+  'Admin Dashboard', 'Analytics', 'Mobile App', 'Social Login (OAuth)',
+]
+
+const COMPLEXITY_CREDITS: Record<string, [number, number]> = {
+  Simple: [200, 500],
+  Standard: [600, 1500],
+  Complex: [2000, 5000],
+}
+
+export type BreakdownPayload = {
+  complexity: string
+  tools: string[]
+  credits_low: number
+  credits_high: number
+  note: string
+}
+
 export type Meeting = {
   id: string
   cal_booking_uid: string
@@ -31,6 +51,10 @@ export type Meeting = {
   converted: boolean
   deal_value: number | null
   source: string
+  intake_answers: Record<string, string> | null
+  conversion_ideas: string | null
+  breakdown_sent_at: string | null
+  breakdown_payload: BreakdownPayload | null
   confirmation_sent_at: string | null
   reminder_1day_sent_at: string | null
   reminder_30min_sent_at: string | null
@@ -59,6 +83,162 @@ function StatCard({ label, value, sub, color = SKY, icon }: { label: string; val
   )
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>
+      {children}
+    </div>
+  )
+}
+
+function BreakdownPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt: string, payload: BreakdownPayload) => void }) {
+  const alreadySent = !!meeting.breakdown_sent_at
+  const [open, setOpen] = useState(false)
+  const [complexity, setComplexity] = useState(meeting.breakdown_payload?.complexity ?? 'Standard')
+  const [tools, setTools] = useState<string[]>(meeting.breakdown_payload?.tools ?? [])
+  const [creditsLow, setCreditsLow] = useState(String(meeting.breakdown_payload?.credits_low ?? COMPLEXITY_CREDITS['Standard'][0]))
+  const [creditsHigh, setCreditsHigh] = useState(String(meeting.breakdown_payload?.credits_high ?? COMPLEXITY_CREDITS['Standard'][1]))
+  const [note, setNote] = useState(meeting.breakdown_payload?.note ?? '')
+  const [sending, setSending] = useState(false)
+  const [sent, setSent] = useState(alreadySent)
+
+  const setComplexityAndCredits = (c: string) => {
+    setComplexity(c)
+    const [lo, hi] = COMPLEXITY_CREDITS[c]
+    setCreditsLow(String(lo))
+    setCreditsHigh(String(hi))
+  }
+
+  const toggleTool = (t: string) => setTools(ts => ts.includes(t) ? ts.filter(x => x !== t) : [...ts, t])
+
+  const sendBreakdown = async () => {
+    setSending(true)
+    try {
+      const res = await fetch(`/api/admin/consultations/${meeting.id}/send-breakdown`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          complexity,
+          tools,
+          credits_low: Number(creditsLow),
+          credits_high: Number(creditsHigh),
+          note,
+        }),
+      })
+      const data = await res.json() as { ok: boolean; sent_at: string }
+      if (data.ok) {
+        setSent(true)
+        setOpen(false)
+        onSent(data.sent_at, { complexity, tools, credits_low: Number(creditsLow), credits_high: Number(creditsHigh), note })
+      }
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div style={{ gridColumn: '1 / -1', background: '#0a0a10', border: `1px solid ${sent ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 12, padding: '16px 18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: open ? 20 : 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: sent ? GREEN : '#e4e4e7' }}>
+            {sent ? '✓ Breakdown sent' : 'Send breakdown email'}
+          </span>
+          {sent && meeting.breakdown_sent_at && (
+            <span style={{ fontSize: 11, color: MUTED }}>
+              {new Date(meeting.breakdown_sent_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setOpen(o => !o)}
+          style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${sent ? 'rgba(34,197,94,0.3)' : '#2a2a35'}`, background: sent ? 'rgba(34,197,94,0.08)' : '#111115', color: sent ? GREEN : SKY, cursor: 'pointer' }}
+        >
+          {open ? 'Close' : sent ? 'Resend' : 'Compose →'}
+        </button>
+      </div>
+
+      {sent && !open && meeting.breakdown_payload && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+          <span style={{ fontSize: 11, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', color: SKY, borderRadius: 6, padding: '3px 10px' }}>
+            {meeting.breakdown_payload.complexity}
+          </span>
+          <span style={{ fontSize: 11, background: 'rgba(14,165,233,0.08)', border: '1px solid #1e1e26', color: '#a0a0b0', borderRadius: 6, padding: '3px 10px' }}>
+            {meeting.breakdown_payload.credits_low}–{meeting.breakdown_payload.credits_high} credits
+          </span>
+          {meeting.breakdown_payload.tools.map(t => (
+            <span key={t} style={{ fontSize: 11, background: 'rgba(255,255,255,0.04)', border: '1px solid #1e1e26', color: MUTED, borderRadius: 6, padding: '3px 10px' }}>{t}</span>
+          ))}
+        </div>
+      )}
+
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Complexity */}
+          <div>
+            <SectionLabel>Complexity</SectionLabel>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['Simple', 'Standard', 'Complex'] as const).map(c => (
+                <button key={c} onClick={() => setComplexityAndCredits(c)}
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `1px solid ${complexity === c ? SKY : '#2a2a35'}`, background: complexity === c ? 'rgba(14,165,233,0.12)' : '#111115', color: complexity === c ? SKY : MUTED, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.12s' }}>
+                  {c}
+                  <div style={{ fontSize: 11, fontWeight: 400, marginTop: 3, color: complexity === c ? 'rgba(14,165,233,0.7)' : '#3f3f46' }}>
+                    {COMPLEXITY_CREDITS[c][0]}–{COMPLEXITY_CREDITS[c][1]} cr
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tools */}
+          <div>
+            <SectionLabel>Tools needed</SectionLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(175px, 1fr))', gap: 6 }}>
+              {TOOLS_LIST.map(t => (
+                <label key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, border: `1px solid ${tools.includes(t) ? 'rgba(14,165,233,0.3)' : '#1e1e26'}`, background: tools.includes(t) ? 'rgba(14,165,233,0.07)' : 'transparent', cursor: 'pointer', transition: 'all 0.1s' }}>
+                  <input type="checkbox" checked={tools.includes(t)} onChange={() => toggleTool(t)} style={{ accentColor: SKY, width: 14, height: 14, flexShrink: 0 }} />
+                  <span style={{ fontSize: 12, color: tools.includes(t) ? '#e4e4e7' : MUTED, fontWeight: tools.includes(t) ? 600 : 400 }}>{t}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Credits range */}
+          <div>
+            <SectionLabel>Credits estimate</SectionLabel>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input type="number" value={creditsLow} onChange={e => setCreditsLow(e.target.value)}
+                style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 14, fontWeight: 700, width: 100, textAlign: 'center' }} />
+              <span style={{ color: MUTED }}>to</span>
+              <input type="number" value={creditsHigh} onChange={e => setCreditsHigh(e.target.value)}
+                style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 14, fontWeight: 700, width: 100, textAlign: 'center' }} />
+              <span style={{ fontSize: 13, color: MUTED }}>credits</span>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <SectionLabel>Scope notes (shown in email)</SectionLabel>
+            <textarea rows={4} value={note} onChange={e => setNote(e.target.value)}
+              placeholder="Describe the MVP scope, any key constraints, what's in vs out of this credit range…"
+              style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <button onClick={() => setOpen(false)}
+              style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid #2a2a35', background: 'transparent', color: MUTED, fontSize: 13, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button onClick={sendBreakdown} disabled={sending}
+              style={{ padding: '9px 22px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1, transition: 'opacity 0.15s' }}>
+              {sending ? 'Sending…' : `Send to ${meeting.attendee_email} →`}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: string, patch: Partial<Meeting>) => void }) {
   const [expanded, setExpanded] = useState(false)
   const [notes, setNotes] = useState(meeting.notes ?? '')
@@ -66,7 +246,8 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
   const [deal, setDeal] = useState(meeting.deal_value?.toString() ?? '')
   const [status, setStatus] = useState(meeting.status)
   const [converted, setConverted] = useState(meeting.converted)
-  const [saving, startSave] = useTransition()
+  const [convIdeas, setConvIdeas] = useState(meeting.conversion_ideas ?? '')
+  const [, startSave] = useTransition()
 
   const save = (updates: Record<string, unknown>) => {
     startSave(async () => {
@@ -80,6 +261,7 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
   const timeStr = dt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
 
   const emailsSent = [meeting.confirmation_sent_at, meeting.reminder_1day_sent_at, meeting.reminder_30min_sent_at, meeting.thankyou_sent_at].filter(Boolean).length
+  const intakeEntries = meeting.intake_answers ? Object.entries(meeting.intake_answers) : []
 
   return (
     <>
@@ -111,6 +293,11 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
           ) : <span style={{ color: MUTED, fontSize: 13 }}>—</span>}
         </td>
         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+          {meeting.breakdown_sent_at ? (
+            <span style={{ fontSize: 11, color: GREEN, fontWeight: 600 }}>✓ Sent</span>
+          ) : <span style={{ color: MUTED, fontSize: 12 }}>—</span>}
+        </td>
+        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
           {recording ? (
             <a href={recording} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
               style={{ fontSize: 11, color: SKY, textDecoration: 'none', fontWeight: 600 }}>▶ Watch</a>
@@ -126,94 +313,100 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
 
       {expanded && (
         <tr style={{ background: '#0d0d12' }}>
-          <td colSpan={8} style={{ padding: '20px 16px 24px', borderBottom: '1px solid #1a1a22' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 900 }}>
+          <td colSpan={9} style={{ padding: '20px 16px 24px', borderBottom: '1px solid #1a1a22' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 980 }}>
 
-              {/* Status */}
-              <div>
-                <label style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Status</label>
-                <select
-                  value={status}
-                  onChange={e => { setStatus(e.target.value); save({ status: e.target.value }) }}
-                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%' }}
-                >
-                  {STATUS_LABELS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-                </select>
+              {/* Intake answers */}
+              <div style={{ background: '#0a0a10', border: '1px solid #1e1e26', borderRadius: 12, padding: '16px 18px' }}>
+                <SectionLabel>What they told us (intake)</SectionLabel>
+                {intakeEntries.length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#3f3f46', margin: 0 }}>No intake answers captured yet — questions appear once added to the Cal.com event type.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {intakeEntries.map(([q, a], i) => (
+                      <div key={i}>
+                        <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>{q}</div>
+                        <div style={{ fontSize: 13, color: '#e4e4e7', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{a}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Conversion + deal */}
-              <div>
-                <label style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Conversion</label>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <button
-                    onClick={() => { const v = !converted; setConverted(v); save({ converted: v }) }}
-                    style={{ background: converted ? 'rgba(34,197,94,0.12)' : '#111115', border: `1px solid ${converted ? GREEN : '#2a2a35'}`, borderRadius: 8, color: converted ? GREEN : MUTED, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s' }}
-                  >
-                    {converted ? '✓ Converted' : 'Mark converted'}
-                  </button>
-                  {converted && (
-                    <input
-                      type="number"
-                      placeholder="Deal $ USD"
-                      value={deal}
-                      onChange={e => setDeal(e.target.value)}
-                      onBlur={() => { if (deal !== '') save({ deal_value: parseFloat(deal) }) }}
-                      style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: 120 }}
-                    />
-                  )}
+              {/* Status + recording + source */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <SectionLabel>Status</SectionLabel>
+                  <select value={status} onChange={e => { setStatus(e.target.value); save({ status: e.target.value }) }}
+                    style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%' }}>
+                    {STATUS_LABELS.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <SectionLabel>Recording URL</SectionLabel>
+                  <input type="url" placeholder="Google Meet / Loom link…" value={recording}
+                    onChange={e => setRecording(e.target.value)} onBlur={() => save({ recording_url: recording || null })}
+                    style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <SectionLabel>Conversion</SectionLabel>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button onClick={() => { const v = !converted; setConverted(v); save({ converted: v }) }}
+                      style={{ background: converted ? 'rgba(34,197,94,0.12)' : '#111115', border: `1px solid ${converted ? GREEN : '#2a2a35'}`, borderRadius: 8, color: converted ? GREEN : MUTED, padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                      {converted ? '✓ Converted' : 'Mark converted'}
+                    </button>
+                    {converted && (
+                      <input type="number" placeholder="Deal $" value={deal}
+                        onChange={e => setDeal(e.target.value)} onBlur={() => { if (deal !== '') save({ deal_value: parseFloat(deal) }) }}
+                        style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: 110 }} />
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Recording URL */}
+              {/* Call notes */}
               <div>
-                <label style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Recording URL</label>
-                <input
-                  type="url"
-                  placeholder="Paste Google Meet / Loom link…"
-                  value={recording}
-                  onChange={e => setRecording(e.target.value)}
-                  onBlur={() => save({ recording_url: recording || null })}
-                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%' }}
-                />
+                <SectionLabel>Call notes</SectionLabel>
+                <textarea rows={5} placeholder="Pain points, budget, timeline, what they said, next steps…"
+                  value={notes} onChange={e => setNotes(e.target.value)} onBlur={() => save({ notes: notes || null })}
+                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
               </div>
 
-              {/* Source */}
+              {/* Conversion ideas */}
               <div>
-                <label style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Source</label>
-                <div style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: MUTED, padding: '8px 12px', fontSize: 13 }}>{meeting.source}</div>
+                <SectionLabel>Conversion ideas</SectionLabel>
+                <textarea rows={5} placeholder="How to close this person — objections to address, follow-up timing, specific angle…"
+                  value={convIdeas} onChange={e => setConvIdeas(e.target.value)} onBlur={() => save({ conversion_ideas: convIdeas || null })}
+                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
               </div>
 
-              {/* Notes — full width */}
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Call notes</label>
-                <textarea
-                  rows={4}
-                  placeholder="What was discussed? Pain points, budget, timeline, next steps…"
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  onBlur={() => save({ notes: notes || null })}
-                  style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }}
-                />
-                {saving && <span style={{ fontSize: 11, color: MUTED, marginTop: 4, display: 'block' }}>Saving…</span>}
-              </div>
+              {/* Breakdown sender */}
+              <BreakdownPanel
+                meeting={meeting}
+                onSent={(sentAt, payload) => onUpdate(meeting.id, { breakdown_sent_at: sentAt, breakdown_payload: payload })}
+              />
 
               {/* Email timeline */}
               <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Email timeline</label>
+                <SectionLabel>Email timeline</SectionLabel>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {[
+                  {([
                     ['Confirmation', meeting.confirmation_sent_at],
                     ['1-day reminder', meeting.reminder_1day_sent_at],
                     ['30-min reminder', meeting.reminder_30min_sent_at],
                     ['Thank-you', meeting.thankyou_sent_at],
-                  ].map(([label, ts]) => (
-                    <div key={label as string} style={{ background: ts ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${ts ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 8, padding: '6px 12px' }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, color: ts ? GREEN : '#3f3f46' }}>{label as string}</div>
-                      <div style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>{ts ? new Date(ts as string).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'not sent'}</div>
+                    ['Breakdown', meeting.breakdown_sent_at],
+                  ] as [string, string | null][]).map(([label, ts]) => (
+                    <div key={label} style={{ background: ts ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${ts ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 8, padding: '6px 12px' }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: ts ? GREEN : '#3f3f46' }}>{label}</div>
+                      <div style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>
+                        {ts ? new Date(ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'not sent'}
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
+
             </div>
           </td>
         </tr>
@@ -243,14 +436,14 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
 
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'system-ui, -apple-system, sans-serif', padding: '40px 24px' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
           <div>
             <div style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6 }}>Admin · Consultations</div>
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>Free Founder Calls</h1>
-            <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>Track bookings, notes, recordings and ROI from the Meta ads campaign.</p>
+            <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>Track bookings, intake answers, notes, breakdowns and ROI from the Meta ads campaign.</p>
           </div>
           <a href="/admin" style={{ fontSize: 12, color: MUTED, textDecoration: 'none', padding: '8px 14px', border: '1px solid #1e1e26', borderRadius: 8 }}>← Admin</a>
         </div>
@@ -266,7 +459,7 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
         </div>
 
         {/* Filter tabs */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
           {FILTER_TABS.map(f => (
             <button key={f} onClick={() => setFilter(f)}
               style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 20, border: `1px solid ${filter === f ? SKY : '#1e1e26'}`, background: filter === f ? 'rgba(14,165,233,0.1)' : 'transparent', color: filter === f ? SKY : MUTED, cursor: 'pointer', textTransform: 'capitalize' }}>
@@ -277,11 +470,11 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
         </div>
 
         {/* Table */}
-        <div style={{ background: '#0e0e14', border: '1px solid #1a1a22', borderRadius: 16, overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ background: '#0e0e14', border: '1px solid #1a1a22', borderRadius: 16, overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 820 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #1a1a22' }}>
-                {['Date / Time', 'Attendee', 'Status', 'Converted', 'Deal $', 'Recording', 'Emails', ''].map(h => (
+                {['Date / Time', 'Attendee', 'Status', 'Converted', 'Deal $', 'Breakdown', 'Recording', 'Emails', ''].map(h => (
                   <th key={h} style={{ padding: '10px 16px', color: MUTED, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: h === 'Deal $' ? 'right' : 'left', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -289,7 +482,7 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: '48px 16px', textAlign: 'center', color: MUTED }}>
+                  <td colSpan={9} style={{ padding: '48px 16px', textAlign: 'center', color: MUTED }}>
                     {meetings.length === 0 ? 'No bookings yet — ads just went live, check back soon.' : 'No meetings in this filter.'}
                   </td>
                 </tr>
@@ -303,7 +496,7 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
 
         {meetings.length > 0 && (
           <p style={{ fontSize: 11, color: '#2a2a35', textAlign: 'center', marginTop: 16 }}>
-            Click any row to expand · Notes and recording links auto-save on blur
+            Click any row to expand · All fields auto-save on blur
           </p>
         )}
       </div>

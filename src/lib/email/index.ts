@@ -1295,11 +1295,82 @@ export async function sendConsultationReminder30MinEmail(to: string, name: strin
 export async function sendConsultationThankYouEmail(to: string, name: string | null) {
   const html = wrap(`
     ${h1(`Thanks for the call${name ? `, ${name}` : ''}`)}
-    ${p('Thanks for walking us through your idea today. We\'ll follow up by email with a firm quote and delivery date if we discussed moving forward — reply here anytime if you have questions in the meantime.')}
+    ${p('Thanks for walking us through your idea today. You\'ll hear from us within 24 hours — we\'ll send you a full breakdown: credits needed, tools required, and the right MVP scope. Reply here anytime if you have questions in the meantime.')}
     ${p('In the meantime, feel free to explore WyberAi and try building it yourself — it\'s free to start.')}
     <div style="text-align:center;margin:0 0 24px">
       ${btn('Start building free →', `${APP_URL}/signup`)}
     </div>
-  `, 'Thanks for the call')
-  return resend.emails.send({ from: FROM, to, subject: 'Thanks for the call — next steps', html })
+  `, 'Thanks for the call — breakdown coming within 24 hrs')
+  return resend.emails.send({ from: FROM, to, subject: 'Thanks for the call — breakdown coming shortly', html })
+}
+
+export async function sendFounderBriefingEmail(
+  attendeeName: string | null,
+  attendeeEmail: string,
+  startIso: string,
+  intakeAnswers: Record<string, string> | null,
+) {
+  const when = formatMeetingTime(startIso)
+  const skip = new Set(['name', 'email', 'guests', 'location', 'title'])
+  const rows = intakeAnswers
+    ? Object.entries(intakeAnswers).filter(([k]) => !skip.has(k.toLowerCase()) && String(intakeAnswers[k]).trim())
+    : []
+
+  const answersHtml = rows.length
+    ? rows.map(([k, v], i) => `
+        ${i > 0 ? '<hr style="border:none;border-top:1px solid #2e2e38;margin:10px 0"/>' : ''}
+        <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:6px">${k}</div>
+        <div style="font-size:14px;color:#f0f0f4;line-height:1.65">${String(v).replace(/\n/g, '<br/>')}</div>
+      `).join('')
+    : `<div style="font-size:14px;color:#8888a0">No intake answers — ask on the call.</div>`
+
+  const html = wrap(`
+    ${h1('📋 Pre-call briefing')}
+    ${p(`<strong style="color:#f0f0f4">${attendeeName || attendeeEmail}</strong> booked a free scoping call at <strong style="color:#f0f0f4">${when}</strong>.`)}
+    <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:20px;margin:0 0 24px">
+      <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:14px">What they told us</div>
+      ${answersHtml}
+    </div>
+    <div style="text-align:center;margin:0 0 8px">${btn('View in admin →', `${APP_URL}/admin/consultations`, '#0EA5E9')}</div>
+  `, `Call in your calendar: ${attendeeName || attendeeEmail}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📋 Pre-call brief: ${attendeeName || attendeeEmail} · ${when}`, html })
+}
+
+export async function sendBreakdownEmail(
+  to: string,
+  name: string | null,
+  payload: {
+    complexity: string
+    tools: string[]
+    credits_low: number
+    credits_high: number
+    note: string
+  },
+) {
+  const toolsList = payload.tools.length
+    ? `<ul style="margin:8px 0 0;padding:0 0 0 20px;color:#f0f0f4;font-size:14px;line-height:1.9">${payload.tools.map(t => `<li>${t}</li>`).join('')}</ul>`
+    : `<div style="font-size:14px;color:#8888a0;margin-top:8px">None beyond standard setup.</div>`
+
+  const html = wrap(`
+    ${h1(`Here's your app breakdown${name ? `, ${name}` : ''}`)}
+    ${p("As promised — based on our call, here's a clear picture of what it takes to build your app on WyberAi.")}
+    <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:22px;margin:0 0 16px">
+      <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px">WyberAi credits needed</div>
+      <div style="font-size:38px;font-weight:800;color:#0EA5E9;letter-spacing:-0.05em;line-height:1">${payload.credits_low}–${payload.credits_high} <span style="font-size:18px;color:#8888a0;font-weight:500">credits</span></div>
+      <div style="font-size:12px;color:#555566;margin-top:6px">Complexity: ${payload.complexity}</div>
+    </div>
+    <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:22px;margin:0 0 16px">
+      <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:4px">Tools &amp; integrations</div>
+      ${toolsList}
+    </div>
+    ${payload.note ? `<div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:22px;margin:0 0 16px">
+      <div style="font-size:11px;color:#8888a0;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px">Scope notes</div>
+      <div style="font-size:14px;color:#f0f0f4;line-height:1.75">${payload.note.replace(/\n/g, '<br/>')}</div>
+    </div>` : ''}
+    ${divider()}
+    ${p("You can build this yourself on WyberAi with the credits above, or we can handle the whole build for you. Either way, you now have a clear path forward.")}
+    <div style="text-align:center;margin:0 0 16px">${btn('Start building on WyberAi →', `${APP_URL}/signup`, '#22c55e')}</div>
+    ${p('<span style="font-size:13px">Questions? Just reply to this email — I read every one.</span>')}
+  `, `Your app needs ${payload.credits_low}–${payload.credits_high} WyberAi credits`)
+  return resend.emails.send({ from: FROM, to, subject: `Your app breakdown — ${payload.credits_low}–${payload.credits_high} WyberAi credits`, html })
 }
