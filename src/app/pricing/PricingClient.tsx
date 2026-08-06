@@ -472,8 +472,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
         </div>
       </section>
 
-      {/* Done-for-you builds — hidden for India (low intent there) */}
-      {currency !== 'INR' && (
+      {/* Done-for-you builds — free globally, shown to all visitors */}
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
@@ -539,7 +538,6 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
           </div>
         </div>
       </section>
-      )}
 
       {/* FAQ */}
       <section style={{ padding: 'clamp(40px,6vw,80px) clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)' }}>
