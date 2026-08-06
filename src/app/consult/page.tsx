@@ -29,11 +29,6 @@ const WHAT_HAPPENS = [
     title: 'You get a full breakdown — within 24 hrs',
     desc: 'Credits needed to build it, tools and integrations required, and exactly what the MVP should include. Clear, specific, actionable.',
   },
-  {
-    icon: '🛠️',
-    title: 'Build it yourself or let us help',
-    desc: 'Use the breakdown to build on WyberAi yourself — or have us build it for you. Either way, you leave knowing exactly what to do next.',
-  },
 ]
 
 const OBJECTIONS = [
