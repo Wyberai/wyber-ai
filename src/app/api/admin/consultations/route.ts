@@ -2,10 +2,36 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { isAdminEmail } from '@/lib/admin'
 
-export async function POST(req: NextRequest) {
+async function getAuthedAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user || !isAdminEmail(user.email)) {
+  if (!user || !isAdminEmail(user.email)) return { user: null, admin: null }
+  const admin = await createAdminClient()
+  return { user, admin }
+}
+
+export async function GET() {
+  const { user, admin } = await getAuthedAdmin()
+  if (!user || !admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { count, error: countErr } = await admin
+    .from('consultation_meetings')
+    .select('*', { count: 'exact', head: true })
+
+  if (countErr) return NextResponse.json({ table_exists: false, error: countErr.message })
+
+  const { data: recent } = await admin
+    .from('consultation_meetings')
+    .select('id, attendee_email, scheduled_start, status, created_at')
+    .order('created_at', { ascending: false })
+    .limit(3)
+
+  return NextResponse.json({ table_exists: true, row_count: count, recent })
+}
+
+export async function POST(req: NextRequest) {
+  const { user, admin: adminClient } = await getAuthedAdmin()
+  if (!user || !adminClient) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -28,8 +54,7 @@ export async function POST(req: NextRequest) {
   const uid = body.cal_booking_uid
     ?? `manual_${body.attendee_email.split('@')[0]}_${Date.now()}`
 
-  const admin = await createAdminClient()
-  const { data, error } = await admin
+  const { data, error } = await adminClient
     .from('consultation_meetings')
     .insert({
       cal_booking_uid: uid,
