@@ -38,6 +38,33 @@ export type BreakdownPayload = {
   note: string
 }
 
+export type AiBrief = {
+  summary: string
+  questions: string[]
+  direction: string
+  self_serve: {
+    credits: number
+    credit_cost_inr: number
+    plan: string
+    plan_cost_inr: number
+    months_to_build: number
+    total_practical_inr: number
+    hard_part: string
+  }
+  dfy: {
+    tier: string
+    price_inr_full: number
+    price_inr_now: number
+    timeline: string
+    includes: string
+    external_costs: string | null
+  }
+  concerns: string[]
+  opportunities: string[]
+  close_angle: string
+  generated_at: string
+}
+
 export type Meeting = {
   id: string
   cal_booking_uid: string
@@ -59,6 +86,7 @@ export type Meeting = {
   reminder_1day_sent_at: string | null
   reminder_30min_sent_at: string | null
   thankyou_sent_at: string | null
+  ai_brief: AiBrief | null
   created_at: string
 }
 
@@ -87,6 +115,141 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 8 }}>
       {children}
+    </div>
+  )
+}
+
+function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGenerated: (brief: AiBrief) => void }) {
+  const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const brief = meeting.ai_brief
+
+  async function generate() {
+    setLoading(true); setErr(null)
+    try {
+      const res = await fetch(`/api/admin/consultations/${meeting.id}/generate-brief`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error || 'Failed'); return }
+      onBriefGenerated(data.brief)
+    } catch { setErr('Network error') } finally { setLoading(false) }
+  }
+
+  const fmt = (n: number) => `₹${Number(n).toLocaleString('en-IN')}`
+
+  return (
+    <div style={{ gridColumn: '1 / -1', background: '#09090f', border: '1px solid #1e2030', borderRadius: 14, padding: '18px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: brief ? 16 : 0 }}>
+        <span style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+          AI Call Brief
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {brief && (
+            <span style={{ fontSize: 10, color: MUTED }}>
+              Generated {new Date(brief.generated_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}
+            </span>
+          )}
+          <button onClick={generate} disabled={loading}
+            style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 8, border: 'none', background: loading ? '#1e1e26' : '#6366f1', color: loading ? MUTED : '#fff', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.15s' }}>
+            {loading ? 'Generating…' : brief ? 'Regenerate' : 'Generate Brief'}
+          </button>
+        </div>
+      </div>
+      {err && <div style={{ fontSize: 12, color: RED, marginTop: 8 }}>{err}</div>}
+
+      {brief && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Summary */}
+          <div style={{ fontSize: 13, color: '#c4c4d4', lineHeight: 1.7, borderLeft: '2px solid #6366f1', paddingLeft: 12 }}>
+            {brief.summary}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+
+            {/* Questions */}
+            <div style={{ background: '#0e0e18', border: '1px solid #1e1e2e', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Ask on the call</div>
+              <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {brief.questions.map((q, i) => (
+                  <li key={i} style={{ fontSize: 12, color: '#d4d4e4', lineHeight: 1.6 }}>{q}</li>
+                ))}
+              </ol>
+            </div>
+
+            {/* Direction + close */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: '#0e0e18', border: '1px solid #1e1e2e', borderRadius: 10, padding: '14px 16px', flex: 1 }}>
+                <div style={{ fontSize: 11, color: AMBER, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>How to steer it</div>
+                <div style={{ fontSize: 12, color: '#d4d4e4', lineHeight: 1.65 }}>{brief.direction}</div>
+              </div>
+              <div style={{ background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 10, padding: '12px 16px' }}>
+                <div style={{ fontSize: 11, color: GREEN, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>Close angle</div>
+                <div style={{ fontSize: 12, color: '#d4d4e4', lineHeight: 1.6 }}>{brief.close_angle}</div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Pricing */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ background: '#0e0e18', border: '1px solid #1e1e2e', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>If they build it themselves</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Row label="Credits needed" value={`${brief.self_serve.credits} credits`} />
+                <Row label="Credits cost" value={fmt(brief.self_serve.credit_cost_inr)} />
+                <Row label="Plan while building" value={`${brief.self_serve.plan} · ${fmt(brief.self_serve.plan_cost_inr)}/mo`} />
+                <Row label="Est. months" value={`${brief.self_serve.months_to_build} months`} />
+                <div style={{ borderTop: '1px solid #1e1e2e', marginTop: 4, paddingTop: 8 }}>
+                  <Row label="Practical total" value={fmt(brief.self_serve.total_practical_inr)} highlight />
+                </div>
+                <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.5, marginTop: 4 }}>{brief.self_serve.hard_part}</div>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Done for you (your quote)</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Row label="Tier" value={brief.dfy.tier} />
+                <Row label="Timeline" value={brief.dfy.timeline} />
+                <div style={{ borderTop: '1px solid rgba(99,102,241,0.2)', marginTop: 4, paddingTop: 8 }}>
+                  <Row label="Normal price" value={fmt(brief.dfy.price_inr_full)} muted />
+                  <Row label="Current offer (50% off)" value={fmt(brief.dfy.price_inr_now)} highlight />
+                </div>
+                <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.5, marginTop: 4 }}>{brief.dfy.includes}</div>
+                {brief.dfy.external_costs && (
+                  <div style={{ fontSize: 11, color: AMBER, lineHeight: 1.5 }}>External: {brief.dfy.external_costs}</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Concerns + Opportunities */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 11, color: RED, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>Watch out for</div>
+              <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {brief.concerns.map((c, i) => <li key={i} style={{ fontSize: 12, color: '#d4d4e4', lineHeight: 1.6 }}>{c}</li>)}
+              </ul>
+            </div>
+            <div style={{ background: 'rgba(245,158,11,0.04)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ fontSize: 11, color: AMBER, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>Opportunities</div>
+              <ul style={{ margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {brief.opportunities.map((o, i) => <li key={i} style={{ fontSize: 12, color: '#d4d4e4', lineHeight: 1.6 }}>{o}</li>)}
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Row({ label, value, highlight, muted }: { label: string; value: string; highlight?: boolean; muted?: boolean }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+      <span style={{ fontSize: 11, color: MUTED, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: highlight ? 14 : 12, fontWeight: highlight ? 700 : 500, color: highlight ? '#e4e4f7' : muted ? '#3f3f46' : '#a0a0b8', textDecoration: muted ? 'line-through' : 'none', fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{value}</span>
     </div>
   )
 }
@@ -322,6 +485,12 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
         <tr style={{ background: '#0d0d12' }}>
           <td colSpan={9} style={{ padding: '20px 16px 24px', borderBottom: '1px solid #1a1a22' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, maxWidth: 980 }}>
+
+              {/* AI Brief — full width, always first */}
+              <BriefPanel
+                meeting={meeting}
+                onBriefGenerated={brief => onUpdate(meeting.id, { ai_brief: brief })}
+              />
 
               {/* Intake answers */}
               <div style={{ background: '#0a0a10', border: '1px solid #1e1e26', borderRadius: 12, padding: '16px 18px' }}>

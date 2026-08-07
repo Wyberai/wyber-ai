@@ -16,7 +16,7 @@ export default async function AdminConsultationsPage() {
   const admin = await createAdminClient()
   const { data: meetings } = await admin
     .from('consultation_meetings')
-    .select('id, cal_booking_uid, attendee_name, attendee_email, scheduled_start, scheduled_end, status, notes, recording_url, converted, deal_value, source, intake_answers, conversion_ideas, breakdown_sent_at, breakdown_payload, confirmation_sent_at, reminder_1day_sent_at, reminder_30min_sent_at, thankyou_sent_at, created_at')
+    .select('id, cal_booking_uid, attendee_name, attendee_email, scheduled_start, scheduled_end, status, notes, recording_url, converted, deal_value, source, intake_answers, conversion_ideas, breakdown_sent_at, breakdown_payload, confirmation_sent_at, reminder_1day_sent_at, reminder_30min_sent_at, thankyou_sent_at, ai_brief, created_at')
     .order('scheduled_start', { ascending: true })
     .limit(500)
 
