@@ -75,16 +75,28 @@ function extractIntakeAnswers(p: CalBookingPayload): Record<string, string> | nu
   return Object.keys(out).length ? out : null
 }
 
+export async function GET() {
+  const configured = !!process.env.CAL_WEBHOOK_SECRET
+  return NextResponse.json({ configured, endpoint: '/api/cal/webhook', ready: configured })
+}
+
 export async function POST(req: NextRequest) {
   const secret = process.env.CAL_WEBHOOK_SECRET
   if (!secret) {
+    console.error('Cal.com webhook: CAL_WEBHOOK_SECRET not set in env')
     return NextResponse.json({ error: 'Cal.com webhook not configured — set CAL_WEBHOOK_SECRET' }, { status: 503 })
   }
 
   const body = await req.text()
   const signature = req.headers.get('x-cal-signature-256')
+
+  if (!signature) {
+    console.error('Cal.com webhook: missing x-cal-signature-256 header. Headers received:', JSON.stringify([...req.headers.keys()]))
+    return NextResponse.json({ error: 'Missing signature header' }, { status: 401 })
+  }
+
   if (!verifySignature(body, signature, secret)) {
-    console.error('Cal.com webhook rejected: invalid signature')
+    console.error('Cal.com webhook: signature mismatch. sig_prefix:', signature.slice(0, 16))
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
