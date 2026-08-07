@@ -138,26 +138,22 @@ export async function POST(req: NextRequest) {
       }, { onConflict: 'cal_booking_uid' })
       if (error) throw error
 
-      // Emails fire-and-forget (fast)
       sendConsultationConfirmEmail(attendee.email, attendee.name || null, p.startTime, p.metadata?.videoCallUrl).catch(() => {})
       sendFounderBriefingEmail(attendee.name || null, attendee.email, p.startTime, intakeAnswers).catch(() => {})
       sendAdminPaymentAlert(attendee.email, 'Free scoping call booked').catch(() => {})
 
-      // Auto-generate AI brief while Cal.com waits (Sonnet ~10s, well inside the 30s webhook timeout)
-      try {
-        const { data: row } = await admin.from('consultation_meetings').select('id').eq('cal_booking_uid', uid).single()
-        if (row?.id) {
-          const brief = await generateConsultationBrief({
-            attendee_name: attendee.name || null,
-            attendee_email: attendee.email,
-            scheduled_start: p.startTime,
-            intake_answers: intakeAnswers,
-          })
-          await admin.from('consultation_meetings').update({ ai_brief: brief, updated_at: new Date().toISOString() }).eq('id', row.id)
-        }
-      } catch (briefErr) {
-        console.error('Auto-brief generation failed (non-fatal):', String(briefErr))
-      }
+      // Brief generation is fire-and-forget — Cal.com gets its 200 immediately.
+      // The brief generates in the background; if it doesn't complete before the
+      // function is recycled, the admin dashboard "Generate Brief" button covers it.
+      admin.from('consultation_meetings').select('id').eq('cal_booking_uid', uid).single().then(({ data: row }) => {
+        if (!row?.id) return
+        return generateConsultationBrief({
+          attendee_name: attendee.name || null,
+          attendee_email: attendee.email,
+          scheduled_start: p.startTime!,
+          intake_answers: intakeAnswers,
+        }).then(brief => admin.from('consultation_meetings').update({ ai_brief: brief, updated_at: new Date().toISOString() }).eq('id', row.id))
+      }).catch(e => console.error('Auto-brief (non-fatal):', String(e)))
 
       return NextResponse.json({ received: true })
     }
