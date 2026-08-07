@@ -422,12 +422,161 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
   )
 }
 
+function NewMeetingPanel({ onCreated }: { onCreated: (m: Meeting) => void }) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [form, setForm] = useState({
+    name: '', email: '', date: '', time: '', duration: '15', idea: '', meet: '',
+  })
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    setErr(null)
+    if (!form.email || !form.date || !form.time) { setErr('Email, date and time are required.'); return }
+
+    const start = new Date(`${form.date}T${form.time}:00+05:30`).toISOString()
+    const endMs = new Date(start).getTime() + Number(form.duration) * 60_000
+    const end = new Date(endMs).toISOString()
+
+    const intakeAnswers: Record<string, string> = {}
+    if (form.idea) intakeAnswers['idea'] = form.idea
+    if (form.meet) intakeAnswers['meet_link'] = form.meet
+
+    setSaving(true)
+    try {
+      const res = await fetch('/api/admin/consultations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attendee_name: form.name || null,
+          attendee_email: form.email,
+          scheduled_start: start,
+          scheduled_end: end,
+          intake_answers: Object.keys(intakeAnswers).length ? intakeAnswers : null,
+          source: 'manual',
+        }),
+      })
+      const data = await res.json() as { ok?: boolean; id?: string; error?: string }
+      if (!data.ok) { setErr(data.error ?? 'Failed'); return }
+
+      const newMeeting: Meeting = {
+        id: data.id!,
+        cal_booking_uid: `manual_${data.id}`,
+        attendee_name: form.name || null,
+        attendee_email: form.email,
+        scheduled_start: start,
+        scheduled_end: end,
+        status: 'scheduled',
+        notes: null,
+        recording_url: null,
+        converted: false,
+        deal_value: null,
+        source: 'manual',
+        intake_answers: Object.keys(intakeAnswers).length ? intakeAnswers : null,
+        conversion_ideas: null,
+        breakdown_sent_at: null,
+        breakdown_payload: null,
+        confirmation_sent_at: null,
+        reminder_1day_sent_at: null,
+        reminder_30min_sent_at: null,
+        thankyou_sent_at: null,
+        created_at: new Date().toISOString(),
+      }
+      onCreated(newMeeting)
+      setOpen(false)
+      setForm({ name: '', email: '', date: '', time: '', duration: '15', idea: '', meet: '' })
+    } catch {
+      setErr('Network error — try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    background: '#111115', border: '1px solid #2a2a35', borderRadius: 8,
+    color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box',
+  }
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', cursor: 'pointer' }}
+      >
+        + New Meeting
+      </button>
+
+      {open && (
+        <form onSubmit={submit} style={{ marginTop: 16, background: '#0e0e14', border: '1px solid #1e1e26', borderRadius: 14, padding: '24px 20px' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#e4e4e7', marginBottom: 18 }}>Add meeting manually</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>NAME</div>
+              <input style={inputStyle} value={form.name} onChange={set('name')} placeholder="Chayan Mondal" />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>EMAIL *</div>
+              <input style={inputStyle} type="email" value={form.email} onChange={set('email')} placeholder="guest@gmail.com" required />
+            </div>
+            <div>
+              <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>DATE * (IST)</div>
+              <input style={inputStyle} type="date" value={form.date} onChange={set('date')} required />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div>
+                <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>TIME * (IST)</div>
+                <input style={inputStyle} type="time" value={form.time} onChange={set('time')} required />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>DURATION</div>
+                <select style={inputStyle} value={form.duration} onChange={set('duration')}>
+                  <option value="15">15 min</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">60 min</option>
+                </select>
+              </div>
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>GOOGLE MEET LINK</div>
+              <input style={inputStyle} value={form.meet} onChange={set('meet')} placeholder="https://meet.google.com/xxx-yyyy-zzz" />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ fontSize: 11, color: MUTED, fontWeight: 600, marginBottom: 4 }}>THEIR IDEA / NOTES</div>
+              <textarea style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.55 }} rows={3} value={form.idea} onChange={set('idea')} placeholder="What they want to build…" />
+            </div>
+          </div>
+          {err && <div style={{ marginTop: 10, fontSize: 12, color: RED, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 12px' }}>{err}</div>}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
+            <button type="button" onClick={() => { setOpen(false); setErr(null) }}
+              style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #2a2a35', background: 'transparent', color: MUTED, fontSize: 13, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={saving}
+              style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontSize: 13, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+              {saving ? 'Saving…' : 'Add Meeting'}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
 export default function ConsultationsClient({ initialMeetings }: { initialMeetings: Meeting[] }) {
   const [meetings, setMeetings] = useState(initialMeetings)
   const [filter, setFilter] = useState<'all' | string>('all')
 
   const handleUpdate = (id: string, updates: Partial<Meeting>) => {
     setMeetings(ms => ms.map(m => m.id === id ? { ...m, ...updates } : m))
+  }
+
+  const handleCreate = (m: Meeting) => {
+    setMeetings(ms => [m, ...ms])
   }
 
   const filtered = filter === 'all' ? meetings : meetings.filter(m => m.status === filter)
@@ -452,7 +601,10 @@ export default function ConsultationsClient({ initialMeetings }: { initialMeetin
             <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>Free Founder Calls</h1>
             <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>Track bookings, intake answers, notes, breakdowns and ROI from the Meta ads campaign.</p>
           </div>
-          <a href="/admin" style={{ fontSize: 12, color: MUTED, textDecoration: 'none', padding: '8px 14px', border: '1px solid #1e1e26', borderRadius: 8 }}>← Admin</a>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <NewMeetingPanel onCreated={handleCreate} />
+            <a href="/admin" style={{ fontSize: 12, color: MUTED, textDecoration: 'none', padding: '8px 14px', border: '1px solid #1e1e26', borderRadius: 8 }}>← Admin</a>
+          </div>
         </div>
 
         {/* Stats */}
