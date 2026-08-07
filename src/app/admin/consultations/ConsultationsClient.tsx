@@ -247,7 +247,7 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Architecture — share on screen during call</div>
                 <a
-                  href={`https://mermaid.live/edit#base64:${btoa(JSON.stringify({ code: brief.architecture_mermaid, mermaid: { theme: 'dark' } }))}`}
+                  href={`https://mermaid.live/edit#base64:${btoa(unescape(encodeURIComponent(JSON.stringify({ code: brief.architecture_mermaid, mermaid: { theme: 'dark' } }))))}`}
                   target="_blank" rel="noopener noreferrer"
                   style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', textDecoration: 'none', padding: '4px 12px', border: '1px solid rgba(99,102,241,0.4)', borderRadius: 6, background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap' }}
                 >
