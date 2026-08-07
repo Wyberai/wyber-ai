@@ -99,7 +99,8 @@ Write a JSON brief with EXACTLY this shape (no markdown, no explanation, just ra
   },
   "concerns": ["2-3 real risks — market, execution, regulatory, cold-start, monetisation"],
   "opportunities": ["1-2 angles — WearOn beta if relevant, AI add-on, mobile tier, referral"],
-  "close_angle": "One sentence on the single strongest reason this person should say yes on this call"
+  "close_angle": "One sentence on the single strongest reason this person should say yes on this call",
+  "architecture_mermaid": "A mermaid graph TD diagram showing the key components of their app. Use simple node labels. Show: user-facing layer, backend/API, database, and any key external services (e.g. Twilio, AI API, payment gateway). Keep it to 8-12 nodes max. Use --> for connections. Example style: graph TD\\n  A[User / Browser] --> B[Web App]\\n  B --> C[API Routes]\\n  C --> D[(Database)]\\n  C --> E[External API]. Use actual node names relevant to THEIR specific app, not placeholders."
 }`
 
   const msg = await anthropic.messages.create({

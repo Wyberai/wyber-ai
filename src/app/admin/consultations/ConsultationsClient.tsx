@@ -62,6 +62,7 @@ export type AiBrief = {
   concerns: string[]
   opportunities: string[]
   close_angle: string
+  architecture_mermaid?: string
   generated_at: string
 }
 
@@ -87,6 +88,7 @@ export type Meeting = {
   reminder_30min_sent_at: string | null
   thankyou_sent_at: string | null
   ai_brief: AiBrief | null
+  summary_sent_at: string | null
   created_at: string
 }
 
@@ -239,6 +241,97 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
             </div>
           </div>
 
+          {/* Architecture diagram */}
+          {brief.architecture_mermaid && (
+            <div style={{ background: '#0e0e18', border: '1px solid #1e1e2e', borderRadius: 10, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <div style={{ fontSize: 11, color: '#6366f1', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Architecture — share on screen during call</div>
+                <a
+                  href={`https://mermaid.live/edit#base64:${btoa(JSON.stringify({ code: brief.architecture_mermaid, mermaid: { theme: 'dark' } }))}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 11, fontWeight: 700, color: '#6366f1', textDecoration: 'none', padding: '4px 12px', border: '1px solid rgba(99,102,241,0.4)', borderRadius: 6, background: 'rgba(99,102,241,0.08)', whiteSpace: 'nowrap' }}
+                >
+                  Open diagram →
+                </a>
+              </div>
+              <pre style={{ margin: 0, fontSize: 11, color: '#a0a0c0', lineHeight: 1.6, overflowX: 'auto', fontFamily: 'monospace', whiteSpace: 'pre' }}>
+                {brief.architecture_mermaid}
+              </pre>
+            </div>
+          )}
+
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SendSummaryPanel({ meeting, onSent }: { meeting: Meeting; onSent: (sentAt: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const sent = !!meeting.summary_sent_at
+  const [summary, setSummary] = useState(meeting.notes ?? '')
+  const [ideaLine, setIdeaLine] = useState('')
+
+  async function send() {
+    if (!summary.trim()) { setErr('Add call notes first'); return }
+    setSending(true); setErr(null)
+    try {
+      const res = await fetch(`/api/admin/consultations/${meeting.id}/send-summary`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ call_summary: summary, idea_one_liner: ideaLine }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setErr(data.error || 'Failed'); return }
+      onSent(data.sent_at)
+      setOpen(false)
+    } catch { setErr('Network error') } finally { setSending(false) }
+  }
+
+  return (
+    <div style={{ background: '#0e0e14', border: `1px solid ${sent ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 12, padding: '16px 18px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <SectionLabel>Post-call summary email</SectionLabel>
+          {sent && (
+            <div style={{ fontSize: 11, color: GREEN }}>
+              Sent {new Date(meeting.summary_sent_at!).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true })}
+            </div>
+          )}
+        </div>
+        <button onClick={() => setOpen(o => !o)}
+          style={{ fontSize: 12, fontWeight: 600, padding: '6px 14px', borderRadius: 8, border: `1px solid ${sent ? 'rgba(34,197,94,0.3)' : '#2a2a35'}`, background: sent ? 'rgba(34,197,94,0.08)' : '#111115', color: sent ? GREEN : SKY, cursor: 'pointer' }}>
+          {open ? 'Close' : sent ? 'Resend' : 'Compose →'}
+        </button>
+      </div>
+
+      {open && (
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <SectionLabel>One-liner — what they&apos;re building</SectionLabel>
+            <input placeholder="e.g. an SMS platform with dedicated US numbers per user" value={ideaLine}
+              onChange={e => setIdeaLine(e.target.value)}
+              style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '8px 12px', fontSize: 13, width: '100%', boxSizing: 'border-box' }} />
+          </div>
+          <div>
+            <SectionLabel>What was covered on the call (bullet points, one per line)</SectionLabel>
+            <textarea rows={6} placeholder="- They want to build X&#10;- Key concern was Y&#10;- They have Z already&#10;- Next step agreed: …"
+              value={summary} onChange={e => setSummary(e.target.value)}
+              style={{ background: '#111115', border: '1px solid #2a2a35', borderRadius: 8, color: '#e4e4e7', padding: '10px 12px', fontSize: 13, width: '100%', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, boxSizing: 'border-box' }} />
+          </div>
+          {err && <div style={{ fontSize: 12, color: RED, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '8px 12px' }}>{err}</div>}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button onClick={() => setOpen(false)}
+              style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #2a2a35', background: 'transparent', color: MUTED, fontSize: 13, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button onClick={send} disabled={sending}
+              style={{ padding: '8px 22px', borderRadius: 8, border: 'none', background: GREEN, color: '#fff', fontSize: 13, fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', opacity: sending ? 0.7 : 1 }}>
+              {sending ? 'Sending…' : `Send to ${meeting.attendee_email}`}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -562,6 +655,14 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                 onSent={(sentAt, payload) => onUpdate(meeting.id, { breakdown_sent_at: sentAt, breakdown_payload: payload })}
               />
 
+              {/* Post-call summary email */}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <SendSummaryPanel
+                  meeting={meeting}
+                  onSent={sentAt => onUpdate(meeting.id, { summary_sent_at: sentAt })}
+                />
+              </div>
+
               {/* Email timeline */}
               <div style={{ gridColumn: '1 / -1' }}>
                 <SectionLabel>Email timeline</SectionLabel>
@@ -572,6 +673,7 @@ function MeetingRow({ meeting, onUpdate }: { meeting: Meeting; onUpdate: (id: st
                     ['30-min reminder', meeting.reminder_30min_sent_at],
                     ['Thank-you', meeting.thankyou_sent_at],
                     ['Breakdown', meeting.breakdown_sent_at],
+                    ['Call summary', meeting.summary_sent_at],
                   ] as [string, string | null][]).map(([label, ts]) => (
                     <div key={label} style={{ background: ts ? 'rgba(34,197,94,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${ts ? 'rgba(34,197,94,0.25)' : '#1e1e26'}`, borderRadius: 8, padding: '6px 12px' }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: ts ? GREEN : '#3f3f46' }}>{label}</div>

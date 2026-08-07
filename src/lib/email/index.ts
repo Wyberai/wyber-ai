@@ -1304,6 +1304,46 @@ export async function sendConsultationThankYouEmail(to: string, name: string | n
   return resend.emails.send({ from: FROM, to, subject: 'Thanks for the call — breakdown coming shortly', html })
 }
 
+export async function sendConsultationSummaryEmail(opts: {
+  to: string
+  name: string | null
+  callSummary: string
+  ideaOneLiner: string
+}) {
+  const { to, name, callSummary, ideaOneLiner } = opts
+  const firstName = name ? name.split(' ')[0] : null
+  const greeting = firstName ? `Hi ${firstName}` : 'Hi'
+
+  const summaryLines = callSummary.trim().split('\n').filter(Boolean)
+  const summaryHtml = summaryLines.map(line => {
+    const clean = line.replace(/^[-•*]\s*/, '')
+    return `<li style="margin:0 0 8px;color:#374151;line-height:1.65;font-size:15px">${esc(clean)}</li>`
+  }).join('')
+
+  const html = wrap(`
+    ${h1(`Good talking, ${firstName ?? 'you'}`)}
+    ${p(`Really enjoyed our conversation — good energy, and I can tell you've thought this through.`)}
+    ${p(`Here's a quick summary of what we covered:`)}
+    <ul style="margin:0 0 20px;padding-left:20px">${summaryHtml}</ul>
+    ${p(`The way I see it, what you're building is: <strong>${esc(ideaOneLiner)}</strong>`)}
+    ${p(`Next step from my side: I'll put together a detailed plan showing exactly what we'd build, in what order, and what your options look like. Give me 24 hours and I'll send that over.`)}
+    ${p(`In the meantime, if anything comes up or you want to think through any part of it before then — just reply to this email.`)}
+    <div style="margin:28px 0 8px;font-size:14px;color:#374151;line-height:1.7">
+      Best,<br>
+      <strong>Sumeet</strong><br>
+      Founder, WyberAi<br>
+      <a href="${FOUNDER_LINKEDIN_URL}" style="color:#6366f1;text-decoration:none">LinkedIn</a> · <a href="${APP_URL}" style="color:#6366f1;text-decoration:none">wyberai.com</a>
+    </div>
+  `, `Good talking — next steps coming in 24 hrs`)
+
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: `Good talking, ${firstName ?? 'you'} — quick summary from our call`,
+    html,
+  })
+}
+
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
