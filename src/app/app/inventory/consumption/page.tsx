@@ -38,6 +38,14 @@ const CONSUMPTION_DATA = [
   },
 ];
 
+const DEMO_WASTAGE = [
+  { material:"RM-1042", description:"Aluminium Sheet 2mm", unit:"MT", line:"Line B", planned:117, actual:144, wasteQty:27, wastePercent:23.1, target:2.0, wasteCost:1620000, cause:"New CNC cutting program — higher edge trimming loss" },
+  { material:"RM-5520", description:"PVC Insulation Tape", unit:"EA", line:"Line A", planned:300, actual:540, wasteQty:240, wastePercent:80.0, target:5.0, wasteCost:12000, cause:"Bulk breakage/improper storage on assembly floor" },
+  { material:"RM-2088", description:"Steel Rod Ø12mm", unit:"MT", line:"Line A", planned:60, actual:63, wasteQty:3, wastePercent:5.0, target:2.0, wasteCost:180000, cause:"Cut-off tolerance overrun — above target but manageable" },
+  { material:"PM-0441", description:"HDPE Granules", unit:"MT", line:"Line A", planned:90, actual:96, wasteQty:6, wastePercent:6.7, target:3.0, wasteCost:120000, cause:"Runner/sprue waste from injection moulding startup" },
+  { material:"RM-3015", description:"Copper Wire 4mm", unit:"MT", line:"Quality", planned:6, actual:5.6, wasteQty:-0.4, wastePercent:-6.7, target:1.0, wasteCost:0, cause:"Process improvement in wire termination — UNDER target" },
+];
+
 function SparkLine({ plan, actual, anomalyDays, height = 80, width = 340 }: {
   plan: number[]; actual: number[]; anomalyDays: number[]; height?: number; width?: number;
 }) {
@@ -66,7 +74,7 @@ function SparkLine({ plan, actual, anomalyDays, height = 80, width = 340 }: {
 
 export default function ConsumptionPage() {
   const [selected, setSelected] = useState("RM-1042");
-  const [tab, setTab] = useState<"daily" | "dept" | "production">("daily");
+  const [tab, setTab] = useState<"daily" | "dept" | "production" | "wastage">("daily");
 
   const sel = CONSUMPTION_DATA.find(m => m.material === selected) ?? CONSUMPTION_DATA[0];
   const totalPlan = sel.plan.reduce((a, v) => a + v, 0);
@@ -83,6 +91,13 @@ export default function ConsumptionPage() {
     { line: "Dispatch",          materials: DEMO_DEPT_CONSUMPTION.filter(d => d.department === "Dispatch") },
   ].filter(p => p.materials.length > 0);
 
+  // Wastage summary
+  const totalWasteCost = DEMO_WASTAGE.reduce((a, w) => a + w.wasteCost, 0);
+  const worstScrap = [...DEMO_WASTAGE].sort((a, b) => b.wastePercent - a.wastePercent)[0];
+  const withinTarget = DEMO_WASTAGE.filter(w => w.wastePercent <= w.target).length;
+  const materialsWithWaste = DEMO_WASTAGE.filter(w => w.wasteQty > 0).length;
+  const actionRequired = DEMO_WASTAGE.filter(w => w.wastePercent > 0 && w.wastePercent > 2 * w.target);
+
   return (
     <div style={{ maxWidth: 1400 }}>
       <div style={{ marginBottom: 24 }}>
@@ -91,9 +106,9 @@ export default function ConsumptionPage() {
       </div>
 
       <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
-        {(["daily", "dept", "production"] as const).map(t => (
+        {(["daily", "dept", "production", "wastage"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 20px", borderRadius: 8, border: "1.5px solid", borderColor: tab === t ? "#0070f2" : "#e2e8f0", background: tab === t ? "#0070f2" : "#fff", color: tab === t ? "#fff" : "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-            {t === "daily" ? "📈 Daily Trend" : t === "dept" ? "🏢 Department-Wise" : "⚙️ Production Analysis"}
+            {t === "daily" ? "📈 Daily Trend" : t === "dept" ? "🏢 Department-Wise" : t === "production" ? "⚙️ Production Analysis" : "♻️ Wastage Analysis"}
           </button>
         ))}
       </div>
@@ -237,6 +252,139 @@ export default function ConsumptionPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {tab === "wastage" && (
+        <div>
+          {/* Summary Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
+            {[
+              { l: "Total Waste This Month", v: `${materialsWithWaste} Materials`, sub: "with positive waste", c: "#ef4444" },
+              { l: "Waste Cost (₹)", v: `₹${(totalWasteCost / 100000).toFixed(1)}L`, sub: "total cost this month", c: "#dc2626" },
+              { l: "Worst Scrap Rate", v: worstScrap.material, sub: `${worstScrap.wastePercent}% (target ${worstScrap.target}%)`, c: "#f59e0b" },
+              { l: "Materials Within Target", v: `${withinTarget} / ${DEMO_WASTAGE.length}`, sub: "meeting scrap target", c: "#22c55e" },
+            ].map(x => (
+              <div key={x.l} style={{ background: "#fff", borderRadius: 10, padding: "14px 16px", border: "1.5px solid #e2e8f0" }}>
+                <div style={{ fontSize: 11, color: "#64748b", marginBottom: 4 }}>{x.l}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: x.c }}>{x.v}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{x.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bar Chart */}
+          <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #e2e8f0", marginBottom: 20 }}>
+            <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", marginBottom: 6 }}>Actual Scrap Rate vs Target Rate</div>
+            <div style={{ display: "flex", gap: 16, fontSize: 11, color: "#94a3b8", marginBottom: 14 }}>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 14, height: 10, background: "#ef4444", borderRadius: 2, display: "inline-block" }} />Over Target
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 14, height: 10, background: "#22c55e", borderRadius: 2, display: "inline-block" }} />Within Target
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 20, borderTop: "1.5px dashed #94a3b8", display: "inline-block" }} />Target Rate
+              </span>
+            </div>
+            <svg width="100%" viewBox="0 0 580 290" style={{ display: "block" }}>
+              {[0,10,20,30,40,50,60,70,80,90].map(t => {
+                const tx = 155 + (t / 90) * 390;
+                return (
+                  <g key={t}>
+                    <line x1={tx} y1={18} x2={tx} y2={272} stroke="#e2e8f0" strokeWidth={1} />
+                    <text x={tx} y={13} textAnchor="middle" fontSize={9} fill="#94a3b8">{t}%</text>
+                  </g>
+                );
+              })}
+              {DEMO_WASTAGE.map((w, i) => {
+                const cy = 42 + i * 50;
+                const isOver = w.wastePercent > w.target;
+                const barColor = isOver ? "#ef4444" : "#22c55e";
+                const barW = (Math.max(0, w.wastePercent) / 90) * 390;
+                const targetX = 155 + (w.target / 90) * 390;
+                return (
+                  <g key={w.material}>
+                    <text x={149} y={cy + 5} textAnchor="end" fontSize={11} fontWeight="bold" fill="#0070f2">{w.material}</text>
+                    <text x={149} y={cy + 18} textAnchor="end" fontSize={9} fill="#94a3b8">{w.line}</text>
+                    <rect x={155} y={cy - 9} width={390} height={18} fill="#f1f5f9" rx={4} />
+                    <rect x={155} y={cy - 9} width={Math.max(2, barW)} height={18} fill={barColor} rx={4} fillOpacity={0.85} />
+                    <line x1={targetX} y1={cy - 13} x2={targetX} y2={cy + 13} stroke="#64748b" strokeWidth={1.5} strokeDasharray="3,2" />
+                    {w.wastePercent >= 0 ? (
+                      <text x={155 + barW + 5} y={cy + 5} fontSize={11} fontWeight="bold" fill={barColor}>{w.wastePercent}%</text>
+                    ) : (
+                      <text x={161} y={cy + 5} fontSize={11} fontWeight="bold" fill="#22c55e">{w.wastePercent}% ↓</text>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          </div>
+
+          {/* Detailed Table */}
+          <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden", marginBottom: 20 }}>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0" }}>
+              <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Wastage Detail — Aug 2026</div>
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: "#f8fafc" }}>
+                    {["Material", "Description", "Line", "Planned", "Actual", "Waste Qty", "Scrap Rate", "Target", "Cost Impact", "Status"].map(h => (
+                      <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "#64748b", fontWeight: 600, fontSize: 11, borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {DEMO_WASTAGE.map((w, i) => {
+                    const isOver = w.wastePercent > w.target;
+                    const is2x = w.wastePercent > 0 && w.wastePercent > 2 * w.target;
+                    const statusColor = !isOver ? "#22c55e" : is2x ? "#ef4444" : "#f59e0b";
+                    const statusLabel = !isOver ? "Within Target" : is2x ? "Action Required" : "Over Target";
+                    return (
+                      <tr key={w.material} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+                        <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0070f2" }}>{w.material}</td>
+                        <td style={{ padding: "10px 12px", color: "#374151" }}>{w.description}</td>
+                        <td style={{ padding: "10px 12px", color: "#64748b" }}>{w.line}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 600 }}>{w.planned} {w.unit}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 600 }}>{w.actual} {w.unit}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 700, color: w.wasteQty > 0 ? "#ef4444" : "#22c55e" }}>{w.wasteQty > 0 ? "+" : ""}{w.wasteQty} {w.unit}</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 700, color: isOver ? "#ef4444" : "#22c55e" }}>{w.wastePercent}%</td>
+                        <td style={{ padding: "10px 12px", color: "#64748b" }}>{w.target}%</td>
+                        <td style={{ padding: "10px 12px", fontWeight: 600, color: w.wasteCost > 0 ? "#dc2626" : "#22c55e" }}>
+                          {w.wasteCost > 0 ? `₹${(w.wasteCost / 100000).toFixed(1)}L` : "—"}
+                        </td>
+                        <td style={{ padding: "10px 12px" }}>
+                          <span style={{ padding: "3px 8px", borderRadius: 5, background: statusColor + "18", color: statusColor, fontWeight: 700, fontSize: 11, whiteSpace: "nowrap" }}>{statusLabel}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Action Required Banner */}
+          {actionRequired.length > 0 && (
+            <div style={{ background: "#fef2f2", borderRadius: 10, padding: "16px 20px", border: "1.5px solid #fecaca" }}>
+              <div style={{ fontWeight: 700, color: "#dc2626", fontSize: 14, marginBottom: 10 }}>
+                🚨 Action Required — {actionRequired.length} Material{actionRequired.length !== 1 ? "s" : ""} More Than 2× Over Scrap Target
+              </div>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                {actionRequired.map(w => (
+                  <div key={w.material} style={{ background: "#fff", borderRadius: 8, padding: "10px 14px", border: "1px solid #fecaca", flex: "1 1 220px" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#dc2626" }}>{w.material} — {w.description}</div>
+                    <div style={{ fontSize: 12, color: "#991b1b", margin: "4px 0" }}>
+                      {w.wastePercent}% vs target {w.target}%&nbsp;
+                      <span style={{ fontWeight: 700 }}>({(w.wastePercent / w.target).toFixed(1)}× over target)</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#64748b" }}>{w.cause}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

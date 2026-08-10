@@ -5,19 +5,40 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 
 const NAV = [
-  { href: "/app/inventory",                  label: "Overview",           icon: "▣" },
-  { href: "/app/inventory/stock",            label: "Inventory Monitor",  icon: "📦" },
-  { href: "/app/inventory/consumption",      label: "Consumption",        icon: "📈" },
-  { href: "/app/inventory/purchases",        label: "Purchase Orders",    icon: "📋" },
-  { href: "/app/inventory/forecasting",      label: "Forecasting",        icon: "🔮" },
-  { href: "/app/inventory/warehouse",        label: "Warehouse View",     icon: "🏭" },
-  { href: "/app/inventory/alerts",           label: "Email Alerts",       icon: "🔔" },
-  { href: "/app/inventory/recommendations",  label: "AI Recommendations", icon: "✨" },
-  { href: "/app/inventory/assistant",        label: "AI Assistant",       icon: "💬" },
-  { href: "/app/inventory/reports",          label: "Reports",            icon: "📊" },
+  { href: "/app/inventory",                 label: "Overview",           icon: "▣",  roles: ["admin","plant_manager","procurement","store_manager"] },
+  { href: "/app/inventory/stock",           label: "Inventory Monitor",  icon: "📦", roles: ["admin","plant_manager","procurement","store_manager"] },
+  { href: "/app/inventory/consumption",     label: "Consumption",        icon: "📈", roles: ["admin","plant_manager"] },
+  { href: "/app/inventory/purchases",       label: "Purchase Orders",    icon: "📋", roles: ["admin","procurement"] },
+  { href: "/app/inventory/forecasting",     label: "Forecasting",        icon: "🔮", roles: ["admin","plant_manager"] },
+  { href: "/app/inventory/warehouse",       label: "Warehouse View",     icon: "🏭", roles: ["admin","plant_manager","store_manager"] },
+  { href: "/app/inventory/alerts",          label: "Email Alerts",       icon: "🔔", roles: ["admin","procurement","store_manager"] },
+  { href: "/app/inventory/recommendations", label: "AI Recommendations", icon: "✨", roles: ["admin","procurement"] },
+  { href: "/app/inventory/assistant",       label: "AI Assistant",       icon: "💬", roles: ["admin","plant_manager"] },
+  { href: "/app/inventory/reports",         label: "Reports",            icon: "📊", roles: ["admin","plant_manager","procurement","store_manager"] },
+  { href: "/app/inventory/audit",           label: "Audit Logs",         icon: "🗒️", roles: ["admin"] },
 ];
 
 const VALID_TOKENS = ["guru2026", "rohit2026"];
+
+type RoleKey = "admin" | "plant_manager" | "procurement" | "store_manager";
+
+const ROLE_META: Record<RoleKey, { label: string; color: string; name: string; icon: string; title: string }> = {
+  admin:         { label: "General Manager",     color: "#7c3aed", name: "G. Prasad",    icon: "👤", title: "Admin" },
+  plant_manager: { label: "Plant Manager",        color: "#0070f2", name: "R. Venkatesh", icon: "🏭", title: "Plant Manager" },
+  procurement:   { label: "Procurement Officer",  color: "#d97706", name: "S. Mehta",     icon: "📋", title: "Procurement Officer" },
+  store_manager: { label: "Store Manager",        color: "#16a34a", name: "K. Reddy",     icon: "🗄️", title: "Store Manager" },
+};
+
+const ROLE_CARDS: { key: RoleKey; desc: string }[] = [
+  { key: "admin",         desc: "Full access to all modules" },
+  { key: "plant_manager", desc: "Operations & production view" },
+  { key: "procurement",   desc: "Purchasing & supplier access" },
+  { key: "store_manager", desc: "Warehouse & stock tracking" },
+];
+
+function getInitials(name: string) {
+  return name.split(" ").map((p: string) => p[0]).join("").slice(0, 2).toUpperCase();
+}
 
 function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,15 +47,26 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
   const [inputToken, setInputToken] = useState("");
   const [error, setError] = useState("");
+  const [selectedRole, setSelectedRole] = useState<RoleKey>("admin");
+  const [role, setRole] = useState<RoleKey>("admin");
+  const [userName, setUserName] = useState("G. Prasad");
 
   useEffect(() => {
     const urlToken = searchParams.get("access");
     if (urlToken && VALID_TOKENS.includes(urlToken)) {
       sessionStorage.setItem("inv_demo_ok", "1");
+      const storedRole = (sessionStorage.getItem("inv_role") as RoleKey) || "admin";
+      const storedUser = sessionStorage.getItem("inv_user") || ROLE_META[storedRole].name;
+      setRole(storedRole);
+      setUserName(storedUser);
       setAuthorized(true);
       return;
     }
     if (sessionStorage.getItem("inv_demo_ok") === "1") {
+      const storedRole = (sessionStorage.getItem("inv_role") as RoleKey) || "admin";
+      const storedUser = sessionStorage.getItem("inv_user") || ROLE_META[storedRole].name;
+      setRole(storedRole);
+      setUserName(storedUser);
       setAuthorized(true);
     } else {
       setAuthorized(false);
@@ -44,6 +76,10 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const handleAuth = () => {
     if (VALID_TOKENS.includes(inputToken)) {
       sessionStorage.setItem("inv_demo_ok", "1");
+      sessionStorage.setItem("inv_role", selectedRole);
+      sessionStorage.setItem("inv_user", ROLE_META[selectedRole].name);
+      setRole(selectedRole);
+      setUserName(ROLE_META[selectedRole].name);
       setAuthorized(true);
     } else {
       setError("Invalid access code. Please contact WyberAI.");
@@ -52,43 +88,136 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (authorized === null) return null;
 
+  /* ── Lock screen ── */
   if (!authorized) {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", fontFamily: "'Inter','Segoe UI',system-ui,sans-serif" }}>
-        <div style={{ background: "#fff", borderRadius: 16, padding: 48, maxWidth: 440, width: "90%", boxShadow: "0 24px 80px rgba(0,0,0,0.4)" }}>
-          <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <div style={{ width: 56, height: 56, borderRadius: 12, background: "linear-gradient(135deg,#0070f2,#00a4e0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, margin: "0 auto 16px" }}>
-              🔒
+      <div style={{
+        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+        background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)",
+        fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", padding: "24px 16px",
+      }}>
+        <div style={{ maxWidth: 680, width: "100%" }}>
+
+          {/* Branding */}
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 14,
+              background: "linear-gradient(135deg,#0070f2,#00a4e0)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 26, margin: "0 auto 14px",
+            }}>🔒</div>
+            <div style={{ fontWeight: 800, fontSize: 26, color: "#fff", letterSpacing: "-0.5px" }}>IntelliStock</div>
+            <div style={{ fontSize: 14, color: "#94a3b8", marginTop: 5 }}>
+              AI Inventory Intelligence — Confidential Demo
             </div>
-            <div style={{ fontWeight: 800, fontSize: 22, color: "#0f172a" }}>IntelliStock</div>
-            <div style={{ fontSize: 14, color: "#64748b", marginTop: 4 }}>AI Inventory Intelligence — Confidential Demo</div>
           </div>
-          <div style={{ fontSize: 13, color: "#475569", marginBottom: 6 }}>Access Code</div>
-          <input
-            type="password"
-            value={inputToken}
-            onChange={e => { setInputToken(e.target.value); setError(""); }}
-            onKeyDown={e => e.key === "Enter" && handleAuth()}
-            placeholder="Enter your demo access code"
-            style={{ width: "100%", padding: "10px 14px", border: error ? "1.5px solid #ef4444" : "1.5px solid #e2e8f0", borderRadius: 8, fontSize: 14, outline: "none", boxSizing: "border-box", marginBottom: error ? 6 : 16 }}
-          />
-          {error && <div style={{ color: "#ef4444", fontSize: 12, marginBottom: 12 }}>{error}</div>}
-          <button
-            onClick={handleAuth}
-            style={{ width: "100%", padding: "11px", background: "linear-gradient(135deg,#0070f2,#0050d0)", color: "#fff", border: "none", borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: "pointer" }}
-          >
-            Access Demo
-          </button>
-          <div style={{ textAlign: "center", marginTop: 20, color: "#94a3b8", fontSize: 12 }}>
-            Prepared by WyberAI · Confidential · Do not distribute
+
+          {/* Form card */}
+          <div style={{
+            background: "#fff", borderRadius: 18, padding: "36px 36px 28px",
+            boxShadow: "0 32px 80px rgba(0,0,0,0.45)",
+          }}>
+
+            {/* Access code */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Access Code
+              </div>
+              <input
+                type="password"
+                value={inputToken}
+                onChange={e => { setInputToken(e.target.value); setError(""); }}
+                onKeyDown={e => e.key === "Enter" && handleAuth()}
+                placeholder="Enter your demo access code"
+                style={{
+                  width: "100%", padding: "11px 14px",
+                  border: error ? "1.5px solid #ef4444" : "1.5px solid #e2e8f0",
+                  borderRadius: 9, fontSize: 14, outline: "none",
+                  boxSizing: "border-box", color: "#0f172a",
+                  transition: "border-color 0.15s",
+                }}
+              />
+              {error && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 6 }}>{error}</div>}
+            </div>
+
+            {/* Role selector */}
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                Select Your Role
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                {ROLE_CARDS.map(({ key, desc }) => {
+                  const meta = ROLE_META[key];
+                  const isSelected = selectedRole === key;
+                  return (
+                    <div
+                      key={key}
+                      onClick={() => setSelectedRole(key)}
+                      style={{
+                        padding: "14px 14px 12px",
+                        borderRadius: 10,
+                        border: isSelected ? `2px solid ${meta.color}` : "2px solid #e2e8f0",
+                        cursor: "pointer",
+                        background: isSelected ? `${meta.color}08` : "#fafafa",
+                        transition: "all 0.15s",
+                        position: "relative",
+                      }}
+                    >
+                      {isSelected && (
+                        <div style={{
+                          position: "absolute", top: 10, right: 10,
+                          width: 18, height: 18, borderRadius: "50%",
+                          background: meta.color,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          color: "#fff", fontSize: 10, fontWeight: 700,
+                        }}>✓</div>
+                      )}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 18 }}>{meta.icon}</span>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: "2px 7px",
+                          borderRadius: 5, background: `${meta.color}18`,
+                          color: meta.color,
+                        }}>{meta.title}</span>
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: 13, color: "#1e293b", marginBottom: 2 }}>{meta.name}</div>
+                      <div style={{ fontSize: 11, color: "#94a3b8" }}>{desc}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              onClick={handleAuth}
+              style={{
+                width: "100%", padding: "12px",
+                background: "linear-gradient(135deg,#0070f2,#0050d0)",
+                color: "#fff", border: "none", borderRadius: 9,
+                fontSize: 14, fontWeight: 700, cursor: "pointer",
+                letterSpacing: "0.01em",
+              }}
+            >
+              Access Dashboard
+            </button>
+
+            <div style={{ textAlign: "center", marginTop: 18, color: "#94a3b8", fontSize: 11 }}>
+              Prepared by WyberAI · Confidential · Do not distribute
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
+  /* ── Authorized shell ── */
+  const roleMeta = ROLE_META[role] ?? ROLE_META.admin;
+  const visibleNav = NAV.filter(item => item.roles.includes(role));
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", background: "#f0f2f5" }}>
+
       {/* Sidebar */}
       <aside style={{
         width: sidebarOpen ? 240 : 64,
@@ -97,11 +226,15 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
         flexShrink: 0, position: "sticky", top: 0, height: "100vh",
         overflowY: "auto", overflowX: "hidden", zIndex: 50,
       }}>
+        {/* Logo */}
         <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0, background: "linear-gradient(135deg,#0070f2,#00a4e0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, fontWeight: 700, color: "#fff" }}>
-              I
-            </div>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+              background: "linear-gradient(135deg,#0070f2,#00a4e0)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, fontWeight: 700, color: "#fff",
+            }}>I</div>
             {sidebarOpen && (
               <div>
                 <div style={{ color: "#fff", fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>IntelliStock</div>
@@ -111,6 +244,7 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {/* Demo mode badge */}
         {sidebarOpen && (
           <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(255,165,0,0.12)", borderRadius: 6, border: "1px solid rgba(255,165,0,0.2)" }}>
@@ -121,8 +255,9 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
+        {/* Nav */}
         <nav style={{ padding: "8px 8px", flex: 1 }}>
-          {NAV.map(item => {
+          {visibleNav.map(item => {
             const active = item.href === "/app/inventory" ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link key={item.href} href={item.href} style={{
@@ -144,8 +279,36 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
+        {/* User info strip (expanded sidebar only) */}
+        {sidebarOpen && (
+          <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: roleMeta.color, flexShrink: 0 }} />
+              <span style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {userName}
+              </span>
+            </div>
+            <div style={{ marginTop: 5, marginLeft: 16 }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
+                background: `${roleMeta.color}22`, color: roleMeta.color, whiteSpace: "nowrap",
+              }}>{roleMeta.label}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Collapse toggle */}
         <div style={{ padding: "12px 8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-          <button onClick={() => setSidebarOpen(v => !v)} style={{ width: "100%", padding: "8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "#64748b", fontSize: 16, display: "flex", alignItems: "center", justifyContent: sidebarOpen ? "flex-end" : "center" }}>
+          <button
+            onClick={() => setSidebarOpen(v => !v)}
+            style={{
+              width: "100%", padding: "8px", borderRadius: 8,
+              border: "none", cursor: "pointer",
+              background: "rgba(255,255,255,0.06)", color: "#64748b",
+              fontSize: 16, display: "flex", alignItems: "center",
+              justifyContent: sidebarOpen ? "flex-end" : "center",
+            }}
+          >
             {sidebarOpen ? "◀" : "▶"}
           </button>
         </div>
@@ -153,7 +316,12 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <header style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 40 }}>
+        <header style={{
+          background: "#fff", borderBottom: "1px solid #e2e8f0",
+          padding: "0 24px", height: 56,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          position: "sticky", top: 0, zIndex: 40,
+        }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#64748b", fontSize: 13 }}>Plant:</span>
             <span style={{ color: "#1e293b", fontWeight: 600, fontSize: 13 }}>1010 — Hyderabad Manufacturing</span>
@@ -162,7 +330,21 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <span style={{ color: "#64748b", fontSize: 12 }}>Last sync: 10 Aug 2026, 06:30 IST</span>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#0070f2", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 14, fontWeight: 600 }}>A</div>
+            {/* Role-coloured avatar + name/role */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: "50%",
+                background: roleMeta.color,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "#fff", fontSize: 12, fontWeight: 700, flexShrink: 0,
+              }}>
+                {getInitials(userName)}
+              </div>
+              <div style={{ lineHeight: 1.25 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#1e293b" }}>{userName}</div>
+                <div style={{ fontSize: 11, color: "#94a3b8" }}>{roleMeta.label}</div>
+              </div>
+            </div>
           </div>
         </header>
 

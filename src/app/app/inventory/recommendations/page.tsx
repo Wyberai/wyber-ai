@@ -72,7 +72,21 @@ function buildRecommendations(): Recommendation[] {
       state: "pending",
     });
   });
-  return recs.slice(0, 8);
+  recs.push({
+    id: "wh-bal-1", priority: "Medium", category: "Warehouse Balancing",
+    material: "FG-0077 / FG-0211", description: "WH-03 at 85% Utilization",
+    action: "WH-03 (Finished Goods) is at 85% utilization due to overstock. Coordinate with Sales to expedite dispatch of FG-0077 Motor Assembly (620 units, 34 days cover) and FG-0211 Control Panel (487 units, 34 days cover). Target: reduce WH-03 to 65% within 2 weeks to avoid receiving bottleneck.",
+    impact: "Frees 20% floor space in WH-03 and reduces holding cost by ₹2.4L/month",
+    state: "pending",
+  });
+  recs.push({
+    id: "wh-bal-2", priority: "Low", category: "Warehouse Balancing",
+    material: "SP-0088 / SP-0145", description: "Consolidate Spares to WH-01",
+    action: "SP-0088 (Bearing 6205-2RS, 840 EA) and SP-0145 (V-Belt A-42, 180 EA) are occupying dedicated floor space in WH-02 (Packaging & Spares). Consolidate both to WH-01 spare parts zone to free WH-02 for active packaging materials. Save 8% WH-02 floor space.",
+    impact: "Optimizes WH-02 for faster packaging throughput; improves picker efficiency",
+    state: "pending",
+  });
+  return recs;
 }
 
 export default function RecommendationsPage() {

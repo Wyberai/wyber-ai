@@ -17,39 +17,75 @@ function fmt(n: number) {
   return "₹" + n.toLocaleString("en-IN");
 }
 
-function HealthGauge({ score }: { score: number }) {
+function HeroGauge({ score }: { score: number }) {
   const color = score >= 75 ? "#22c55e" : score >= 50 ? "#f59e0b" : "#ef4444";
-  const label = score >= 75 ? "Good" : score >= 50 ? "Fair" : "At Risk";
-  const r = 36, cx = 44, cy = 44;
+  const r = 56, cx = 70, cy = 70;
   const circum = 2 * Math.PI * r;
   const filled = (score / 100) * circum;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-      <svg width={88} height={88} viewBox="0 0 88 88">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e2e8f0" strokeWidth={8} />
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={8}
-          strokeDasharray={`${filled} ${circum - filled}`}
-          strokeLinecap="round"
-          transform={`rotate(-90 ${cx} ${cy})`} />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={16} fontWeight={700} fill={color}>{score}</text>
-      </svg>
-      <div>
-        <div style={{ fontWeight: 700, fontSize: 20, color }}>{label}</div>
-        <div style={{ color: "#64748b", fontSize: 12 }}>Inventory Health Score</div>
-        <div style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>out of 100 points</div>
-      </div>
+    <svg width={140} height={140} viewBox="0 0 140 140">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth={10} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={10}
+        strokeDasharray={`${filled} ${circum - filled}`}
+        strokeLinecap="round"
+        transform={`rotate(-90 ${cx} ${cy})`} />
+      <text x={cx} y={cy - 8} textAnchor="middle" dominantBaseline="middle" fontSize={34} fontWeight={800} fill={color}>{score}</text>
+      <text x={cx} y={cy + 18} textAnchor="middle" dominantBaseline="middle" fontSize={11} fontWeight={500} fill="rgba(255,255,255,0.55)">out of 100</text>
+    </svg>
+  );
+}
+
+function SectionHeader({ title, badge, badgeColor = "#0070f2" }: { title: string; badge?: string; badgeColor?: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+      <div style={{ width: 3, height: 20, background: badgeColor, borderRadius: 2, flexShrink: 0 }} />
+      <span style={{ fontSize: 16, fontWeight: 700, color: "#0f172a" }}>{title}</span>
+      <div style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+      {badge && (
+        <span style={{ padding: "3px 10px", background: badgeColor + "18", color: badgeColor, borderRadius: 6, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
+          {badge}
+        </span>
+      )}
     </div>
   );
 }
 
-function KPICard({ label, value, sub, color = "#0070f2", alert = false }:
-  { label: string; value: string; sub?: string; color?: string; alert?: boolean }) {
+interface KPICardProps {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: string;
+  alert?: boolean;
+  icon: string;
+}
+
+function KPICard({ label, value, sub, color = "#0070f2", alert = false, icon }: KPICardProps) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div style={{ background: "#fff", borderRadius: 12, padding: "20px 22px", border: alert ? `1.5px solid ${color}` : "1.5px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#fff",
+        borderRadius: 12,
+        padding: "20px 22px",
+        border: alert ? `1.5px solid ${color}30` : "1.5px solid #e2e8f0",
+        boxShadow: hovered
+          ? `0 4px 12px rgba(0,0,0,0.10), 0 8px 32px rgba(0,0,0,0.07)`
+          : "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
+        transition: "box-shadow 0.18s ease, transform 0.18s ease",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: color, borderRadius: "12px 12px 0 0" }} />
-      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginBottom: 6 }}>{label}</div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: alert ? color : "#0f172a", lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{sub}</div>}
+      <div style={{ position: "absolute", top: 16, right: 16, width: 44, height: 44, borderRadius: 10, background: color + "18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+        {icon}
+      </div>
+      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginBottom: 8, paddingRight: 52 }}>{label}</div>
+      <div style={{ fontSize: 32, fontWeight: 800, color: alert ? color : "#0f172a", lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 6, paddingRight: 52 }}>{sub}</div>}
     </div>
   );
 }
@@ -67,9 +103,22 @@ const DUP_POS = [
 ];
 
 const CAT_DATA = [
-  { label: "Raw Materials (WH-01)", value: 3990000, pct: 72 },
-  { label: "Finished Goods (WH-03)", value: 39850000, pct: 85 },
-  { label: "Packaging & Spares (WH-02)", value: 5040000, pct: 58 },
+  { label: "Raw Materials", sub: "WH-01", value: 3990000, pct: 72, color: "#0070f2" },
+  { label: "Finished Goods", sub: "WH-03", value: 39850000, pct: 85, color: "#7c3aed" },
+  { label: "Packaging & Spares", sub: "WH-02", value: 5040000, pct: 58, color: "#0891b2" },
+];
+
+const PRIORITY_ACTIONS = [
+  { icon: "🚨", text: "RM-3015 stock-out in 2.9 days", action: "Emergency PO", actionColor: "#dc2626", bg: "#fef2f2", border: "#fecaca", textColor: "#991b1b" },
+  { icon: "🚨", text: "RM-1042 stock-out in 4.9 days", action: "View Forecast", actionColor: "#dc2626", bg: "#fef2f2", border: "#fecaca", textColor: "#991b1b" },
+  { icon: "⚠️", text: "₹38.6L in duplicate POs pending block", action: "Review", actionColor: "#d97706", bg: "#fffbeb", border: "#fde68a", textColor: "#92400e" },
+];
+
+const HEALTH_DEDUCTIONS = [
+  { label: "Critical Stock", pct: 30, color: "#ef4444" },
+  { label: "Duplicates", pct: 15, color: "#f59e0b" },
+  { label: "Slow-Moving", pct: 8, color: "#94a3b8" },
+  { label: "Waste Alerts", pct: 6, color: "#fb923c" },
 ];
 
 export default function InventoryOverview() {
@@ -79,18 +128,21 @@ export default function InventoryOverview() {
     fetch("/api/inventory/overview").then(r => r.json()).then(d => setKpis(d.kpis || {}));
   }, []);
 
-  const health = kpis.healthScore ?? 62;
+  const health = kpis.healthScore ?? 41;
   const totalValue = kpis.totalStockValue ?? 48880500;
   const opening = 39200000;
   const closing = totalValue;
   const movement = closing - opening;
+  const healthColor = health >= 75 ? "#22c55e" : health >= 50 ? "#f59e0b" : "#ef4444";
+  const healthLabel = health >= 75 ? "Healthy" : health >= 50 ? "Fair" : "At Risk";
 
   return (
     <div style={{ maxWidth: 1400 }}>
+      {/* Page Title */}
       <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a" }}>Inventory Overview</h1>
-          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>Plant 1010 — Hyderabad Manufacturing · August 2026</p>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.5px" }}>Inventory Overview</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>IntelliStock · Real-time operations dashboard · August 2026</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <span style={{ padding: "6px 14px", background: "#fee2e2", color: "#dc2626", borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
@@ -102,107 +154,254 @@ export default function InventoryOverview() {
         </div>
       </div>
 
-      {/* Health + Stock Value row */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
-        <div style={{ background: "#fff", borderRadius: 12, padding: "24px", border: "1.5px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <HealthGauge score={health} />
-          <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+      {/* HERO HEALTH BANNER */}
+      <div style={{
+        borderRadius: 16,
+        background: "linear-gradient(135deg, #0f172a 0%, #1a2332 100%)",
+        padding: "32px 36px 0",
+        marginBottom: 32,
+        overflow: "hidden",
+        boxShadow: "0 4px 24px rgba(15,23,42,0.18)",
+        position: "relative",
+      }}>
+        {/* Subtle grid pattern overlay */}
+        <div style={{
+          position: "absolute", inset: 0, opacity: 0.04,
+          backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(255,255,255,1) 31px,rgba(255,255,255,1) 32px),repeating-linear-gradient(90deg,transparent,transparent 31px,rgba(255,255,255,1) 31px,rgba(255,255,255,1) 32px)",
+          pointerEvents: "none",
+        }} />
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 40, alignItems: "center", position: "relative" }}>
+          {/* Left: Text content */}
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
+              Plant 1010 — Hyderabad Manufacturing
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.9)", marginBottom: 12 }}>
+              Inventory Health
+            </div>
+            <div style={{ fontSize: 72, fontWeight: 900, color: healthColor, lineHeight: 1, marginBottom: 10, letterSpacing: "-2px" }}>
+              {health}
+            </div>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "6px 14px",
+              background: healthColor + "22",
+              border: `1px solid ${healthColor}44`,
+              borderRadius: 8,
+            }}>
+              <span style={{ width: 7, height: 7, borderRadius: "50%", background: healthColor, display: "inline-block" }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: healthColor }}>
+                {healthLabel} — {kpis.criticalCount ?? 2} critical materials require immediate action
+              </span>
+            </div>
+
+            {/* Health deduction pills */}
+            <div style={{ display: "flex", gap: 8, marginTop: 20, flexWrap: "wrap" }}>
+              {[
+                { l: "Critical", v: kpis.criticalCount ?? 2, c: "#ef4444" },
+                { l: "Low Stock", v: kpis.lowCount ?? 2, c: "#f59e0b" },
+                { l: "Overstock", v: kpis.overstockCount ?? 3, c: "#8b5cf6" },
+                { l: "Dead Stock", v: kpis.deadStockCount ?? 1, c: "#94a3b8" },
+              ].map(x => (
+                <div key={x.l} style={{ padding: "4px 10px", background: x.c + "22", border: `1px solid ${x.c}33`, borderRadius: 6, fontSize: 11, color: x.c, fontWeight: 600 }}>
+                  {x.l}: {x.v}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Center: Gauge */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <HeroGauge score={health} />
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", letterSpacing: "0.05em", textTransform: "uppercase" }}>Health Score</div>
+          </div>
+
+          {/* Right: Mini stats */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {[
-              { l: "Critical", v: kpis.criticalCount ?? 2, c: "#ef4444" },
-              { l: "Low Stock", v: kpis.lowCount ?? 2, c: "#f59e0b" },
-              { l: "Overstock", v: kpis.overstockCount ?? 3, c: "#8b5cf6" },
-              { l: "Dead Stock", v: kpis.deadStockCount ?? 1, c: "#94a3b8" },
-            ].map(x => (
-              <div key={x.l} style={{ padding: "4px 10px", background: x.c + "18", borderRadius: 6, fontSize: 11, color: x.c, fontWeight: 600 }}>
-                {x.l}: {x.v}
+              { label: "Opening Stock", value: fmt(opening), icon: "📂", note: "Aug 1, 2026" },
+              { label: "Closing Stock", value: fmt(closing), icon: "📊", note: "Aug 10, 2026" },
+              { label: "Net Movement", value: (movement >= 0 ? "+" : "") + fmt(Math.abs(movement)), icon: movement >= 0 ? "📈" : "📉", note: "this month", valueColor: movement >= 0 ? "#4ade80" : "#f87171" },
+            ].map(s => (
+              <div key={s.label} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                <span style={{ fontSize: 22 }}>{s.icon}</span>
+                <div>
+                  <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", fontWeight: 500, marginBottom: 2 }}>{s.label}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: (s as { valueColor?: string }).valueColor ?? "rgba(255,255,255,0.92)", letterSpacing: "-0.5px" }}>{s.value}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 1 }}>{s.note}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div style={{ background: "#fff", borderRadius: 12, padding: "24px", border: "1.5px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-          <div style={{ fontSize: 13, color: "#64748b", fontWeight: 500, marginBottom: 4 }}>Total Stock Value (Aug 2026)</div>
-          <div style={{ fontSize: 32, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>{fmt(closing)}</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <div style={{ background: "#f8fafc", borderRadius: 8, padding: "12px 16px" }}>
-              <div style={{ fontSize: 11, color: "#64748b" }}>Opening Stock (Aug 1)</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>{fmt(opening)}</div>
-            </div>
-            <div style={{ background: movement >= 0 ? "#dcfce7" : "#fee2e2", borderRadius: 8, padding: "12px 16px" }}>
-              <div style={{ fontSize: 11, color: "#64748b" }}>Net Movement (Aug)</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: movement >= 0 ? "#16a34a" : "#dc2626" }}>
-                {movement >= 0 ? "+" : ""}{fmt(Math.abs(movement))}
-              </div>
-            </div>
-          </div>
+        {/* Bottom strip — health breakdown bar */}
+        <div style={{ marginTop: 28, marginLeft: -36, marginRight: -36, height: 6, display: "flex" }}>
+          {HEALTH_DEDUCTIONS.map((d, i) => (
+            <div key={i} style={{ flex: d.pct, background: d.color, opacity: 0.85 }} title={`${d.label}: -${d.pct}pts`} />
+          ))}
+          <div style={{ flex: 100 - HEALTH_DEDUCTIONS.reduce((a, b) => a + b.pct, 0), background: "#22c55e", opacity: 0.5 }} />
         </div>
       </div>
 
-      {/* KPI Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 20 }}>
-        <KPICard label="Total Materials Tracked" value={String(kpis.totalMaterials ?? 12)} sub="across 3 warehouses" color="#0070f2" />
-        <KPICard label="Open Purchase Orders" value={String(kpis.openPOs ?? 6)} sub="4 pending delivery" color="#8b5cf6" />
-        <KPICard label="AI Recommendations" value={String(kpis.aiRecommendations ?? 5)} sub="3 require action today" color="#059669" />
-        <KPICard label="Duplicate PO Exposure" value="₹38.6L" sub="2 POs can be blocked now" color="#ef4444" alert />
-        <KPICard label="Slow-Moving Stock" value={String(kpis.slowMovingCount ?? 1)} sub="SP-0088 — 56 days no movement" color="#f59e0b" alert />
-        <KPICard label="Dead Stock Value" value="₹54,000" sub="SP-0145 V-Belt — since Mar 2026" color="#94a3b8" />
-        <KPICard label="Waste / Scrap Alerts" value={String(kpis.wasteAlerts ?? 2)} sub="RM-1042 & RM-5520 excess" color="#ef4444" />
-        <KPICard label="Materials at Risk" value={String((kpis.criticalCount ?? 2) + (kpis.lowCount ?? 2))} sub="critical + low combined" color="#ef4444" alert />
-      </div>
-
-      {/* Bottom grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
-        <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #fecaca" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>🚨 Active Alerts</div>
-            <span style={{ background: "#fee2e2", color: "#dc2626", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>4 alerts</span>
-          </div>
-          {ALERTS.map((a, i) => (
-            <div key={i} style={{ padding: "10px 12px", background: a.sev === "critical" ? "#fef2f2" : a.sev === "high" ? "#fffbeb" : "#f8fafc", borderRadius: 8, marginBottom: 8, borderLeft: `3px solid ${a.sev === "critical" ? "#ef4444" : a.sev === "high" ? "#f59e0b" : "#94a3b8"}` }}>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontWeight: 700, fontSize: 12, color: "#0f172a" }}>{a.mat}</span>
-                <span style={{ fontSize: 11, color: "#64748b" }}>{a.desc}</span>
+      {/* PRIORITY ACTIONS STRIP */}
+      <div style={{ marginBottom: 32 }}>
+        <SectionHeader title="Today's Priority Actions" badge="3 urgent" badgeColor="#dc2626" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
+          {PRIORITY_ACTIONS.map((p, i) => (
+            <div key={i} style={{
+              background: p.bg,
+              border: `1.5px solid ${p.border}`,
+              borderRadius: 12,
+              padding: "16px 18px",
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}>
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{p.icon}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: p.textColor, lineHeight: 1.4 }}>{p.text}</div>
               </div>
-              <div style={{ fontSize: 12, color: "#475569", marginTop: 3 }}>{a.msg}</div>
+              <button style={{
+                flexShrink: 0,
+                padding: "6px 12px",
+                background: p.actionColor,
+                color: "#fff",
+                border: "none",
+                borderRadius: 7,
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}>
+                {p.action}
+              </button>
             </div>
           ))}
         </div>
+      </div>
 
-        <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #fde8a1" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-            <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>⚠️ Duplicate Purchase Orders</div>
-            <span style={{ background: "#fef3c7", color: "#d97706", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>₹38.6L at risk</span>
+      {/* KPI GRID */}
+      <div style={{ marginBottom: 32 }}>
+        <SectionHeader title="Key Performance Indicators" badge="8 metrics" badgeColor="#0070f2" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>
+          <KPICard label="Materials Tracked" value={String(kpis.totalMaterials ?? 12)} sub="across 3 warehouses" color="#0070f2" icon="📦" />
+          <KPICard label="Critical Stock" value={String(kpis.criticalCount ?? 2)} sub="immediate action needed" color="#dc2626" alert icon="🚨" />
+          <KPICard label="AI Recommendations" value={String(kpis.aiRecommendations ?? 5)} sub="3 require action today" color="#7c3aed" icon="✨" />
+          <KPICard label="Duplicate PO Exposure" value="₹38.6L" sub="2 POs can be blocked now" color="#d97706" alert icon="⚠️" />
+          <KPICard label="Slow-Moving Items" value={String(kpis.slowMovingCount ?? 1)} sub="SP-0088 — 56 days no movement" color="#64748b" icon="🐢" />
+          <KPICard label="Dead Stock" value="₹54,000" sub="SP-0145 V-Belt — since Mar 2026" color="#94a3b8" icon="💀" />
+          <KPICard label="Waste / Scrap Alerts" value={String(kpis.wasteAlerts ?? 2)} sub="RM-1042 & RM-5520 excess" color="#f59e0b" alert icon="♻️" />
+          <KPICard label="At-Risk Count" value={String((kpis.criticalCount ?? 2) + (kpis.lowCount ?? 2))} sub="critical + low combined" color="#ef4444" alert icon="⚡" />
+        </div>
+      </div>
+
+      {/* ALERTS + DUPLICATE POS */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 32 }}>
+        {/* Active Alerts */}
+        <div style={{ background: "#fff", borderRadius: 14, padding: "24px", border: "1.5px solid #fecaca", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)" }}>
+          <SectionHeader title="Active Alerts" badge="4 alerts" badgeColor="#dc2626" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {ALERTS.map((a, i) => {
+              const sevColor = a.sev === "critical" ? "#ef4444" : a.sev === "high" ? "#f59e0b" : "#94a3b8";
+              const sevBg = a.sev === "critical" ? "#fef2f2" : a.sev === "high" ? "#fffbeb" : "#f8fafc";
+              return (
+                <div key={i} style={{
+                  padding: "12px 14px",
+                  background: sevBg,
+                  borderRadius: 10,
+                  borderLeft: `3px solid ${sevColor}`,
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-start",
+                }}>
+                  <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>{a.sev === "critical" ? "🚨" : a.sev === "high" ? "⚠️" : "ℹ️"}</span>
+                  <div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 3 }}>
+                      <span style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>{a.mat}</span>
+                      <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>{a.desc}</span>
+                      <span style={{ padding: "2px 7px", background: sevColor + "18", color: sevColor, borderRadius: 5, fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" }}>{a.sev}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{a.msg}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          {DUP_POS.map((d, i) => (
-            <div key={i} style={{ padding: "12px 14px", background: "#fffbeb", borderRadius: 8, marginBottom: 8, borderLeft: "3px solid #f59e0b" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>PO {d.po}</span>
-                <span style={{ fontWeight: 700, fontSize: 13, color: "#dc2626" }}>{d.value} exposure</span>
+        </div>
+
+        {/* Duplicate POs */}
+        <div style={{ background: "#fff", borderRadius: 14, padding: "24px", border: "1.5px solid #fde68a", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)" }}>
+          <SectionHeader title="Duplicate Purchase Orders" badge="₹38.6L at risk" badgeColor="#d97706" />
+
+          {/* Table header */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, padding: "8px 12px", background: "#fef3c7", borderRadius: 8, marginBottom: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.05em" }}>PO / Material</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.05em" }}>Vendor</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#92400e", textTransform: "uppercase", letterSpacing: "0.05em" }}>Exposure</span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {DUP_POS.map((d, i) => (
+              <div key={i} style={{ padding: "14px 16px", background: "#fffbeb", borderRadius: 10, borderLeft: "3px solid #f59e0b" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                  <div>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>PO {d.po}</span>
+                    <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{d.mat} · {d.vendor}</div>
+                  </div>
+                  <span style={{ fontWeight: 800, fontSize: 15, color: "#dc2626", whiteSpace: "nowrap" }}>{d.value}</span>
+                </div>
+                <div style={{ fontSize: 11, color: "#92400e", background: "#fef3c7", borderRadius: 5, padding: "4px 8px", marginTop: 6 }}>
+                  🤖 AI: {d.reason}
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>{d.mat} · {d.vendor}</div>
-              <div style={{ fontSize: 11, color: "#92400e", marginTop: 4 }}>AI: {d.reason}</div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 14, padding: "14px 16px", background: "#fefce8", borderRadius: 10, border: "1.5px solid #fde68a", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <div style={{ fontSize: 13, color: "#713f12", fontWeight: 700 }}>Total Savings Available</div>
+              <div style={{ fontSize: 11, color: "#a16207", marginTop: 2 }}>Block these POs to free working capital</div>
             </div>
-          ))}
-          <div style={{ padding: "10px 14px", background: "#fefce8", borderRadius: 8, borderLeft: "3px solid #eab308", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: 13, color: "#713f12", fontWeight: 600 }}>Total Savings Available</span>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "#dc2626" }}>₹38.6L</span>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: 24, fontWeight: 900, color: "#dc2626", letterSpacing: "-0.5px" }}>₹38.6L</div>
+              <button style={{ marginTop: 4, padding: "5px 12px", background: "#dc2626", color: "#fff", border: "none", borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+                Block Now
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #e2e8f0" }}>
-        <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a", marginBottom: 16 }}>Stock Value by Category & Warehouse</div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+      {/* CATEGORY BREAKDOWN */}
+      <div style={{ background: "#fff", borderRadius: 14, padding: "24px", border: "1.5px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)", marginBottom: 32 }}>
+        <SectionHeader title="Stock Value by Category & Warehouse" badge="3 locations" badgeColor="#0891b2" />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
           {CAT_DATA.map(c => (
-            <div key={c.label}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{c.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{fmt(c.value)}</span>
+            <div key={c.label} style={{ background: "#f8fafc", borderRadius: 12, padding: "20px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>{c.label}</div>
+                  <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{c.sub}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.3px" }}>{fmt(c.value)}</div>
+                  <div style={{ fontSize: 11, color: c.color, fontWeight: 600 }}>{c.pct}% utilized</div>
+                </div>
               </div>
-              <div style={{ background: "#e2e8f0", borderRadius: 4, height: 8, overflow: "hidden" }}>
-                <div style={{ width: `${c.pct}%`, height: "100%", background: "linear-gradient(90deg,#0070f2,#00a4e0)", borderRadius: 4 }} />
+              <div style={{ background: "#e2e8f0", borderRadius: 6, height: 10, overflow: "hidden" }}>
+                <div style={{
+                  width: `${c.pct}%`, height: "100%",
+                  background: `linear-gradient(90deg, ${c.color}, ${c.color}bb)`,
+                  borderRadius: 6,
+                  transition: "width 0.6s ease",
+                }} />
               </div>
-              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{c.pct}% of capacity utilized</div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+                <span style={{ fontSize: 10, color: "#94a3b8" }}>0%</span>
+                <span style={{ fontSize: 10, color: "#94a3b8" }}>Capacity 100%</span>
+              </div>
             </div>
           ))}
         </div>
