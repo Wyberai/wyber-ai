@@ -17,7 +17,7 @@ const NAV = [
   { href: "/app/inventory/reports",          label: "Reports",            icon: "📊" },
 ];
 
-const DEMO_TOKEN = "guru2026";
+const VALID_TOKENS = ["guru2026", "rohit2026"];
 
 function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -29,7 +29,7 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const urlToken = searchParams.get("access");
-    if (urlToken === DEMO_TOKEN) {
+    if (urlToken && VALID_TOKENS.includes(urlToken)) {
       sessionStorage.setItem("inv_demo_ok", "1");
       setAuthorized(true);
       return;
@@ -42,7 +42,7 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   }, [searchParams]);
 
   const handleAuth = () => {
-    if (inputToken === DEMO_TOKEN) {
+    if (VALID_TOKENS.includes(inputToken)) {
       sessionStorage.setItem("inv_demo_ok", "1");
       setAuthorized(true);
     } else {
