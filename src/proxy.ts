@@ -92,6 +92,11 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/setup-call') ||
     // Free founder consultation landing page — ad traffic, must be public.
     path.startsWith('/consult') ||
+    // US "juggling five different apps" dashboard-scoping-call landing page —
+    // ad traffic (scripts/meta-ad-us-founder-call.mjs), must be public.
+    path.startsWith('/us-consulting') ||
+    // Inventory intelligence demo — live under /app/inventory, public for customer demos.
+    path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||
     path.startsWith('/learn') ||
     path.startsWith('/coming-soon') ||

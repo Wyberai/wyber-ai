@@ -228,10 +228,24 @@ export async function POST(req: NextRequest) {
     }
     clearTimeout(buildTimeout)
 
-    const buildData = await buildRes.json()
+    let buildData: Record<string, unknown> = {}
+    let rawBody = ''
+    try {
+      rawBody = await buildRes.text()
+      buildData = rawBody ? JSON.parse(rawBody) : {}
+    } catch {
+      console.error('[publish] builder returned non-JSON body (HTTP', buildRes.status, '):', rawBody.slice(0, 200))
+      return NextResponse.json({
+        error: `Build failed: builder returned HTTP ${buildRes.status} with unexpected response. Please try again.`,
+      }, { status: 500 })
+    }
 
-    if (!buildData.url) {
-      return NextResponse.json({ error: 'Build failed: ' + (buildData.error || 'Unknown') }, { status: 500 })
+    if (!buildRes.ok || !buildData.url) {
+      const reason = (buildData.error as string | undefined)?.trim()
+        || (buildRes.status !== 200 ? `builder HTTP ${buildRes.status}` : null)
+        || 'Build server returned no URL — the app may have a bundling error. Try republishing or simplifying the last change.'
+      console.error('[publish] build failed for', projectId, '— status:', buildRes.status, '— body:', rawBody.slice(0, 400))
+      return NextResponse.json({ error: reason }, { status: 500 })
     }
 
     // Fetch the built HTML from Railway
