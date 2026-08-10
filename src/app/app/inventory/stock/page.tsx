@@ -49,6 +49,13 @@ export default function StockPage() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"stock" | "opening">("stock");
   const [sortBy, setSortBy] = useState<"material" | "cover" | "value">("cover");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     fetch("/api/inventory/materials")
@@ -83,9 +90,9 @@ export default function StockPage() {
       </div>
 
       {/* Sub-tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap" }}>
         {(["stock", "opening"] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 20px", borderRadius: 8, border: "1.5px solid", borderColor: tab === t ? "#0070f2" : "#e2e8f0", background: tab === t ? "#0070f2" : "#fff", color: tab === t ? "#fff" : "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+          <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 20px", borderRadius: 8, border: "1.5px solid", borderColor: tab === t ? "#0070f2" : "#e2e8f0", background: tab === t ? "#0070f2" : "#fff", color: tab === t ? "#fff" : "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", flex: isMobile ? "1 1 auto" : undefined }}>
             {t === "stock" ? "📦 Stock Levels" : "📊 Opening/Closing Stock"}
           </button>
         ))}
@@ -111,12 +118,12 @@ export default function StockPage() {
             </div>
           </div>
 
-          <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden" }}>
+          <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
                   {["Material", "Description", "Category / WH", "Unrestricted", "Blocked / QI", "Daily Use", "Days Cover", "Reorder Point", "Stock Value", "Status"].map(h => (
-                    <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 600, fontSize: 12, borderBottom: "1px solid #e2e8f0" }}>{h}</th>
+                    <th key={h} style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 600, fontSize: 12, borderBottom: "1px solid #e2e8f0", display: isMobile && (h === "Blocked / QI" || h === "Reorder Point") ? "none" : undefined }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -136,12 +143,12 @@ export default function StockPage() {
                     <td style={{ padding: "10px 14px", fontWeight: 600, color: m.status === "critical" ? "#dc2626" : "#0f172a" }}>
                       {m.unrestricted.toLocaleString("en-IN")} {m.unit}
                     </td>
-                    <td style={{ padding: "10px 14px", color: "#94a3b8", fontSize: 12 }}>
+                    <td style={{ padding: "10px 14px", color: "#94a3b8", fontSize: 12, display: isMobile ? "none" : undefined }}>
                       {m.blocked > 0 ? `${m.blocked} blk` : "—"}{m.qualityInspection > 0 ? ` / ${m.qualityInspection} QI` : ""}
                     </td>
                     <td style={{ padding: "10px 14px", color: "#64748b" }}>{m.dailyConsumption}/{m.unit.toLowerCase()}</td>
                     <td style={{ padding: "10px 14px" }}><CoverBar days={m.daysOfCover} /></td>
-                    <td style={{ padding: "10px 14px", color: "#64748b", fontSize: 12 }}>
+                    <td style={{ padding: "10px 14px", color: "#64748b", fontSize: 12, display: isMobile ? "none" : undefined }}>
                       {m.reorderPoint} {m.unit}
                       <div style={{ fontSize: 10, color: "#94a3b8" }}>Safety: {m.safetyStock}</div>
                     </td>
@@ -159,7 +166,7 @@ export default function StockPage() {
       )}
 
       {tab === "opening" && (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflowX: "auto" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0" }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Opening vs Closing Stock — August 2026</div>
             <div style={{ fontSize: 12, color: "#64748b" }}>Received = Goods Receipts (MT 101) · Issued = Goods Issues (MT 261, 201, 601)</div>

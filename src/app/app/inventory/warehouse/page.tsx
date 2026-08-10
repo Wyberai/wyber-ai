@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEMO_WAREHOUSES, DEMO_BATCHES, DEMO_MOVEMENTS } from "@/lib/inventory-data";
 
 function fmt(n: number) {
@@ -20,6 +20,13 @@ function UtilBar({ pct, color = "#0070f2" }: { pct: number; color?: string }) {
 export default function WarehousePage() {
   const [tab, setTab] = useState<"overview" | "batch" | "movements">("overview");
   const [selectedWH, setSelectedWH] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const totalValue = DEMO_WAREHOUSES.reduce((a, w) => a + w.totalValue, 0);
 
@@ -48,7 +55,7 @@ export default function WarehousePage() {
       {tab === "overview" && (
         <>
           {/* Warehouse cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 16, marginBottom: 20 }}>
             {DEMO_WAREHOUSES.map(wh => {
               const utilColor = wh.utilization >= 80 ? "#ef4444" : wh.utilization >= 60 ? "#f59e0b" : "#22c55e";
               return (
@@ -87,7 +94,7 @@ export default function WarehousePage() {
             const wh = DEMO_WAREHOUSES.find(w => w.warehouseId === selectedWH);
             if (!wh) return null;
             return (
-              <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #0070f2" }}>
+              <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #0070f2", overflowX: "auto" }}>
                 <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a", marginBottom: 16 }}>{wh.warehouseId} — {wh.warehouseName} · Material Detail</div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
@@ -124,7 +131,7 @@ export default function WarehousePage() {
       )}
 
       {tab === "batch" && (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflowX: "auto" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0" }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Batch-Wise Inventory</div>
             <div style={{ fontSize: 12, color: "#64748b" }}>{DEMO_BATCHES.length} active batches across all warehouses</div>
@@ -161,8 +168,8 @@ export default function WarehousePage() {
       )}
 
       {tab === "movements" && (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflowX: "auto" }}>
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Goods Movement History</div>
               <div style={{ fontSize: 12, color: "#64748b" }}>GR (Goods Receipt) · GI (Goods Issue) · STO (Stock Transfer)</div>

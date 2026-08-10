@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEMO_MATERIALS, DEMO_POS } from "@/lib/inventory-data";
 
 type Priority = "Urgent" | "High" | "Medium" | "Low";
@@ -92,6 +92,13 @@ function buildRecommendations(): Recommendation[] {
 export default function RecommendationsPage() {
   const [recs, setRecs] = useState<Recommendation[]>(buildRecommendations);
   const [filter, setFilter] = useState<Priority | "All">("All");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const update = (id: string, state: ActionState) => {
     setRecs(prev => prev.map(r => r.id === id ? { ...r, state } : r));
@@ -104,19 +111,19 @@ export default function RecommendationsPage() {
 
   return (
     <div style={{ maxWidth: 1200 }}>
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a" }}>AI Recommendations</h1>
           <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>Generated from live stock, PO, and consumption data · Powered by Ollama (on-premise AI)</p>
         </div>
-        <div style={{ background: "#fff", borderRadius: 10, padding: "10px 18px", border: "1.5px solid #e2e8f0" }}>
+        <div style={{ background: "#fff", borderRadius: 10, padding: "10px 18px", border: "1.5px solid #e2e8f0", width: isMobile ? "100%" : undefined }}>
           <div style={{ fontSize: 11, color: "#64748b" }}>Potential Savings (pending actions)</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: "#dc2626" }}>₹{(totalSavings / 100000).toFixed(1)}L</div>
         </div>
       </div>
 
       {/* Summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
         {[
           { l: "Pending Action", v: pending.length, c: "#0070f2" },
           { l: "Accepted", v: accepted.length, c: "#22c55e" },

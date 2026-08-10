@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const AUDIT_LOGS = [
   { id:"log001", ts:"2026-08-10T07:42:00Z", user:"G. Prasad (GM)", role:"Admin", action:"Report Downloaded", category:"report", detail:"Monthly Management Summary — August 2026 (PDF)", status:"success" },
@@ -87,6 +87,13 @@ function exportCSV() {
 export default function AuditLogsPage() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const filtered = activeCategory === "all"
     ? AUDIT_LOGS
@@ -124,7 +131,7 @@ export default function AuditLogsPage() {
       </div>
 
       {/* KPI cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 16, marginBottom: 24 }}>
         {kpiCards.map(card => (
           <div
             key={card.label}
@@ -172,18 +179,18 @@ export default function AuditLogsPage() {
       </div>
 
       {/* Table */}
-      <div style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ background: "#fff", border: "1.5px solid #e2e8f0", borderRadius: 12, overflowX: "auto" }}>
         {/* Table header */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "160px 140px 130px 200px 1fr 100px",
+          gridTemplateColumns: isMobile ? "160px 140px 130px 200px 100px" : "160px 140px 130px 200px 1fr 100px",
           padding: "10px 16px",
           background: "#f8fafc",
           borderBottom: "1.5px solid #e2e8f0",
           gap: 12,
         }}>
           {["Timestamp","User","Role","Action","Detail","Status"].map(h => (
-            <div key={h} style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div key={h} style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", display: isMobile && h === "Detail" ? "none" : undefined }}>
               {h}
             </div>
           ))}
@@ -202,7 +209,7 @@ export default function AuditLogsPage() {
               onClick={() => setExpandedRow(isExpanded ? null : log.id)}
               style={{
                 display: "grid",
-                gridTemplateColumns: "160px 140px 130px 200px 1fr 100px",
+                gridTemplateColumns: isMobile ? "160px 140px 130px 200px 100px" : "160px 140px 130px 200px 1fr 100px",
                 padding: "12px 16px",
                 gap: 12,
                 borderBottom: isLast ? "none" : "1px solid #f1f5f9",
@@ -244,7 +251,7 @@ export default function AuditLogsPage() {
               </div>
 
               {/* Detail */}
-              <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5, paddingTop: 2 }}>
+              <div style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5, paddingTop: 2, display: isMobile ? "none" : undefined }}>
                 {isExpanded ? (
                   <span style={{ color: "#334155" }}>{log.detail}</span>
                 ) : (

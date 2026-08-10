@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEMO_ALERTS, DEMO_ALERT_CONFIGS, type EmailAlert, type AlertConfig } from "@/lib/inventory-data";
 
 const TYPE_ICONS: Record<string, string> = {
@@ -75,6 +75,13 @@ export default function AlertsPage() {
   const [configs, setConfigs] = useState<AlertConfig[]>(DEMO_ALERT_CONFIGS);
   const [testSent, setTestSent] = useState<string | null>(null);
   const [tab, setTab] = useState<"config" | "history">("config");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const toggle = (i: number) => {
     setConfigs(prev => prev.map((c, j) => j === i ? { ...c, enabled: !c.enabled } : c));
@@ -97,7 +104,7 @@ export default function AlertsPage() {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14, marginBottom: 20 }}>
         {[
           { l: "Alerts Sent (Aug)", v: String(sentCount), c: "#22c55e" },
           { l: "Critical Stock Alerts", v: String(critCount), c: "#ef4444" },
@@ -121,8 +128,8 @@ export default function AlertsPage() {
       </div>
 
       {tab === "config" && (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflowX: "auto" }}>
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Alert Configuration</div>
               <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>Configure thresholds, recipients, and frequency for each alert type</div>

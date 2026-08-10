@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEMO_DEPT_CONSUMPTION } from "@/lib/inventory-data";
 
 const CONSUMPTION_DATA = [
@@ -75,6 +75,13 @@ function SparkLine({ plan, actual, anomalyDays, height = 80, width = 340 }: {
 export default function ConsumptionPage() {
   const [selected, setSelected] = useState("RM-1042");
   const [tab, setTab] = useState<"daily" | "dept" | "production" | "wastage">("daily");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const sel = CONSUMPTION_DATA.find(m => m.material === selected) ?? CONSUMPTION_DATA[0];
   const totalPlan = sel.plan.reduce((a, v) => a + v, 0);
@@ -105,7 +112,7 @@ export default function ConsumptionPage() {
         <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>30-day trend · department breakdown · production vs material</p>
       </div>
 
-      <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, flexWrap: "wrap" }}>
         {(["daily", "dept", "production", "wastage"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{ padding: "8px 20px", borderRadius: 8, border: "1.5px solid", borderColor: tab === t ? "#0070f2" : "#e2e8f0", background: tab === t ? "#0070f2" : "#fff", color: tab === t ? "#fff" : "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             {t === "daily" ? "📈 Daily Trend" : t === "dept" ? "🏢 Department-Wise" : t === "production" ? "⚙️ Production Analysis" : "♻️ Wastage Analysis"}
@@ -114,7 +121,7 @@ export default function ConsumptionPage() {
       </div>
 
       {tab === "daily" && (
-        <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "260px 1fr", gap: 20 }}>
           {/* Material list */}
           <div style={{ background: "#fff", borderRadius: 12, padding: 16, border: "1.5px solid #e2e8f0" }}>
             <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a", marginBottom: 12 }}>Materials</div>
@@ -131,7 +138,7 @@ export default function ConsumptionPage() {
 
           {/* Chart area */}
           <div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 12, marginBottom: 16 }}>
               {[
                 { l: "30-day Plan", v: `${totalPlan.toFixed(1)} ${sel.unit}`, c: "#64748b" },
                 { l: "30-day Actual", v: `${totalActual.toFixed(1)} ${sel.unit}`, c: Math.abs(variance) > 10 ? "#ef4444" : "#0070f2" },
@@ -151,7 +158,7 @@ export default function ConsumptionPage() {
                 <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 20, height: 2, background: "#0070f2", display: "inline-block" }} />Actual</span>
                 {sel.anomaly && <span style={{ display: "flex", alignItems: "center", gap: 4 }}><span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", display: "inline-block" }} />Anomaly</span>}
               </div>
-              <SparkLine plan={sel.plan} actual={sel.actual} anomalyDays={sel.anomalyDays} height={120} width={520} />
+              <SparkLine plan={sel.plan} actual={sel.actual} anomalyDays={sel.anomalyDays} height={120} width={isMobile ? 260 : 520} />
               <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, fontSize: 10, color: "#94a3b8" }}>
                 <span>Aug 1</span><span>Aug 8</span><span>Aug 15</span><span>Aug 22</span><span>Aug 30</span>
               </div>
@@ -172,7 +179,7 @@ export default function ConsumptionPage() {
       )}
 
       {tab === "dept" && (
-        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: 12, border: "1.5px solid #e2e8f0", overflowX: "auto" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #e2e8f0" }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Department-Wise Consumption (Aug 2026)</div>
           </div>
@@ -226,7 +233,7 @@ export default function ConsumptionPage() {
           {PROD_DATA.map(p => (
             <div key={p.line} style={{ background: "#fff", borderRadius: 12, padding: "16px 20px", border: "1.5px solid #e2e8f0", marginBottom: 12 }}>
               <div style={{ fontWeight: 700, fontSize: 14, color: "#0f172a", marginBottom: 12 }}>{p.line}</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 12 }}>
                 {p.materials.map(m => (
                   <div key={m.material} style={{ background: "#f8fafc", borderRadius: 8, padding: "12px" }}>
                     <div style={{ fontWeight: 600, fontSize: 12, color: "#0070f2" }}>{m.material}</div>
@@ -258,7 +265,7 @@ export default function ConsumptionPage() {
       {tab === "wastage" && (
         <div>
           {/* Summary Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
             {[
               { l: "Total Waste This Month", v: `${materialsWithWaste} Materials`, sub: "with positive waste", c: "#ef4444" },
               { l: "Waste Cost (₹)", v: `₹${(totalWasteCost / 100000).toFixed(1)}L`, sub: "total cost this month", c: "#dc2626" },

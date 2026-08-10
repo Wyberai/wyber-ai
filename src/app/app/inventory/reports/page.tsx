@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DEMO_MATERIALS, DEMO_POS, DEMO_MOVEMENTS, DEMO_DEPT_CONSUMPTION, DEMO_WAREHOUSES } from "@/lib/inventory-data";
 
 function fmt(n: number) {
@@ -201,6 +201,13 @@ const CATS = ["All", "Inventory", "Procurement", "Consumption", "Movements", "Wa
 export default function ReportsPage() {
   const [generating, setGenerating] = useState<string | null>(null);
   const [catFilter, setCatFilter] = useState("All");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const filtered = REPORTS.filter(r => catFilter === "All" || r.category === catFilter);
 
@@ -237,7 +244,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Report cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2,1fr)", gap: 14 }}>
         {filtered.map(report => {
           const csvKey = `${report.id}-csv`;
           const pdfKey = `${report.id}-pdf`;

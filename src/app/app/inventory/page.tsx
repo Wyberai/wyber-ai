@@ -123,9 +123,16 @@ const HEALTH_DEDUCTIONS = [
 
 export default function InventoryOverview() {
   const [kpis, setKpis] = useState<Partial<KPIs>>({});
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     fetch("/api/inventory/overview").then(r => r.json()).then(d => setKpis(d.kpis || {}));
+  }, []);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
 
   const health = kpis.healthScore ?? 41;
@@ -137,9 +144,9 @@ export default function InventoryOverview() {
   const healthLabel = health >= 75 ? "Healthy" : health >= 50 ? "Fair" : "At Risk";
 
   return (
-    <div style={{ maxWidth: 1400 }}>
+    <div style={{ maxWidth: 1400, padding: isMobile ? "16px 12px" : undefined }}>
       {/* Page Title */}
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.5px" }}>Inventory Overview</h1>
           <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>IntelliStock · Real-time operations dashboard · August 2026</p>
@@ -171,7 +178,7 @@ export default function InventoryOverview() {
           pointerEvents: "none",
         }} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 40, alignItems: "center", position: "relative" }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto 1fr", gap: isMobile ? 20 : 40, alignItems: "center", position: "relative" }}>
           {/* Left: Text content */}
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
@@ -180,7 +187,7 @@ export default function InventoryOverview() {
             <div style={{ fontSize: 22, fontWeight: 700, color: "rgba(255,255,255,0.9)", marginBottom: 12 }}>
               Inventory Health
             </div>
-            <div style={{ fontSize: 72, fontWeight: 900, color: healthColor, lineHeight: 1, marginBottom: 10, letterSpacing: "-2px" }}>
+            <div style={{ fontSize: isMobile ? 48 : 72, fontWeight: 900, color: healthColor, lineHeight: 1, marginBottom: 10, letterSpacing: "-2px" }}>
               {health}
             </div>
             <div style={{
@@ -237,7 +244,7 @@ export default function InventoryOverview() {
         </div>
 
         {/* Bottom strip — health breakdown bar */}
-        <div style={{ marginTop: 28, marginLeft: -36, marginRight: -36, height: 6, display: "flex" }}>
+        <div style={{ marginTop: 28, marginLeft: -36, marginRight: -36, height: 6, display: isMobile ? "none" : "flex" }}>
           {HEALTH_DEDUCTIONS.map((d, i) => (
             <div key={i} style={{ flex: d.pct, background: d.color, opacity: 0.85 }} title={`${d.label}: -${d.pct}pts`} />
           ))}
@@ -248,7 +255,7 @@ export default function InventoryOverview() {
       {/* PRIORITY ACTIONS STRIP */}
       <div style={{ marginBottom: 32 }}>
         <SectionHeader title="Today's Priority Actions" badge="3 urgent" badgeColor="#dc2626" />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 14 }}>
           {PRIORITY_ACTIONS.map((p, i) => (
             <div key={i} style={{
               background: p.bg,
@@ -285,7 +292,7 @@ export default function InventoryOverview() {
       {/* KPI GRID */}
       <div style={{ marginBottom: 32 }}>
         <SectionHeader title="Key Performance Indicators" badge="8 metrics" badgeColor="#0070f2" />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 14 }}>
           <KPICard label="Materials Tracked" value={String(kpis.totalMaterials ?? 12)} sub="across 3 warehouses" color="#0070f2" icon="📦" />
           <KPICard label="Critical Stock" value={String(kpis.criticalCount ?? 2)} sub="immediate action needed" color="#dc2626" alert icon="🚨" />
           <KPICard label="AI Recommendations" value={String(kpis.aiRecommendations ?? 5)} sub="3 require action today" color="#7c3aed" icon="✨" />
@@ -298,7 +305,7 @@ export default function InventoryOverview() {
       </div>
 
       {/* ALERTS + DUPLICATE POS */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 32 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 20, marginBottom: 32 }}>
         {/* Active Alerts */}
         <div style={{ background: "#fff", borderRadius: 14, padding: "24px", border: "1.5px solid #fecaca", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)" }}>
           <SectionHeader title="Active Alerts" badge="4 alerts" badgeColor="#dc2626" />
@@ -377,7 +384,7 @@ export default function InventoryOverview() {
       {/* CATEGORY BREAKDOWN */}
       <div style={{ background: "#fff", borderRadius: 14, padding: "24px", border: "1.5px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)", marginBottom: 32 }}>
         <SectionHeader title="Stock Value by Category & Warehouse" badge="3 locations" badgeColor="#0891b2" />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)", gap: 24 }}>
           {CAT_DATA.map(c => (
             <div key={c.label} style={{ background: "#f8fafc", borderRadius: 12, padding: "20px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 }}>

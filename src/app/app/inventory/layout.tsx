@@ -51,6 +51,17 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState<RoleKey>("admin");
   const [userName, setUserName] = useState("G. Prasad");
 
+  // Mobile responsiveness
+  const [isMobile, setIsMobile] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   useEffect(() => {
     const urlToken = searchParams.get("access");
     if (urlToken && VALID_TOKENS.includes(urlToken)) {
@@ -94,9 +105,10 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
       <div style={{
         minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
         background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)",
-        fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", padding: "24px 16px",
+        fontFamily: "'Inter','Segoe UI',system-ui,sans-serif",
+        padding: isMobile ? "16px" : "24px 16px",
       }}>
-        <div style={{ maxWidth: 680, width: "100%" }}>
+        <div style={{ maxWidth: isMobile ? "95%" : 680, width: "100%" }}>
 
           {/* Branding */}
           <div style={{ textAlign: "center", marginBottom: 28 }}>
@@ -114,7 +126,8 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
 
           {/* Form card */}
           <div style={{
-            background: "#fff", borderRadius: 18, padding: "36px 36px 28px",
+            background: "#fff", borderRadius: 18,
+            padding: isMobile ? "24px 24px 20px" : "36px 36px 28px",
             boxShadow: "0 32px 80px rgba(0,0,0,0.45)",
           }}>
 
@@ -140,12 +153,16 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
               {error && <div style={{ color: "#ef4444", fontSize: 12, marginTop: 6 }}>{error}</div>}
             </div>
 
-            {/* Role selector */}
+            {/* Role selector — 2 cols on mobile, 2 cols on desktop */}
             <div style={{ marginBottom: 24 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#475569", marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>
                 Select Your Role
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr",
+                gap: isMobile ? 8 : 10,
+              }}>
                 {ROLE_CARDS.map(({ key, desc }) => {
                   const meta = ROLE_META[key];
                   const isSelected = selectedRole === key;
@@ -154,7 +171,7 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
                       key={key}
                       onClick={() => setSelectedRole(key)}
                       style={{
-                        padding: "14px 14px 12px",
+                        padding: isMobile ? "10px 10px 8px" : "14px 14px 12px",
                         borderRadius: 10,
                         border: isSelected ? `2px solid ${meta.color}` : "2px solid #e2e8f0",
                         cursor: "pointer",
@@ -165,23 +182,23 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
                     >
                       {isSelected && (
                         <div style={{
-                          position: "absolute", top: 10, right: 10,
+                          position: "absolute", top: 8, right: 8,
                           width: 18, height: 18, borderRadius: "50%",
                           background: meta.color,
                           display: "flex", alignItems: "center", justifyContent: "center",
                           color: "#fff", fontSize: 10, fontWeight: 700,
                         }}>✓</div>
                       )}
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontSize: 18 }}>{meta.icon}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                        <span style={{ fontSize: isMobile ? 15 : 18 }}>{meta.icon}</span>
                         <span style={{
-                          fontSize: 11, fontWeight: 700, padding: "2px 7px",
+                          fontSize: 10, fontWeight: 700, padding: "2px 6px",
                           borderRadius: 5, background: `${meta.color}18`,
                           color: meta.color,
                         }}>{meta.title}</span>
                       </div>
-                      <div style={{ fontWeight: 700, fontSize: 13, color: "#1e293b", marginBottom: 2 }}>{meta.name}</div>
-                      <div style={{ fontSize: 11, color: "#94a3b8" }}>{desc}</div>
+                      <div style={{ fontWeight: 700, fontSize: isMobile ? 12 : 13, color: "#1e293b", marginBottom: 2 }}>{meta.name}</div>
+                      <div style={{ fontSize: 10, color: "#94a3b8", lineHeight: 1.3 }}>{desc}</div>
                     </div>
                   );
                 })}
@@ -215,89 +232,104 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const roleMeta = ROLE_META[role] ?? ROLE_META.admin;
   const visibleNav = NAV.filter(item => item.roles.includes(role));
 
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", background: "#f0f2f5" }}>
-
-      {/* Sidebar */}
-      <aside style={{
-        width: sidebarOpen ? 240 : 64,
-        background: "linear-gradient(180deg,#1a2332 0%,#0f172a 100%)",
-        display: "flex", flexDirection: "column", transition: "width 0.2s ease",
-        flexShrink: 0, position: "sticky", top: 0, height: "100vh",
-        overflowY: "auto", overflowX: "hidden", zIndex: 50,
-      }}>
-        {/* Logo */}
-        <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-              background: "linear-gradient(135deg,#0070f2,#00a4e0)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, fontWeight: 700, color: "#fff",
-            }}>I</div>
-            {sidebarOpen && (
-              <div>
-                <div style={{ color: "#fff", fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>IntelliStock</div>
-                <div style={{ color: "#64748b", fontSize: 11, marginTop: 2 }}>AI Inventory Intelligence</div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Demo mode badge */}
-        {sidebarOpen && (
-          <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(255,165,0,0.12)", borderRadius: 6, border: "1px solid rgba(255,165,0,0.2)" }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
-              <span style={{ color: "#fbbf24", fontSize: 11, fontWeight: 500 }}>Demo Mode</span>
+  /* ── Sidebar content (shared between desktop sticky and mobile drawer) ── */
+  const sidebarContent = (inDrawer: boolean) => (
+    <>
+      {/* Logo */}
+      <div style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+            background: "linear-gradient(135deg,#0070f2,#00a4e0)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 18, fontWeight: 700, color: "#fff",
+          }}>I</div>
+          {(inDrawer || sidebarOpen) && (
+            <div style={{ flex: 1 }}>
+              <div style={{ color: "#fff", fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>IntelliStock</div>
+              <div style={{ color: "#64748b", fontSize: 11, marginTop: 2 }}>AI Inventory Intelligence</div>
             </div>
-            <div style={{ color: "#475569", fontSize: 10, marginTop: 6, padding: "0 2px" }}>Set SAP_BASE_URL to connect live SAP</div>
-          </div>
-        )}
+          )}
+          {/* Close button inside mobile drawer */}
+          {inDrawer && (
+            <button
+              onClick={() => setDrawerOpen(false)}
+              style={{
+                background: "transparent", border: "none", cursor: "pointer",
+                color: "#94a3b8", fontSize: 20, lineHeight: 1,
+                padding: "4px", minWidth: 32, minHeight: 32,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                flexShrink: 0,
+              }}
+              aria-label="Close menu"
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
 
-        {/* Nav */}
-        <nav style={{ padding: "8px 8px", flex: 1 }}>
-          {visibleNav.map(item => {
-            const active = item.href === "/app/inventory" ? pathname === item.href : pathname.startsWith(item.href);
-            return (
-              <Link key={item.href} href={item.href} style={{
+      {/* Demo mode badge */}
+      {(inDrawer || sidebarOpen) && (
+        <div style={{ padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(255,165,0,0.12)", borderRadius: 6, border: "1px solid rgba(255,165,0,0.2)" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b", flexShrink: 0 }} />
+            <span style={{ color: "#fbbf24", fontSize: 11, fontWeight: 500 }}>Demo Mode</span>
+          </div>
+          <div style={{ color: "#475569", fontSize: 10, marginTop: 6, padding: "0 2px" }}>Set SAP_BASE_URL to connect live SAP</div>
+        </div>
+      )}
+
+      {/* Nav */}
+      <nav style={{ padding: "8px 8px", flex: 1, overflowY: "auto" }}>
+        {visibleNav.map(item => {
+          const active = item.href === "/app/inventory" ? pathname === item.href : pathname.startsWith(item.href);
+          const showLabel = inDrawer || sidebarOpen;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => inDrawer && setDrawerOpen(false)}
+              style={{
                 display: "flex", alignItems: "center", gap: 10,
-                padding: sidebarOpen ? "9px 10px" : "9px 14px",
+                padding: showLabel ? "9px 10px" : "9px 14px",
                 borderRadius: 8, marginBottom: 2, textDecoration: "none",
                 background: active ? "rgba(0,112,242,0.18)" : "transparent",
                 borderLeft: active ? "3px solid #0070f2" : "3px solid transparent",
                 transition: "all 0.15s",
-              }}>
-                <span style={{ fontSize: 15, flexShrink: 0, width: 22, textAlign: "center" }}>{item.icon}</span>
-                {sidebarOpen && (
-                  <span style={{ color: active ? "#60a5fa" : "#94a3b8", fontSize: 13, fontWeight: active ? 600 : 400, whiteSpace: "nowrap" }}>
-                    {item.label}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+              }}
+            >
+              <span style={{ fontSize: 15, flexShrink: 0, width: 22, textAlign: "center" }}>{item.icon}</span>
+              {showLabel && (
+                <span style={{ color: active ? "#60a5fa" : "#94a3b8", fontSize: 13, fontWeight: active ? 600 : 400, whiteSpace: "nowrap" }}>
+                  {item.label}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
 
-        {/* User info strip (expanded sidebar only) */}
-        {sidebarOpen && (
-          <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: roleMeta.color, flexShrink: 0 }} />
-              <span style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {userName}
-              </span>
-            </div>
-            <div style={{ marginTop: 5, marginLeft: 16 }}>
-              <span style={{
-                fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
-                background: `${roleMeta.color}22`, color: roleMeta.color, whiteSpace: "nowrap",
-              }}>{roleMeta.label}</span>
-            </div>
+      {/* User info strip */}
+      {(inDrawer || sidebarOpen) && (
+        <div style={{ padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: roleMeta.color, flexShrink: 0 }} />
+            <span style={{ color: "#e2e8f0", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {userName}
+            </span>
           </div>
-        )}
+          <div style={{ marginTop: 5, marginLeft: 16 }}>
+            <span style={{
+              fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
+              background: `${roleMeta.color}22`, color: roleMeta.color, whiteSpace: "nowrap",
+            }}>{roleMeta.label}</span>
+          </div>
+        </div>
+      )}
 
-        {/* Collapse toggle */}
+      {/* Collapse toggle — desktop only */}
+      {!inDrawer && (
         <div style={{ padding: "12px 8px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <button
             onClick={() => setSidebarOpen(v => !v)}
@@ -312,6 +344,104 @@ function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
             {sidebarOpen ? "◀" : "▶"}
           </button>
         </div>
+      )}
+    </>
+  );
+
+  /* ── Mobile layout ── */
+  if (isMobile) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", background: "#f0f2f5" }}>
+
+        {/* Sticky mobile header */}
+        <header style={{
+          background: "#fff", borderBottom: "1px solid #e2e8f0",
+          padding: "0 12px", height: 52,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          position: "sticky", top: 0, zIndex: 40, flexShrink: 0,
+        }}>
+          {/* Hamburger */}
+          <button
+            onClick={() => setDrawerOpen(true)}
+            style={{
+              background: "transparent", border: "none", cursor: "pointer",
+              color: "#374151", fontSize: 20, lineHeight: 1,
+              minWidth: 32, minHeight: 32, padding: "4px",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              flexShrink: 0,
+            }}
+            aria-label="Open menu"
+          >
+            ☰
+          </button>
+
+          {/* Plant label — abbreviated */}
+          <div style={{ fontSize: 11, fontWeight: 600, color: "#1e293b", flex: 1, textAlign: "center", padding: "0 8px" }}>
+            Plant 1010
+          </div>
+
+          {/* Avatar */}
+          <div style={{
+            width: 32, height: 32, borderRadius: "50%",
+            background: roleMeta.color,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0,
+          }}>
+            {getInitials(userName)}
+          </div>
+        </header>
+
+        {/* Dark backdrop */}
+        {drawerOpen && (
+          <div
+            onClick={() => setDrawerOpen(false)}
+            style={{
+              position: "fixed", inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              zIndex: 99,
+            }}
+          />
+        )}
+
+        {/* Mobile drawer */}
+        <aside style={{
+          position: "fixed",
+          left: drawerOpen ? 0 : -280,
+          width: 280,
+          top: 0,
+          height: "100vh",
+          zIndex: 100,
+          transition: "left 0.25s ease",
+          background: "linear-gradient(180deg,#1a2332 0%,#0f172a 100%)",
+          display: "flex",
+          flexDirection: "column",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}>
+          {sidebarContent(true)}
+        </aside>
+
+        {/* Main content */}
+        <main style={{ flex: 1, padding: "16px", overflowY: "auto" }}>
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  /* ── Desktop layout ── */
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Inter','Segoe UI',system-ui,sans-serif", background: "#f0f2f5" }}>
+
+      {/* Desktop sidebar */}
+      <aside style={{
+        width: sidebarOpen ? 240 : 64,
+        background: "linear-gradient(180deg,#1a2332 0%,#0f172a 100%)",
+        display: "flex", flexDirection: "column", transition: "width 0.2s ease",
+        flexShrink: 0, position: "sticky", top: 0, height: "100vh",
+        overflowY: "auto", overflowX: "hidden", zIndex: 50,
+      }}>
+        {sidebarContent(false)}
       </aside>
 
       {/* Main content */}

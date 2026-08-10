@@ -17,6 +17,13 @@ export default function PurchasesPage() {
   const [loading, setLoading] = useState(true);
   const [blockState, setBlockState] = useState<BlockState>({});
   const [filter, setFilter] = useState<"all" | "duplicates">("all");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     fetch("/api/inventory/purchases")
@@ -45,7 +52,7 @@ export default function PurchasesPage() {
       </div>
 
       {/* Duplicate summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "1fr 1fr 1fr", gap: 16, marginBottom: 24 }}>
         <div style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: "1px solid #e2e8f0", borderTop: "3px solid #dc2626" }}>
           <div style={{ color: "#64748b", fontSize: 12, fontWeight: 500, marginBottom: 6, textTransform: "uppercase" }}>Duplicate POs</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#dc2626" }}>{orders.filter(o => o.duplicate).length}</div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DEMO_MATERIALS, generateForecast, DEMO_POS } from "@/lib/inventory-data";
 
 const PENDING: Record<string, { qty: number; date: string }> = {
@@ -79,6 +79,13 @@ function ForecastChart({ forecast30, material, reorderPoint, currentStock, pendi
 export default function ForecastingPage() {
   const [horizon, setHorizon] = useState<30 | 60>(30);
   const [selected, setSelected] = useState("RM-1042");
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const forecasts = useMemo(() => {
     return DEMO_MATERIALS.filter(m => m.dailyConsumption > 0).map(m => generateForecast(m, PENDING[m.material]));
@@ -92,21 +99,21 @@ export default function ForecastingPage() {
 
   return (
     <div style={{ maxWidth: 1400 }}>
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a" }}>Inventory Forecasting</h1>
           <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>AI-projected stock levels · consumption trends · reorder predictions</p>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {([30, 60] as const).map(h => (
-            <button key={h} onClick={() => setHorizon(h)} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid", borderColor: horizon === h ? "#0070f2" : "#e2e8f0", background: horizon === h ? "#0070f2" : "#fff", color: horizon === h ? "#fff" : "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            <button key={h} onClick={() => setHorizon(h)} style={{ padding: "7px 16px", borderRadius: 8, border: "1.5px solid", borderColor: horizon === h ? "#0070f2" : "#e2e8f0", background: horizon === h ? "#0070f2" : "#fff", color: horizon === h ? "#fff" : "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer", flex: isMobile ? "1" : undefined }}>
               {h}-day view
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "280px 1fr", gap: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "280px 1fr", gap: 20 }}>
         {/* Material selector */}
         <div style={{ background: "#fff", borderRadius: 12, padding: "16px", border: "1.5px solid #e2e8f0" }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: "#0f172a", marginBottom: 12 }}>Materials</div>
@@ -140,7 +147,7 @@ export default function ForecastingPage() {
           {sel && (
             <>
               {/* Summary cards */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 16 }}>
+              <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2,1fr)" : "repeat(4,1fr)", gap: 12, marginBottom: 16 }}>
                 {[
                   { l: "Current Stock", v: `${sel.currentStock} ${sel.unit}`, c: "#0070f2" },
                   { l: "Daily Consumption", v: `${sel.dailyConsumption} ${sel.unit}/day`, c: "#8b5cf6" },
@@ -189,7 +196,7 @@ export default function ForecastingPage() {
       </div>
 
       {/* All materials forecast table */}
-      <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #e2e8f0", marginTop: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #e2e8f0", marginTop: 20, overflowX: "auto" }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a", marginBottom: 16 }}>30-Day Forecast Summary — All Materials</div>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
           <thead>

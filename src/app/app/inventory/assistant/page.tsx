@@ -54,6 +54,13 @@ function Bubble({ msg }: { msg: ChatMessage & { typing?: boolean } }) {
 type UIMessage = ChatMessage & { typing?: boolean };
 
 export default function AssistantPage() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
   const [messages, setMessages] = useState<UIMessage[]>([
     {
       role: "assistant",
@@ -96,7 +103,7 @@ export default function AssistantPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px - 48px)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 56px - 48px)", padding: isMobile ? "0 4px" : undefined }}>
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0 }}>AI Inventory Assistant</h1>
