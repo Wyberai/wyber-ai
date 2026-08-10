@@ -1,183 +1,209 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import type { OverviewKPIs } from "@/lib/sap-client";
 
-const STATUS_COLOR: Record<string, { bg: string; text: string; border: string }> = {
-  critical: { bg: "#fff1f2", text: "#dc2626", border: "#fecaca" },
-  low:      { bg: "#fffbeb", text: "#d97706", border: "#fde68a" },
-  healthy:  { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" },
-  overstock:{ bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe" },
-};
-
-function KPICard({ label, value, sub, color, href }: {
-  label: string; value: string | number; sub?: string; color?: string; href?: string;
-}) {
-  const inner = (
-    <div style={{
-      background: "#fff",
-      borderRadius: 12,
-      padding: "20px 24px",
-      border: `1px solid #e2e8f0`,
-      borderTop: color ? `3px solid ${color}` : `3px solid #0070f2`,
-      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-      cursor: href ? "pointer" : "default",
-      transition: "box-shadow 0.15s",
-    }}
-    onMouseEnter={e => href && ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 16px rgba(0,0,0,0.1)")}
-    onMouseLeave={e => href && ((e.currentTarget as HTMLElement).style.boxShadow = "0 1px 4px rgba(0,0,0,0.04)")}
-    >
-      <div style={{ color: "#64748b", fontSize: 12, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>{label}</div>
-      <div style={{ color: "#0f172a", fontSize: 32, fontWeight: 700, lineHeight: 1 }}>{value}</div>
-      {sub && <div style={{ color: "#94a3b8", fontSize: 12, marginTop: 6 }}>{sub}</div>}
-    </div>
-  );
-  return href ? <Link href={href} style={{ textDecoration: "none" }}>{inner}</Link> : inner;
+interface KPIs {
+  totalMaterials: number; criticalCount: number; lowCount: number;
+  overstockCount: number; deadStockCount: number; slowMovingCount: number;
+  openPOs: number; duplicatePOs: number; totalStockValue: number;
+  openingStockValue: number; closingStockValue: number;
+  wasteAlerts: number; aiRecommendations: number; healthScore: number;
+  currency: string; live: boolean;
 }
 
-function Alert({ status, material, days, action }: { status: string; material: string; days: number; action: string }) {
-  const s = STATUS_COLOR[status] ?? STATUS_COLOR.healthy;
+function fmt(n: number) {
+  if (n >= 10000000) return "₹" + (n / 10000000).toFixed(2) + " Cr";
+  if (n >= 100000) return "₹" + (n / 100000).toFixed(1) + "L";
+  return "₹" + n.toLocaleString("en-IN");
+}
+
+function HealthGauge({ score }: { score: number }) {
+  const color = score >= 75 ? "#22c55e" : score >= 50 ? "#f59e0b" : "#ef4444";
+  const label = score >= 75 ? "Good" : score >= 50 ? "Fair" : "At Risk";
+  const r = 36, cx = 44, cy = 44;
+  const circum = 2 * Math.PI * r;
+  const filled = (score / 100) * circum;
   return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "12px 16px", borderRadius: 8,
-      background: s.bg, border: `1px solid ${s.border}`,
-      marginBottom: 8,
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ width: 8, height: 8, borderRadius: "50%", background: s.text, flexShrink: 0 }} />
-        <div>
-          <span style={{ fontWeight: 600, color: s.text, fontSize: 13 }}>{material}</span>
-          <span style={{ color: "#475569", fontSize: 13 }}> — {days.toFixed(1)} days of cover remaining</span>
-        </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <svg width={88} height={88} viewBox="0 0 88 88">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#e2e8f0" strokeWidth={8} />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={8}
+          strokeDasharray={`${filled} ${circum - filled}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`} />
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize={16} fontWeight={700} fill={color}>{score}</text>
+      </svg>
+      <div>
+        <div style={{ fontWeight: 700, fontSize: 20, color }}>{label}</div>
+        <div style={{ color: "#64748b", fontSize: 12 }}>Inventory Health Score</div>
+        <div style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>out of 100 points</div>
       </div>
-      <span style={{ color: "#64748b", fontSize: 12, background: "#f8fafc", padding: "3px 10px", borderRadius: 6, border: "1px solid #e2e8f0" }}>{action}</span>
     </div>
   );
 }
 
-export default function OverviewPage() {
-  const [kpis, setKpis] = useState<OverviewKPIs | null>(null);
+function KPICard({ label, value, sub, color = "#0070f2", alert = false }:
+  { label: string; value: string; sub?: string; color?: string; alert?: boolean }) {
+  return (
+    <div style={{ background: "#fff", borderRadius: 12, padding: "20px 22px", border: alert ? `1.5px solid ${color}` : "1.5px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", position: "relative", overflow: "hidden" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: color, borderRadius: "12px 12px 0 0" }} />
+      <div style={{ fontSize: 12, color: "#64748b", fontWeight: 500, marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 26, fontWeight: 800, color: alert ? color : "#0f172a", lineHeight: 1 }}>{value}</div>
+      {sub && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{sub}</div>}
+    </div>
+  );
+}
+
+const ALERTS = [
+  { mat: "RM-1042", desc: "Aluminium Sheet 2mm", msg: "4.9 days of cover remaining — Production Line B at 23% overconsumption", sev: "critical" },
+  { mat: "RM-3015", desc: "Copper Wire 4mm", msg: "2.9 days of cover — PO-18791 in transit, escalate vendor delivery urgently", sev: "critical" },
+  { mat: "RM-5520", desc: "PVC Insulation Tape", msg: "12.5 days of cover. Consumption 60% above plan — investigate scrap rate", sev: "high" },
+  { mat: "SP-0145", desc: "V-Belt A-42", msg: "Zero movement since Mar 2026. ₹54,000 blocked as dead stock — review for write-off", sev: "info" },
+];
+
+const DUP_POS = [
+  { po: "4500018843", mat: "Aluminium Sheet 2mm", vendor: "Nalco Trading", value: "₹18.6L", reason: "PO-18842 already covers needs through Sept 2026" },
+  { po: "4500018700", mat: "HDPE Granules", vendor: "RIL Channel", value: "₹20.0L", reason: "PO-18680 (80 MT) being delivered covers Nov 2026" },
+];
+
+const CAT_DATA = [
+  { label: "Raw Materials (WH-01)", value: 3990000, pct: 72 },
+  { label: "Finished Goods (WH-03)", value: 39850000, pct: 85 },
+  { label: "Packaging & Spares (WH-02)", value: 5040000, pct: 58 },
+];
+
+export default function InventoryOverview() {
+  const [kpis, setKpis] = useState<Partial<KPIs>>({});
 
   useEffect(() => {
-    fetch("/api/inventory/overview")
-      .then(r => r.json())
-      .then(d => setKpis(d.kpis));
+    fetch("/api/inventory/overview").then(r => r.json()).then(d => setKpis(d.kpis || {}));
   }, []);
 
-  const fmt = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
-
-  if (!kpis) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 400 }}>
-        <div style={{ color: "#64748b", fontSize: 14 }}>Loading data from SAP...</div>
-      </div>
-    );
-  }
+  const health = kpis.healthScore ?? 62;
+  const totalValue = kpis.totalStockValue ?? 48880500;
+  const opening = 39200000;
+  const closing = totalValue;
+  const movement = closing - opening;
 
   return (
-    <div>
-      {/* Page header */}
-      <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0 }}>Inventory Overview</h1>
-        <p style={{ color: "#64748b", fontSize: 14, margin: "4px 0 0" }}>Plant 1010 · Real-time SAP data · 10 Aug 2026</p>
+    <div style={{ maxWidth: 1400 }}>
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a" }}>Inventory Overview</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>Plant 1010 — Hyderabad Manufacturing · August 2026</p>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <span style={{ padding: "6px 14px", background: "#fee2e2", color: "#dc2626", borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
+            🔴 {kpis.criticalCount ?? 2} Critical
+          </span>
+          <span style={{ padding: "6px 14px", background: "#fef3c7", color: "#d97706", borderRadius: 8, fontSize: 13, fontWeight: 600 }}>
+            ⚠️ {kpis.duplicatePOs ?? 2} Duplicate POs
+          </span>
+        </div>
       </div>
 
-      {/* KPI grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16, marginBottom: 28 }}>
-        <KPICard label="Total Materials" value={kpis.totalMaterials} sub="Tracked in Plant 1010" href="/app/inventory/stock" />
-        <KPICard label="Critical Stock" value={kpis.criticalCount} sub="< 3 days of cover" color="#dc2626" href="/app/inventory/stock" />
-        <KPICard label="Low Stock" value={kpis.lowCount} sub="Below reorder point" color="#d97706" href="/app/inventory/stock" />
-        <KPICard label="Overstock Items" value={kpis.overstockCount} sub="Capital tied up" color="#1d4ed8" href="/app/inventory/stock" />
-        <KPICard label="Open POs" value={kpis.openPOs} sub="Active purchase orders" href="/app/inventory/purchases" />
-        <KPICard label="Duplicate POs" value={kpis.duplicatePOs} sub="Flagged for review" color="#dc2626" href="/app/inventory/purchases" />
-        <KPICard label="Total Stock Value" value={fmt(kpis.totalStockValue)} sub="Across all categories" />
-        <KPICard label="AI Alerts" value={kpis.aiRecommendations + kpis.wasteAlerts} sub="Recommendations pending" color="#7c3aed" href="/app/inventory/recommendations" />
+      {/* Health + Stock Value row */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+        <div style={{ background: "#fff", borderRadius: 12, padding: "24px", border: "1.5px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <HealthGauge score={health} />
+          <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              { l: "Critical", v: kpis.criticalCount ?? 2, c: "#ef4444" },
+              { l: "Low Stock", v: kpis.lowCount ?? 2, c: "#f59e0b" },
+              { l: "Overstock", v: kpis.overstockCount ?? 3, c: "#8b5cf6" },
+              { l: "Dead Stock", v: kpis.deadStockCount ?? 1, c: "#94a3b8" },
+            ].map(x => (
+              <div key={x.l} style={{ padding: "4px 10px", background: x.c + "18", borderRadius: 6, fontSize: 11, color: x.c, fontWeight: 600 }}>
+                {x.l}: {x.v}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ background: "#fff", borderRadius: 12, padding: "24px", border: "1.5px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
+          <div style={{ fontSize: 13, color: "#64748b", fontWeight: 500, marginBottom: 4 }}>Total Stock Value (Aug 2026)</div>
+          <div style={{ fontSize: 32, fontWeight: 800, color: "#0f172a", marginBottom: 16 }}>{fmt(closing)}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={{ background: "#f8fafc", borderRadius: 8, padding: "12px 16px" }}>
+              <div style={{ fontSize: 11, color: "#64748b" }}>Opening Stock (Aug 1)</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>{fmt(opening)}</div>
+            </div>
+            <div style={{ background: movement >= 0 ? "#dcfce7" : "#fee2e2", borderRadius: 8, padding: "12px 16px" }}>
+              <div style={{ fontSize: 11, color: "#64748b" }}>Net Movement (Aug)</div>
+              <div style={{ fontSize: 18, fontWeight: 700, color: movement >= 0 ? "#16a34a" : "#dc2626" }}>
+                {movement >= 0 ? "+" : ""}{fmt(Math.abs(movement))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Two-column lower section */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+      {/* KPI Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 20 }}>
+        <KPICard label="Total Materials Tracked" value={String(kpis.totalMaterials ?? 12)} sub="across 3 warehouses" color="#0070f2" />
+        <KPICard label="Open Purchase Orders" value={String(kpis.openPOs ?? 6)} sub="4 pending delivery" color="#8b5cf6" />
+        <KPICard label="AI Recommendations" value={String(kpis.aiRecommendations ?? 5)} sub="3 require action today" color="#059669" />
+        <KPICard label="Duplicate PO Exposure" value="₹38.6L" sub="2 POs can be blocked now" color="#ef4444" alert />
+        <KPICard label="Slow-Moving Stock" value={String(kpis.slowMovingCount ?? 1)} sub="SP-0088 — 56 days no movement" color="#f59e0b" alert />
+        <KPICard label="Dead Stock Value" value="₹54,000" sub="SP-0145 V-Belt — since Mar 2026" color="#94a3b8" />
+        <KPICard label="Waste / Scrap Alerts" value={String(kpis.wasteAlerts ?? 2)} sub="RM-1042 & RM-5520 excess" color="#ef4444" />
+        <KPICard label="Materials at Risk" value={String((kpis.criticalCount ?? 2) + (kpis.lowCount ?? 2))} sub="critical + low combined" color="#ef4444" alert />
+      </div>
 
-        {/* Critical alerts */}
-        <div style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: 0 }}>🚨 Critical Alerts</h2>
-            <Link href="/app/inventory/stock" style={{ color: "#0070f2", fontSize: 12, textDecoration: "none" }}>View all →</Link>
+      {/* Bottom grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 20 }}>
+        <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #fecaca" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>🚨 Active Alerts</div>
+            <span style={{ background: "#fee2e2", color: "#dc2626", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>4 alerts</span>
           </div>
-          <Alert status="critical" material="RM-3015 Copper Wire 4mm" days={2.9} action="PO in transit Aug 12" />
-          <Alert status="critical" material="RM-1042 Aluminium Sheet 2mm" days={4.9} action="PO due Aug 15" />
-          <Alert status="low" material="RM-2088 Steel Rod Ø12mm" days={10.2} action="PO open – monitor" />
-          <Alert status="low" material="RM-5520 PVC Insulation Tape" days={12.5} action="Reorder recommended" />
-        </div>
-
-        {/* Duplicate PO flags */}
-        <div style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <h2 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: 0 }}>⚠️ Duplicate POs Detected</h2>
-            <Link href="/app/inventory/purchases" style={{ color: "#0070f2", fontSize: 12, textDecoration: "none" }}>Review →</Link>
-          </div>
-          {[
-            { po: "4500018843", material: "RM-1042 Aluminium Sheet", amount: "₹18.6L", risk: "Excess cover: 76+ days" },
-            { po: "4500018700", material: "PM-0441 HDPE Granules", amount: "₹20L", risk: "Combined: 4.2 months stock" },
-          ].map(d => (
-            <div key={d.po} style={{ padding: "12px 14px", borderRadius: 8, background: "#fff7ed", border: "1px solid #fed7aa", marginBottom: 8 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ fontWeight: 600, color: "#92400e", fontSize: 13 }}>PO {d.po}</div>
-                  <div style={{ color: "#78350f", fontSize: 12, marginTop: 2 }}>{d.material}</div>
-                </div>
-                <div style={{ textAlign: "right" }}>
-                  <div style={{ fontWeight: 700, color: "#dc2626", fontSize: 14 }}>{d.amount}</div>
-                  <div style={{ color: "#b45309", fontSize: 11, marginTop: 2 }}>{d.risk}</div>
-                </div>
+          {ALERTS.map((a, i) => (
+            <div key={i} style={{ padding: "10px 12px", background: a.sev === "critical" ? "#fef2f2" : a.sev === "high" ? "#fffbeb" : "#f8fafc", borderRadius: 8, marginBottom: 8, borderLeft: `3px solid ${a.sev === "critical" ? "#ef4444" : a.sev === "high" ? "#f59e0b" : "#94a3b8"}` }}>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <span style={{ fontWeight: 700, fontSize: 12, color: "#0f172a" }}>{a.mat}</span>
+                <span style={{ fontSize: 11, color: "#64748b" }}>{a.desc}</span>
               </div>
-            </div>
-          ))}
-          <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 8, background: "#f0fdf4", border: "1px solid #bbf7d0" }}>
-            <span style={{ color: "#16a34a", fontWeight: 600, fontSize: 13 }}>Potential savings: ₹38.6L</span>
-            <span style={{ color: "#4ade80", fontSize: 13 }}> if both cancelled</span>
-          </div>
-        </div>
-
-        {/* Stock category breakdown */}
-        <div style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: "0 0 16px" }}>📦 Stock by Category</h2>
-          {[
-            { label: "Finished Goods", value: 3.99, total: 4.87, color: "#0070f2" },
-            { label: "Raw Materials", value: 1.45, total: 4.87, color: "#7c3aed" },
-            { label: "Packaging Materials", value: 0.54, total: 4.87, color: "#059669" },
-          ].map(row => (
-            <div key={row.label} style={{ marginBottom: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 13, color: "#374151" }}>{row.label}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>₹{row.value}Cr</span>
-              </div>
-              <div style={{ height: 8, background: "#f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${(row.value / row.total) * 100}%`, background: row.color, borderRadius: 4 }} />
-              </div>
+              <div style={{ fontSize: 12, color: "#475569", marginTop: 3 }}>{a.msg}</div>
             </div>
           ))}
         </div>
 
-        {/* Quick actions */}
-        <div style={{ background: "#fff", borderRadius: 12, padding: "20px 24px", border: "1px solid #e2e8f0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-          <h2 style={{ fontSize: 15, fontWeight: 700, color: "#0f172a", margin: "0 0 16px" }}>⚡ Quick Actions</h2>
-          {[
-            { label: "Ask AI about stock levels", href: "/app/inventory/assistant", color: "#7c3aed", bg: "#faf5ff" },
-            { label: "Review & block duplicate POs", href: "/app/inventory/purchases", color: "#dc2626", bg: "#fff1f2" },
-            { label: "Download stock report (CSV)", href: "/app/inventory/reports", color: "#0070f2", bg: "#eff6ff" },
-            { label: "View AI reorder recommendations", href: "/app/inventory/recommendations", color: "#059669", bg: "#f0fdf4" },
-          ].map(action => (
-            <Link key={action.href} href={action.href} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "12px 14px", borderRadius: 8, marginBottom: 8,
-              background: action.bg, border: `1px solid ${action.color}22`,
-              textDecoration: "none",
-            }}>
-              <span style={{ color: action.color, fontWeight: 500, fontSize: 13 }}>{action.label}</span>
-              <span style={{ color: action.color, fontSize: 16 }}>→</span>
-            </Link>
+        <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #fde8a1" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>⚠️ Duplicate Purchase Orders</div>
+            <span style={{ background: "#fef3c7", color: "#d97706", borderRadius: 6, padding: "3px 10px", fontSize: 12, fontWeight: 600 }}>₹38.6L at risk</span>
+          </div>
+          {DUP_POS.map((d, i) => (
+            <div key={i} style={{ padding: "12px 14px", background: "#fffbeb", borderRadius: 8, marginBottom: 8, borderLeft: "3px solid #f59e0b" }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontWeight: 700, fontSize: 13, color: "#0f172a" }}>PO {d.po}</span>
+                <span style={{ fontWeight: 700, fontSize: 13, color: "#dc2626" }}>{d.value} exposure</span>
+              </div>
+              <div style={{ fontSize: 12, color: "#475569", marginTop: 2 }}>{d.mat} · {d.vendor}</div>
+              <div style={{ fontSize: 11, color: "#92400e", marginTop: 4 }}>AI: {d.reason}</div>
+            </div>
+          ))}
+          <div style={{ padding: "10px 14px", background: "#fefce8", borderRadius: 8, borderLeft: "3px solid #eab308", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 13, color: "#713f12", fontWeight: 600 }}>Total Savings Available</span>
+            <span style={{ fontSize: 18, fontWeight: 800, color: "#dc2626" }}>₹38.6L</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 12, padding: "20px", border: "1.5px solid #e2e8f0" }}>
+        <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a", marginBottom: 16 }}>Stock Value by Category & Warehouse</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+          {CAT_DATA.map(c => (
+            <div key={c.label}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{c.label}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>{fmt(c.value)}</span>
+              </div>
+              <div style={{ background: "#e2e8f0", borderRadius: 4, height: 8, overflow: "hidden" }}>
+                <div style={{ width: `${c.pct}%`, height: "100%", background: "linear-gradient(90deg,#0070f2,#00a4e0)", borderRadius: 4 }} />
+              </div>
+              <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 4 }}>{c.pct}% of capacity utilized</div>
+            </div>
           ))}
         </div>
       </div>

@@ -1,202 +1,177 @@
 "use client";
 
 import { useState } from "react";
+import { DEMO_MATERIALS, DEMO_POS } from "@/lib/inventory-data";
 
 type Priority = "Urgent" | "High" | "Medium" | "Low";
+type ActionState = "pending" | "accepted" | "dismissed";
 
 interface Recommendation {
-  id: string;
-  material: string;
-  description: string;
-  action: string;
-  priority: Priority;
-  reason: string;
-  quantity: string;
-  estimatedCost: string;
-  impact: string;
-  deadline: string;
-  accepted: boolean | null;
+  id: string; priority: Priority; category: string;
+  material: string; description: string; action: string;
+  impact: string; savingsINR?: number; riskReduced?: string;
+  state: ActionState;
 }
 
-const RECOMMENDATIONS: Recommendation[] = [
-  {
-    id: "r1",
-    material: "RM-3015",
-    description: "Copper Wire 4mm",
-    action: "Expedite In-Transit PO 4500018791",
-    priority: "Urgent",
-    reason: "2.9 days of cover remaining. Production lines C and D will halt without this material by Aug 13.",
-    quantity: "20 MT in transit",
-    estimatedCost: "₹18.0L (already committed)",
-    impact: "Avoids ₹12L/day production line stoppage",
-    deadline: "Aug 12",
-    accepted: null,
-  },
-  {
-    id: "r2",
-    material: "RM-5520",
-    description: "PVC Insulation Tape (20m roll)",
-    action: "Place reorder — 500 EA",
-    priority: "High",
-    reason: "12.5 days of cover. Safety stock will be breached by Aug 22. Consumption running 18% above plan due to batch rework.",
-    quantity: "500 EA recommended",
-    estimatedCost: "~₹25,000",
-    impact: "Prevents stockout before Sep delivery window",
-    deadline: "Aug 14",
-    accepted: null,
-  },
-  {
-    id: "r3",
-    material: "RM-1042",
-    description: "Aluminium Sheet 2mm",
-    action: "Monitor PO 4500018842 delivery closely",
-    priority: "High",
-    reason: "4.9 days of cover. PO for 40 MT is due Aug 15 — any delay would trigger a production stoppage.",
-    quantity: "40 MT on order",
-    estimatedCost: "₹24.0L (already committed)",
-    impact: "Confirm delivery date with Hindalco today",
-    deadline: "Aug 15",
-    accepted: null,
-  },
-  {
-    id: "r4",
-    material: "FG-0077",
-    description: "Motor Assembly 5HP (OEM-A)",
-    action: "Pause procurement — dispatch overstock first",
-    priority: "Medium",
-    reason: "620 EA in stock (34.4 days cover) vs. 15-day target. ₹1.55Cr in working capital tied up in finished goods.",
-    quantity: "No new orders for 6 weeks",
-    estimatedCost: "₹0 — prevents ₹1.55Cr over-investment",
-    impact: "Frees ₹1.55Cr working capital",
-    deadline: "Aug 30",
-    accepted: null,
-  },
-  {
-    id: "r5",
-    material: "FG-0211",
-    description: "Control Panel (IP54, 3-phase)",
-    action: "Expedite sales dispatch — overstock clearance",
-    priority: "Medium",
-    reason: "487 EA (34.8 days cover). Work with sales team to prioritize dispatch of pending orders.",
-    quantity: "Target: dispatch 100 EA by Aug 31",
-    estimatedCost: "₹0 — accelerates cash collection",
-    impact: "₹2.4Cr potential early cash collection",
-    deadline: "Aug 31",
-    accepted: null,
-  },
-];
-
-const PRIORITY_STYLE: Record<Priority, { bg: string; text: string; border: string }> = {
-  Urgent: { bg: "#fff1f2", text: "#dc2626", border: "#fecaca" },
-  High:   { bg: "#fff7ed", text: "#c2410c", border: "#fed7aa" },
-  Medium: { bg: "#fffbeb", text: "#b45309", border: "#fde68a" },
-  Low:    { bg: "#f0fdf4", text: "#15803d", border: "#bbf7d0" },
+const PRI_STYLE: Record<Priority, { bg: string; text: string; border: string }> = {
+  Urgent: { bg: "#fee2e2", text: "#dc2626", border: "#fecaca" },
+  High:   { bg: "#fef3c7", text: "#d97706", border: "#fde68a" },
+  Medium: { bg: "#eff6ff", text: "#1d4ed8", border: "#bfdbfe" },
+  Low:    { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" },
 };
 
+function buildRecommendations(): Recommendation[] {
+  const recs: Recommendation[] = [];
+  const criticals = DEMO_MATERIALS.filter(m => m.status === "critical");
+  criticals.forEach(m => {
+    recs.push({
+      id: `crit-${m.material}`, priority: "Urgent", category: "Critical Stock",
+      material: m.material, description: m.description,
+      action: `Place emergency PO for ${m.material} — current ${m.unrestricted} ${m.unit} = ${m.daysOfCover.toFixed(1)} days cover. Order minimum ${m.reorderPoint - m.unrestricted + m.safetyStock} ${m.unit} from approved vendor. Flag for expedited delivery within ${m.leadTimeDays} days.`,
+      impact: `Production stoppage risk in ${m.daysOfCover.toFixed(1)} days without intervention`,
+      riskReduced: `Prevents production line shutdown`,
+      state: "pending",
+    });
+  });
+  DEMO_POS.filter(p => p.duplicate).forEach(p => {
+    recs.push({
+      id: `dup-${p.poNumber}`, priority: "High", category: "Duplicate PO",
+      material: p.material, description: p.description,
+      action: `Block PO ${p.poNumber} (${p.quantity} ${p.unit} from ${p.vendor}, ₹${(p.netPrice / 100000).toFixed(1)}L). Prior PO ${p.duplicate!.of} already covers requirements. ${p.duplicate!.reason}.`,
+      impact: `Saves ₹${(p.netPrice / 100000).toFixed(1)}L in unnecessary procurement`,
+      savingsINR: p.netPrice, state: "pending",
+    });
+  });
+  const dead = DEMO_MATERIALS.filter(m => m.deadStock);
+  dead.forEach(m => {
+    recs.push({
+      id: `dead-${m.material}`, priority: "Medium", category: "Dead Stock",
+      material: m.material, description: m.description,
+      action: `Initiate write-off review for ${m.material} — zero movement since Mar 2026. 180 EA (₹${(m.stockValue / 1000).toFixed(0)}K). Options: (1) Return to vendor if under warranty, (2) Internal transfer to another plant, (3) Write-off and dispose.`,
+      impact: `Recovers ₹${(m.stockValue / 1000).toFixed(0)}K from dead inventory`,
+      savingsINR: m.stockValue, state: "pending",
+    });
+  });
+  const slow = DEMO_MATERIALS.filter(m => m.slowMoving && !m.deadStock);
+  slow.forEach(m => {
+    recs.push({
+      id: `slow-${m.material}`, priority: "Medium", category: "Slow-Moving Stock",
+      material: m.material, description: m.description,
+      action: `${m.material} has not moved in 56+ days. At current consumption rate, stock will last 2,800 days (7+ years). Review: (1) Is this still needed on BOM? (2) Can excess be returned to vendor? (3) Stop future procurement.`,
+      impact: "Frees warehouse space and reduces holding cost",
+      state: "pending",
+    });
+  });
+  const overstock = DEMO_MATERIALS.filter(m => m.status === "overstock" && m.category === "FG");
+  overstock.forEach(m => {
+    recs.push({
+      id: `os-${m.material}`, priority: "Low", category: "Overstock — Finished Goods",
+      material: m.material, description: m.description,
+      action: `${m.material} at ${m.daysOfCover.toFixed(0)} days cover vs target 15 days. Coordinate with Sales to push ${Math.round((m.unrestricted - 15 * m.dailyConsumption))} units through upcoming campaigns or dealer promotions to normalize inventory.`,
+      impact: `Reduces holding cost by ₹${((m.unrestricted - 15 * m.dailyConsumption) * (m.stockValue / m.unrestricted) / 100000).toFixed(1)}L if dispatched`,
+      state: "pending",
+    });
+  });
+  return recs.slice(0, 8);
+}
+
 export default function RecommendationsPage() {
-  const [recs, setRecs] = useState<Recommendation[]>(RECOMMENDATIONS);
+  const [recs, setRecs] = useState<Recommendation[]>(buildRecommendations);
+  const [filter, setFilter] = useState<Priority | "All">("All");
 
-  const accept = (id: string) => setRecs(r => r.map(x => x.id === id ? { ...x, accepted: true } : x));
-  const dismiss = (id: string) => setRecs(r => r.map(x => x.id === id ? { ...x, accepted: false } : x));
+  const update = (id: string, state: ActionState) => {
+    setRecs(prev => prev.map(r => r.id === id ? { ...r, state } : r));
+  };
 
-  const pending = recs.filter(r => r.accepted === null).length;
-  const accepted = recs.filter(r => r.accepted === true).length;
+  const filtered = recs.filter(r => filter === "All" || r.priority === filter);
+  const pending = recs.filter(r => r.state === "pending");
+  const accepted = recs.filter(r => r.state === "accepted");
+  const totalSavings = recs.filter(r => r.state === "pending" && r.savingsINR).reduce((a, r) => a + (r.savingsINR ?? 0), 0);
 
   return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#0f172a", margin: 0 }}>AI Recommendations</h1>
-        <p style={{ color: "#64748b", fontSize: 14, margin: "4px 0 0" }}>Generated from SAP data · Updated daily at 06:30 IST</p>
+    <div style={{ maxWidth: 1200 }}>
+      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: "#0f172a" }}>AI Recommendations</h1>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 14 }}>Generated from live stock, PO, and consumption data · Powered by Ollama (on-premise AI)</p>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 10, padding: "10px 18px", border: "1.5px solid #e2e8f0" }}>
+          <div style={{ fontSize: 11, color: "#64748b" }}>Potential Savings (pending actions)</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#dc2626" }}>₹{(totalSavings / 100000).toFixed(1)}L</div>
+        </div>
       </div>
 
-      {/* Summary bar */}
-      <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+      {/* Summary */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginBottom: 20 }}>
         {[
-          { label: "Pending Review", value: pending, color: "#d97706", bg: "#fffbeb" },
-          { label: "Accepted", value: accepted, color: "#16a34a", bg: "#f0fdf4" },
-          { label: "Dismissed", value: recs.filter(r => r.accepted === false).length, color: "#64748b", bg: "#f8fafc" },
-        ].map(s => (
-          <div key={s.label} style={{ padding: "12px 20px", borderRadius: 10, background: s.bg, border: `1px solid ${s.color}33` }}>
-            <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>{s.label}</div>
+          { l: "Pending Action", v: pending.length, c: "#0070f2" },
+          { l: "Accepted", v: accepted.length, c: "#22c55e" },
+          { l: "Urgent", v: recs.filter(r => r.priority === "Urgent").length, c: "#ef4444" },
+          { l: "High Priority", v: recs.filter(r => r.priority === "High").length, c: "#d97706" },
+        ].map(x => (
+          <div key={x.l} style={{ background: "#fff", borderRadius: 10, padding: "14px 16px", border: "1.5px solid #e2e8f0" }}>
+            <div style={{ fontSize: 11, color: "#64748b" }}>{x.l}</div>
+            <div style={{ fontSize: 28, fontWeight: 800, color: x.c }}>{x.v}</div>
           </div>
         ))}
       </div>
 
-      {/* Recommendation cards */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {recs.map(rec => {
-          const ps = PRIORITY_STYLE[rec.priority];
-          const accepted = rec.accepted;
-          return (
-            <div key={rec.id} style={{
-              background: "#fff",
-              borderRadius: 12,
-              border: `1px solid ${accepted === true ? "#bbf7d0" : accepted === false ? "#e2e8f0" : ps.border}`,
-              borderLeft: `4px solid ${accepted === true ? "#22c55e" : accepted === false ? "#94a3b8" : ps.text}`,
-              padding: "20px 24px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-              opacity: accepted === false ? 0.55 : 1,
-              transition: "opacity 0.2s",
-            }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-                    <span style={{ padding: "2px 10px", borderRadius: 20, fontSize: 11, fontWeight: 700, background: ps.bg, color: ps.text, border: `1px solid ${ps.border}` }}>
-                      {rec.priority}
-                    </span>
-                    <span style={{ fontWeight: 700, color: "#0f172a", fontSize: 15 }}>{rec.material}</span>
-                    <span style={{ color: "#64748b", fontSize: 13 }}>— {rec.description}</span>
-                  </div>
-                  <div style={{ fontWeight: 600, color: "#1e293b", fontSize: 14, marginBottom: 6 }}>{rec.action}</div>
-                  <div style={{ color: "#475569", fontSize: 13, lineHeight: 1.5 }}>{rec.reason}</div>
-
-                  <div style={{ display: "flex", gap: 24, marginTop: 12, flexWrap: "wrap" }}>
-                    {[
-                      { label: "Quantity", value: rec.quantity },
-                      { label: "Est. Cost", value: rec.estimatedCost },
-                      { label: "Impact", value: rec.impact },
-                      { label: "Deadline", value: rec.deadline },
-                    ].map(d => (
-                      <div key={d.label}>
-                        <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textTransform: "uppercase", marginBottom: 2 }}>{d.label}</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>{d.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {accepted === null && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 20, flexShrink: 0 }}>
-                    <button
-                      onClick={() => accept(rec.id)}
-                      style={{ padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", background: "#16a34a", color: "#fff", fontSize: 13, fontWeight: 600 }}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => dismiss(rec.id)}
-                      style={{ padding: "8px 20px", borderRadius: 8, border: "1px solid #e2e8f0", cursor: "pointer", background: "#fff", color: "#64748b", fontSize: 13 }}
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                )}
-                {accepted === true && (
-                  <div style={{ marginLeft: 20, padding: "6px 14px", borderRadius: 8, background: "#f0fdf4", color: "#16a34a", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-                    ✓ Accepted
-                  </div>
-                )}
-                {accepted === false && (
-                  <div style={{ marginLeft: 20, padding: "6px 14px", borderRadius: 8, background: "#f8fafc", color: "#94a3b8", fontSize: 13, flexShrink: 0 }}>
-                    Dismissed
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      {/* Filter bar */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+        {(["All", "Urgent", "High", "Medium", "Low"] as const).map(p => (
+          <button key={p} onClick={() => setFilter(p)} style={{ padding: "6px 14px", borderRadius: 8, border: "1.5px solid", borderColor: filter === p ? "#0070f2" : "#e2e8f0", background: filter === p ? "#0070f2" : "#fff", color: filter === p ? "#fff" : "#64748b", fontSize: 12, fontWeight: filter === p ? 700 : 400, cursor: "pointer" }}>
+            {p}
+          </button>
+        ))}
+        <span style={{ marginLeft: "auto", fontSize: 12, color: "#94a3b8", display: "flex", alignItems: "center" }}>
+          {filtered.length} recommendations
+        </span>
       </div>
+
+      {/* Recommendation cards */}
+      {filtered.map(rec => {
+        const pri = PRI_STYLE[rec.priority];
+        const done = rec.state !== "pending";
+        return (
+          <div key={rec.id} style={{ background: "#fff", borderRadius: 12, padding: "20px", border: `1.5px solid ${done ? "#e2e8f0" : pri.border}`, marginBottom: 12, opacity: done ? 0.6 : 1, transition: "opacity 0.2s" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <span style={{ padding: "3px 10px", borderRadius: 6, background: pri.bg, color: pri.text, fontWeight: 700, fontSize: 12 }}>{rec.priority}</span>
+                <span style={{ padding: "3px 10px", borderRadius: 6, background: "#f8fafc", color: "#475569", fontWeight: 500, fontSize: 12 }}>{rec.category}</span>
+                <span style={{ fontWeight: 700, fontSize: 13, color: "#0070f2" }}>{rec.material}</span>
+                <span style={{ fontSize: 12, color: "#64748b" }}>{rec.description.slice(0, 30)}</span>
+              </div>
+              {rec.savingsINR && (
+                <span style={{ fontWeight: 800, color: "#dc2626", fontSize: 15 }}>₹{(rec.savingsINR / 100000).toFixed(1)}L savings</span>
+              )}
+            </div>
+
+            <div style={{ background: "#f8fafc", borderRadius: 8, padding: "12px 14px", marginBottom: 12, fontSize: 13, color: "#374151", lineHeight: 1.6 }}>
+              <strong>Recommended Action:</strong> {rec.action}
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: 12, color: "#64748b" }}>
+                <span style={{ color: "#22c55e", fontWeight: 600 }}>Impact: </span>{rec.impact}
+              </div>
+              {!done ? (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => update(rec.id, "dismissed")} style={{ padding: "6px 16px", border: "1px solid #e2e8f0", borderRadius: 8, background: "#f8fafc", color: "#64748b", fontSize: 12, cursor: "pointer" }}>
+                    Dismiss
+                  </button>
+                  <button onClick={() => update(rec.id, "accepted")} style={{ padding: "6px 16px", border: "none", borderRadius: 8, background: "#0070f2", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                    ✓ Accept & Act
+                  </button>
+                </div>
+              ) : (
+                <span style={{ padding: "4px 12px", borderRadius: 6, background: rec.state === "accepted" ? "#dcfce7" : "#f1f5f9", color: rec.state === "accepted" ? "#16a34a" : "#64748b", fontSize: 12, fontWeight: 600 }}>
+                  {rec.state === "accepted" ? "✓ Accepted" : "Dismissed"}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
