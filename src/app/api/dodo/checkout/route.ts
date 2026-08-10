@@ -103,9 +103,8 @@ export async function POST(req: NextRequest) {
     // needs the admin client, not the request-scoped one. Fire-and-forget;
     // table may not exist yet if migration 20260726000000 hasn't been
     // applied — never block checkout either way.
-    createAdminClient().then(admin =>
-      admin.from('checkout_attempts').insert({ user_id: user.id, plan_key: planKey, currency: chargeCurrency })
-    ).then(() => {}, () => {})
+    createAdminClient().from('checkout_attempts').insert({ user_id: user.id, plan_key: planKey, currency: chargeCurrency })
+      .then(() => {}, () => {})
 
     return NextResponse.json({ url })
   } catch (err) {
