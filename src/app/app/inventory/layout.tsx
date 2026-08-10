@@ -17,7 +17,7 @@ const NAV = [
   { href: "/app/inventory/reports",          label: "Reports",            icon: "📊" },
 ];
 
-const DEMO_TOKEN = "rohit2026";
+const DEMO_TOKEN = "guru2026";
 
 function InventoryLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
