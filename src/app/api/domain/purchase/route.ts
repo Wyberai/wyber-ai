@@ -1,3 +1,4 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
@@ -27,9 +28,21 @@ const REQUIRED_CONTACT_FIELDS: (keyof DomainContactInfo)[] = [
 // webhook can pass it through once payment confirms.
 export async function POST(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Internal callers (the MCP buy_domain tool) have no browser session —
+    // same X-Scheduler-Secret/X-Scheduler-User-Id bypass as /api/publish.
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isInternalCall = !!schedulerUserId && schedulerSecret === internalSecret()
+
+    let user: { id: string; email?: string }
+    if (isInternalCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const supabase = await createClient()
+      const { data: { user: cookieUser } } = await supabase.auth.getUser()
+      if (!cookieUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      user = cookieUser
+    }
 
     const { projectId, domain, priceCents, contactInfo } = await req.json() as {
       projectId?: string; domain?: string; priceCents?: number; contactInfo?: DomainContactInfo
@@ -48,9 +61,11 @@ export async function POST(req: NextRequest) {
 
     // Re-verify availability right before charging — a domain found available
     // moments ago may have been registered by someone else since.
-    const origin = req.headers.get('origin') || 'https://wyberai.com'
-    const statusCheck = await fetch(`${origin}/api/domain/search?name=${encodeURIComponent(domain)}`, {
-      headers: { cookie: req.headers.get('cookie') || '' },
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
+    const statusCheck = await fetch(`${origin}/api/domain/search?name=${encodeURIComponent(domain)}&availability_only=1`, {
+      headers: isInternalCall
+        ? { 'x-scheduler-user-id': schedulerUserId!, 'x-scheduler-secret': schedulerSecret! }
+        : { cookie: req.headers.get('cookie') || '' },
     })
     const statusData = await statusCheck.json().catch(() => ({}))
     if (!statusData.available) {
@@ -76,7 +91,7 @@ export async function POST(req: NextRequest) {
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         product_cart: [{ product_id: productId, quantity: 1, amount: priceCents }],
-        customer: { email: user.email, name: user.email?.split('@')[0] },
+        customer: { email: user.email || contactInfo.email, name: (user.email || contactInfo.email).split('@')[0] },
         return_url: `${origin}/dashboard?domain_purchase=${purchase.id}`,
         metadata: { user_id: user.id, purchase_type: 'domain', domain_purchase_id: purchase.id, domain, project_id: projectId ?? '' },
       }),

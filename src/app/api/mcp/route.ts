@@ -6,12 +6,13 @@ import { verifyToken, userIdFromAuth } from '@/lib/mcp/auth'
 import { getProjectSupabase } from '@/lib/mcp/project-db'
 import { runSql } from '@/lib/supabase-management'
 import { runProjectRlsScan } from '@/lib/rls-scan-project'
-import { creditCost, resolveBuildTier, type ActionType, type ModelTier } from '@/lib/credits'
+import { creditCost, resolveBuildTier, type ActionType, type ModelTier, type BuildSizeTier } from '@/lib/credits'
 import { PLAN_FACTS } from '@/lib/plans'
 import { currencyForCountry } from '@/lib/currency'
 import { Composio } from '@composio/core'
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js'
 import { sendAdminMcpProjectAlert } from '@/lib/email'
+import { internalSecret, signParams } from '@/lib/internal-auth'
 
 // The MCP route itself only does fast DB work (create/list/get/queue) — the
 // heavy builds run in /api/cron/mcp-consumer, so a short ceiling is fine.
@@ -84,32 +85,6 @@ Upgrade now: https://wyberai.com/pricing
 Or top-up credits: https://wyberai.com/credits`
 }
 
-/** Build post-build upsell message */
-function postBuildUpsell(projectType: string): string {
-  const baseMsg = `**What's next?**
-
-✅ Your app is built and live!
-
-**Post-build options:**
-- **Publish to web** (free) — get a public URL
-- **Buy custom domain** ($9–15/year) — your own domain
-
-**Choose storage:**
-- **Connect Supabase** (free) — bring your own database
-- **Connect WyberCloud** (free tier) — our hosted database, zero setup
-
-**More:**
-- **Upgrade to Opus** — faster builds, higher quality (available in Builder plan)`
-
-  if (projectType === 'mobile') {
-    return `${baseMsg}
-- **Export APK** (50 credits) — download and install on Android devices
-- **Export IPA** (50 credits) — for iOS via TestFlight`
-  }
-
-  return baseMsg
-}
-
 const handler = createMcpHandler(
   (server) => {
     server.tool(
@@ -121,19 +96,20 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db
+        const { data, error } = await db
           .from('projects')
           .select('id, name, framework, published_url, deployed_url, updated_at')
           .eq('user_id', userId)
           .order('updated_at', { ascending: false })
           .limit(20)
+        if (error) return errorResult(`Could not list projects: ${error.message}`)
         return jsonResult({ projects: data ?? [] })
       },
     )
 
     server.tool(
       'create_project',
-      'Create a new WyberAi project. Returns a project id that send_message uses to build the app.',
+      'Create a new WyberAi project. Returns a project id that start_build uses to build the app.',
       {
         name: z.string().describe('Project name'),
         framework: z
@@ -169,7 +145,7 @@ const handler = createMcpHandler(
 
         return jsonResult({
           project: data,
-          message: `Project "${args.name}" created. Use send_message with project_id "${data?.id}" to start building.`,
+          message: `Project "${args.name}" created. Use start_build with project_id "${data?.id}" to start building.`,
         })
       },
     )
@@ -183,13 +159,13 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db
+        const { data, error } = await db
           .from('projects')
           .select('*')
           .eq('id', args.project_id)
           .eq('user_id', userId)
           .single()
-        if (!data) return errorResult('Project not found')
+        if (error || !data) return errorResult(error && error.code !== 'PGRST116' ? `Could not get project: ${error.message}` : 'Project not found')
         return jsonResult({
           project: {
             id: data.id,
@@ -226,7 +202,7 @@ const handler = createMcpHandler(
               label: 'Mobile App',
               description: 'iOS/Android app built with React Native via Expo',
               baseFileCount: 10,
-              note: 'Preview in-house free, export APK 50cr',
+              note: 'Preview in-house free. APK/IPA export is temporarily unavailable.',
             },
             {
               id: 'website',
@@ -320,20 +296,31 @@ const handler = createMcpHandler(
         const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
         const currency = await getUserCurrency(userId)
 
-        // Calculate cost
-        const estimatedFiles = args.estimated_files ?? 15
-        const buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+        // Calculate cost — must mirror /api/generate's real pricing decision
+        // (src/app/api/generate/route.ts ~line 2455): any build on a project
+        // that already has files is priced as a flat 'small-edit', regardless
+        // of project type or file-count estimate. Quoting full build pricing
+        // for what will actually be charged as a 2-5cr edit misleads the
+        // affordability check (can wrongly refuse, or wrongly reassure).
+        const availableCredits = profile.credits ?? 0
+        const isFirstBuild = !project?.files || Object.keys((project?.files as Record<string, unknown>) ?? {}).length === 0
+
         const actionTypeMap: Record<string, ActionType> = {
           'web-app': 'web-build',
           'mobile': 'mobile-build',
           'website': 'website-build',
           'saas': 'saas-build',
         }
-        const actionType = actionTypeMap[args.project_type]
+        let buildTier: BuildSizeTier | undefined
+        let actionType: ActionType
+        if (isFirstBuild) {
+          const estimatedFiles = args.estimated_files ?? 15
+          buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+          actionType = actionTypeMap[args.project_type]
+        } else {
+          actionType = 'small-edit'
+        }
         const estimatedCost = creditCost(actionType, modelTier, buildTier)
-
-        const availableCredits = profile.credits ?? 0
-        const isFirstBuild = !project?.files || Object.keys((project?.files as Record<string, unknown>) ?? {}).length === 0
 
         if (availableCredits < estimatedCost) {
           return jsonResult({
@@ -341,6 +328,7 @@ const handler = createMcpHandler(
             available_credits: availableCredits,
             can_afford: false,
             shortage: estimatedCost - availableCredits,
+            is_first_build: isFirstBuild,
             error: insufficientCreditsMessage(estimatedCost, availableCredits, currency),
           })
         }
@@ -351,10 +339,13 @@ const handler = createMcpHandler(
           can_afford: true,
           remaining_after: availableCredits - estimatedCost,
           project_type: args.project_type,
+          is_first_build: isFirstBuild,
           build_tier: buildTier,
           model_tier: modelTier,
           plan: profile.plan,
-          message: `Building ${args.project_type} will cost ~${estimatedCost} credits.\nYou'll have ${availableCredits - estimatedCost} credits left.\n\nReady to proceed?`,
+          message: isFirstBuild
+            ? `Building ${args.project_type} will cost ~${estimatedCost} credits.\nYou'll have ${availableCredits - estimatedCost} credits left.\n\nReady to proceed?`
+            : `This project already has files, so this is priced as an edit: ${estimatedCost} credits flat.\nYou'll have ${availableCredits - estimatedCost} credits left.\n\nReady to proceed?`,
         })
       },
     )
@@ -397,16 +388,26 @@ const handler = createMcpHandler(
         const userPlanRank = planRank[profile.plan as string] ?? 0
         const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
 
-        const estimatedFiles = args.estimated_files ?? (isFirstBuild ? 15 : 8)
-        const buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
-
+        // Must mirror /api/generate's real pricing decision — any build on a
+        // project that already has files is charged as a flat 'small-edit'
+        // (2-5cr) regardless of project type, not full build pricing. See the
+        // matching comment in get_build_cost above.
         const actionTypeMap: Record<string, ActionType> = {
           'web-app': 'web-build',
           'mobile': 'mobile-build',
           'website': 'website-build',
           'saas': 'saas-build',
         }
-        const actionType = actionTypeMap[args.project_type]
+        let buildTier: BuildSizeTier | undefined
+        let actionType: ActionType
+        let estimatedFiles: number | undefined
+        if (isFirstBuild) {
+          estimatedFiles = args.estimated_files ?? 15
+          buildTier = resolveBuildTier({ totalPlannedFiles: estimatedFiles })
+          actionType = actionTypeMap[args.project_type]
+        } else {
+          actionType = 'small-edit'
+        }
         const estimatedCost = creditCost(actionType, modelTier, buildTier)
 
         if (availableCredits < estimatedCost) {
@@ -421,6 +422,7 @@ const handler = createMcpHandler(
             user_id: userId,
             message: args.message,
             project_type: args.project_type,
+            palette_id: args.palette_id ?? null,
             status: 'queued',
           })
           .select('id')
@@ -432,8 +434,10 @@ const handler = createMcpHandler(
         return jsonResult({
           message_id: data?.id,
           status: 'queued',
-          cost_charged: estimatedCost,
-          credits_remaining: availableCredits - estimatedCost,
+          // Nothing is charged yet — /api/generate deducts (and can refund)
+          // the actual cost once the build runs. This is only an estimate.
+          estimated_cost: estimatedCost,
+          estimated_credits_remaining: availableCredits - estimatedCost,
           estimated_files: estimatedFiles,
           build_tier: buildTier,
           model_tier: modelTier,
@@ -444,59 +448,9 @@ const handler = createMcpHandler(
     )
 
     server.tool(
-      'get_build_progress',
-      'Poll build progress. Returns status (queued/processing/done/error) and elapsed time.',
-      { message_id: z.string().describe('Message ID from start_build') },
-      { title: 'Check build progress', readOnlyHint: true, openWorldHint: false },
-      async (args, extra) => {
-        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
-        if (!userId) return errorResult('Unauthorized')
-        const db = createServiceClient()
-        const { data } = await db
-          .from('mcp_messages')
-          .select('id, status, response, error, published_url, created_at, processed_at')
-          .eq('id', args.message_id)
-          .eq('user_id', userId)
-          .single()
-        if (!data) return errorResult('Build not found')
-
-        const createdAt = new Date(data.created_at).getTime()
-        const now = new Date().getTime()
-        const elapsedMin = Math.floor((now - createdAt) / 60000)
-        const elapsedSec = Math.floor(((now - createdAt) % 60000) / 1000)
-
-        let emoji = '⏳'
-        let statusText = 'Queued'
-        if (data.status === 'processing') {
-          emoji = '🔨'
-          statusText = 'Building'
-        } else if (data.status === 'done') {
-          emoji = '✅'
-          statusText = 'Complete'
-        } else if (data.status === 'error') {
-          emoji = '❌'
-          statusText = 'Error'
-        }
-
-        return jsonResult({
-          message_id: data.id,
-          status: data.status,
-          emoji,
-          elapsed_time: `${elapsedMin}m ${elapsedSec}s`,
-          response: data.response,
-          error: data.error,
-          published_url: data.published_url,
-          message: data.status === 'done'
-            ? `${emoji} Build complete! ${data.published_url ? `Live: ${data.published_url}` : 'Project updated.'}`
-            : `${emoji} ${statusText} (${elapsedMin}m ${elapsedSec}s elapsed)`,
-        })
-      },
-    )
-
-    server.tool(
       'get_message_status',
-      'Check the status of a queued build (from send_message): queued | processing | done | error. Returns live URL when complete.',
-      { message_id: z.string().describe('The message_id returned by send_message') },
+      'Check the status of a queued build (from start_build): queued | processing | done | error. Returns live URL when complete.',
+      { message_id: z.string().describe('The message_id returned by start_build') },
       { title: 'Check build status', readOnlyHint: true, openWorldHint: false },
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
@@ -516,11 +470,17 @@ const handler = createMcpHandler(
         const elapsedMin = Math.floor((now - createdAt) / 60000)
         const elapsedSec = Math.floor(((now - createdAt) % 60000) / 1000)
 
+        let emoji = '⏳'
         let progressMsg = ''
         if (data.status === 'queued') {
           progressMsg = `⏳ Queued for ${elapsedMin}m ${elapsedSec}s. Builds typically take 8-10 minutes total.`
         } else if (data.status === 'processing') {
+          emoji = '🔨'
           progressMsg = `🔨 Building for ${elapsedMin}m ${elapsedSec}s. This is normal — generation takes time.`
+        } else if (data.status === 'done') {
+          emoji = '✅'
+        } else if (data.status === 'error') {
+          emoji = '❌'
         }
 
         // If there's a credit-limit error, inject an interactive checkout modal
@@ -530,16 +490,23 @@ const handler = createMcpHandler(
           const balanceMatch = data.error.match(/have (\d+)/)
           const cost = costMatch ? parseInt(costMatch[1], 10) : 100
           const balance = balanceMatch ? parseInt(balanceMatch[1], 10) : 0
-          checkoutUrl = `${APP_URL}/api/mcp/resources/checkout?user_id=${userId}&cost=${cost}&balance=${balance}`
+          // Signed so this URL can't be forged to read another user's
+          // plan/balance by guessing a UUID — see internal-auth.ts.
+          const checkoutParams = { user_id: userId, cost: String(cost), balance: String(balance) }
+          const sig = signParams(checkoutParams)
+          checkoutUrl = `${APP_URL}/api/mcp/resources/checkout?user_id=${userId}&cost=${cost}&balance=${balance}&sig=${sig}`
         }
 
         const response = {
           message_id: data.id,
           status: data.status,
+          elapsed_time: `${elapsedMin}m ${elapsedSec}s`,
           response: data.response,
           error: data.error,
           published_url: data.published_url,
-          progress: progressMsg,
+          progress: progressMsg || (data.status === 'done'
+            ? `${emoji} Build complete! ${data.published_url ? `Live: ${data.published_url}` : 'Project updated.'}`
+            : `${emoji} ${data.status}`),
           ...(checkoutUrl && { checkout_url: checkoutUrl }),
         }
 
@@ -560,7 +527,7 @@ const handler = createMcpHandler(
           headers: {
             'Content-Type': 'application/json',
             'X-Scheduler-User-Id': userId,
-            'X-Scheduler-Secret': process.env.CRON_SECRET!,
+            'X-Scheduler-Secret': internalSecret(),
           },
           body: JSON.stringify({ projectId: args.project_id }),
         })
@@ -588,15 +555,22 @@ const handler = createMcpHandler(
         if (!userId) return errorResult('Unauthorized')
 
         try {
-          const res = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`)
+          const res = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`, {
+            headers: {
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': internalSecret(),
+            },
+          })
           const data = await res.json()
+          if (!res.ok) return errorResult(data.error || 'Domain search failed')
 
+          const priceCents = data.priceCents as number | null
           return jsonResult({
             domain: args.domain_name,
             available: data.available,
-            price_usd: data.price_cents ? data.price_cents / 100 : null,
+            price_usd: priceCents ? priceCents / 100 : null,
             message: data.available
-              ? `✅ ${args.domain_name} is available!\n\nPrice: $${data.price_cents ? (data.price_cents / 100).toFixed(2) : '9-15'}/year\n\nReady to buy? I'll collect your contact info.`
+              ? `✅ ${args.domain_name} is available!\n\nPrice: $${priceCents ? (priceCents / 100).toFixed(2) : '9-15'}/year\n\nReady to buy? I'll collect your contact info.`
               : `❌ ${args.domain_name} is taken.\n\nTry another or use your free subdomain.`,
           })
         } catch (err) {
@@ -626,23 +600,33 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
+        const schedulerHeaders = {
+          'Content-Type': 'application/json',
+          'X-Scheduler-User-Id': userId,
+          'X-Scheduler-Secret': internalSecret(),
+        }
+
         try {
+          // The purchase endpoint needs the real Vercel-quoted price on the
+          // request — look it up fresh rather than trust a stale value.
+          const priceRes = await fetch(`${APP_URL}/api/domain/search?name=${encodeURIComponent(args.domain_name)}`, { headers: schedulerHeaders })
+          const priceData = await priceRes.json()
+          if (!priceRes.ok) return errorResult(priceData.error || 'Could not price this domain')
+          if (!priceData.available || !priceData.priceCents) return errorResult(`${args.domain_name} is no longer available.`)
+
           const res = await fetch(`${APP_URL}/api/domain/purchase`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': process.env.CRON_SECRET!,
-            },
+            headers: schedulerHeaders,
             body: JSON.stringify({
               projectId: args.project_id,
               domain: args.domain_name,
+              priceCents: priceData.priceCents,
               contactInfo: {
                 firstName: args.first_name,
                 lastName: args.last_name,
                 email: args.email,
                 phone: args.phone,
-                address: args.address,
+                address1: args.address,
                 city: args.city,
                 state: args.state,
                 zip: args.zip,
@@ -653,11 +637,14 @@ const handler = createMcpHandler(
           const data = await res.json()
 
           if (!res.ok) return errorResult(data.error || 'Purchase failed')
+          if (!data.url) return errorResult('Checkout could not be created')
 
           return jsonResult({
             success: true,
             domain: args.domain_name,
-            message: `✅ Domain purchased!\n\nYour app is now live at: https://${args.domain_name}\n\nDNS setup: 15-30 minutes to propagate.`,
+            checkout_url: data.url,
+            price_usd: priceData.priceCents / 100,
+            message: `Almost there — complete payment to register ${args.domain_name} ($${(priceData.priceCents / 100).toFixed(2)}/year):\n\n${data.url}\n\nThe domain registers automatically once payment confirms.`,
           })
         } catch (err) {
           return errorResult(`Could not purchase domain: ${String(err).slice(0, 100)}`)
@@ -667,7 +654,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'export_mobile_build',
-      'Export APK or IPA for mobile app. Costs 50cr for APK.',
+      'Export APK or IPA for mobile app. Currently unavailable — always returns an error, no credits charged.',
       {
         project_id: z.string().describe('Project ID'),
         format: z.enum(['apk', 'ipa']).describe('Export format'),
@@ -676,49 +663,14 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
-        const db = createServiceClient()
 
-        const { data: profile } = await db
-          .from('profiles')
-          .select('credits')
-          .eq('id', userId)
-          .single()
-
-        const cost = 50  // APK costs 50cr
-        const credits = profile?.credits ?? 0
-
-        if (credits < cost) {
-          return errorResult(
-            `Not enough credits to export ${args.format.toUpperCase()}.\n\nCost: ${cost} credits\nYou have: ${credits}\n\nUpgrade to get more: https://wyberai.com/pricing`
-          )
-        }
-
-        try {
-          const endpoint = args.format === 'apk' ? '/api/mobile/build-apk' : '/api/mobile/build-ipa'
-          const res = await fetch(`${APP_URL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': process.env.CRON_SECRET!,
-            },
-            body: JSON.stringify({ projectId: args.project_id }),
-          })
-          const data = await res.json()
-
-          if (!res.ok) return errorResult(data.error || `Export failed (${res.status})`)
-
-          return jsonResult({
-            success: true,
-            format: args.format,
-            cost,
-            credits_remaining: credits - cost,
-            build_id: data.buildId,
-            message: `✅ ${args.format.toUpperCase()} build queued (${cost} credits charged).\n\n📥 Build ID: ${data.buildId}\n\nCheck back in 10-15 minutes for download link.\n\n**Installation:**\n- APK: Enable "Unknown Sources" in Android settings\n- IPA: Use TestFlight or connect to Xcode`,
-          })
-        } catch (err) {
-          return errorResult(`Could not start export: ${String(err).slice(0, 100)}`)
-        }
+        // /api/mobile/build-apk|ipa authenticates to Expo's EAS API with the
+        // user's GitHub OAuth token, which isn't a valid Expo credential — every
+        // EAS call 401s server-side and no EXPO_TOKEN is configured anywhere.
+        // Refuse here instead of deducting 50cr for a build that can only fail.
+        return errorResult(
+          `${args.format.toUpperCase()} export isn't available yet — the mobile build pipeline needs to be reconnected to a real build backend. No credits were charged. Use export_code to download the project and build it yourself in the meantime.`
+        )
       },
     )
 
@@ -749,7 +701,7 @@ const handler = createMcpHandler(
             headers: {
               'Content-Type': 'application/json',
               'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+              'X-Scheduler-Secret': internalSecret(),
             },
             body: JSON.stringify({
               project_id: args.project_id,
@@ -785,7 +737,7 @@ const handler = createMcpHandler(
           const res = await fetch(`${APP_URL}/api/snapshots?project_id=${args.project_id}`, {
             headers: {
               'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+              'X-Scheduler-Secret': internalSecret(),
             },
           })
           const data = await res.json()
@@ -825,45 +777,32 @@ const handler = createMcpHandler(
         if (!project) return errorResult('Project not found')
 
         try {
-          const res = await fetch(`${APP_URL}/api/snapshots/${args.snapshot_id}`, {
+          const res = await fetch(`${APP_URL}/api/snapshots/${args.snapshot_id}?project_id=${args.project_id}`, {
             headers: {
               'X-Scheduler-User-Id': userId,
-              'X-Scheduler-Secret': process.env.CRON_SECRET!,
+              'X-Scheduler-Secret': internalSecret(),
             },
           })
           const data = await res.json()
           if (!res.ok) return errorResult(data.error || 'Restore failed')
+          if (!data.snapshot?.files) return errorResult('Snapshot has no files to restore')
 
+          const { error: updateError } = await db
+            .from('projects')
+            .update({ files: data.snapshot.files, updated_at: new Date().toISOString() })
+            .eq('id', args.project_id)
+            .eq('user_id', userId)
+          if (updateError) return errorResult(`Restore failed: ${updateError.message}`)
+
+          const count = Object.keys((data.snapshot.files as Record<string, unknown>) ?? {}).length
           return jsonResult({
             success: true,
-            message: `✅ Project restored to "${data.snapshot?.label}".\n\nYour files have been rolled back.`,
+            restored_files: count,
+            message: `✅ Project restored to "${data.snapshot?.label}" (${count} files).\n\nYour files have been rolled back.`,
           })
         } catch (err) {
           return errorResult(`Could not restore snapshot: ${String(err).slice(0, 100)}`)
         }
-      },
-    )
-
-    server.tool(
-      'publish_project',
-      'Publish a project to a live URL (projectname on wyberai.com/app).',
-      { project_id: z.string().describe('Project ID') },
-      { title: 'Publish to a live URL', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
-      async (args, extra) => {
-        const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
-        if (!userId) return errorResult('Unauthorized')
-        const res = await fetch(`${APP_URL}/api/publish`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Scheduler-User-Id': userId,
-            'X-Scheduler-Secret': process.env.CRON_SECRET!,
-          },
-          body: JSON.stringify({ projectId: args.project_id }),
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) return errorResult(data.error || `Publish failed (${res.status})`)
-        return jsonResult(data)
       },
     )
 
@@ -876,13 +815,13 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db
+        const { data, error } = await db
           .from('projects')
           .select('files')
           .eq('id', args.project_id)
           .eq('user_id', userId)
           .single()
-        if (!data) return errorResult('Project not found')
+        if (error || !data) return errorResult(error && error.code !== 'PGRST116' ? `Could not list files: ${error.message}` : 'Project not found')
         const paths = Object.keys((data.files as Record<string, unknown>) ?? {}).sort()
         return jsonResult({ file_count: paths.length, files: paths })
       },
@@ -900,13 +839,13 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db
+        const { data, error } = await db
           .from('projects')
           .select('files')
           .eq('id', args.project_id)
           .eq('user_id', userId)
           .single()
-        if (!data) return errorResult('Project not found')
+        if (error || !data) return errorResult(error && error.code !== 'PGRST116' ? `Could not read file: ${error.message}` : 'Project not found')
         const files = (data.files as Record<string, { content?: string }>) ?? {}
         const file = files[args.path]
         if (!file) return errorResult(`File not found: ${args.path}. Call list_files to see available paths.`)
@@ -937,7 +876,26 @@ const handler = createMcpHandler(
         if (!project) return errorResult('Project not found')
 
         const conn = await getProjectSupabase(userId, args.project_id)
-        if (!conn) return errorResult('No Supabase connected for this project. Connect it in the WyberAi editor (Connect Supabase) first.')
+        if (!conn) {
+          // getProjectSupabase needs BOTH a data-plane connection (service=
+          // 'supabase') AND the OAuth management-API connection (service=
+          // 'supabase-oauth') — a project connected only via connect_supabase
+          // or the editor's manual-paste flow has real data access (codegen
+          // works) but no management token, so "no Supabase connected" would
+          // be false and misleading here. Distinguish the two.
+          const { data: rows } = await db
+            .from('project_connectors')
+            .select('service')
+            .eq('project_id', args.project_id)
+            .eq('user_id', userId)
+            .in('service', ['supabase', 'supabase-oauth'])
+          const hasDataPlane = rows?.some(r => r.service === 'supabase')
+          return errorResult(
+            hasDataPlane
+              ? 'Supabase is connected for this project\'s own data access, but execute_sql needs the Management API connection. Reconnect via "Connect with Supabase" (OAuth) in the WyberAi editor — connect_supabase and manual URL+key connections don\'t enable this.'
+              : 'No Supabase connected for this project. Connect it in the WyberAi editor (Connect Supabase) first.'
+          )
+        }
         try {
           const rows = await runSql(conn.token, conn.ref, args.query)
           return jsonResult({ rows })
@@ -956,13 +914,13 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db
+        const { data, error } = await db
           .from('projects')
           .select('knowledge')
           .eq('id', args.project_id)
           .eq('user_id', userId)
           .single()
-        if (!data) return errorResult('Project not found')
+        if (error || !data) return errorResult(error && error.code !== 'PGRST116' ? `Could not get knowledge: ${error.message}` : 'Project not found')
         return jsonResult({ knowledge: data.knowledge ?? '' })
       },
     )
@@ -979,13 +937,20 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
+        const truncated = args.knowledge.length > 8000
         const { error } = await db
           .from('projects')
           .update({ knowledge: args.knowledge.slice(0, 8000) })
           .eq('id', args.project_id)
           .eq('user_id', userId)
         if (error) return errorResult(`Could not save knowledge: ${error.message}`)
-        return jsonResult({ ok: true, message: 'Project knowledge updated.' })
+        return jsonResult({
+          ok: true,
+          truncated,
+          message: truncated
+            ? `Project knowledge updated. Note: your text was ${args.knowledge.length} characters — only the first 8000 were saved.`
+            : 'Project knowledge updated.',
+        })
       },
     )
 
@@ -998,8 +963,8 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db.from('profiles').select('email, credits, plan').eq('id', userId).single()
-        if (!data) return errorResult('Account not found')
+        const { data, error } = await db.from('profiles').select('email, credits, plan').eq('id', userId).single()
+        if (error || !data) return errorResult(error && error.code !== 'PGRST116' ? `Could not get account: ${error.message}` : 'Account not found')
         return jsonResult({ email: data.email, credits: data.credits, plan: data.plan })
       },
     )
@@ -1084,7 +1049,11 @@ const handler = createMcpHandler(
           connected: !!dataPlane,
           ref: (dataPlane?.config as { ref?: string })?.ref ?? null,
           management_api_connected: !!mgmt, // required for execute_sql + security scans
-          hint: dataPlane ? undefined : 'Connect Supabase in the WyberAi editor (Connect Supabase) to enable SQL and security scans.',
+          hint: !dataPlane
+            ? 'Connect Supabase in the WyberAi editor (Connect Supabase) to enable SQL and security scans.'
+            : !mgmt
+              ? 'Connected for data access, but execute_sql/run_security_scan need the OAuth management connection too — use "Connect with Supabase" in the editor, not connect_supabase or manual URL+key.'
+              : undefined,
         })
       },
     )
@@ -1102,6 +1071,18 @@ const handler = createMcpHandler(
           const { connected, blockedRef, report } = await runProjectRlsScan(db, args.project_id, userId)
           if (blockedRef) return errorResult('That project cannot be scanned.')
           if (!connected) return errorResult('No Supabase connected for this project. Connect it in the WyberAi editor first.')
+          // scanRls returns reachable:false with a placeholder score:100 when
+          // it couldn't reach ANY table with the anon key (paused project,
+          // rotated/wrong key) — that is "nothing was actually checked", not
+          // "checked and clean". Surfacing the raw report as-is reads as a
+          // clean pass; make the inconclusive case impossible to miss.
+          if (report && report.reachable === false) {
+            return jsonResult({
+              ...report,
+              inconclusive: true,
+              message: `⚠️ Scan did not run — no tables were reachable with the anon key (${report.note ?? 'the project may be paused, or the URL/key is stale'}). This is NOT a clean result; nothing was actually checked. Verify the connection in the WyberAi editor and retry.`,
+            })
+          }
           return jsonResult(report)
         } catch (e) {
           return errorResult(`Scan failed: ${String(e).slice(0, 300)}`)
@@ -1118,13 +1099,14 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
         const db = createServiceClient()
-        const { data } = await db
+        const { data, error } = await db
           .from('project_versions')
           .select('id, label, created_at')
           .eq('project_id', args.project_id)
           .eq('user_id', userId)
           .order('created_at', { ascending: false })
           .limit(20)
+        if (error) return errorResult(`Could not list versions: ${error.message}`)
         return jsonResult({ versions: data ?? [] })
       },
     )
@@ -1163,7 +1145,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'connect_supabase',
-      'Connect a Supabase database to the project. Enables real data instead of mocks.',
+      'Connect a Supabase database to the project (URL + anon key). Enables real data instead of mocks. Note: SQL execution and security scans additionally require connecting Supabase via OAuth in the WyberAi editor — this tool alone does not enable execute_sql/run_security_scan.',
       {
         project_id: z.string().describe('Project ID'),
         supabase_url: z.string().describe('Supabase project URL'),
@@ -1184,6 +1166,8 @@ const handler = createMcpHandler(
         if (!project) return errorResult('Project not found')
 
         try {
+          const { encrypt } = await import('@/lib/secrets-crypto')
+          const refMatch = args.supabase_url.match(/https:\/\/([a-z0-9]+)\.supabase/i)
           const { error } = await db
             .from('project_connectors')
             .upsert(
@@ -1191,18 +1175,23 @@ const handler = createMcpHandler(
                 project_id: args.project_id,
                 user_id: userId,
                 service: 'supabase',
-                config: {
-                  url: args.supabase_url,
-                  key: args.supabase_key,
-                },
+                // Same shape the editor's manual-paste connect flow writes
+                // (src/app/api/connectors/route.ts) — this is what codegen's
+                // getSupabaseContext actually reads. The onConflict target
+                // must match the real DB constraint, unique(project_id, service)
+                // — a 3-column target here always failed with a Postgres
+                // 42P10 error, so this tool never connected anything before.
+                api_key: encrypt(args.supabase_key),
+                config: { url: args.supabase_url, ref: refMatch?.[1] ?? null },
+                connected_at: new Date().toISOString(),
               },
-              { onConflict: 'project_id,user_id,service' },
+              { onConflict: 'project_id,service' },
             )
           if (error) return errorResult(`Could not connect: ${error.message}`)
 
           return jsonResult({
             success: true,
-            message: `✅ Supabase connected!\n\nYour app can now use real auth and database queries.\n\nURL: ${args.supabase_url}\n\nNext: rebuild the app to replace mock data with live queries.`,
+            message: `✅ Supabase connected!\n\nYour app can now use real auth and database queries.\n\nURL: ${args.supabase_url}\n\nNext: rebuild the app to replace mock data with live queries.\n\nNote: execute_sql and run_security_scan need Supabase connected via OAuth in the WyberAi editor (Connect Supabase → "Connect with Supabase") — this URL+key connection alone doesn't enable those.`,
           })
         } catch (err) {
           return errorResult(`Could not connect Supabase: ${String(err).slice(0, 100)}`)
@@ -1212,47 +1201,26 @@ const handler = createMcpHandler(
 
     server.tool(
       'connect_wybercloud',
-      'Connect WyberCloud (our hosted database) for easy backend without setup. Zero-config option.',
+      'Connect WyberCloud (our hosted database) for easy backend without setup. Currently unavailable via the connector — provisions real cloud infrastructure and needs to go through the WyberAi editor.',
       {
         project_id: z.string().describe('Project ID'),
       },
       { title: 'Connect WyberCloud', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
-      async (args, extra) => {
+      async (_args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
-        const db = createServiceClient()
 
-        const { data: project } = await db
-          .from('projects')
-          .select('id')
-          .eq('id', args.project_id)
-          .eq('user_id', userId)
-          .single()
-        if (!project) return errorResult('Project not found')
-
-        try {
-          const { error } = await db
-            .from('project_connectors')
-            .upsert(
-              {
-                project_id: args.project_id,
-                user_id: userId,
-                service: 'wybercloud',
-                config: {
-                  enabled: true,
-                },
-              },
-              { onConflict: 'project_id,user_id,service' },
-            )
-          if (error) return errorResult(`Could not connect: ${error.message}`)
-
-          return jsonResult({
-            success: true,
-            message: `✅ WyberCloud connected!\n\nYour app now uses our hosted database.\n\n**Included:**\n- Zero-config setup\n- Automatic backups\n- 5GB free tier\n- Scales as you grow\n\nNext: rebuild the app to use real data instead of mocks.`,
-          })
-        } catch (err) {
-          return errorResult(`Could not connect WyberCloud: ${String(err).slice(0, 100)}`)
-        }
+        // The old implementation wrote a { service: 'wybercloud', config: {
+        // enabled: true } } marker row that nothing in the codebase ever
+        // reads — it also used a 3-column onConflict target that doesn't
+        // match the real 2-column DB constraint, so it always failed anyway.
+        // Real WyberCloud provisioning (/api/cloud/create-database) spins up
+        // a genuine, billable Google Cloud SQL instance and takes 5-10
+        // minutes — that's a real infra-provisioning action with no rate
+        // limiting today, not something to expose to an MCP tool call
+        // without deliberately deciding to. Refuse honestly instead of
+        // faking success.
+        return errorResult('Connecting WyberCloud isn\'t available via the connector yet. Open the project in the WyberAi editor and use "Connect WyberCloud" there.')
       },
     )
 
@@ -1269,12 +1237,28 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        return jsonResult({
-          success: true,
-          invited_email: args.email,
-          role: args.role,
-          message: `✅ Invitation sent to ${args.email}\n\nThey can now ${args.role === 'editor' ? 'build and edit' : 'view'} your project.`,
-        })
+        try {
+          const res = await fetch(`${APP_URL}/api/projects/${args.project_id}/collaborators`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': internalSecret(),
+            },
+            body: JSON.stringify({ email: args.email, role: args.role }),
+          })
+          const data = await res.json()
+          if (!res.ok) return errorResult(data.error || 'Invite failed')
+
+          return jsonResult({
+            success: true,
+            invited_email: args.email,
+            role: args.role,
+            message: `✅ Invitation sent to ${args.email}\n\nThey can now ${args.role === 'editor' ? 'build and edit' : 'view'} your project once they accept.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not invite: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 
@@ -1287,11 +1271,11 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        const downloadUrl = `${APP_URL}/api/export?project_id=${args.project_id}`
+        const downloadUrl = `${APP_URL}/api/export?project_id=${args.project_id}&format=zip`
         return jsonResult({
           success: true,
           download_url: downloadUrl,
-          message: `✅ Export ready!\n\nDownload your code: ${downloadUrl}\n\nYou can run it locally, deploy elsewhere, or use as a reference.`,
+          message: `✅ Export ready!\n\nDownload your code (opens in your browser, signed in as yourself): ${downloadUrl}\n\nYou can run it locally, deploy elsewhere, or use as a reference.`,
         })
       },
     )
@@ -1304,11 +1288,46 @@ const handler = createMcpHandler(
       async (args, extra) => {
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
+        const db = createServiceClient()
 
-        return jsonResult({
-          success: true,
-          message: `✅ Code pushed to GitHub!\n\nYour repo is now synced. You can clone, deploy, or collaborate on GitHub.`,
-        })
+        const { data: project } = await db
+          .from('projects')
+          .select('name, files')
+          .eq('id', args.project_id)
+          .eq('user_id', userId)
+          .single()
+        if (!project) return errorResult('Project not found')
+        if (!project.files || Object.keys(project.files as Record<string, unknown>).length === 0) {
+          return errorResult('Project has no files to push yet.')
+        }
+
+        try {
+          const res = await fetch(`${APP_URL}/api/github/push`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': internalSecret(),
+            },
+            body: JSON.stringify({ files: project.files, projectName: project.name }),
+          })
+          const data = await res.json()
+          if (!res.ok) {
+            if (res.status === 400 && data.error === 'GitHub not connected') {
+              return errorResult('GitHub is not connected. Connect it in the WyberAi editor (Connect GitHub) first.')
+            }
+            return errorResult(data.error || 'Push failed')
+          }
+
+          return jsonResult({
+            success: true,
+            repo_url: data.repoUrl,
+            files_pushed: data.files,
+            message: `✅ Code pushed to GitHub!\n\n${data.repoUrl}\n\nYou can clone, deploy, or collaborate on GitHub.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not push to GitHub: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 

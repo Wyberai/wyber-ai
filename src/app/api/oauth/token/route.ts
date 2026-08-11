@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { consumeAuthCode, rotateRefreshToken, createRefreshToken } from '@/lib/oauth/store'
 import { signAccessToken, verifyPkceS256 } from '@/lib/oauth/tokens'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimitDb } from '@/lib/rate-limit-db'
 
 function base(req: NextRequest): string {
   return process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   // Bound token attempts per IP — brute-forcing codes/refresh tokens is the
   // main attack on this endpoint (they're already 256-bit random, this is
   // defense in depth).
-  const { allowed } = rateLimit(`oauth-token:${clientIp(req)}`, 60, 600_000)
+  const { allowed } = await rateLimitDb(`oauth-token:${clientIp(req)}`, 60, 600_000)
   if (!allowed) return oauthError('temporarily_unavailable', 'Too many token requests, please retry shortly', 429)
 
   let form: FormData
@@ -53,8 +53,14 @@ export async function POST(req: NextRequest) {
 
     const consumed = await consumeAuthCode(code)
     if (!consumed) return oauthError('invalid_grant', 'Authorization code is invalid or expired')
-    if (clientId && consumed.client_id !== clientId) return oauthError('invalid_grant', 'client_id mismatch')
-    if (redirectUri && consumed.redirect_uri !== redirectUri) return oauthError('invalid_grant', 'redirect_uri mismatch')
+    // Unconditional, not "only if the request happened to include it" — the
+    // authorize step (src/app/api/oauth/authorize/route.ts) never creates a
+    // code without both fields, so a request that omits them here should
+    // fail closed, not skip the check. RFC 6749 §4.1.3 requires redirect_uri
+    // be re-verified whenever it was present at the authorization step, which
+    // for this server is always.
+    if (consumed.client_id !== clientId) return oauthError('invalid_grant', 'client_id mismatch')
+    if (consumed.redirect_uri !== redirectUri) return oauthError('invalid_grant', 'redirect_uri mismatch')
     if (!verifyPkceS256(codeVerifier, consumed.code_challenge)) return oauthError('invalid_grant', 'PKCE verification failed')
 
     const scope = consumed.scope ?? 'mcp'

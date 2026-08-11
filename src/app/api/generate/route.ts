@@ -1,3 +1,4 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
@@ -2381,7 +2382,7 @@ export async function POST(req: NextRequest) {
     // target user's id via X-Scheduler-User-Id, exactly like /api/agents/run.
     const schedulerSecret = req.headers.get('x-scheduler-secret')
     const schedulerUserId = req.headers.get('x-scheduler-user-id')
-    const isInternalCall = !!schedulerUserId && schedulerSecret === process.env.CRON_SECRET
+    const isInternalCall = !!schedulerUserId && schedulerSecret === internalSecret()
 
     const supabase = await createClient()
     let user: { id: string } | null
@@ -3181,6 +3182,46 @@ ${code}
                 content: `This build ran heavier than a typical ${buildTier} build (~${Math.round(totalBuildOutputTokens / 1000)}K tokens generated) — an extra ${chargedOverage} credit${chargedOverage === 1 ? '' : 's'} was charged to cover it.`,
                 files_changed: [],
               })
+            }
+          }
+        }
+        // Edit overage safety valve — mirrors the buildTier valve above, for
+        // the one action class it doesn't cover. 'small-edit'/'complex-edit'
+        // are flat-priced (2cr) assuming a single short generation pass, but
+        // the max_tokens retry-continuation loop (~line 3896) can legitimately
+        // chain up to MAX_TOOL_ITERATIONS full stageMaxTokens passes for an
+        // edit that keeps hitting the token ceiling — confirmed live via
+        // generation_usage_log: 'small-edit' rows regularly landing at
+        // 30-51K output tokens (1.5-2x a single 24K 'fast'-tier pass) while
+        // charged the same flat 2 credits every time. Builds already have a
+        // valve for this exact shape of overrun; edits never did. Same bounded-
+        // tail-only philosophy as computeOverageCharge: nothing below the
+        // threshold, a small capped charge above it — never open-ended
+        // metering, and single-request-scoped so no cross-request idempotency
+        // bookkeeping is needed (unlike the multi-request buildId case above).
+        if (!buildTier && !selfHeal && !isInternalPass && stage !== 'plan' && authedUserId && cost > 0) {
+          const editOverageThreshold = stageMaxTokens * 1.5
+          if (totalOutputTokens > editOverageThreshold) {
+            const extraPasses = Math.ceil((totalOutputTokens - stageMaxTokens) / stageMaxTokens)
+            const editOverage = Math.min(extraPasses * cost, cost * 4)
+            if (editOverage > 0) {
+              const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: editOverage })
+              if (overageRpc?.new_credits !== undefined) {
+                await admin.from('generation_usage_log').insert({
+                  user_id: authedUserId, project_id: projectId || null, build_id: buildId || null,
+                  action_type: 'edit-overage', stage, model_tier: resolvedTier,
+                  model_id: MODELS[resolvedTier] ?? String(resolvedTier),
+                  output_tokens: totalOutputTokens, credits_charged: editOverage,
+                })
+                if (projectId) {
+                  await admin.from('project_messages').insert({
+                    project_id: projectId,
+                    role: 'assistant',
+                    content: `This edit ran heavier than usual (~${Math.round(totalOutputTokens / 1000)}K tokens generated) — an extra ${editOverage} credit${editOverage === 1 ? '' : 's'} was charged to cover it.`,
+                    files_changed: [],
+                  })
+                }
+              }
             }
           }
         }

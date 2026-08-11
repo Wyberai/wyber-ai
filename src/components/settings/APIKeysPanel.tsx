@@ -47,7 +47,7 @@ export function APIKeysPanel() {
         <code style={{ display: 'block', padding: '8px 10px', borderRadius: 7, background: 'var(--bg)', border: '1px solid var(--border)', fontSize: 11, color: 'var(--sky)', fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
           claude mcp add --transport http wyberai https://wyberai.com/api/mcp --header &quot;x-api-key: YOUR_KEY&quot;
         </code>
-        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>20 tools — build (create_project, send_message, publish_project), inspect (list_files, read_file, get_project, get_account, get_message_status), database (execute_sql, get_database_status), security (run_security_scan), manage (rename/duplicate/delete_project, list/restore_version), knowledge, and connectors.</div>
+        <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8 }}>34 tools — build (create_project, start_build, publish_to_web), inspect (list_files, read_file, get_project, get_account, get_message_status), database (execute_sql, get_database_status, connect_supabase), security (run_security_scan), manage (rename/duplicate/delete_project, list/restore_version, save/restore_snapshot), ship (search/buy_domain, export_code, push_to_github, invite_collaborator), knowledge, and connectors.</div>
       </div>
 
       {newKey && (

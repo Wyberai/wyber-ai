@@ -133,9 +133,9 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
   };
 
   const restoreSnapshot = async (id: string) => {
-    if (restoringId) return;
+    if (restoringId || !projectId) return;
     setRestoringId(id);
-    const res = await fetch(`/api/snapshots/${id}`);
+    const res = await fetch(`/api/snapshots/${id}?project_id=${projectId}`);
     if (res.ok) {
       const { snapshot } = await res.json();
       const { setFiles } = useEditorStore.getState();

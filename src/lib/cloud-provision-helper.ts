@@ -4,6 +4,7 @@
  */
 
 import { createAdminClient } from '@/lib/supabase/server'
+import { internalCallHeaders } from '@/lib/internal-auth'
 
 export interface ProvisionOptions {
   projectId: string
@@ -81,11 +82,7 @@ export async function autoProvisionCloudDatabase(options: ProvisionOptions): Pro
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Scheduler-Secret': process.env.CRON_SECRET || '',
-        'X-Scheduler-User-Id': userId,
-      },
+      headers: { 'Content-Type': 'application/json', ...internalCallHeaders(userId) },
       body: JSON.stringify({ projectId }),
     })
 

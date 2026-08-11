@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
+import { verifyParams } from '@/lib/internal-auth'
 
 /**
  * Serves the interactive credit-limit checkout UI for MCP.
@@ -12,6 +13,7 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get('user_id')
     const costNeeded = searchParams.get('cost')
     const balance = searchParams.get('balance')
+    const sig = searchParams.get('sig')
     const returnTo = searchParams.get('return_to') || 'https://claude.ai'
 
     if (!userId || !costNeeded || balance === null) {
@@ -19,6 +21,15 @@ export async function GET(req: NextRequest) {
         { error: 'Missing required params: user_id, cost, balance' },
         { status: 400 },
       )
+    }
+
+    // This resource previously trusted user_id/cost/balance straight off the
+    // query string with no auth at all — anyone who could guess a WyberAi
+    // user UUID could load this page and read that user's plan and credit
+    // balance. get_message_status signs the URL it generates; refuse
+    // anything else instead of serving real account data to an unsigned request.
+    if (!sig || !verifyParams({ user_id: userId, cost: costNeeded, balance }, sig)) {
+      return NextResponse.json({ error: 'Invalid or expired checkout link.' }, { status: 403 })
     }
 
     // Fetch user plan to show relevant upgrade options.

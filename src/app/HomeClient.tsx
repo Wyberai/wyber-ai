@@ -229,12 +229,12 @@ function McpConsole() {
       <div style={{ color: 'var(--brand-accent-hot)', fontSize: 10, marginBottom: 8, paddingLeft: 12, wordBreak: 'break-all' }}>
         https://wyberai.com/api/mcp --header &quot;x-api-key: wyb_•••&quot;
       </div>
-      <div style={{ color: '#22c55e', fontSize: 10, marginBottom: 14 }}>✓ connected · 20 tools available</div>
+      <div style={{ color: '#22c55e', fontSize: 10, marginBottom: 14 }}>✓ connected · 34 tools available</div>
       <div style={{ color: 'var(--brand-text-dim)', fontSize: 10, marginBottom: 8 }}>&gt; &quot;spin up a waitlist app and publish it&quot;</div>
       {[
         { t: 'create_project',  d: 'waitlist-app · react-vite' },
-        { t: 'send_message',    d: 'building… 12 files generated' },
-        { t: 'publish_project', d: 'live at waitlist-x1.wyber.app' },
+        { t: 'start_build',     d: 'building… 12 files generated' },
+        { t: 'publish_to_web',  d: 'live at waitlist-x1.wyber.app' },
       ].map((r, i) => (
         <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--brand-border)' }}>
           <span style={{ color: 'var(--brand-accent)', fontSize: 10, width: 128, flexShrink: 0 }}>{r.t}</span>
@@ -762,11 +762,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 18px' }}>
                   {([
                     ['create_project', t.mcpTool1Desc],
-                    ['send_message', t.mcpTool2Desc],
+                    ['start_build', t.mcpTool2Desc],
                     ['execute_sql', t.mcpTool3Desc],
                     ['run_security_scan', t.mcpTool4Desc],
                     ['set_project_knowledge', t.mcpTool5Desc],
-                    ['publish_project', t.mcpTool6Desc],
+                    ['publish_to_web', t.mcpTool6Desc],
                   ] as [string, string][]).map(([code, desc]) => (
                     <li key={code} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                       <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 11 }}>{code}</span>

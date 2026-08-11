@@ -6,6 +6,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { creditCost } from '@/lib/credits'
 import { sendAgentCompletedEmail, sendAgentFailedEmail } from '@/lib/email'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
+import { internalSecret } from '@/lib/internal-auth'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     const schedulerSecret = req.headers.get('x-scheduler-secret')
     const schedulerUserId = req.headers.get('x-scheduler-user-id')
     const isSchedulerCall =
-      schedulerSecret === process.env.CRON_SECRET && !!schedulerUserId
+      schedulerSecret === internalSecret() && !!schedulerUserId
 
     let user: { id: string } | null = null
     if (isSchedulerCall) {

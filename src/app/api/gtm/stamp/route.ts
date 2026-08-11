@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto'
 import { replaceTokenInFiles } from '@/lib/image-directives'
 import { SECURITY_COCKPIT_FILES } from '@/lib/templates/gtm/security-cockpit'
 import { ITSERVICES_COCKPIT_FILES } from '@/lib/templates/gtm/itservices-cockpit'
+import { internalSecret, internalCallHeaders } from '@/lib/internal-auth'
 
 const COCKPIT_TEMPLATES: Record<string, Record<string, string>> = {
   security: SECURITY_COCKPIT_FILES,
@@ -32,11 +33,12 @@ export const maxDuration = 300
  *      re-invoke on an interval. Stops early and reports `rateLimited` on a 429.
  *
  * Auth: an allowlisted admin session, OR the internal scheduler secret
- * (X-Scheduler-Secret === CRON_SECRET) so a scheduled task can drive it.
+ * (X-Scheduler-Secret, its own dedicated secret — see src/lib/internal-auth.ts)
+ * so a scheduled task can drive it.
  */
 export async function POST(req: NextRequest) {
   const schedulerSecret = req.headers.get('x-scheduler-secret')
-  const isInternalCall = !!schedulerSecret && schedulerSecret === process.env.CRON_SECRET
+  const isInternalCall = !!schedulerSecret && schedulerSecret === internalSecret()
 
   if (!isInternalCall) {
     const supabase = await createClient()
@@ -131,11 +133,7 @@ export async function POST(req: NextRequest) {
       if (done >= limit) break
       const res = await fetch(`${origin}/api/publish`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Scheduler-User-Id': outreachUserId,
-          'X-Scheduler-Secret': process.env.CRON_SECRET!,
-        },
+        headers: { 'Content-Type': 'application/json', ...internalCallHeaders(outreachUserId) },
         body: JSON.stringify({ projectId: p.id }),
       })
       const data = await res.json().catch(() => ({}))

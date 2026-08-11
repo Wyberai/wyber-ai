@@ -1,3 +1,4 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sendTeamInviteEmail as sendCollaboratorInviteEmail } from '@/lib/email'
@@ -28,9 +29,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
 // POST — invite a collaborator
 export async function POST(req: NextRequest, { params }: Params) {
   const { id } = await params
-  const auth = await createClient()
-  const { data: { user } } = await auth.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Internal callers (the MCP invite_collaborator tool) have no browser
+  // session — same X-Scheduler-Secret/X-Scheduler-User-Id bypass as /api/publish.
+  const schedulerSecret = req.headers.get('x-scheduler-secret')
+  const schedulerUserId = req.headers.get('x-scheduler-user-id')
+  const isInternalCall = !!schedulerUserId && schedulerSecret === internalSecret()
+
+  let user: { id: string; email?: string }
+  if (isInternalCall) {
+    user = { id: schedulerUserId! }
+  } else {
+    const auth = await createClient()
+    const { data: { user: cookieUser } } = await auth.auth.getUser()
+    if (!cookieUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    user = cookieUser
+  }
 
   const db = createServiceClient()
   const { data: project } = await db.from('projects').select('id, name').eq('id', id).eq('user_id', user.id).single()

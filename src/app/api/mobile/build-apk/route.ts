@@ -1,14 +1,61 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 const BUILD_COST = 50
 const EAS_API_BASE = 'https://api.expo.io'
 
-export async function POST(req: NextRequest) {
+// Never charge for a build that never actually started. Same adjust_credits
+// RPC (migration 20260702130000) /api/generate uses to refund failed builds,
+// with the same read-then-write fallback if it's unavailable.
+async function refundBuildCost(admin: ReturnType<typeof createAdminClient>, userId: string, amount: number, reason: string) {
   try {
-    const auth = await createClient()
-    const { data: { user } } = await auth.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { data: adjusted, error } = await admin.rpc('adjust_credits', { p_user_id: userId, p_delta: amount })
+    let after = !error && typeof adjusted === 'number' ? adjusted : null
+    if (after === null) {
+      const { data: prof } = await admin.from('profiles').select('credits').eq('id', userId).single()
+      after = (prof?.credits ?? 0) + amount
+      await admin.from('profiles').update({ credits: after }).eq('id', userId)
+    }
+    const finalCredits = after ?? amount
+    await admin.from('credit_usage').insert({ user_id: userId, amount: -amount, reason: `refund:${reason}`, credits_before: finalCredits - amount, credits_after: finalCredits })
+  } catch (e) { console.error('[mobile/build-apk] refund failed', e) }
+}
+
+// This route authenticates to Expo's EAS API with the user's GitHub OAuth
+// token, which is not a valid Expo credential — the EAS call 401s every time
+// (no EXPO_TOKEN is configured anywhere in this project). Gated off at the
+// route level, not just in the MCP tool wrapper, so the web editor's own
+// Export APK button (MobilePreviewPanel.tsx) can't deduct-then-refund 50cr on
+// a build that's guaranteed to fail either. Flip back on once a real build
+// backend (EAS with a real token, or the GitHub-Actions self-build pattern
+// the companion app moved to) is wired up here.
+const MOBILE_BUILD_BACKEND_ENABLED = process.env.MOBILE_BUILD_BACKEND_ENABLED === 'true'
+
+export async function POST(req: NextRequest) {
+  if (!MOBILE_BUILD_BACKEND_ENABLED) {
+    return NextResponse.json(
+      { error: 'APK export isn\'t available right now — the mobile build pipeline needs a real build backend. No credits are charged. Use Export Code to download the project and build it yourself in the meantime.' },
+      { status: 503 },
+    )
+  }
+
+  try {
+    // Internal callers (the MCP export_mobile_build tool) have no browser
+    // session — same X-Scheduler-Secret/X-Scheduler-User-Id bypass as /api/publish.
+    const schedulerSecret = req.headers.get('x-scheduler-secret')
+    const schedulerUserId = req.headers.get('x-scheduler-user-id')
+    const isInternalCall = !!schedulerUserId && schedulerSecret === internalSecret()
+
+    let user: { id: string }
+    if (isInternalCall) {
+      user = { id: schedulerUserId! }
+    } else {
+      const auth = await createClient()
+      const { data: { user: cookieUser } } = await auth.auth.getUser()
+      if (!cookieUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      user = cookieUser
+    }
 
     const { projectId } = await req.json() as { projectId?: string }
     if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
@@ -121,6 +168,7 @@ export async function POST(req: NextRequest) {
           .from('mobile_builds')
           .update({ status: 'error', error_message: `EAS API error: ${easRes.status}` })
           .eq('id', buildId)
+        await refundBuildCost(admin, user.id, BUILD_COST, 'eas-build-failed')
         return NextResponse.json(
           { error: 'Failed to start build with Expo' },
           { status: 500 },
@@ -136,6 +184,7 @@ export async function POST(req: NextRequest) {
           .from('mobile_builds')
           .update({ status: 'error', error_message: 'No build ID from EAS' })
           .eq('id', buildId)
+        await refundBuildCost(admin, user.id, BUILD_COST, 'eas-build-failed')
         return NextResponse.json(
           { error: 'Failed to get build ID from Expo' },
           { status: 500 },
@@ -161,6 +210,7 @@ export async function POST(req: NextRequest) {
         .from('mobile_builds')
         .update({ status: 'error', error_message: String(err) })
         .eq('id', buildId)
+      await refundBuildCost(admin, user.id, BUILD_COST, 'eas-build-failed')
       return NextResponse.json({ error: 'Build initiation failed' }, { status: 500 })
     }
   } catch (err) {

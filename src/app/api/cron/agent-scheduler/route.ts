@@ -4,6 +4,7 @@ import { creditCost } from '@/lib/credits'
 import { sendCreditLowEmail } from '@/lib/email'
 import { userCurrency } from '@/lib/user-currency'
 import { notifyPush } from '@/lib/push'
+import { internalCallHeaders } from '@/lib/internal-auth'
 
 const ITER_COST = creditCost('execution', 'default') // 2 credits
 // Worst-case cost = 1 initial call + MAX_ITERATIONS continuation calls (10) + 1 = 11 calls
@@ -157,11 +158,7 @@ export async function GET(req: NextRequest) {
 
       const runRes = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Scheduler-User-Id': schedule.user_id,
-          'X-Scheduler-Secret': process.env.CRON_SECRET!,
-        },
+        headers: { 'Content-Type': 'application/json', ...internalCallHeaders(schedule.user_id) },
         body: JSON.stringify(body),
       })
 

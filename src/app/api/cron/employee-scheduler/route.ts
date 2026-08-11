@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { nextRunAt } from '@/app/api/cron/agent-scheduler/route'
 import { sendCreditLowEmail } from '@/lib/email'
 import { userCurrency } from '@/lib/user-currency'
+import { internalCallHeaders } from '@/lib/internal-auth'
 
 const MAX_RUN_COST = 22
 
@@ -71,11 +72,7 @@ export async function GET(req: NextRequest) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
       await fetch(`${baseUrl}/api/ai-employees/${emp.id}/run`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Scheduler-Secret': process.env.CRON_SECRET!,
-          'X-Scheduler-User-Id': emp.user_id,
-        },
+        headers: { 'Content-Type': 'application/json', ...internalCallHeaders(emp.user_id) },
       })
       results.push({ employee_id: emp.id, action: 'fired' })
     } catch (err) {

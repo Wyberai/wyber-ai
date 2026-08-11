@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { registerClient } from '@/lib/oauth/store'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimitDb } from '@/lib/rate-limit-db'
 
 const clientIp = (req: NextRequest) =>
   req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -9,7 +9,7 @@ const clientIp = (req: NextRequest) =>
 // (PKCE, no secret) on each fresh connection and sends its redirect URIs.
 export async function POST(req: NextRequest) {
   // Bound registrations per IP so a bad actor can't flood oauth_clients.
-  const { allowed } = rateLimit(`oauth-register:${clientIp(req)}`, 20, 600_000)
+  const { allowed } = await rateLimitDb(`oauth-register:${clientIp(req)}`, 20, 600_000)
   if (!allowed) {
     return NextResponse.json({ error: 'temporarily_unavailable', error_description: 'Too many registrations, please retry shortly' }, { status: 429 })
   }

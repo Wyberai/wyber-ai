@@ -25,14 +25,18 @@ export async function GET(req: NextRequest) {
   const db = createServiceClient()
 
   // ── Reclaim crashed builds ──────────────────────────────────────────────
-  // No dedicated processing-started column exists, so approximate: a row still
-  // 'processing' but created long ago is stuck (real builds finish in minutes).
+  // Keyed off processing_started_at (when a worker actually claimed the row),
+  // not created_at (when it was queued) — a message that sat queued behind
+  // others for a while is not stuck, and reclaiming it while a worker is
+  // genuinely still running it would double-process it (double charge, file
+  // write race). See migration 20260811000000.
   const staleCutoff = new Date(Date.now() - STALE_MS).toISOString()
   await db
     .from('mcp_messages')
-    .update({ status: 'queued' })
+    .update({ status: 'queued', processing_started_at: null })
     .eq('status', 'processing')
-    .lt('created_at', staleCutoff)
+    .not('processing_started_at', 'is', null)
+    .lt('processing_started_at', staleCutoff)
 
   // ── Pull the oldest queued builds ───────────────────────────────────────
   const { data: queued, error } = await db

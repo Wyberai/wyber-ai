@@ -4,7 +4,21 @@ import { sanitizeFiles } from '@/lib/sanitize-files';
 import { scanForExposedSecrets } from '@/lib/security-scan';
 import { rateLimit } from '@/lib/rate-limit';
 
+// GET — a plain clicked link (e.g. from the MCP export_code tool's response,
+// which can only ever offer a URL for the user to click, not fire a POST)
+// authenticated by the browser's own WyberAi session cookie, same as any
+// other authenticated download link in the app.
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  return handleExport(searchParams.get('project_id') ?? searchParams.get('projectId'), searchParams.get('format') ?? 'zip')
+}
+
 export async function POST(req: NextRequest) {
+  const { projectId, format } = await req.json();
+  return handleExport(projectId, format)
+}
+
+async function handleExport(projectId: string | null, format: string | null) {
   // Auth: only the project owner may export
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
@@ -13,7 +27,6 @@ export async function POST(req: NextRequest) {
   const { allowed } = rateLimit(`export:${user.id}`, 20, 600_000)
   if (!allowed) return NextResponse.json({ error: 'Too many exports in a short time. Please wait a few minutes.' }, { status: 429 })
 
-  const { projectId, format } = await req.json();
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 })
 
   const supabase = createServiceClient();

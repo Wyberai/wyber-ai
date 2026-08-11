@@ -1,11 +1,27 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+
+// Internal callers (the MCP save_snapshot/list_snapshots tools) have no
+// browser session — they authenticate with X-Scheduler-Secret +
+// X-Scheduler-User-Id, the same internal-bypass convention used by
+// /api/publish and /api/generate.
+async function resolveUser(req: NextRequest): Promise<{ id: string } | null> {
+  const schedulerSecret = req.headers.get('x-scheduler-secret')
+  const schedulerUserId = req.headers.get('x-scheduler-user-id')
+  if (schedulerUserId && schedulerSecret === internalSecret()) {
+    return { id: schedulerUserId }
+  }
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user ? { id: user.id } : null
+}
 
 // GET /api/snapshots?project_id=xxx  — list snapshots for a project
 export async function GET(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await resolveUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const supabase = createServiceClient()
 
   const projectId = req.nextUrl.searchParams.get('project_id')
   if (!projectId) return NextResponse.json({ error: 'project_id required' }, { status: 400 })
@@ -24,9 +40,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/snapshots  — save a snapshot
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await resolveUser(req)
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const supabase = createServiceClient()
 
   const body = await req.json()
   const { project_id, label, files } = body as { project_id: string; label?: string; files: Record<string, unknown> }

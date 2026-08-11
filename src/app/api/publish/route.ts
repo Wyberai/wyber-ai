@@ -1,3 +1,4 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sanitizeFiles } from '@/lib/sanitize-files'
@@ -71,12 +72,12 @@ async function ensureUniqueSlug(base: string, admin: any): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
-    // Internal callers (the MCP `publish_project` tool) have no browser session —
+    // Internal callers (the MCP `publish_to_web` tool) have no browser session —
     // they authenticate with X-Scheduler-Secret + X-Scheduler-User-Id, the same
     // internal-bypass convention used by /api/agents/run and /api/generate.
     const schedulerSecret = req.headers.get('x-scheduler-secret')
     const schedulerUserId = req.headers.get('x-scheduler-user-id')
-    const isInternalCall = !!schedulerUserId && schedulerSecret === process.env.CRON_SECRET
+    const isInternalCall = !!schedulerUserId && schedulerSecret === internalSecret()
 
     const supabase = await createClient()
     let user: { id: string; email?: string } | null

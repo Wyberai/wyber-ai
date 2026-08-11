@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
 import { applyEdits } from '@/lib/patch-applier'
+import { internalSecret } from '@/lib/internal-auth'
 
 type FileVal = { path: string; content: string; language: string }
 
@@ -11,6 +12,26 @@ const LANG_MAP: Record<string, string> = {
 
 function langFor(path: string): string {
   return LANG_MAP[path.split('.').pop() ?? ''] ?? 'plaintext'
+}
+
+/** Refund a charge /api/generate already took, for a failure only detectable
+ *  downstream of it (e.g. every parsed edit block failed to apply against the
+ *  real file content). Same adjust_credits RPC + read-then-write fallback
+ *  /api/generate's own refundCredits() uses — duplicated here because that
+ *  function lives unexported inside a route file. */
+async function refundBuildCost(db: ReturnType<typeof createServiceClient>, userId: string, amount: number, reason: string) {
+  if (!userId || amount <= 0) return
+  try {
+    const { data: adjusted, error } = await db.rpc('adjust_credits', { p_user_id: userId, p_delta: amount })
+    let after = !error && typeof adjusted === 'number' ? adjusted : null
+    if (after === null) {
+      const { data: prof } = await db.from('profiles').select('credits').eq('id', userId).single()
+      after = (prof?.credits ?? 0) + amount
+      await db.from('profiles').update({ credits: after }).eq('id', userId)
+    }
+    const finalCredits = after ?? amount
+    await db.from('credit_usage').insert({ user_id: userId, amount: -amount, reason: `refund:${reason}`, credits_before: finalCredits - amount, credits_after: finalCredits })
+  } catch (e) { console.error('[mcp/build-runner] refund failed', e) }
 }
 
 /** Serialize a project's files into the `<file path="…">…</file>` context format
@@ -39,15 +60,22 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
   const db = createServiceClient()
 
   // ── Atomic claim: only the worker that flips queued→processing proceeds ──
+  // processing_started_at lets the cron consumer's stale-reclaim key off when
+  // this row actually started running, not when it was queued — a message
+  // queued behind others for a while is not "stuck". A partial unique index
+  // (one row per project_id where status='processing') also makes this same
+  // update fail with a constraint violation if another message for the same
+  // project is already in flight, so `claimed` comes back null and this
+  // worker naturally backs off instead of racing a concurrent build.
   const { data: claimed } = await db
     .from('mcp_messages')
-    .update({ status: 'processing' })
+    .update({ status: 'processing', processing_started_at: new Date().toISOString() })
     .eq('id', messageId)
     .eq('status', 'queued')
-    .select('id, project_id, user_id, message, project_type')
+    .select('id, project_id, user_id, message, project_type, palette_id')
     .single()
 
-  if (!claimed) return // already claimed by another tick, or not queued
+  if (!claimed) return // already claimed by another tick, not queued, or another build for this project is in flight
 
   const fail = async (error: string) => {
     await db.from('mcp_messages')
@@ -79,7 +107,7 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
       headers: {
         'Content-Type': 'application/json',
         'X-Scheduler-User-Id': claimed.user_id,
-        'X-Scheduler-Secret': process.env.CRON_SECRET!,
+        'X-Scheduler-Secret': internalSecret(),
       },
       body: JSON.stringify({
         prompt: claimed.message,
@@ -87,6 +115,7 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
         projectId: project.id,
         projectType,
         isFirstBuild,
+        paletteId: claimed.palette_id ?? undefined,
         history: [],
         stage: 'full',
       }),
@@ -99,6 +128,10 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
       await fail(msg)
       return
     }
+
+    // Read the real charged amount before draining the body, so a downstream
+    // no-op (below) can refund exactly what was taken.
+    const creditsCharged = Number(res.headers.get('X-Credits-Used') ?? '0') || 0
 
     // /api/generate streams the raw model text — drain it fully.
     const generatedText = await res.text()
@@ -116,11 +149,55 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
     for (const { path, content } of newFiles) {
       merged[path] = { path, content, language: langFor(path) }
     }
+    let appliedEdits = 0
     if (editBlocks.length > 0) {
       const result = applyEdits(merged, editBlocks)
+      appliedEdits = result.appliedCount
       for (const [path, content] of Object.entries(result.updated)) {
         merged[path] = { path, content, language: langFor(path) }
       }
+    }
+
+    // The model emitted edit blocks, but none of them actually matched the
+    // real file content (fuzzy match included) — e.g. because the file
+    // context sent to it was truncated. Unlike an empty generation, /api/generate
+    // has no way to see this failure (it never inspects whether the edits it
+    // emitted apply), so it already charged for this turn — refund it here
+    // instead of reporting a false "done" with N changes on an untouched project.
+    if (newFiles.length === 0 && appliedEdits === 0) {
+      await refundBuildCost(db, claimed.user_id, creditsCharged, 'mcp-edit-apply-failed')
+      await fail('The build produced changes that could not be applied to your project (the edit no longer matched the file content). Any credits charged were refunded — try rephrasing your request or asking for a smaller change.')
+      return
+    }
+
+    // Checkpoint the pre-build files as a version before overwriting them.
+    // list_versions/restore_version are otherwise permanently dead for any
+    // project built purely through Claude/MCP — the only other writer of
+    // project_versions is the web editor's own "Save Version" button
+    // (src/components/editor/VersionHistory.tsx), which an MCP-only user
+    // never touches. Best-effort: a failed checkpoint must never block the
+    // build itself.
+    if (!isFirstBuild) {
+      try {
+        await fetch(`${baseUrl}/api/versions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Scheduler-User-Id': claimed.user_id,
+            'X-Scheduler-Secret': internalSecret(),
+          },
+          body: JSON.stringify({
+            // project_versions.files stores the full {path, content, language}
+            // shape (see VersionHistory.tsx's saveVersion) — restore_version
+            // writes this straight back onto projects.files, so anything
+            // narrower here (e.g. plain content strings) would corrupt every
+            // file on restore.
+            projectId: project.id,
+            files,
+            label: `Before: ${claimed.message.slice(0, 60)}`,
+          }),
+        })
+      } catch (e) { console.error('[mcp/build-runner] version checkpoint failed', e) }
     }
 
     await db.from('projects')
@@ -133,7 +210,7 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
       headers: {
         'Content-Type': 'application/json',
         'X-Scheduler-User-Id': claimed.user_id,
-        'X-Scheduler-Secret': process.env.CRON_SECRET!,
+        'X-Scheduler-Secret': internalSecret(),
       },
       body: JSON.stringify({ projectId: project.id }),
     })
@@ -141,10 +218,12 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
     let publishedUrl = null
     if (publishRes.ok) {
       const publishData = await publishRes.json().catch(() => ({}))
-      publishedUrl = (publishData as { url?: string }).url
+      // /api/publish returns `publishedUrl`, not `url` — reading the wrong
+      // field meant every MCP auto-publish silently recorded a null URL here.
+      publishedUrl = (publishData as { publishedUrl?: string }).publishedUrl ?? null
     }
 
-    const changed = newFiles.length + editBlocks.length
+    const changed = newFiles.length + appliedEdits
     await db.from('mcp_messages')
       .update({
         status: 'done',

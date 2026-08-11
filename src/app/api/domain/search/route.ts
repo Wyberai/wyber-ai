@@ -1,5 +1,14 @@
+import { internalSecret } from '@/lib/internal-auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+
+// Internal callers (the MCP search_domains tool) have no browser session —
+// same X-Scheduler-Secret/X-Scheduler-User-Id bypass as /api/publish.
+function isInternalCall(req: NextRequest): boolean {
+  const schedulerSecret = req.headers.get('x-scheduler-secret')
+  const schedulerUserId = req.headers.get('x-scheduler-user-id')
+  return !!schedulerUserId && schedulerSecret === internalSecret()
+}
 
 // WYBERAI_DOMAINS is a separately-scoped token with Vercel Registrar API access
 // (the original VERCEL_TOKEN lacked the right scope/permissions for it).
@@ -29,12 +38,22 @@ function extractDollars(price: unknown): number | null {
 // domain-purchase flow so users see actual pricing, not a guess.
 export async function GET(req: NextRequest) {
   try {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    if (!isInternalCall(req)) {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
 
-    const name = new URL(req.url).searchParams.get('name')
+    const params = new URL(req.url).searchParams
+    const name = params.get('name')
     if (!name) return NextResponse.json({ error: 'name required' }, { status: 400 })
+    // domain/purchase's pre-charge re-verification only needs to know the
+    // domain is still available, not its price (it already has a
+    // caller-supplied priceCents) — skipping the price lookup here cuts one
+    // sequential Vercel call from that chain, which otherwise stacks 4
+    // external calls + a DB write + a Dodo call inside buy_domain's single
+    // 60s function ceiling.
+    const availabilityOnly = params.get('availability_only') === '1'
 
     if (!VERCEL_TOKEN) {
       return NextResponse.json({ error: 'Domain purchasing is not configured yet' }, { status: 503 })
@@ -55,8 +74,8 @@ export async function GET(req: NextRequest) {
 
     const available = Boolean(availData.results?.[0]?.available)
 
-    if (!available) {
-      return NextResponse.json({ name, available: false, priceCents: null, period: 1 })
+    if (!available || availabilityOnly) {
+      return NextResponse.json({ name, available, priceCents: null, period: 1 })
     }
 
     const priceTeamQ = VERCEL_TEAM ? `&teamId=${VERCEL_TEAM}` : ''

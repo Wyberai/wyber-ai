@@ -66,6 +66,13 @@ export function verifyAccessToken(token: string): AccessClaims | null {
     const claims = JSON.parse(Buffer.from(p, 'base64').toString('utf8')) as AccessClaims
     if (!claims.sub || typeof claims.exp !== 'number') return null
     if (Math.floor(Date.now() / 1000) >= claims.exp) return null
+    // aud/iss are minted by signAccessToken but were never checked here —
+    // signature+sub+exp alone don't confirm this token was meant for THIS
+    // resource. The only audience this server ever mints is "<issuer>/api/mcp"
+    // (see the token endpoint's `issue` helper); require that shape rather than
+    // an exact string match, which would break across APP_URL/domain changes.
+    if (!claims.aud || !claims.aud.endsWith('/api/mcp')) return null
+    if (!claims.iss) return null
     return claims
   } catch {
     return null

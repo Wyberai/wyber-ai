@@ -138,7 +138,7 @@ function cardDoneForYou(w, h, active) {
 // carousel otherwise targeted at a non-IT audience — added at explicit user
 // request despite that mismatch.
 function cardMcp(w, h, active) {
-  const body = `<div style="font-size:24px;color:#a1a1aa;line-height:1.4">WyberAi ships a real MCP server &mdash; 20 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps &mdash; without leaving your AI editor.</div>
+  const body = `<div style="font-size:24px;color:#a1a1aa;line-height:1.4">WyberAi ships a real MCP server &mdash; 34 tools. Create projects, run builds, inspect files, run SQL, scan for security holes, and publish live apps &mdash; without leaving your AI editor.</div>
     <div style="display:flex;flex-direction:column;gap:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:20px;padding:26px">
       ${check('Start a new app')}
       ${check('Kick off a build')}

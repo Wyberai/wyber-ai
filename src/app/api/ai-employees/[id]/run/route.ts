@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { runEmployee } from '@/lib/ai-employees/run-engine'
 import { sendAIEmployeeDigestEmail, sendAIEmployeeFailedEmail } from '@/lib/email'
+import { internalSecret } from '@/lib/internal-auth'
 
 // A full agentic employee run (up to 15 iterations + tools + sub-agents +
 // reflection) easily exceeds the default function timeout. Without this the run
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // Allow both user-authenticated calls and internal scheduler calls
   const schedulerSecret = req.headers.get('X-Scheduler-Secret')
-  const isScheduler = schedulerSecret === process.env.CRON_SECRET
+  const isScheduler = schedulerSecret === internalSecret()
 
   let userId: string
 
