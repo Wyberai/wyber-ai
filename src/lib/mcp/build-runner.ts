@@ -2,6 +2,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
 import { applyEdits } from '@/lib/patch-applier'
 import { internalSecret } from '@/lib/internal-auth'
+import { synthesizeAppTsx } from '@/lib/synthesize-app'
 
 type FileVal = { path: string; content: string; language: string }
 
@@ -201,30 +202,16 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
     }
 
     // If the model missed App.tsx (truncated stream, soft-deadline cutoff,
-    // or forced-iteration edit block that couldn't apply), synthesize a minimal
-    // one so the Railway Vite build has a real entry point and renders something
-    // rather than a blank shell. Saved to the DB so future edits have context.
-    if (projectType !== 'mobile' && !merged['src/App.tsx'] && !merged['src/App.jsx']) {
-      const components = Object.keys(merged).filter(p =>
-        p.startsWith('src/') &&
-        (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
-        !p.endsWith('main.tsx') && !p.endsWith('main.jsx')
-      )
-      if (components.length > 0) {
-        const importLines: string[] = []
-        const names: string[] = []
-        for (const p of components) {
-          const name = p.split('/').pop()!.replace(/\.(tsx|jsx)$/, '')
-          const rel = './' + p.replace(/^src\//, '').replace(/\.(tsx|jsx)$/, '')
-          importLines.push(`import ${name} from '${rel}'`)
-          names.push(name)
-        }
-        const renders = names.map(n => `  <${n} />`).join('\n')
-        merged['src/App.tsx'] = {
-          path: 'src/App.tsx',
-          content: `${importLines.join('\n')}\n\nexport default function App() {\n  return (\n    <>\n${renders}\n    </>\n  )\n}\n`,
-          language: 'typescript',
-        }
+    // or a failed edit-apply), synthesize a stateful one. The smart synthesizer
+    // parses each component's Props interface and the types they import from App,
+    // then generates a properly-wired App.tsx with useState + seed data so the
+    // app renders content instead of crashing with undefined-prop errors.
+    if (!merged['src/App.tsx'] && !merged['src/App.jsx']) {
+      const allContents: Record<string, string> = {}
+      for (const [p, f] of Object.entries(merged)) allContents[p] = (f as FileVal).content
+      const synth = synthesizeAppTsx(allContents, projectType)
+      if (synth) {
+        merged['src/App.tsx'] = { path: 'src/App.tsx', content: synth, language: 'typescript' }
       }
     }
 

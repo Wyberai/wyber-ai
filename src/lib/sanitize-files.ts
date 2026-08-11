@@ -9,6 +9,7 @@ import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
 import { WYBER_STORE_FILES } from './wyber-store'
 import { resolveDirectivesForPreview } from './image-directives'
+import { synthesizeAppTsx } from './synthesize-app'
 
 type FileVal = { content?: string; language?: string } | string
 
@@ -59,32 +60,16 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
 
   let appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
 
-  // If no App.tsx exists but component files do, synthesize a minimal entry
-  // point so the Railway Vite build compiles and renders something instead of
-  // a blank shell. This fires both at publish time (web editor flow) and at
-  // preview-build time — both paths call sanitizeFiles before posting to the
-  // builder. build-runner.ts also synthesizes and saves to DB, so this is a
-  // second layer of defense for cases that bypass the MCP pipeline.
+  // If no App.tsx exists but component files do, synthesize a stateful entry
+  // point. The smart synthesizer parses each component's Props interface and
+  // the types they import from App, generating a properly-wired App.tsx with
+  // useState + seed data so the build renders content instead of crashing.
   if (!appExt) {
-    const components = Object.keys(out).filter(p =>
-      p.startsWith('src/') &&
-      (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
-      !p.endsWith('main.tsx') && !p.endsWith('main.jsx')
-    )
-    if (components.length > 0) {
-      const importLines: string[] = []
-      const names: string[] = []
-      for (const p of components) {
-        const name = p.split('/').pop()!.replace(/\.(tsx|jsx)$/, '')
-        const rel = './' + p.replace(/^src\//, '').replace(/\.(tsx|jsx)$/, '')
-        importLines.push(`import ${name} from '${rel}'`)
-        names.push(name)
-      }
-      const renders = names.map(n => `  <${n} />`).join('\n')
-      out['src/App.tsx'] = {
-        content: `${importLines.join('\n')}\n\nexport default function App() {\n  return (\n    <>\n${renders}\n    </>\n  )\n}\n`,
-        language: 'typescript',
-      }
+    const allContents: Record<string, string> = {}
+    for (const [p, v] of Object.entries(out)) allContents[p] = fileContent(v)
+    const synth = synthesizeAppTsx(allContents, 'web')
+    if (synth) {
+      out['src/App.tsx'] = { content: synth, language: 'typescript' }
       appExt = 'tsx'
     }
   }
