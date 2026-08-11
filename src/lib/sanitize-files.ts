@@ -75,6 +75,38 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
   }
 
   if (appExt) {
+    // 0-pre. Auto-inject context providers: the model sometimes generates
+    // AuthProvider/ToastProvider in context files but forgets to wrap App.tsx,
+    // causing "useXxx must be used within XxxProvider" runtime crashes in SaaS/
+    // web-app builds. Scan src/context(s)/ files, find any exported XxxProvider
+    // not yet referenced in App.tsx, and inject them.
+    {
+      const appKey = `src/App.${appExt}`
+      const currentApp = fileContent(out[appKey])
+      const missing: Array<{ name: string; rel: string }> = []
+      for (const [fp] of Object.entries(out)) {
+        if (!/^src\/contexts?\//i.test(fp) || !/\.(tsx?|jsx?)$/.test(fp)) continue
+        const src = fileContent(out[fp])
+        for (const m of src.matchAll(/export\s+(?:function|const|class)\s+(\w+Provider)\b/g)) {
+          if (!currentApp.includes(m[1]))
+            missing.push({ name: m[1], rel: './' + fp.replace(/^src\//, '').replace(/\.(tsx?|jsx?)$/, '') })
+        }
+      }
+      if (missing.length > 0) {
+        const importBlock = missing.map(p => `import { ${p.name} } from '${p.rel}'`).join('\n')
+        const openTags  = missing.map(p => `    <${p.name}>`).join('\n')
+        const closeTags = [...missing].reverse().map(p => `    </${p.name}>`).join('\n')
+        let app2 = `${importBlock}\n${currentApp}`
+        // Rename the existing export default function to _AppContent and re-export
+        // it wrapped in the discovered providers. Handles the common model pattern.
+        if (/export\s+default\s+function\s+App\s*\(/.test(app2)) {
+          app2 = app2.replace(/export\s+default\s+function\s+App\s*\(/, 'function _AppContent(')
+          app2 = `${app2.trimEnd()}\n\nexport default function App() {\n  return (\n${openTags}\n      <_AppContent />\n${closeTags}\n  );\n}\n`
+        }
+        out[appKey] = { content: app2, language: appExt === 'tsx' ? 'typescript' : 'javascript' }
+      }
+    }
+
     // 0. Wyber UI kit — premium pre-built components every app can import
     //    (`import { Button } from './wyber-ui'`). Injected like the tailwind
     //    config: transient, never persisted, user files win. Vite tree-shakes
