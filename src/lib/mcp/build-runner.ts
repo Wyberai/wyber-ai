@@ -204,23 +204,33 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
       .update({ files: merged, updated_at: new Date().toISOString() })
       .eq('id', project.id)
 
-    // Auto-publish the project so Claude immediately has a live URL
-    const publishRes = await fetch(`${baseUrl}/api/publish`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Scheduler-User-Id': claimed.user_id,
-        'X-Scheduler-Secret': internalSecret(),
-      },
-      body: JSON.stringify({ projectId: project.id }),
-    })
-
+    // Auto-publish the project so Claude immediately has a live URL.
+    // /api/publish always runs the Vite web bundler — it has no concept of
+    // project_type — so it can never succeed for a mobile/Expo project
+    // (confirmed live: every mobile build's publish attempt fails with
+    // "ENOENT ... src/main.tsx", the entry point a Vite build expects that a
+    // React Native project doesn't have). Mobile previews go through Expo
+    // (see mobile-preview-expo-pivot), not this static-site pipeline —
+    // skip the doomed attempt instead of masking a real generation result
+    // behind a guaranteed publish failure.
     let publishedUrl = null
-    if (publishRes.ok) {
-      const publishData = await publishRes.json().catch(() => ({}))
-      // /api/publish returns `publishedUrl`, not `url` — reading the wrong
-      // field meant every MCP auto-publish silently recorded a null URL here.
-      publishedUrl = (publishData as { publishedUrl?: string }).publishedUrl ?? null
+    if (projectType !== 'mobile') {
+      const publishRes = await fetch(`${baseUrl}/api/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Scheduler-User-Id': claimed.user_id,
+          'X-Scheduler-Secret': internalSecret(),
+        },
+        body: JSON.stringify({ projectId: project.id }),
+      })
+
+      if (publishRes.ok) {
+        const publishData = await publishRes.json().catch(() => ({}))
+        // /api/publish returns `publishedUrl`, not `url` — reading the wrong
+        // field meant every MCP auto-publish silently recorded a null URL here.
+        publishedUrl = (publishData as { publishedUrl?: string }).publishedUrl ?? null
+      }
     }
 
     const changed = newFiles.length + appliedEdits
