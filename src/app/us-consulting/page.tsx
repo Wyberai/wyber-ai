@@ -2,8 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 
-// Dedicated landing page for the US "juggling five different apps" Meta
-// campaign (scripts/meta-ad-us-founder-call.mjs) — a separate route rather
+// Dedicated landing page for the US small-business-automation Meta campaign
+// (scripts/meta-ad-us-founder-call.mjs) — a separate route rather
 // than a query-param variant on /consult, per direction, modeled on the
 // structure of /setup-call (dedicated managed-build page, real delivery
 // tiers, no dollar figures shown pre-call). The concrete deliverable is
@@ -17,11 +17,11 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 // meta-ad-us-founder-call.mjs for why that separation matters.
 
 export const metadata: Metadata = {
-  title: 'Free Dashboard Scoping Call — WyberAi',
-  description: 'Tired of juggling spreadsheets, texts, and apps that don\'t talk to each other? Book a free 15-min call. We scope the one dashboard that replaces it — then build it for you.',
+  title: 'Free Business Automation Call — WyberAi',
+  description: 'Still running your business on spreadsheets, texts, and sticky notes? Book a free 30-min call. We\'ll show you exactly what\'s worth automating — then build it for you.',
   openGraph: {
-    title: 'Free Dashboard Scoping Call — WyberAi',
-    description: 'Stop stitching your business together by hand. 15 minutes, free, no pitch.',
+    title: 'Free Business Automation Call — WyberAi',
+    description: 'Stop doing by hand what could run itself. 30 minutes, free, no pitch.',
   },
 }
 
@@ -30,7 +30,7 @@ const CAL_LINK = 'https://cal.com/wyberai/wyber-ai-build-consultation'
 const STEPS = [
   { n: '01', icon: '🗒️', title: 'Tell us what\'s scattered', desc: 'This call is free — just tell us what you\'re currently using to run things: spreadsheets, group texts, sticky notes, three apps that don\'t talk to each other.' },
   { n: '02', icon: '📅', title: 'Pick a time', desc: 'Book any slot — available 24/7 including weekends.' },
-  { n: '03', icon: '💬', title: 'We scope your dashboard', desc: '15 minutes on Google Meet. You describe what\'s scattered, we ask the right questions, and map out the one dashboard that replaces it.' },
+  { n: '03', icon: '💬', title: 'We scope your dashboard', desc: '30 minutes on Google Meet. You describe what\'s scattered, we ask the right questions, and map out the one dashboard that replaces it.' },
   { n: '04', icon: '🛠️', title: 'We build & deliver', desc: 'GitHub repo, live URL, walkthrough video. Support included.' },
 ]
 
@@ -67,9 +67,9 @@ export default function UsConsultingPage() {
 
         {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Free dashboard scoping call</div>
-          <h1 style={{ fontSize: 'clamp(28px,5vw,46px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 16 }}>Stop juggling five different apps.<br />Get one dashboard instead.</h1>
-          <p style={{ fontSize: 15, color: s.muted, maxWidth: 520, margin: '0 auto 20px', lineHeight: 1.75 }}>You&apos;re already running a business — you don&apos;t have time to become a developer too. Tell us what you&apos;re juggling: spreadsheets, texts, tools that don&apos;t talk to each other. Our team scopes and builds one real dashboard — bookings, records, and payments, all in one view.</p>
+          <div style={{ display: 'inline-block', padding: '4px 14px', borderRadius: 20, background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, fontWeight: 700, color: s.sky, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 16 }}>Free 30-min automation call</div>
+          <h1 style={{ fontSize: 'clamp(28px,5vw,46px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 16 }}>Still running your business by hand?<br />Get the one dashboard that fixes it.</h1>
+          <p style={{ fontSize: 15, color: s.muted, maxWidth: 520, margin: '0 auto 20px', lineHeight: 1.75 }}>You&apos;re already running a business — you don&apos;t have time to become a developer too. Tell us what you&apos;re tracking by hand: spreadsheets, texts, sticky notes, tools that don&apos;t talk to each other. We&apos;ll show you exactly what&apos;s worth automating, then build the one dashboard that replaces it — bookings, records, and payments, all in one view.</p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px', borderRadius: 20, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: s.green }} />
             <span style={{ fontSize: 12, color: s.green, fontWeight: 600 }}>Available 24/7 · Google Meet · No card required</span>

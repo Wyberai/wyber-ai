@@ -18,11 +18,11 @@
 // pricing is intentionally NOT shown here; it lives on the call itself
 // (per the real /consult page flow) and in the founder's scoping breakdown.
 //
-// Offer + call mechanics verified against the real /consult page
-// (src/app/consult/page.tsx) — NOT invented:
-//   - Free · 15 min · Google Meet · Worldwide, no card required — page badges
-//   - 3-step flow (describe idea → right questions → breakdown in 24 hrs) —
-//     WHAT_HAPPENS array on that page
+// Offer + call mechanics verified against the real /us-consulting page
+// (src/app/us-consulting/page.tsx) — NOT invented:
+//   - Free · 30 min · Google Meet · Available 24/7, no card required — page badges
+//   - 4-step flow (tell us what's scattered → pick a time → we scope your
+//     dashboard, 30 min → we build & deliver) — STEPS array on that page
 //   - It's the FOUNDER on the call (Sumeet Sutar), not a "CEO" — the site
 //     never uses that title (sole founder, no separate CEO), so the ad says
 //     "founder" to match what the landing page actually says.
@@ -90,19 +90,18 @@ function card1(w, h) {
   return doc(w, h, shell('TIRED OF JUGGLING FIVE DIFFERENT APPS?', 'Free founder call', 'Stop stitching your<br>business together<br>by hand.', body, 0))
 }
 
-// Card 2 — mechanism, pulled directly from the real WHAT_HAPPENS steps on
-// /consult (src/app/consult/page.tsx), plus one verified trust line already
-// on that same page ("We've scoped enough apps to know exactly what to
-// ask.") — no invented numbers/testimonials, just the one real proof
-// statement that already exists in the product copy. No pricing on this card.
+// Card 2 — mechanism, pulled directly from the real STEPS flow on
+// /us-consulting (src/app/us-consulting/page.tsx) — no invented numbers/
+// testimonials, just the real 30-minute scoping-call flow that page
+// actually describes. No pricing on this card.
 function card2(w, h) {
-  const body = `<div class="mono sky" style="font-size:21px;font-weight:500">We&rsquo;ve scoped enough apps to know exactly what to ask.</div>
+  const body = `<div class="mono sky" style="font-size:21px;font-weight:500">We&rsquo;ve scoped enough businesses to know exactly what to ask.</div>
     <div style="display:flex;flex-direction:column;gap:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:20px;padding:30px">
-      ${check('You describe your idea &mdash; no deck or brief needed')}
-      ${check('We ask the right questions &mdash; features, timeline, budget')}
-      ${check('You get a full breakdown within 24 hours &mdash; costs, tools, MVP plan')}
+      ${check('Tell us what&rsquo;s scattered &mdash; no deck or brief needed')}
+      ${check('30 minutes on Google Meet &mdash; we ask the right questions')}
+      ${check('We map out the one dashboard that replaces it')}
     </div>`
-  return doc(w, h, shell('15 MINUTES &middot; NO PITCH', 'Talk to our founder', 'A real conversation<br>about what&rsquo;s slowing<br>you down.', body, 1))
+  return doc(w, h, shell('30 MINUTES &middot; NO PITCH', 'Talk to our founder', 'A real conversation<br>about what&rsquo;s slowing<br>you down.', body, 1))
 }
 
 // Card 3 — CTA. Drops the "become a founder" close from the prior draft —
@@ -110,9 +109,9 @@ function card2(w, h) {
 // response) rather than an identity payoff. "Founder" not "CEO" (matches
 // the real page — sole founder, no separate CEO title).
 function card3(w, h) {
-  const body = `<div style="font-size:28px;color:#a1a1aa;line-height:1.4;max-width:820px">Free. No card required. No commitment. Just 15 minutes to map out everything you&rsquo;re juggling &mdash; and see what one app could replace.</div>
+  const body = `<div style="font-size:28px;color:#a1a1aa;line-height:1.4;max-width:820px">Free. No card required. No commitment. Just 30 minutes to map out everything you&rsquo;re juggling &mdash; and see what one dashboard could replace.</div>
     ${cta('Pick your free slot &rarr;')}
-    <div class="mono" style="font-size:19px;color:#6b7280">wyberai.com/consult &middot; usually responds same day</div>`
+    <div class="mono" style="font-size:19px;color:#6b7280">wyberai.com/us-consulting &middot; usually responds same day</div>`
   return doc(w, h, shell('BOOK YOUR FREE CALL', null, 'Let&rsquo;s bring it<br>all together.', body, 2))
 }
 
@@ -140,7 +139,7 @@ await browser.close()
 fs.writeFileSync(path.join(OUT, 'README.txt'), `WyberAi — US "Free Founder Call" carousel (3 cards, 1080x1080)
 ============================================================================
 card1_hook_1080x1080.png        "Stop stitching your business together by hand." + checklist: our team builds it (not you), bookings/records/payments in one place, real database & login. Pure time/consolidation pitch — no identity claim, no earnings claim, no dollar figures.
-card2_howitworks_1080x1080.png  "A real conversation about what's slowing you down." — the 3-step call flow + one real trust line ("We've scoped enough apps to know exactly what to ask"), both verbatim from wyberai.com/consult. No pricing on this card.
+card2_howitworks_1080x1080.png  "A real conversation about what's slowing you down." — the real 30-min scoping-call flow, verbatim from wyberai.com/us-consulting. No pricing on this card.
 card3_cta_1080x1080.png         "Let's bring it all together." — free/no-card/no-commitment CTA: "map out everything you're juggling — and see what one app could replace."
 
 FINAL ANGLE (after two reworks): the campaign moved through three distinct
@@ -176,11 +175,11 @@ STILL OPEN / NOT FIXED BY THIS COPY PASS:
   if/when you have something concrete and true to say (e.g. a real count of
   calls taken, a specific built example) — don't invent a number to fill
   this gap.
-- /consult still frames "build it yourself" and "hire us" as equal next
-  steps in its FAQ ("Not at all... use the breakdown to build on WyberAi
-  yourself, hire someone else, or come back to us"). If this campaign's job
-  is 1:1 meetings for the managed build, that page arguably shouldn't offer
-  an equally-weighted DIY off-ramp to traffic coming from it.
+- /us-consulting still frames "build it yourself" and "hire us" as equal
+  next steps in its FAQ ("Not at all. Take the plan and build it yourself
+  with WyberAi, or hire us — no pressure either way"). If this campaign's
+  job is 1:1 meetings for the managed build, that page arguably shouldn't
+  offer an equally-weighted DIY off-ramp to traffic coming from it.
 - This entire angle is untested — treat as a hypothesis to validate with a
   small budget, not a scaled bet.
 
@@ -206,16 +205,18 @@ COPY NOTES:
 - "Our team designs & builds it — not you" on card 1 exists specifically so
   the ad doesn't read as a DIY self-serve pitch, while still not mentioning
   price or the DFY product name directly.
-- "Founder" not "CEO" throughout — matches the real /consult page copy
-  (src/app/consult/page.tsx), which titles Sumeet Sutar "Founder, WyberAi".
+- "Founder" not "CEO" throughout — matches the real /us-consulting page copy
+  (src/app/us-consulting/page.tsx), which titles Sumeet Sutar "Founder, WyberAi".
   There's no separate CEO title on a sole-founder company; using "founder"
   keeps the ad and the landing page saying the same thing.
 - No income figures or "side income" language — earnings claims for an app
   idea are unverifiable and a Meta ad-policy risk, especially targeting an
   older demographic. The ad sells clarity and ownership of an idea, not a
   guaranteed income stream.
-- Landing link is wyberai.com/consult (the real page), not a bare Cal.com
-  link — that page already handles objections (is this really free? am I
-  obligated to hire you?) before the visitor reaches the calendar embed.
+- Landing link is wyberai.com/us-consulting (the real page, dedicated to this
+  campaign's dashboard/automation framing), not a bare Cal.com link and not
+  the generic /consult page — /us-consulting already handles objections (is
+  this really free? what if I'm not techy?) before the visitor reaches the
+  calendar embed, and its copy/duration (free, 30 min) match this creative.
 `)
 console.log('\nAll ad creatives in:', OUT)
