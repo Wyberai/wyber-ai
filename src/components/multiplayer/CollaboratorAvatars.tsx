@@ -30,8 +30,10 @@ export function CollaboratorAvatars({ projectId, userId, email }: Props) {
       },
     });
 
-    session.join();
     sessionRef.current = session;
+    // _leaving flag in MultiplayerSession handles the race if the component
+    // unmounts before the subscribe handshake completes.
+    session.join().catch(err => console.error('[multiplayer] join failed', err));
 
     return () => { session.leave(); };
   }, [projectId, userId, email]);
