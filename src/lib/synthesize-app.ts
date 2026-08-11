@@ -116,7 +116,7 @@ export function synthesizeAppTsx(allFiles: FileMap, projectType: string): string
   let hasState = false
   for (const [varName, prop] of stateMap) {
     if (actionsMap.has(varName)) continue
-    const decl = stateDeclaration(varName, prop.type)
+    const decl = stateDeclaration(varName, prop.type, allFiles)
     if (decl) { lines.push('  ' + decl); hasState = true }
   }
   if (hasState) lines.push('')
@@ -170,7 +170,7 @@ function parseProps(content: string): PropEntry[] {
 
 // ─── State generation ────────────────────────────────────────────────────────
 
-function stateDeclaration(varName: string, type: string): string | null {
+function stateDeclaration(varName: string, type: string, allFiles: FileMap): string | null {
   // Skip callbacks and object-of-callbacks — they don't need useState
   if (isCallbackType(type)) return null
   if (isActionsObjectType(type)) return null
@@ -178,7 +178,7 @@ function stateDeclaration(varName: string, type: string): string | null {
   const isArr = type.endsWith('[]') || /^Array</.test(type)
   if (isArr) {
     const baseType = type.replace(/\[\]$/, '').replace(/^Array<(.+)>$/, '$1').trim()
-    const seed = seedArray(varName, baseType)
+    const seed = seedFromInterface(varName, baseType, allFiles)
     return `const [${varName}, set${cap(varName)}] = useState<${type}>(${seed})`
   }
   if (type === 'string') return `const [${varName}, set${cap(varName)}] = useState(${defaultString(varName)})`
@@ -302,32 +302,80 @@ function inferInterface(typeName: string, allFiles: FileMap): string {
 
 // ─── Seed data ────────────────────────────────────────────────────────────────
 
-function seedArray(varName: string, baseType: string): string {
-  const key = (varName + baseType).toLowerCase()
+/**
+ * Generate 3 seed records whose fields match the actual interface definition
+ * found in the component files. Falls back to name-based guessing only when
+ * the interface can't be located (avoids undefined-field crashes at runtime).
+ */
+function seedFromInterface(varName: string, baseType: string, allFiles: FileMap): string {
+  // Try to find the actual interface so seed records cover every field
+  const ifaceDef = findOrInferInterface(baseType, allFiles)
+  const fields = parseInterfaceFields(ifaceDef)
 
-  if (/contact|customer|client|person|member|user/.test(key)) {
-    return `[\n    { id: '1', name: 'Alice Johnson', email: 'alice@example.com', status: 'active', company: 'Acme Corp' },\n    { id: '2', name: 'Bob Smith', email: 'bob@example.com', status: 'lead', company: 'TechCo' },\n    { id: '3', name: 'Carol Davis', email: 'carol@example.com', status: 'prospect', company: 'Startup Ltd' },\n  ]`
+  if (fields.length > 0) {
+    const records = [0, 1, 2].map(i => {
+      const entries = fields.map(f => {
+        const v = seedFieldValue(f.name, f.type, i)
+        return `${f.name}: ${typeof v === 'string' && !v.startsWith('[') ? `'${v}'` : v}`
+      })
+      return `{ ${entries.join(', ')} }`
+    })
+    return `[\n    ${records.join(',\n    ')},\n  ]`
   }
-  if (/deal|opportunity|pipeline/.test(key)) {
-    return `[\n    { id: '1', name: 'Enterprise License Q4', value: 50000, stage: 'Proposal', probability: 75 },\n    { id: '2', name: 'SMB Starter Pack', value: 5000, stage: 'Discovery', probability: 30 },\n    { id: '3', name: 'Agency Partnership', value: 120000, stage: 'Negotiation', probability: 90 },\n  ]`
-  }
-  if (/activity|event|log|history/.test(key)) {
-    return `[\n    { id: '1', type: 'call', description: 'Discovery call with Alice', date: '2026-08-10', user: 'sales@example.com' },\n    { id: '2', type: 'email', description: 'Sent proposal to Bob', date: '2026-08-09', user: 'sales@example.com' },\n    { id: '3', type: 'meeting', description: 'Product demo for Carol', date: '2026-08-08', user: 'sales@example.com' },\n  ]`
-  }
-  if (/invoice|payment|bill|receipt/.test(key)) {
-    return `[\n    { id: '1', number: 'INV-001', client: 'Acme Corp', amount: 5000, status: 'paid', dueDate: '2026-08-01' },\n    { id: '2', number: 'INV-002', client: 'TechCo', amount: 12500, status: 'pending', dueDate: '2026-08-15' },\n    { id: '3', number: 'INV-003', client: 'Startup Ltd', amount: 3750, status: 'overdue', dueDate: '2026-07-20' },\n  ]`
-  }
-  if (/product|item|listing|catalog|sku/.test(key)) {
-    return `[\n    { id: '1', name: 'Premium Plan', price: 99, category: 'SaaS', status: 'active' },\n    { id: '2', name: 'Starter Plan', price: 29, category: 'SaaS', status: 'active' },\n    { id: '3', name: 'Enterprise Add-on', price: 499, category: 'Services', status: 'available' },\n  ]`
-  }
-  if (/task|todo|ticket|issue|bug/.test(key)) {
-    return `[\n    { id: '1', title: 'Set up project structure', status: 'done', priority: 'high', assignee: 'Alice' },\n    { id: '2', title: 'Design UI mockups', status: 'in-progress', priority: 'high', assignee: 'Bob' },\n    { id: '3', title: 'Write API documentation', status: 'todo', priority: 'medium', assignee: 'Carol' },\n  ]`
-  }
-  if (/order|cart|purchase|transaction/.test(key)) {
-    return `[\n    { id: '1', orderId: 'ORD-001', customer: 'Alice Johnson', total: 249.99, status: 'fulfilled', date: '2026-08-10' },\n    { id: '2', orderId: 'ORD-002', customer: 'Bob Smith', total: 89.50, status: 'processing', date: '2026-08-11' },\n    { id: '3', orderId: 'ORD-003', customer: 'Carol Davis', total: 1199.00, status: 'pending', date: '2026-08-11' },\n  ]`
-  }
-  // Generic fallback
+
+  // Ultimate fallback — generic records guaranteed not to crash on .length / .toLocaleString
   return `[\n    { id: '1', name: 'Item One', status: 'active', value: 100 },\n    { id: '2', name: 'Item Two', status: 'pending', value: 200 },\n    { id: '3', name: 'Item Three', status: 'inactive', value: 300 },\n  ]`
+}
+
+function parseInterfaceFields(ifaceDef: string): Array<{ name: string; type: string }> {
+  const fields: Array<{ name: string; type: string }> = []
+  const bodyMatch = ifaceDef.match(/\{([\s\S]*)\}/)
+  if (!bodyMatch) return fields
+  for (const line of bodyMatch[1].split('\n')) {
+    const m = line.match(/^\s+(\w+)\??\s*:\s*(.+?)\s*[;,]?\s*$/)
+    if (m) fields.push({ name: m[1], type: m[2].trim() })
+  }
+  return fields
+}
+
+const NAMES  = ['Alice Johnson', 'Bob Smith', 'Carol Davis']
+const EMAILS = ['alice@example.com', 'bob@example.com', 'carol@example.com']
+const COMPANIES = ['Acme Corp', 'TechCo', 'Startup Ltd']
+const PHONES = ['+1 415 555 0101', '+1 415 555 0102', '+1 415 555 0103']
+const DATES  = ['2026-08-10', '2026-08-09', '2026-08-08']
+
+function seedFieldValue(name: string, type: string, i: number): string | number | boolean {
+  const k = name.toLowerCase()
+
+  // Union literal type: 'lead' | 'active' | 'churned'  →  cycle through options
+  const literals = [...type.matchAll(/'([^']+)'/g)].map(m => m[1])
+  if (literals.length > 0) return literals[i % literals.length]
+
+  // Field-name heuristics (most specific first)
+  if (k === 'id')                                        return String(i + 1)
+  if (k === 'name' || k === 'fullname')                  return NAMES[i]
+  if (k === 'email')                                     return EMAILS[i]
+  if (k === 'company' || k === 'organization' || k === 'firm') return COMPANIES[i]
+  if (k === 'phone' || k === 'mobile' || k === 'tel')    return PHONES[i]
+  if (/date|at$|time|day/.test(k))                       return DATES[i]
+  if (k === 'stage')    return ['Proposal', 'Discovery', 'Negotiation'][i]
+  if (k === 'priority') return ['high', 'medium', 'low'][i]
+  if (k === 'assignee') return NAMES[i].split(' ')[0]
+  if (k === 'title' || k === 'label' || k === 'subject') return [`Task ${i + 1}`, `Issue ${i + 1}`, `Ticket ${i + 1}`][i]
+  if (k === 'description' || k === 'note' || k === 'body') return [`Item ${i + 1} description`, `Note ${i + 1}`, `Detail ${i + 1}`][i]
+  if (k === 'type' || k === 'kind' || k === 'category')  return ['primary', 'secondary', 'tertiary'][i]
+  if (k === 'user' || k === 'author' || k === 'owner')   return EMAILS[i]
+  if (k === 'number' || k === 'num' || k === 'ref')      return `REF-00${i + 1}`
+  if (k === 'client' || k === 'customer')                return COMPANIES[i]
+
+  // Type-based fallbacks
+  if (type === 'number' || /value|amount|price|total|cost|fee|balance|revenue|profit|salary|count|qty|quantity|probability|percent|score|rank|index|size|age/.test(k))
+    return [5000, 12500, 3750][i]
+  if (type === 'boolean' || /^is|^has|^can|^show|^enable|^active|^visible/.test(k))
+    return false
+
+  // Default: non-empty string (never undefined)
+  return `${cap(name)} ${i + 1}`
 }
 
 function defaultString(varName: string): string {
