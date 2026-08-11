@@ -200,8 +200,40 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
       } catch (e) { console.error('[mcp/build-runner] version checkpoint failed', e) }
     }
 
+    // If the model missed App.tsx (truncated stream, soft-deadline cutoff,
+    // or forced-iteration edit block that couldn't apply), synthesize a minimal
+    // one so the Railway Vite build has a real entry point and renders something
+    // rather than a blank shell. Saved to the DB so future edits have context.
+    if (projectType !== 'mobile' && !merged['src/App.tsx'] && !merged['src/App.jsx']) {
+      const components = Object.keys(merged).filter(p =>
+        p.startsWith('src/') &&
+        (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
+        !p.endsWith('main.tsx') && !p.endsWith('main.jsx')
+      )
+      if (components.length > 0) {
+        const importLines: string[] = []
+        const names: string[] = []
+        for (const p of components) {
+          const name = p.split('/').pop()!.replace(/\.(tsx|jsx)$/, '')
+          const rel = './' + p.replace(/^src\//, '').replace(/\.(tsx|jsx)$/, '')
+          importLines.push(`import ${name} from '${rel}'`)
+          names.push(name)
+        }
+        const renders = names.map(n => `  <${n} />`).join('\n')
+        merged['src/App.tsx'] = {
+          path: 'src/App.tsx',
+          content: `${importLines.join('\n')}\n\nexport default function App() {\n  return (\n    <>\n${renders}\n    </>\n  )\n}\n`,
+          language: 'typescript',
+        }
+      }
+    }
+
     await db.from('projects')
-      .update({ files: merged, updated_at: new Date().toISOString() })
+      .update({
+        files: merged,
+        updated_at: new Date().toISOString(),
+        ...(projectType === 'mobile' ? { framework: 'react-native' } : {}),
+      })
       .eq('id', project.id)
 
     // Auto-publish the project so Claude immediately has a live URL.

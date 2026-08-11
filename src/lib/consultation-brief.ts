@@ -4,7 +4,7 @@ const anthropic = new Anthropic()
 
 const PRICING = `
 WyberAi credit costs (August 2026):
-- Web or mobile app build from scratch: 75 credits
+- Web or mobile app build from scratch: 40 credits (free/Spark plan) or 80 credits (Starter plan)
 - Plan Mode (architecture): 13 credits
 - Edit / iteration: 2 credits
 - Complex edit (new feature module): 5 credits

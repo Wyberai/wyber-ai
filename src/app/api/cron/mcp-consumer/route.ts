@@ -9,7 +9,7 @@ export const maxDuration = 900
 
 // How many queued builds to drain per minute-tick. Kept low because each build
 // is a full generation; the queue drains over successive ticks.
-const BATCH = 2
+const BATCH = 1
 
 // A message stuck in 'processing' this long is from a crashed/killed worker —
 // reclaim it. Comfortably longer than any real build.

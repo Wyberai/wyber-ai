@@ -57,7 +57,38 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
   const fileContent = (v: FileVal | undefined): string =>
     v == null ? '' : typeof v === 'string' ? v : (v.content ?? '')
 
-  const appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
+  let appExt = 'src/App.tsx' in out ? 'tsx' : 'src/App.jsx' in out ? 'jsx' : null
+
+  // If no App.tsx exists but component files do, synthesize a minimal entry
+  // point so the Railway Vite build compiles and renders something instead of
+  // a blank shell. This fires both at publish time (web editor flow) and at
+  // preview-build time — both paths call sanitizeFiles before posting to the
+  // builder. build-runner.ts also synthesizes and saves to DB, so this is a
+  // second layer of defense for cases that bypass the MCP pipeline.
+  if (!appExt) {
+    const components = Object.keys(out).filter(p =>
+      p.startsWith('src/') &&
+      (p.endsWith('.tsx') || p.endsWith('.jsx')) &&
+      !p.endsWith('main.tsx') && !p.endsWith('main.jsx')
+    )
+    if (components.length > 0) {
+      const importLines: string[] = []
+      const names: string[] = []
+      for (const p of components) {
+        const name = p.split('/').pop()!.replace(/\.(tsx|jsx)$/, '')
+        const rel = './' + p.replace(/^src\//, '').replace(/\.(tsx|jsx)$/, '')
+        importLines.push(`import ${name} from '${rel}'`)
+        names.push(name)
+      }
+      const renders = names.map(n => `  <${n} />`).join('\n')
+      out['src/App.tsx'] = {
+        content: `${importLines.join('\n')}\n\nexport default function App() {\n  return (\n    <>\n${renders}\n    </>\n  )\n}\n`,
+        language: 'typescript',
+      }
+      appExt = 'tsx'
+    }
+  }
+
   if (appExt) {
     // 0. Wyber UI kit — premium pre-built components every app can import
     //    (`import { Button } from './wyber-ui'`). Injected like the tailwind

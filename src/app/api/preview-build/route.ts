@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+import { createClient } from '@/lib/supabase/server'
+import { isInternalRequest } from '@/lib/internal-auth'
 
 export const maxDuration = 300
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user && !isInternalRequest(req)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const body = await req.json()
     // Sanitize server-side so EVERY client (esp. the mobile app, which posts raw
     // generated files) gets the same guaranteed entry/config/tailwind + stubbed

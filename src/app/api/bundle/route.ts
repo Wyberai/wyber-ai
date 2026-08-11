@@ -2,6 +2,8 @@ export const runtime = 'nodejs'
 export const maxDuration = 30
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { isInternalRequest } from '@/lib/internal-auth'
 
 const ESM_IMPORTS: Record<string, string> = {
   'react':             'https://esm.sh/react@18.3.1',
@@ -42,6 +44,12 @@ function resolveImport(from: string, to: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user && !isInternalRequest(req)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { files } = await req.json()
     if (!files || Object.keys(files).length === 0) {
       return NextResponse.json({ error: 'No files' }, { status: 400 })

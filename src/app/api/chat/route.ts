@@ -27,7 +27,7 @@ HELPING USERS:
 - Website stuck? Describe which section needs work, paste a reference URL or screenshot for inspiration
 - Mobile App stuck? Describe screens, install Expo Go on your phone, scan QR to preview
 - Build errors? Click "Send to AI" — self-healing fixes it automatically
-- Credits? Any build = 30 credits, edit = 2 credits, build plan = 5 credits, deploy/export = always free
+- Credits? First build = 40–80cr (free/Spark: 40cr, Starter+: 80cr), edit = 2–5cr, plan mode = 13cr, deploy/export = free. Exact cost shown before each action.
 
 PRICING (3 plans):
 - Starter: $29/month — 150 credits
