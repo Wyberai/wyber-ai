@@ -1466,9 +1466,28 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const cutAt = fileCut ? lastFileOpen : lastEditOpen;
         const cm = full.slice(cutAt).match(/path="([^"]+)"/);
         const cutPath = cm ? cm[1] : 'the last file';
+        // Big builds are the ones most likely to hit this cutoff, and also
+        // the ones most likely to still be sitting on the auto-seeded
+        // starter-template entry file (see isFirstBuild above) if the model
+        // never got around to it before running out of room. The dedicated
+        // placeholder check further below (4b) explicitly skips this pass
+        // (gated on !fileCut && !editCut, so a second fix pass never races
+        // this one) — so if the entry file is still a placeholder right now,
+        // this cut-recovery prompt is its only chance to get fixed. Folded
+        // into the SAME dispatch rather than firing a second wyber-autofix
+        // alongside it: two autofix events landing for one pass would race
+        // on useEditorStore (see the fill-batch clobbering note elsewhere
+        // in this file), so this stays exactly one prompt, one dispatch.
+        const entryPath = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx';
+        const preExistingFiles = (useEditorStore.getState().files ?? {}) as Record<string, { content?: string }>;
+        const entryFile = preExistingFiles['src/App.tsx'] || preExistingFiles['src/App.jsx'] || preExistingFiles['App.tsx'];
+        const entryStillPlaceholder = cutPath !== entryPath && isPlaceholderApp(entryFile?.content);
+        const wireNote = entryStillPlaceholder
+          ? ` ${entryPath} is also still the placeholder starter file — once the real screens/components above exist, wire them into it as its own complete <file> block.`
+          : '';
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { continuation: true, prompt: `Your previous output was cut off before finishing. Output the COMPLETE <file> block (full contents, not a diff) for: ${cutPath}. Then output any other files from your plan that were never emitted, each as a complete <file> block.` }
+            detail: { continuation: true, prompt: `Your previous output was cut off before finishing. Output the COMPLETE <file> block (full contents, not a diff) for: ${cutPath}. Then output any other files from your plan that were never emitted, each as a complete <file> block.${wireNote}` }
           }));
         }, 600);
       }
