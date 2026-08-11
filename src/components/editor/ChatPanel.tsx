@@ -2532,36 +2532,51 @@ const storeProjectId = useEditorStore.getState().project?.id;
     await dispatchTurn(userMsg, img, hasAttachments, paletteId);
   }, [files, dispatchTurn]);
 
+  // Synchronous re-entrancy lock. `isGenerating` alone isn't enough to stop a
+  // double-fire: it only flips true once the async work below actually kicks
+  // in, so two handleSend() calls in the same tick (Enter + Enter, or Enter +
+  // click, right after pasting a long prompt) both read the same stale
+  // `false` and both pass the guard — sending the same message twice, one
+  // real turn and one duplicate that lands moments later. This ref closes
+  // that gap: it's set before anything async happens and only released once
+  // the whole turn (including the awaited generation) is done.
+  const sendingRef = useRef(false);
+
   const handleSend = useCallback(async () => {
     // No credits<=0 gate here — conversational messages are FREE, so the box
     // stays usable at 0 credits. The build/edit path is blocked separately in
     // executeGeneration with a clear "out of credits" message.
-    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating || imageReading) return;
-    const userMsg = input.trim();
-    const img = attachedImage;
-    const hasAttachments = attachedFiles.length > 0;
-    setInput('');
-    setAttachedImage(null);
-    if (planMode) {
-      setPendingPlan({ prompt: userMsg, image: img });
-      return;
-    }
+    if ((!input.trim() && !attachedImage && attachedFiles.length === 0) || isGenerating || imageReading || sendingRef.current) return;
+    sendingRef.current = true;
+    try {
+      const userMsg = input.trim();
+      const img = attachedImage;
+      const hasAttachments = attachedFiles.length > 0;
+      setInput('');
+      setAttachedImage(null);
+      if (planMode) {
+        setPendingPlan({ prompt: userMsg, image: img });
+        return;
+      }
 
-    // ── First-build advisory offer ───────────────────────────────────────
-    // Ask once, on a genuinely new project's first message, whether the user
-    // wants to see a build plan/roadmap first — most people never discover
-    // the manual "◎ Plan" toggle above the input box on their own. Gated on
-    // `isFirstBuild` (!hasGeneratedFiles), NOT an empty-files check — every
-    // brand-new project gets an auto-seeded starter-template scaffold on
-    // mount (see the hydration effect above) so `files` is never actually
-    // empty by the time the user can type anything.
-    if (isFirstBuild && !img && !planOfferShownRef.current) {
-      planOfferShownRef.current = true;
-      setPendingPlanOffer({ prompt: userMsg, img, hasAttachments });
-      return;
-    }
+      // ── First-build advisory offer ─────────────────────────────────────
+      // Ask once, on a genuinely new project's first message, whether the user
+      // wants to see a build plan/roadmap first — most people never discover
+      // the manual "◎ Plan" toggle above the input box on their own. Gated on
+      // `isFirstBuild` (!hasGeneratedFiles), NOT an empty-files check — every
+      // brand-new project gets an auto-seeded starter-template scaffold on
+      // mount (see the hydration effect above) so `files` is never actually
+      // empty by the time the user can type anything.
+      if (isFirstBuild && !img && !planOfferShownRef.current) {
+        planOfferShownRef.current = true;
+        setPendingPlanOffer({ prompt: userMsg, img, hasAttachments });
+        return;
+      }
 
-    await proceedPastPlanOffer(userMsg, img, hasAttachments);
+      await proceedPastPlanOffer(userMsg, img, hasAttachments);
+    } finally {
+      sendingRef.current = false;
+    }
   }, [input, attachedImage, attachedFiles, isGenerating, planMode, isFirstBuild, proceedPastPlanOffer]);
 
   // Halts an in-flight generation via the ref-lifted AbortController (see
