@@ -77,6 +77,22 @@ export function synthesizeAppTsx(allFiles: FileMap, projectType: string): string
     }
   }
 
+  // 4b. Detect {base}Actions / {base}Handlers props paired with a {base}[]
+  //     array prop. These become real CRUD handlers instead of null state so
+  //     add/update/remove calls don't crash at runtime.
+  //     e.g. contactActions + contacts: Contact[] → setContacts-backed handlers
+  const actionsMap = new Map<string, string>() // propName → array-state varName
+  for (const [varName] of stateMap) {
+    const m = varName.match(/^(.+?)(?:Actions|Handlers|Callbacks)$/)
+    if (!m) continue
+    const base = m[1]
+    const arrState = [base + 's', base].find(k => {
+      const e = stateMap.get(k)
+      return e && (e.type.endsWith('[]') || e.type.startsWith('Array<'))
+    })
+    if (arrState) actionsMap.set(varName, arrState)
+  }
+
   // 5. Generate the file.
   const lines: string[] = []
 
@@ -96,9 +112,10 @@ export function synthesizeAppTsx(allFiles: FileMap, projectType: string): string
   // App function
   lines.push('export default function App() {')
 
-  // State declarations
+  // State declarations — skip actionsMap entries (generated inline as const)
   let hasState = false
   for (const [varName, prop] of stateMap) {
+    if (actionsMap.has(varName)) continue
     const decl = stateDeclaration(varName, prop.type)
     if (decl) { lines.push('  ' + decl); hasState = true }
   }
@@ -108,7 +125,7 @@ export function synthesizeAppTsx(allFiles: FileMap, projectType: string): string
   lines.push('  return (')
   lines.push('    <div className="min-h-screen bg-background text-foreground">')
   for (const comp of comps) {
-    const attrs = comp.props.map(p => propAttribute(p, stateMap)).filter(Boolean).join(' ')
+    const attrs = comp.props.map(p => propAttribute(p, stateMap, actionsMap)).filter(Boolean).join(' ')
     lines.push(`      <${comp.name}${attrs ? ' ' + attrs : ''} />`)
   }
   lines.push('    </div>')
@@ -172,8 +189,26 @@ function stateDeclaration(varName: string, type: string): string | null {
   return `const [${varName}, set${cap(varName)}] = useState<${type} | null>(null)`
 }
 
-function propAttribute(prop: PropEntry, stateMap: Map<string, PropEntry>): string {
+function propAttribute(
+  prop: PropEntry,
+  stateMap: Map<string, PropEntry>,
+  actionsMap: Map<string, string>,
+): string {
   const type = prop.type
+
+  // {base}Actions / {base}Handlers paired with a matching array state →
+  // generate real CRUD handlers so add/update/remove calls don't crash.
+  if (actionsMap.has(prop.name)) {
+    const arrState = actionsMap.get(prop.name)!
+    const setter = `set${cap(arrState)}`
+    return (
+      `${prop.name}={{` +
+      ` add: (item: any) => ${setter}((p: any[]) => [...p, { ...item, id: String(Date.now()) }]),` +
+      ` update: (id: string, patch: any) => ${setter}((p: any[]) => p.map((x: any) => x.id === id ? { ...x, ...patch } : x)),` +
+      ` remove: (id: string) => ${setter}((p: any[]) => p.filter((x: any) => x.id !== id))` +
+      ` }}`
+    )
+  }
 
   // Simple callback: (arg: T) => void, () => void
   if (isCallbackType(type)) {
@@ -186,7 +221,7 @@ function propAttribute(prop: PropEntry, stateMap: Map<string, PropEntry>): strin
     return `${prop.name}={(..._args: unknown[]) => {}}`
   }
 
-  // Object of callbacks: { add: (x) => void, update: ..., remove: ... }
+  // Inline object of callbacks: { add: (x) => void, update: ..., remove: ... }
   if (isActionsObjectType(type)) {
     const methods = extractMethodNames(type)
     if (methods.length > 0) {
