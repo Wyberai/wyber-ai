@@ -55,6 +55,24 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\trugrain", "--", "--port", "3100"],
       "port": 3100
+    },
+    {
+      "name": "tryfitai-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\tryfitai", "--", "--port", "3200"],
+      "port": 3200
+    },
+    {
+      "name": "wearon",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wearon-platform"],
+      "port": 3300,
+      "autoPort": true
+    },
+    {
+      "name": "template-preview",
+      "url": "http://localhost:5500",
+      "port": 5500
     }
   ]
 }

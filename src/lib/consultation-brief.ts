@@ -37,18 +37,22 @@ export async function generateConsultationBrief(meeting: {
         .join('\n')
     : 'None provided'
 
-  const slot = new Date(meeting.scheduled_start).toLocaleString('en-IN', {
+  const notesText = meeting.notes?.trim() || 'None provided'
+
+  const slot = new Date(meeting.scheduled_start).toLocaleString('en-US', {
     day: 'numeric', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit', hour12: true,
-    timeZone: 'Asia/Kolkata',
+    timeZone: 'America/New_York',
   })
 
   const prompt = `You are writing a pre-call brief for Sumeet Sutar, founder of WyberAi (wyberai.com — AI app builder for web + mobile). He has a 15-minute paid consultation scoping call.
 
 PROSPECT: ${meeting.attendee_name || 'Unknown'} (${meeting.attendee_email})
-SLOT: ${slot} IST
-WHAT THEY SAID:
+SLOT: ${slot} ET
+INTAKE FORM (pre-call, may be stale):
 ${intakeText}
+CALL NOTES (Sumeet's own notes — if present, this reflects the ACTUAL current ask and overrides the intake form, e.g. the prospect may have pivoted their idea during the call):
+${notesText}
 
 WYBERAI PRICING:
 ${PRICING}
