@@ -610,7 +610,8 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         </div>
       </section>
 
-      {/* ── TELEMETRY STRIP ──────────────────────────────────────────── */}
+      {/* ── TELEMETRY STRIP — India only; US homepage omits unverifiable stats ── */}
+      {inr && (
       <section style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
@@ -628,6 +629,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           ))}
         </div>
       </section>
+      )}
 
       <UserBuildsStrip builds={userBuilds} label={t.userBuildsStripLabel} ctaLabel={t.userBuildsStripCta} />
       <GalleryStrip apps={galleryApps} label={t.galleryStripLabel} ctaLabel={t.galleryStripCta} />
