@@ -102,15 +102,23 @@ export async function onboardUser({ user, supabase, ipCountry, refCode, origin, 
             .select('id, referral_count, referral_credits_earned')
             .eq('referral_code', cleanRefCode).maybeSingle();
           if (referrer && referrer.id !== user.id) {
+            // New user always gets their 20-credit welcome bonus regardless of cap.
             await admin.rpc('adjust_credits', { p_user_id: user.id, p_delta: 20 });
-            await admin.rpc('adjust_credits', { p_user_id: referrer.id, p_delta: 50 });
             await admin.from('profiles').update({ referred_by: referrer.id }).eq('id', user.id);
+
+            // Referrer only earns credits for the first 5 referrals — beyond that
+            // the code still works but pays nothing, stopping bot-farming loops.
+            const referralCount = referrer.referral_count ?? 0;
+            const earnedThisReferral = referralCount < 5;
+            if (earnedThisReferral) {
+              await admin.rpc('adjust_credits', { p_user_id: referrer.id, p_delta: 50 });
+            }
             await admin.from('profiles').update({
-              referral_count: (referrer.referral_count ?? 0) + 1,
-              referral_credits_earned: (referrer.referral_credits_earned ?? 0) + 50,
+              referral_count: referralCount + 1,
+              ...(earnedThisReferral && { referral_credits_earned: (referrer.referral_credits_earned ?? 0) + 50 }),
             }).eq('id', referrer.id);
             if (user.email) sendAdminSignupAlert(user.email, `referred by ${cleanRefCode}`).catch(() => {});
-            notify(admin, referrer.id, 'referral', { credits: 50 }).catch(() => {});
+            if (earnedThisReferral) notify(admin, referrer.id, 'referral', { credits: 50 }).catch(() => {});
           }
         }
       } catch (e) { console.error('signup perks (referral/student) failed:', e); }
