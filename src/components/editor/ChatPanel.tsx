@@ -2110,8 +2110,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // sharedBubbleId: reuse the planning/credit bubble created above.
       await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
       // The one-shot path uses sharedBubbleId, so ownsBubble=false inside executeGeneration
-      // and its finally block never calls setIsGenerating(false). Clear it here explicitly.
+      // and its finally block never calls setIsGenerating(false) or clears progress. Do it here.
       setIsGenerating(false);
+      setProgressSteps([]);
+      clearStreamingContent();
       return;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) + costSuffix });
