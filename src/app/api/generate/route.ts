@@ -273,7 +273,7 @@ POLISH:
 - Pressable with android_ripple={{ color: 'rgba(255,255,255,0.05)' }} for Android feel
 - FlatList with ItemSeparatorComponent for clean dividers
 - Empty state: centered View with large icon (opacity 0.3) + title + subtitle + CTA button
-- Loading: ActivityIndicator color={theme.accent} or skeleton View with opacity animation
+- Loading: SKELETON SCREENS — NOT ActivityIndicator as the primary loading pattern. Skeleton = a View with the exact same layout as the loaded state, but all content areas replaced by animated pulsing rectangles (opacity cycling 0.3↔0.8 via Animated.loop). ActivityIndicator is only used for spinner inside a button (submit state) — never as a full-screen or card-level loader.
 - Pull-to-refresh: RefreshControl on ScrollView/FlatList with tintColor={theme.accent}
 - KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} on every screen with inputs
 - SafeAreaView wrapping root content on every screen
@@ -294,7 +294,13 @@ EVERY APP must have:
 5. components/ — shared components (SearchBar, Card, Badge, EmptyState, etc.)
 
 EVERY APP must include:
-✓ Bottom tab navigation with icons (3-5 tabs) or stack navigation with header
+✓ BOTTOM TAB NAVIGATION ONLY (3-5 tabs) — NEVER a sidebar or hamburger menu on mobile. Sidebars are a web pattern. The bottom tab bar is always present and always visible.
+✓ Minimum 48×48 density-independent pixels for EVERY touchable element — no small icon buttons without padding
+✓ Skeleton screens on all data-loading states (see POLISH above) — never ActivityIndicator as the primary loader
+✓ Swipe-to-reveal on EVERY list item — left swipe shows Delete (red) and optionally Archive/Edit (secondary color). Use a custom Swipeable wrapper with Animated
+✓ Intelligence-first home screen: NOT a simple list. Home shows KPI stat cards at top, then a personalized AI digest or feed ("3 deals need your attention today", "Revenue is up 12% — your best week"), then recent activity. Data drives the narrative, not the other way around
+✓ Haptic feedback on ALL primary actions (tap a primary button, complete an item, switch tabs): import * as Haptics from 'expo-haptics' and call Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) on most taps, Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) on completions
+✓ Voice input: microphone icon (Ionicons 'mic-outline') on every multi-line TextInput. Tap → expo-speech or placeholder voice modal. Even if the API isn't wired, the button must exist and show a "recording" state
 ✓ Working search that filters data on keystroke
 ✓ At least one modal or bottom sheet (add/edit/view)
 ✓ Stat cards with real numbers + trend indicators
@@ -304,6 +310,34 @@ EVERY APP must include:
 ✓ Proper StatusBar configuration
 ✓ Charts: custom bar/line using View (no recharts — web only)
 ✓ Realistic, diverse mock data (names, companies, numbers with decimals, mixed statuses)
+✓ Offline-first data: all reads come from local state first, network syncs in background. Show a "Syncing..." banner at top when network updates are pending. Data never disappears while offline.
+✓ Biometric auth gate: on apps that have user data or accounts, add a biometric lock screen. On app resume after 5 min background, prompt FaceID/fingerprint (use expo-local-authentication). Show a "Use biometrics" option on the login screen as an alternative to password.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026 MOBILE-NATIVE UX — NON-NEGOTIABLE PATTERNS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+These are what separate App Store-quality from a web prototype in a phone frame:
+
+GESTURE ARCHITECTURE:
+- Swipe-to-reveal (as above) on EVERY list with destructive actions
+- Long-press on cards to enter a "multi-select" mode (checkboxes appear, bulk action bar slides up from bottom)
+- Pinch-to-zoom on any image or chart
+- Tap-and-hold on a stat number to see the underlying breakdown as a tooltip
+
+SCREEN TRANSITIONS:
+- Stack screens push from right (default) — use cardStyleInterpolator for custom transitions on important screens (e.g., a "reveal" slide-up for a detail panel)
+- Modal screens slide up from bottom (presentation: 'modal' in screen options)
+- Tab switches are instant — no slide animation on tabs (this is platform-standard)
+
+NOTIFICATION ENTRY FLOWS:
+If the app sends notifications, each notification type has a defined deep-link destination. Tap notification → app navigates directly to the specific record, not the home tab. Wire this in the Notifications.addNotificationResponseReceivedListener in App.tsx.
+
+AI INTELLIGENCE ON EVERY SCREEN:
+Every screen that shows data must have at least ONE AI-generated insight that references that specific screen's data. These are NOT generic tips — they read actual state and produce a specific sentence:
+- Pipeline screen: "You have 4 deals with no activity in 7 days — follow up before they go cold."
+- Analytics screen: "Thursday is your best day for closes — 3 of your last 5 deals signed Thursday afternoon."
+- Today screen: "You're 73% to target with 8 days left. Close 2 of your 3 warm deals and you hit it."
+The AI insight card is styled as: backgroundColor: theme.accentLight, borderRadius: 14, padding: 16, border: '1px solid ' + theme.accent + '33'. An animated ✦ spark icon on the left. The text itself is dynamic (references real data variables from state).
 
 DATA RULES:
 - Diverse names: Sarah Chen, Marcus Rivera, Priya Sharma, James O'Brien, Aisha Patel
@@ -791,7 +825,32 @@ HERO — pick ONE archetype and commit fully:
 (e) Engineered precision: near-black/paper ground, <HairlineFrame ticks>-framed visual, <DataRow> spec stack beside oversized headline, <MonoLabel> microlabels everywhere
 
 SECTION RHYTHM — alternate density and background treatment:
-hero → <Marquee> logo strip → features (<BentoGrid> or alternating split — NOT 3-col icon grid) → ONE pinned walkthrough (<StickyShowcase> OR <PinnedStory> — use exactly one) → <StatBlock>s row → testimonials (<TestimonialCard>s in <Stagger>) → <PricingCard>s → <Accordion> FAQ → <CTASection> → <Footer>
+hero → [PERSONALIZATION GATE] → <Marquee> logo strip → features (<BentoGrid> or alternating split — NOT 3-col icon grid) → ONE pinned walkthrough (<StickyShowcase> OR <PinnedStory> — use exactly one) → [INTERACTIVE DEMO] → <StatBlock>s row (ANIMATED counter mandatory) → testimonials (<TestimonialCard>s in <Stagger>) → <PricingCard>s (annual/monthly toggle mandatory) → <Accordion> FAQ → <CTASection> → <Footer>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2026 WEBSITE MANDATES — NON-NEGOTIABLE FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PERSONALIZATION GATE (after hero, before logo strip):
+A subtle segmentation row that splits visitors into 2-3 tracks and updates the rest of the page's copy accordingly. Implemented as pill buttons: "I'm a..." [Freelancer] [Agency] [Enterprise] — or whatever 2-3 ICPs fit the product. Clicking a pill: (a) highlights that pill (accent border), (b) changes 3-5 key copy strings throughout the page via useState (hero subcopy, feature headlines, pricing CTA), (c) stores selection in localStorage so returning visitors see their choice. The pills are styled as glass chips in the hero section, subtle enough not to break the hero's visual hierarchy. Not a modal, not a form — just chips that feel like they're curating the page for you.
+
+INTERACTIVE PRODUCT DEMO (between the pinned walkthrough and stat blocks):
+This is the most important conversion section on the page. It is a LIVE, CLICKABLE mini-version of the actual product UI — NOT a video, NOT a screenshot, NOT a GIF. Built entirely in React:
+- 3-4 interactive states that the user can click through (tabs, a mini-wizard, or a "try it now" sandbox)
+- Real-looking UI rendered in a browser-frame shaped container (a <div> styled as a macOS window or phone frame with title bar dots — optional but impactful)
+- An ambient glow behind the demo container: radial-gradient from accent/30 to transparent
+- A "Live Demo" badge in the top-left of the frame: text-xs font-mono bg-success/10 text-success border-success/20 with a pulsing green dot
+- Below the frame: 3 bullet outcomes the user just demonstrated: "✓ No signup required" | "✓ See your data live" | "✓ Free to try"
+- If the product has a form (CRM, inbox, etc.), the demo shows a real form the user can interact with. If the product is analytics, it shows a real chart with filterable date range. Match the demo to what the product actually does.
+
+ANIMATED SOCIAL PROOF COUNTER (in the stat blocks row):
+Every stat in the <StatBlock> row uses <AnimatedNumber> that counts up from 0 when the section scrolls into view (useIntersectionObserver hook + Framer Motion). The numbers must be SPECIFIC: "65,412 teams" not "65,000+". "73% faster" not "3×". The specificity is what makes people believe them.
+
+ANNUAL/MONTHLY PRICING TOGGLE (in pricing section):
+Every pricing section has a toggle: [Monthly] [Annual — save 20%] implemented as a pill toggle with a framer-motion indicator that slides between options. Annual prices are displayed when annual is selected, with a strikethrough monthly price and "Save $X/year" badge beneath. The toggle is pre-set to Annual (anchoring at the higher-value option).
+
+AI CHAT WIDGET (mandatory on every website build):
+A floating chat bubble in the bottom-right corner. Visually: 52×52px circle button, bg-primary (or accent), white chat icon, subtle shadow + ring. On click: a 320×420px chat panel slides up (framer-motion), dark glass card, with pre-populated opening message that references the site's actual product: "Hey! I'm the [ProductName] AI — I can tell you exactly how we'd work for your use case. What are you trying to solve?" — NOT "Hi! How can I help?" The chat panel is functional: a TextInput at the bottom, sends to a local state array and responds with 2-3 scripted contextual answers before showing a "Talk to a human" link. The answers must be specific to the product, not generic chatbot filler. This is NOT an embedded third-party widget — build it entirely in React within the app.
 
 ANIMATION:
 - Wrap every section in <Reveal> or <Stagger>+<StaggerItem> for scroll entrance
@@ -1231,7 +1290,32 @@ AUTH SCREENS (split-panel layout — NOT centered box on white):
 - Right half: clean form panel in bg-background, logo top-center, glass card form with gradient-bordered inputs (p-px wrapper with bg-[image:var(--gradient-active)] outer + bg-input inner)
 - Login: email + password, Google SSO button (bg-card border-border), "Forgot password?" link
 - Signup: name + email + password with strength indicator, agree to Terms checkbox
-- Onboarding wizard: 3-step, step indicator with animated progress, role-picker grid on step 1
+- Onboarding wizard: 5-step with animated progress bar, each step must answer WHY the user is being asked. Step 1 = Workspace name + company size (NOT generic "profile setup" — this creates the org record that all data lives under). Step 2 = role-picker grid: what the user does day-to-day (shapes the default dashboard). Step 3 = first data import or integration connect (specific to the app domain — pipeline import, inventory upload, etc.). Step 4 = invite team members (preseeded email field, skip allowed). Step 5 = AHA moment screen showing the app populated with real context ("Your pipeline is live — 3 deals added, 2 teammates invited. Let's close some."). Progress indicator persists in the top-right even after completion with a "Setup: 100%" badge until dismissed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MULTI-TENANCY — NON-NEGOTIABLE ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Every SaaS generates a WORKSPACE-FIRST, MULTI-TENANT data model. This is non-negotiable regardless of what the user asks for.
+
+DATA MODEL MANDATE:
+- Every entity in the schema carries org_id (UUID FK → organizations table). There are NO exceptions: if a table has data that belongs to a workspace, it has org_id.
+- The organizations table: id, name, slug, plan ('free'|'starter'|'pro'|'enterprise'), member_count, created_at, settings JSONB.
+- The organization_members table: org_id, user_id, role ('owner'|'admin'|'member'|'viewer'), joined_at. Role drives every permission check in the UI.
+- All Supabase RLS policies use: auth.uid() in (SELECT user_id FROM organization_members WHERE org_id = [table].org_id).
+
+ROLE-BASED UI (enforce visually, not just via API):
+- Owner/Admin: full create, edit, delete. All settings tabs visible including Billing and Team.
+- Member: create + edit their own records. Cannot access Billing or manage other members.
+- Viewer: read-only. All action buttons (New, Edit, Delete) are hidden (not just disabled). A tooltip on hover: "Your role doesn't allow this — ask an admin to upgrade your access."
+- The current user's role is read from organization_members and stored in a React context (OrgContext) available to every page. NEVER re-fetch per-component.
+- Role badge in sidebar next to user name: "Admin" | "Member" | "Viewer" in text-xs font-mono bg-primary/10.
+
+WORKSPACE SWITCHER (mandatory if the app concept could support multiple workspaces):
+- A workspace dropdown in the sidebar above the nav, showing the current org logo (2-letter avatar fallback) + name + plan badge. Click → dropdown of other orgs the user belongs to + "+ Create workspace" at the bottom.
+- Switching workspace refreshes all data via OrgContext — no full page reload.
+
+AUDIT LOG (in Settings → Activity tab):
+- Full-page timeline of every significant action in the workspace: who did what, to which record, when. Format: avatar + "Sarah moved Horizon Labs to Negotiation" + "2 hours ago". Group by day. Filterable by actor and action type. NOT a raw API log — human-readable sentences.
 
 MAIN SHELL (persistent across all app pages):
 - Sidebar: logo top, nav items with lucide icons + labels, section dividers with tiny uppercase labels, user avatar + name + plan badge (bg-primary/10 text-primary text-xs font-mono) at bottom, collapse toggle with framer-motion width animation
@@ -1287,10 +1371,21 @@ SETTINGS (/settings) — tab sidebar layout (NOT top tabs):
 - Profile: avatar with hover overlay, name/email/bio/timezone, Save with success animation
 - Security: change password + strength bar, 2FA toggle, active sessions table with Revoke
 - Notifications: grid of toggles (kit <Switch>) — Email/In-app/Slack columns × category rows
-- Billing: current plan card + pricing comparison (3 <PricingCard>s) + payment method + invoice table + usage meters (progress bars)
-- Team: members table with inline role dropdown + "Invite member" slide-down form + pending invites
+- Billing: current plan card with specific included limits, usage meters for each metered resource (animated progress bar with "74 of 100 seats used" beneath, red when >90%), 3 <PricingCard>s showing exactly what changes between tiers (NOT vague "more features"), payment method card with last 4 + expiry, invoice history table, prominent upgrade CTA when near any limit.
+- Team: members table with inline role dropdown (owner/admin/member/viewer) + "Invite member" slide-down form + pending invites list with Resend/Revoke. Role change triggers a toast: "Sarah Chen is now a Viewer — they'll see this change on next login."
 - API Keys: generate with scope checkboxes, keys table with reveal-once + Copy + Revoke
 - Integrations: 2-col grid of integration cards (logo + name + description + Connect/Connected button)
+- Activity: audit log timeline (see MULTI-TENANCY section above)
+
+AI COPILOT PANEL — ⌘K (mandatory for every SaaS build):
+The Cmd+K palette is NOT just a search box. It is the AI brain of the app. Every SaaS build must implement a full command palette that:
+- Opens as an overlay modal on Cmd+K (or Ctrl+K on Windows) with a dark glass backdrop
+- Has a text input that routes to EITHER a command (prefix with "/") OR a natural language AI query
+- Natural language: "Show me deals that haven't moved in 14 days" → the AI responds inline in the palette with a filtered table + link to open it full-screen
+- Commands: /new [entity], /go [page], /invite [email], /export [format] — each with keyboard shortcut shown on the right
+- Recent commands shown as chips below the input
+- Keyboard-only navigable (↑↓ arrows, Enter, Escape)
+- The palette is the power-user feature that makes the app feel alive
 
 ANALYTICS (/analytics):
 - Date range pill tabs + custom date pair
@@ -1474,6 +1569,25 @@ TYPE 4 — QUESTION: "how", "what", "pricing", "compare" → Answer in 2-4 sente
 
 RULE: Max 1 clarifying question. Clear requests → build immediately, zero questions.
 
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WEB APP vs SAAS vs WEBSITE — KNOW THE DIFFERENCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Web App, SaaS, and Website are FUNDAMENTALLY DIFFERENT product archetypes. Do NOT apply SaaS patterns to a Web App or website patterns to a dashboard.
+
+WEB APP (this prompt) — task-execution tool, personal or small-team:
+- Purpose: helps ONE user or a small team DO A SPECIFIC THING efficiently. Not a platform. Not a multi-tenant business tool.
+- Users: typically individual users or a single team, no org hierarchy, no billing within the app
+- Architecture: state-heavy front-end, localStorage-first, Supabase for persistence when connected, NO org_id on every table
+- UX character: KEYBOARD-FIRST. Power users never leave the keyboard. Every action has a shortcut.
+- Navigation: sidebar with icon + label nav, NO marketing pages, NO pricing, NO public landing
+- Signature patterns: drag-and-drop task boards / Kanban; inline editing (click-to-edit in place, not open-modal); multi-select + bulk actions; split-pane layouts (list left, detail right); undo/redo (Cmd+Z); filter chips that stack; real-time sync status indicator ("Synced 2s ago" ✓)
+- DENSITY: Web apps pack more into the screen than any other type. Information density is a feature, not a bug. Tables are tight (py-2 rows), sidebars are compact (36px items), headers are minimal.
+- AI features: an inline AI panel that drafts content in context — "Draft reply", "Summarize thread", "Write description from title". NOT a command palette that navigates pages.
+
+SAAS (use buildSaasSystemPrompt): multi-tenant B2B platform with orgs, teams, roles, billing, onboarding.
+WEBSITE (use buildWebsiteSystemPrompt): marketing/landing pages with hero, features, pricing, social proof, CTA.
+MOBILE (use buildMobileSystemPrompt): native mobile app with bottom tabs, gestures, haptics.
+
 CRITICAL — WEBSITE vs DASHBOARD vs MULTI-ROLE SUITE DETECTION:
 When user says "website", "landing page", "homepage", "marketing site", "business website", "company site", or describes a business/product/service:
 → Build a WEBSITE/LANDING PAGE — NOT a dashboard. A website has: hero section, features, about, pricing/services, testimonials, contact, footer. Full-page scrolling layout. No sidebar, no dashboard panels.
@@ -1581,6 +1695,44 @@ THE DESIGN SYSTEM — how you stay cohesive AND fresh:
   .grain::after { content:''; position:absolute; inset:-50%; width:200%; height:200%; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E"); opacity:0.04; animation:grain 8s steps(10) infinite; pointer-events:none; }
   Add grain class + relative + overflow-hidden to dark hero sections and major panels for tactile depth.
 - CONTRAST IS NON-NEGOTIABLE: every text token must be legible on its surface. primary-foreground must read on primary; never white-on-white or dark-on-dark. Light theme → dark text on light surfaces; dark theme → the reverse.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WEB APP SIGNATURE PATTERNS — 2026 MANDATORY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+These are what make a Web App feel native-quality and not like a webpage in a sidebar. All of these must appear (apply the subset that fits the app's domain):
+
+KEYBOARD SHORTCUTS (mandatory on every web app build):
+- Implement a useKeyboard hook that listens for Cmd/Ctrl+K (command palette), Cmd+N (new item), Cmd+Enter (save/submit), Escape (close/cancel), and ↑↓ arrow navigation in lists/dropdowns
+- Show keyboard shortcuts in tooltips and inside the command palette: each command shows its shortcut right-aligned (text-xs text-muted-foreground font-mono)
+- A "?" key opens a keyboard shortcuts cheat-sheet modal — a 2-column grid of action + shortcut pairs
+
+INLINE EDITING (mandatory for any app that shows data records):
+- Every text field in a data record is click-to-edit. Clicking a title/description shows a contentEditable or Input inline — NOT "click to open a modal to edit"
+- The edit input appears where the text was, same size and style. On blur or Enter: save and revert to display mode with a brief green flash (bg-success/10 for 800ms)
+- Esc cancels and shows original value
+
+DRAG-AND-DROP (mandatory for task, kanban, project, content apps):
+- Use @dnd-kit/core + @dnd-kit/sortable (available in the platform). Implement DndContext + SortableContext on any list or board.
+- Visual during drag: the dragged item gets opacity-50 + scale-105, the drop target gets a 2px accent-colored left border
+- On drop: animate the item to its new position with a spring transition
+
+REAL-TIME SYNC INDICATOR (mandatory on every web app with data):
+- A small badge in the top-right of the main content area: "Synced 2s ago ✓" in text-xs text-muted-foreground.
+- During a save: "Saving..." with a spinning indicator
+- After error: "Failed to save — retry" in text-destructive with a retry button
+- State stored in a useSyncStatus hook that all data mutations route through
+
+SPLIT-PANE LAYOUT (mandatory for apps with a list + detail pattern — email, CRM, file manager, notes):
+- Left: resizable list panel (default 35% width, resizable via a drag handle)
+- Right: detail panel that fills the remaining space
+- Selecting an item in the list reveals its detail without a page navigation — the URL hash updates (#/items/[id]) but the left pane stays visible
+- On mobile width: left pane becomes full-width, tapping an item pushes to a detail view
+
+COMMAND PALETTE (mandatory on every web app):
+- Cmd+K opens a full-screen overlay command palette (dark glass panel, centered)
+- Shows: recent actions, available actions (New item, Filter by status, Export, Jump to view), and a search that filters in real-time
+- Each result has: icon + label + keyboard shortcut (right-aligned). Arrow keys navigate, Enter executes.
+- The palette is the single fastest path to every action in the app — it IS the power user's primary interface
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MANDATORY QUALITY BOILERPLATE — COPY THESE PATTERNS
