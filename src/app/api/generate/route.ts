@@ -314,9 +314,40 @@ EVERY APP must include:
     </TouchableOpacity>
   )
   // Wrap each list item: <Swipeable renderRightActions={() => renderRightActions(item.id)}><ListItem ... /></Swipeable>
-✓ Intelligence-first home screen: NOT a simple list. Home shows KPI stat cards at top, then a personalized AI digest or feed ("3 deals need your attention today", "Revenue is up 12% — your best week"), then recent activity. Data drives the narrative, not the other way around
+✓ Intelligence-first home screen layout (mandatory — NOT a simple list of items):
+  // Section order (ScrollView, no FlatList for home):
+  // 1. GREETING ROW — time-aware + first name. "Good morning, Alex." in text 22/700 + a micro-stat: "You're 73% to target."
+  // 2. AI INSIGHT CARD — the most important signal right now (see AI INTELLIGENCE ON EVERY SCREEN below)
+  // 3. KPI WIDGET ROW — horizontal ScrollView of 3-4 stat cards (width: 140, height: 100):
+  //    Each card: label (10px uppercase mono) + value (28px 800 weight) + delta (12px, success/danger color)
+  //    E.g.: Revenue: $47,832 ↑12% | Deals: 14 ↑3 | Win Rate: 68% ↓2% | Pipeline: $312k →
+  // 4. ACTION ITEMS — "Needs attention" section: 2-4 items that require the user's action TODAY
+  //    Format: colored left-border card (4px, danger/warning/primary) + icon + title + "Due today" or "2 days overdue"
+  //    Tap → navigates directly to that item's detail screen
+  // 5. RECENT ACTIVITY — the last 5-6 events across all entities, with relative timestamps
+  //    Format: avatar + event sentence + timestamp (right-aligned, muted)
+  // Each section has a header: label (12px uppercase mono) + "See all →" link (right-aligned, accent color)
+  // This layout makes the home screen feel like a briefing, not a feature menu
 ✓ Haptic feedback on ALL primary actions (tap a primary button, complete an item, switch tabs): import * as Haptics from 'expo-haptics' and call Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) on most taps, Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) on completions
-✓ Voice input: microphone icon (Ionicons 'mic-outline') on every multi-line TextInput. Tap → expo-speech or placeholder voice modal. Even if the API isn't wired, the button must exist and show a "recording" state
+✓ Voice input: microphone icon on every multi-line TextInput. Pattern:
+  const [recording, setRecording] = useState(false)
+  const handleMicPress = () => {
+    setRecording(true)
+    // Use expo-speech for TTS feedback: import * as Speech from 'expo-speech'; Speech.speak('Listening...')
+    // Simulate recording: wait 2s, then inject a realistic placeholder result
+    setTimeout(() => {
+      setRecording(false)
+      onChangeText(value + ' [voice input: describe your idea here and it will appear]')
+    }, 2000)
+  }
+  // Render mic beside the TextInput:
+  // <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+  //   <TextInput style={{ flex: 1 }} ... />
+  //   <TouchableOpacity onPress={handleMicPress} style={{ padding: 12, backgroundColor: recording ? theme.danger + '20' : theme.accentLight, borderRadius: 12, marginLeft: 8 }}>
+  //     <Ionicons name={recording ? 'stop-circle' : 'mic-outline'} size={20} color={recording ? theme.danger : theme.accent} />
+  //   </TouchableOpacity>
+  // </View>
+  // When recording=true: show a subtle red pulsing border on the TextInput (borderColor: theme.danger)
 ✓ Working search that filters data on keystroke
 ✓ At least one modal or bottom sheet (add/edit/view)
 ✓ Stat cards with real numbers + trend indicators
@@ -326,7 +357,17 @@ EVERY APP must include:
 ✓ Proper StatusBar configuration
 ✓ Charts: custom bar/line using View (no recharts — web only)
 ✓ Realistic, diverse mock data (names, companies, numbers with decimals, mixed statuses)
-✓ Offline-first data: all reads come from local state first, network syncs in background. Show a "Syncing..." banner at top when network updates are pending. Data never disappears while offline.
+✓ Offline-first data — reads from local state, syncs to backend in background:
+  import AsyncStorage from '@react-native-async-storage/async-storage'
+  // Pattern: load from AsyncStorage on mount (fast, instant); sync from Supabase after (background)
+  // On mutation: update state immediately + persist to AsyncStorage + add to a syncQueue
+  // SyncQueue: [{id, table, operation, data}] — persisted to AsyncStorage key 'sync_queue'
+  // useSyncQueue hook: on mount, retry all queued items; on success, remove from queue; retry on next mount
+  // Sync status banner: if syncQueue.length > 0 → show "Syncing {syncQueue.length} changes..." fixed top banner (bg-warning, text-warning-foreground, text-xs)
+  // Implementation:
+  //   useEffect(() => { AsyncStorage.getItem('items').then(v => v && setItems(JSON.parse(v))) }, [])
+  //   const saveItem = async (item) => { const next = [...items, item]; setItems(next); await AsyncStorage.setItem('items', JSON.stringify(next)) }
+  // Data NEVER disappears — always read local first, network is additive only
 ✓ Biometric auth gate: on apps that have user data or accounts, add a biometric lock screen. On app resume after 5 min background, prompt FaceID/fingerprint (use expo-local-authentication). Show a "Use biometrics" option on the login screen as an alternative to password.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -878,19 +919,94 @@ const selectPersona = (p: Persona) => { setPersona(p); localStorage.setItem('per
 </code>
 
 INTERACTIVE PRODUCT DEMO (between the pinned walkthrough and stat blocks):
-This is the most important conversion section on the page. It is a LIVE, CLICKABLE mini-version of the actual product UI — NOT a video, NOT a screenshot, NOT a GIF. Built entirely in React:
-- 3-4 interactive states that the user can click through (tabs, a mini-wizard, or a "try it now" sandbox)
-- Real-looking UI rendered in a browser-frame shaped container (a <div> styled as a macOS window or phone frame with title bar dots — optional but impactful)
-- An ambient glow behind the demo container: radial-gradient from accent/30 to transparent
-- A "Live Demo" badge in the top-left of the frame: text-xs font-mono bg-success/10 text-success border-success/20 with a pulsing green dot
-- Below the frame: 3 bullet outcomes the user just demonstrated: "✓ No signup required" | "✓ See your data live" | "✓ Free to try"
-- If the product has a form (CRM, inbox, etc.), the demo shows a real form the user can interact with. If the product is analytics, it shows a real chart with filterable date range. Match the demo to what the product actually does.
+This is the most important conversion section on the page — NOT a video, NOT a screenshot. Built entirely in React with real interactivity:
+<code>
+// components/InteractiveDemo.tsx
+// STEP 1: define 3-4 steps specific to THIS product. Example for a CRM:
+const DEMO_STEPS = [
+  { id: 0, label: 'Add contact', icon: 'UserPlus' },
+  { id: 1, label: 'AI enriches', icon: 'Sparkles' },
+  { id: 2, label: 'Pipeline updates', icon: 'TrendingUp' },
+]
+// Each step renders a DIFFERENT piece of UI inside the frame — not just text.
+// Step 0: an interactive form (name + email input, the user can actually type)
+// Step 1: an "enriching..." skeleton that resolves to a filled contact card
+// Step 2: a mini kanban with the contact's card moving between columns on click
+
+const [activeStep, setActiveStep] = useState(0)
+const [inputVal, setInputVal] = useState('')  // live typing in demo form
+
+// FRAME — macOS browser window style:
+// <div className="relative rounded-xl border border-border overflow-hidden shadow-2xl">
+//   {/* Title bar */}
+//   <div className="flex items-center gap-1.5 px-4 py-3 bg-muted/50 border-b border-border">
+//     <div className="w-3 h-3 rounded-full bg-destructive/70" />
+//     <div className="w-3 h-3 rounded-full bg-warning/70" />
+//     <div className="w-3 h-3 rounded-full bg-success/70" />
+//     <div className="ml-auto flex items-center gap-2 text-[10px] font-mono text-muted-foreground">
+//       <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+//       Live Demo
+//     </div>
+//   </div>
+//   {/* Step nav */}
+//   <div className="flex border-b border-border bg-muted/30">
+//     {DEMO_STEPS.map((s, i) => (
+//       <button key={s.id} onClick={() => setActiveStep(i)}
+//         className={cn('flex-1 px-4 py-2.5 text-xs font-medium transition-all',
+//           activeStep === i ? 'bg-background text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground')}>
+//         {s.label}
+//       </button>
+//     ))}
+//   </div>
+//   {/* Demo content — SWAP PER STEP */}
+//   <div className="min-h-[280px] p-6 bg-background">
+//     <AnimatePresence mode="wait">
+//       <motion.div key={activeStep} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+//         {activeStep === 0 && <DemoFormStep value={inputVal} onChange={setInputVal} onNext={() => setActiveStep(1)} />}
+//         {activeStep === 1 && <DemoEnrichStep name={inputVal || 'Alex Johnson'} onNext={() => setActiveStep(2)} />}
+//         {activeStep === 2 && <DemoPipelineStep name={inputVal || 'Alex Johnson'} />}
+//       </motion.div>
+//     </AnimatePresence>
+//   </div>
+// </div>
+
+// AMBIENT GLOW behind the frame:
+// <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,hsl(var(--primary)/0.15),transparent)]" />
+
+// BELOW FRAME — outcomes row:
+// <div className="flex items-center justify-center gap-8 mt-6 text-sm text-muted-foreground">
+//   {['No signup required', 'See your data live', 'Free to try'].map(t => (
+//     <span key={t} className="flex items-center gap-2"><Check size={14} className="text-success" />{t}</span>
+//   ))}
+// </div>
+</code>
+IMPORTANT: The DemoFormStep, DemoEnrichStep, DemoPipelineStep are product-specific. Build them to actually reflect what THIS product does — a CRM shows a contact form; an analytics tool shows a chart with a filter; a scheduling app shows a calendar picker. The demo is the product in miniature.
 
 ANIMATED SOCIAL PROOF COUNTER (in the stat blocks row):
 Every stat in the <StatBlock> row uses <AnimatedNumber> that counts up from 0 when the section scrolls into view (useIntersectionObserver hook + Framer Motion). The numbers must be SPECIFIC: "65,412 teams" not "65,000+". "73% faster" not "3×". The specificity is what makes people believe them.
 
 ANNUAL/MONTHLY PRICING TOGGLE (in pricing section):
-Every pricing section has a toggle: [Monthly] [Annual — save 20%] implemented as a pill toggle with a framer-motion indicator that slides between options. Annual prices are displayed when annual is selected, with a strikethrough monthly price and "Save $X/year" badge beneath. The toggle is pre-set to Annual (anchoring at the higher-value option).
+Every pricing section has a toggle pre-set to Annual. Implementation:
+<code>
+const [annual, setAnnual] = useState(true)  // pre-set to Annual — higher anchor
+// Toggle UI:
+<div className="relative flex items-center bg-muted rounded-full p-1 w-fit mx-auto">
+  <motion.div layoutId="pricing-pill"
+    className="absolute inset-y-1 rounded-full bg-background shadow-sm border border-border"
+    style={{ left: annual ? '50%' : '4px', right: annual ? '4px' : '50%' }}
+    transition={{ type: 'spring', stiffness: 400, damping: 30 }} />
+  {[{ label: 'Monthly', val: false }, { label: 'Annual', val: true }].map(opt => (
+    <button key={String(opt.val)} onClick={() => setAnnual(opt.val)}
+      className={cn('relative z-10 px-5 py-1.5 text-sm font-medium rounded-full transition-colors', annual === opt.val ? 'text-foreground' : 'text-muted-foreground')}>
+      {opt.label}
+      {opt.val && <span className="ml-2 text-[10px] font-mono bg-success/15 text-success px-1.5 py-0.5 rounded-full">save 20%</span>}
+    </button>
+  ))}
+</div>
+// In each PricingCard: show annual ? plan.annualPrice : plan.monthlyPrice
+// Below annual price: <p className="text-xs text-muted-foreground line-through">{plan.monthlyPrice}/mo</p>
+// "Save $X/year" badge beneath price when annual is selected
+</code>
 
 AI CHAT WIDGET (mandatory on every website build):
 Build entirely in React — NOT a third-party embed. Mount it once in App.tsx so it persists across all pages. Implementation:
@@ -1404,11 +1520,88 @@ ROLE-BASED UI (enforce visually, not just via API):
 - Role badge in sidebar next to user name: "Admin" | "Member" | "Viewer" in text-xs font-mono bg-primary/10.
 
 WORKSPACE SWITCHER (mandatory if the app concept could support multiple workspaces):
-- A workspace dropdown in the sidebar above the nav, showing the current org logo (2-letter avatar fallback) + name + plan badge. Click → dropdown of other orgs the user belongs to + "+ Create workspace" at the bottom.
-- Switching workspace refreshes all data via OrgContext — no full page reload.
+<code>
+// components/WorkspaceSwitcher.tsx — mount at the TOP of the sidebar, above all nav items
+interface OrgOption { id: string; name: string; plan: string; initials: string }
+const MOCK_ORGS: OrgOption[] = [
+  { id: '1', name: 'Acme Corp', plan: 'Pro', initials: 'AC' },
+  { id: '2', name: 'Personal', plan: 'Free', initials: 'P' },
+]
+const [open, setOpen] = useState(false)
+const { org } = useOrg()
+
+// Trigger — always visible in sidebar:
+// <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-accent transition-colors">
+//   <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center text-[11px] font-bold text-primary-foreground">{org?.name?.slice(0,2).toUpperCase()}</div>
+//   <div className="flex-1 min-w-0 text-left">
+//     <p className="text-sm font-medium text-foreground truncate">{org?.name}</p>
+//     <p className="text-[10px] text-muted-foreground font-mono">{org?.plan} plan</p>
+//   </div>
+//   <ChevronsUpDown size={14} className="text-muted-foreground shrink-0" />
+// </button>
+
+// Dropdown (AnimatePresence):
+// <motion.div className="absolute left-0 top-full mt-1 w-full bg-popover border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+//   initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.97 }}>
+//   <div className="p-1">
+//     {MOCK_ORGS.map(o => (
+//       <button key={o.id} onClick={() => { switchOrg(o.id); setOpen(false) }}
+//         className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-accent text-sm transition-colors">
+//         <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center text-[11px] font-bold">{o.initials}</div>
+//         <span className="flex-1 text-left font-medium">{o.name}</span>
+//         {o.id === org?.id && <Check size={14} className="text-primary" />}
+//       </button>
+//     ))}
+//   </div>
+//   <div className="border-t border-border p-1">
+//     <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+//       <Plus size={14} /><span>Create workspace</span>
+//     </button>
+//   </div>
+// </motion.div>
+</code>
 
 AUDIT LOG (in Settings → Activity tab):
-- Full-page timeline of every significant action in the workspace: who did what, to which record, when. Format: avatar + "Sarah moved Horizon Labs to Negotiation" + "2 hours ago". Group by day. Filterable by actor and action type. NOT a raw API log — human-readable sentences.
+<code>
+// components/AuditLog.tsx — renders inside Settings as a tab panel
+interface AuditEvent {
+  id: string; actor: { name: string; avatar?: string; initials: string }
+  action: string   // e.g. "moved Horizon Labs to Negotiation"
+  resource: string // e.g. "Deal #1847"
+  timestamp: Date
+}
+// Generate 20-30 realistic audit events in useState — use specific action sentences, not generic ones
+// Group by day:
+const grouped = events.reduce((acc: Record<string, AuditEvent[]>, ev) => {
+  const day = ev.timestamp.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+  if (!acc[day]) acc[day] = []
+  acc[day].push(ev)
+  return acc
+}, {})
+
+// Filter bar: actor dropdown + action type dropdown + date range
+// <div className="flex gap-2 mb-6">
+//   <select className="..."> actor options </select>
+//   <select className="..."> action type options </select>
+// </div>
+
+// Timeline rendering:
+// {Object.entries(grouped).map(([day, dayEvents]) => (
+//   <div key={day}>
+//     <div className="text-xs font-mono uppercase tracking-wider text-muted-foreground py-3 border-b border-border mb-2">{day}</div>
+//     {dayEvents.map(ev => (
+//       <div key={ev.id} className="flex items-start gap-3 py-3 border-b border-border/50">
+//         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">{ev.actor.initials}</div>
+//         <div className="flex-1 min-w-0">
+//           <p className="text-sm"><span className="font-medium text-foreground">{ev.actor.name}</span> <span className="text-muted-foreground">{ev.action}</span></p>
+//           <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">{ev.resource} · {relativeTime(ev.timestamp)}</p>
+//         </div>
+//       </div>
+//     ))}
+//   </div>
+// ))}
+// relativeTime: returns "2 minutes ago" | "3 hours ago" | "yesterday" — implement with pure Date arithmetic, no external library
+</code>
 
 MAIN SHELL (persistent across all app pages):
 - Sidebar: logo top, nav items with lucide icons + labels, section dividers with tiny uppercase labels, user avatar + name + plan badge (bg-primary/10 text-primary text-xs font-mono) at bottom, collapse toggle with framer-motion width animation
@@ -1471,14 +1664,93 @@ SETTINGS (/settings) — tab sidebar layout (NOT top tabs):
 - Activity: audit log timeline (see MULTI-TENANCY section above)
 
 AI COPILOT PANEL — ⌘K (mandatory for every SaaS build):
-The Cmd+K palette is NOT just a search box. It is the AI brain of the app. Every SaaS build must implement a full command palette that:
-- Opens as an overlay modal on Cmd+K (or Ctrl+K on Windows) with a dark glass backdrop
-- Has a text input that routes to EITHER a command (prefix with "/") OR a natural language AI query
-- Natural language: "Show me deals that haven't moved in 14 days" → the AI responds inline in the palette with a filtered table + link to open it full-screen
-- Commands: /new [entity], /go [page], /invite [email], /export [format] — each with keyboard shortcut shown on the right
-- Recent commands shown as chips below the input
-- Keyboard-only navigable (↑↓ arrows, Enter, Escape)
-- The palette is the power-user feature that makes the app feel alive
+<code>
+// components/CopilotPalette.tsx — mount once in App.tsx root
+// Register Cmd+K listener in App.tsx: document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCopilotOpen(true) } })
+
+interface CopilotCmd { id: string; label: string; shortcut?: string; group: string; action: () => void }
+// CUSTOMIZE commands to this specific app's actions:
+const COMMANDS: CopilotCmd[] = [
+  { id: 'new-deal', label: 'New deal', shortcut: 'N', group: 'Create', action: () => navigate('#/deals/new') },
+  { id: 'go-dash',  label: 'Go to Dashboard', shortcut: 'G D', group: 'Navigate', action: () => navigate('#/dashboard') },
+  { id: 'go-settings', label: 'Go to Settings', shortcut: 'G S', group: 'Navigate', action: () => navigate('#/settings') },
+  { id: 'export',   label: 'Export as CSV', group: 'Actions', action: exportCSV },
+  { id: 'invite',   label: 'Invite teammate', group: 'Actions', action: () => navigate('#/settings/team') },
+]
+
+// Natural language scripted responses — make these SPECIFIC to the app's data:
+const NL_RESPONSES: Record<string, string> = {
+  'deals not moved': 'Found 4 deals with no activity in 14+ days: Horizon Labs, Vertex Systems, MedCore, Stratos AI. Filter applied.',
+  'revenue': 'Pipeline revenue: $847,000. Weighted forecast: $312,000. Top deal: Horizon Labs at $120k (90% close probability).',
+  'team activity': 'Sarah Chen closed 3 deals this week (+2 vs last). Marcus Rivera has 12 follow-ups overdue.',
+}
+
+const [query, setQuery] = useState('')
+const [selected, setSelected] = useState(0)
+const [aiResult, setAiResult] = useState<string | null>(null)
+const [aiLoading, setAiLoading] = useState(false)
+const inputRef = useRef<HTMLInputElement>(null)
+useEffect(() => { if (open) { setQuery(''); setAiResult(null); setSelected(0); setTimeout(() => inputRef.current?.focus(), 50) } }, [open])
+
+const isNL = query.length > 12 && !query.startsWith('/')
+const filtered = COMMANDS.filter(c => c.label.toLowerCase().includes(query.toLowerCase()))
+const grouped = filtered.reduce((acc: Record<string, CopilotCmd[]>, c) => { (acc[c.group] = acc[c.group] || []).push(c); return acc }, {})
+
+const handleEnter = () => {
+  if (isNL) {
+    setAiLoading(true)
+    setTimeout(() => {
+      const key = Object.keys(NL_RESPONSES).find(k => query.toLowerCase().includes(k))
+      setAiResult(key ? NL_RESPONSES[key] : 'No results found for that query. Try: "deals not moved", "revenue", or "team activity".')
+      setAiLoading(false)
+    }, 900)
+  } else if (filtered[selected]) {
+    filtered[selected].action(); setOpen(false)
+  }
+}
+
+// RENDER — full-screen overlay:
+// <AnimatePresence>
+//  {open && (
+//   <motion.div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
+//     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+//     <div className="absolute inset-0 bg-foreground/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
+//     <motion.div className="relative w-full max-w-xl bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+//       initial={{ y: -20, opacity: 0, scale: 0.96 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: -20, opacity: 0 }}>
+//       {/* Search input */}
+//       <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border">
+//         <Search size={16} className="text-muted-foreground shrink-0" />
+//         <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
+//           onKeyDown={e => { if (e.key==='ArrowDown') setSelected(s=>Math.min(s+1,filtered.length-1)); if (e.key==='ArrowUp') setSelected(s=>Math.max(s-1,0)); if (e.key==='Enter') handleEnter(); if (e.key==='Escape') setOpen(false) }}
+//           placeholder={isNL ? 'Ask anything about your data...' : 'Search commands...'}
+//           className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />
+//         <kbd className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">ESC</kbd>
+//       </div>
+//       {/* AI result */}
+//       {aiLoading && <div className="px-4 py-3 text-sm text-muted-foreground flex items-center gap-2"><Loader2 size={14} className="animate-spin" />Searching your data...</div>}
+//       {aiResult && <div className="px-4 py-3 text-sm text-foreground bg-primary/5 border-b border-border">{aiResult}</div>}
+//       {/* Commands */}
+//       {!isNL && Object.entries(grouped).map(([group, cmds]) => (
+//         <div key={group}>
+//           <div className="px-4 py-1.5 text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-muted/30">{group}</div>
+//           {cmds.map((cmd, i) => (
+//             <button key={cmd.id} onClick={() => { cmd.action(); setOpen(false) }}
+//               className={cn('flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors', selected===i?'bg-accent text-foreground':'text-muted-foreground hover:bg-accent/50')}>
+//               <span className="flex-1 text-left">{cmd.label}</span>
+//               {cmd.shortcut && <kbd className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">{cmd.shortcut}</kbd>}
+//             </button>
+//           ))}
+//         </div>
+//       ))}
+//       {/* Footer */}
+//       <div className="flex items-center gap-4 px-4 py-2 border-t border-border text-[10px] text-muted-foreground font-mono">
+//         <span>↑↓ navigate</span><span>↵ select</span><span>Try: "deals not moved" or "team revenue"</span>
+//       </div>
+//     </motion.div>
+//   </motion.div>
+//  )}
+// </AnimatePresence>
+</code>
 
 ANALYTICS (/analytics):
 - Date range pill tabs + custom date pair
@@ -1883,16 +2155,91 @@ export function useSyncStatus() {
 </code>
 
 SPLIT-PANE LAYOUT (mandatory for apps with a list + detail pattern — email, CRM, file manager, notes):
-- Left: resizable list panel (default 35% width, resizable via a drag handle)
-- Right: detail panel that fills the remaining space
-- Selecting an item in the list reveals its detail without a page navigation — the URL hash updates (#/items/[id]) but the left pane stays visible
-- On mobile width: left pane becomes full-width, tapping an item pushes to a detail view
+<code>
+// hooks/useSplitPane.ts
+export function useSplitPane(defaultWidth = 35) {
+  const [width, setWidth] = useState(defaultWidth)
+  const dragging = useRef(false)
+  const startX = useRef(0)
+  const startW = useRef(defaultWidth)
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    dragging.current = true
+    startX.current = e.clientX
+    startW.current = width
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }, [width])
+
+  useEffect(() => {
+    const move = (e: MouseEvent) => {
+      if (!dragging.current) return
+      const delta = ((e.clientX - startX.current) / window.innerWidth) * 100
+      setWidth(Math.min(55, Math.max(20, startW.current + delta)))
+    }
+    const up = () => { dragging.current = false; document.body.style.cursor = ''; document.body.style.userSelect = '' }
+    document.addEventListener('mousemove', move)
+    document.addEventListener('mouseup', up)
+    return () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up) }
+  }, [])
+
+  return { width, onMouseDown }
+}
+
+// Usage in App.tsx layout:
+const { width, onMouseDown } = useSplitPane(35)
+// <div className="flex h-screen overflow-hidden">
+//   {/* Left panel */}
+//   <div style={{ width: width + '%' }} className="flex flex-col border-r border-border overflow-hidden shrink-0">
+//     {/* list content */}
+//   </div>
+//   {/* Resize handle */}
+//   <div onMouseDown={onMouseDown} className="w-1 cursor-col-resize bg-border hover:bg-primary/40 transition-colors shrink-0 active:bg-primary" />
+//   {/* Right panel */}
+//   <div className="flex-1 overflow-auto">
+//     {selectedItem ? <DetailPanel item={selectedItem} /> : <EmptyDetail />}
+//   </div>
+// </div>
+// Mobile: at md breakpoint, left pane is full width; selectedItem pushes right pane full-screen
+</code>
 
 COMMAND PALETTE (mandatory on every web app):
-- Cmd+K opens a full-screen overlay command palette (dark glass panel, centered)
-- Shows: recent actions, available actions (New item, Filter by status, Export, Jump to view), and a search that filters in real-time
-- Each result has: icon + label + keyboard shortcut (right-aligned). Arrow keys navigate, Enter executes.
-- The palette is the single fastest path to every action in the app — it IS the power user's primary interface
+<code>
+// components/CommandPalette.tsx — task-execution focused (NOT AI query routing, that's SaaS)
+interface PaletteItem { id: string; label: string; subtitle?: string; icon: LucideIcon; shortcut?: string; section: string; action: () => void }
+
+// CUSTOMIZE to this app's actual actions + recent items:
+const ALL_ITEMS: PaletteItem[] = [
+  { id: 'new', label: 'New item', icon: Plus, shortcut: '⌘N', section: 'Actions', action: () => setAddOpen(true) },
+  { id: 'export', label: 'Export as CSV', icon: Download, section: 'Actions', action: exportCSV },
+  { id: 'filter-active', label: 'Filter: Active only', icon: Filter, section: 'Filters', action: () => setFilter('active') },
+  { id: 'filter-overdue', label: 'Filter: Overdue', icon: AlertCircle, section: 'Filters', action: () => setFilter('overdue') },
+  { id: 'shortcuts', label: 'Keyboard shortcuts', icon: Keyboard, shortcut: '?', section: 'Help', action: () => setShortcutsOpen(true) },
+  // Add recent items dynamically: items.slice(0,5).map(i => ({ id: i.id, label: i.title, icon: FileText, section: 'Recent', action: () => setSelected(i) }))
+]
+
+const [query, setQuery] = useState('')
+const [cursor, setCursor] = useState(0)
+const inputRef = useRef<HTMLInputElement>(null)
+useEffect(() => { if (open) { setQuery(''); setCursor(0); setTimeout(() => inputRef.current?.focus(), 30) } }, [open])
+const filtered = ALL_ITEMS.filter(item => query === '' || item.label.toLowerCase().includes(query.toLowerCase()) || item.subtitle?.toLowerCase().includes(query.toLowerCase()))
+const grouped = filtered.reduce((acc: Record<string, PaletteItem[]>, item) => { (acc[item.section] = acc[item.section] || []).push(item); return acc }, {})
+const flat = Object.values(grouped).flat()
+
+const run = (item: PaletteItem) => { item.action(); setOpen(false) }
+const onKey = (e: React.KeyboardEvent) => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); setCursor(c => Math.min(c+1, flat.length-1)) }
+  if (e.key === 'ArrowUp') { e.preventDefault(); setCursor(c => Math.max(c-1, 0)) }
+  if (e.key === 'Enter' && flat[cursor]) run(flat[cursor])
+  if (e.key === 'Escape') setOpen(false)
+}
+
+// RENDER — dark glass overlay, same AnimatePresence pattern as SaaS copilot
+// Sections: each section header is a monospace uppercase label
+// Items: icon (16px) + label + optional subtitle (text-xs text-muted-foreground) + shortcut right-aligned
+// Cursor: bg-accent on hovered/keyboard-selected item
+// Empty state: "No matching actions" with a light icon
+</code>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MANDATORY QUALITY BOILERPLATE — COPY THESE PATTERNS
