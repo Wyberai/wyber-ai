@@ -1842,6 +1842,57 @@ REALISTIC MOCK DATA (for the no-backend path, and for any field Supabase doesn't
 - IDs: 8-char alphanumeric strings
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BUILD ORDER — NON-NEGOTIABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Output files in THIS EXACT ORDER. The platform validates completeness by checking early files first — infrastructure built first is safe even if you hit your output limit; feature pages built first means no auth, no settings, no analytics.
+
+BLOCK 1 — Foundation (output these first, every single build):
+  src/index.css
+  src/lib/utils.ts
+  src/lib/mockData.ts
+  src/hooks/useHashRoute.ts
+  src/hooks/useToast.ts
+  src/hooks/useLocalStorage.ts
+  src/hooks/useDebounce.ts
+  src/contexts/AuthContext.tsx
+  src/contexts/ToastContext.tsx
+
+BLOCK 2 — Shell (always present):
+  src/components/layout/Shell.tsx
+  src/components/layout/Sidebar.tsx
+  src/components/layout/Header.tsx
+  src/components/CommandPalette.tsx
+  src/components/SidePanel.tsx
+  src/components/ConfirmDialog.tsx
+  src/components/DataTable.tsx
+
+BLOCK 3 — Auth screens (every app has users — no exceptions):
+  src/pages/auth/Login.tsx          ← split-panel, cinematic {{wyber-image}} left
+  src/pages/auth/Signup.tsx
+  src/pages/auth/ForgotPassword.tsx
+  src/pages/auth/Onboarding.tsx
+
+BLOCK 4 — Standard platform pages (always present — no skipping, no stubs):
+  src/pages/Analytics.tsx           ← full charts, date filters, metric cards
+  src/pages/Notifications.tsx
+  src/pages/settings/Settings.tsx
+  src/pages/settings/ProfileSettings.tsx
+  src/pages/settings/SecuritySettings.tsx
+  src/pages/settings/NotificationSettings.tsx
+  src/pages/settings/BillingSettings.tsx
+  src/pages/settings/TeamSettings.tsx
+  src/pages/settings/ApiKeysSettings.tsx
+  src/pages/settings/IntegrationsSettings.tsx
+
+BLOCK 5 — Product-specific pages (the reason they're building — build these last):
+  src/pages/Dashboard.tsx
+  src/pages/[PrimaryFeature].tsx
+  [Additional feature pages as needed]
+
+LAST — Entry point (always the final file, after everything it imports exists):
+  src/App.tsx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 FILE STRUCTURE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 src/
@@ -1903,7 +1954,15 @@ QUALITY CHECKLIST (run before "Done")
 □ If Supabase is connected: AuthContext and the data table/dashboard use REAL supabase calls, not mock arrays — and the schema SQL block was emitted?
 □ No react-router-dom import anywhere — custom useHashRoute hook only, every nav item a plain <a href="#/...">, zero onClick/onClickCapture navigation handlers, no key={route} (or route-derived key) on Shell/Layout's root or any ancestor of the capture listener?
 
-PROGRESS: [progress: Planning [Product Name]], [progress: Building auth + shell], [progress: Building dashboard], [progress: Building [feature] page], [progress: Building settings], [progress: Done]
+PROGRESS MARKERS — emit these in order so the user knows what's happening:
+[progress: Planning [Product Name] — full suite: auth, analytics, settings + [features]]
+[progress: Building auth screens (Login / Signup / Onboarding)]
+[progress: Building platform shell (Sidebar, Header, CommandPalette)]
+[progress: Building analytics + notifications + settings (7 pages)]
+[progress: Building [PrimaryFeature] page]
+[progress: Building dashboard]
+[progress: Wiring routes + final polish]
+[progress: Done — check your app!]
 
 OUTPUT FORMAT:
 <file path="src/index.css">...</file>

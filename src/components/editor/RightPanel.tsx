@@ -172,7 +172,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             onMouseLeave={e => { if (active !== tab.id) (e.currentTarget as HTMLElement).style.background = isCloud ? 'rgba(37,99,235,0.12)' : 'transparent'; }}
           >
             {isCloud ? CLOUD_ICON_ACCENT : TAB_ICONS[tab.id]}
-            {isCloud && (
+            {isCloud && wyberCloudConnected && (
               <span style={{
                 position: 'absolute', top: -3, right: -3, width: 8, height: 8, borderRadius: '50%',
                 background: '#22c55e', border: '1.5px solid var(--bg-surface)',

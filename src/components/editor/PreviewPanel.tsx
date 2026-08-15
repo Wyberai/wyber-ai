@@ -932,6 +932,7 @@ Change requested: ${editInstruction.trim()}`
               srcDoc={WYBER_GAME_SRC}
               sandbox="allow-scripts"
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+              onLoad={e => (e.currentTarget as HTMLIFrameElement).focus()}
             />
           </div>
         )}

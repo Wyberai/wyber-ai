@@ -35,7 +35,7 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
 <div id="hdr">
   <div id="hdr-l">
     <div class="dot"></div>
-    <span id="hdr-t">&#x1F3D7; Building your app &mdash; play while you wait</span>
+    <span id="hdr-t">&#x1F3D7; Building your full production suite &mdash; auth, analytics, settings + your features (~10 min)</span>
   </div>
   <span id="hdr-s">&#x26A1; 0 credits</span>
 </div>
@@ -119,6 +119,8 @@ canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
     if(plr.jumps<2){ plr.vy=JUMP_V; plr.jumps++; plr.onGround=false; }
   }
 
+  canvas.setAttribute('tabindex','0');
+  canvas.focus();
   document.addEventListener('keydown',function(e){
     if((e.code==='Space'||e.code==='ArrowUp')&&!keys[e.code]){ handleJump(); e.preventDefault(); }
     keys[e.code]=true;

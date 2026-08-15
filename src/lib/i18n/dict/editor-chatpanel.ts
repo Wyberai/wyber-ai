@@ -26,11 +26,11 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     wiringInteractionsMsg: '🔌 Wiring up interactions — magic is happening',
     addingDataMsg: '📊 Adding realistic data — your app is getting smarter',
     polishingUiMsg: '✨ Polishing the UI — can you see the shine yet?',
-    almostThereMsg: '⏳ Large builds take a few minutes — your app is on its way...',
-    applyingChangesMsg: '🔄 Applying your changes — hold tight',
+    almostThereMsg: '⏳ Building your full production suite — auth, analytics, settings + all features. Usually 10–20 min. Worth the wait.',
+    applyingChangesMsg: '🔄 Working on your changes...',
     updatingComponentsMsg: '🎯 Updating components — precision mode engaged',
     refiningCodeMsg: '🔬 Refining the code — making it pristine',
-    almostDoneMsg: '⏳ Applying your changes — may take a couple of minutes...',
+    almostDoneMsg: '⏳ Still working — WyberAi builds full production code, not shortcuts. Almost there.',
 
     // Header toolbar
     undoTooltip: 'Undo last change',
@@ -134,7 +134,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     templateIncludesStripeMsg: '💳 **This template includes Stripe payments.** Add your `STRIPE_SECRET_KEY` in the Connectors tab to enable checkout.',
     streamCutOffMsg: '✦ Still building — finishing the remaining files now.',
     emptyResponseMsg: "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again.",
-    nothingChangedMsg: "**Nothing was actually changed** — the model responded but didn't produce any file changes, so the app is unmodified. You weren't charged for this. If your message included a large paste (a big table, a long document), try splitting it into smaller pieces and asking again.",
+    nothingChangedMsg: "**No file changes were made** — try being more specific. Instead of \"add analytics\", try \"Build a full Analytics page with a line chart showing monthly revenue, a bar chart for deals by stage, and 4 KPI cards.\" You weren't charged for this.",
     continuationDoneMsg: '✓ Finished applying the remaining files — the build is complete. Check the preview.',
     hitOutputLimitMsg: '✦ Finishing your app — the rest lands in the next pass.',
     supabaseUnreachableMsg: "⚠ I couldn't reach your connected Supabase project, so this build doesn't have a working database. Check your keys in the Connectors tab, then ask me to rebuild the data layer.",

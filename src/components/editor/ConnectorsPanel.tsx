@@ -175,10 +175,12 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
       return;
     }
 
-    // Ask for the exact key(s) inline (same gate ChatPanel already shows for
-    // Supabase/Stripe when typed in chat) — matches how Lovable prompts for a
-    // secret right when a feature needs one, no OAuth dance, no fake "connected".
+    // Ask for the exact key(s) inline — show loading state while the secrets
+    // prompt appears in chat so the button doesn't look dead on click.
+    setAdding(connector.id);
     sendToChat('wyber:request-secrets', { prompt: connector.prompt, group: { label: connector.name, icon: connector.icon, color: connector.color, keys: connector.secretKeys } });
+    await new Promise(r => setTimeout(r, 1200));
+    setAdding(null);
   };
 
   const renderRow = (c: typeof CONNECTORS[0]) => {
