@@ -4148,42 +4148,41 @@ export async function POST(req: NextRequest) {
       if (balance > 20 && finalBalance <= 20 && finalBalance > 0) {
         notify(admin, user.id, 'credits_low', { balance: finalBalance }).catch(() => {})
       }
-    }
-
-    // ── Build API cost cap: abort before Anthropic call if this build already
-    // spent $5. Queries the cumulative cost_usd logged for this buildId in the
-    // last 6 hours. Protects against runaway staged builds (e.g. 7 fill passes
-    // each billed as a full Opus build = ~$10+). Applies to all Claude tiers;
-    // gpt/wybercode have cost_usd=0 so they never trigger this cap.
-    const BUILD_API_COST_CAP_USD = 5
-    if (buildId && user?.id) {
-      const capWindow = new Date(Date.now() - 6 * 3600_000).toISOString()
-      const { data: buildCostRows } = await admin
-        .from('generation_usage_log')
-        .select('cost_usd')
-        .eq('build_id', buildId)
-        .eq('user_id', user.id)
-        .gte('created_at', capWindow)
-      const buildSpentUsd = (buildCostRows ?? []).reduce(
-        (sum: number, r: { cost_usd: number | null }) => sum + (r.cost_usd || 0), 0
-      )
-      if (buildSpentUsd >= BUILD_API_COST_CAP_USD) {
-        // Refund whatever platform credits were just deducted for this pass
-        await settleRefund('build-cost-cap')
-        // Write a project message so the user sees the cap even for silent
-        // fill passes (those never own the chat bubble and swallow the error).
-        if (projectId) {
-          admin.from('project_messages').insert({
-            project_id: projectId, role: 'assistant',
-            content: `⚠ Build stopped: Anthropic API spend for this build reached the $${BUILD_API_COST_CAP_USD} safety cap. Your platform credits have been refunded. Some screens may be missing — start a new build to complete the app.`,
-            files_changed: [],
-          }).then(() => {}, () => {})
+      // ── Build API cost cap: abort before Anthropic call if this build already
+      // spent $5. Queries the cumulative cost_usd logged for this buildId in the
+      // last 6 hours. Protects against runaway staged builds (e.g. 7 fill passes
+      // each billed as a full Opus build = ~$10+). Applies to all Claude tiers;
+      // gpt/wybercode have cost_usd=0 so they never trigger this cap.
+      const BUILD_API_COST_CAP_USD = 5
+      if (buildId && user?.id) {
+        const capWindow = new Date(Date.now() - 6 * 3600_000).toISOString()
+        const { data: buildCostRows } = await admin
+          .from('generation_usage_log')
+          .select('cost_usd')
+          .eq('build_id', buildId)
+          .eq('user_id', user.id)
+          .gte('created_at', capWindow)
+        const buildSpentUsd = (buildCostRows ?? []).reduce(
+          (sum: number, r: { cost_usd: number | null }) => sum + (r.cost_usd || 0), 0
+        )
+        if (buildSpentUsd >= BUILD_API_COST_CAP_USD) {
+          // Refund whatever platform credits were just deducted for this pass
+          await settleRefund('build-cost-cap')
+          // Write a project message so the user sees the cap even for silent
+          // fill passes (those never own the chat bubble and swallow the error).
+          if (projectId) {
+            admin.from('project_messages').insert({
+              project_id: projectId, role: 'assistant',
+              content: `⚠ Build stopped: Anthropic API spend for this build reached the $${BUILD_API_COST_CAP_USD} safety cap. Your platform credits have been refunded. Some screens may be missing — start a new build to complete the app.`,
+              files_changed: [],
+            }).then(() => {}, () => {})
+          }
+          return new Response(JSON.stringify({
+            error: `Build stopped: Anthropic API spend for this build reached the $${BUILD_API_COST_CAP_USD} safety cap. Your platform credits have been refunded. Start a new build if needed.`,
+            code: 'BUILD_COST_CAP',
+            spent_usd: Number(buildSpentUsd.toFixed(2)),
+          }), { status: 402 })
         }
-        return new Response(JSON.stringify({
-          error: `Build stopped: Anthropic API spend for this build reached the $${BUILD_API_COST_CAP_USD} safety cap. Your platform credits have been refunded. Start a new build if needed.`,
-          code: 'BUILD_COST_CAP',
-          spent_usd: Number(buildSpentUsd.toFixed(2)),
-        }), { status: 402 })
       }
     }
 
@@ -5103,6 +5102,20 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // Blocking findings per path, pending hand-back as failed tool_results.
             const vetoByPath = new Map<string, SecurityRuleFinding[]>()
             let assistantSoFar = ''
+            // Emit an early progress marker the instant the stream opens so the
+            // client UI escapes the timed BUILD_MSGS fallback immediately — before
+            // the model writes its first token.
+            if (stage !== 'plan') {
+              const nFiles = (typeof totalPlannedFiles === 'number' && totalPlannedFiles > 0)
+                ? totalPlannedFiles
+                : (Array.isArray(stageFiles) ? stageFiles.length : 0)
+              const startLabel = nFiles > 0
+                ? 'Generating your app — ' + nFiles + ' files'
+                : 'Generating your app'
+              const startMarker = '[progress: ' + startLabel + ']\n'
+              assistantSoFar += startMarker
+              try { controller.enqueue(encoder.encode(startMarker)) } catch { /* stream closing */ }
+            }
             let loopMessages: Anthropic.MessageParam[] = [...finalMessages]
             let stream = firstStream
             let inThinkingBlock = false
