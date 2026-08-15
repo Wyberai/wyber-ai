@@ -203,5 +203,9 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
 export function classifyClaudeParallelFailure(result: ClaudeParallelResult): ClaudeParallelFailureReason | null {
   if (!/<(file|edit) path="/.test(result.text)) return 'empty-output'
   if (result.truncated) return 'truncated-page'
+  // A real app needs at minimum App.tsx + some logic — anything under 500
+  // output tokens is just boilerplate (CSS stub, a single empty component)
+  // and will trigger self-heal, showing the user a confusing second message.
+  if (result.usage.outputTokens < 500) return 'empty-output'
   return null
 }

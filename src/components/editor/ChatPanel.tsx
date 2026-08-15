@@ -2068,6 +2068,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         addMessage({ id: msgId, role: 'assistant', content: shortMsg, timestamp: Date.now(), status: 'error' });
         persistMessage('assistant', shortMsg);
         pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(plannedFileCount)) });
+        setIsGenerating(false);
         return;
       }
     }
@@ -2108,6 +2109,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // echoedUser: user message already added at the top of runAgenticBuild.
       // sharedBubbleId: reuse the planning/credit bubble created above.
       await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
+      // The one-shot path uses sharedBubbleId, so ownsBubble=false inside executeGeneration
+      // and its finally block never calls setIsGenerating(false). Clear it here explicitly.
+      setIsGenerating(false);
       return;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) + costSuffix });

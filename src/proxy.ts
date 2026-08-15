@@ -120,6 +120,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/designers') ||
     path.startsWith('/affiliates') ||
     path.startsWith('/challenge') ||
+    // Independence Day contest — ad traffic, public landing page.
+    path.startsWith('/independence-day') ||
     // Public browse + detail pages, AND /marketplace/sell — that page enforces
     // its own login redirect so a signed-out visitor sees a clean bounce with
     // `next` preserved, instead of the generic gate below stripping it.

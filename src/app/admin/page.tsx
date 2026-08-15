@@ -24,6 +24,7 @@ export default async function AdminPage() {
     { data: recentFlows },
     { data: waitlistEmails },
     { data: creditUsage },
+    { data: allCreditUsage },
     { data: todaySignups },
     { data: recentGenerations },
     { data: recentMcpProjects },
@@ -40,6 +41,7 @@ export default async function AdminPage() {
     db.from('flows').select('id,name,run_count,last_run_at,created_at,user_id').order('created_at', { ascending: false }).limit(20),
     db.from('ai_employee_waitlist').select('email,created_at').order('created_at', { ascending: false }).limit(100),
     db.from('credit_usage').select('user_id,amount,reason,created_at').order('created_at', { ascending: false }).limit(50),
+    db.from('credit_usage').select('amount'),
     db.from('profiles').select('id').gte('created_at', new Date(Date.now() - 86400000).toISOString()),
     db.from('generations').select('id,created_at').gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString()),
     db.from('projects').select('id,name,framework,created_at,user_id').eq('created_via', 'mcp').order('created_at', { ascending: false }).limit(20),
@@ -52,7 +54,7 @@ export default async function AdminPage() {
     totalCreditsInSystem += p.credits ?? 0;
   });
 
-  const totalCreditsBurned = creditUsage?.reduce((s, r) => s + (r.amount ?? 0), 0) ?? 0;
+  const totalCreditsBurned = allCreditUsage?.reduce((s, r) => s + (r.amount ?? 0), 0) ?? 0;
 
   // Generations per day for the last 7 days
   const genByDay: Record<string, number> = {};

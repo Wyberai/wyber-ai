@@ -157,6 +157,11 @@ export function cleanStreamingDisplay(raw: string): string {
   // [plan: ...] and [complete: ...] are internal generation markers, not chat
   out = out.replace(/\[plan:[^\]]+\]/gi, '');
   out = out.replace(/\[complete:[^\]]+\]/gi, '');
+  // [progress: ...] are extracted by extractProgressLines and shown in the
+  // progress steps UI — never as raw chat text. Also cut a partial marker.
+  out = out.replace(/\[progress:[^\]]+\]/gi, '');
+  const openProgress = out.search(/\[progress:[^\]]*$/i);
+  if (openProgress !== -1) out = out.slice(0, openProgress);
   return out.trim();
 }
 

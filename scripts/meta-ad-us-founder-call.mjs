@@ -1,43 +1,46 @@
 // Generate WyberAi Meta/Instagram carousel ad creatives — "Free Founder Call"
-// campaign targeting US small-business-owner audience (50+). Drives straight
-// to a 1:1 scoping call for the MANAGED build service (we build it, not "you
-// build it yourself"). FINAL angle (after two reworks — see git history /
-// card1() comment for the earlier "become a founder" and "earn income"
-// drafts that were tried and moved away from): TIME + TOOL CONSOLIDATION —
-// replace the spreadsheets/texts/disconnected-apps a small business owner
-// juggles with one real app. No identity claim, no earnings claim, no
-// pricing anywhere in the creative. Same headless-Chrome + brand pattern as
-// scripts/meta-ad-india-skillbuilders.mjs / scripts/meta-ad-us-carousel.mjs
-// — pixel-perfect logo straight from the real SVG (src/components/shared/
-// WyberLogo.tsx), same dark bg + sky-blue accent design system used
-// everywhere else on wyberai.com.
+// campaign, landing at wyberai.com/us-consulting. Same headless-Chrome +
+// brand pattern as scripts/meta-ad-india-skillbuilders.mjs / scripts/
+// meta-ad-us-carousel.mjs — pixel-perfect logo straight from the real SVG
+// (src/components/shared/WyberLogo.tsx), same dark bg + sky-blue accent
+// design system used everywhere else on wyberai.com.
 //
-// The real Done-For-You tiers this call is meant to lead into are $199/$399/
-// $799 (src/app/pricing/PricingClient.tsx:508-510, same numbers in src/lib/
-// consultation-brief.ts:19-22), currently 50% off through Aug 15 2026 — that
-// pricing is intentionally NOT shown here; it lives on the call itself
-// (per the real /consult page flow) and in the founder's scoping breakdown.
+// CURRENT STATE: src/app/us-consulting/page.tsx now re-exports
+// src/app/consult/page.tsx (same page, second URL, kept separate to track
+// Meta campaign traffic) — so this carousel is written to match /consult's
+// real copy: "Have an app idea but don't know where to start?", free
+// 30-min call, breakdown of credits/tools/MVP scope within 24 hours. No
+// identity claim, no earnings claim, no pricing (the $199–799 DFY tiers,
+// 50% off through Aug 15 2026 — src/app/pricing/PricingClient.tsx — come up
+// on the call itself, never in the creative).
 //
-// Offer + call mechanics verified against the real /us-consulting page
-// (src/app/us-consulting/page.tsx) — NOT invented:
-//   - Free · 30 min · Google Meet · Available 24/7, no card required — page badges
-//   - 4-step flow (tell us what's scattered → pick a time → we scope your
-//     dashboard, 30 min → we build & deliver) — STEPS array on that page
-//   - It's the FOUNDER on the call (Sumeet Sutar), not a "CEO" — the site
-//     never uses that title (sole founder, no separate CEO), so the ad says
-//     "founder" to match what the landing page actually says.
+// ANGLE HISTORY (condensed — earlier passes targeted a since-retired
+// version of /us-consulting that framed the deliverable as a "dashboard"
+// for existing small-business owners, 45–50+, automating spreadsheets/
+// texts by hand):
+//   1. "Become a founder" (identity/aspiration) — dropped on the assumption
+//      it would trip Meta's Employment Special Ad Category classifier.
+//   2. "Build something worth selling" (earning-adjacent) — dropped on the
+//      assumption of FTC Business Opportunity Rule exposure.
+//   3. Dashboard/tool-consolidation angle, no identity claim — landed here
+//      after re-checking both assumptions in #1–2 against source (neither
+//      actually applied to this offer; the one real constraint is just
+//      "no unverifiable earnings claims," which stays true below too).
+//   4. That angle got re-litigated into an identity pitch, then reverted
+//      back to the page's real (dashboard) copy when it drifted from card
+//      to card — lesson: verify against the live page text before locking
+//      any "theme," since the landing page is the real source of truth,
+//      not the ad copy.
+//   5. CURRENT — the page itself changed (now mirrors /consult instead of
+//      running its own dashboard pitch), so the ad is rewritten to match
+//      that, not reworked on its own terms again.
 //
-// Deliberately avoids a guaranteed-income claim ("side income", "$X/month")
-// — Meta's ad policy (and basic honesty) treats unverifiable earnings claims
-// as a compliance risk, especially for an older demographic. The angle
-// instead: you already run a business / have domain expertise, our team
-// builds the app for you — no developers to hire, no code to learn. No
-// dollar income figures, no guarantees.
-//
-// Audience is NOT age-called-out in copy (identity/psychographic targeting —
-// "you already run a business" — reads better than literally saying "for
-// people 50+", and avoids ageist-framing risk). Age/interest targeting for
-// this is a Meta Ads Manager config, not something baked into the creative.
+// OPEN QUESTION, not decided here: the 45–50+ small-business-owner Meta Ads
+// Manager targeting was built for the old dashboard/automation pitch. Now
+// that the landing page sells a general "have an app idea" call, that
+// targeting may no longer be the right audience — this file doesn't change
+// Ads Manager settings, so that's a decision to make separately, in Ads
+// Manager, not something this comment resolves.
 //
 // 3 cards, 1080x1080 (1:1) — Meta's carousel image spec.
 // Output: <OneDrive>/Desktop/Wyber Ai/meta-ads-us-founder-call/
@@ -48,6 +51,12 @@ import path from 'node:path'
 
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
 const OUT = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'meta-ads-us-founder-call')
+
+// Real founder headshot (Sumeet Sutar) — embedded as base64, same reasoning as the
+// webfont links below: a file:// path is one relocated folder away from a broken
+// image in headless Chrome, a data URI never breaks.
+const FOUNDER_PHOTO_PATH = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai', 'New DP.jpeg')
+const founderPhotoDataUri = `data:image/jpeg;base64,${fs.readFileSync(FOUNDER_PHOTO_PATH).toString('base64')}`
 
 const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">`
 const BASE = `*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%}body{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}.sky{color:#0EA5E9}.mono{font-family:'JetBrains Mono',ui-monospace,monospace}`
@@ -71,48 +80,71 @@ const shell = (eyebrow, badgeText, headline, body, active) => `<div style="width
     ${dots(active, TOTAL)}
   </div>`
 
-// Card 1 — hook. Reworked once more per direction: away from the earning
-// angle entirely, toward a pure TIME/CONSOLIDATION pitch — replace the pile
-// of spreadsheets/texts/disconnected apps a small business owner is
-// juggling with one real app. This sidesteps every risk category flagged so
-// far: no identity claim ("become a founder"), no earnings claim (so no
-// FTC Business Opportunity Rule exposure), no Employment-classifier risk on
-// Meta. It's also the most directly true claim of the three drafts — the
-// managed build's real mechanism (one custom app, with database/auth/
-// integrations, replacing scattered tools) needs no framing gymnastics.
+// Card 1 — hook. /us-consulting now re-exports /consult (src/app/
+// us-consulting/page.tsx), so this carousel is rewritten to match THAT
+// page's real copy instead — headline is the verbatim H1 ("Have an app
+// idea but don't know where to start?"), subhead trimmed from the page's
+// own text, checklist pulled from its trust-badge row and subhead
+// ("no commitment, no pitch"). The old "dashboard"/30-min small-business
+// framing is retired along with the page content it was built to match.
 function card1(w, h) {
-  const body = `<div style="font-size:29px;color:#a1a1aa;line-height:1.45;max-width:840px">Spreadsheets, texts, sticky notes, three apps that don&rsquo;t talk to each other &mdash; you&rsquo;re already running a business, you don&rsquo;t have time to be your own IT department too. Tell us what you&rsquo;re juggling. Our team builds the one real app that replaces it.</div>
+  const body = `<div style="font-size:27px;color:#a1a1aa;line-height:1.45;max-width:840px">Book a free 30-min call with our Founder. Tell us your idea &mdash; we&rsquo;ll scope it and send you a full breakdown within 24 hours: credits needed, tools required, and a clear MVP plan.</div>
     <div style="display:flex;flex-direction:column;gap:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:20px;padding:26px">
-      ${check('Our team designs &amp; builds it &mdash; not you')}
-      ${check('Bookings, records, payments &mdash; all in one place')}
-      ${check('Web or mobile, real database &amp; login included')}
+      ${check('No deck, no brief needed &mdash; just tell us your idea')}
+      ${check('Full breakdown within 24 hours &mdash; credits, tools &amp; MVP plan')}
+      ${check('No commitment, no pitch &mdash; just the right advice')}
     </div>`
-  return doc(w, h, shell('TIRED OF JUGGLING FIVE DIFFERENT APPS?', 'Free founder call', 'Stop stitching your<br>business together<br>by hand.', body, 0))
+  return doc(w, h, shell('FREE 30-MINUTE CALL', 'Free founder call', 'Have an app idea<br>but don&rsquo;t know<br>where to start?', body, 0))
 }
 
-// Card 2 — mechanism, pulled directly from the real STEPS flow on
-// /us-consulting (src/app/us-consulting/page.tsx) — no invented numbers/
-// testimonials, just the real 30-minute scoping-call flow that page
-// actually describes. No pricing on this card.
+// Card 2 — mechanism, pulled directly from the real WHAT_HAPPENS flow on
+// /consult (src/app/consult/page.tsx, now also served at /us-consulting) —
+// no invented numbers/testimonials, just the real 30-minute scoping-call
+// flow that page actually describes. No pricing on this card.
+//
+// Trust signal: a large poster-style photo fills the empty right-hand
+// space this square format leaves once the headline wraps (first version
+// used a 92px circle — too small to register while scrolling). Name/title
+// overlay on a bottom gradient rather than sitting beside the photo, so
+// the photo itself can run full-size. Trust line is identical verbatim
+// text in both /consult (page.tsx:128) and the old /us-consulting
+// (page.tsx:141) — didn't need to change when the page did.
 function card2(w, h) {
-  const body = `<div class="mono sky" style="font-size:21px;font-weight:500">We&rsquo;ve scoped enough businesses to know exactly what to ask.</div>
-    <div style="display:flex;flex-direction:column;gap:18px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:20px;padding:30px">
-      ${check('Tell us what&rsquo;s scattered &mdash; no deck or brief needed')}
-      ${check('30 minutes on Google Meet &mdash; we ask the right questions')}
-      ${check('We map out the one dashboard that replaces it')}
+  const photoCard = `<div style="position:relative;flex-shrink:0;width:380px;height:560px;border-radius:28px;overflow:hidden;border:2px solid rgba(14,165,233,.4);box-shadow:0 30px 90px rgba(0,0,0,.55)">
+      <img src="${founderPhotoDataUri}" style="width:100%;height:100%;object-fit:cover;display:block" />
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 26px 22px;background:linear-gradient(to top, rgba(0,0,0,.88), rgba(0,0,0,0))">
+        <div style="font-size:25px;font-weight:800;color:#fff;letter-spacing:-.01em">Sumeet Sutar</div>
+        <div style="font-size:18px;color:#38bdf8;font-weight:600;margin-top:2px">Founder &middot; WyberAi</div>
+      </div>
     </div>`
-  return doc(w, h, shell('30 MINUTES &middot; NO PITCH', 'Talk to our founder', 'A real conversation<br>about what&rsquo;s slowing<br>you down.', body, 1))
+  const textCol = `<div style="flex:1;display:flex;flex-direction:column;gap:24px;min-width:0;justify-content:center">
+      <div class="mono sky" style="font-size:22px;font-weight:500;letter-spacing:.1em">30 MINUTES &middot; NO PITCH</div>
+      <div style="font-weight:900;font-size:46px;letter-spacing:-0.03em;color:#fafafa;line-height:1.16">We&rsquo;ve scoped enough<br>apps to know exactly<br>what to ask.</div>
+      <div style="font-size:19px;color:#a1a1aa;line-height:1.5">You&rsquo;re not talking to a sales rep or an AI chatbot &mdash; you&rsquo;re talking directly to the person who built WyberAi.</div>
+      <div style="display:flex;flex-direction:column;gap:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);border-radius:20px;padding:26px">
+        ${check('You describe your idea &mdash; no deck or brief needed')}
+        ${check('We ask the right questions &mdash; features, timeline, budget')}
+        ${check('A full breakdown within 24 hours &mdash; credits, tools &amp; MVP plan')}
+      </div>
+    </div>`
+  return doc(w, h, `<div style="width:100%;height:100%;display:flex;flex-direction:column;padding:68px 72px 58px">
+    <div style="display:flex;justify-content:space-between;align-items:center">${lockup(50, 31)}${badge('Talk to our founder')}</div>
+    <div style="flex:1;display:flex;align-items:center;gap:44px;margin-top:6px">
+      ${textCol}
+      ${photoCard}
+    </div>
+    ${dots(1, TOTAL)}
+  </div>`)
 }
 
-// Card 3 — CTA. Drops the "become a founder" close from the prior draft —
-// ends on the concrete, verifiable offer instead (free, no card, 24-hr
-// response) rather than an identity payoff. "Founder" not "CEO" (matches
-// the real page — sole founder, no separate CEO title).
+// Card 3 — CTA. Headline, body, and button text are verbatim from
+// /consult's real bottom CTA (page.tsx:152-158) — "Still not sure? Just
+// show up." is the actual close on the live page, not an invented line.
 function card3(w, h) {
-  const body = `<div style="font-size:28px;color:#a1a1aa;line-height:1.4;max-width:820px">Free. No card required. No commitment. Just 30 minutes to map out everything you&rsquo;re juggling &mdash; and see what one dashboard could replace.</div>
-    ${cta('Pick your free slot &rarr;')}
-    <div class="mono" style="font-size:19px;color:#6b7280">wyberai.com/us-consulting &middot; usually responds same day</div>`
-  return doc(w, h, shell('BOOK YOUR FREE CALL', null, 'Let&rsquo;s bring it<br>all together.', body, 2))
+  const body = `<div style="font-size:28px;color:#a1a1aa;line-height:1.4;max-width:820px">The call is free. The worst outcome is 30 minutes and a clear answer on whether your idea is worth building.</div>
+    ${cta('Book your free call &rarr;')}
+    <div class="mono" style="font-size:19px;color:#6b7280">wyberai.com/us-consulting &middot; Available 24/7 &middot; usually responds same day</div>`
+  return doc(w, h, shell('BOOK YOUR FREE CALL', null, 'Still not sure?<br>Just show up.', body, 2))
 }
 
 const W = 1080, H = 1080
@@ -138,85 +170,56 @@ await browser.close()
 
 fs.writeFileSync(path.join(OUT, 'README.txt'), `WyberAi — US "Free Founder Call" carousel (3 cards, 1080x1080)
 ============================================================================
-card1_hook_1080x1080.png        "Stop stitching your business together by hand." + checklist: our team builds it (not you), bookings/records/payments in one place, real database & login. Pure time/consolidation pitch — no identity claim, no earnings claim, no dollar figures.
-card2_howitworks_1080x1080.png  "A real conversation about what's slowing you down." — the real 30-min scoping-call flow, verbatim from wyberai.com/us-consulting. No pricing on this card.
-card3_cta_1080x1080.png         "Let's bring it all together." — free/no-card/no-commitment CTA: "map out everything you're juggling — and see what one app could replace."
+card1_hook_1080x1080.png        "Have an app idea but don't know where to start?" (verbatim H1) + checklist: no deck/brief needed, full breakdown within 24 hours, no commitment/no pitch.
+card2_howitworks_1080x1080.png  "We've scoped enough apps to know exactly what to ask." (verbatim from the page) — real founder photo (Sumeet Sutar) + the real 30-min scoping-call steps.
+card3_cta_1080x1080.png         "Still not sure? Just show up." (verbatim bottom-CTA headline) — "Book your free call →", matching the page's actual button text.
 
-FINAL ANGLE (after two reworks): the campaign moved through three distinct
-hooks before landing here —
-  1. "Become a founder" (identity/aspiration) — dropped: risked Meta's
-     Employment/business-opportunity ad classifier silently stripping the
-     50+ age targeting via Special Ad Category rules.
-  2. "Build something worth selling" (earning-adjacent, no numbers) —
-     dropped: pairing a paid offer ($99–399 managed build) with any earning
-     angle in the same ad is the exact shape the FTC's Business Opportunity
-     Rule and state Seller-Assisted-Marketing-Plan laws (California's is
-     strictest) regulate, regardless of whether the claim is true.
-  3. TIME + TOOL CONSOLIDATION (current) — replace the spreadsheets/texts/
-     disconnected apps a small business owner juggles with one real app.
-     No identity claim, no earnings claim, no regulated category at all —
-     just a true, concrete description of what the managed build does.
-This is also the most directly honest of the three: "one app replaces your
-scattered tools" needs no framing gymnastics — it's just what a custom
-full-stack build (database, auth, integrations) actually does for someone
-currently running their business on spreadsheets and texts.
+WHY THIS VERSION: src/app/us-consulting/page.tsx now re-exports src/app/
+consult/page.tsx (same page, second URL) — the "dashboard"/30-min small-
+business-automation pitch this carousel used to carry doesn't exist on the
+live page anymore, so every card here is rewritten from /consult's actual
+copy instead of reworking the old angle. See the top-of-file comment for
+the full history of how the previous angle was built, reworked, and
+eventually retired along with the page it was matching.
 
 NO PRICING IN THE AD — by direction. The real Done-For-You tiers ($199/$399/
 $799, 50% off through Aug 15 2026 → $99/$199/$399 — src/app/pricing/
 PricingClient.tsx, src/lib/consultation-brief.ts) only come up on the call
-itself, in the founder's scoping breakdown — not in the creative. If that
-promo lapses or changes before the call happens, that's a founder-side
-pricing update, not something this ad needs to track.
+itself, in the founder's scoping breakdown — not in the creative.
 
-STILL OPEN / NOT FIXED BY THIS COPY PASS:
-- No trust/credibility signal (name, photo, a real verified number) appears
-  anywhere in the 3 slides — for a 50+ audience that's warier of scam-shaped
-  business ads, that's arguably a bigger lever than any copy angle. Add one
-  if/when you have something concrete and true to say (e.g. a real count of
-  calls taken, a specific built example) — don't invent a number to fill
-  this gap.
-- /us-consulting still frames "build it yourself" and "hire us" as equal
-  next steps in its FAQ ("Not at all. Take the plan and build it yourself
-  with WyberAi, or hire us — no pressure either way"). If this campaign's
-  job is 1:1 meetings for the managed build, that page arguably shouldn't
-  offer an equally-weighted DIY off-ramp to traffic coming from it.
-- This entire angle is untested — treat as a hypothesis to validate with a
-  small budget, not a scaled bet.
+TRUST SIGNAL (card 2): real photo of founder Sumeet Sutar (source:
+~/OneDrive/Desktop/Wyber Ai/New DP.jpeg, embedded as base64 — not a stock
+photo, not AI-generated), his name, title, and the same "you're talking
+directly to the person who built WyberAi" line that's identical, verbatim
+text in both /consult (page.tsx:128) and the old /us-consulting (page.tsx:
+141) — it didn't need to change when the page did.
 
-TARGETING (set this in Meta Ads Manager, not baked into the creative):
-  Location: United States only
-  Age: 50+ (or 45+ if you want more volume — Meta lets you narrow post-launch)
-  Interests/behaviors: small business owners, Shopify/Square/QuickBooks
-    (signals an existing operating business, not just an aspiring idea)
-  Placements: Feed + Reels carousel (this is a 1:1 carousel spec, not 9:16)
-  Audience layer: retarget site visitors + lookalike off existing
-    consultation bookers/converted customers if you have enough seed data —
-    this is a "book a call" ask, which converts better warm than cold
-  Goal: this campaign optimizes for CALL BOOKINGS into the paid managed
-    build (DFY), sold on the call — not self-serve signups. Don't route this
-    traffic to /signup or the DIY builder in any follow-up creative/landing
-    changes.
+STILL OPEN:
+- TARGETING MISMATCH: the 45–50+, existing-small-business-owner Meta Ads
+  Manager targeting (small business owners, Shopify/Square/QuickBooks
+  signals) was built for the old dashboard/automation pitch aimed at people
+  already running a business. The live page now sells a general "have an
+  app idea" call — that targeting may no longer be the right audience for
+  this creative. Not changed here; this is an Ads Manager decision, not a
+  creative one, and it's undecided.
+- Cards 1 and 3 still carry no face — only card 2 does. The first-seen
+  frame in a carousel is card 1, and it's still text-only.
+- This exact copy is untested — treat it as a hypothesis to validate with
+  a small budget, not a scaled bet.
 
 COPY NOTES:
-- Sells the "become a tech founder" identity/aspiration, not a coding lesson
-  and not a price point. The call itself is where the managed-build pitch
-  and real pricing happen (per your direction — book the meeting, sell the
-  dream, price it live).
-- "Our team designs & builds it — not you" on card 1 exists specifically so
-  the ad doesn't read as a DIY self-serve pitch, while still not mentioning
-  price or the DFY product name directly.
-- "Founder" not "CEO" throughout — matches the real /us-consulting page copy
-  (src/app/us-consulting/page.tsx), which titles Sumeet Sutar "Founder, WyberAi".
-  There's no separate CEO title on a sole-founder company; using "founder"
-  keeps the ad and the landing page saying the same thing.
-- No income figures or "side income" language — earnings claims for an app
-  idea are unverifiable and a Meta ad-policy risk, especially targeting an
-  older demographic. The ad sells clarity and ownership of an idea, not a
-  guaranteed income stream.
-- Landing link is wyberai.com/us-consulting (the real page, dedicated to this
-  campaign's dashboard/automation framing), not a bare Cal.com link and not
-  the generic /consult page — /us-consulting already handles objections (is
-  this really free? what if I'm not techy?) before the visitor reaches the
-  calendar embed, and its copy/duration (free, 30 min) match this creative.
+- Headline, subhead, "What happens" steps, founder-block trust line, and
+  bottom-CTA headline/body/button are all pulled directly from the live
+  page (src/app/consult/page.tsx, now also served at /us-consulting) — not
+  paraphrased from memory.
+- "Founder" not "CEO" throughout — matches the real page copy, which titles
+  Sumeet Sutar "Founder, WyberAi". No separate CEO title on a sole-founder
+  company.
+- No income figures, no "side income" language, no identity/aspiration
+  claim ("become a founder," etc.) — matches the page's own restraint: it
+  sells a scoping call and a breakdown, not a dream.
+- Landing link is wyberai.com/us-consulting — a second URL for the same
+  /consult content, kept separate so Meta campaign traffic can be tracked
+  apart from organic /consult visits.
 `)
 console.log('\nAll ad creatives in:', OUT)

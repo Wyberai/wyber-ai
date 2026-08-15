@@ -5169,6 +5169,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                           const p = pathStreamer(toolJson)
                           if (p.closed) {
                             toolOpened = true
+                            // Emit an early progress marker the moment the file path
+                            // is known — this fires seconds before the file completes,
+                            // so the UI escapes the 60s "Almost there" fallback.
+                            // cleanStreamingDisplay strips [progress:] from chat text;
+                            // extractProgressLines still picks it up for the step list.
+                            const earlyProgress = `[progress: Building ${p.value}...]\n`
+                            assistantSoFar += earlyProgress
+                            controller.enqueue(encoder.encode(earlyProgress))
                             const openTag = `<file path="${p.value.replace(/"/g, '&quot;')}">\n`
                             assistantSoFar += openTag
                             controller.enqueue(encoder.encode(openTag))

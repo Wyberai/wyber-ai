@@ -4,10 +4,10 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 
 export const metadata: Metadata = {
   title: 'Free Founder Call — WyberAi',
-  description: 'Have an app idea but don\'t know where to start? Book a free 15-min call with our Founder. We\'ll scope it, quote it, and give you a clear path. No commitment.',
+  description: 'Have an app idea but don\'t know where to start? Book a free 30-min call with our Founder. We\'ll scope it, quote it, and give you a clear path. No commitment.',
   openGraph: {
     title: 'Free Founder Call — WyberAi',
-    description: 'Have an app idea but don\'t know where to start? 15 minutes with our Founder. Free. No strings attached.',
+    description: 'Have an app idea but don\'t know where to start? 30 minutes with our Founder. Free. No strings attached.',
   },
 }
 
@@ -72,7 +72,7 @@ export default function ConsultPage() {
         <div style={{ textAlign: 'center', marginBottom: 56 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 20, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', fontSize: 12, fontWeight: 700, color: s.green, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 24 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.green, display: 'inline-block' }} />
-            Free · 15 min · Google Meet · Worldwide
+            Free · 30 min · Google Meet · Worldwide
           </div>
 
           <h1 style={{ fontSize: 'clamp(32px,5.5vw,58px)', fontWeight: 900, letterSpacing: '-0.04em', lineHeight: 1.05, marginBottom: 20 }}>
@@ -81,12 +81,12 @@ export default function ConsultPage() {
           </h1>
 
           <p style={{ fontSize: 'clamp(15px,2vw,18px)', color: s.muted, maxWidth: 520, margin: '0 auto 28px', lineHeight: 1.75 }}>
-            Book a free 15-min call with our Founder. Tell us your idea — we&apos;ll scope it and send you a full breakdown within 24 hours: credits needed, tools required, and a clear MVP plan. <strong style={{ color: s.text }}>No commitment. No pitch. Just the right advice.</strong>
+            Book a free 30-min call with our Founder. Tell us your idea — we&apos;ll scope it and send you a full breakdown within 24 hours: credits needed, tools required, and a clear MVP plan. <strong style={{ color: s.text }}>No commitment. No pitch. Just the right advice.</strong>
           </p>
 
           {/* Trust badges */}
           <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 8 }}>
-            {['⏱ 15 minutes', '🎥 Google Meet', '🌍 Worldwide', '💳 No card required'].map(b => (
+            {['⏱ 30 minutes', '🎥 Google Meet', '🌍 Worldwide', '💳 No card required'].map(b => (
               <span key={b} style={{ fontSize: 13, color: s.muted, background: 'rgba(255,255,255,0.04)', border: `1px solid ${s.border}`, borderRadius: 20, padding: '6px 14px' }}>{b}</span>
             ))}
           </div>
@@ -105,7 +105,7 @@ export default function ConsultPage() {
 
         {/* What happens */}
         <div style={{ marginBottom: 72 }}>
-          <h2 style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: 8 }}>What happens in 15 minutes</h2>
+          <h2 style={{ fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', textAlign: 'center', marginBottom: 8 }}>What happens in 30 minutes</h2>
           <p style={{ fontSize: 14, color: s.muted, textAlign: 'center', marginBottom: 32 }}>We&apos;ve scoped enough apps to know exactly what to ask.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
             {WHAT_HAPPENS.map((step, i) => (
@@ -150,7 +150,7 @@ export default function ConsultPage() {
         {/* Bottom CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(28px,5vw,48px)', background: `linear-gradient(135deg, rgba(14,165,233,0.06) 0%, rgba(34,197,94,0.04) 100%)`, border: `1px solid rgba(14,165,233,0.15)`, borderRadius: 20 }}>
           <div style={{ fontSize: 'clamp(18px,3vw,26px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8 }}>Still not sure? Just show up.</div>
-          <p style={{ fontSize: 14, color: s.muted, maxWidth: 400, margin: '0 auto 24px', lineHeight: 1.7 }}>The call is free. The worst outcome is 15 minutes and a clear answer on whether your idea is worth building.</p>
+          <p style={{ fontSize: 14, color: s.muted, maxWidth: 400, margin: '0 auto 24px', lineHeight: 1.7 }}>The call is free. The worst outcome is 30 minutes and a clear answer on whether your idea is worth building.</p>
           <a href={CAL_LINK} target="_blank" rel="noopener noreferrer"
             style={{ display: 'inline-block', padding: '14px 32px', borderRadius: 10, background: s.green, color: '#fff', fontSize: 15, fontWeight: 800, textDecoration: 'none', letterSpacing: '-0.01em' }}>
             Book your free call →
