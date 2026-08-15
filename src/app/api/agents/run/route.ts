@@ -90,17 +90,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Helper: give credits back when a deducted Anthropic call never produced a
-    // result (it threw). Credit invariant: never charge for nothing.
+    // result (it threw). Uses adjust_credits RPC (delta-based, atomic) — the old
+    // `credits: creditBalance + amount` literal would clobber any deductions that
+    // occurred during the agent run if creditBalance was stale.
     async function refundCredits(amount: number, reason: string): Promise<void> {
       if (amount <= 0) return
       const before = creditBalance
-      const { data: updated } = await admin
-        .from('profiles')
-        .update({ credits: creditBalance + amount, updated_at: new Date().toISOString() })
-        .eq('id', userId)
-        .select('credits')
-        .single()
-      if (updated) creditBalance = updated.credits
+      const { data: adjusted } = await admin.rpc('adjust_credits', { p_user_id: userId, p_delta: amount })
+      if (typeof adjusted === 'number') creditBalance = adjusted
       admin.from('credit_usage').insert({
         user_id: userId, amount: -amount, reason,
         credits_before: before, credits_after: creditBalance,

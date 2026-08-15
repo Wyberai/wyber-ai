@@ -3595,10 +3595,6 @@ export async function POST(req: NextRequest) {
     // checked once the caller's plan is known (below, alongside the existing
     // tierAllowedForPlan gate).
     let { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false, buildComplexity } = body
-    // DISABLE STAGING: Force all requests to 'full' generation mode
-    stage = 'full'
-    stageFiles = []
-    stagePurposes = []
     // Set by the client from the 'plan' stage's response header (see
     // X-Build-Complexity below) and echoed back on every subsequent staged
     // request (scaffold/fill/wire) of the SAME build — reuses the one Haiku
@@ -4476,7 +4472,7 @@ ${code}
         // threshold, a small capped charge above it — never open-ended
         // metering, and single-request-scoped so no cross-request idempotency
         // bookkeeping is needed (unlike the multi-request buildId case above).
-        if (!buildTier && !selfHeal && !isInternalPass && stage !== 'plan' && authedUserId && cost > 0) {
+        if (!buildTier && !selfHeal && !isInternalPass && stage !== 'plan' && authedUserId && cost > 0 && !creditsSettled) {
           const editOverageThreshold = stageMaxTokens * 1.5
           if (totalOutputTokens > editOverageThreshold) {
             const extraPasses = Math.ceil((totalOutputTokens - stageMaxTokens) / stageMaxTokens)

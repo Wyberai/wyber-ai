@@ -130,21 +130,18 @@ export async function POST(req: NextRequest) {
         needed: PLAN_COST, balance,
       }, { status: 402 });
     }
-    // Atomic deduct — only succeeds if credits still >= cost
-    const { data: updated, error: deductErr } = await admin
-      .from('profiles')
-      .update({ credits: balance - PLAN_COST, updated_at: new Date().toISOString() })
-      .eq('id', user.id)
-      .gte('credits', PLAN_COST)
-      .select('credits')
-      .single();
-    if (deductErr || !updated) {
+    // Atomic deduct via deduct_credits RPC — SET runs as `credits - PLAN_COST`
+    // in Postgres, guarded by `credits >= PLAN_COST`, so two concurrent plan
+    // requests with the same stale local balance can't both write balance - PLAN_COST.
+    const { data: deductRpc, error: deductErr } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: PLAN_COST });
+    if (deductErr || deductRpc?.new_credits === undefined) {
       return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
     }
     deducted = PLAN_COST;
+    const newBalance = deductRpc.new_credits;
     admin.from('credit_usage').insert({
       user_id: user.id, amount: PLAN_COST, reason: 'plan',
-      credits_before: balance, credits_after: updated.credits,
+      credits_before: newBalance + PLAN_COST, credits_after: newBalance,
     }).then(() => {}, () => {});
   }
   const refund = async (reason: string) => {
@@ -153,12 +150,11 @@ export async function POST(req: NextRequest) {
     deducted = 0;
     try {
       const admin = await createAdminClient();
-      const { data: prof } = await admin.from('profiles').select('credits').eq('id', user.id).single();
-      const current = prof?.credits ?? 0;
-      await admin.from('profiles').update({ credits: current + amount, updated_at: new Date().toISOString() }).eq('id', user.id);
+      const { data: adjusted } = await admin.rpc('adjust_credits', { p_user_id: user.id, p_delta: amount });
+      const after = typeof adjusted === 'number' ? adjusted : null;
       admin.from('credit_usage').insert({
         user_id: user.id, amount: -amount, reason: `refund:${reason}`,
-        credits_before: current, credits_after: current + amount,
+        credits_before: after !== null ? after - amount : null, credits_after: after,
       }).then(() => {}, () => {});
     } catch (e) { console.error('[plan-refund] failed', e); }
   };

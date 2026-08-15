@@ -638,12 +638,13 @@ export async function POST(req: NextRequest) {
           balance,
         }, { status: 402 })
       }
-      // Atomic deduct — only succeeds if credits still >= runCost
-      const { data: deducted, error: dedErr } = await admin.from('profiles').update({ credits: balance - runCost, updated_at: new Date().toISOString() }).eq('id', user.id).gte('credits', runCost).select('credits').single()
-      if (dedErr || !deducted) return NextResponse.json({ error: 'Credit deduction failed — please try again' }, { status: 402 })
+      // Atomic deduct via deduct_credits RPC — SET runs as `credits - runCost`
+      // in Postgres so two concurrent runs with the same stale local balance can't both succeed.
+      const { data: deductRpc, error: dedErr } = await admin.rpc('deduct_credits', { p_user_id: user.id, p_amount: runCost })
+      if (dedErr || deductRpc?.new_credits === undefined) return NextResponse.json({ error: 'Credit deduction failed — please try again' }, { status: 402 })
       admin.from('credit_usage').insert({
         user_id: user.id, amount: runCost, reason: 'canvas-execution',
-        credits_before: balance, credits_after: balance - runCost,
+        credits_before: deductRpc.new_credits + runCost, credits_after: deductRpc.new_credits,
       }).then(() => {}, () => {})
     }
 
