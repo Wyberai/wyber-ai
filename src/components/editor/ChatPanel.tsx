@@ -1990,6 +1990,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
     turnCreditsRef.current = 0;
     useAgentTurnStore.getState().resetTurn();
     pushAgentEvents({ agent: 'planner', status: 'start', detail: t('mappingBuildMsg') });
+    // Echo the user message immediately so the chat isn't blank during the plan pass.
+    const userMsgId = uid();
+    addMessage({ id: userMsgId, role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+    persistMessage('user', userMsg, undefined, userMsgId);
+    // Show a "Planning..." bubble immediately — replaced by the credit estimate
+    // once the plan pass returns, or updated to the chain bubble for the full build.
+    const chainId = uid();
+    addMessage({ id: chainId, role: 'assistant', content: '✦ Planning your build...', timestamp: Date.now(), status: 'streaming' });
+    setIsGenerating(true);
     // One id for every request in this build's chain (scaffold + its fill
     // batches, or the one-shot fallback) — lets the server sum real usage
     // across the WHOLE build for the overage safety valve instead of just
@@ -2072,9 +2081,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
       effectiveModelTier, estimateBuildTier,
     )}cr` : '';
 
-    // Pre-build credit message — visible in chat BEFORE any credits are spent.
-    // This is the moat: user sees the exact cost with a tight ±12% upper bound,
-    // not a vague wide range. Shows immediately after the plan pass succeeds.
+    // Update the "Planning..." bubble with the real credit estimate now that
+    // we know the file count. Tight ±12% range — same functions the server charges from.
     if (estimateBuildTier && plannedFileCount > 0) {
       const buildActionForCost: ActionType = projectType === 'mobile' ? 'mobile-build'
         : projectType === 'website' ? 'website-build'
@@ -2087,8 +2095,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         : projectType === 'saas' ? 'SaaS'
         : 'app';
       const preMsg = `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
-      const preMsgId = uid();
-      addMessage({ id: preMsgId, role: 'assistant', content: preMsg, timestamp: Date.now(), status: 'done' });
+      updateMessage(chainId, { content: preMsg, status: 'done' });
       persistMessage('assistant', preMsg);
     }
 
@@ -2098,29 +2105,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // succeeded but came back under STAGE_THRESHOLD) so the one-shot
       // completeness check doesn't pay for a second plan call — see
       // isNewBuildCompletenessEligible in executeGeneration.
-      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity });
+      // echoedUser: user message already added at the top of runAgenticBuild.
+      // sharedBubbleId: reuse the planning/credit bubble created above.
+      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
       return;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) + costSuffix });
 
-    // One chat bubble for the ENTIRE staged chain (scaffold, every fill
-    // batch, the wire pass) instead of one bubble per internal pass. A
-    // single user request ("create a revops dashboard") used to come back as
-    // a stream of separate messages — "Scaffolding...", "Wired the pipeline
-    // data model...", "Built the Accounts, Forecast, Settings screens...",
-    // "Wired the real screens..." — each with its own "Show details" file
-    // list. That's implementation detail, not something the user asked to
-    // see: one line in, it should read back as one short response out.
-    // executeGeneration still runs every pass exactly as before (staging,
-    // retries, verification) — sharedBubbleId just tells it not to create or
-    // finalize its own message; this function owns the one bubble and writes
-    // the final summary once the whole chain is actually done. The
-    // "Building…" pill/elapsed timer (driven by isGenerating, set once here
-    // and cleared once at the end) is what tells the user something is still
-    // in flight for the whole chain — not a wall of intermediate bubbles.
-    const chainId = uid();
-    addMessage({ id: chainId, role: 'assistant', content: '', timestamp: Date.now(), status: 'streaming' });
-    setIsGenerating(true);
+    // chainId + setIsGenerating already set at the top of runAgenticBuild.
+    // finishChain writes the final summary and clears the loading state.
     const finishChain = (content: string, filesChanged: string[]) => {
       updateMessage(chainId, { content, status: 'done', filesChanged });
       persistMessage('assistant', content, filesChanged);
@@ -2139,6 +2132,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, stagePurposes: scaffoldPurposes, finalPass: !hasFills,
       totalPlannedFiles: staged.files.length, buildId, buildComplexity, sharedBubbleId: chainId,
+      echoedUser: true, // user message already added at the top of runAgenticBuild
     });
     // A failed scaffold means there's no skeleton for fill batches to build
     // on — piling more passes on top of a pass that produced no real files
