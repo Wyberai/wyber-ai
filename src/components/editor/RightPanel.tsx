@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 import dynamic from 'next/dynamic';
 import { useEditorStore } from '@/store/editor';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
@@ -38,7 +38,7 @@ interface Props {
 
 type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'cloud' | 'payments' | 'seo' | 'analytics';
 
-const TAB_ICONS: Record<string, JSX.Element> = {
+const TAB_ICONS: Record<string, ReactElement> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
   agent: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
   figma: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="2" x2="12" y2="22"/><path d="M5 9h7M5 15h7M12 9h7M12 15h7"/></svg>,

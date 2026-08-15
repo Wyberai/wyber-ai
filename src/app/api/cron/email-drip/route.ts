@@ -125,6 +125,7 @@ export async function GET(req: NextRequest) {
     }
 
     // ── 2a2. Next-step nurture (already had their first build, day after) ──
+    const eighteenHoursAgo = new Date(now - 18 * 3600_000).toISOString()
     const { data: firstBuilders } = await admin
       .from('profiles')
       .select('id, email, full_name, email_opt_out, created_at, first_build_emailed')

@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const apiKey = await getDecryptedSecret(user.id, 'HUBSPOT_ACCESS_TOKEN')
     if (!apiKey) return NextResponse.json({ error: 'HUBSPOT_ACCESS_TOKEN secret not found. Add it in Settings → Secrets.' }, { status: 400 })
     const result = await syncToHubSpot(apiKey, leads as Record<string, unknown>[])
-    await db.from('gtm_crm_sync_logs').insert({ user_id: user.id, crm: 'hubspot', synced: result.synced, errors: result.errors, synced_at: new Date().toISOString() }).then(() => {}).catch(() => {})
+    await db.from('gtm_crm_sync_logs').insert({ user_id: user.id, crm: 'hubspot', synced: result.synced, errors: result.errors, synced_at: new Date().toISOString() }).then(() => {}, () => {})
     return NextResponse.json(result)
   }
 
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'SALESFORCE_INSTANCE_URL and SALESFORCE_ACCESS_TOKEN secrets not found. Add them in Settings → Secrets.' }, { status: 400 })
     }
     const result = await syncToSalesforce(instanceUrl, accessToken, leads as Record<string, unknown>[])
-    await db.from('gtm_crm_sync_logs').insert({ user_id: user.id, crm: 'salesforce', synced: result.synced, errors: result.errors, synced_at: new Date().toISOString() }).then(() => {}).catch(() => {})
+    await db.from('gtm_crm_sync_logs').insert({ user_id: user.id, crm: 'salesforce', synced: result.synced, errors: result.errors, synced_at: new Date().toISOString() }).then(() => {}, () => {})
     return NextResponse.json(result)
   }
 

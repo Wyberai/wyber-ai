@@ -7,6 +7,7 @@ import {
   MiniMap,
   BackgroundVariant,
   NodeProps,
+  Node,
   Handle,
   Position,
   Panel,
@@ -144,7 +145,7 @@ const STATUS_COLORS = { idle: 'rgba(255,255,255,0.12)', running: '#f59e0b', succ
 
 // ─── Custom node ─────────────────────────────────────────────────────────────
 
-function WyberNode({ id, type, data, selected }: NodeProps<WyberNodeData>) {
+function WyberNode({ id, type, data, selected }: NodeProps<Node<WyberNodeData>>) {
   const nodeType = (type || 'trigger') as WyberNodeType
   const meta = NODE_META[nodeType]
   const t = useT(EDITOR_CANVAS_STRINGS)

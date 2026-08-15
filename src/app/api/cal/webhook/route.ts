@@ -149,11 +149,11 @@ export async function POST(req: NextRequest) {
         if (!row?.id) return
         return generateConsultationBrief({
           attendee_name: attendee.name || null,
-          attendee_email: attendee.email,
-          scheduled_start: p.startTime!,
+          attendee_email: attendee?.email ?? '',
+          scheduled_start: p.startTime ?? '',
           intake_answers: intakeAnswers,
         }).then(brief => admin.from('consultation_meetings').update({ ai_brief: brief, updated_at: new Date().toISOString() }).eq('id', row.id))
-      }).catch(e => console.error('Auto-brief (non-fatal):', String(e)))
+      }, e => console.error('Auto-brief (non-fatal):', String(e)))
 
       return NextResponse.json({ received: true })
     }

@@ -72,6 +72,7 @@ export interface Project {
   // each save sends this as `expectedUpdatedAt` so a save from another tab
   // that's landed in between is detected instead of silently overwritten.
   updated_at?: string;
+  first_prompt?: string;
 }
 
 export interface Connector {

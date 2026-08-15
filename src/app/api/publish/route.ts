@@ -250,11 +250,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch the built HTML from Railway
-    const htmlRes = await fetch(buildData.url)
+    const buildUrl = buildData.url as string
+    const htmlRes = await fetch(buildUrl)
     const html = await htmlRes.text()
 
     // Fix asset paths to be absolute (pointing to Railway CDN)
-    const baseUrl = buildData.url.replace('/index.html', '')
+    const baseUrl = buildUrl.replace('/index.html', '')
     let fixedHtml = html
       .replace(/src="\.\/assets\//g, `src="${baseUrl}/assets/`)
       .replace(/href="\.\/assets\//g, `href="${baseUrl}/assets/`)

@@ -329,7 +329,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   });
   const dismissBanner = () => { setBannerDismissed(true); localStorage.setItem(BANNER_KEY, '1'); };
   const showLowCreditsBanner = plan === 'free' && credits <= 20 && projects.length >= 2 && !bannerDismissed;
-  const totalCredits = plan === 'scale' ? 10000 : plan === 'growth' ? 4000 : plan === 'pro' ? 1500 : plan === 'builder' ? 500 : plan === 'starter' ? 150 : 50;
+  const planStr = plan as string;
+  const totalCredits = planStr === 'scale' ? 10000 : planStr === 'growth' ? 4000 : planStr === 'pro' ? 1500 : planStr === 'builder' ? 500 : planStr === 'starter' ? 150 : 50;
   const creditPct = Math.min(100, (credits / totalCredits) * 100);
 
   const MOBILE_KEYWORDS = /\b(mobile app|ios app|android app|react native|phone app|iphone|smartphone app|expo)\b/i;

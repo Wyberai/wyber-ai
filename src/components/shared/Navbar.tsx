@@ -46,7 +46,7 @@ const RESOURCES = [
 ] as const;
 
 // Flat list of all hrefs for arrow-key navigation
-const ALL_ITEMS = RESOURCES.flatMap(g => g.items);
+const ALL_ITEMS = RESOURCES.flatMap(g => g.items as unknown as { label: string; sub: string; href: string }[]);
 
 // `soon` marks products that aren't live yet (only Web + Mobile are live).
 // The pages stay reachable but carry a "soon" marker so we don't present them
@@ -233,7 +233,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
               >
                 {/* Arrow pointer */}
                 <div style={{
-                  position: 'absolute', top: -6, left: '50%', transform: 'translateX(-50%)',
+                  position: 'absolute', top: -6, left: '50%',
                   width: 12, height: 12, background: 'var(--card)',
                   border: '1px solid var(--border)', borderBottom: 'none', borderRight: 'none',
                   transform: 'translateX(-50%) rotate(45deg)',
@@ -323,7 +323,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               fontSize: 15, fontWeight: 500, color: 'var(--text2)',
-              padding: '11px 0', borderBottom: '1px solid var(--border)',
+              padding: '11px 0',
               background: 'none', border: 'none', borderBottom: '1px solid var(--border)',
               cursor: 'pointer', fontFamily: 'var(--font-sans)', width: '100%', textAlign: 'left',
             }}

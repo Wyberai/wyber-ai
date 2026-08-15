@@ -221,7 +221,7 @@ export const useAgentStore = create<AgentStore>((set, get) => ({
         await new Promise(r => setTimeout(r, 120)) // brief visual pause
 
         // Mark with final status + add log lines
-        const finalStatus = step.status === 'success' ? 'success' : 'error'
+        const finalStatus: 'success' | 'error' = step.status === 'success' ? 'success' : 'error'
         const logLines: string[] = step.log ?? []
         set((s) => ({
           nodes: s.nodes.map(n => n.id === step.nodeId

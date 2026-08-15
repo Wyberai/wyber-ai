@@ -288,7 +288,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
   // Spark is India-only; hide it (and never show INR) outside the INR view.
   // Free tier is hidden for India (INR users must start with Spark).
   const visiblePlans = PLANS.filter(p => {
-    if (currency === 'INR') return !p.hideForINR
+    if (currency === 'INR') return !(p as any).hideForINR
     return !p.inrOnly
   })
 

@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const supabase = createServiceClient();
-    const { error, count } = await supabase
+    const { data: rows, error } = await supabase
       .from('projects')
       .update({ plan, updated_at: new Date().toISOString() })
       .eq('id', projectId)
       .eq('user_id', user.id)
-      .select('id', { count: 'exact' });
+      .select('id');
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    if (!count) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!rows || rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

@@ -182,7 +182,7 @@ export default function AgentsPage() {
         {/* Stats */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
           <span style={{ fontSize:12, color:'#52525b' }}>
-            {loading ? 'Loading...' : `${total.toLocaleString()} agents${search ? ` matching "${search}"` : ''}${category !== 'All' ? ` in ${category}` : ''}`}
+            {loading ? 'Loading...' : `${(total ?? 0).toLocaleString()} agents${search ? ` matching "${search}"` : ''}${category !== 'All' ? ` in ${category}` : ''}`}
           </span>
           <div style={{ display:'flex', gap:12, fontSize:11, color:'#52525b' }}>
             <span style={{ display:'flex', alignItems:'center', gap:4 }}>
@@ -262,15 +262,15 @@ export default function AgentsPage() {
         )}
 
         {/* Pagination */}
-        {total > 24 && (
+        {(total ?? 0) > 24 && (
           <div style={{ display:'flex', justifyContent:'center', alignItems:'center', gap:8, marginTop:32 }}>
             <button onClick={() => setPage(p => Math.max(1,p-1))} disabled={page === 1}
               style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.08)', background:'transparent', color: page===1 ? '#3f3f46' : '#fafafa', cursor: page===1 ? 'not-allowed':'pointer', fontSize:13 }}>
               ← Prev
             </button>
-            <span style={{ fontSize:13, color:'#52525b' }}>Page {page} of {Math.ceil(total/24)}</span>
-            <button onClick={() => setPage(p => p+1)} disabled={page >= Math.ceil(total/24)}
-              style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.08)', background:'transparent', color: page>=Math.ceil(total/24) ? '#3f3f46' : '#fafafa', cursor: page>=Math.ceil(total/24) ? 'not-allowed':'pointer', fontSize:13 }}>
+            <span style={{ fontSize:13, color:'#52525b' }}>Page {page} of {Math.ceil((total ?? 0)/24)}</span>
+            <button onClick={() => setPage(p => p+1)} disabled={page >= Math.ceil((total ?? 0)/24)}
+              style={{ padding:'8px 16px', borderRadius:8, border:'1px solid rgba(255,255,255,0.08)', background:'transparent', color: page>=Math.ceil((total ?? 0)/24) ? '#3f3f46' : '#fafafa', cursor: page>=Math.ceil((total ?? 0)/24) ? 'not-allowed':'pointer', fontSize:13 }}>
               Next →
             </button>
           </div>

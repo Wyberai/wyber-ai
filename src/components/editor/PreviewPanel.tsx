@@ -433,7 +433,7 @@ export function PreviewPanel() {
   const betaMountedRef = useRef(false)
   useEffect(() => {
     if (!betaMountedRef.current) { betaMountedRef.current = true; return }
-    if (hasApp) { lastBuiltKey.current = ''; buildRef.current(true) }
+    if (hasApp) { lastBuiltKey.current = ''; buildRef.current() }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [betaBundler])
 

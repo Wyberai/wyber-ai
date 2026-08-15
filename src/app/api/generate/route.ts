@@ -3342,8 +3342,8 @@ async function refundCredits(userId: string, amount: number, reason: string): Pr
     }
     admin.from('credit_usage').insert({
       user_id: userId, amount: -amount, reason: `refund:${reason}`,
-      credits_before: after - amount, credits_after: after,
-    }).then(() => {}).catch(() => {})
+      credits_before: (after ?? 0) - amount, credits_after: after ?? 0,
+    }).then(() => {}, () => {})
   } catch (e) { console.error('[refund] failed', e) }
 }
 
@@ -4125,7 +4125,7 @@ export async function POST(req: NextRequest) {
       admin.from('credit_usage').insert({
         user_id: user.id, amount: cost, reason: actionType,
         credits_before: balance, credits_after: updated!.credits,
-      }).then(() => {}).catch(() => {})
+      }).then(() => {}, () => {})
 
       // ── Lifecycle emails (fire-and-forget) ──────────────────────────────
       const email = profile?.email as string | undefined
@@ -4133,7 +4133,7 @@ export async function POST(req: NextRequest) {
       if (email) {
         // First-build milestone — send once, then flip the flag
         if (!profile?.first_build_emailed) {
-          admin.from('profiles').update({ first_build_emailed: true }).eq('id', user.id).then(() => {}).catch(() => {})
+          admin.from('profiles').update({ first_build_emailed: true }).eq('id', user.id).then(() => {}, () => {})
           const displayName = (profile?.full_name as string | undefined) || email.split('@')[0]
           sendFirstBuildEmail(email, displayName, 'your app', `${APP_URL}/project/${projectId}`).catch(() => {})
         }
@@ -4213,12 +4213,13 @@ export async function POST(req: NextRequest) {
             .not('files', 'is', null)
             .limit(10)
 
-          if (matches && matches.length > 0) {
+          const safeMatches = matches ?? []
+          if (safeMatches.length > 0) {
             // Score each match
-            let best = matches[0]
+            let best = safeMatches[0]
             let bestScore = 0
 
-            for (const m of matches) {
+            for (const m of safeMatches) {
               // Check files exist and have real content
               const fileCount = m.files ? Object.keys(m.files).length : 0
               if (fileCount < 2) continue

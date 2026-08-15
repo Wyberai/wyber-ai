@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
       messages: [{ role: 'user', content: `Build an agent for: ${prompt}` }],
     })
 
-    const u = msg.usage as Record<string, number>
+    const u = msg.usage as unknown as Record<string, number>
     console.log(`[generate-canvas cache] creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens}`)
 
     const raw = (msg.content.find(b => b.type === 'text') as { type: 'text'; text: string } | undefined)?.text || ''

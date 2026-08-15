@@ -755,6 +755,8 @@ function NewMeetingPanel({ onCreated }: { onCreated: (m: Meeting) => void }) {
         reminder_1day_sent_at: null,
         reminder_30min_sent_at: null,
         thankyou_sent_at: null,
+        ai_brief: null,
+        summary_sent_at: null,
         created_at: new Date().toISOString(),
       }
       onCreated(newMeeting)

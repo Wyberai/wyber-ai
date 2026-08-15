@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     if (rpcErr?.message?.includes('function') || rpcErr?.message?.includes('does not exist')) {
       const { data: updated, error: updateErr } = await admin
         .from('profiles')
-        .update({ credits: admin.rpc ? undefined : 0, updated_at: new Date().toISOString() })
+        .update({ updated_at: new Date().toISOString() })
         .eq('id', user.id)
         .gte('credits', amount)
         .select('credits')
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       admin.from('credit_usage').insert({
         user_id: user.id, amount, reason,
         credits_before: decremented.credits + amount, credits_after: decremented.credits,
-      }).then(() => {}).catch(() => {})
+      }).then(() => {}, () => {})
 
       return NextResponse.json({ success: true, credits: decremented.credits, deducted: amount })
     }
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     admin.from('credit_usage').insert({
       user_id: user.id, amount, reason,
       credits_before: result.new_credits + amount, credits_after: result.new_credits,
-    }).then(() => {}).catch(() => {})
+    }).then(() => {}, () => {})
 
     return NextResponse.json({ success: true, credits: result.new_credits, deducted: amount })
   } catch (err) {

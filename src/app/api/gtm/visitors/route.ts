@@ -65,7 +65,7 @@ w.__wyb_tid=t;
               company_domain: data.company.domain,
               employee_count: data.company.metrics?.employees,
               identified_at: new Date().toISOString(),
-            }, { onConflict: 'user_id,ip_address' }).then(() => {}).catch(() => {})
+            }, { onConflict: 'user_id,ip_address' }).then(() => {}, () => {})
           }
         } else {
           results.push({ ip, company: null, domain: null, employees: null })

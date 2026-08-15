@@ -15,7 +15,8 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, pickRouterFile, forgeLine, diffPlannedAgainstWritten, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES } from '@/lib/staged-plan';
+import { parsePlanManifest, buildStagedPlan, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES } from '@/lib/staged-plan';
+import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
@@ -2298,7 +2299,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
               status: 'progress',
               detail: wireResult.swappedCount === 0
                 ? `Built ${screenNames.length} screens, but router has no placeholders to swap`
-                : `Built ${screenNames.length} screens, but wiring incomplete — missing: ${verification.missing.map(m => m.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '')).join(', ')}`,
+                : `Built ${screenNames.length} screens, but wiring incomplete — missing: ${verification.missing.map((m: string) => m.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '')).join(', ')}`,
             });
           }
         }

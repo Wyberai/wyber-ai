@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
         admin.from('credit_usage').insert({
           user_id: user.id, amount: cost, reason: isHero ? 'hero-image-gen' : 'image-regenerate',
           credits_before: credits !== null ? credits + cost : null, credits_after: credits,
-        }).then(() => {}).catch(() => {})
+        }).then(() => {}, () => {})
       } catch (e) {
         console.error('[img-regen] charge failed (image already delivered):', e)
       }

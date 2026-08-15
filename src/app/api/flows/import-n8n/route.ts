@@ -139,7 +139,6 @@ const N8N_TYPE_MAP: Record<string, { wyberType: WyberNode['type']; toolId?: stri
   'n8n-nodes-base.github':                    { wyberType: 'tool', toolId: 'github', label: 'GitHub' },
   'n8n-nodes-base.gitlab':                    { wyberType: 'tool', toolId: 'gitlab', label: 'GitLab' },
   'n8n-nodes-base.httpRequest':               { wyberType: 'tool', toolId: 'http', label: 'HTTP Request' },
-  'n8n-nodes-base.webhook':                   { wyberType: 'trigger', label: 'Webhook' },
   'n8n-nodes-base.respondToWebhook':          { wyberType: 'output', label: 'Respond to Webhook' },
   'n8n-nodes-base.graphql':                   { wyberType: 'tool', toolId: 'graphql', label: 'GraphQL' },
 

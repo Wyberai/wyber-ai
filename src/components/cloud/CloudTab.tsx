@@ -345,7 +345,7 @@ function OverviewTab({ databases, usage, onProvision }: any) {
         <div>
           <h3 className="text-lg font-semibold mb-3">Your Databases</h3>
           <div className="space-y-2">
-            {databases.map(db => (
+            {databases.map((db: any) => (
               <div key={db.id} className="p-3 bg-slate-950 border border-slate-700 rounded text-sm">
                 <div className="flex justify-between items-center">
                   <div>
@@ -393,7 +393,7 @@ function DatabasesTab({ databases, selectedDatabase, onSelect, onProvision, proj
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {databases.map(db => (
+        {databases.map((db: any) => (
           <div
             key={db.id}
             onClick={() => onSelect(db)}
@@ -574,7 +574,7 @@ function SecretsTab({ projectId, secrets, onRefresh }: any) {
           <p className="text-slate-400 text-sm">No secrets</p>
         ) : (
           <div className="space-y-2">
-            {secrets.map(secret => (
+            {secrets.map((secret: any) => (
               <div key={secret.id} className="p-3 bg-slate-950 border border-slate-700 rounded flex items-center justify-between text-sm">
                 <span className="font-medium">{secret.key}</span>
               </div>
@@ -594,7 +594,7 @@ function LogsTab({ logs }: any) {
         <p className="text-slate-400 text-sm">No logs</p>
       ) : (
         <div className="space-y-2">
-          {logs.map(log => (
+          {logs.map((log: any) => (
             <div key={log.id} className="p-3 bg-slate-950 border border-slate-700 rounded text-sm">
               <code className="text-xs block font-mono text-slate-500 mb-1">{(log.query || '').substring(0, 80)}</code>
               <div className="flex gap-3 text-xs text-slate-400">

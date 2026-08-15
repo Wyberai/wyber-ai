@@ -17,6 +17,7 @@ interface AgentMatch {
   name: string
   confidence: number
   reason: string
+  [key: string]: unknown
 }
 
 interface Props {
@@ -147,12 +148,12 @@ export function CanvasChat({ projectId, canvasType }: Props) {
   }, [])
 
   const parseAgentMatch = (text: string): AgentMatch | null => {
-    const match = text.match(/AGENT_MATCH:\s*(\{[^}]+\})/s)
+    const match = text.match(/AGENT_MATCH:\s*(\{[^}]+\})/)
     if (!match) return null
     try { return JSON.parse(match[1]) } catch { return null }
   }
 
-  const cleanText = (text: string) => text.replace(/AGENT_MATCH:\s*\{[^}]+\}/s, '').trim()
+  const cleanText = (text: string) => text.replace(/AGENT_MATCH:\s*\{[^}]+\}/, '').trim()
 
   // Path A: generate fresh canvas from Claude
   const generateCanvas = useCallback(async (prompt: string) => {

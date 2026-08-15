@@ -12,6 +12,7 @@ export interface EmployeeTemplate {
   guardrail_code: string
   primary_tool: string
   popular: boolean
+  default_tools?: string[]
 }
 
 function slug(name: string) {

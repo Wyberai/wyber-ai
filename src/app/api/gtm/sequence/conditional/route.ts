@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
   const branched: string[] = []
 
   for (const enrollment of enrollments) {
-    const seq = enrollment.gtm_sequences as { steps: unknown[]; name: string }
+    const seq = enrollment.gtm_sequences as unknown as { steps: unknown[]; name: string }
     const steps = seq?.steps ?? []
     const currentIdx = enrollment.current_step ?? 0
     const step = steps[currentIdx] as Record<string, unknown> | undefined

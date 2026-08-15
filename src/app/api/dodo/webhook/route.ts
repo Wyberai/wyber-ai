@@ -176,9 +176,11 @@ export async function POST(req: NextRequest) {
 
     const userId = (metadata.user_id as string | undefined) || null
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eventDataAny = (event.data as any)
     const productId = String(
-      (event.data as Record<string, unknown> | undefined)?.product_cart?.[0]?.product_id ||
-      (event.data as Record<string, unknown> | undefined)?.items?.[0]?.product_id ||
+      eventDataAny?.product_cart?.[0]?.product_id ||
+      eventDataAny?.items?.[0]?.product_id ||
       event.product_id || ''
     )
 

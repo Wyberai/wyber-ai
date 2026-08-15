@@ -16,7 +16,7 @@ type FileVal = { content?: string; language?: string } | string
 
 const hasExtension = (p: string) => /\.[a-z0-9]+$/i.test(p)
 
-export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?: { appId?: string; securityBadge?: { score: number } }): T {
+export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?: { appId?: string; securityBadge?: { score: number } }): Record<string, FileVal> {
   if (!files || typeof files !== 'object') return files
 
   const out: Record<string, FileVal> = {}

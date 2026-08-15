@@ -196,6 +196,26 @@ export function diffPlannedAgainstWritten(planned: PlannedFile[], writtenPaths: 
 // worse than the friendly-name fallback).
 const FORGE_PURPOSE_MAX_LEN = 60
 
+/**
+ * Verifies that the router file actually references all expected screens after wiring.
+ * Returns { applied: true } when all screens are found, or { applied: false, missing: string[] }.
+ */
+export function wireLooksApplied(
+  routerBefore: string,
+  routerAfter: string,
+  screens: { path: string; purpose?: string }[],
+): { applied: boolean; missing: string[] } {
+  const missing: string[] = []
+  for (const s of screens) {
+    const name = s.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? s.path
+    // A screen is wired if its name appears in the router (as an import or JSX tag)
+    if (!routerAfter.includes(name)) missing.push(s.path)
+  }
+  // Only report as applied if something actually changed AND nothing is missing
+  const changed = routerBefore !== routerAfter
+  return { applied: changed && missing.length === 0, missing }
+}
+
 export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): string {
   if (phase === 'scaffold') return 'Laying the foundation — shell, theme, and navigation'
   // Prefer the most descriptive purpose in the batch, skipping any that read

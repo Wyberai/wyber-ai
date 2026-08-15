@@ -139,7 +139,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     if (res.ok) {
       const { snapshot } = await res.json();
       const { setFiles } = useEditorStore.getState();
-      const restored = Object.fromEntries(Object.entries(snapshot.files as Record<string, string>).map(([k, v]) => [k, { content: v, language: k.endsWith('.tsx') || k.endsWith('.ts') ? 'typescript' : 'css' }]));
+      const restored = Object.fromEntries(Object.entries(snapshot.files as Record<string, string>).map(([k, v]) => [k, { path: k, content: v, language: k.endsWith('.tsx') || k.endsWith('.ts') ? 'typescript' : 'css' }]));
       setFiles(restored);
       setShowSnapshots(false);
     }

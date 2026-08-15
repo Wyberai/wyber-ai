@@ -1,6 +1,6 @@
 'use client'
 import { memo } from 'react'
-import { Handle, Position, NodeProps } from 'reactflow'
+import { Handle, Position, NodeProps } from '@xyflow/react'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas'
 
@@ -103,7 +103,7 @@ export function resolveTools(requiredTools: string): string[] {
 }
 
 // Integration Node Component for ReactFlow
-export const IntegrationNode = memo(({ data }: NodeProps) => {
+export const IntegrationNode = memo(({ data }: { data: Record<string, any> }) => {
   const integration = INTEGRATIONS[data.integrationKey] || INTEGRATIONS.webhook
   const { label, color, icon } = integration
 

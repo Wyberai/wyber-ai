@@ -46,7 +46,7 @@ function getPlans(isIndia: boolean) {
         ['pro',     ['multiUserOrgs',      'prioritySupportSlack']],
       ];
   return rows.map(([id, extraKeys]) => {
-    const f = PLAN_FACTS[id];
+    const f = PLAN_FACTS[id as keyof typeof PLAN_FACTS];
     const price = isIndia
       ? (f.monthlyPriceINR == null ? '₹0' : `₹${f.monthlyPriceINR.toLocaleString('en-IN')}`)
       : (f.monthlyPrice    == null ? '$0'  : `$${f.monthlyPrice}`);
