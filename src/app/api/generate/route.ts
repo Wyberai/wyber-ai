@@ -4153,7 +4153,7 @@ export async function POST(req: NextRequest) {
       // last 6 hours. Protects against runaway staged builds (e.g. 7 fill passes
       // each billed as a full Opus build = ~$10+). Applies to all Claude tiers;
       // gpt/wybercode have cost_usd=0 so they never trigger this cap.
-      const BUILD_API_COST_CAP_USD = 5
+      const BUILD_API_COST_CAP_USD = 15
       if (buildId && user?.id) {
         const capWindow = new Date(Date.now() - 6 * 3600_000).toISOString()
         const { data: buildCostRows } = await admin
@@ -4853,7 +4853,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         // completeness-retry check in ChatPanel now catches directly.
         const isComplexFullBuild = isNewBuild && (tier === 'default' || tier === 'premium' || tier === 'fable')
         staticSystemPrompt += isComplexFullBuild
-          ? '\n\n=== BUILD EFFICIENCY ===\n1. This is a large multi-feature build — completeness matters more than minimizing file count. Use as many files as the app genuinely needs (a real multi-role or multi-module app can legitimately need 15-30+ files); do not compress it into a handful of giant files just to save output.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. Finish every file you open before starting another — a working 20-file app beats a 6-file app missing half its screens.'
+          ? '\n\n=== BUILD EFFICIENCY ===\n1. This is a large multi-feature build — completeness matters more than minimizing file count. Use as many files as the app genuinely needs (a real multi-role or multi-module app can legitimately need 15-30+ files); do not compress it into a handful of giant files just to save output.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. Finish every file you open before starting another — a working 20-file app beats a 6-file app missing half its screens.\n4. NEVER output any text saying "remaining files", "I\'ll continue", "say \'finish it\'", "ask me to complete", or any variation that asks the user to do anything. The platform handles continuations automatically — just write every file you planned in order without commentary.'
           : '\n\n=== BUILD EFFICIENCY ===\n1. PREFER FEWER, LARGER FILES. Aim for 3-5 files total, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines.\n2. ORDER MATTERS: emit leaf/child files FIRST, then files that import them, App.tsx LAST. Never import a file you have not already written in this same response.\n3. App.tsx must only import files you are creating this turn. A working 4-file app beats a 9-file app missing 3 files.\n4. Finish every file you open before starting another.'
       }
     }

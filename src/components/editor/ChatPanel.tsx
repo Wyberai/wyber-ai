@@ -525,7 +525,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Ref so event handlers always get the latest executeGeneration without stale closure
-  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => Promise<boolean>) | null>(null);
+  const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
   const MAX_AUTOFIX = 2;
@@ -724,11 +724,12 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
         }
       }
       // Stop runaway self-heal: cap consecutive autofix passes per user turn.
-      if (autofixCountRef.current >= MAX_AUTOFIX) {
+      // Completeness retries (completenessRetryFor set) have their own cap and bypass this.
+      if (autofixCountRef.current >= MAX_AUTOFIX && !detail.completenessRetryFor?.length) {
         console.warn('[wyber] self-heal retry cap reached — stopping to protect credits')
         return
       }
-      autofixCountRef.current += 1
+      if (!detail.completenessRetryFor?.length) autofixCountRef.current += 1
       // Runtime-error self-heals stay OUT of the visible agent-team feed on
       // purpose — this used to synthesize a "preview error detected — fixing
       // automatically" event into the feed the user is already looking at, so
@@ -740,7 +741,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       // continuation: this is the user's own build still in flight (cut stream,
       // missing entry file, failed patches) → visible bubble + persisted receipt.
       // Untagged events (runtime-error self-heals from the preview) stay silent.
-      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, completenessRetryFor: detail.completenessRetryFor })
+      executeGenerationRef.current?.(detail.prompt, null, { silent: true, continuation: !!detail.continuation, completenessRetryFor: detail.completenessRetryFor, completenessRetryCount: detail.completenessRetryCount })
     }
     window.addEventListener('wyber-autofix', autofixHandler)
     // Connector/theme panels send prompts via this event
@@ -1022,7 +1023,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
@@ -1636,27 +1637,39 @@ const storeProjectId = useEditorStore.getState().project?.id;
         }
       }
 
-      // 4d. Verify a completeness retry (4c) actually finished the job —
-      // runs only on the retry pass itself (opts.completenessRetryFor is
-      // only ever set by 4c's own dispatch, forwarded through autofixHandler).
-      // One retry is the budget: if it's still incomplete after this, tell
-      // the user plainly what's left rather than silently retrying forever
-      // or, worse, reporting done with a real gap — the exact failure mode
-      // this whole check exists to close.
+      // 4d. Verify a completeness retry (4c) actually finished the job.
+      // Chains up to MAX_COMPLETENESS_RETRIES passes before telling the user.
+      const MAX_COMPLETENESS_RETRIES = 3
       if (opts?.completenessRetryFor?.length && !fileCut && !editCut) {
         const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
         const stillMissing = diffPlannedAgainstWritten(opts.completenessRetryFor, writtenPaths)
         if (stillMissing.length > 0 && isVisible) {
           const nameList = stillMissing.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
           const extra = stillMissing.length > 3 ? ` +${stillMissing.length - 3} more` : ''
-          editIncompleteReported = true
-          setTimeout(() => {
-            const msg = t('editIncompleteMsg')
-              .replace('{count}', String(stillMissing.length))
-              .replace('{names}', nameList + extra)
-            addMessage({ id: uid(), role: 'assistant', content: msg, timestamp: Date.now(), status: 'done' })
-            persistMessage('assistant', msg)
-          }, 300)
+          const retryCount = opts.completenessRetryCount ?? 1
+          if (retryCount < MAX_COMPLETENESS_RETRIES) {
+            const detailList = stillMissing.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
+            pushAgentEvents({ agent: 'orchestrator', status: 'progress', detail: `Finishing ${stillMissing.length} more file${stillMissing.length === 1 ? '' : 's'} (pass ${retryCount + 1})...` })
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('wyber-autofix', {
+                detail: {
+                  continuation: true,
+                  completenessRetryFor: stillMissing,
+                  completenessRetryCount: retryCount + 1,
+                  prompt: `Your previous response still left ${stillMissing.length} planned file${stillMissing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files.`,
+                },
+              }))
+            }, 600)
+          } else {
+            editIncompleteReported = true
+            setTimeout(() => {
+              const msg = t('editIncompleteMsg')
+                .replace('{count}', String(stillMissing.length))
+                .replace('{names}', nameList + extra)
+              addMessage({ id: uid(), role: 'assistant', content: msg, timestamp: Date.now(), status: 'done' })
+              persistMessage('assistant', msg)
+            }, 300)
+          }
         }
       }
 
