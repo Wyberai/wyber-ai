@@ -925,9 +925,63 @@ Change requested: ${editInstruction.trim()}`
             in the chat bubble and the status strip above — a real user saw
             FOUR simultaneous "building" indicators and rightly called it out. */}
         {isGenerating && !html && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
-            <div style={{ width: 28, height: 28, border: '2px solid rgba(14,165,233,0.15)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 13, color: '#71717a', fontWeight: 500 }}>Writing your app...</div>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: '#09090b', zIndex: 5, overflow: 'hidden' }}>
+            {/* top bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', opacity: 0.7 }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#f59e0b', opacity: 0.7 }} />
+              <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', opacity: 0.7 }} />
+              <div style={{ flex: 1, height: 1 }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1.4s ease-in-out infinite' }} />
+                <span style={{ fontSize: 11, color: '#52525b', fontWeight: 500, fontFamily: 'monospace' }}>building</span>
+              </div>
+            </div>
+            {/* file tree */}
+            <div style={{ flex: 1, padding: '16px 14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div style={{ fontSize: 10, color: '#3f3f46', fontWeight: 600, letterSpacing: '0.08em', marginBottom: 10, fontFamily: 'monospace' }}>PROJECT FILES</div>
+              {Object.keys(files).length === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {['src/index.css', 'src/App.tsx', 'src/components/'].map((ph, i) => (
+                    <div key={ph} style={{ display: 'flex', alignItems: 'center', gap: 8, animation: `fadeIn 0.3s ease ${i * 0.15}s both` }}>
+                      <div style={{ width: 14, height: 14, borderRadius: 3, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.12)', animation: 'pulse 1.6s ease-in-out infinite', animationDelay: `${i * 0.2}s` }} />
+                      <div style={{ height: 9, borderRadius: 4, background: 'rgba(255,255,255,0.04)', width: `${60 + i * 20}px` }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                Object.keys(files).slice(-30).map((path, i) => {
+                  const ext = path.split('.').pop() ?? ''
+                  const color = ext === 'css' ? '#f59e0b' : ext === 'ts' || ext === 'tsx' ? '#60a5fa' : ext === 'json' ? '#34d399' : '#a1a1aa'
+                  const name = path.split('/').pop() ?? path
+                  const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/') + 1) : ''
+                  return (
+                    <div key={path} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '3px 0', animation: 'slideIn 0.2s ease both' }}>
+                      <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 700, fontFamily: 'monospace', minWidth: 10 }}>✓</span>
+                      <span style={{ fontSize: 11, color: '#3f3f46', fontFamily: 'monospace' }}>{dir}</span>
+                      <span style={{ fontSize: 11, color, fontWeight: 500, fontFamily: 'monospace' }}>{name}</span>
+                    </div>
+                  )
+                })
+              )}
+              {/* currently writing indicator */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '3px 0', marginTop: 2 }}>
+                <div style={{ width: 10, height: 10, border: '1.5px solid rgba(14,165,233,0.3)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: '#52525b', fontFamily: 'monospace', fontStyle: 'italic' }}>writing…</span>
+              </div>
+            </div>
+            {/* bottom bar */}
+            <div style={{ padding: '8px 14px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0EA5E9', animation: 'pulse 1.4s ease-in-out infinite' }} />
+              <span style={{ fontSize: 11, color: '#3f3f46', fontFamily: 'monospace' }}>
+                {Object.keys(files).length > 0 ? `${Object.keys(files).length} file${Object.keys(files).length !== 1 ? 's' : ''} ready` : 'Starting up…'}
+              </span>
+            </div>
+            <style>{`
+              @keyframes slideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+              @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+              @keyframes pulse   { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+            `}</style>
           </div>
         )}
 

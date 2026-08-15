@@ -72,6 +72,12 @@ export function parseGenerationOutput(raw: string): ParseResult {
     /^(the (above|following|component|code|implementation|app|dashboard))/i,
     /^(note (that|:|—)|important:|key (point|note|thing))/i,
     /^(building|generating|creating|outputting|writing) (the |your |a )?(app|component|file|dashboard|interface)/i,
+    // fill-pass narration: "Wiring up X", "Adding the N missing", "since none existed", "which is why"
+    /^(wiring|hooking|connecting|linking) (up |in )?(app|the|src)/i,
+    /^(adding|including|inserting) (the |these )?(missing|remaining|required|needed)/i,
+    /^since (none|they|these|the)/i,
+    /^which is why/i,
+    /^(now |next |then )?(adding|wiring|hooking|building|generating|creating) (the |your |a )?/i,
   ];
   chatText = chatText
     .split('\n')
