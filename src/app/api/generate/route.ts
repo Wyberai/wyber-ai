@@ -4150,6 +4150,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ── Build API cost cap: abort before Anthropic call if this build already
+    // spent $5. Queries the cumulative cost_usd logged for this buildId in the
+    // last 6 hours. Protects against runaway staged builds (e.g. 7 fill passes
+    // each billed as a full Opus build = ~$10+). Applies to all Claude tiers;
+    // gpt/wybercode have cost_usd=0 so they never trigger this cap.
+    const BUILD_API_COST_CAP_USD = 5
+    if (buildId && user?.id) {
+      const capWindow = new Date(Date.now() - 6 * 3600_000).toISOString()
+      const { data: buildCostRows } = await admin
+        .from('generation_usage_log')
+        .select('cost_usd')
+        .eq('build_id', buildId)
+        .eq('user_id', user.id)
+        .gte('created_at', capWindow)
+      const buildSpentUsd = (buildCostRows ?? []).reduce(
+        (sum: number, r: { cost_usd: number | null }) => sum + (r.cost_usd || 0), 0
+      )
+      if (buildSpentUsd >= BUILD_API_COST_CAP_USD) {
+        // Refund whatever platform credits were just deducted for this pass
+        await settleRefund('build-cost-cap')
+        // Write a project message so the user sees the cap even for silent
+        // fill passes (those never own the chat bubble and swallow the error).
+        if (projectId) {
+          admin.from('project_messages').insert({
+            project_id: projectId, role: 'assistant',
+            content: `⚠ Build stopped: Anthropic API spend for this build reached the $${BUILD_API_COST_CAP_USD} safety cap. Your platform credits have been refunded. Some screens may be missing — start a new build to complete the app.`,
+            files_changed: [],
+          }).then(() => {}, () => {})
+        }
+        return new Response(JSON.stringify({
+          error: `Build stopped: Anthropic API spend for this build reached the $${BUILD_API_COST_CAP_USD} safety cap. Your platform credits have been refunded. Start a new build if needed.`,
+          code: 'BUILD_COST_CAP',
+          spent_usd: Number(buildSpentUsd.toFixed(2)),
+        }), { status: 402 })
+      }
+    }
+
     // ── TEMPLATE MATCHING DISABLED ──────────────────────────────────
     // All code is generated fresh from scratch — no stale templates.
     // This ensures users always get the latest, highest-quality output.
