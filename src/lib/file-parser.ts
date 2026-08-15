@@ -55,11 +55,28 @@ export function parseGenerationOutput(raw: string): ParseResult {
   chatText = chatText.replace(/```edited:[^`]*```/g, '');
   // Strip backtick code fences that wrap file lists
   chatText = chatText.replace(/```[\s\S]*?```/g, '');
-  // Strip [progress: ...] markers — these are surfaced as the live checklist, never as chat text
+  // Strip [progress: ...] markers — surfaced as the live checklist, never as chat text
   chatText = chatText.replace(/\[progress:[^\]]+\]/gi, '');
+  // Strip [plan: ...] markers — generation file-commit list, not user-facing
+  chatText = chatText.replace(/\[plan:[^\]]+\]/gi, '');
+  // Strip [complete: ...] markers — completion checklist, not user-facing
+  chatText = chatText.replace(/\[complete:[^\]]+\]/gi, '');
   // Strip [agent:{...}] team-event markers — surfaced via extractAgentEvents
   // (src/lib/agents/events.ts) as the agent feed, never as chat text.
   chatText = chatText.replace(/\[agent:\{[^\n\]]*\}\]/g, '');
+  // Strip build-narration lines that leaked through — these are model prose
+  // that belongs in code comments, not in the chat panel. Pattern: lines that
+  // begin with common narration phrases produced by the model mid-generation.
+  const NARRATION_PATTERNS = [
+    /^(here'?s?|here is|i'?ve? (created|built|implemented|added|updated|included|designed|set up)|now (let'?s?|i'?ll?|we)|this (component|file|creates|adds|implements|handles|shows))/i,
+    /^(the (above|following|component|code|implementation|app|dashboard))/i,
+    /^(note (that|:|—)|important:|key (point|note|thing))/i,
+    /^(building|generating|creating|outputting|writing) (the |your |a )?(app|component|file|dashboard|interface)/i,
+  ];
+  chatText = chatText
+    .split('\n')
+    .filter(line => !NARRATION_PATTERNS.some(p => p.test(line.trim())))
+    .join('\n');
   // Clean up extra whitespace and blank lines
   chatText = chatText
     .split('\n')
@@ -126,6 +143,9 @@ export function cleanStreamingDisplay(raw: string): string {
   out = out.replace(/\[agent:\{[^\n\]]*\}\]/g, '');
   const openAgent = out.search(/\[agent:\{[^\n\]]*$/);
   if (openAgent !== -1) out = out.slice(0, openAgent);
+  // [plan: ...] and [complete: ...] are internal generation markers, not chat
+  out = out.replace(/\[plan:[^\]]+\]/gi, '');
+  out = out.replace(/\[complete:[^\]]+\]/gi, '');
   return out.trim();
 }
 

@@ -23,6 +23,7 @@ import { GOOGLE_FONTS_LINKS, PREVIEW_TAILWIND_CONFIG, TOKEN_VARS_CSS } from '@/l
 import { resolveDirectivesForPreview } from '@/lib/image-directives'
 import { WYBER_UI_KIT_FILES } from '@/lib/wyber-ui-kit'
 import { WYBER_STORE_FILES } from '@/lib/wyber-store'
+import { CONNECTOR_INFRA_FILES } from '@/lib/connector-infra'
 import { injectWyberLoc, WYBER_BRIDGE_SCRIPT } from '@/lib/wyber-preview/bridge'
 
 export interface PreviewFile {
@@ -181,6 +182,14 @@ export async function bundleFiles(
     for (const [storePath, storeContent] of Object.entries(WYBER_STORE_FILES)) {
       const np = normalizeFilePath(storePath)
       if (!normalizedFiles[np]) normalizedFiles[np] = storeContent
+    }
+
+    // Connector infrastructure (ConnectorStore, useConnector, ConnectorCard,
+    // SourceBadge, ConnectModal). Same rules: tree-shaken when unused, user
+    // files win. The LLM imports from these rather than regenerating them.
+    for (const { path: infPath, content: infContent } of CONNECTOR_INFRA_FILES) {
+      const np = normalizeFilePath(infPath)
+      if (!normalizedFiles[np]) normalizedFiles[np] = infContent
     }
 
     // Phase 3: Check if any files changed

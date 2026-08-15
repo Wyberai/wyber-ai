@@ -2072,6 +2072,26 @@ const storeProjectId = useEditorStore.getState().project?.id;
       effectiveModelTier, estimateBuildTier,
     )}cr` : '';
 
+    // Pre-build credit message — visible in chat BEFORE any credits are spent.
+    // This is the moat: user sees the exact cost with a tight ±12% upper bound,
+    // not a vague wide range. Shows immediately after the plan pass succeeds.
+    if (estimateBuildTier && plannedFileCount > 0) {
+      const buildActionForCost: ActionType = projectType === 'mobile' ? 'mobile-build'
+        : projectType === 'website' ? 'website-build'
+        : projectType === 'saas' ? 'saas-build'
+        : 'web-build';
+      const exactCost = creditCost(buildActionForCost, effectiveModelTier, estimateBuildTier);
+      const hi = Math.ceil(exactCost * 1.12);
+      const appLabel = projectType === 'mobile' ? 'mobile app'
+        : projectType === 'website' ? 'website'
+        : projectType === 'saas' ? 'SaaS'
+        : 'app';
+      const preMsg = `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
+      const preMsgId = uid();
+      addMessage({ id: preMsgId, role: 'assistant', content: preMsg, timestamp: Date.now(), status: 'done' });
+      persistMessage('assistant', preMsg);
+    }
+
     if (!staged || !staged.shouldStage) {
       pushAgentEvents({ agent: 'planner', status: 'done', detail: (staged ? t('compactBuildMsg') : t('buildingOnePassMsg')) + costSuffix });
       // Forward the manifest already fetched above (if the plan pass

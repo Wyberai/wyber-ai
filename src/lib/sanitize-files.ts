@@ -8,6 +8,7 @@ import { collectMissingStubs } from './stub-missing-imports'
 import { TAILWIND_CONFIG_FILE, DEFAULT_TOKENS_CSS, GOOGLE_FONTS_LINKS } from './design-system'
 import { WYBER_UI_KIT_FILES } from './wyber-ui-kit'
 import { WYBER_STORE_FILES } from './wyber-store'
+import { CONNECTOR_INFRA_FILES } from './connector-infra'
 import { resolveDirectivesForPreview } from './image-directives'
 import { synthesizeAppTsx } from './synthesize-app'
 
@@ -121,6 +122,14 @@ export function sanitizeFiles<T extends Record<string, FileVal>>(files: T, opts?
     //     tree-shaken when unused, must land before the stub pass.
     for (const [storePath, storeContent] of Object.entries(WYBER_STORE_FILES)) {
       if (!(storePath in out)) out[storePath] = { content: storeContent, language: 'typescript' }
+    }
+
+    // 0c. Connector infrastructure — pre-built ConnectorStore, useConnector
+    //     hook, ConnectorCard/SourceBadge/ConnectModal UI components. Same
+    //     rules: transient, user files win, tree-shaken when unused. LLM imports
+    //     from these rather than regenerating them (saves ~900 tokens per build).
+    for (const { path: infPath, content: infContent } of CONNECTOR_INFRA_FILES) {
+      if (!(infPath in out)) out[infPath] = { content: infContent, language: 'typescript' }
     }
 
     // 1. index.css must carry the @tailwind directives AND the design-system
