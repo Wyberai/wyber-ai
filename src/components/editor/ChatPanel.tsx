@@ -2315,11 +2315,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const st = useEditorStore.getState();
     const appFile = (st.files?.['src/App.tsx'] || st.files?.['App.tsx'] || st.files?.['src/App.jsx']) as { content?: string } | undefined;
     const isFirstBuild = !st.hasGeneratedFiles || isPlaceholderApp(appFile?.content);
-    // Agent team disabled — use simple per-file generation
-    // if (AGENT_TEAM_ENABLED && !img && !hasAttachments && isFirstBuild) {
-    //   await runAgenticBuild(content, img, paletteId);
-    //   return;
-    // }
+    // Staged pipeline: plan → scaffold → fill batches → wire.
+    // Runs for all first builds without images/attachments.
+    // AGENT_TEAM_ENABLED stays false (disables agent-team UI features only).
+    if (!img && !hasAttachments && isFirstBuild) {
+      await runAgenticBuild(content, img, paletteId);
+      return;
+    }
     // finalPass + a fresh buildId mark this as a complete, one-request build
     // chain for the overage safety valve (harmless on edits — buildTier is
     // only ever resolved server-side for isNewBuild requests, so the check

@@ -72,12 +72,17 @@ export function parseGenerationOutput(raw: string): ParseResult {
     /^(the (above|following|component|code|implementation|app|dashboard))/i,
     /^(note (that|:|—)|important:|key (point|note|thing))/i,
     /^(building|generating|creating|outputting|writing) (the |your |a )?(app|component|file|dashboard|interface)/i,
-    // fill-pass narration: "Wiring up X", "Adding the N missing", "since none existed", "which is why"
-    /^(wiring|hooking|connecting|linking) (up |in )?(app|the|src)/i,
+    // fill/completeness-pass narration
+    /^(wiring|hooking|connecting|linking) (up |in )?(app|the|src|all)/i,
     /^(adding|including|inserting) (the |these )?(missing|remaining|required|needed)/i,
     /^since (none|they|these|the)/i,
     /^which is why/i,
     /^(now |next |then )?(adding|wiring|hooking|building|generating|creating) (the |your |a )?/i,
+    // standalone connective phrases that only appear in narration prose
+    /^(to (complete|finish|render|make) (the|this|your))/i,
+    /^(these (files|components|screens) (will|were|are|have))/i,
+    /^(all (files|screens|components) (are|have been|were))/i,
+    /^(the (app|dashboard|crm|saas) (now|is|should|will))/i,
   ];
   chatText = chatText
     .split('\n')
