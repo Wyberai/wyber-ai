@@ -2960,15 +2960,19 @@ export async function POST(req: NextRequest) {
     // billed as a full paid build instead of the intended free lane. A
     // single flag makes that drift impossible instead of just detectable.
     // Turns on: [agent:{json}] event emission in the stream, Sentinel's
-    // in-stream security review, and the internal-pass billing lane below.
-    // Off = byte-identical current behavior.
+    // in-stream security review.
     const agentTeamOn = process.env.NEXT_PUBLIC_AGENT_TEAM === 'true'
     // `internalPass` marks a follow-up pass of an already-charged turn (fill
     // batches after a charged scaffold, a targeted agent fix, or the final
     // wire-the-real-screens-in pass). Honored ONLY for those bounded stages so
     // a crafted request can never get a full build for free — and every
     // internal pass is counted by the free-lane hourly guard below.
-    const isInternalPass = agentTeamOn && internalPass === true && (stage === 'fill' || stage === 'agentFix' || stage === 'wire')
+    // NOTE: deliberately NOT gated on agentTeamOn — the staged pipeline
+    // (scaffold → fill batches → wire) charges ONE build cost on scaffold and
+    // all follow-up passes are free, regardless of agent-team UI features.
+    // Gating on agentTeamOn caused every fill/wire pass to bill as a full
+    // build whenever the flag was off, silently multiplying costs 4-6×.
+    const isInternalPass = internalPass === true && (stage === 'fill' || stage === 'agentFix' || stage === 'wire')
     // Internal fills are batch-bounded by design (buildStagedPlan batches of 2);
     // reject oversized lists so "fill" can't be abused as a free full build.
     if (isInternalPass && stage === 'fill') {
