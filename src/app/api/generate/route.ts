@@ -273,7 +273,16 @@ POLISH:
 - Pressable with android_ripple={{ color: 'rgba(255,255,255,0.05)' }} for Android feel
 - FlatList with ItemSeparatorComponent for clean dividers
 - Empty state: centered View with large icon (opacity 0.3) + title + subtitle + CTA button
-- Loading: SKELETON SCREENS — NOT ActivityIndicator as the primary loading pattern. Skeleton = a View with the exact same layout as the loaded state, but all content areas replaced by animated pulsing rectangles (opacity cycling 0.3↔0.8 via Animated.loop). ActivityIndicator is only used for spinner inside a button (submit state) — never as a full-screen or card-level loader.
+- Loading: SKELETON SCREENS — NOT ActivityIndicator as the primary loading pattern. ActivityIndicator is only used for spinner inside a button (submit state) — never as a full-screen or card-level loader. Skeleton implementation:
+  const opacity = useRef(new Animated.Value(0.3)).current
+  useEffect(() => {
+    Animated.loop(Animated.sequence([
+      Animated.timing(opacity, { toValue: 0.8, duration: 700, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
+    ])).start()
+  }, [])
+  // SkeletonBox: <Animated.View style={{ opacity, backgroundColor: theme.border, borderRadius: 8, height: 16, width: '70%' }} />
+  // Use SkeletonBox with the exact dimensions of what will load (card height, text width, avatar circle, etc.)
 - Pull-to-refresh: RefreshControl on ScrollView/FlatList with tintColor={theme.accent}
 - KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} on every screen with inputs
 - SafeAreaView wrapping root content on every screen
@@ -297,7 +306,14 @@ EVERY APP must include:
 ✓ BOTTOM TAB NAVIGATION ONLY (3-5 tabs) — NEVER a sidebar or hamburger menu on mobile. Sidebars are a web pattern. The bottom tab bar is always present and always visible.
 ✓ Minimum 48×48 density-independent pixels for EVERY touchable element — no small icon buttons without padding
 ✓ Skeleton screens on all data-loading states (see POLISH above) — never ActivityIndicator as the primary loader
-✓ Swipe-to-reveal on EVERY list item — left swipe shows Delete (red) and optionally Archive/Edit (secondary color). Use a custom Swipeable wrapper with Animated
+✓ Swipe-to-reveal on EVERY list item — left swipe reveals Delete (red). Implement with react-native-gesture-handler's Swipeable (already available in the platform):
+  import Swipeable from 'react-native-gesture-handler/Swipeable'
+  const renderRightActions = (id: string) => (
+    <TouchableOpacity onPress={() => handleDelete(id)} style={{ backgroundColor: theme.danger, justifyContent: 'center', alignItems: 'center', width: 80, borderRadius: theme.radius, marginBottom: 8 }}>
+      <Ionicons name="trash-outline" size={20} color="#fff" />
+    </TouchableOpacity>
+  )
+  // Wrap each list item: <Swipeable renderRightActions={() => renderRightActions(item.id)}><ListItem ... /></Swipeable>
 ✓ Intelligence-first home screen: NOT a simple list. Home shows KPI stat cards at top, then a personalized AI digest or feed ("3 deals need your attention today", "Revenue is up 12% — your best week"), then recent activity. Data drives the narrative, not the other way around
 ✓ Haptic feedback on ALL primary actions (tap a primary button, complete an item, switch tabs): import * as Haptics from 'expo-haptics' and call Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) on most taps, Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success) on completions
 ✓ Voice input: microphone icon (Ionicons 'mic-outline') on every multi-line TextInput. Tap → expo-speech or placeholder voice modal. Even if the API isn't wired, the button must exist and show a "recording" state
@@ -337,7 +353,7 @@ Every screen that shows data must have at least ONE AI-generated insight that re
 - Pipeline screen: "You have 4 deals with no activity in 7 days — follow up before they go cold."
 - Analytics screen: "Thursday is your best day for closes — 3 of your last 5 deals signed Thursday afternoon."
 - Today screen: "You're 73% to target with 8 days left. Close 2 of your 3 warm deals and you hit it."
-The AI insight card is styled as: backgroundColor: theme.accentLight, borderRadius: 14, padding: 16, border: '1px solid ' + theme.accent + '33'. An animated ✦ spark icon on the left. The text itself is dynamic (references real data variables from state).
+The AI insight card is styled as: backgroundColor: theme.accentLight, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: theme.accent + '33'. An animated ✦ spark icon on the left (text size 16, color: theme.accent). The text itself is dynamic (references real data variables from state). IMPORTANT: never use a CSS border shorthand in React Native - always use borderWidth + borderColor separately.
 
 DATA RULES:
 - Diverse names: Sarah Chen, Marcus Rivera, Priya Sharma, James O'Brien, Aisha Patel
@@ -832,7 +848,34 @@ hero → [PERSONALIZATION GATE] → <Marquee> logo strip → features (<BentoGri
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 PERSONALIZATION GATE (after hero, before logo strip):
-A subtle segmentation row that splits visitors into 2-3 tracks and updates the rest of the page's copy accordingly. Implemented as pill buttons: "I'm a..." [Freelancer] [Agency] [Enterprise] — or whatever 2-3 ICPs fit the product. Clicking a pill: (a) highlights that pill (accent border), (b) changes 3-5 key copy strings throughout the page via useState (hero subcopy, feature headlines, pricing CTA), (c) stores selection in localStorage so returning visitors see their choice. The pills are styled as glass chips in the hero section, subtle enough not to break the hero's visual hierarchy. Not a modal, not a form — just chips that feel like they're curating the page for you.
+<code>
+type Persona = 'freelancer' | 'agency' | 'enterprise'  // adapt to this product's ICPs
+const PERSONAS: { key: Persona; label: string }[] = [
+  { key: 'freelancer', label: 'Freelancer' },
+  { key: 'agency', label: 'Agency' },
+  { key: 'enterprise', label: 'Enterprise' },
+]
+const PERSONA_COPY: Record<Persona, { subheadline: string; featureHook: string; ctaText: string }> = {
+  freelancer: { subheadline: 'Invoice clients in seconds, get paid faster.', featureHook: 'Made for solo operators.', ctaText: 'Start free — no card' },
+  agency: { subheadline: 'Manage 10+ clients without losing track.', featureHook: 'Built for teams of 2–15.', ctaText: 'Start agency trial' },
+  enterprise: { subheadline: 'SSO, audit logs, and custom contracts.', featureHook: 'SOC 2 Type II certified.', ctaText: 'Talk to sales' },
+}
+// In App.tsx:
+const [persona, setPersona] = useState<Persona>(() => (localStorage.getItem('persona') as Persona) || 'freelancer')
+const selectPersona = (p: Persona) => { setPersona(p); localStorage.setItem('persona', p) }
+// Pass persona + PERSONA_COPY[persona] down to Hero and Features as props
+// Chip row (render in hero, below h1):
+<div className="flex items-center gap-2 text-sm text-muted-foreground">
+  <span className="font-mono text-[10px] uppercase tracking-wider">I'm a</span>
+  {PERSONAS.map(p => (
+    <button key={p.key} onClick={() => selectPersona(p.key)}
+      className={cn('px-3 py-1 rounded-full border text-sm transition-all',
+        persona === p.key ? 'border-primary text-primary bg-primary/10' : 'border-border text-muted-foreground hover:border-primary/50')}>
+      {p.label}
+    </button>
+  ))}
+</div>
+</code>
 
 INTERACTIVE PRODUCT DEMO (between the pinned walkthrough and stat blocks):
 This is the most important conversion section on the page. It is a LIVE, CLICKABLE mini-version of the actual product UI — NOT a video, NOT a screenshot, NOT a GIF. Built entirely in React:
@@ -850,7 +893,38 @@ ANNUAL/MONTHLY PRICING TOGGLE (in pricing section):
 Every pricing section has a toggle: [Monthly] [Annual — save 20%] implemented as a pill toggle with a framer-motion indicator that slides between options. Annual prices are displayed when annual is selected, with a strikethrough monthly price and "Save $X/year" badge beneath. The toggle is pre-set to Annual (anchoring at the higher-value option).
 
 AI CHAT WIDGET (mandatory on every website build):
-A floating chat bubble in the bottom-right corner. Visually: 52×52px circle button, bg-primary (or accent), white chat icon, subtle shadow + ring. On click: a 320×420px chat panel slides up (framer-motion), dark glass card, with pre-populated opening message that references the site's actual product: "Hey! I'm the [ProductName] AI — I can tell you exactly how we'd work for your use case. What are you trying to solve?" — NOT "Hi! How can I help?" The chat panel is functional: a TextInput at the bottom, sends to a local state array and responds with 2-3 scripted contextual answers before showing a "Talk to a human" link. The answers must be specific to the product, not generic chatbot filler. This is NOT an embedded third-party widget — build it entirely in React within the app.
+Build entirely in React — NOT a third-party embed. Mount it once in App.tsx so it persists across all pages. Implementation:
+<code>
+// In App.tsx, after all page content:
+<AIChatWidget productName="[ProductName]" />
+</code>
+<code>
+// components/AIChatWidget.tsx
+const SCRIPTED_RESPONSES = [
+  "Great question. [ProductName] handles that by [specific mechanism]. Most customers see results within [timeframe].",
+  "That's a common concern — here's how we solve it: [specific answer]. Want me to show you a quick example?",
+  "Talk to a human → [book a demo link or contact email]"
+]
+const [open, setOpen] = useState(false)
+const [messages, setMessages] = useState([{ role: 'ai', text: 'Hey! I’m the [ProductName] AI. What are you trying to solve?' }])
+const [input, setInput] = useState('')
+const [respIdx, setRespIdx] = useState(0)
+
+const send = () => {
+  if (!input.trim()) return
+  setMessages(m => [...m, { role: 'user', text: input }])
+  setInput('')
+  setTimeout(() => {
+    setMessages(m => [...m, { role: 'ai', text: SCRIPTED_RESPONSES[Math.min(respIdx, SCRIPTED_RESPONSES.length - 1)] }])
+    setRespIdx(i => i + 1)
+  }, 800)
+}
+
+// Render: fixed bottom-right. Button = 52px circle bg-primary. Panel = AnimatePresence slide-up
+// Panel: 320px wide, 420px tall, dark glass (bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl)
+// Messages scroll area: overflow-y-auto flex-1. User msg: bg-primary text-primary-foreground rounded-2xl rounded-br-sm. AI msg: bg-muted rounded-2xl rounded-bl-sm.
+// Input row: Input + Send button (bg-primary, Arrow icon)
+</code>
 
 ANIMATION:
 - Wrap every section in <Reveal> or <Stagger>+<StaggerItem> for scroll entrance
@@ -1303,6 +1377,25 @@ DATA MODEL MANDATE:
 - The organization_members table: org_id, user_id, role ('owner'|'admin'|'member'|'viewer'), joined_at. Role drives every permission check in the UI.
 - All Supabase RLS policies use: auth.uid() in (SELECT user_id FROM organization_members WHERE org_id = [table].org_id).
 
+ORG CONTEXT — implement this exact pattern as src/context/OrgContext.tsx:
+<code>
+interface Org { id: string; name: string; slug: string; plan: 'free'|'starter'|'pro'|'enterprise' }
+type OrgRole = 'owner' | 'admin' | 'member' | 'viewer'
+interface OrgContextType {
+  org: Org | null
+  role: OrgRole | null
+  canEdit: boolean    // owner | admin | member (own records)
+  canAdmin: boolean   // owner | admin only
+  isViewer: boolean   // viewer only
+}
+const OrgContext = React.createContext<OrgContextType>({ org: null, role: null, canEdit: false, canAdmin: false, isViewer: false })
+export const useOrg = () => React.useContext(OrgContext)
+
+// In App.tsx root: wrap with <OrgProvider>. OrgProvider reads org_id from localStorage or URL slug,
+// fetches org + user role from organization_members, stores in context.
+// Every page reads: const { org, canAdmin, isViewer } = useOrg()
+</code>
+
 ROLE-BASED UI (enforce visually, not just via API):
 - Owner/Admin: full create, edit, delete. All settings tabs visible including Billing and Team.
 - Member: create + edit their own records. Cannot access Billing or manage other members.
@@ -1702,25 +1795,92 @@ WEB APP SIGNATURE PATTERNS — 2026 MANDATORY
 These are what make a Web App feel native-quality and not like a webpage in a sidebar. All of these must appear (apply the subset that fits the app's domain):
 
 KEYBOARD SHORTCUTS (mandatory on every web app build):
-- Implement a useKeyboard hook that listens for Cmd/Ctrl+K (command palette), Cmd+N (new item), Cmd+Enter (save/submit), Escape (close/cancel), and ↑↓ arrow navigation in lists/dropdowns
-- Show keyboard shortcuts in tooltips and inside the command palette: each command shows its shortcut right-aligned (text-xs text-muted-foreground font-mono)
-- A "?" key opens a keyboard shortcuts cheat-sheet modal — a 2-column grid of action + shortcut pairs
+Implement as src/hooks/useKeyboard.ts:
+<code>
+export function useKeyboard(handlers: Record<string, () => void>) {
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      const meta = e.metaKey || e.ctrlKey
+      const key = (meta ? 'cmd+' : '') + (e.shiftKey ? 'shift+' : '') + e.key.toLowerCase()
+      if (handlers[key]) { e.preventDefault(); handlers[key]() }
+    }
+    document.addEventListener('keydown', down)
+    return () => document.removeEventListener('keydown', down)
+  }, [handlers])
+}
+// Usage in App.tsx:
+useKeyboard({
+  'cmd+k': () => setCommandOpen(true),
+  'cmd+n': () => setAddOpen(true),
+  'escape': () => { setCommandOpen(false); setAddOpen(false) },
+  '?': () => setShortcutsOpen(true),
+})
+</code>
+Show keyboard shortcut hints right-aligned in the command palette: <kbd className="ml-auto text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">⌘K</kbd>
 
 INLINE EDITING (mandatory for any app that shows data records):
-- Every text field in a data record is click-to-edit. Clicking a title/description shows a contentEditable or Input inline — NOT "click to open a modal to edit"
-- The edit input appears where the text was, same size and style. On blur or Enter: save and revert to display mode with a brief green flash (bg-success/10 for 800ms)
-- Esc cancels and shows original value
+<code>
+function InlineEdit({ value, onSave, className }: { value: string; onSave: (v: string) => void; className?: string }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const [flash, setFlash] = useState(false)
+  const ref = useRef<HTMLInputElement>(null)
+  useEffect(() => { if (editing) ref.current?.focus() }, [editing])
+  const save = () => {
+    setEditing(false)
+    if (draft !== value) { onSave(draft); setFlash(true); setTimeout(() => setFlash(false), 800) }
+  }
+  if (!editing) return (
+    <span onClick={() => setEditing(true)}
+      className={cn('cursor-text rounded px-1 -mx-1 transition-colors hover:bg-accent/50', flash && 'bg-success/10', className)}>
+      {value}
+    </span>
+  )
+  return <input ref={ref} value={draft} onChange={e => setDraft(e.target.value)}
+    onBlur={save} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(value); setEditing(false) } }}
+    className={cn('bg-transparent border-b border-primary outline-none w-full', className)} />
+}
+</code>
 
 DRAG-AND-DROP (mandatory for task, kanban, project, content apps):
-- Use @dnd-kit/core + @dnd-kit/sortable (available in the platform). Implement DndContext + SortableContext on any list or board.
-- Visual during drag: the dragged item gets opacity-50 + scale-105, the drop target gets a 2px accent-colored left border
-- On drop: animate the item to its new position with a spring transition
+Use HTML5 native drag events — zero dependencies, works in the platform:
+<code>
+// In each draggable item:
+const [dragging, setDragging] = useState<string | null>(null)
+const [over, setOver] = useState<string | null>(null)
+
+// On the draggable element:
+draggable={true}
+onDragStart={(e) => { setDragging(item.id); e.dataTransfer.effectAllowed = 'move' }}
+onDragOver={(e) => { e.preventDefault(); setOver(item.id) }}
+onDrop={(e) => { e.preventDefault(); reorderItems(dragging, item.id); setDragging(null); setOver(null) }}
+onDragEnd={() => { setDragging(null); setOver(null) }}
+className={cn(
+  'transition-all duration-200',
+  dragging === item.id && 'opacity-40 scale-[0.98]',
+  over === item.id && dragging !== item.id && 'border-l-2 border-primary translate-x-1'
+)}
+</code>
+The reorderItems function: move the dragged item to the position of the target item in the array using array splice. Use React state so the reorder is instant and smooth.
 
 REAL-TIME SYNC INDICATOR (mandatory on every web app with data):
-- A small badge in the top-right of the main content area: "Synced 2s ago ✓" in text-xs text-muted-foreground.
-- During a save: "Saving..." with a spinning indicator
-- After error: "Failed to save — retry" in text-destructive with a retry button
-- State stored in a useSyncStatus hook that all data mutations route through
+<code>
+type SyncStatus = 'idle' | 'saving' | 'saved' | 'error'
+export function useSyncStatus() {
+  const [status, setStatus] = useState<SyncStatus>('idle')
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const saving = () => setStatus('saving')
+  const saved = () => { setStatus('saved'); setLastSaved(new Date()); setTimeout(() => setStatus('idle'), 3000) }
+  const error = () => setStatus('error')
+  return { status, lastSaved, saving, saved, error }
+}
+// Mount once in App.tsx, pass down as prop or via context
+// UI: in the app header, top-right:
+// status === 'saving' → <Loader2 className="animate-spin" size={12} /> Saving...
+// status === 'saved'  → <Check size={12} className="text-success" /> Synced just now
+// status === 'idle' && lastSaved → Synced {formatDistanceToNow(lastSaved)} ago
+// status === 'error'  → <AlertCircle size={12} className="text-destructive" /> Failed — Retry
+</code>
 
 SPLIT-PANE LAYOUT (mandatory for apps with a list + detail pattern — email, CRM, file manager, notes):
 - Left: resizable list panel (default 35% width, resizable via a drag handle)
