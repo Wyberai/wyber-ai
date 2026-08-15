@@ -2133,16 +2133,22 @@ const storeProjectId = useEditorStore.getState().project?.id;
     agentPassCountRef.current += 1;
     useAgentTurnStore.getState().setPasses(agentPassCountRef.current, totalPassesPlanned);
     const scaffoldPurposes = staged.scaffoldPaths.map(p => staged.files.find(f => f.path === p)?.purpose ?? '');
-    const scaffoldOk = await executeGenerationRef.current?.(userMsg, img, {
+    const runScaffold = () => executeGenerationRef.current?.(userMsg, img, {
       paletteId, stage: 'scaffold', stageFiles: staged.scaffoldPaths, stagePurposes: scaffoldPurposes, finalPass: !hasFills,
       totalPlannedFiles: staged.files.length, buildId, buildComplexity, sharedBubbleId: chainId,
-      echoedUser: true, // user message already added at the top of runAgenticBuild
+      echoedUser: true,
     });
-    // A failed scaffold means there's no skeleton for fill batches to build
-    // on — piling more passes on top of a pass that produced no real files
-    // (or errored) just multiplies wasted model calls on top of broken state.
+    let scaffoldOk = await runScaffold();
+    // Retry once on transient failure before surfacing an error — same pattern as fill batches.
     if (!scaffoldOk) {
-      finishChain(t('scaffoldFailedMsg'), []);
+      await new Promise(r => setTimeout(r, 1200));
+      scaffoldOk = await runScaffold();
+    }
+    if (!scaffoldOk) {
+      // Show a clean error with a Retry button — no internal jargon.
+      updateMessage(chainId, { content: "Something interrupted your build. Hit Retry and it'll pick up where it left off.", status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+      persistMessage('assistant', "Something interrupted your build. Hit Retry and it'll pick up where it left off.");
+      setIsGenerating(false);
       return;
     }
 
