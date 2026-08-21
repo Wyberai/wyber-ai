@@ -53,8 +53,7 @@ export type AiBrief = {
   }
   dfy: {
     tier: string
-    price_inr_full: number
-    price_inr_now: number
+    price_inr: number
     timeline: string
     includes: string
     external_costs: string | null
@@ -214,8 +213,7 @@ function BriefPanel({ meeting, onBriefGenerated }: { meeting: Meeting; onBriefGe
                 <Row label="Tier" value={brief.dfy.tier} />
                 <Row label="Timeline" value={brief.dfy.timeline} />
                 <div style={{ borderTop: '1px solid rgba(99,102,241,0.2)', marginTop: 4, paddingTop: 8 }}>
-                  <Row label="Normal price" value={fmt(brief.dfy.price_inr_full)} muted />
-                  <Row label="Current offer (50% off)" value={fmt(brief.dfy.price_inr_now)} highlight />
+                  <Row label="Price" value={fmt(brief.dfy.price_inr)} highlight />
                 </div>
                 <div style={{ fontSize: 11, color: '#52525b', lineHeight: 1.5, marginTop: 4 }}>{brief.dfy.includes}</div>
                 {brief.dfy.external_costs && (

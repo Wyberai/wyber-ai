@@ -16,10 +16,10 @@ Monthly plans (annual billing):
 
 One-time packs: 200cr ₹399 | 600cr ₹999 | 2,000cr ₹1,999
 
-Done-For-You (50% off through Aug 15 2026):
-- Simple $199 → $99 now (₹8,300) — no auth/db, landing page / tool
-- Medium $399 → $199 now (₹16,700) — SaaS with auth + database, 3-6 screens
-- Complex $799 → $399 now (₹33,500) — payments + integrations, 6+ screens, external APIs
+Done-For-You:
+- Simple $199 (₹16,700) — no auth/db, landing page / tool
+- Medium $399 (₹33,500) — SaaS with auth + database, 3-6 screens
+- Complex $799 (₹67,100) — payments + integrations, 6+ screens, external APIs
 
 USD/INR: ₹84
 `
@@ -78,8 +78,7 @@ Write a JSON brief with EXACTLY this shape (no markdown, no explanation, just ra
   },
   "dfy": {
     "tier": "<Simple|Medium|Complex>",
-    "price_inr_full": <full price in INR>,
-    "price_inr_now": <50% off price in INR>,
+    "price_inr": <price in INR from the tier table above>,
     "timeline": "<24 hours|3 working days|1 week>",
     "includes": "What's delivered",
     "external_costs": "<any ongoing external service costs they pay separately, or null>"

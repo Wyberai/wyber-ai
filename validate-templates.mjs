@@ -46,6 +46,13 @@ function resolveImport(fromPath, imp, fileKeys) {
     else parts.push(seg);
   }
   const base = parts.join('/');
+  // src/wyber-ui.tsx is injected into every project's virtual FS at preview/publish
+  // time regardless of what's stored (src/lib/wyber-preview/engine.ts:174-177,
+  // "user files always win; unused kit exports are tree-shaken") — never actually
+  // persisted in prebuilt_apps.files, so it will never appear in fileKeys here even
+  // though it always resolves for real. Treat it as always-present rather than
+  // flagging every wyber-ui-kit-based template as broken.
+  if (base === 'src/wyber-ui') return true;
   return RESOLVE_EXTS.some((ext) => fileKeys.has(base + ext));
 }
 
