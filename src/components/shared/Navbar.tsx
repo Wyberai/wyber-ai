@@ -52,7 +52,7 @@ const ALL_ITEMS = RESOURCES.flatMap(g => g.items as unknown as { label: string; 
 // The pages stay reachable but carry a "soon" marker so we don't present them
 // as shipped — matching the dashboard, which already groups them under Coming Soon.
 const NAV_LINKS: [label: string, href: string, soon?: boolean][] = [
-  ['Web Apps', '/gallery'],
+  ['Free Apps', '/gallery'],
   ['Mobile', '/use-cases/build-mobile-app-with-ai'],
   ['MCP', '/mcp'],
   ['Pricing', '/pricing'],

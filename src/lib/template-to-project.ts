@@ -24,6 +24,7 @@ const langFromExt = (path: string): string => {
 const ROOT_FILES = new Set([
   'index.html', 'vite.config.js', 'vite.config.ts', 'package.json',
   'tsconfig.json', 'postcss.config.js', 'tailwind.config.js', '.gitignore',
+  'app.json', // Expo config — a real Expo/EAS build only discovers it at project root
 ]);
 
 function normalizeContent(f: FileVal): string {
@@ -36,6 +37,9 @@ function normalizePath(rawPath: string): string {
   let p = rawPath.replace(/^\.?\//, ''); // strip leading ./ or /
   // already correctly placed
   if (p.startsWith('src/')) return p;
+  // Vite's public/ dir is served from project root, not under src/ — a file
+  // there (robots.txt, sitemap.xml, favicon) must stay at "public/...".
+  if (p.startsWith('public/')) return p;
   if (ROOT_FILES.has(p)) return p;
   // bare root-level config/html that we missed → keep at root
   const base = p.split('/').pop() ?? p;

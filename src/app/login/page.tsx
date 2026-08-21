@@ -13,7 +13,15 @@ export default function LoginPage() {
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
+  const [signupHref, setSignupHref] = useState('/signup');
   const supabase = createClient();
+
+  // Forward ?next= to the signup link too, so switching from sign-in to
+  // sign-up (e.g. from a template deep link) doesn't drop the destination.
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    if (next) setSignupHref(`/signup?next=${encodeURIComponent(next)}`);
+  }, []);
 
   // /auth/callback redirects here with ?error=auth when the code exchange
   // fails — most often because the magic link was opened in a different
@@ -191,7 +199,7 @@ export default function LoginPage() {
               </form>
 
               <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 20, marginBottom: 0 }}>
-                No account? <Link href="/signup" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Start free — 50 credits</Link>
+                No account? <Link href={signupHref} style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Start free — 50 credits</Link>
               </p>
             </div>
           )}

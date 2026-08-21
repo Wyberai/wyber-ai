@@ -41,9 +41,6 @@ export interface HomeStrings {
   // ── Below-the-hero homepage sections (added in a later pass — see the
   // scope note above). Same "AI-drafted, not yet native-reviewed" caveat
   // applies here as to the hero strings.
-  bannerLabel: string;
-  bannerText: string;
-  bannerCta: string;
   statAppsBuilt: string;
   statAvgBuildTime: string;
   statUserRating: string;
@@ -161,9 +158,9 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   en: {
     navWebApps: 'Web Apps',
     navMobileApps: 'Mobile Apps',
-    navGallery: 'Gallery',
-    galleryStripLabel: 'Real apps, real usage',
-    galleryStripCta: 'See the full gallery',
+    navGallery: 'Free Apps',
+    galleryStripLabel: 'Free apps, ready to use',
+    galleryStripCta: 'Browse all free apps',
     userBuildsStripLabel: 'Built and sold by our users',
     userBuildsStripCta: 'Browse the marketplace',
     navJourney: 'Journey',
@@ -187,9 +184,6 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'A US-registered company · SignalPulse Technologies, Wyoming',
     upiLine: 'Pay with UPI',
 
-    bannerLabel: '🎉 CELEBRATING 1,000 BUILDERS',
-    bannerText: 'We hit 1,000 creators. 50% off all plans through August 15',
-    bannerCta: 'Claim Now →',
     statAppsBuilt: 'APPS BUILT',
     statAvgBuildTime: 'AVG BUILD TIME',
     statUserRating: 'USER RATING',
@@ -312,9 +306,9 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   hi: {
     navWebApps: 'वेब ऐप्स',
     navMobileApps: 'मोबाइल ऐप्स',
-    navGallery: 'गैलरी',
-    galleryStripLabel: 'असली ऐप्स, असली इस्तेमाल',
-    galleryStripCta: 'पूरी गैलरी देखें',
+    navGallery: 'मुफ़्त ऐप्स',
+    galleryStripLabel: 'मुफ़्त ऐप्स, इस्तेमाल के लिए तैयार',
+    galleryStripCta: 'सभी मुफ़्त ऐप्स देखें',
     userBuildsStripLabel: 'हमारे यूज़र्स द्वारा बनाए और बेचे गए',
     userBuildsStripCta: 'मार्केटप्लेस देखें',
     navJourney: 'जर्नी',
@@ -338,9 +332,6 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'एक US-रजिस्टर्ड कंपनी · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI से पेमेंट करें',
 
-    bannerLabel: 'स्वतंत्रता दिवस विशेष',
-    bannerText: 'कोड WYBER50 से 50% छूट, सभी प्लान पर 15 अगस्त तक',
-    bannerCta: 'अभी दावा करें →',
     statAppsBuilt: 'बने ऐप्स',
     statAvgBuildTime: 'औसत बिल्ड टाइम',
     statUserRating: 'यूज़र रेटिंग',
@@ -463,9 +454,9 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   kn: {
     navWebApps: 'ವೆಬ್ ಆ್ಯಪ್‌ಗಳು',
     navMobileApps: 'ಮೊಬೈಲ್ ಆ್ಯಪ್‌ಗಳು',
-    navGallery: 'ಗ್ಯಾಲರಿ',
-    galleryStripLabel: 'ನಿಜವಾದ ಆ್ಯಪ್‌ಗಳು, ನಿಜವಾದ ಬಳಕೆ',
-    galleryStripCta: 'ಪೂರ್ಣ ಗ್ಯಾಲರಿ ನೋಡಿ',
+    navGallery: 'ಉಚಿತ ಆ್ಯಪ್‌ಗಳು',
+    galleryStripLabel: 'ಉಚಿತ ಆ್ಯಪ್‌ಗಳು, ಬಳಸಲು ಸಿದ್ಧ',
+    galleryStripCta: 'ಎಲ್ಲಾ ಉಚಿತ ಆ್ಯಪ್‌ಗಳನ್ನು ನೋಡಿ',
     userBuildsStripLabel: 'ನಮ್ಮ ಬಳಕೆದಾರರು ನಿರ್ಮಿಸಿ ಮಾರಾಟ ಮಾಡಿದ್ದು',
     userBuildsStripCta: 'ಮಾರುಕಟ್ಟೆ ನೋಡಿ',
     navJourney: 'ಜರ್ನಿ',
@@ -489,9 +480,6 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'US-ನೋಂದಾಯಿತ ಕಂಪನಿ · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI ಮೂಲಕ ಪಾವತಿಸಿ',
 
-    bannerLabel: 'ಸ್ವಾತಂತ್ರ್ಯ ದಿವಸ ವಿಶೇಷ',
-    bannerText: 'ಕೋಡ್ WYBER50 ನೊಂದಿಗೆ 50% ರಿಯಾಯಿತಿ, ಎಲ್ಲಾ ಯೋಜನೆಗಳಲ್ಲಿ ಆಗಸ್ಟ್ 15 ರವರೆಗೆ',
-    bannerCta: 'ಈಗ ಅರ್ಜಿ ಸಲ್ಲಿಸಿ →',
     statAppsBuilt: 'ನಿರ್ಮಿಸಿದ ಆ್ಯಪ್‌ಗಳು',
     statAvgBuildTime: 'ಸರಾಸರಿ ಬಿಲ್ಡ್ ಸಮಯ',
     statUserRating: 'ಬಳಕೆದಾರರ ರೇಟಿಂಗ್',
@@ -614,9 +602,9 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   te: {
     navWebApps: 'వెబ్ యాప్‌లు',
     navMobileApps: 'మొబైల్ యాప్‌లు',
-    navGallery: 'గ్యాలరీ',
-    galleryStripLabel: 'నిజమైన యాప్‌లు, నిజమైన వినియోగం',
-    galleryStripCta: 'పూర్తి గ్యాలరీ చూడండి',
+    navGallery: 'ఉచిత యాప్‌లు',
+    galleryStripLabel: 'ఉచిత యాప్‌లు, వాడటానికి సిద్ధం',
+    galleryStripCta: 'అన్ని ఉచిత యాప్‌లను చూడండి',
     userBuildsStripLabel: 'మా యూజర్లు నిర్మించి అమ్మినవి',
     userBuildsStripCta: 'మార్కెట్‌ప్లేస్ చూడండి',
     navJourney: 'జర్నీ',
@@ -640,9 +628,6 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'US-రిజిస్టర్డ్ కంపెనీ · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI తో పే చేయండి',
 
-    bannerLabel: 'స్వాతంత్ర్య దిన ప్రత్యేకం',
-    bannerText: 'కోడ్ WYBER50 తో 50% డిస్కౌంట్, అన్ని ప్లాన్‌లలో ఆగస్టు 15 వరకు',
-    bannerCta: 'ఇప్పుడు క్లెయిమ్ చేయండి →',
     statAppsBuilt: 'నిర్మించిన యాప్‌లు',
     statAvgBuildTime: 'సగటు బిల్డ్ సమయం',
     statUserRating: 'యూజర్ రేటింగ్',
@@ -765,9 +750,9 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
   ta: {
     navWebApps: 'வெப் ஆப்ஸ்',
     navMobileApps: 'மொபைல் ஆப்ஸ்',
-    navGallery: 'கேலரி',
-    galleryStripLabel: 'உண்மையான ஆப்ஸ், உண்மையான பயன்பாடு',
-    galleryStripCta: 'முழு கேலரியைப் பாருங்கள்',
+    navGallery: 'இலவச ஆப்ஸ்',
+    galleryStripLabel: 'இலவச ஆப்ஸ், பயன்படுத்த தயார்',
+    galleryStripCta: 'அனைத்து இலவச ஆப்ஸையும் பாருங்கள்',
     userBuildsStripLabel: 'எங்கள் யூசர்களால் உருவாக்கப்பட்டு விற்கப்பட்டவை',
     userBuildsStripCta: 'மார்க்கெட்பிளேஸைப் பாருங்கள்',
     navJourney: 'ஜர்னி',
@@ -791,9 +776,6 @@ export const HOME_STRINGS: Record<Locale, HomeStrings> = {
     trustLine: 'US-பதிவு செய்யப்பட்ட நிறுவனம் · SignalPulse Technologies, Wyoming',
     upiLine: 'UPI மூலம் பணம் செலுத்துங்கள்',
 
-    bannerLabel: 'சுதந்திர தினம் சிறப்பு',
-    bannerText: 'கோடு WYBER50 உடன் 50% தள்ளுபடி, அனைத்து திட்டங்களிலும் ஆகஸ்ட் 15 வரை',
-    bannerCta: 'இப்போது உரிமை கோரவும் →',
     statAppsBuilt: 'உருவாக்கப்பட்ட ஆப்ஸ்',
     statAvgBuildTime: 'சராசரி பில்ட் நேரம்',
     statUserRating: 'பயனர் மதிப்பீடு',

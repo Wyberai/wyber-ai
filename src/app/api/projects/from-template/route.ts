@@ -37,18 +37,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Template has no files' }, { status: 422 });
     }
 
-    // Normalize into the correct Vite location (src/ prefix etc.) and inject
-    // any missing scaffold (index.html / main.jsx / vite.config.js) so the
-    // preview can build.
-    const normalized = templateFilesToProjectFiles(rawFiles, template.name);
+    // project_type drives MobileLayout vs IDELayout AND (via the client
+    // store it hydrates into) which of the four system prompts governs every
+    // EDIT made after loading the template — see build-from-template/route.ts
+    // for the full explanation. WebApp-category templates want the generic
+    // 'app' default on purpose (they're built to the real Web App spec).
+    const category = (template.category as string) || '';
+    const isMobile = category.startsWith('Mobile');
+    const projectType = isMobile ? 'mobile'
+      : category.startsWith('Website-') ? 'website'
+      : category.startsWith('WebApp-') ? 'app'
+      : 'saas';
+    const normalized = isMobile
+      ? Object.fromEntries(Object.entries(rawFiles as Record<string, any>).map(([p, v]) => {
+          const path = p.replace(/^\.?\//, '');
+          const content = typeof v === 'string' ? v : (v?.content ?? '');
+          const ext = path.split('.').pop()?.toLowerCase() ?? '';
+          const language = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', json: 'json' }[ext] ?? 'plaintext';
+          return [path, { path, content, language }];
+        }))
+      : templateFilesToProjectFiles(rawFiles, template.name);
 
     const { data: project, error: pErr } = await supabase
       .from('projects')
       .insert({
         name: template.name || 'Untitled',
-        framework: 'react-vite',
+        framework: isMobile ? 'react-native' : 'react-vite',
         user_id: user.id,
-        project_type: 'app',
+        project_type: projectType,
         files: normalized,
         initial_prompt: '',
       })
@@ -64,7 +80,7 @@ export async function POST(req: NextRequest) {
       await supabase.from('project_messages').insert({
         project_id: project.id,
         role: 'assistant',
-        content: `You've chosen the **${template.name}** template. Take a look at the preview on the left and tell me how you'd like to design it — change colors, add features, rename sections, anything.`,
+        content: `You've picked the **${template.name}** template. Take a look at the preview on the left and make it yours — change colors, add features, rename sections, anything.`,
       });
     } catch {}
 

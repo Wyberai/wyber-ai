@@ -7,9 +7,15 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 const ACCENT = '#0EA5E9'
 const PER_PAGE = 24
 
-const CAT_GROUPS: Record<string, string[]> = {
-  'Web Apps': ['SaaS', 'CRM', 'Ecommerce', 'Healthcare', 'Education', 'Finance', 'Marketing', 'HRPeople', 'RealEstate', 'Food', 'Productivity', 'Legal', 'Logistics', 'Events', 'Creative', 'Landing', 'Analytics', 'ProjectManagement', 'Social', 'Media', 'Restaurant', 'NonProfit', 'Travel', 'HR', 'E-commerce'],
-  'Mobile Apps': ['Mobile-Social', 'Mobile-Productivity', 'Mobile-Health', 'Mobile-Shopping', 'Mobile-Travel', 'Mobile-Finance', 'Mobile-Education', 'Mobile-Food', 'Mobile-Utility', 'Mobile-Lifestyle', 'Mobile-Business', 'Mobile-Kids'],
+// SaaS-bucket categories carry no prefix — everything else is grouped by
+// its 'Mobile-' / 'Website-' / 'WebApp-' prefix.
+const GROUP_ORDER = ['SaaS', 'Web Apps', 'Websites', 'Mobile Apps'] as const
+
+function groupOf(category: string): string {
+  if (category.startsWith('Mobile-')) return 'Mobile Apps'
+  if (category.startsWith('Website-')) return 'Websites'
+  if (category.startsWith('WebApp-')) return 'Web Apps'
+  return 'SaaS'
 }
 
 const CAT_COLORS: Record<string, string> = {
@@ -26,7 +32,7 @@ export default function GalleryPage() {
   const [apps, setApps] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
-  const [activeGroup, setActiveGroup] = useState('Web Apps')
+  const [activeGroup, setActiveGroup] = useState('SaaS')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'popular' | 'name' | 'newest'>('popular')
   const [page, setPage] = useState(1)
@@ -47,12 +53,12 @@ export default function GalleryPage() {
 
   const visibleCategories = useMemo(() => {
     if (activeGroup === 'All') return [...new Set(apps.map(a => a.category))]
-    return (CAT_GROUPS[activeGroup] || []).filter(c => apps.some(a => a.category === c))
+    return [...new Set(apps.filter(a => groupOf(a.category) === activeGroup).map(a => a.category))]
   }, [apps, activeGroup])
 
   const filtered = useMemo(() => {
     let result = apps.filter(a => {
-      const matchGroup = activeGroup === 'All' || (CAT_GROUPS[activeGroup] || []).includes(a.category)
+      const matchGroup = activeGroup === 'All' || groupOf(a.category) === activeGroup
       const matchCat = activeCategory === 'All' || a.category === activeCategory
       const matchSearch = !search || a.name.toLowerCase().includes(search.toLowerCase()) || a.description?.toLowerCase().includes(search.toLowerCase())
       return matchGroup && matchCat && matchSearch
@@ -82,18 +88,18 @@ export default function GalleryPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: 'clamp(32px,4vw,56px) clamp(16px,4vw,48px)' }}>
         {/* Header */}
         <div style={{ marginBottom: 32 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Prebuilt Web Apps</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>Free templates</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(26px,3.5vw,40px)', fontWeight: 800, letterSpacing: '-0.04em', marginBottom: 8 }}>
-            {apps.length > 0 ? `${apps.length}` : ''} ready-to-use web apps
+            {apps.length > 0 ? `${apps.length}` : ''} free, ready-to-use apps
           </h1>
-          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 500 }}>Click any app to load it instantly. Or go to the dashboard and describe something completely custom — AI builds it from scratch in minutes.</p>
+          <p style={{ fontSize: 15, color: '#71717a', maxWidth: 500 }}>Every app here is free to load — 0 credits. Click one to open it instantly, or go to the dashboard and describe something completely custom — AI builds it from scratch in minutes.</p>
         </div>
 
         {/* Search + Sort bar */}
         <div style={{ display: 'flex', gap: 12, marginBottom: 28, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: 240 }}>
             <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.35 }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fafafa" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search web apps..."
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search templates..."
               style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: '#111113', color: '#fafafa', fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
@@ -117,7 +123,7 @@ export default function GalleryPage() {
             <div style={{ fontSize: 12, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Browse by category</div>
 
             {/* Group toggles */}
-            {['Web Apps'].map(g => (
+            {GROUP_ORDER.map(g => (
               <button key={g} onClick={() => { setActiveGroup(g); setActiveCategory('All') }}
                 style={{
                   padding: '8px 12px', borderRadius: 8, border: 'none', textAlign: 'left',
@@ -126,7 +132,7 @@ export default function GalleryPage() {
                   fontSize: 13, fontWeight: activeGroup === g ? 700 : 500,
                   cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
                 }}
-              >{g === 'All' ? `All (${apps.length})` : g}</button>
+              >{g} ({apps.filter(a => groupOf(a.category) === g).length})</button>
             ))}
 
             <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
@@ -138,7 +144,7 @@ export default function GalleryPage() {
             </button>
             {visibleCategories.sort().map(cat => {
               const count = apps.filter(a => a.category === cat).length
-              const displayName = cat.replace('Mobile-', '')
+              const displayName = cat.replace(/^(Mobile|Website|WebApp)-/, '')
               return (
                 <button key={cat} onClick={() => setActiveCategory(cat)}
                   style={{
@@ -193,7 +199,7 @@ export default function GalleryPage() {
                               {isMobile ? '📱' : '🌐'}
                             </div>
                             <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: color + '15', color, border: `1px solid ${color}25`, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                              {app.category?.replace('Mobile-', '')}
+                              {app.category?.replace(/^(Mobile|Website|WebApp)-/, '')}
                             </span>
                           </div>
 

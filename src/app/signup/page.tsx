@@ -13,7 +13,15 @@ export default function SignupPage() {
   const [code, setCode] = useState('');
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState('');
+  const [loginHref, setLoginHref] = useState('/login');
   const supabase = createClient();
+
+  // Forward ?next= to the login link too, so switching from sign-up to
+  // sign-in (e.g. from a template deep link) doesn't drop the destination.
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next');
+    if (next) setLoginHref(`/login?next=${encodeURIComponent(next)}`);
+  }, []);
 
   // Capture a referral code from ?ref=CODE so the referrer gets credited when
   // this person signs up. Stashed in a cookie (survives the OAuth/magic-link
@@ -191,7 +199,7 @@ export default function SignupPage() {
               </p>
 
               <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 16, marginBottom: 0 }}>
-                Already have an account? <Link href="/login" style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+                Already have an account? <Link href={loginHref} style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
               </p>
             </div>
           )}

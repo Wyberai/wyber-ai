@@ -134,9 +134,8 @@ function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: num
 }
 
 /* Real-apps gallery strip — replaces illustrative mockups with actual template
-   names, categories, and genuine use_count numbers pulled from prebuilt_apps
-   (same source /gallery uses). No screenshots yet (future improvement), but
-   the numbers themselves are real, not marketing copy. */
+   names and categories pulled from prebuilt_apps (same source /gallery uses).
+   No screenshots yet (future improvement). Use-count intentionally not shown. */
 function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label: string; ctaLabel: string }) {
   if (apps.length === 0) return null;
   return (
@@ -157,10 +156,6 @@ function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label
                   <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: color }} />
                   <div className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-faint)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{app.category}</div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--brand-text)', lineHeight: 1.3 }}>{app.name}</div>
-                  <div style={{ marginTop: 'auto', fontSize: 11, color: color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    {app.use_count.toLocaleString()}
-                  </div>
                 </div>
               </Link>
             </Reveal>

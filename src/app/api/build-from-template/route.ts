@@ -22,6 +22,7 @@ const langFromExt = (path: string): string =>
 const ROOT_FILES = new Set([
   'index.html', 'vite.config.js', 'vite.config.ts', 'package.json',
   'tsconfig.json', 'postcss.config.js', 'tailwind.config.js', '.gitignore',
+  'app.json', // Expo config — a real Expo/EAS build only discovers it at project root
 ])
 
 function contentOf(v: FileVal): string {
@@ -31,6 +32,8 @@ function contentOf(v: FileVal): string {
 function normalizePath(rawPath: string): string {
   const p = rawPath.replace(/^\.?\//, '')
   if (p.startsWith('src/')) return p
+  // Vite's public/ dir is served from project root, not under src/.
+  if (p.startsWith('public/')) return p
   if (ROOT_FILES.has(p)) return p
   return `src/${p}`
 }
@@ -129,6 +132,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
+    // project_type drives TWO things downstream, not just MobileLayout vs
+    // IDELayout: /api/generate also reads it straight off the client's store
+    // (which hydrates from this column) to pick which of the four system
+    // prompts governs every EDIT the user makes after loading the template —
+    // buildMobileSystemPrompt / buildWebsiteSystemPrompt / buildSaasSystemPrompt
+    // / buildSystemPrompt (Web App). Leaving it generic silently routed every
+    // SaaS and Website template's edits through the Web App prompt — wrong
+    // auth/settings/multi-tenancy conventions applied to code that doesn't
+    // have them. WebApp-category templates correctly want the 'app' default
+    // (they're built to the real Web App spec on purpose).
+    const category = (template.category as string) || ''
+    const isMobile = category.startsWith('Mobile')
+    const projectType = isMobile ? 'mobile'
+      : category.startsWith('Website-') ? 'website'
+      : category.startsWith('WebApp-') ? 'app'
+      : 'saas'
+
     const rawFiles = (template.files || {}) as Record<string, FileVal>
     if (Object.keys(rawFiles).length < 2) {
       // Template is metadata-only (no pre-generated code) — create project and redirect
@@ -136,7 +156,8 @@ export async function POST(req: NextRequest) {
       const { data: project, error: projErr } = await admin.from('projects').insert({
         user_id: user.id,
         name: template.name,
-        framework: (template.category as string)?.startsWith('Mobile') ? 'react-native' : 'react-vite',
+        framework: isMobile ? 'react-native' : 'react-vite',
+        project_type: projectType,
         files: {},
         first_prompt: `Build a ${template.name}: ${template.description || template.name}`,
       }).select('id').single()
@@ -159,9 +180,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 2. Inject Vite scaffold if missing so the preview can build immediately
+    // 2. Inject Vite scaffold if missing so the preview can build immediately.
+    // Never for mobile — an Expo/RN project has no Vite entry point at all,
+    // and injecting one only adds dead files (its real package.json/app.json
+    // are already in the template and must not be touched).
     const paths = Object.keys(normalized)
-    const appEntry = findAppEntry(paths)
+    const appEntry = isMobile ? null : findAppEntry(paths)
     if (appEntry) {
       const hasCss = paths.includes('src/index.css')
       const scaffold = buildScaffold(appEntry, hasCss, template.name)
@@ -184,7 +208,8 @@ export async function POST(req: NextRequest) {
       .insert({
         user_id: user.id,
         name: template.name,
-        framework: 'react-vite',
+        framework: isMobile ? 'react-native' : 'react-vite',
+        project_type: projectType,
         files: normalized,
         first_prompt: '',
       })
@@ -201,7 +226,7 @@ export async function POST(req: NextRequest) {
       await admin.from('project_messages').insert({
         project_id: project.id,
         role: 'assistant',
-        content: `You've chosen the **${template.name}** template. Take a look at the preview on the left and tell me how you'd like to design it — change colors, add features, rename sections, anything.`,
+        content: `You've picked the **${template.name}** template. Take a look at the preview on the left and make it yours — change colors, add features, rename sections, anything.`,
       })
     } catch {}
 
