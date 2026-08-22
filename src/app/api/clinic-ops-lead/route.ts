@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendAdminDentistLeadAlert } from '@/lib/email';
+import { sendAdminClinicLeadAlert } from '@/lib/email';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await sendAdminDentistLeadAlert(email, 'dentist-ops-dashboard');
+    await sendAdminClinicLeadAlert(email, 'clinic-ops-dashboard');
   } catch (err) {
-    console.error('[dentist-ops-lead]', err);
+    console.error('[clinic-ops-lead]', err);
   }
 
   return NextResponse.json({ ok: true });

@@ -5,7 +5,7 @@ import { useState } from 'react';
 type ChatMsg = { from: 'bot' | 'user'; text: string };
 
 const QUICK_QUESTIONS: { q: string; a: string }[] = [
-  { q: 'Do you take my insurance?', a: 'We’re in-network with Delta Dental, Cigna, and MetLife. Send your plan name and we’ll confirm before your visit.' },
+  { q: 'Do you take my insurance?', a: 'We’re in-network with most major providers, including Cigna, Aetna, and UnitedHealthcare. Send your plan name and we’ll confirm before your visit.' },
   { q: 'Can I book a Saturday appointment?', a: 'Yes — Saturday slots open at 9am. Want me to hold one? Just share your preferred time.' },
   { q: 'What if I need to cancel?', a: 'No penalty with 24 hours’ notice. Reply here or use the link in your reminder text.' },
   { q: 'Do you see new patients?', a: 'Always. New-patient exams include a full set of x-rays and a cleaning — usually a 45-minute visit.' },

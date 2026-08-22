@@ -5,8 +5,8 @@ import ChatWidget from './ChatWidget';
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-display' });
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-body' });
 
-const CAL_LINK = 'https://cal.com/wyberai/wyberai-dentist-transformation-call';
-const DASHBOARD_LINK = '/app/dentist-ops-dashboard/index.html';
+const CAL_LINK = 'https://cal.com/wyberai/wyberai-practice-transformation-call';
+const DASHBOARD_LINK = '/app/clinic-ops-dashboard/index.html';
 
 const AI_FEATURES = [
   {
@@ -43,7 +43,7 @@ const AI_FEATURES = [
     n: '06',
     title: 'Built to be found — SEO + AEO',
     body: 'Real technical SEO for Google, plus structured for AEO — the schema and clean answers that let ChatGPT, Perplexity, and Google AI Overviews actually recommend your practice.',
-    proof: { kind: 'stat', label: '"best dentist near me"', value: 'Structured to be quotable, not just crawlable' },
+    proof: { kind: 'stat', label: '"best clinic near me"', value: 'Structured to be quotable, not just crawlable' },
   },
 ];
 
@@ -56,10 +56,10 @@ const AUTOMATIONS = [
 
 export const metadata = {
   title: 'Your Practice — 2026 Rebuild',
-  description: 'A modern dental practice site with a real owner dashboard, AI front desk, and automations running behind it.',
+  description: 'A modern clinic website with a real owner dashboard, AI front desk, and automations running behind it.',
 };
 
-export default function DentistOpsDemo() {
+export default function ClinicOpsDemo() {
   return (
     <div className={`page ${spaceGrotesk.variable} ${manrope.variable}`}>
       {/* ---------- nav ---------- */}
@@ -108,7 +108,7 @@ export default function DentistOpsDemo() {
       {/* ---------- transition ---------- */}
       <section id="behind" className="transition wrap">
         <div className="transitionHead">
-          <h2>Most dental sites stop at a phone number.</h2>
+          <h2>Most small clinic sites stop at a phone number.</h2>
           <p className="transitionSub">This one doesn&rsquo;t. Here&rsquo;s what&rsquo;s actually running behind it — for the practice owner, not the patient.</p>
         </div>
 

@@ -165,13 +165,13 @@ export async function sendAdminSignupAlert(userEmail: string, provider?: string)
   return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎉 New signup: ${userEmail}`, html })
 }
 
-export async function sendAdminDentistLeadAlert(leadEmail: string, source: string) {
+export async function sendAdminClinicLeadAlert(leadEmail: string, source: string) {
   const html = wrap(`
-    ${h1('New dentist-ops lead 🦷')}
-    ${p(`<strong style="color:#f0f0f4">${leadEmail}</strong> just entered their email to view the dentist-ops dashboard demo.`)}
+    ${h1('New clinic-ops lead 🩺')}
+    ${p(`<strong style="color:#f0f0f4">${leadEmail}</strong> just entered their email to view the clinic-ops dashboard demo.`)}
     ${infoBox([['Email', leadEmail], ['Source', source], ['When', new Date().toUTCString()]])}
-  `, `New dentist-ops lead: ${leadEmail}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🦷 New dentist-ops lead: ${leadEmail}`, html })
+  `, `New clinic-ops lead: ${leadEmail}`)
+  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🦷 New clinic-ops lead: ${leadEmail}`, html })
 }
 
 export async function sendAdminMcpProjectAlert(userEmail: string, projectName: string, framework: string) {
