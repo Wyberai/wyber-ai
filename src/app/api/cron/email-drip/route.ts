@@ -17,7 +17,7 @@ function planLabelFromKey(key: string): string {
 }
 import { unsubscribeUrl } from '@/lib/email/unsubscribe'
 
-export const maxDuration = 120
+export const maxDuration = 300
 
 // Daily lifecycle drip (vercel.json cron). Every campaign is tracked in
 // email_events (kind + sent_count + last_sent_at) so a "daily" cron never
