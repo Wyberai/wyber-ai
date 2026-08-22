@@ -89,54 +89,17 @@ export default function DentistOpsDemo() {
 
       {/* ---------- hero ---------- */}
       <section className="hero">
-        <div className="wrap heroInner">
-          <div className="heroCopy">
-            <div className="eyebrow">Live sample — this is a real, unlocked build</div>
-            <h1>
-              Still using an <span className="strike">outdated</span> website for your clinic?
-            </h1>
+        <div className="wrap heroInner heroInner--single">
+          <div className="heroCopy heroCopy--center">
+            <div className="eyebrow">Now accepting new patients</div>
+            <h1>Book your visit in under a minute.</h1>
             <p className="lede">
-              Turn it from just a front end into a complete dashboard — tracking the metrics that
-              matter to you, running the follow-ups you don&rsquo;t have time for, and staying with
-              you as your practice grows.
+              Same-day appointment requests, clear answers on insurance before you even call, and
+              reminders so you never lose track of your next cleaning.
             </p>
             <div className="heroActions">
-              <a className="btn btn-solid btn-lg" href={CAL_LINK} target="_blank" rel="noopener">
-                Book a free call with the founder →
-              </a>
-              <a className="btn btn-outline btn-lg" href="#behind">See what&rsquo;s behind it</a>
-            </div>
-          </div>
-
-          <div className="compareStack">
-            <div className="compareCard before">
-              <div className="compareTag">Before</div>
-              <div className="fauxBrowser">
-                <div className="fauxBar"><span /><span /><span /></div>
-                <div className="fauxBody">
-                  <div className="fauxLine w60" />
-                  <div className="fauxLine w40" />
-                  <div className="fauxSpacer" />
-                  <div className="fauxPhone">📞 (555) 214-0192</div>
-                  <div className="fauxHint">Mon–Thu, 8am–4pm only</div>
-                </div>
-              </div>
-            </div>
-            <div className="compareCard after">
-              <div className="compareTag">After</div>
-              <div className="fauxBrowser dark">
-                <div className="fauxBar"><span /><span /><span /></div>
-                <div className="fauxBody">
-                  <div className="fauxLine w70 light" />
-                  <div className="fauxLine w50 light dim" />
-                  <div className="fauxStatRow">
-                    <div className="fauxStat"><b>23</b><small>Requests</small></div>
-                    <div className="fauxStat"><b>4.2%</b><small>No-shows</small></div>
-                    <div className="fauxStat"><b>$18.4k</b><small>Revenue</small></div>
-                  </div>
-                  <div className="fauxPing"><span className="pulseDot" />New request — 8:52am</div>
-                </div>
-              </div>
+              <a className="btn btn-solid btn-lg" href="#behind">Request Appointment →</a>
+              <a className="btn btn-outline btn-lg" href="#behind">New patient? Start here</a>
             </div>
           </div>
         </div>
@@ -144,8 +107,42 @@ export default function DentistOpsDemo() {
 
       {/* ---------- transition ---------- */}
       <section id="behind" className="transition wrap">
-        <h2>Most dental sites stop at a phone number.</h2>
-        <p>This one has an owner dashboard, five AI features running quietly in the background, and a front-desk chatbot that never puts anyone on hold.</p>
+        <div className="transitionHead">
+          <h2>Most dental sites stop at a phone number.</h2>
+          <p className="transitionSub">This one doesn&rsquo;t. Here&rsquo;s what&rsquo;s actually running behind it — for the practice owner, not the patient.</p>
+        </div>
+
+        <div className="compareStack">
+          <div className="compareCard before">
+            <div className="compareTag">Before</div>
+            <div className="fauxBrowser">
+              <div className="fauxBar"><span /><span /><span /></div>
+              <div className="fauxBody">
+                <div className="fauxLine w60" />
+                <div className="fauxLine w40" />
+                <div className="fauxSpacer" />
+                <div className="fauxPhone">📞 (555) 214-0192</div>
+                <div className="fauxHint">Mon–Thu, 8am–4pm only</div>
+              </div>
+            </div>
+          </div>
+          <div className="compareCard after">
+            <div className="compareTag">After</div>
+            <div className="fauxBrowser dark">
+              <div className="fauxBar"><span /><span /><span /></div>
+              <div className="fauxBody">
+                <div className="fauxLine w70 light" />
+                <div className="fauxLine w50 light dim" />
+                <div className="fauxStatRow">
+                  <div className="fauxStat"><b>23</b><small>Requests</small></div>
+                  <div className="fauxStat"><b>4.2%</b><small>No-shows</small></div>
+                  <div className="fauxStat"><b>$18.4k</b><small>Revenue</small></div>
+                </div>
+                <div className="fauxPing"><span className="pulseDot" />New request — 8:52am</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ---------- dashboard preview ---------- */}
@@ -273,6 +270,10 @@ export default function DentistOpsDemo() {
 
         .hero { padding: 64px 0 72px; border-bottom: 1px solid #eaeaea; }
         .heroInner { display: grid; grid-template-columns: 1fr; gap: 44px; }
+        .heroCopy--center { text-align: center; max-width: 640px; margin: 0 auto; }
+        .heroCopy--center .lede { margin-left: auto; margin-right: auto; }
+        .heroCopy--center .heroActions { justify-content: center; }
+        .heroCopy--center .eyebrow { margin-left: auto; margin-right: auto; }
         .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: 2px solid #0a0a0a; padding: 5px 12px; border-radius: 999px; margin-bottom: 22px; }
         .eyebrow::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; }
         .page h1 { font-size: clamp(2.3rem, 5.2vw, 4.1rem); font-weight: 700; line-height: 1.06; max-width: 16ch; }
@@ -307,7 +308,8 @@ export default function DentistOpsDemo() {
         .pulseDot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-dark); animation: pulse 1.8s ease-in-out infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
 
-        .transition { text-align: center; padding: 68px 0 8px; max-width: 640px; }
+        .transition { padding: 68px 0 8px; }
+        .transitionHead { text-align: center; max-width: 640px; margin: 0 auto 40px; }
         .transition h2 { font-size: 1.7rem; font-weight: 700; }
         .transition p { color: #444; margin-top: 12px; font-size: 1rem; line-height: 1.6; font-weight: 500; }
 
