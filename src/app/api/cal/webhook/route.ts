@@ -66,7 +66,7 @@ function extractIntakeAnswers(p: CalBookingPayload): Record<string, string> | nu
     }
   }
 
-  if (p.customInputs) {
+  if (Array.isArray(p.customInputs)) {
     for (const { label, value } of p.customInputs) {
       if (!value || skip.has(label.toLowerCase())) continue
       out[label] = String(value)
