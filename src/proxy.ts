@@ -71,6 +71,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/community') ||
     path.startsWith('/privacy') ||
     path.startsWith('/terms') ||
+    path.startsWith('/dpa') ||
     path.startsWith('/delete-account') ||
     path.startsWith('/status') ||
     path.startsWith('/vs') ||
