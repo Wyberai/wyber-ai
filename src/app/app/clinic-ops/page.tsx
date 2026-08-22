@@ -48,9 +48,11 @@ const AI_FEATURES = [
 ];
 
 const AUTOMATIONS = [
-  { title: 'Appointment reminders', desc: 'SMS + email, sent 24 hours before every visit, auto-scheduled off the calendar.' },
-  { title: 'Recall batches', desc: 'Patients due for a 6-month cleaning get messaged automatically — no list-pulling.' },
-  { title: 'Review requests', desc: 'Sent 2 hours after checkout, only to patients marked satisfied at the front desk.' },
+  { title: 'Booking confirmation', desc: 'Sent the instant someone requests an appointment — from your own domain, not a generic address.' },
+  { title: '24-hour reminder', desc: 'Auto-scheduled off the calendar the day before every visit.' },
+  { title: '1-hour reminder', desc: 'One last nudge before the appointment — this is what actually kills no-shows.' },
+  { title: 'Thank-you email', desc: 'Sent after checkout, only to patients marked satisfied — this is what feeds the review-request flow.' },
+  { title: 'Marketing emails & offers', desc: 'One button on the dashboard sends a greeting or a promotion to your whole patient list.' },
   { title: 'Weekly owner report', desc: 'Requests, no-shows, revenue pace, and top lead source — delivered every Monday, no login required.' },
 ];
 
@@ -222,9 +224,37 @@ export default function ClinicOpsDemo() {
           <div className="compareRow"><div>Modern website</div><div>Yes</div><div>—</div><div>Yes</div></div>
           <div className="compareRow"><div>Owner dashboard</div><div>—</div><div>Sometimes</div><div>Yes</div></div>
           <div className="compareRow"><div>AI no-show / review / recall</div><div>—</div><div>Rarely</div><div>Yes</div></div>
-          <div className="compareRow"><div>Typical monthly cost</div><div>Undisclosed, sales call</div><div>$189–$249+</div><div>One bill</div></div>
+          <div className="compareRow"><div>Custom domain + email suite</div><div>—</div><div>—</div><div>Yes, included</div></div>
+          <div className="compareRow"><div>Typical annual cost</div><div>Undisclosed, sales call</div><div>$2,268–$2,988+</div><div>One bill</div></div>
         </div>
-        <p className="compareNote">RevenueWell and Weave pricing from their public 2026 rate cards — both are add-ons most practices layer on top of a separate website vendor, not a replacement for one.</p>
+        <p className="compareNote">RevenueWell and Weave pricing from their public 2026 rate cards, annualized — both are add-ons most practices layer on top of a separate website vendor, not a replacement for one.</p>
+      </section>
+
+      {/* ---------- pricing ---------- */}
+      <section className="wrap pricingSection">
+        <div className="sectionKicker"><span className="kickerLine" />Simple pricing</div>
+        <h2 className="sectionHeadBig">One price. Everything included.</h2>
+        <div className="pricingCard">
+          <div className="pricingLeft">
+            <ul className="pricingList">
+              <li>Complete website, built for your practice</li>
+              <li>Owner dashboard — appointments, revenue, reviews</li>
+              <li>All 5 AI features, live from day one</li>
+              <li>Your own domain — 1 year included</li>
+              <li>Full email suite, sent from your domain: booking confirmations, 24-hour and 1-hour reminders, thank-you notes, and one-click marketing sends</li>
+              <li>Weekly owner report, no login required</li>
+            </ul>
+          </div>
+          <div className="pricingRight">
+            <div className="pricingBadge">Founding-practice rate — first 20 only</div>
+            <div className="pricingWas">$1,999/year</div>
+            <div className="pricingNow"><span>$999</span>/year</div>
+            <p className="pricingNote">Billed annually. Locked in for as long as you stay — not an intro rate that jumps later.</p>
+            <a className="btn btn-solid btn-lg pricingCta" href={CAL_LINK} target="_blank" rel="noopener">
+              Book your call to claim this rate →
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* ---------- bottom CTA ---------- */}
@@ -345,6 +375,20 @@ export default function ClinicOpsDemo() {
         .autoTitle { font-weight: 700; font-size: 0.97rem; margin-bottom: 6px; }
         .autoDesc { color: #555; font-size: 0.86rem; line-height: 1.55; font-weight: 500; }
 
+        .pricingSection { padding-top: 88px; }
+        .pricingCard { margin-top: 32px; border: 2px solid #0a0a0a; border-radius: 20px; display: grid; grid-template-columns: 1.2fr 1fr; overflow: hidden; }
+        .pricingLeft { padding: 40px; border-right: 2px solid #0a0a0a; }
+        .pricingList { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px; }
+        .pricingList li { position: relative; padding-left: 28px; font-size: 0.95rem; font-weight: 500; color: #222; line-height: 1.5; }
+        .pricingList li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--accent); font-weight: 700; }
+        .pricingRight { padding: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--accent-soft); }
+        .pricingBadge { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent-dark); background: #fff; border: 1px solid #cfcdf9; padding: 6px 12px; border-radius: 999px; margin-bottom: 18px; }
+        .pricingWas { font-size: 1.1rem; color: #888; text-decoration: line-through; font-weight: 600; }
+        .pricingNow { font-family: var(--font-display), sans-serif; font-size: 3.2rem; font-weight: 700; color: #0a0a0a; margin-top: 4px; }
+        .pricingNow span { color: var(--accent-dark); }
+        .pricingNote { font-size: 0.8rem; color: #666; max-width: 26ch; margin: 14px 0 24px; font-weight: 500; }
+        .pricingCta { width: 100%; justify-content: center; }
+
         .midCta { background: #0a0a0a; color: #fff; padding: 96px 24px; text-align: center; margin-top: 96px; position: relative; overflow: hidden; }
         .midCta::before { content: ''; position: absolute; top: -40%; left: 50%; width: 700px; height: 700px; transform: translateX(-50%); background: radial-gradient(circle, var(--accent) 0%, transparent 65%); opacity: 0.25; pointer-events: none; }
         .freeTag { position: relative; display: inline-block; font-family: 'JetBrains Mono', monospace; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border: 2px solid var(--accent); color: #fff; background: rgba(59,57,224,0.25); padding: 6px 14px; border-radius: 999px; margin-bottom: 26px; }
@@ -378,6 +422,8 @@ export default function ClinicOpsDemo() {
           .autoGrid { grid-template-columns: 1fr; }
           .compareRow { grid-template-columns: 1.2fr 1fr 1fr 1fr; font-size: 0.74rem; }
           .navDashBtn span { display: none; }
+          .pricingCard { grid-template-columns: 1fr; }
+          .pricingLeft { border-right: none; border-bottom: 2px solid #0a0a0a; }
         }
         @media (max-width: 520px) {
           .navDashBtn { padding: 10px 12px; }
