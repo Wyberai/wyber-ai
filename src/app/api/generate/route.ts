@@ -1243,6 +1243,8 @@ RULE 3 — CANONICAL URL CRASH: <link rel="canonical" href="https://brand.com/" 
 
 RULE 4 — NEVER TRUNCATE: Output every file completely. NEVER "// ... rest" or "// same pattern". Truncated file = broken build.
 
+RULE 4a — APP.TSX STAYS LEAN: App.tsx is the entry, router, and section-switcher ONLY. Utility functions, constants, and helpers belong in src/lib/utils.ts (already scaffolded). App.tsx that accumulates utilities grows past the context window; on the next edit the platform truncates it and the model drops the utilities, causing "No matching export" errors. Keep App.tsx under 150 lines.
+
 RULE 5 — SECURITY: Never expose API keys, env vars, or internal config in client code.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1966,6 +1968,8 @@ RULE 2 — TYPESCRIPT THAT COMPILES: No React.FC<Props>. No React.Dispatch<React
 RULE 3 — CONTEXT DISCIPLINE (hard constraint): AuthContext and ToastContext are the ONLY two context files allowed to exist. NEVER create additional context files (DashboardContext, UserContext, AnalyticsContext, SettingsContext, etc.). Any context file you create beyond these two will NOT be wrapped in a Provider in App.tsx, so its useContext() call will return undefined, and every screen that uses it will throw "Cannot convert undefined or null to object" at runtime — the app crashes immediately on load. For shared state, use: useState + prop drilling down to the component that needs it, a custom hook that wraps useState, or wyber-store (already injected). Context for feature data also causes cascading re-renders that break builds.
 
 RULE 4 — NEVER TRUNCATE: Output every single file completely. NEVER "// ... rest of component", "// same as above". Truncated file = broken import = entire app fails to build. If you are approaching your response limit with files still to write, STOP after the currently open file (close it properly — end with its closing } and export default statement), then list the remaining file names in your recap. 30 complete files is always more valuable than 40 truncated ones.
+
+RULE 4a — FILE RESPONSIBILITY (App.tsx is a router, not a utility barrel): App.tsx contains the hash router, providers, and top-level component tree ONLY. Utility functions, constants, and helpers (date formatters, calculators, lookup tables like CATEGORY_OPTIONS or HUE_SWATCHES, chart color arrays) belong in src/lib/utils.ts — which is already created in Block 1. If you put utilities in App.tsx, the file grows past the platform's context window limit; on the NEXT edit turn the platform can only send half the file, the model rewrites from that partial view and drops the rest, causing "No matching export" build errors across every screen that imported them. Keep App.tsx under 200 lines: router + providers + screen switch. Everything else goes in utils.ts or its own file.
 
 RULE 5 — SECURITY: Never expose API keys, env vars, or database URLs in client code.
 
@@ -2703,6 +2707,11 @@ BAD: React.FC<Props>, React.Dispatch<React.SetStateAction<T>>, import type, Part
 
 ━━━ RULE #4 — STATE ARCHITECTURE ━━━
 ALL useState in App.tsx. Pass data as props, handlers as callbacks. Max 2 levels. No Context/Redux.
+
+━━━ RULE #4a — APP.TSX IS A STATE ROOT, NOT A UTILITY BARREL ━━━
+App.tsx contains: state declarations + the main component tree ONLY.
+Utility functions, constants, helpers (formatters, calculators, color maps, lookup tables) → src/lib/utils.ts.
+An App.tsx that accumulates utility exports grows past the platform's context window; the platform truncates it on the next edit turn, the model rewrites from a partial view, drops the utilities, and every screen that imported them breaks with "No matching export". Keep App.tsx under 200 lines.
 
 ━━━ RULE #5 — DATA VISUALIZATION SYSTEM ━━━
 

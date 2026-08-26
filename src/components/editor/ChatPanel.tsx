@@ -1176,8 +1176,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
       : '';
     // Send FULL content of the most relevant files so the model can produce exact-match
     // SEARCH/REPLACE diffs. Truncating breaks diff editing (model can't match what it can't see).
+    // CORE_FILES (App.tsx, index.css, etc.) are NEVER truncated — App.tsx in particular
+    // grows to 300-500 lines over edit turns; a 12K cut hides the bottom half (where
+    // utility exports live), so the model rewrites from a partial view and drops them,
+    // causing "No matching export" build errors on the very next edit turn.
     const fullBlock = contextFiles.map(({path, content}) => {
-      const body = content.length > 12000 ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
+      const isCoreFile = CORE_FILES.some(c => path.toLowerCase().endsWith(c));
+      const body = (!isCoreFile && content.length > 12000) ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
       return `<file path="${path}">\n${body}\n</file>`;
     }).join('\n\n');
     // For every OTHER file (large apps have many), ship signatures only — the model
@@ -1188,7 +1193,32 @@ const storeProjectId = useEditorStore.getState().project?.id;
       ? '\n\nFILE OUTLINES (these files exist — signatures only; edit via their exports, never recreate):\n' +
         outlineEntries.map(([p, f]) => `<outline path="${p}">\n${extractSignatures((f as any).content ?? '')}\n</outline>`).join('\n')
       : '';
-    const fileContext = manifest + fullBlock + outlineBlock;
+    // Extract named exports from App.tsx and inject as an explicit lock so that
+    // if the model rewrites App.tsx for any reason, it has a concrete checklist
+    // of what must survive. This catches the case where the model still does a
+    // full rewrite (valid for multi-place changes) but forgets exports it can't
+    // see because they're in a file it doesn't have in context this turn.
+    const appEntry = allFileEntries.find(([p]) => p.toLowerCase().endsWith('app.tsx') || p.toLowerCase().endsWith('app.jsx'));
+    const appExports = appEntry
+      ? (() => {
+          const src = (appEntry[1] as any).content ?? '';
+          const names: string[] = [];
+          // named exports: "export const X", "export function X", "export class X", "export type X"
+          for (const m of src.matchAll(/^export\s+(?:const|function|class|type|enum|interface|async function)\s+(\w+)/gm)) names.push(m[1]);
+          // re-exports: "export { X, Y }" and "export { X as Y }"
+          for (const m of src.matchAll(/^export\s*\{([^}]+)\}/gm)) {
+            for (const part of m[1].split(',')) {
+              const name = part.trim().replace(/\s+as\s+\w+/, '').trim();
+              if (name) names.push(name);
+            }
+          }
+          return [...new Set(names)];
+        })()
+      : [];
+    const exportLock = appExports.length > 0
+      ? `\n\n⚠️ EXPORT LOCK — App.tsx currently exports these names; every single one MUST be present after any rewrite or edit (even if the file is restructured): ${appExports.join(', ')}`
+      : '';
+    const fileContext = manifest + fullBlock + outlineBlock + exportLock;
     const history = windowedHistory(messages.filter(m => m.status==='done')).map(m => ({ role:m.role, content:m.content }));
 
     // Edit-completeness check: on every genuine, visible, user-initiated edit
