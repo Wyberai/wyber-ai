@@ -55,3 +55,17 @@ gtm-sec-batch*-results.json
 growth-brief-history.jsonl
 scratch-*/
 scratch-*.html
+
+# one-off scripts and temp run artifacts (underscore-prefixed by convention)
+scripts/_*.mjs
+scripts/_*.json
+scripts/_*.html
+_testkey.txt
+_tmp_*.js
+_tmp_*.mjs
+build_info.json
+run_start.json
+monitor-pricing.js
+*-email-preview.html
+supabase/.temp/
+scripts/template-gen/_pilot-output*/
