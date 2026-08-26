@@ -1498,7 +1498,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // Strip [progress: ...] tags from visible chat text
           .replace(/\[progress:[^\]]+\]/gi, '')
           .trim();
-        setStreamingContent(cleanedFull || '');
+        // Internal passes (fill/scaffold/wire) share the chain bubble via sharedBubbleId.
+        // Don't leak their streaming prose into the chat — the chain bubble already
+        // shows "Building your app — X files planned" and that's all the user needs to see.
+        if (ownsBubble) setStreamingContent(cleanedFull || '');
       }
       const { files: newFiles, chatText } = parseGenerationOutput(full);
       const editBlocks = parseEditBlocks(full);
