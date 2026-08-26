@@ -194,7 +194,7 @@ export function PreviewPanel() {
         setHtml(blobUrl)
         if (!buildError) {
           setError(null)
-          if (isFirstBuild.current && Object.keys(files).length > 3) {
+          if (isFirstBuild.current && Object.keys(files).length > 3 && !useEditorStore.getState().isGenerating) {
             isFirstBuild.current = false
             const isTemplate = !project?.first_prompt
             if (!isTemplate) setConfettiTrigger(c => c + 1)

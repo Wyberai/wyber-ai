@@ -2079,6 +2079,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // computeOverageCharge in credits.ts.
     const buildId = uid();
 
+    try {
+
     // Atlas: the plan pass — a JSON file manifest, free (stage:'plan' skips
     // billing server-side). One retry on failure/empty manifest before
     // dropping to one-shot — same idiom as the fill-batch retry below
@@ -2170,12 +2172,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
         : projectType === 'saas' ? 'saas-build'
         : 'web-build';
       const estimatedCost = creditCost(buildActionType, effectiveModelTier, estimateBuildTier);
-      if (credits < estimatedCost) {
+      // Read credits fresh from the store — the closure value can be stale if
+      // a real-time subscription updated the balance after the last render.
+      const freshCredits = useEditorStore.getState().credits ?? 0;
+      if (freshCredits < estimatedCost) {
         // "Not enough credits" (verbatim) is what the message-renderer below
         // matches on to show the Upgrade button — same reusable upsell moment
         // a post-hoc 402 already triggers, just surfaced before any credits
         // are spent instead of after a failed build.
-        const shortMsg = `This build needs ~${estimatedCost} credits (${estimateBuildTier} tier, ${plannedFileCount} files planned) — you have ${credits}. Not enough credits for this action. Add credits, upgrade, or describe something smaller and I'll check again.`;
+        const shortMsg = `This build needs ~${estimatedCost} credits (${estimateBuildTier} tier, ${plannedFileCount} files planned) — you have ${freshCredits}. Not enough credits for this action. Add credits, upgrade, or describe something smaller and I'll check again.`;
         const msgId = uid();
         addMessage({ id: msgId, role: 'assistant', content: shortMsg, timestamp: Date.now(), status: 'error' });
         persistMessage('assistant', shortMsg);
@@ -2416,7 +2421,24 @@ const storeProjectId = useEditorStore.getState().project?.id;
       ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live.\nCheck the preview, or tell me what to change next.`
       : t('doneCheckPreviewMsg');
     finishChain(summary, liveScreens.map(f => f.path));
-  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents, addMessage, updateMessage, persistMessage, setIsGenerating, t]);
+
+    } catch (e: any) {
+      // Any unhandled exception in the build chain (network error, 402 mid-fill,
+      // unhandled throw) lands here so isGenerating never gets stuck forever.
+      const errMsg = (e?.message ?? '').includes('Not enough credits')
+        ? `Your build ran out of credits mid-build. Not enough credits for this action. Add credits to try again.`
+        : `Something interrupted your build — hit Retry and it'll pick up where it left off.`;
+      updateMessage(chainId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+      persistMessage('assistant', errMsg);
+    } finally {
+      // Always clear generating state — the individual happy paths above do this
+      // too (finishChain, early credit/scaffold returns) but a thrown exception
+      // would skip them without this guard.
+      setIsGenerating(false);
+      clearStreamingContent();
+      setProgressSteps([]);
+    }
+  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents, addMessage, updateMessage, persistMessage, setIsGenerating, clearStreamingContent, t]);
 
   // The ONE entry point for "start a build/edit now" — the agentic staged
   // path for first builds (flag-gated), the classic single request otherwise.
