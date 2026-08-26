@@ -1174,15 +1174,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (lastChangedPathsRef.current.has(path)) score += 50;
       return { path, content: (f as any).content, score };
     });
-    const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
+    const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 10);
     // Pull in helper files imported by the top files (lib/api, Auth, hooks…) so
     // the model can edit them instead of recreating them. Capped to keep the
     // context bounded.
     const fileMap: Record<string, string> = {};
     for (const [p, f] of allFileEntries) fileMap[p] = (f as any).content ?? '';
     const seedPaths = topFiles.map(f => f.path);
-    const importedPaths = collectImportedPaths(seedPaths, allFileEntries.map(([p]) => p), p => fileMap[p] ?? '', 8);
-    const contextPaths = [...new Set([...seedPaths, ...importedPaths])].slice(0, 14);
+    const importedPaths = collectImportedPaths(seedPaths, allFileEntries.map(([p]) => p), p => fileMap[p] ?? '', 12);
+    const contextPaths = [...new Set([...seedPaths, ...importedPaths])].slice(0, 20);
     const contextFiles = contextPaths.map(p => ({ path: p, content: fileMap[p] ?? '' }));
     // Full manifest of EVERY existing file path. Without this the model only sees the
     // top-6 scored files, so on follow-up edits it can't see helper files (lib/api,
@@ -1200,7 +1200,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // causing "No matching export" build errors on the very next edit turn.
     const fullBlock = contextFiles.map(({path, content}) => {
       const isCoreFile = CORE_FILES.some(c => path.toLowerCase().endsWith(c));
-      const body = (!isCoreFile && content.length > 12000) ? content.slice(0, 12000) + '\n/* ...truncated... */' : content;
+      const body = (!isCoreFile && content.length > 24000) ? content.slice(0, 24000) + '\n/* ...truncated... */' : content;
       return `<file path="${path}">\n${body}\n</file>`;
     }).join('\n\n');
     // For every OTHER file (large apps have many), ship signatures only — the model
@@ -2198,7 +2198,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
         : 'app';
       const preMsg = `Building your ${appLabel} — ${plannedFileCount} files planned, ~${exactCost}–${hi} credits. Starting now.`;
       updateMessage(chainId, { content: preMsg, status: 'done' });
-      persistMessage('assistant', preMsg);
+      // Do NOT persist the intermediate progress message — finishChain persists
+      // the final summary. Persisting here creates a duplicate DB row that comes
+      // back as a separate bubble on every page reload.
     }
 
     if (!staged || !staged.shouldStage) {

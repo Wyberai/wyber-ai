@@ -245,12 +245,11 @@ export const useEditorStore = create<EditorState>()(
     setFramework: (f) => set((s) => { s.framework = f; }),
 
     hydrateProject: (data) => set((s) => {
-      // Same race as files below: if the caller already set s.project (synchronously,
-      // before its own async fetches resolved) and a save has since bumped its
-      // updated_at, blindly reapplying data.project here would reset it back to the
-      // stale SSR value — causing the NEXT save's conflict-guard to false-positive
-      // and get silently rejected by the server (see persist-project.ts).
-      if (!s.project || s.project.id !== data.project.id) {
+      // IDELayout/MobileLayout call setProject() synchronously before starting their
+      // async fetches, so s.project is already set to the correct project by the time
+      // this callback fires. We only fall through to the assignment if the store is
+      // somehow empty (safety net for unusual mount orders).
+      if (!s.project) {
         s.project = data.project;
         s.framework = data.project.framework ?? 'react-vite';
       }
@@ -272,10 +271,16 @@ export const useEditorStore = create<EditorState>()(
           s.hasGeneratedFiles = false;
         }
       }
-      s.messages = data.messages ?? [];
-      s.knowledge = data.knowledge ?? '';
-      s.initialPrompt = data.initialPrompt ?? '';
-      s.hydrated = true;
+      // Guard against stale fetches from a previous project overwriting the current
+      // project's chat. On rapid A→B navigation: setProject(A) then setProject(B) both
+      // run synchronously, so s.project.id === B.id when A's fetch finally resolves.
+      // Dropping A's messages here prevents the flash of wrong history.
+      if (s.project?.id === data.project.id) {
+        s.messages = data.messages ?? [];
+        s.knowledge = data.knowledge ?? '';
+        s.initialPrompt = data.initialPrompt ?? '';
+        s.hydrated = true;
+      }
     }),
 
     setHydrated: (v) => set((s) => { s.hydrated = v; }),
