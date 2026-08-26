@@ -139,7 +139,7 @@ CREDITS & PLANS:
 - Scale ($799/mo): 10,000 credits/month — all features unlocked
 - No employee caps, no agent limits, no feature gates — every plan unlocks ALL features
 - Prebuilt templates: 0 credits always
-- Web/mobile app build: 30 credits | App edit: 2 credits | Build plan: 5 credits
+- Web/mobile app build: 15–130 credits depending on size (exact cost always shown before generation) | App edit: 2 credits | Build plan: 5 credits
 - AI Employee run: 5 credits | Agent run: 5 credits | Workflow run: 2 credits
 - GTM campaign action: 3 credits | Lead enrichment: 1 credit per contact | Image: 3 credits
 - Always free: templates, self-healing, export, deploy, GitHub push
@@ -154,7 +154,7 @@ vs COMPETITORS:
 - Self-healing builds — AI catches and fixes its own errors automatically
 
 DONE-FOR-YOU (book at wyberai.com/setup-call):
-- $99 consultation — scope the app, get a firm quote and delivery date
+- Free scoping call — 30 min with our founder to scope the app, get a firm quote and delivery date (no charge, no commitment)
 - Simple ($199): landing pages, tools — 24 hours
 - Medium ($399): SaaS MVP with auth + database — 3 working days  
 - Complex ($799): full SaaS with payments, multi-role — 1 week
@@ -1243,7 +1243,7 @@ RULE 3 — CANONICAL URL CRASH: <link rel="canonical" href="https://brand.com/" 
 
 RULE 4 — NEVER TRUNCATE: Output every file completely. NEVER "// ... rest" or "// same pattern". Truncated file = broken build.
 
-RULE 4a — APP.TSX STAYS LEAN: App.tsx is the entry, router, and section-switcher ONLY. Utility functions, constants, and helpers belong in src/lib/utils.ts (already scaffolded). App.tsx that accumulates utilities grows past the context window; on the next edit the platform truncates it and the model drops the utilities, causing "No matching export" errors. Keep App.tsx under 150 lines.
+RULE 4a — APP.TSX STAYS LEAN: App.tsx is the entry, router, and section-switcher ONLY. Utility functions, constants, and helpers belong in src/lib/utils.ts (already scaffolded). App.tsx that accumulates utilities grows past the context window; on the next edit the platform truncates it and the model drops the utilities, causing "No matching export" errors. Keep App.tsx under 200 lines.
 
 RULE 5 — SECURITY: Never expose API keys, env vars, or internal config in client code.
 

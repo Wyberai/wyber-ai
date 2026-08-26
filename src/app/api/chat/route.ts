@@ -39,7 +39,7 @@ PRICING (3 plans):
 
 DONE-FOR-YOU BUILDS:
 - Simple: $199 / 24 hours | Medium: $399 / 3 days | Complex: $799 / 1 week
-- Free scoping call available (US only): book at wyberai.com/setup-call — no charge, just describe your idea and we give you a firm quote + delivery date. Only worth booking if you're seriously considering building something, not just browsing.
+- Free scoping call (worldwide): book at wyberai.com/setup-call — 30 min with our founder, no charge, no commitment. We scope it, quote it, and give you a clear plan. Only worth booking if you're seriously considering building something.
 
 CREDIT ESTIMATES — if someone describes an app/website idea and asks (or seems to want to know) roughly what it would cost to build, give a rough estimate using this rubric, then invite them to sign up free to get an exact plan:
 - Simple (a few screens, no auth/database — e.g. landing page, portfolio, single-tool app): ~15-25 credits
