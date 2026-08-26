@@ -2129,9 +2129,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
     if (seedData?.files && Object.keys(seedData.files).length > 0) {
       const langMap: Record<string, string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
       const seedFileMap: Record<string, { path: string; content: string; language: string }> = {};
-      for (const [path, content] of Object.entries(seedData.files)) {
+      for (const [path, rawVal] of Object.entries(seedData.files)) {
         const ext = path.split('.').pop() ?? '';
-        seedFileMap[path] = { path, content: content as string, language: langMap[ext] ?? 'plaintext' };
+        // prebuilt_apps.files may store FileNode objects {content,language} or plain strings
+        const content = typeof rawVal === 'string' ? rawVal : ((rawVal as any)?.content ?? '');
+        seedFileMap[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
       }
       setFiles(seedFileMap);
     }
