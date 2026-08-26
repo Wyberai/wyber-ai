@@ -2123,18 +2123,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
         : Promise.resolve(null)) as Promise<{ files: Record<string, string>; name: string } | null>,
     ]);
 
-    // Pre-load files into the editor store so scaffold/fill/wire calls include them
-    // as fileContext → server sets hasExisting=true → model uses <edit> blocks
-    // (small diff output) rather than full rewrites → 50%+ faster, fewer truncations.
-    // Priority: (1) DB template seed if domain-specific match (score ≥ 8);
-    //           (2) hardcoded type skeleton as fallback — ensures every build starts
-    //               with a proper multi-screen structure, not an empty canvas.
-    // The preview stays on the game screen throughout because PreviewPanel gates the
-    // game on isFirstBuild.current (not !html), so these files don't flash to users.
+    // DB template seed — only load into the store when it's a domain-specific match
+    // (score ≥ 8). These templates are real, complete app files that the AI can
+    // meaningfully diff against (hasExisting=true → edit mode → faster).
+    // Hardcoded skeletons are NOT loaded here: they are generic placeholders whose
+    // content never matches what the AI would actually write, so SEARCH blocks built
+    // against them fail → autofix loop → slower, not faster. Skeletons are used only
+    // as a plan-stage file-structure hint (injected into the plan prompt in route.ts).
     const langMap: Record<string, string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
     const rawSeedFiles: Record<string, string> = (seedData?.files && Object.keys(seedData.files).length > 0)
       ? seedData.files
-      : (getSkeletonForType(projectType) ?? {});
+      : {};
     if (Object.keys(rawSeedFiles).length > 0) {
       const seedFileMap: Record<string, { path: string; content: string; language: string }> = {};
       for (const [path, rawVal] of Object.entries(rawSeedFiles)) {

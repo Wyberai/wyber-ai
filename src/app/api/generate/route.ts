@@ -4952,7 +4952,18 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         const planCount = isMobilePlan
           ? (planIsComplex ? '20-32' : '8-14')
           : (planIsComplex ? '18-30' : '6-10')
-        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
+        // Skeleton file-structure hint — tells the planner which paths/roles each
+        // project type uses (e.g. src/index.css first for webapps, App.tsx at root
+        // for mobile). This enforces correct architecture without loading skeleton
+        // content into the store (which caused SEARCH-block failures in edit mode).
+        const skeletonHint = isMobilePlan
+          ? ' Follow this file layout for mobile (React Native): App.tsx at project root (NOT src/), theme.ts at root, then screens/ directory with one file per screen. Use GestureHandlerRootView → NavigationContainer → bottom-tab navigator. NEVER put App.tsx inside src/.'
+          : projectType === 'saas'
+          ? ' Follow this file layout for SaaS: src/index.css FIRST, then src/hooks/useHashRoute.ts, src/lib/utils.ts, src/contexts/ (max 2 contexts: AuthContext + ToastContext only), src/components/layout/ (Sidebar, Header), src/pages/ (one per route), src/App.tsx LAST. Hash routing only — no react-router-dom. All navigation via <a href="#/...">.'
+          : projectType === 'website'
+          ? ' Follow this file layout for websites: src/index.css FIRST, src/App.tsx SECOND (contains all sections or a useHashRoute router), then src/components/ with one file per section (Navbar, Hero, Features, Pricing, Testimonials, FAQ, Footer etc). No react-router-dom.'
+          : ' Follow this file layout for web apps: src/index.css FIRST, src/App.tsx SECOND (state-based routing with useState — no react-router-dom), then src/components/ (Sidebar, one component per section). App.tsx under 200 lines — all useState at top, section-switcher only.'
+        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''}${skeletonHint} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
       }
       // Only the from-scratch branch above actually ran isComplexBuild — the
       // hasExisting (edit-completeness) branch leaves planIsComplex at its
