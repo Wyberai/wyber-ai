@@ -1623,7 +1623,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const entry = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { continuation: true, prompt: `The build finished but ${entry} was never written (or is still the empty placeholder), so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist. Do not rewrite other files.` }
+            detail: { continuation: true, prompt: `The build finished but ${entry} was never written (or is still the empty placeholder), so the app cannot render. Output the COMPLETE <file> block for ${entry}, wiring together the components that already exist. Do not rewrite other files. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.` }
           }));
         }, 600);
       }
@@ -1687,7 +1687,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                 detail: {
                   continuation: true,
                   completenessRetryFor: missing,
-                  prompt: `Your previous response addressed part of the request but left ${missing.length} planned file${missing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied.`,
+                  prompt: `Your previous response addressed part of the request but left ${missing.length} planned file${missing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied. AUTOMATED CONTINUATION: after the last </file> or </edit> tag, write ZERO additional words — no questions, no offers, no recap.`,
                 },
               }))
             }, 600)
@@ -1714,7 +1714,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   continuation: true,
                   completenessRetryFor: stillMissing,
                   completenessRetryCount: retryCount + 1,
-                  prompt: `Your previous response still left ${stillMissing.length} planned file${stillMissing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files.`,
+                  prompt: `Your previous response still left ${stillMissing.length} planned file${stillMissing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words — no questions, no offers, no recap.`,
                 },
               }))
             }, 600)
@@ -1793,7 +1793,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (failedPaths.length > 0) {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
-            detail: { continuation: true, prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}` }
+            detail: { continuation: true, prompt: `Some edits could not be applied automatically. Output the COMPLETE updated <file> block (full file contents, not a diff) for each of these files: ${failedPaths.join(', ')}. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words.` }
           }));
         }, 400);
       }
