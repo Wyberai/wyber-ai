@@ -4952,7 +4952,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       // Confirmed live in production chat history: every staged pass ended
       // with such a question, and the very next pass silently acted on it —
       // reads as the AI ignoring the user and talking to itself.
-      const stagedAutomationNote = "\nThis pass is one link in an automated chain the platform already planned — it runs back-to-back with the next pass, with no user reply in between. Your closing sentence must be a plain, past-tense statement of what you built. NEVER end with a question or an offer awaiting a yes/no (no \"Want me to build X next?\", no \"should I continue?\") — nobody is there to answer it, and the next pass will run regardless of what you ask. NEVER reference internal build mechanics like \"this pass\"/\"next pass\"/\"later passes\" — describe the app in plain language a user would recognize, not the pipeline building it."
+      const stagedAutomationNote = "\nAUTOMATED BUILD PASS — STRICT OUTPUT RULES:\n1. Output ONLY <file> or <edit> blocks. After the last closing tag, write ZERO additional words.\n2. NEVER ask a question. NEVER write \"Want me to...\", \"Should I...\", \"would you like me to...\", or any offer awaiting a reply — nobody is reading between passes.\n3. NEVER comment on what you didn\'t do or what\'s not yet wired — the platform handles subsequent passes automatically.\n4. NEVER reference build internals (\"this pass\", \"next pass\", \"scaffold\", \"fill\", \"wire\") in any visible text.\n5. If you feel the urge to write a closing sentence — suppress it. End at </file>."
       if (stage === 'scaffold') {
         const sPaths = stageFiles as string[]
         const sPurposes = stagePurposes as string[]
@@ -4962,7 +4962,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         const paths = stageFiles as string[]
         const purposes = stagePurposes as string[]
         const items = paths.map((p, i) => purposes[i] ? `- ${p}: ${purposes[i]}` : `- ${p}`).join('\n')
-        perRequestParts.push(`\n\n=== FILL PASS ===\nThe app shell (navigation, theme, routing) is already built. Now build ONLY these feature files — output each as a COMPLETE <file> block with fully working code, no stubs, no TODO placeholders:\n${items}\nDo NOT re-output App.tsx, index.css, or any scaffold file not listed above. Write real, working implementations for the files listed.${stagedAutomationNote}`)
+        perRequestParts.push(`\n\n=== FILL PASS ===\nThe app shell (navigation, theme, routing) is already built. Now build ONLY these feature files — output each as a COMPLETE <file> block with fully working code, no stubs, no TODO placeholders:\n${items}\nDo NOT output App.tsx, index.css, or any file not listed above. A dedicated wire pass runs immediately after all fills complete and will update App.tsx to import/route to the real components you build here — you do not need to do this, and commenting on it breaks the build.\nWrite real, working implementations for ONLY the files listed above.${stagedAutomationNote}`)
       } else if (stage === 'wire') {
         const routerPath = (stageFiles as string[])[0]
         const screenList = (stagePurposes as string[]).map((s) => `- ${s}`).join('\n')
