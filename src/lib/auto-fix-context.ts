@@ -12,8 +12,8 @@
 // file, itself starting at char 12619 in a 10-file project — the fix model
 // never saw the file's content, and two consecutive fix attempts silently did
 // nothing.
-export const AUTO_FIX_GLOBAL_BUDGET = 60000
-const OTHER_FILE_CAP = 3000
+export const AUTO_FIX_GLOBAL_BUDGET = 90000
+const OTHER_FILE_CAP = 5000
 
 /**
  * fileName comes from a regex over the raw build error, which usually names

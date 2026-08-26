@@ -25,6 +25,13 @@ const BANNED_RGB_RE = /\brgba?\(/g;
 // fresh build to use (bg-primary, text-foreground, border-border, etc).
 const SEMANTIC_CLASS_RE = /\b(?:bg|text|border|ring)-(?:background|foreground|card|card-foreground|popover|popover-foreground|primary|primary-foreground|secondary|secondary-foreground|muted|muted-foreground|accent|accent-foreground|destructive|destructive-foreground|border|input|ring)\b/g;
 
+// A literal emoji used as a feature/nav icon is one of the clearest AI-slop
+// tells (see anti-slop hardening pass) — but only when the file ALSO imports
+// a real icon library, i.e. the emoji is standing in for an icon rather than
+// appearing as ordinary copy (a toast string like "Saved! 🎉" is fine).
+const LUCIDE_IMPORT_RE = /from ['"]lucide-react['"]/;
+const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+
 // wyber-ui-kit.ts's exported layout/motion primitives.
 const KIT_COMPONENTS = [
   'Reveal', 'Stagger', 'StaggerItem', 'AnimatedNumber', 'Marquee', 'ScrollProgress', 'Parallax',
@@ -55,6 +62,7 @@ export function assessDesignFreshness(files: Record<string, FileVal>, projectTyp
   let semanticHits = 0;
   let bareDivCount = 0;
   let scannedFiles = 0;
+  let emojiIconHits = 0;
   const kitSeen = new Set<string>();
 
   for (const [path, val] of Object.entries(files ?? {})) {
@@ -74,10 +82,26 @@ export function assessDesignFreshness(files: Record<string, FileVal>, projectTyp
         if (kitSeen.has(name)) continue;
         if (new RegExp(`<${name}\\b`).test(content)) kitSeen.add(name);
       }
+      // A file that already imports a real icon library but ALSO renders a
+      // literal emoji glyph is very likely using that emoji as an icon
+      // (nav/feature/badge), not as ordinary copy — the combination is what
+      // makes this signal clean rather than flagging every "Saved! 🎉" toast.
+      if (LUCIDE_IMPORT_RE.test(content) && EMOJI_RE.test(content)) emojiIconHits++;
     }
   }
 
   if (scannedFiles === 0) return null;
+
+  // Mixed icon/emoji is its own, unambiguous problem — surface it on its own
+  // rather than folding it into the genericness count below, so the
+  // suggestion text always matches what was actually detected.
+  if (emojiIconHits > 0) {
+    return {
+      note: 'One or more components mix an emoji in as an icon alongside real Lucide icons — worth a consistency pass?',
+      prompt: 'Find any place an emoji (✨🚀⚡ etc) is used as a nav, feature, or badge icon and replace it with a Lucide icon that matches the surrounding icon style. Leave emoji that appear in ordinary copy (toast/notification text) alone.',
+      label: '🎨 Fix mixed icons',
+    };
+  }
 
   let flags = 0;
   if (bannedHits >= 3) flags++;

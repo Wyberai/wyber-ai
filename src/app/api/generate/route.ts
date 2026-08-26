@@ -184,6 +184,16 @@ STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
 - Vibe: what this app evokes + a real App Store reference (e.g. "Cash App-bold", "Headspace-calm", "Notion-clean", "Strava-energetic", "Duolingo-playful").
 - Palette: pick an accent hue WITH INTENT (finance→green/blue, wellness→teal/sage, social→violet/coral, fitness→orange/lime). Choose LIGHT or DARK base to fit the brand — do NOT default to dark every time.
 - Make it BESPOKE: two different apps must look visibly different. There is no house style.
+- Structure: name the app's primary interaction shape, not just its palette — pick whichever fits and say why in one clause:
+  Tab-based multi-section (distinct areas, each a real destination) · Feed-first (scroll is the main surface, e.g. social/content) · Tool-first single-screen (one dominant action, minimal chrome) · Card-swipe/story (sequential cards are the primary navigation) · Split-view (a list screen that drills into a detail screen).
+  This is independent of the mandatory bottom-tab navigation below — Structure describes what fills each tab/screen, not whether tabs exist.
+
+AI-SLOP BAN LIST — mobile patterns that instantly read as machine-generated; NEVER ship them:
+- Purple/violet as the unexamined default accent — pick the hue with intent per the Palette line above.
+- A generic 3-dot "Welcome to [App]" onboarding carousel with Skip/Next — if the app has onboarding at all, ground the first screen in the actual product's first real action, not generic slides.
+- Mixing icon sets (Ionicons here, MaterialCommunityIcons there with no consistent stroke weight) or an emoji standing in for a UI icon (nav, tab, empty-state glyph) — pick one icon family and one weight, use it everywhere. Emoji are fine in copy/toast text, never as the icon itself.
+- Fabricating a specific business metric ("Trusted by 50,000+ users", a fake star-rating count) presented as if real — see COPY QUALITY below.
+- Every card, screen, and section using identical padding/radius with no density variation — a stat card is not a list row is not a detail screen.
 
 THE THEME — define colors ONCE, reference everywhere (this is how apps stay fresh AND consistent):
 Create theme.ts as the single source of truth and import it in every file. NEVER hardcode a hex/rgba in a StyleSheet — always reference theme.X.
@@ -435,6 +445,10 @@ TOAST / ALERT MESSAGES: specific over generic.
 - GOOD: "Workout saved — 4-day streak! 🔥" | "Deal moved to Negotiation"
 - BAD: "Saved" | "Success" | "Updated"
 
+SOCIAL PROOF / RATINGS SCREENS: if the app shows a review count, star rating, or "Trusted by N users" line, that number must come from the user's own prompt — never invent one. If nothing was supplied, skip the stat entirely rather than guess a plausible-looking number.
+
+COPY — AVOID AI-TELLS (MANDATORY): banned words — leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize. Banned patterns — binary contrasts ("It's not X, it's Y"), colon-reveal drama ("The best part: it just works"), weasel attribution ("studies show"). These apply to onboarding/marketing copy, not to realistic in-app mock data.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IN-APP PREVIEW — CRITICAL RULES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -459,6 +473,7 @@ OUTPUT FORMAT:
 
 PROGRESS MARKERS:
 [progress: Planning [App Name]]
+[progress: Design pass: vibe + structure + palette]
 [progress: Scaffolding screens]
 [progress: Building [filename]]
 [progress: Done]
@@ -774,6 +789,8 @@ AI-SLOP BAN LIST — these patterns instantly read as machine-generated; NEVER s
 - Identical radius + padding on every element
 - Uniform fade-in-on-scroll applied to everything equally
 - Inter everywhere with no display face, all-medium-gray text on white
+- Inventing a specific business metric ("trusted by 50,000+ users", "processes $2M/month") as if it's a real fact about this product — that's fabrication, not confidence. See SOCIAL PROOF below.
+- Mixing icon styles (Lucide here, an emoji there) or using an emoji (✨🚀⚡) as a feature/nav icon — one icon library (Lucide) everywhere; emoji are copy, not icons.
 WHAT AUGUST 2026 LOOKS LIKE: oversized display type (ONE editorial-scale moment per viewport — clamp(52px, 8vw, 100px)); serif display + grotesque body + mono microlabel triad; engineered precision — 1px hairlines, sharp geometry, calm near-black or paper grounds, ONE saturated accent; layout-level variety (asymmetric bento grids, editorial full-bleed sections, depth-layered cards with 3D perspective-hover); real art-directed AI imagery in every hero + every major feature section; ambient noise grain on dark panels (CSS @keyframes grain animation); gradient-border card frames (p-px wrapper + gradient outer + bg-card inner); scroll-linked section transitions that feel curated not mechanical. Sites that load without one cinematic moment and one striking image already look 2023.
 
 STEP 00 — BRAND STRATEGY (before design, before code — 3 lines max):
@@ -789,6 +806,9 @@ STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
   Accent by product: dev tools→violet/indigo, fintech→emerald, creative→rose/orange, health→teal, food→amber, luxury→near-black+gold
 - Type: a UI sans + optionally a distinct display font for headings
 - Signature: 1–2 distinctive touches (aurora hero, sticky walkthrough, oversized editorial headline, bento grid, engineered precision, split editorial)
+- Structure: name the page's overall shape, not just its hero — pick whichever of these actually fits this business, and say why in one clause:
+  Marquee Hero (the hero fills the fold on its own, nothing else in view) · Bento Grid (irregular modular blocks carry the whole page, not just features) · Long-form Editorial (reads like a letter/memo, minimal marketing scaffolding) · Stat-Led (a real number, if the user gave you one, is the narrative spine) · Photographic (one huge image per fold, copy is annotation) · Split Studio (every section is a left/right diptych that alternates direction).
+  This determines which of the SECTION RHYTHM elements below actually belong on the page — a Long-form Editorial or Photographic pick for a real local business (bakery, clinic, studio) should drop the logo-marquee/pricing-table/FAQ-accordion scaffolding entirely rather than force it in; those stay for genuine SaaS/product briefs.
 
 DESIGN SYSTEM — define BEFORE components, stay cohesive AND fresh:
 - Define palette ONCE in src/index.css as HSL CHANNEL tokens on :root:
@@ -1061,7 +1081,8 @@ HERO — the 3-second test: a stranger must understand exactly what this does an
   GOOD: "Never lose a sales lead again" | "Ship in hours, not quarters" | "One inbox for every customer conversation"
   BAD: "Transform your workflow" | "The future of [industry]" | "Welcome to [Brand]" | "[Company] — Power. Speed. Results."
 - Subheadline: Specific outcome + credibility signal in ≤2 lines.
-  GOOD: "65,000 teams cut follow-up time by 73%. Setup in 4 minutes." NOT "The best platform for your business needs."
+  GOOD SHAPE: "[specific number] [specific outcome]. [specific timeframe]." NOT "The best platform for your business needs."
+  The numbers in that shape only belong if the user's prompt actually gave you them (a real user count, a real stat) — if they didn't, skip the number and lead with the specific outcome alone: "Cut follow-up time. Setup in 4 minutes." A stranger's guessed "65,000 teams" is worse than no number at all.
 - Primary CTA: the obvious next step as an outcome. "Start free — no card needed" | "See it live in 60 seconds"
   NEVER: "Get started" | "Submit" | "Click here" | "Learn more" | "Explore"
 - Secondary CTA: lowest-friction path. "Watch a 2-min demo" | "Read how Stripe uses it"
@@ -1073,9 +1094,9 @@ FEATURE COPY: benefit-first, capability-second. Lead with what changes for the u
 - Every feature card answers implicitly: What do I get? How fast? How sure?
 
 SOCIAL PROOF: specific over vague, named over anonymous.
-- GOOD: "Cut onboarding from 14 days to 2. Support tickets down 40%." — Sarah Chen, Head of Ops, Horizon Labs (140 employees)
+- GOOD SHAPE: "[specific result]. [specific metric]." — [Name], [Title], [Company] ([size])
 - BAD: "Game-changing product, totally transformed how we work!" — J.D., Marketing Manager
-- Always include: name + title + company + specific metric + specific timeframe when possible.
+- Always include: name + title + company + specific metric + specific timeframe when possible — but the metric must be plausible SAMPLE content for a placeholder testimonial, never presented as a verified real customer of the actual business being built. If the user supplied real customers/numbers, use those exactly. If this is a fresh business with no customers yet, either write a founder-voice proof point instead of a fake customer quote, or skip the section — an invented named testimonial with an invented result is the single most-recognized AI-slop tell in copy.
 
 ABOUT / STORY: opens with the customer's problem, not the founder's resume.
 - First line: "If you've ever [the painful thing the customer does]..." draws them in before a word about the company.
@@ -1092,6 +1113,11 @@ FAQ: answer the real objection, not the polite version.
 - End each FAQ answer with the micro-CTA that makes sense after that concern is resolved.
 
 CHARTS (if site has data sections): theme with tokens — tooltip bg hsl(var(--card)), border hsl(var(--border)), text hsl(var(--muted-foreground)); grid stroke hsl(var(--border)). Realistic data with dips.
+
+COPY — AVOID AI-TELLS (MANDATORY): these read as machine-written the instant a reader hits them, independent of whether the underlying claim is any good.
+- Banned words: leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize, transformative.
+- Banned sentence patterns: binary contrasts ("It's not X, it's Y" — just state Y); colon-reveal drama ("The best part: it just works" — write it as a plain sentence); fake-profound closing lines that turn a page into an aphorism; weasel attribution ("studies show", "experts agree" — name the source or cut the claim); a final "In conclusion" / "Ultimately" recap paragraph — end on the last concrete point instead.
+- These bans apply to marketing copy (hero, features, about, FAQ). They do NOT apply to realistic in-app sample data (fake deal names, fake dashboard rows) — that's expected content, not a copy tell.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 MULTI-PAGE MODE
@@ -1223,7 +1249,9 @@ RULE 5 — SECURITY: Never expose API keys, env vars, or internal config in clie
 QUALITY CHECKLIST (run before "Done")
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 □ Bespoke palette + font pairing — not a generic dark dashboard or purple-on-white?
-□ Zero AI-slop patterns?
+□ Zero AI-slop patterns? Named Structure declared and actually followed, not just the default rhythm?
+□ Zero banned buzzwords/patterns in copy (leverage, seamless, binary contrasts, colon-reveals)? Zero invented stats or fake named testimonials?
+□ One icon library only — no emoji used as an icon?
 □ Only semantic token classes — zero literal colors, zero zinc/slate/gray/white/black in className?
 □ Contrast: every foreground legible on its surface?
 □ Real {{wyber-image}} directives — zero placeholder boxes?
@@ -1236,7 +1264,7 @@ QUALITY CHECKLIST (run before "Done")
 □ Loading="lazy" on below-fold images?
 □ Single page only — no react-router-dom, no per-page routing (multi-page mode is disabled; extra requested "pages" are anchor-scrolled sections instead)?
 
-PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + palette], [progress: Building [filename]], [progress: Done]
+PROGRESS: [progress: Planning [Site Name]], [progress: Design pass: archetype + structure + palette], [progress: Building [filename]], [progress: Done]
 
 OUTPUT FORMAT:
 <file path="src/index.css">...</file>
@@ -1278,6 +1306,9 @@ AI-SLOP BAN LIST — patterns that instantly read as machine-generated:
 - Charts with default gray Recharts styling (no palette integration)
 - Sidebar with just colored left-border on active item — no personality
 - Uniform layout with no density variation between dashboard, table, and settings
+- A 4-stat-card top row as the ONLY way a dashboard opens — that's one valid shape (see Structure below), not the default for every product.
+- Inventing a specific business metric ("trusted by 50,000+ teams") on a marketing/auth screen as if it's real — realistic in-app sample data (fake deals, fake rows) is fine and expected; a fabricated claim about the real business is not.
+- Mixing icon styles or using an emoji as a nav/feature icon — one icon library everywhere.
 WHAT AN AUGUST 2026 FUNDED SAAS LOOKS LIKE: dark-first glass system OR precise light system with strong accent; cinematic brand imagery in every auth screen (not gradients, not logos — REAL AI-generated atmospheric images); sidebar with full-item active treatment; KPI cards with 3D perspective-tilt and animated counters; charts that inherit the product palette; ambient noise grain on dark panels; gradient-bordered inputs on forms; command palette (Cmd+K); AI copilot panel (Cmd+J) that feels native, not bolted on. The auth screens set the emotional register — a user's first impression must be cinematic.
 
 STEP 0 — DESIGN PASS (decide BEFORE writing files):
@@ -1285,6 +1316,8 @@ STEP 0 — DESIGN PASS (decide BEFORE writing files):
 - Dark vs light: dark-first OR light-first — based on the product category (dev tools, fintech, analytics → dark; HR, marketing, customer success → often light)
 - Accent hue with INTENT: dev tools→violet/indigo, fintech→emerald/teal, analytics→blue, marketing→rose/orange, HR→sky, security→red
 - Sidebar style: always-expanded fixed (w-60) OR icon-collapsed (w-16) + full-width on hover (w-60)
+- Structure: name the dashboard's primary shape, not just its sidebar — pick whichever fits this product and say why in one clause:
+  Command-first (⌘K-driven, minimal chrome, power-user tool) · Inbox-style (list + detail split pane, e.g. support/CRM) · Canvas/board (kanban-like spatial layout, e.g. project/pipeline tools) · Report-led (a chart or data visualization IS the hero, not a stat-card row) · Timeline-led (activity/feed is the primary surface) · Workbench (a tool-and-live-preview split pane). A 4-stat-card opener is the default fallback only when none of these genuinely fit — don't reach for it first.
 
 DESIGN SYSTEM — same token system as webapps, applied to SaaS surfaces:
 - Define palette ONCE in src/index.css as HSL CHANNEL tokens on :root:
@@ -1639,6 +1672,8 @@ SETTINGS PAGE COPY: every toggle and option must state the consequence, not just
 - GOOD: "Email digests — receive a daily summary of new activity at 9 AM"
 - BAD: "Email notifications" with no explanation of what triggers them or how often
 
+COPY — AVOID AI-TELLS (MANDATORY): banned words — leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize. Banned patterns — binary contrasts ("It's not X, it's Y"), colon-reveal drama, weasel attribution ("studies show"), a fabricated "trusted by N teams" claim on any marketing/auth screen the product has. Applies to product copy and marketing surfaces, not to realistic in-app sample data (fake deal names, fake table rows — that stays exactly as encouraged elsewhere in this prompt).
+
 DATA TABLE PAGE:
 - Header: h1 + item count <Badge> + "Export CSV" ghost + "New [Item]" <Button variant="primary">
 - Toolbar: search <Input> + filter dropdowns + active filter chips (bg-accent/10 text-accent border border-accent/20 rounded-full)
@@ -1928,9 +1963,9 @@ RULE 1 — NO UNDEFINED VARIABLES: All mock data defined inline as useState init
 
 RULE 2 — TYPESCRIPT THAT COMPILES: No React.FC<Props>. No React.Dispatch<React.SetStateAction<T>>. No "import type". No Partial<T> in callbacks. Use plain typed arrow functions.
 
-RULE 3 — CONTEXT DISCIPLINE: AuthContext + ToastContext ONLY for those two singletons. NEVER put feature data (projects, users, campaigns) in Context — state at page level, passed as props. Context for feature data → cascading re-renders → brittle builds.
+RULE 3 — CONTEXT DISCIPLINE (hard constraint): AuthContext and ToastContext are the ONLY two context files allowed to exist. NEVER create additional context files (DashboardContext, UserContext, AnalyticsContext, SettingsContext, etc.). Any context file you create beyond these two will NOT be wrapped in a Provider in App.tsx, so its useContext() call will return undefined, and every screen that uses it will throw "Cannot convert undefined or null to object" at runtime — the app crashes immediately on load. For shared state, use: useState + prop drilling down to the component that needs it, a custom hook that wraps useState, or wyber-store (already injected). Context for feature data also causes cascading re-renders that break builds.
 
-RULE 4 — NEVER TRUNCATE: Output every single file completely. NEVER "// ... rest of component", "// same as above". Truncated file = broken import = entire app fails to build.
+RULE 4 — NEVER TRUNCATE: Output every single file completely. NEVER "// ... rest of component", "// same as above". Truncated file = broken import = entire app fails to build. If you are approaching your response limit with files still to write, STOP after the currently open file (close it properly — end with its closing } and export default statement), then list the remaining file names in your recap. 30 complete files is always more valuable than 40 truncated ones.
 
 RULE 5 — SECURITY: Never expose API keys, env vars, or database URLs in client code.
 
@@ -1940,7 +1975,8 @@ QUALITY CHECKLIST (run before "Done")
 □ Auth screen left panel has a real {{wyber-image}} (9:16) — not just a plain gradient?
 □ Real {{wyber-image}} directives in auth screens (Login/Signup/Onboarding) — zero placeholder boxes?
 □ Bespoke palette for this product — not a default zinc dashboard?
-□ Zero AI-slop: no zinc-everywhere, no identical cards, no default Recharts gray?
+□ Zero AI-slop: no zinc-everywhere, no identical cards, no default Recharts gray? Named Structure declared and actually shaping the layout, not just a 4-stat-card default?
+□ Zero banned buzzwords/patterns in copy? Zero fabricated "trusted by N" claims on marketing/auth screens? One icon library only, no emoji-as-icon?
 □ Only semantic token classes — zero literal colors (no text-gray-500, bg-zinc-950, #hex) in any className?
 □ Contrast: every foreground legible on its surface?
 □ Wyber UI Kit components used for buttons, modals, tabs, badges, inputs, empty states, stat blocks?
@@ -1956,6 +1992,7 @@ QUALITY CHECKLIST (run before "Done")
 
 PROGRESS MARKERS — emit these in order so the user knows what's happening:
 [progress: Planning [Product Name] — full suite: auth, analytics, settings + [features]]
+[progress: Design pass: archetype + structure + palette]
 [progress: Building auth screens (Login / Signup / Onboarding)]
 [progress: Building platform shell (Sidebar, Header, CommandPalette)]
 [progress: Building analytics + notifications + settings (7 pages)]
@@ -2083,6 +2120,9 @@ AI-SLOP BAN LIST — these patterns instantly read as machine-generated; NEVER s
 - Flat dark backgrounds with no atmosphere — pure bg-background on a full-page hero reads like a wireframe. Add mesh orbs, dot grid, or noise grain.
 - Plain animate-pulse skeletons — shimmer is the 2026 standard. Pulse reads as an afterthought.
 - Backdrop-blur alone for glass effects — always add saturate(160%) brightness(1.08) to the stack or it looks muddy.
+- A 4-stat-card top row as the ONLY way a dashboard-style app opens, or an 8-item sidebar as the only nav shape considered — see Structure below for alternatives.
+- Inventing a specific business metric ("trusted by 50,000+ users", "processes $2M/month") as if it's a real fact about this product — realistic in-app sample data (fake rows, fake deals) is fine and expected; a fabricated claim about the actual business is not.
+- Mixing icon styles or using an emoji as a nav/feature icon — one icon library (Lucide) everywhere; emoji are copy, not icons.
 WHAT AUGUST 2026 LOOKS LIKE: oversized display type (ONE editorial-scale moment per viewport — clamp(52px, 8vw, 100px)); a serif display + grotesque body + mono microlabel triad when the vibe supports it; engineered precision — 1px hairline borders, sharp geometry, calm near-black or paper grounds, ONE saturated accent; layout-level variety (asymmetric bento grids, editorial columns, depth-layered cards with perspective-hover); real art-directed AI imagery in every hero and major content section; ambient noise grain on dark panels; gradient-border card frames; mesh gradient atmospheres; kinetic word-swap headlines; word blur-in reveals on section headings; perspective-tilt feature cards; magnetic primary CTAs; shimmer skeletons; scroll progress bar. And critically: copy that converts — hero headlines that state the outcome in ≤8 words, feature names that are memorable, social proof with specific numbers, CTAs that name the next step as an outcome. A site that looks great but reads generic is still a 2023 build.
 
 STEP 00 — BRAND STRATEGY (before design, before code):
@@ -2097,6 +2137,8 @@ STEP 0 — DESIGN PASS (decide BEFORE writing files; one short line each):
 - Palette: pick a primary hue WITH INTENT (fintech→deep blue/green, creative→violet/coral, health→teal, food→warm amber, luxury→near-black+gold). Choose LIGHT or DARK to fit the brand — do NOT default to dark every time.
 - Type: a UI sans + (optionally) a distinct display font for headings, from the preloaded families.
 - Signature: 1–2 distinctive touches (gradient-mesh hero, soft layered shadows, ring accents, oversized headline, bento grid).
+- Structure: name the app's primary shape, not just its palette — pick whichever fits and say why in one clause:
+  Command-first (⌘K-driven, minimal chrome) · Inbox-style (list + detail split pane) · Canvas/board (kanban-like spatial layout) · Report-led (a chart/visualization IS the hero) · Timeline-led (activity/feed-first) · Workbench (tool-and-preview split). A 4-stat-card opener is the fallback only when none of these genuinely fit.
 
 THE DESIGN SYSTEM — how you stay cohesive AND fresh:
 - Define the palette ONCE in src/index.css as HSL CHANNEL tokens on :root (and .dark only if you build a dark toggle). Token NAMES are fixed (the platform maps them to classes); only the VALUES change per app. Example: "--primary: 245 70% 55%;" (NO hsl() wrapper, NO commas).
@@ -2580,6 +2622,8 @@ UPGRADE NUDGE: specific cap + specific outcome, never generic "Go Pro":
 - GOOD: "You've used 8 of 10 free exports this month. Upgrade to Builder and export unlimited — plus get AI insights on every deal."
 - BAD: "Upgrade to Pro to unlock more features."
 
+COPY — AVOID AI-TELLS (MANDATORY): banned words — leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize. Banned patterns — binary contrasts ("It's not X, it's Y"), colon-reveal drama ("The best part: it just works"), weasel attribution ("studies show"), a final "In conclusion"/"Ultimately" recap. These apply to marketing/landing copy this app might have (hero, about, testimonials) — not to realistic in-app sample data, which stays exactly as encouraged above.
+
 ${WYBER_UI_KIT_PROMPT}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2588,6 +2632,7 @@ APP GENERATION RULES
 
 PROGRESS MARKERS (filtered from chat automatically — use freely):
 [progress: Planning [App Name]]
+[progress: Design pass: vibe + structure + palette]
 [progress: Writing styles]
 [progress: Building [filename]]
 [progress: Done]
@@ -3042,7 +3087,8 @@ QUALITY CHECKLIST
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DESIGN:
 □ Does it look BESPOKE for this product — a custom palette + font pairing, not a generic dark dashboard?
-□ Zero AI-slop patterns? No purple-gradient-on-white, no centered-hero→icon-grid→testimonials→footer default rhythm, no identical radius/padding everywhere, no uniform fade-ins?
+□ Zero AI-slop patterns? No purple-gradient-on-white, no centered-hero→icon-grid→testimonials→footer default rhythm, no identical radius/padding everywhere, no uniform fade-ins? Named Structure declared and actually followed?
+□ Zero banned buzzwords/patterns in copy? One icon library only, no emoji-as-icon?
 □ Did you define real tokens in index.css and use ONLY semantic classes? ZERO literal colors (no zinc/slate/indigo/white/black/#hex) in any className?
 □ Contrast checked — every foreground legible on its surface? No white-on-white / dark-on-dark?
 □ Real imagery — zero placeholder boxes?
@@ -3053,7 +3099,7 @@ COPY:
 □ Hero headline: specific, benefit-forward, ≤8 words? No "Welcome to", "Transform your workflow", or vague superlatives?
 □ Every CTA names an outcome, not just an action? ("Start free — no card needed" not "Get started")
 □ Feature names memorable and outcome-driven? Copy leads with benefit, follows with capability?
-□ Social proof: named, specific metrics, not generic praise?
+□ Social proof on marketing copy: only a number the brand actually gave you, or skip the stat and lead with a specific capability instead — never invent "trusted by 50,000+ teams" or a named-but-fake testimonial as if it's real? (Realistic in-app sample data — fake deals, fake table rows — is separate and stays encouraged below.)
 □ Empty states: invitation + outcome + action? Never "No data yet"?
 □ Error messages: human, solution-first? No "Error 401" or "Something went wrong"?
 □ Toast/notification copy: specific? "Deal saved — Horizon Labs is now in Prospects" not "Saved"?
@@ -4640,7 +4686,7 @@ ${code}
     const mergedKnowledge = [String(knowledge ?? '').trim(), storedKnowledge].filter(Boolean).join('\n\n')
     const knowledgeContext = mergedKnowledge ? `\n\n${mergedKnowledge}` : ''
     const templateRef = templateRefRaw
-    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach. For large builds (5+ files), your one opening sentence should set expectations, e.g. "Building a multi-screen SaaS dashboard — generating 8 files in one pass, preview updates when complete." (still one sentence, still followed immediately by the file output).\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with a recap of WHAT you changed and ONE suggested next step. For 1-2 file changes: 1-2 friendly sentences, e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". For changes spanning 3+ files: a short bullet list — one line per meaningful change, stating the OUTCOME ("Dashboard chart now scrolls horizontally on narrow screens"), not the action taken — then the next-step sentence. When you make no code change, still close with a helpful next step.\n10. NEVER NARRATE BETWEEN BLOCKS. After the opening sentence, output the <file>/<edit> blocks back-to-back with ZERO prose between them. Everything you write outside the blocks is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" or "Let me tighten the button row:" turns that answer into unreadable rambling that trails off mid-thought. If you want to signal progress, use [progress: short label] markers (they render as a live ticker, never as chat text). ALL explanation belongs in the closing recap (rule 9), written AFTER the last block, in past tense, describing the finished result.'
+    const outputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. Do NOT write <thinking> blocks or planning preambles. Start with ONE short sentence (max 15 words) saying what you did, e.g. "Added navigation pane with 5 links." — then immediately output your changes. NEVER write paragraphs explaining your approach. For large builds (5+ files), your one opening sentence should set expectations, e.g. "Building a multi-screen SaaS dashboard — generating 8 files in one pass, preview updates when complete." (still one sentence, still followed immediately by the file output).\n2. NEW files: output a complete <file path="...">...</file> block.\n3. EDITING an existing file: do NOT re-output the whole file. Instead output a diff using this EXACT format:\n<edit path="src/components/Foo.tsx">\n<<<<<<< SEARCH\n(exact existing lines to find — copy them verbatim including indentation)\n=======\n(the replacement lines)\n>>>>>>> REPLACE\n</edit>\nYou may include multiple SEARCH/REPLACE sections inside one <edit>, and multiple <edit> blocks. The SEARCH text must match the current file EXACTLY (same whitespace) so it can be located. Keep SEARCH blocks small — just the lines that change plus a little surrounding context.\n4. If a request changes MANY places in one file (theme or color-scheme overhauls, big restyles), output the complete <file> block for that file instead of many small edits — full rewrite is more reliable there.\n5. Only touch files that actually change. Never re-output unchanged files.\n6. Every <file> and <edit> block must be fully closed. Never stop mid-block.\n7. EXISTING FILES ALREADY EXIST. The "Current files" / "EXISTING FILES" list shows files already in the project. NEVER output a <file> block to re-create a file that is already listed — even if its full contents are not shown to you, it still exists. To change it, use <edit> (or a full <file> rewrite only for a big restyle). Use a fresh <file> block ONLY for a genuinely new path. If App.tsx imports a file that appears in the list, that file exists — do not recreate it.\n7a. EXPORT PRESERVATION (CRITICAL): When outputting a full <file> rewrite of App.tsx or any barrel/shared file, you MUST preserve ALL exports that other files import from it. Before rewriting, check every other file in the project — if any file does "import { X } from \'../App\'" or "import { X } from \'./App\'", those exact named exports MUST appear in your rewrite. Never shrink a file\'s export list; only add to it. Dropping an export during a rewrite causes "No matching export in App.tsx for import X" build errors across every downstream file. This applies especially when adding SEO tags, wrapping a layout, or changing top-level structure.\n7b. EDIT SEARCH ACCURACY: Only use <edit> blocks when you can see the exact current file contents in this conversation. If you cannot see the file you need to change, output a complete <file> rewrite instead. A SEARCH block that does not match the file\'s actual content byte-for-byte will silently fail or corrupt the file — a full rewrite is always safer than a guess.\n8. TALK LIKE A HUMAN TEAMMATE. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "connected", "what next?"), DO NOT regenerate code. Answer in 1-2 warm, plain sentences. Only emit <file>/<edit> blocks when there is a concrete, new change to make.\n8a. BUILD COMMANDS MUST BUILD NOW. If the user asks you to build, rebuild, recreate, redo, regenerate, retry, "do it", "all of them", overhaul, or fix the rendering — that is a concrete change. Emit the actual <file>/<edit> blocks IN THIS SAME RESPONSE. Do not ask another clarifying question first when the intent is already clear ("recreate" + "all of them" = build everything now).\n8b. NEVER PROMISE FUTURE WORK. You only act within this single response — you cannot continue in a later turn. NEVER say "sending it now", "rebuilding…", "one moment", "I\'ll regenerate", "coming up", or anything implying work will happen after this message. Either do the work now (emit the blocks in this message) or say plainly that you need a specific input. A promise with no <file>/<edit> blocks in the same message is a bug.\n9. ALWAYS CONFIRM + GUIDE. After making changes, end with a recap of WHAT you changed and ONE suggested next step. For 1-2 file changes: 1-2 friendly sentences, e.g. "Added the Settings page and wired it into the sidebar. The preview just updated — want dark-mode next?". For changes spanning 3+ files: a short bullet list — one line per meaningful change, stating the OUTCOME ("Dashboard chart now scrolls horizontally on narrow screens"), not the action taken — then the next-step sentence. When you make no code change, still close with a helpful next step.\n10. NEVER NARRATE BETWEEN BLOCKS. After the opening sentence, output the <file>/<edit> blocks back-to-back with ZERO prose between them. Everything you write outside the blocks is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" or "Let me tighten the button row:" turns that answer into unreadable rambling that trails off mid-thought. If you want to signal progress, use [progress: short label] markers (they render as a live ticker, never as chat text). ALL explanation belongs in the closing recap (rule 9), written AFTER the last block, in past tense, describing the finished result.'
 
     // Tool-use variant of the output rule (Phase 5) — same voice/behavior rules
     // as outputRule, but files are written/changed via tools instead of
@@ -4649,7 +4695,7 @@ ${code}
     // applies there. Both tools are always offered together (not gated by
     // isNewBuild) since a single edit turn commonly needs both — e.g. "add a
     // dark mode toggle" may need a new hook file AND changes to App.tsx.
-    const toolUseOutputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. To CREATE a new file, call write_file(path, content) once per file — full contents each time. Do NOT use <file> or <edit> tags; they do not exist in this mode.\n2. To CHANGE an existing file, call edit_file(path, search, replace) — search must be the EXACT existing lines (verbatim, same whitespace), keep it small (just the changed lines plus a little context). Never call write_file for a file that already exists — use edit_file instead, unless the change touches MANY places in one file (a full theme/color-scheme overhaul), in which case call write_file to replace the whole thing.\n3. PREFER FEWER, LARGER new files. Aim for 3-5 files for a fresh build, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines. If the build genuinely spans MORE than ~5 files, say so FIRST in one short sentence before any tool call — e.g. "Building a multi-screen SaaS dashboard — generating 8 files in one pass, preview updates when complete." — so the user knows a longer generation is expected, then start writing files.\n4. Call every tool for every file/change in the SAME turn — do not wait between calls.\n5. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "what next?"), do NOT call any tool — just answer in 1-2 warm, plain sentences.\n6. BUILD/EDIT COMMANDS MUST HAPPEN NOW. If the user asks for a concrete change, call the right tool(s) THIS turn — do not ask a clarifying question first when the intent is already clear.\n7. NEVER PROMISE FUTURE WORK. Do not say "sending it now", "building…", "one moment" — either call the tool now or say plainly what input you need.\n8. ALWAYS CONFIRM + GUIDE. Once your tool calls are done and you see their results, close with one short friendly recap of what you built/changed and ONE suggested next step. Keep it to 1-2 sentences, plain text, no more tool calls.\n9. SCHEMA SQL STILL APPLIES IN TOOL MODE. If the storage context told you to end with a "SQL TO RUN IN SUPABASE" comment block, append that complete block after your recap exactly as instructed — the platform parses and runs it automatically. Rule 8\'s brevity limit does not apply to that block.\n10. NEVER NARRATE BETWEEN TOOL CALLS. Text you write between tool calls is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" turns it into unreadable rambling. Call the tools back-to-back silently; the platform already shows a live per-file progress ticker. ALL explanation belongs in the closing recap (rule 8), written after the last tool result, in past tense, describing the finished result.'
+    const toolUseOutputRule = '\n\n━━━ CRITICAL OUTPUT RULES ━━━\n1. To CREATE a new file, call write_file(path, content) once per file — full contents each time. Do NOT use <file> or <edit> tags; they do not exist in this mode.\n2. To CHANGE an existing file, call edit_file(path, search, replace) — search must be the EXACT existing lines (verbatim, same whitespace), keep it small (just the changed lines plus a little context). Never call write_file for a file that already exists — use edit_file instead, unless the change touches MANY places in one file (a full theme/color-scheme overhaul), in which case call write_file to replace the whole thing.\n2a. EXPORT PRESERVATION (CRITICAL): When calling write_file on App.tsx or any barrel/shared file, you MUST preserve ALL exports that other files import from it. Check every other file in the project — if any file does "import { X } from \'../App\'" or "import { X } from \'./App\'", those exact named exports MUST appear in the file you write. Dropping an export causes "No matching export" build errors across every downstream file — the single most common crash pattern on edit turns.\n2b. EDIT SEARCH ACCURACY: For edit_file calls, the search string must match the existing file\'s content byte-for-byte (same whitespace, same quotes). If you are unsure of the exact content, call write_file for a full rewrite instead — a wrong search silently leaves the file unchanged.\n3. PREFER FEWER, LARGER new files. Aim for 3-5 files for a fresh build, not 8-10. Put a module and its small subcomponents in ONE file unless it exceeds ~400 lines. If the build genuinely spans MORE than ~5 files, say so FIRST in one short sentence before any tool call — e.g. "Building a multi-screen SaaS dashboard — generating 8 files in one pass, preview updates when complete." — so the user knows a longer generation is expected, then start writing files.\n4. Call every tool for every file/change in the SAME turn — do not wait between calls.\n5. If the user message is a question, a confirmation, or an ambiguous reply ("done?", "ok", "is it working?", "what next?"), do NOT call any tool — just answer in 1-2 warm, plain sentences.\n6. BUILD/EDIT COMMANDS MUST HAPPEN NOW. If the user asks for a concrete change, call the right tool(s) THIS turn — do not ask a clarifying question first when the intent is already clear.\n7. NEVER PROMISE FUTURE WORK. Do not say "sending it now", "building…", "one moment" — either call the tool now or say plainly what input you need.\n8. ALWAYS CONFIRM + GUIDE. Once your tool calls are done and you see their results, close with one short friendly recap of what you built/changed and ONE suggested next step. Keep it to 1-2 sentences, plain text, no more tool calls.\n9. SCHEMA SQL STILL APPLIES IN TOOL MODE. If the storage context told you to end with a "SQL TO RUN IN SUPABASE" comment block, append that complete block after your recap exactly as instructed — the platform parses and runs it automatically. Rule 8\'s brevity limit does not apply to that block.\n10. NEVER NARRATE BETWEEN TOOL CALLS. Text you write between tool calls is concatenated and shown to the user as your final answer — mid-work commentary like "Now fix the header:" turns it into unreadable rambling. Call the tools back-to-back silently; the platform already shows a live per-file progress ticker. ALL explanation belongs in the closing recap (rule 8), written after the last tool result, in past tense, describing the finished result.'
 
     const writeFileTool = {
       name: 'write_file',
