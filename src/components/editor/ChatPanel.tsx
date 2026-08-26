@@ -1588,9 +1588,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
         setHasGeneratedFiles(true);
         // Record paths changed this turn — the NEXT runGeneration call will
         // boost their file-score so the model stays aware of what it last edited.
+        // Include failed paths too: partial edits were saved (patch-applier always
+        // keeps workingContent), and the autofix will request the full file, so
+        // the model needs to see it in context either way.
         lastChangedPathsRef.current = new Set([
           ...newFiles.map((f: any) => f.path),
-          ...editBlocks.filter((e: any) => !failedPaths.includes(e.path)).map((e: any) => e.path),
+          ...editBlocks.map((e: any) => e.path),
         ]);
         await saveProject(updatedFiles);
       }
