@@ -925,7 +925,7 @@ Change requested: ${editInstruction.trim()}`
             floating pill over an existing preview: build state already shows
             in the chat bubble and the status strip above — a real user saw
             FOUR simultaneous "building" indicators and rightly called it out. */}
-        {isGenerating && !html && (
+        {isGenerating && isFirstBuild.current && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 5, background: '#09090b' }}>
             <iframe
               title="Build game"

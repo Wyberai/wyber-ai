@@ -738,7 +738,7 @@ When a user wants a real iOS app file for iPhone/iPad:
 
 NEVER MENTION: "Download our mobile app", "Get it on the App Store", or any suggestion that a prebuilt WyberAi app exists. The user's BUILD IS the app.
 
-After ALL files, output one line starting with "Built:"
+After ALL files, output ONE line starting with "Built:" and nothing else — no narration, no "heads up", no "note:", no suggestions, no questions. Zero words after that line.
 `
 }
 
@@ -1273,7 +1273,7 @@ OUTPUT FORMAT:
 <file path="src/App.tsx">...</file>
 <file path="public/robots.txt">...</file>
 
-After ALL files, output one line starting with "Built:"
+After ALL files, output ONE line starting with "Built:" and nothing else — no narration, no "heads up", no "note:", no suggestions, no questions. Zero words after that line.
 NEVER truncate. NEVER "// ... rest". NEVER stop before all files are output.
 `
 }
@@ -2010,7 +2010,7 @@ OUTPUT FORMAT:
 <file path="src/App.tsx">...</file>
 <file path="src/contexts/AuthContext.tsx">...</file>
 
-After ALL files, output one line starting with "Built:"
+After ALL files, output ONE line starting with "Built:" and nothing else — no narration, no "heads up", no "note:", no suggestions, no questions. Zero words after that line.
 NEVER truncate. NEVER "// ... rest". NEVER stop before all files are output.
 `
 }
@@ -2052,6 +2052,43 @@ WEB APP (this prompt) — task-execution tool, personal or small-team:
 SAAS (use buildSaasSystemPrompt): multi-tenant B2B platform with orgs, teams, roles, billing, onboarding.
 WEBSITE (use buildWebsiteSystemPrompt): marketing/landing pages with hero, features, pricing, social proof, CTA.
 MOBILE (use buildMobileSystemPrompt): native mobile app with bottom tabs, gestures, haptics.
+
+CRITICAL — CUSTOM LOGO (MANDATORY FOR EVERY APP):
+Every app MUST have a custom logo mark in the sidebar/header. Design a simple, stylized logo using the app's initials or a domain-relevant icon (e.g. a fork for a food app, a chart line for analytics, a leaf for wellness). NEVER use the generic Zap icon from the skeleton — it is a placeholder. The logo appears in: sidebar header, auth screens (SaaS), mobile splash screen, and as a favicon emoji.
+
+CRITICAL — BROWSER METADATA (MANDATORY FOR EVERY APP):
+Every app MUST set its own browser metadata using document APIs. Add this to App.tsx in a root-level useEffect:
+\`\`\`tsx
+useEffect(() => {
+  document.title = '[Specific App Name] | [Specific Value Prop]'
+  let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null
+  if (!meta) { meta = document.createElement('meta') as HTMLMetaElement; meta.name = 'description'; document.head.appendChild(meta) }
+  meta.content = '[Specific description 160 chars max]'
+  let ogTitle = document.querySelector('meta[property="og:title"]') as HTMLMetaElement | null
+  if (!ogTitle) { ogTitle = document.createElement('meta') as HTMLMetaElement; ogTitle.setAttribute('property', 'og:title'); document.head.appendChild(ogTitle) }
+  ogTitle.content = '[Specific App Name]'
+}, [])
+\`\`\`
+SaaS: each page updates document.title on mount via useEffect with the page name prefix.
+Websites: add a <Helmet>-style pattern or useEffect in App.tsx for the main meta, plus per-page document.title in each page's useEffect.
+
+CRITICAL — MOBILE-FIRST RESPONSIVE (MANDATORY FOR EVERY APP):
+Every app MUST work on mobile screens (375px+). Required:
+• Sidebar: hidden on mobile, shown as off-canvas drawer on lg+. Add hamburger button to header on mobile.
+• Stats grids: grid-cols-1 sm:grid-cols-2 lg:grid-cols-4
+• Tables: wrapped in overflow-x-auto container. On mobile, tables collapse to card-stacks.
+• Modals: w-full max-w-lg mx-4 (never fixed pixel width)
+• Forms: w-full inputs, single column layout on mobile
+
+CRITICAL — "SIMPLE" NEVER MEANS MINIMAL:
+If the user says "simple", "basic", "just a", "quick", "small", "lite" — these describe the CONCEPT (a simple type of app), NOT the implementation scope. Always build a complete, production-quality app with:
+• Multiple real screens/pages (not a single-file component dump)
+• Proper component decomposition (each section its own file)
+• Full data model with realistic mock data
+• All CRUD flows the app logically needs
+• Complete styling — semantic tokens, custom palette, Wyber UI Kit components throughout
+• Every interactive element wired up
+A "simple expense tracker" still needs ExpenseForm, ExpenseList, SummaryCards, CategoryBreakdown, and settings. A "simple CRM" still needs a pipeline, deal cards, and contact list. Never ship a single-page React file and call it done.
 
 CRITICAL — WEBSITE vs DASHBOARD vs MULTI-ROLE SUITE DETECTION:
 When user says "website", "landing page", "homepage", "marketing site", "business website", "company site", or describes a business/product/service:
@@ -3088,7 +3125,7 @@ OUTPUT FORMAT
 <file path="src/components/Dashboard.tsx">...</file>
 [...all other files...]
 
-After ALL files: "Built: [summary]"
+After ALL files: "Built: [summary]" — ONE line, nothing after it. No narration, no "heads up", no questions, zero extra words.
 NEVER truncate. NEVER "// ... rest". NEVER stop before all files output.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -6,6 +6,7 @@ import { useRef, useEffect, useState, useCallback, memo, useMemo, type ReactNode
 import { parseGenerationOutput, parseEditBlocks, cleanStreamingDisplay, extractProgressLines, extractReasoning } from '@/lib/file-parser';
 import { applyEdits } from '@/lib/patch-applier';
 import { STARTER_TEMPLATES, isPlaceholderApp } from '@/lib/starter-templates';
+import { getSkeletonForType } from '@/lib/skeletons';
 import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '@/lib/detect-deps';
 import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
@@ -1925,13 +1926,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
             ? { agent: 'design', status: 'finding', detail: suggestion.label, severity: 'low' }
             : { agent: 'design', status: 'done', detail: t('designCheckPassedMsg') });
         }
-        if (suggestion) {
-          addMessage({
-            id: uid(), role: 'assistant', timestamp: Date.now(), status: 'done',
-            content: suggestion.note,
-            designSuggestion: { prompt: suggestion.prompt, label: suggestion.label },
-          });
-        }
+        // Design suggestion is surfaced in the agent-team feed only (above).
+        // No separate chat bubble — it was firing after every build and adding
+        // noise even when the app was perfectly usable. If we want to resurface
+        // it as a chat prompt the user can act on, attach it to the finishChain
+        // Done bubble (not as a standalone message).
       }
       setLiveReasoning('');
 
@@ -2124,14 +2123,22 @@ const storeProjectId = useEditorStore.getState().project?.id;
         : Promise.resolve(null)) as Promise<{ files: Record<string, string>; name: string } | null>,
     ]);
 
-    // Pre-load template files into the editor store so scaffold/fill/wire calls
-    // include them as fileContext → server sets hasExisting=true → model uses <edit>.
-    if (seedData?.files && Object.keys(seedData.files).length > 0) {
-      const langMap: Record<string, string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
+    // Pre-load files into the editor store so scaffold/fill/wire calls include them
+    // as fileContext → server sets hasExisting=true → model uses <edit> blocks
+    // (small diff output) rather than full rewrites → 50%+ faster, fewer truncations.
+    // Priority: (1) DB template seed if domain-specific match (score ≥ 8);
+    //           (2) hardcoded type skeleton as fallback — ensures every build starts
+    //               with a proper multi-screen structure, not an empty canvas.
+    // The preview stays on the game screen throughout because PreviewPanel gates the
+    // game on isFirstBuild.current (not !html), so these files don't flash to users.
+    const langMap: Record<string, string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
+    const rawSeedFiles: Record<string, string> = (seedData?.files && Object.keys(seedData.files).length > 0)
+      ? seedData.files
+      : (getSkeletonForType(projectType) ?? {});
+    if (Object.keys(rawSeedFiles).length > 0) {
       const seedFileMap: Record<string, { path: string; content: string; language: string }> = {};
-      for (const [path, rawVal] of Object.entries(seedData.files)) {
+      for (const [path, rawVal] of Object.entries(rawSeedFiles)) {
         const ext = path.split('.').pop() ?? '';
-        // prebuilt_apps.files may store FileNode objects {content,language} or plain strings
         const content = typeof rawVal === 'string' ? rawVal : ((rawVal as any)?.content ?? '');
         seedFileMap[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
       }

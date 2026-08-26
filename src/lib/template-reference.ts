@@ -8,7 +8,12 @@ import { createServiceClient } from '@/lib/supabase/server'
 export async function getTemplateReference(prompt: string): Promise<string> {
   try {
     const supabase = createServiceClient()
-    const stopWords = new Set(['build','create','make','want','need','with','that','have','this','from','for','and','the','can','get','app'])
+    const stopWords = new Set([
+      'build','create','make','want','need','with','that','have','this','from','for','and','the',
+      'can','get','app','list','view','form','page','data','edit','save','type','item','file',
+      'sort','text','menu','tabs','note','user','time','date','name','tags','info','link',
+      'show','hide','open','next','back','home','main','side','full','able','like',
+    ])
     const words = prompt.toLowerCase()
       .replace(/[^a-z0-9 ]/g, ' ')
       .split(' ')
@@ -41,7 +46,7 @@ export async function getTemplateReference(prompt: string): Promise<string> {
       if (score > bestScore) { bestScore = score; best = m }
     }
 
-    if (!best || bestScore < 1) return ''
+    if (!best || bestScore < 8) return ''
 
     const files = best.files as Record<string, string>
     const keys = Object.keys(files)
@@ -109,7 +114,13 @@ export interface TemplateSeed {
 export async function getTemplateSeed(prompt: string): Promise<TemplateSeed | null> {
   try {
     const supabase = createServiceClient()
-    const stopWords = new Set(['build','create','make','want','need','with','that','have','this','from','for','and','the','can','get','app'])
+    // Generic UI words that appear in almost every app — useless for discriminating templates
+    const stopWords = new Set([
+      'build','create','make','want','need','with','that','have','this','from','for','and','the',
+      'can','get','app','list','view','form','page','data','edit','save','type','item','file',
+      'sort','text','menu','tabs','note','user','time','date','name','tags','info','link',
+      'show','hide','open','next','back','home','main','side','full','able','like',
+    ])
     const words = prompt.toLowerCase()
       .replace(/[^a-z0-9 ]/g, ' ')
       .split(' ')
@@ -141,7 +152,11 @@ export async function getTemplateSeed(prompt: string): Promise<TemplateSeed | nu
       if (score > bestScore) { bestScore = score; best = m }
     }
 
-    if (!best || bestScore < 1) return null
+    // Require a strong domain match (score ≥ 8 ≈ 2-3 meaningful keyword overlaps).
+    // A score < 8 means only generic words matched (list/form/view) — that would
+    // show a visually wrong template while AI generates the correct one, which
+    // confuses users more than showing nothing.
+    if (!best || bestScore < 8) return null
 
     const files = best.files as Record<string, string>
     if (Object.keys(files).length < 2) return null
