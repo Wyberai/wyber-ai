@@ -20,7 +20,7 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Web/mobile app build', '30'],
+              ['Web/mobile app build', '15–130 (by project size)'],
               ['App edit', '2'],
               ['Complex edit (new feature module)', '5'],
               ['Build plan (Plan Mode)', '5'],

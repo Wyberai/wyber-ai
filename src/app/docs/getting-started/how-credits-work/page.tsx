@@ -20,8 +20,8 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Web/mobile app build', '10'],
-              ['App edit', '3'],
+              ['Web/mobile app build', '15–130 (by project size)'],
+              ['App edit', '2'],
               ['AI Agent run', '5'],
               ['AI Employee run', '5'],
               ['Workflow run', '2'],

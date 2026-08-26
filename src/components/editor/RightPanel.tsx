@@ -26,6 +26,7 @@ const CloudTab        = dynamic(() => import('../cloud/CloudTab').then(m => ({ d
 const PaymentsPanel   = dynamic(() => import('./PaymentsPanel').then(m => ({ default: m.PaymentsPanel })), { ssr: false });
 const SeoScanPanel    = dynamic(() => import('./SeoScanPanel').then(m => ({ default: m.SeoScanPanel })), { ssr: false });
 const AnalyticsPanel  = dynamic(() => import('./AnalyticsPanel').then(m => ({ default: m.AnalyticsPanel })), { ssr: false });
+const GitHubPanel     = dynamic(() => import('../github/GitHubPanel').then(m => ({ default: m.GitHubPanel })), { ssr: false });
 
 interface Props {
   projectId?: string;
@@ -36,7 +37,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'cloud' | 'payments' | 'seo' | 'analytics';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'github' | 'cloud' | 'payments' | 'seo' | 'analytics';
 
 const TAB_ICONS: Record<string, ReactElement> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
@@ -54,6 +55,7 @@ const TAB_ICONS: Record<string, ReactElement> = {
   seo: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   history: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 106 5.3L3 8"/><path d="M12 7v5l3 2"/></svg>,
+  github: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>,
   cloud: <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>,
 };
 
@@ -91,10 +93,11 @@ const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; de
   { id: 'seo',        labelKey: 'rpTabSeoLabel',        descKey: 'rpTabSeoDesc' },
   { id: 'analytics',  labelKey: 'rpTabAnalyticsLabel',  descKey: 'rpTabAnalyticsDesc' },
   { id: 'history',    labelKey: 'rpTabHistoryLabel',    descKey: 'rpTabHistoryDesc' },
+  { id: 'github',     labelKey: 'rpTabGithubLabel',     descKey: 'rpTabGithubDesc' },
   { id: 'cloud',      labelKey: 'rpTabCloudLabel',      descKey: 'rpTabCloudDesc' },
 ];
 
-export function RightPanel({ projectId, userId, onClose }: Props) {
+export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClose }: Props) {
   const t = useT(EDITOR_SHELL_STRINGS);
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
@@ -236,6 +239,7 @@ export function RightPanel({ projectId, userId, onClose }: Props) {
             {active === 'seo'        && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'analytics'  && <div style={scrollStyle}><AnalyticsPanel projectId={projectId || ''} /></div>}
             {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
+            {active === 'github'     && <div style={scrollStyle}><GitHubPanel projectId={projectId || ''} userId={userId} githubRepo={githubRepo} lastCommitSha={lastCommitSha} /></div>}
             {active === 'cloud'      && <div style={scrollStyle}><SupabasePanel projectId={projectId || ''} /></div>}
           </ErrorBoundary>
         </div>

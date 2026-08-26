@@ -529,6 +529,10 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
+  // Tracks which file paths were written in the last edit turn so the NEXT
+  // turn's file-scoring gives them a +50 boost. Without this, the model loses
+  // track of its own edits on follow-up messages and rewrites files from scratch.
+  const lastChangedPathsRef = useRef<Set<string>>(new Set());
   const MAX_AUTOFIX = 2;
   // Futility detection on top of the volume cap: the SAME error signature
   // twice means the fix strategy is failing — stop and show LoopStopCard
@@ -1165,6 +1169,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const pathLower = path.toLowerCase();
       let score = CORE_FILES.some(c => pathLower.endsWith(c)) ? 100 : 0;
       promptTokens.forEach(w => { if (pathLower.includes(w)) score += 20; });
+      // Boost paths touched in the most recent edit turn so the model always
+      // sees files it just modified — prevents accidental rewrites on follow-ups.
+      if (lastChangedPathsRef.current.has(path)) score += 50;
       return { path, content: (f as any).content, score };
     });
     const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
@@ -1579,6 +1586,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (newFiles.length > 0 || editBlocks.length > 0) {
         setFiles(updatedFiles);
         setHasGeneratedFiles(true);
+        // Record paths changed this turn — the NEXT runGeneration call will
+        // boost their file-score so the model stays aware of what it last edited.
+        lastChangedPathsRef.current = new Set([
+          ...newFiles.map((f: any) => f.path),
+          ...editBlocks.filter((e: any) => !failedPaths.includes(e.path)).map((e: any) => e.path),
+        ]);
         await saveProject(updatedFiles);
       }
       // 4b. Safety net for the failure the server's forced follow-up also

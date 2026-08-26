@@ -17,6 +17,7 @@ import { WyberLogo } from '@/components/shared/WyberLogo'
 import { NotificationBell } from '@/components/shared/NotificationBell';
 import { creditsLine } from '@/lib/plans';
 import { VoiceButton } from '@/components/editor/VoiceButton';
+import { TemplatesShowcase } from '@/components/dashboard/TemplatesShowcase';
 import { useT } from '@/lib/i18n/useT';
 import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
@@ -776,13 +777,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
             </div>
           ) : (
             <>
-              <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><IconEmpty /></div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>{t('noProjectsYetTitle')}</div>
-                <div style={{ fontSize: 14, marginBottom: 16 }}>{t('noProjectsYetDesc')}</div>
+              <div style={{ textAlign: 'center', paddingTop: 32, paddingBottom: 4, color: DIM }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{t('noProjectsYetTitle')}</div>
+                <div style={{ fontSize: 14, marginBottom: 20 }}>{t('noProjectsYetDesc')}</div>
+              </div>
+              <TemplatesShowcase userId={profile?.id} />
+              <div style={{ textAlign: 'center', marginTop: 16, paddingBottom: 8 }}>
                 <button onClick={() => setShowImport(true)}
-                  style={{ padding: '8px 18px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  style={{ padding: '7px 16px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   {t('importExistingBtn')}
                 </button>
               </div>
