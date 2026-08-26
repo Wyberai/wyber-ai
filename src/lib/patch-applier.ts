@@ -92,10 +92,14 @@ export function applyEdits(
       fileHadFailure = true;
     }
 
+    // Always save partial work — successful blocks must not be discarded just
+    // because one block failed. The failed-path autofix will request the full
+    // file using the partially-edited content as its context (since it's now
+    // in updatedFiles), so the model only needs to add the one missing piece
+    // rather than re-derive all N changes from scratch.
+    updated[path] = workingContent;
     if (fileHadFailure) {
       failed.add(path);
-    } else {
-      updated[path] = workingContent;
     }
   }
 

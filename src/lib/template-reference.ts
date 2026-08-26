@@ -1,8 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/server'
 
-// Finds the closest prebuilt template to a prompt and returns it as a STYLE/STRUCTURE
-// reference string to inject into the system prompt. The AI still builds fresh — this
-// just gives it a known-good example to follow for consistency and speed.
+// Finds the closest prebuilt template and injects it as a scaffold the model
+// starts from rather than a loose style hint. Generating FROM a scaffold
+// (adapt/customise) is significantly faster than generating from scratch
+// (invent everything) because the model skips architectural decisions and
+// just fills in the user-specific content.
 export async function getTemplateReference(prompt: string): Promise<string> {
   try {
     const supabase = createServiceClient()
@@ -39,31 +41,51 @@ export async function getTemplateReference(prompt: string): Promise<string> {
       if (score > bestScore) { bestScore = score; best = m }
     }
 
-    // Only inject a reference if there's at least a weak match
     if (!best || bestScore < 1) return ''
 
-    // Pull just App.tsx + index.css as the reference (structure + style), capped in size
     const files = best.files as Record<string, string>
-    const appKey = Object.keys(files).find(k => /app\.(tsx|jsx)$/i.test(k))
-    const cssKey = Object.keys(files).find(k => /index\.css$/i.test(k))
-    const appContent = appKey ? files[appKey].slice(0, 2500) : ''
-    const cssContent = cssKey ? files[cssKey].slice(0, 1500) : ''
+    const keys = Object.keys(files)
+
+    // App.tsx / index.css are the structural anchors — inject in full (up to
+    // generous caps) so the model has the complete component tree and token set
+    // to start from, not just a taste of it.
+    const appKey = keys.find(k => /app\.(tsx|jsx)$/i.test(k))
+    const cssKey = keys.find(k => /index\.css$/i.test(k))
+    const appContent = appKey ? files[appKey].slice(0, 8000) : ''
+    const cssContent = cssKey ? files[cssKey].slice(0, 5000) : ''
     if (!appContent) return ''
 
+    // Pull up to 3 component files (likely to contain reusable patterns the
+    // model should follow rather than reinvent — cards, forms, nav, etc.)
+    const componentKeys = keys
+      .filter(k => !appKey || k !== appKey)
+      .filter(k => !cssKey  || k !== cssKey)
+      .filter(k => /\.(tsx|jsx|ts|js)$/.test(k))
+      .slice(0, 3)
+
+    const componentParts = componentKeys.length > 0
+      ? '\n\n' + componentKeys.map(k =>
+          `Scaffold component "${k}":\n${files[k].slice(0, 2500)}`
+        ).join('\n\n')
+      : ''
+
     return `
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STYLE & STRUCTURE REFERENCE (follow this quality bar)
+SCAFFOLD — start here, customise for the user's request
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Below is a similar high-quality Wyber app ("${best.name}"). Use it ONLY as a reference for
-structure, component patterns, and visual quality. Do NOT copy its content or features —
-build exactly what the user asked for, fresh. Match this level of polish and this file structure.
+Below is "${best.name}" — a proven ${best.category ?? 'app'} scaffold.
+Adapt its file structure, component patterns, CSS variable conventions, and
+import organisation to build exactly what the user asked for. Replace every
+piece of placeholder content, the app name, features, copy, and colour palette
+with what the user actually needs. Improve the visual design beyond the scaffold
+if you can. Output complete <file> blocks for every file — do NOT output the
+scaffold's content unchanged; every file must reflect the user's specific request.
 
-REFERENCE App.tsx (excerpt):
+Scaffold App.tsx:
 ${appContent}
 
-REFERENCE index.css (excerpt):
-${cssContent}
+Scaffold index.css:
+${cssContent}${componentParts}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`
   } catch {
     return ''

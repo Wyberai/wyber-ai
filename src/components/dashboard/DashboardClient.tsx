@@ -152,7 +152,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [view, setView] = useState<'all' | 'web' | 'mobile'>('all');
+  const [view, setView] = useState<'all' | 'app' | 'website' | 'saas' | 'mobile'>('all');
   const searchParams = useSearchParams();
   // "Today's ideas" — personalized quick prompts from /api/suggestions.
   // null = still loading (render QUICK_PROMPTS); fail-soft to QUICK_PROMPTS.
@@ -411,20 +411,19 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   };
 
   const NAV = [
-    { label: t('navHome'),         href: '/dashboard',        icon: <IconHome />,      view: 'all' as const },
-    { label: t('navWebApps'),     href: '/dashboard',        icon: <IconTemplates />, view: 'web' as const },
-    { label: t('navMobileApps'),  href: '/dashboard',        icon: <IconPhone />,     view: 'mobile' as const },
-    { label: tc('settings'),     href: '/settings',         icon: <IconSettings /> },
+    { label: t('navHome'),        href: '/dashboard', icon: <IconHome />,      view: 'all'     as const },
+    { label: 'Web Apps',          href: '/dashboard', icon: <IconGrid />,      view: 'app'     as const },
+    { label: 'Websites',          href: '/dashboard', icon: <IconDocs />,      view: 'website' as const },
+    { label: 'SaaS',              href: '/dashboard', icon: <IconWorkflow />,  view: 'saas'    as const },
+    { label: t('navMobileApps'), href: '/dashboard', icon: <IconPhone />,     view: 'mobile'  as const },
+    { label: tc('settings'),     href: '/settings',  icon: <IconSettings /> },
   ];
   const COMING_SOON: { label: string; href: string; icon: React.ReactNode; soon?: boolean }[] = [
   ];
 
-  // Web = app + website + saas (anything not mobile). Mobile = mobile only.
   const visibleProjects = view === 'all'
     ? projects
-    : projects.filter(p => view === 'mobile'
-        ? (p as any).project_type === 'mobile'
-        : (p as any).project_type !== 'mobile');
+    : projects.filter(p => (p as any).project_type === view);
 
   const ACCENT_PALETTE = ['#0EA5E9','#8b5cf6','#10b981','#f59e0b','#ef4444'];
   const accentFor = (n?: string) => ACCENT_PALETTE[Math.abs((n?.charCodeAt(0) ?? 0) % ACCENT_PALETTE.length)];
@@ -681,16 +680,24 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           {visibleProjects.length > 0 ? (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>{view === 'web' ? t('webAppsHeading') : view === 'mobile' ? t('mobileAppsHeading') : t('myProjectsHeading')}</h2>
+                <h2 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>
+                  {view === 'app' ? 'Web Apps' : view === 'website' ? 'Websites' : view === 'saas' ? 'SaaS Projects' : view === 'mobile' ? t('mobileAppsHeading') : t('myProjectsHeading')}
+                </h2>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button onClick={() => setShowImport(true)}
                     style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${BORDER}`, background: 'transparent', color: MUTED, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     {t('importBtn')}
                   </button>
-                  <button onClick={() => view === 'mobile' ? startProject(undefined, 'mobile') : openChooser()} disabled={creating}
+                  <button onClick={() => {
+                    if (view === 'mobile') startProject(undefined, 'mobile');
+                    else if (view === 'website') startProject(undefined, 'website');
+                    else if (view === 'saas') startProject(undefined, 'saas');
+                    else if (view === 'app') startProject(undefined, 'app');
+                    else openChooser();
+                  }} disabled={creating}
                     style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: BRAND, color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {view === 'mobile' ? t('newMobileAppBtn') : t('newProjectBtn')}
+                    {view === 'mobile' ? t('newMobileAppBtn') : view === 'website' ? 'New Website' : view === 'saas' ? 'New SaaS' : view === 'app' ? 'New Web App' : t('newProjectBtn')}
                   </button>
                 </div>
               </div>
@@ -747,14 +754,24 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
           ) : view !== 'all' ? (
             /* Filtered view (Web/Mobile) with no matching projects — no templates, just a build CTA */
             <div style={{ textAlign: 'center', paddingTop: 40, paddingBottom: 8, color: DIM }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>{view === 'mobile' ? <IconPhone /> : <IconTemplates />}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>{view === 'mobile' ? t('dashboardEmptyMobileTitle') : t('dashboardEmptyWebTitle')}</div>
-              <div style={{ fontSize: 14, marginBottom: 16 }}>
-                {view === 'mobile' ? t('mobileEmptyDesc') : t('webEmptyDesc')}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                {view === 'mobile' ? <IconPhone /> : view === 'saas' ? <IconWorkflow /> : view === 'website' ? <IconDocs /> : <IconGrid />}
               </div>
-              <button onClick={() => view === 'mobile' ? startProject(undefined, 'mobile') : openChooser()} disabled={creating}
+              <div style={{ fontSize: 18, fontWeight: 700, color: TEXT, marginBottom: 8 }}>
+                {view === 'mobile' ? t('dashboardEmptyMobileTitle') : view === 'website' ? 'No websites yet' : view === 'saas' ? 'No SaaS projects yet' : t('dashboardEmptyWebTitle')}
+              </div>
+              <div style={{ fontSize: 14, marginBottom: 16 }}>
+                {view === 'mobile' ? t('mobileEmptyDesc') : view === 'website' ? 'Describe your landing page or marketing site and it\'ll be ready in minutes.' : view === 'saas' ? 'Describe your SaaS product — auth, billing, team management generated from scratch.' : t('webEmptyDesc')}
+              </div>
+              <button onClick={() => {
+                if (view === 'mobile') startProject(undefined, 'mobile');
+                else if (view === 'website') startProject(undefined, 'website');
+                else if (view === 'saas') startProject(undefined, 'saas');
+                else if (view === 'app') startProject(undefined, 'app');
+                else openChooser();
+              }} disabled={creating}
                 style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-                {view === 'mobile' ? t('buildMobileAppBtn') : t('newProjectBtn')}
+                {view === 'mobile' ? t('buildMobileAppBtn') : view === 'website' ? 'Build a Website' : view === 'saas' ? 'Build a SaaS' : view === 'app' ? 'Build a Web App' : t('newProjectBtn')}
               </button>
             </div>
           ) : (

@@ -1150,10 +1150,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const allFileEntries = Object.entries(files).filter(([p]) =>
       framework !== 'react-native' || !WEB_ONLY_FILES.has(p)
     );
+    // Split prompt into words, then also expand CamelCase/PascalCase tokens
+    // so "fix UserSettings" boosts UserSettings.tsx even though the path stores
+    // it lowercase. E.g. "UserSettings" → ["usersettings", "user", "settings"].
+    const promptWords = promptLower.split(/\s+/).filter(w => w.length > 3);
+    const promptTokens = [...new Set([
+      ...promptWords,
+      ...promptLower
+        .split(/\s+/)
+        .flatMap(w => w.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().split(/\s+/))
+        .filter(w => w.length > 3),
+    ])];
     const scored = allFileEntries.map(([path, f]) => {
       const pathLower = path.toLowerCase();
       let score = CORE_FILES.some(c => pathLower.endsWith(c)) ? 100 : 0;
-      promptLower.split(/\s+/).filter(w => w.length > 3).forEach(w => { if (pathLower.includes(w)) score += 20; });
+      promptTokens.forEach(w => { if (pathLower.includes(w)) score += 20; });
       return { path, content: (f as any).content, score };
     });
     const topFiles = scored.sort((a,b) => b.score - a.score).slice(0, 6);
