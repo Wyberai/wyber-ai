@@ -214,6 +214,21 @@ export async function bundleFiles(
       treeShaking: true,
       jsx: 'automatic',
       jsxImportSource: 'react',
+      // esbuild-wasm runs directly in the browser (no real Vite dev server behind
+      // it), so `import.meta.env` is otherwise undefined and any generated
+      // connector client reading e.g. VITE_CONNECTOR_MODE crashes the preview.
+      // Shim it to a plain object so unset VITE_* keys resolve to `undefined`
+      // instead of throwing on `.env` itself.
+      define: {
+        'import.meta.env': JSON.stringify({
+          MODE: 'development',
+          DEV: true,
+          PROD: false,
+          SSR: false,
+          VITE_CONNECTOR_MODE: 'demo',
+          VITE_CONNECTOR_PROXY_URL: '',
+        }),
+      },
       loader: {
         '.tsx': 'tsx',
         '.ts': 'ts',
