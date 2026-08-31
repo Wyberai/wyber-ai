@@ -254,6 +254,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
       if (!r.ok) {
         const err = d.error || 'Failed to start build'
         setApkError(err)
+        setApkStatus('error')
         if (r.status === 402) {
           const { createClient } = await import('@/lib/supabase/client')
           const supabase = createClient()
@@ -295,6 +296,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
       if (!r.ok) {
         const err = d.error || 'Failed to start build'
         setIpaError(err)
+        setIpaStatus('error')
         if (r.status === 402) {
           const { createClient } = await import('@/lib/supabase/client')
           const supabase = createClient()
