@@ -1,9 +1,46 @@
-import { Resend } from 'resend'
 import { memeImg } from './memes'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+// Dogfooding our own product: every transactional/lifecycle email in this
+// file now sends through Continuum instead of Resend. Same call shape as
+// Resend's SDK ({from, to, subject, html}) on purpose — every one of the
+// ~59 functions below already calls `sendMail({...})` with
+// exactly this shape, so swapping the transport didn't require touching a
+// single call site's arguments, only the function they call.
+const CONTINUUM_API_URL = 'https://api.continuumapi.com/v1/send'
+
+function parseFromAddress(from: string): { from_name?: string; from_email: string } {
+  const match = from.match(/^(.*)<(.+)>$/)
+  if (match) return { from_name: match[1].trim(), from_email: match[2].trim() }
+  return { from_email: from.trim() }
+}
+
+async function sendMail(opts: { from: string; to: string; subject: string; html: string }): Promise<{ id: string | null }> {
+  const apiKey = process.env.CONTINUUM_API_KEY
+  if (!apiKey) throw new Error('CONTINUUM_API_KEY is not set — cannot send email')
+
+  const { from_name, from_email } = parseFromAddress(opts.from)
+  const res = await fetch(CONTINUUM_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify({
+      to: opts.to,
+      from_name,
+      from_email,
+      subject: opts.subject,
+      html_body: opts.html,
+    }),
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(`Continuum send failed (${res.status}): ${text.slice(0, 300)}`)
+  }
+
+  const data = await res.json().catch(() => ({})) as { id?: string }
+  return { id: data.id ?? null }
+}
 
 const FROM       = 'WyberAi <hello@wyberai.com>'
 const FROM_NOTIF = 'WyberAi <hello@wyberai.com>'
@@ -135,7 +172,7 @@ export async function sendWelcomeEmail(to: string, name?: string, source: Welcom
     ${p('— Sumeet, founder')}
   `, 'Your 50 free credits are ready')
 
-  return resend.emails.send({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
+  return sendMail({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
 }
 
 // ── 2. Magic link / OTP ───────────────────────────────────────────────────────
@@ -150,7 +187,7 @@ export async function sendMagicLinkEmail(to: string, link: string) {
     <p style="margin:16px 0 0;font-size:13px;color:#555566">Or copy this link: <a href="${link}" style="color:#0EA5E9;word-break:break-all">${link}</a></p>
   `, 'Sign in to WyberAi')
 
-  return resend.emails.send({ from: FROM, to, subject: 'Your WyberAi login link', html })
+  return sendMail({ from: FROM, to, subject: 'Your WyberAi login link', html })
 }
 
 // ── Internal owner alerts (new signup / new payment) ──────────────────────────
@@ -162,7 +199,7 @@ export async function sendAdminSignupAlert(userEmail: string, provider?: string)
     ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just created a WyberAi account${provider ? ` via ${provider}` : ''}.`)}
     ${infoBox([['Email', userEmail], ['Method', provider || 'email'], ['When', new Date().toUTCString()]])}
   `, `New signup: ${userEmail}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎉 New signup: ${userEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎉 New signup: ${userEmail}`, html })
 }
 
 export async function sendAdminClinicLeadAlert(leadEmail: string, source: string) {
@@ -171,7 +208,7 @@ export async function sendAdminClinicLeadAlert(leadEmail: string, source: string
     ${p(`<strong style="color:#f0f0f4">${leadEmail}</strong> just entered their email to view the clinic-ops dashboard demo.`)}
     ${infoBox([['Email', leadEmail], ['Source', source], ['When', new Date().toUTCString()]])}
   `, `New clinic-ops lead: ${leadEmail}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🦷 New clinic-ops lead: ${leadEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🦷 New clinic-ops lead: ${leadEmail}`, html })
 }
 
 export async function sendAdminMcpProjectAlert(userEmail: string, projectName: string, framework: string) {
@@ -180,7 +217,7 @@ export async function sendAdminMcpProjectAlert(userEmail: string, projectName: s
     ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just created a project through the Claude MCP connector — someone is building WyberAi apps from inside Claude.`)}
     ${infoBox([['Project', projectName], ['Framework', framework], ['User', userEmail], ['When', new Date().toUTCString()]])}
   `, `MCP build: ${projectName}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚡ MCP build: ${projectName} — ${userEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚡ MCP build: ${projectName} — ${userEmail}`, html })
 }
 
 export async function sendAdminPaymentAlert(userEmail: string, description: string, amount?: string) {
@@ -191,7 +228,7 @@ export async function sendAdminPaymentAlert(userEmail: string, description: stri
     ${p(`<strong style="color:#f0f0f4">${userEmail}</strong> just paid.`)}
     ${infoBox([['Customer', userEmail], ['Purchase', description], ...(amount ? [['Amount', amount] as [string, string]] : []), ['When', new Date().toUTCString()]], '#3dd68c44')}
   `, `Payment from ${userEmail}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `💰 Payment: ${description} — ${userEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `💰 Payment: ${description} — ${userEmail}`, html })
 }
 
 export async function sendAdminContentReport(opts: {
@@ -215,7 +252,7 @@ export async function sendAdminContentReport(opts: {
     ], '#ef444455')}
     <div style="text-align:center;margin:24px 0 0">${btn('View reported app →', appUrl)}</div>
   `, `Content reported: ${opts.slug}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚠️ Content reported: ${opts.slug}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `⚠️ Content reported: ${opts.slug}`, html })
 }
 
 export async function sendAdminPaperLeakTip(opts: {
@@ -242,7 +279,7 @@ export async function sendAdminPaperLeakTip(opts: {
       ['When', new Date().toUTCString()],
     ], '#0EA5E955')}
   `, `Paper leak tip: ${opts.examName}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📝 Paper leak tip: ${opts.examName}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📝 Paper leak tip: ${opts.examName}`, html })
 }
 
 export async function sendChallengeWinnerEmail(to: string, placeLabel: string, credits: number, newBalance?: number) {
@@ -257,7 +294,7 @@ export async function sendChallengeWinnerEmail(to: string, placeLabel: string, c
     <div style="text-align:center;margin:0 0 24px">${btn('Keep building →', `${APP_URL}/dashboard`)}</div>
     ${p('Enter again next week — new challenge every Monday, winners every Sunday.')}
   `, `You won ${placeLabel} — ${credits} credits added`)
-  return resend.emails.send({ from: FROM, to, subject: `🏆 You won ${placeLabel} — ${credits} credits added`, html })
+  return sendMail({ from: FROM, to, subject: `🏆 You won ${placeLabel} — ${credits} credits added`, html })
 }
 
 export async function sendCommunityRewardEmail(to: string, programLabel: string, credits: number, discountNote?: string, discountCode?: string) {
@@ -273,7 +310,7 @@ export async function sendCommunityRewardEmail(to: string, programLabel: string,
     ${infoBox([['Reward', reward], useIt], '#0EA5E955')}
     <div style="text-align:center;margin:0 0 24px">${btn('Go to your dashboard →', `${APP_URL}/dashboard`)}</div>
   `, `Your ${programLabel} reward is approved`)
-  return resend.emails.send({ from: FROM, to, subject: `✅ Your ${programLabel} reward is approved`, html })
+  return sendMail({ from: FROM, to, subject: `✅ Your ${programLabel} reward is approved`, html })
 }
 
 export async function sendCommunityApplicationAlert(a: { programLabel: string; userEmail: string; proofUrl?: string | null; proofText?: string | null }) {
@@ -290,7 +327,7 @@ export async function sendCommunityApplicationAlert(a: { programLabel: string; u
     ${a.proofUrl ? `<div style="text-align:center;margin:0 0 8px">${btn('Open proof ↗', a.proofUrl)}</div>` : ''}
     <div style="text-align:center;margin:0 0 24px">${btn('Review in admin →', `${APP_URL}/admin/community`)}</div>
   `, `New application: ${a.programLabel}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎁 ${a.programLabel} application — ${a.userEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎁 ${a.programLabel} application — ${a.userEmail}`, html })
 }
 
 export async function sendChallengeEntryAlert(entry: {
@@ -315,7 +352,7 @@ export async function sendChallengeEntryAlert(entry: {
     ], '#0EA5E944')}
     ${entry.liveUrl ? `<div style="text-align:center;margin:0 0 8px">${btn('Open the build ↗', entry.liveUrl)}</div>` : ''}
   `, `New entry: ${entry.title}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 Challenge entry: ${entry.title} — ${entry.userEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 Challenge entry: ${entry.title} — ${entry.userEmail}`, html })
 }
 
 // ── 2a. Free-scanner lead magnet (/tools) ─────────────────────────────────────
@@ -349,7 +386,7 @@ export async function sendScannerReport(to: string, opts: {
     <div style="text-align:center;margin:8px 0 24px">${btn('Build a safe app free →', `${APP_URL}/?utm_source=scanner_email&utm_campaign=${opts.tool}`)}</div>
     ${p(`<span style="color:#555566">Run it again anytime at ${APP_URL}/tools</span>`)}
   `, `Your ${label}: ${opts.score}/100 (${issues})`)
-  return resend.emails.send({ from: FROM, to, subject: `Your ${label} — ${opts.score}/100`, html })
+  return sendMail({ from: FROM, to, subject: `Your ${label} — ${opts.score}/100`, html })
 }
 
 export async function sendScannerLeadAlert(opts: {
@@ -374,7 +411,7 @@ export async function sendScannerLeadAlert(opts: {
       ['When', new Date().toUTCString()],
     ], '#0EA5E944')}
   `, `New scanner lead: ${opts.email}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎯 Scanner lead: ${opts.email} (${label})`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🎯 Scanner lead: ${opts.email} (${label})`, html })
 }
 
 // ── 2b. Auth emails (Supabase Send Email Hook) ────────────────────────────────
@@ -403,7 +440,7 @@ export async function sendAuthEmail(to: string, action: AuthAction, url: string,
     ${c.cta && url ? `<p style="margin:16px 0 0;font-size:12px;color:#555566">Or copy this link: <a href="${url}" style="color:#0EA5E9;word-break:break-all">${url}</a></p>` : ''}
   `, c.heading)
 
-  return resend.emails.send({ from: FROM, to, subject: c.subject, html })
+  return sendMail({ from: FROM, to, subject: c.subject, html })
 }
 
 // ── 3. Plan upgrade confirmed ─────────────────────────────────────────────────
@@ -425,7 +462,7 @@ export async function sendUpgradeConfirmEmail(to: string, plan: string, credits:
     ${p('To manage billing or cancel anytime, go to Settings → Billing.')}
   `, `Your ${plan} plan is active`)
 
-  return resend.emails.send({ from: FROM, to, subject: `Suffering from Success? Welcome to ${plan} 🏆 (confirmed)`, html })
+  return sendMail({ from: FROM, to, subject: `Suffering from Success? Welcome to ${plan} 🏆 (confirmed)`, html })
 }
 
 // ── 4. Subscription renewed ───────────────────────────────────────────────────
@@ -445,7 +482,7 @@ export async function sendRenewalEmail(to: string, plan: string, creditsAdded: n
     </div>
   `, `${creditsAdded} credits added to your account`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Another one. ${plan} renewed — ${creditsAdded} credits added 🔑`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Another one. ${plan} renewed — ${creditsAdded} credits added 🔑`, html })
 }
 
 // ── 5. Subscription cancelled ─────────────────────────────────────────────────
@@ -464,7 +501,7 @@ export async function sendCancellationEmail(to: string, plan: string) {
     </div>
   `, 'Your subscription has ended')
 
-  return resend.emails.send({ from: FROM, to, subject: `WyberAi ${plan} cancelled`, html })
+  return sendMail({ from: FROM, to, subject: `WyberAi ${plan} cancelled`, html })
 }
 
 // ── 6. Credit top-up confirmed ────────────────────────────────────────────────
@@ -484,7 +521,7 @@ export async function sendTopupEmail(to: string, credits: number, newBalance: nu
     </div>
   `, `${credits} credits added to your account`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `${credits} credits added to WyberAi ✓`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `${credits} credits added to WyberAi ✓`, html })
 }
 
 // ── 6a2. Goodwill bonus credits (admin-granted, no purchase) ─────────────────
@@ -501,7 +538,7 @@ export async function sendBonusCreditEmail(to: string, credits: number, newBalan
     </div>
   `, `${credits} bonus credits added to your account`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `A little something extra — ${credits} credits on us 🎁`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `A little something extra — ${credits} credits on us 🎁`, html })
 }
 
 // ── 6b. Payment failed (dunning) ──────────────────────────────────────────────
@@ -545,7 +582,7 @@ export async function sendPaymentFailedEmail(to: string, plan?: string, attemptN
     ${p('Think the charge itself is wrong? Just reply — hello@wyberai.com goes straight to a human referee.')}
   `, v.subject)
 
-  return resend.emails.send({ from: FROM, to, subject: v.subject, html })
+  return sendMail({ from: FROM, to, subject: v.subject, html })
 }
 
 // ── 6c. Refund processed ──────────────────────────────────────────────────────
@@ -560,7 +597,7 @@ export async function sendRefundEmail(to: string, amount?: string) {
     </div>
   `, 'Your WyberAi refund has been processed')
 
-  return resend.emails.send({ from: FROM, to, subject: 'Your WyberAi refund has been processed', html })
+  return sendMail({ from: FROM, to, subject: 'Your WyberAi refund has been processed', html })
 }
 
 // ── 7. Running low on credits ─────────────────────────────────────────────────
@@ -576,7 +613,7 @@ export async function sendCreditLowEmail(to: string, remaining: number, currency
     ${p('Or upgrade to the <a href="' + APP_URL + '/pricing" style="color:#0EA5E9">Builder plan</a> — 500 credits/month at ' + formatPrice(prices.builder_monthly, currency) + '.')}
   `, `${remaining} credits remaining`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `This is fine — ${remaining} credits remaining 🔥`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `This is fine — ${remaining} credits remaining 🔥`, html })
 }
 
 // ── 7b. Out of credits — recurring drip (cron: /api/cron/email-drip) ─────────
@@ -622,7 +659,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     </div>
     ${p('Every plan includes every feature. Unused credits roll over; top-ups never expire.')}
   `, v.heading, unsubUrl)
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: v.subject, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
 
 // ── 7c. Never-built nudge (signed up, never generated an app) ────────────────
@@ -642,7 +679,7 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
     </div>
     ${p('Stuck or skeptical? Reply to this email and tell us what you want to build — a human reads every reply.')}
   `, 'Your free credits are waiting', unsubUrl)
-  return resend.emails.send({ from: FROM, to, subject: 'Your 50 free credits are still waiting ⚡', html })
+  return sendMail({ from: FROM, to, subject: 'Your 50 free credits are still waiting ⚡', html })
 }
 
 // ── 7d. Built-but-never-published nudge — 2-touch (was one-shot only) ───────
@@ -671,7 +708,7 @@ export async function sendPublishNudgeEmail(to: string, projectName: string, pro
     </div>
     ${p('You can also connect your own domain, push to GitHub, or export the full source as a ZIP.')}
   `, v.subject, unsubUrl)
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: v.subject, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
 
 // ── 8. App deployed successfully ──────────────────────────────────────────────
@@ -692,7 +729,7 @@ export async function sendDeploySuccessEmail(to: string, projectName: string, ur
     ${p("Keep iterating — every generation auto-saves. Connect GitHub to commit changes automatically.")}
   `, `${projectName} is live`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `IT'S HAPPENING — ${projectName} is live 💥`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `IT'S HAPPENING — ${projectName} is live 💥`, html })
 }
 
 // ── 9. Security / deploy blocked ─────────────────────────────────────────────
@@ -710,7 +747,7 @@ export async function sendSecurityAlertEmail(to: string, projectName: string, fl
     ${p('WyberAi does not permit phishing, credential harvesting, or malware distribution.')}
   `, `Deploy blocked on ${projectName}`)
 
-  return resend.emails.send({ from: FROM, to, subject: `Deployment blocked: ${projectName}`, html })
+  return sendMail({ from: FROM, to, subject: `Deployment blocked: ${projectName}`, html })
 }
 
 // ── 10. Team / collaborator invite ───────────────────────────────────────────
@@ -724,7 +761,7 @@ export async function sendTeamInviteEmail(to: string, inviterName: string, proje
     ${p("This invitation expires in 7 days. If you weren't expecting this, you can ignore it.")}
   `, `You're invited to ${projectName}`)
 
-  return resend.emails.send({ from: FROM, to, subject: `${inviterName} invited you to ${projectName} on WyberAi`, html })
+  return sendMail({ from: FROM, to, subject: `${inviterName} invited you to ${projectName} on WyberAi`, html })
 }
 
 // ── 11. Agent execution completed ────────────────────────────────────────────
@@ -746,7 +783,7 @@ export async function sendAgentCompletedEmail(to: string, agentName: string, ste
     </div>
   `, `${agentName} completed`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Agent completed: ${agentName}`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Agent completed: ${agentName}`, html })
 }
 
 // ── 12. Agent execution failed ────────────────────────────────────────────────
@@ -764,7 +801,7 @@ export async function sendAgentFailedEmail(to: string, agentName: string, error:
     </div>
   `, `${agentName} failed`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Agent failed: ${agentName}`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Agent failed: ${agentName}`, html })
 }
 
 // ── 13. Workflow run completed ────────────────────────────────────────────────
@@ -782,7 +819,7 @@ export async function sendWorkflowCompletedEmail(to: string, workflowName: strin
     </div>
   `, `${workflowName} ran successfully`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Workflow completed: ${workflowName}`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Workflow completed: ${workflowName}`, html })
 }
 
 // ── 14. Workflow run failed ───────────────────────────────────────────────────
@@ -800,7 +837,7 @@ export async function sendWorkflowFailedEmail(to: string, workflowName: string, 
     </div>
   `, `${workflowName} failed`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Workflow failed: ${workflowName}`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Workflow failed: ${workflowName}`, html })
 }
 
 // ── 15. Support ticket received ───────────────────────────────────────────────
@@ -817,7 +854,7 @@ export async function sendSupportAckEmail(to: string, name: string, message: str
     ${p('Reply directly to this email if you have more details to add.')}
   `, 'We got your support request')
 
-  return resend.emails.send({ from: FROM, to, subject: "We got your message — WyberAi support", html })
+  return sendMail({ from: FROM, to, subject: "We got your message — WyberAi support", html })
 }
 
 // ── 16. Community template published ─────────────────────────────────────────
@@ -832,7 +869,7 @@ export async function sendTemplatePublishedEmail(to: string, templateName: strin
     ${p('Thanks for contributing to the WyberAi community.')}
   `, `${templateName} is now in the gallery`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Template published: ${templateName}`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Template published: ${templateName}`, html })
 }
 
 // ── 17. First app built (onboarding milestone) ────────────────────────────────
@@ -853,7 +890,7 @@ export async function sendFirstBuildEmail(to: string, name: string, projectName:
     </div>
   `, `${projectName} is ready`)
 
-  return resend.emails.send({ from: FROM, to, subject: `You built ${projectName} ✓`, html })
+  return sendMail({ from: FROM, to, subject: `You built ${projectName} ✓`, html })
 }
 
 // ── 19. AI Employees waitlist confirmation ────────────────────────────────────
@@ -876,7 +913,7 @@ export async function sendAIEmployeesWaitlistEmail(to: string) {
     ${p("In the meantime — you can already build web apps, mobile apps, and run AI agents on Wyber. Start free while you wait.")}
   `, "You're on the AI Employees early access list")
 
-  return resend.emails.send({ from: FROM, to, subject: "You're on the AI Employees waitlist 🤖", html })
+  return sendMail({ from: FROM, to, subject: "You're on the AI Employees waitlist 🤖", html })
 }
 
 // ── 18. Weekly digest (credits summary) ──────────────────────────────────────
@@ -909,7 +946,7 @@ export async function sendWeeklyDigestEmail(to: string, name: string, stats: {
       : ''}
   `, `Your WyberAi week in review`)
 
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Your WyberAi week — ${stats.appsBuilt} builds, ${stats.creditsRemaining} credits left`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Your WyberAi week — ${stats.appsBuilt} builds, ${stats.creditsRemaining} credits left`, html })
 }
 
 // ── 20. AI Employee run digest ────────────────────────────────────────────────
@@ -969,7 +1006,7 @@ export async function sendAIEmployeeDigestEmail(
     </div>
   `, run.summary)
 
-  return resend.emails.send({
+  return sendMail({
     from: FROM_NOTIF,
     to,
     subject: `${employee.emoji} ${employee.name} completed a run`,
@@ -999,7 +1036,7 @@ export async function sendAIEmployeeFailedEmail(
     </div>
   `, `${employee.name} encountered an error`)
 
-  return resend.emails.send({
+  return sendMail({
     from: FROM_NOTIF,
     to,
     subject: `${employee.emoji} ${employee.name} failed — action needed`,
@@ -1032,7 +1069,7 @@ export async function sendQuickStartNudgeEmail(to: string, name: string, unsubUr
     </div>
     ${p('No pressure — your 50 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
   `, "Your first app takes about 60 seconds", unsubUrl)
-  return resend.emails.send({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
+  return sendMail({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
 }
 
 // ── 23. Post-first-build nurture — fires the day after the aha-moment email ─
@@ -1050,7 +1087,7 @@ export async function sendNextStepNurtureEmail(to: string, name: string, project
     </div>
     ${p("Reply if you're not sure which one to start with — we'll point you in the right direction.")}
   `, `What to do next with ${projectName}`)
-  return resend.emails.send({ from: FROM, to, subject: `Now that ${projectName} is built...`, html })
+  return sendMail({ from: FROM, to, subject: `Now that ${projectName} is built...`, html })
 }
 
 // ── 24. Social proof — day 3–4, no strong engagement signal yet ─────────────
@@ -1068,7 +1105,7 @@ export async function sendSocialProofEmail(to: string, name: string) {
       ${btn('Browse the gallery →', `${APP_URL}/gallery`)}
     </div>
   `, 'What builders shipped this week')
-  return resend.emails.send({ from: FROM, to, subject: 'What builders shipped this week', html })
+  return sendMail({ from: FROM, to, subject: 'What builders shipped this week', html })
 }
 
 // ── 25. Feature spotlight — rotates across a small set, day 5–7 ─────────────
@@ -1112,7 +1149,7 @@ export async function sendFeatureSpotlightEmail(to: string, key: FeatureSpotligh
       ${btn(f.cta, f.url)}
     </div>
   `, f.subject)
-  return resend.emails.send({ from: FROM, to, subject: f.subject, html })
+  return sendMail({ from: FROM, to, subject: f.subject, html })
 }
 
 // ── 26. Referral nudge — proactive invite ask, day 5-ish with real usage ────
@@ -1129,7 +1166,7 @@ export async function sendReferralNudgeEmail(to: string, name: string, referralC
     </div>
     ${p('No cap on how many times this can pay out.')}
   `, 'Invite a friend, you both get 50 credits')
-  return resend.emails.send({ from: FROM, to, subject: 'Give 50, get 50 — invite a friend to WyberAi', html })
+  return sendMail({ from: FROM, to, subject: 'Give 50, get 50 — invite a friend to WyberAi', html })
 }
 
 // ── 27. Early credit warning — softer signal before the ≤20 credit-low email ─
@@ -1139,7 +1176,7 @@ export async function sendEarlyCreditWarningEmail(to: string, remaining: number)
     ${p(`Just a heads up — you're down to <strong style="color:#f0f0f4">${remaining} credits</strong>. No action needed yet, but if you're mid-project it's worth knowing before you hit zero mid-build.`)}
     ${p(`Top-up credits never expire, so buying ahead costs you nothing extra — <a href="${APP_URL}/pricing" style="color:#0EA5E9">see plans and top-ups</a> whenever you're ready.`)}
   `, `${remaining} credits remaining`)
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Halfway there — ${remaining} credits remaining`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Halfway there — ${remaining} credits remaining`, html })
 }
 
 // ── 28. Paywall / feature-block hit — blocked from a specific model tier ────
@@ -1153,7 +1190,7 @@ export async function sendPaywallHitEmail(to: string, tier: string, currency: Cu
     </div>
     ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and includes every model tier.`)}
   `, `${tier} needs a higher plan`)
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `That model needs a higher plan`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `That model needs a higher plan`, html })
 }
 
 // ── 29. Checkout abandoned — started checkout, never completed payment ─────
@@ -1168,7 +1205,7 @@ export async function sendCheckoutAbandonedEmail(to: string, planLabel: string, 
     </div>
     ${p(`Every plan includes every feature — web, mobile, deploy, connectors — starting at ${formatPrice(prices.starter_monthly, currency)}/mo.`)}
   `, `Finish setting up ${planLabel}`)
-  return resend.emails.send({ from: FROM_NOTIF, to, subject: `Still thinking it over?`, html })
+  return sendMail({ from: FROM_NOTIF, to, subject: `Still thinking it over?`, html })
 }
 
 // ── 30. Win-back — 14–30 days inactive, unused free credits ────────────────
@@ -1182,7 +1219,7 @@ export async function sendWinBackEmail(to: string, name: string, remaining: numb
       ${btn('Pick up where you left off →', `${APP_URL}/dashboard`)}
     </div>
   `, "Still there? Your credits are waiting", unsubUrl)
-  return resend.emails.send({ from: FROM, to, subject: 'Still there? 👋', html })
+  return sendMail({ from: FROM, to, subject: 'Still there? 👋', html })
 }
 
 // ── 32. Unused credits — 3+ days old, 0 builds, credits ≥ 45 ───────────────
@@ -1215,7 +1252,7 @@ export async function sendUnusedCreditsEmail(to: string, name: string, credits: 
     </table>
     ${p("Once you've built your first thing, you'll wonder what took you so long.")}
   `, `You have ${credits} credits doing nothing`, unsubUrl)
-  return resend.emails.send({ from: FROM, to, subject: `${name}, your ${credits} free credits are doing nothing`, html })
+  return sendMail({ from: FROM, to, subject: `${name}, your ${credits} free credits are doing nothing`, html })
 }
 
 // ── 31. Breakup email — 45–60 days silent, last touch, no meme on purpose ──
@@ -1228,7 +1265,7 @@ export async function sendBreakupEmail(to: string, name: string, unsubUrl: strin
       ${btn('Still interested →', `${APP_URL}/dashboard`, '#3d3d4a')}
     </div>
   `, "Should we close your file?", unsubUrl)
-  return resend.emails.send({ from: FROM, to, subject: 'Should we close your file?', html })
+  return sendMail({ from: FROM, to, subject: 'Should we close your file?', html })
 }
 
 // ── 32. Milestone celebration — 1000 creators ──
@@ -1242,7 +1279,7 @@ export async function sendMilestoneEmail(to: string, name?: string, unsubUrl?: s
       ${btn('Keep building →', `${APP_URL}/dashboard`)}
     </div>
   `, 'We hit 1,000 creators', unsubUrl)
-  return resend.emails.send({ from: FROM, to, subject: '🎉 We hit 1,000 creators', html })
+  return sendMail({ from: FROM, to, subject: '🎉 We hit 1,000 creators', html })
 }
 
 // ── Free US scoping-call lifecycle (src/app/api/cal/webhook, src/app/api/cron/consultation-reminders) ──
@@ -1272,7 +1309,7 @@ export async function sendConsultationConfirmEmail(to: string, name: string | nu
     ${p('Come with a real description of what you want to build — the more specific, the more useful the call. We\'ll give you a firm quote and delivery date if you decide to move forward.')}
     ${p('Need to reschedule or cancel? Use the link in your calendar invite.')}
   `, 'Your free scoping call is confirmed')
-  return resend.emails.send({ from: FROM, to, subject: `Confirmed: your free scoping call — ${when}`, html })
+  return sendMail({ from: FROM, to, subject: `Confirmed: your free scoping call — ${when}`, html })
 }
 
 export async function sendConsultationReminder1DayEmail(to: string, name: string | null, startIso: string, meetLink?: string) {
@@ -1283,7 +1320,7 @@ export async function sendConsultationReminder1DayEmail(to: string, name: string
     ${meetLink ? `<div style="text-align:center;margin:0 0 24px">${btn('Join link →', meetLink)}</div>` : ''}
     ${p('Jot down what you want to build before the call so we can make the most of the 60 minutes.')}
   `, 'Your scoping call is tomorrow')
-  return resend.emails.send({ from: FROM, to, subject: `Reminder: your scoping call is tomorrow (${when})`, html })
+  return sendMail({ from: FROM, to, subject: `Reminder: your scoping call is tomorrow (${when})`, html })
 }
 
 export async function sendConsultationReminder30MinEmail(to: string, name: string | null, meetLink?: string) {
@@ -1292,7 +1329,7 @@ export async function sendConsultationReminder30MinEmail(to: string, name: strin
     ${p('Your free scoping call starts in about 30 minutes.')}
     ${meetLink ? `<div style="text-align:center;margin:0 0 24px">${btn('Join now →', meetLink)}</div>` : ''}
   `, 'Your call starts in 30 minutes')
-  return resend.emails.send({ from: FROM, to, subject: 'Starting in 30 minutes — your WyberAi scoping call', html })
+  return sendMail({ from: FROM, to, subject: 'Starting in 30 minutes — your WyberAi scoping call', html })
 }
 
 export async function sendConsultationThankYouEmail(to: string, name: string | null) {
@@ -1304,7 +1341,7 @@ export async function sendConsultationThankYouEmail(to: string, name: string | n
       ${btn('Start building free →', `${APP_URL}/signup`)}
     </div>
   `, 'Thanks for the call — breakdown coming within 24 hrs')
-  return resend.emails.send({ from: FROM, to, subject: 'Thanks for the call — breakdown coming shortly', html })
+  return sendMail({ from: FROM, to, subject: 'Thanks for the call — breakdown coming shortly', html })
 }
 
 export async function sendConsultationSummaryEmail(opts: {
@@ -1339,7 +1376,7 @@ export async function sendConsultationSummaryEmail(opts: {
     </div>
   `, `Good talking — next steps coming in 24 hrs`)
 
-  return resend.emails.send({
+  return sendMail({
     from: FROM,
     to,
     subject: `Good talking, ${firstName ?? 'you'} — quick summary from our call`,
@@ -1380,7 +1417,7 @@ export async function sendFounderBriefingEmail(
     </div>
     <div style="text-align:center;margin:0 0 8px">${btn('View in admin →', `${APP_URL}/admin/consultations`, '#0EA5E9')}</div>
   `, `Call in your calendar: ${attendeeName || attendeeEmail}`)
-  return resend.emails.send({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📋 Pre-call brief: ${attendeeName || attendeeEmail} · ${when}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📋 Pre-call brief: ${attendeeName || attendeeEmail} · ${when}`, html })
 }
 
 export async function sendBreakdownEmail(
@@ -1419,5 +1456,5 @@ export async function sendBreakdownEmail(
     <div style="text-align:center;margin:0 0 16px">${btn('Start building on WyberAi →', `${APP_URL}/signup`, '#22c55e')}</div>
     ${p('<span style="font-size:13px">Questions? Just reply to this email — I read every one.</span>')}
   `, `Your app needs ${payload.credits_low}–${payload.credits_high} WyberAi credits`)
-  return resend.emails.send({ from: FROM, to, subject: `Your app breakdown — ${payload.credits_low}–${payload.credits_high} WyberAi credits`, html })
+  return sendMail({ from: FROM, to, subject: `Your app breakdown — ${payload.credits_low}–${payload.credits_high} WyberAi credits`, html })
 }
