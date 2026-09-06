@@ -92,15 +92,14 @@ export function applyEdits(
       fileHadFailure = true;
     }
 
-    if (workingContent !== content) {
-      // At least one block applied — commit the partial result. Autofix will
-      // request a full rewrite for any remaining failed blocks, starting from
-      // this partially-edited content (which at least has the successful changes).
+    // Only commit if EVERY block for this file applied. A file with any failed
+    // block is left completely untouched — callers that autofix always request
+    // a full rewrite for failed paths (not a diff), so there's nothing to gain
+    // from persisting a half-edited file in the meantime, and callers that don't
+    // autofix (e.g. the MCP build runner) would otherwise save broken code.
+    if (!fileHadFailure && workingContent !== content) {
       updated[path] = workingContent;
     }
-    // If NOTHING applied (workingContent === content), don't touch updated[path]:
-    // the file stays at its known-good original state so autofix starts clean
-    // instead of from broken half-edited code.
     if (fileHadFailure) {
       failed.add(path);
     }

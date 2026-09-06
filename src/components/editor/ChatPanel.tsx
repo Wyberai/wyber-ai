@@ -1592,9 +1592,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
         setHasGeneratedFiles(true);
         // Record paths changed this turn — the NEXT runGeneration call will
         // boost their file-score so the model stays aware of what it last edited.
-        // Include failed paths too: partial edits were saved (patch-applier always
-        // keeps workingContent), and the autofix will request the full file, so
-        // the model needs to see it in context either way.
+        // Include failed paths too: the autofix is about to request a full rewrite
+        // for them, so the model needs to see they're in play even though
+        // patch-applier left their content untouched.
         lastChangedPathsRef.current = new Set([
           ...newFiles.map((f: any) => f.path),
           ...editBlocks.map((e: any) => e.path),
@@ -2135,18 +2135,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // content never matches what the AI would actually write, so SEARCH blocks built
     // against them fail → autofix loop → slower, not faster. Skeletons are used only
     // as a plan-stage file-structure hint (injected into the plan prompt in route.ts).
+    // Computed here (parallel with the plan fetch) but not written into the
+    // store yet — the build can still be aborted below for insufficient
+    // credits, and writing it now would leave a rejected build's project
+    // showing someone else's template instead of the user's own (empty) state.
     const langMap: Record<string, string> = { ts:'typescript', tsx:'typescript', js:'javascript', jsx:'javascript', css:'css', html:'html', json:'json', vue:'vue' };
     const rawSeedFiles: Record<string, string> = (seedData?.files && Object.keys(seedData.files).length > 0)
       ? seedData.files
       : {};
-    if (Object.keys(rawSeedFiles).length > 0) {
-      const seedFileMap: Record<string, { path: string; content: string; language: string }> = {};
-      for (const [path, rawVal] of Object.entries(rawSeedFiles)) {
-        const ext = path.split('.').pop() ?? '';
-        const content = typeof rawVal === 'string' ? rawVal : ((rawVal as any)?.content ?? '');
-        seedFileMap[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
-      }
-      setFiles(seedFileMap);
+    const seedFileMap: Record<string, { path: string; content: string; language: string }> = {};
+    for (const [path, rawVal] of Object.entries(rawSeedFiles)) {
+      const ext = path.split('.').pop() ?? '';
+      const content = typeof rawVal === 'string' ? rawVal : ((rawVal as any)?.content ?? '');
+      seedFileMap[path] = { path, content, language: langMap[ext] ?? 'plaintext' };
     }
 
     let manifest = firstManifest;
@@ -2188,6 +2189,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
         setIsGenerating(false);
         return;
       }
+    }
+    // Credit check passed (or didn't apply) — safe to seed the template now.
+    if (Object.keys(seedFileMap).length > 0) {
+      setFiles(seedFileMap);
     }
     // Folded into the SAME persistent 'done' event below (not a standalone
     // 'progress' push) — the agent feed only ever shows the latest event per

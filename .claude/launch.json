@@ -73,6 +73,48 @@
       "name": "template-preview",
       "url": "http://localhost:5500",
       "port": 5500
+    },
+    {
+      "name": "setu-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\setu-app", "--", "--port", "3400"],
+      "port": 3400
+    },
+    {
+      "name": "sendkar",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\OneDrive\\Desktop\\Sendkar", "--", "--port", "3500"],
+      "port": 3500
+    },
+    {
+      "name": "wyber-game-proto",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\wyber-game-proto", "--", "--port", "3600"],
+      "port": 3600
+    },
+    {
+      "name": "continuum-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\projects\\continuum-web", "--", "--port", "3700"],
+      "port": 3700
+    },
+    {
+      "name": "anti-piracy-dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\anti-piracy-platform\\apps\\producer-dashboard", "--", "--port", "3800"],
+      "port": 3800
+    },
+    {
+      "name": "trueframe-mobile-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "web", "--prefix", "C:\\Users\\sumit\\anti-piracy-platform\\apps\\mobile-companion", "--", "--port", "8098"],
+      "port": 8098
+    },
+    {
+      "name": "continuum-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\sumit\\projects\\continuum-app-lovable"],
+      "port": 5173
     }
   ]
 }

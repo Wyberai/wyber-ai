@@ -96,6 +96,9 @@ export async function proxy(request: NextRequest) {
     // US "juggling five different apps" dashboard-scoping-call landing page —
     // ad traffic (scripts/meta-ad-us-founder-call.mjs), must be public.
     path.startsWith('/us-consulting') ||
+    // India layoff-anxiety carousel campaign's own tracking URL for the same
+    // /consult page (scripts/meta-ad-india-layoff.mjs), must be public.
+    path.startsWith('/india-consult') ||
     // Inventory intelligence demo — live under /app/inventory, public for customer demos.
     path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||

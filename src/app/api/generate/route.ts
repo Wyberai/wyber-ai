@@ -9,7 +9,7 @@ import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
-import { WYBER_UI_KIT_PROMPT } from '@/lib/wyber-ui-kit'
+import { WYBER_UI_KIT_PROMPT, WYBER_UI_KIT_PRIMARY_BY_TYPE } from '@/lib/wyber-ui-kit'
 import { WYBER_STORE_PROMPT } from '@/lib/wyber-store'
 import { CONNECTOR_INFRA_PROMPT } from '@/lib/connector-infra'
 import { formatAgentEvent, type AgentEvent } from '@/lib/agents/events'
@@ -905,6 +905,8 @@ NEVER: gray placeholder boxes, via.placeholder.com, picsum, unsplash/pexels, dat
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WYBER UI KIT — IMPORT THESE, DON'T HAND-ROLL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${WYBER_UI_KIT_PRIMARY_BY_TYPE.website}
+
 ${WYBER_UI_KIT_PROMPT}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1380,6 +1382,8 @@ DESIGN SYSTEM — same token system as webapps, applied to SaaS surfaces:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WYBER UI KIT — IMPORT THESE, DON'T HAND-ROLL
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${WYBER_UI_KIT_PRIMARY_BY_TYPE.saas}
+
 ${WYBER_UI_KIT_PROMPT}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2712,6 +2716,8 @@ UPGRADE NUDGE: specific cap + specific outcome, never generic "Go Pro":
 - BAD: "Upgrade to Pro to unlock more features."
 
 COPY — AVOID AI-TELLS (MANDATORY): banned words — leverage, seamless, foster, empower, delve, streamline, robust, cutting-edge, paradigm shift, game-changer, elevate, supercharge, harness, unlock, revolutionize. Banned patterns — binary contrasts ("It's not X, it's Y"), colon-reveal drama ("The best part: it just works"), weasel attribution ("studies show"), a final "In conclusion"/"Ultimately" recap. These apply to marketing/landing copy this app might have (hero, about, testimonials) — not to realistic in-app sample data, which stays exactly as encouraged above.
+
+${WYBER_UI_KIT_PRIMARY_BY_TYPE.webapp}
 
 ${WYBER_UI_KIT_PROMPT}
 

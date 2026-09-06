@@ -257,8 +257,11 @@ export const useEditorStore = create<EditorState>()(
       // connectors), so the user can already have edited files (e.g. a theme change)
       // by the time it lands. If so, `data.files` is just the stale SSR snapshot from
       // page load — applying it would silently revert the edit a few seconds later.
-      // Only seed files here if nothing has populated the store yet.
-      if (Object.keys(s.files).length === 0) {
+      // Only seed files here if nothing has populated the store yet, and only if
+      // the store still points at the project this fetch was for — otherwise a
+      // stale fetch from a previous project (see guard below) would overwrite
+      // whichever new project the user has since navigated to.
+      if (s.project?.id === data.project.id && Object.keys(s.files).length === 0) {
         if (data.files && Object.keys(data.files).length > 0) {
           s.files = data.files;
           s.hasGeneratedFiles = true;
