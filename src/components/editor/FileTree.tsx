@@ -37,7 +37,22 @@ function buildTree(paths: string[]): TreeNode[] {
   const root: TreeNode[] = [];
   const dirMap = new Map<string, TreeNode>();
 
-  for (const path of paths.sort()) {
+  // A real filesystem can never have a file and a folder share the same
+  // path, but the generated-app file map isn't guaranteed to respect that
+  // (e.g. a stub/import-fixup writing a nested path like
+  // "src/index.css/extra.ts" alongside the real file "src/index.css"). Left
+  // unfiltered, the loop below would create a 'file' node AND a 'dir' node
+  // at the identical path as siblings — the exact "two children with the
+  // same key" React warning (and the growing re-render loop that came with
+  // it). Drop any path whose full string is also a strict prefix of another
+  // path — it can't be represented as a tree node either way, so it's
+  // excluded from the tree (the file itself is untouched; this only affects
+  // this sidebar's rendering).
+  const usablePaths = paths.filter(path =>
+    !paths.some(other => other !== path && other.startsWith(path + '/'))
+  );
+
+  for (const path of usablePaths.sort()) {
     const parts = path.split('/');
     let current = root;
     let accumulated = '';

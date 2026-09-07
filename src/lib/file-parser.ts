@@ -95,7 +95,19 @@ export function parseGenerationOutput(raw: string): ParseResult {
     .filter(l => l.length > 0)
     .join('\n')
     .trim();
-  return { files, chatText };
+  // Dedupe by path, keeping the LAST occurrence. A long generation can emit
+  // the same path more than once across a multi-iteration tool-use response
+  // (e.g. a file re-emitted in full after an earlier max_tokens cutoff left
+  // it unclosed/dropped) — every consumer already applies files in array
+  // order via setFile, so a later duplicate is what actually lands in the
+  // store; keeping only that one file per path here is what the UI (chat
+  // "files changed" chips, keyed by raw path — src/index.css showing up
+  // 2-3x as sibling <span> elements with an identical key was this exact
+  // bug) needs to stay consistent with the store instead of listing ghost
+  // duplicates.
+  const seen = new Map<string, ParsedFile>();
+  for (const f of files) seen.set(f.path, f);
+  return { files: [...seen.values()], chatText };
 }
 
 export class StreamingFileParser {

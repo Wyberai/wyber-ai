@@ -16,7 +16,7 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES } from '@/lib/staged-plan';
+import { parsePlanManifest, buildStagedPlan, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
@@ -1682,19 +1682,40 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const missing = diffPlannedAgainstWritten(planned, writtenPaths)
           if (missing.length > 0) {
             completenessRetryFired = true
-            const nameList = missing.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
-            const extra = missing.length > 3 ? ` +${missing.length - 3} more` : ''
-            const detail = missing.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
             pushAgentEvents({ agent: 'orchestrator', status: 'progress', detail: `Finishing ${missing.length} remaining file${missing.length === 1 ? '' : 's'}...` })
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('wyber-autofix', {
-                detail: {
-                  continuation: true,
-                  completenessRetryFor: missing,
-                  prompt: `Your previous response addressed part of the request but left ${missing.length} planned file${missing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied. AUTOMATED CONTINUATION: after the last </file> or </edit> tag, write ZERO additional words — no questions, no offers, no recap.`,
-                },
-              }))
-            }, 600)
+            // Dispatch in small concurrent batches instead of one request
+            // asking for every missing file at once. A single big request
+            // here falls OUT of the fast parallel-generation path (any
+            // existing file makes the server see isNewBuild=false) and INTO
+            // the slow sequential loop — which can burn the full max_tokens
+            // ceiling and need several auto-continuations for what should be
+            // a quick patch (observed: a 4-missing-file retry took a single
+            // 196s/24k-token pass that hit the ceiling and had to continue).
+            // Same fix as the proven fill-batch concurrency win (~6x
+            // wall-clock, scripts/_verify-concurrent-fill-sonnet.mjs) applied
+            // to this fallback path. Batches are disjoint file sets, each
+            // independently diffed/re-verified by its own pass (step 4d
+            // below), so they never step on each other.
+            let batchIndex = 0
+            for (let i = 0; i < missing.length; i += FILL_BATCH_SIZE) {
+              const batch = missing.slice(i, i + FILL_BATCH_SIZE)
+              const nameList = batch.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
+              const extra = batch.length > 3 ? ` +${batch.length - 3} more` : ''
+              const detail = batch.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
+              // Small stagger (matches runFillBatch) — not required for
+              // correctness, just keeps progress events landing in a
+              // readable order instead of all at once.
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('wyber-autofix', {
+                  detail: {
+                    continuation: true,
+                    completenessRetryFor: batch,
+                    prompt: `Your previous response addressed part of the request but left ${batch.length} planned file${batch.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied. AUTOMATED CONTINUATION: after the last </file> or </edit> tag, write ZERO additional words — no questions, no offers, no recap.`,
+                  },
+                }))
+              }, 600 + batchIndex * 150)
+              batchIndex++
+            }
           }
         }
       }
@@ -1710,18 +1731,28 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const extra = stillMissing.length > 3 ? ` +${stillMissing.length - 3} more` : ''
           const retryCount = opts.completenessRetryCount ?? 1
           if (retryCount < MAX_COMPLETENESS_RETRIES) {
-            const detailList = stillMissing.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
             pushAgentEvents({ agent: 'orchestrator', status: 'progress', detail: `Finishing ${stillMissing.length} more file${stillMissing.length === 1 ? '' : 's'} (pass ${retryCount + 1})...` })
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('wyber-autofix', {
-                detail: {
-                  continuation: true,
-                  completenessRetryFor: stillMissing,
-                  completenessRetryCount: retryCount + 1,
-                  prompt: `Your previous response still left ${stillMissing.length} planned file${stillMissing.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words — no questions, no offers, no recap.`,
-                },
-              }))
-            }, 600)
+            // Same concurrent-batch dispatch as the initial retry above —
+            // see the comment there for why a single big request is the slow
+            // path here.
+            let batchIndex = 0
+            for (let i = 0; i < stillMissing.length; i += FILL_BATCH_SIZE) {
+              const batch = stillMissing.slice(i, i + FILL_BATCH_SIZE)
+              const batchNames = batch.slice(0, 3).map(f => f.path.split('/').pop()).join(', ')
+              const batchExtra = batch.length > 3 ? ` +${batch.length - 3} more` : ''
+              const detailList = batch.slice(0, 4).map(f => `${f.path} — ${f.purpose}`).join('; ')
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('wyber-autofix', {
+                  detail: {
+                    continuation: true,
+                    completenessRetryFor: batch,
+                    completenessRetryCount: retryCount + 1,
+                    prompt: `Your previous response still left ${batch.length} planned file${batch.length === 1 ? '' : 's'} unfinished (${batchNames}${batchExtra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words — no questions, no offers, no recap.`,
+                  },
+                }))
+              }, 600 + batchIndex * 150)
+              batchIndex++
+            }
           } else {
             editIncompleteReported = true
             setTimeout(() => {
@@ -2078,6 +2109,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // whichever single request happens to carry finalPass. See
     // computeOverageCharge in credits.ts.
     const buildId = uid();
+    // Cross-stage wall-clock timing — each stage is a separate POST (see
+    // route.ts's per-request [generate cache] elapsed_ms, now tagged with this
+    // same buildId), so this is the only place that can stitch plan/scaffold/
+    // fill/wire into one "time to done" number. Purely additive console
+    // telemetry — never read by build logic. See [build timing] below.
+    const buildStartTime = Date.now();
+    let planDoneTime = 0, scaffoldDoneTime = 0, fillDoneTime = 0;
 
     try {
 
@@ -2156,6 +2194,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       manifest = await fetchPlanManifest();
     }
     const staged: ReturnType<typeof buildStagedPlan> | null = manifest.length ? buildStagedPlan(manifest) : null;
+    planDoneTime = Date.now();
 
     // Show the real credit cost BEFORE spending anything — the plan pass is
     // free and already knows the real file count, so the tiered price (see
@@ -2232,12 +2271,40 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // isNewBuildCompletenessEligible in executeGeneration.
       // echoedUser: user message already added at the top of runAgenticBuild.
       // sharedBubbleId: reuse the planning/credit bubble created above.
-      await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
+      const oneShotOk = await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
       // The one-shot path uses sharedBubbleId, so ownsBubble=false inside executeGeneration
       // and its finally block never calls setIsGenerating(false) or clears progress. Do it here.
       setIsGenerating(false);
       setProgressSteps([]);
       clearStreamingContent();
+      console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=one-shot plan_ms=${planDoneTime - buildStartTime} total_ms=${Date.now() - buildStartTime}`);
+      // executeGeneration never touches this bubble when ownsBubble=false (see
+      // the sharedBubbleId comment right above it) — every write to `chainId`
+      // above (both here and in executeGeneration) is gated on ownsBubble,
+      // which is false for the whole one-shot path. Left as-is, the chain
+      // bubble was created 'streaming' ("Planning your build...") and NEVER
+      // moved to 'done' or 'error' once the actual generation finished — the
+      // build fully succeeds server-side (files written, project saved) while
+      // the chat bubble sits stuck forever. The staged path avoids this via
+      // finishChain(); this is the one-shot path's equivalent finalization.
+      const plannedPaths = (staged?.files ?? manifest).map(f => f.path);
+      const filesAtCloseOneShot = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
+      const liveFilesOneShot = plannedPaths.filter(p => filesAtCloseOneShot[p] !== undefined);
+      if (oneShotOk) {
+        const screenNamesOneShot = liveFilesOneShot.map(p => p.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? p);
+        const screenListOneShot = screenNamesOneShot.length <= 1
+          ? screenNamesOneShot[0]
+          : `${screenNamesOneShot.slice(0, -1).join(', ')} and ${screenNamesOneShot[screenNamesOneShot.length - 1]}`;
+        const oneShotSummary = screenNamesOneShot.length > 0
+          ? `Built it — ${screenListOneShot} ${screenNamesOneShot.length === 1 ? 'is' : 'are'} live.\nCheck the preview, or tell me what to change next.`
+          : t('doneCheckPreviewMsg');
+        updateMessage(chainId, { content: oneShotSummary, status: 'done', filesChanged: liveFilesOneShot });
+        persistMessage('assistant', oneShotSummary, liveFilesOneShot);
+      } else {
+        const oneShotErrMsg = "Something interrupted your build. Hit Retry and it'll pick up where it left off.";
+        updateMessage(chainId, { content: oneShotErrMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+        persistMessage('assistant', oneShotErrMsg);
+      }
       return;
     }
     pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(staged.files.length)) + costSuffix });
@@ -2274,9 +2341,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // Show a clean error with a Retry button — no internal jargon.
       updateMessage(chainId, { content: "Something interrupted your build. Hit Retry and it'll pick up where it left off.", status: 'error', retryPrompt: userMsg, retryLane: 'build' });
       persistMessage('assistant', "Something interrupted your build. Hit Retry and it'll pick up where it left off.");
+      console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=error failedAt=scaffold plan_ms=${planDoneTime - buildStartTime} total_ms=${Date.now() - buildStartTime}`);
       setIsGenerating(false);
       return;
     }
+    scaffoldDoneTime = Date.now();
 
     // The scaffold pass is explicitly told (see api/generate/route.ts's
     // SCAFFOLD PASS prompt) to render a "Coming up next..." placeholder for
@@ -2362,6 +2431,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // below — the final summary only ever lists screens that actually
       // landed, so it never claims something that isn't there.
     }
+    fillDoneTime = Date.now();
     // Wire the real screens into the app shell.
     // Step 1: Try deterministic wire (fast, text-based swap of placeholder names).
     // Step 2: Verify it worked — only claim success if the screens are actually wired.
@@ -2425,6 +2495,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const summary = screenNames.length > 0
       ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live.\nCheck the preview, or tell me what to change next.`
       : t('doneCheckPreviewMsg');
+    // buildId ties this to the server-side [generate cache] elapsed_ms lines
+    // for the same build — cross-reference to split "model latency" from
+    // "everything else" (client round-trips, retries, credit checks, wiring).
+    console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=staged fileCount=${staged.files.length} fillBatches=${batchesToRun.length} plan_ms=${planDoneTime - buildStartTime} scaffold_ms=${scaffoldDoneTime - planDoneTime} fill_ms=${fillDoneTime - scaffoldDoneTime} wire_ms=${Date.now() - fillDoneTime} total_ms=${Date.now() - buildStartTime}`);
     finishChain(summary, liveScreens.map(f => f.path));
 
     } catch (e: any) {
@@ -2435,6 +2509,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         : `Something interrupted your build — hit Retry and it'll pick up where it left off.`;
       updateMessage(chainId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
       persistMessage('assistant', errMsg);
+      console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=error failedAt=${!planDoneTime ? 'plan' : !scaffoldDoneTime ? 'scaffold' : !fillDoneTime ? 'fill' : 'wire'} plan_ms=${planDoneTime ? planDoneTime - buildStartTime : null} scaffold_ms=${scaffoldDoneTime && planDoneTime ? scaffoldDoneTime - planDoneTime : null} fill_ms=${fillDoneTime && scaffoldDoneTime ? fillDoneTime - scaffoldDoneTime : null} total_ms=${Date.now() - buildStartTime}`);
     } finally {
       // Always clear generating state — the individual happy paths above do this
       // too (finishChain, early credit/scaffold returns) but a thrown exception

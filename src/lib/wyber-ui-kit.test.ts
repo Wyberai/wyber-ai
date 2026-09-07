@@ -94,6 +94,49 @@ export default function App() {
     expect(result.outputFiles[0].text.length).toBeGreaterThan(0)
   })
 
+  it('a fixture app importing the AI/agent UI layer bundles against the kit', async () => {
+    const { build } = await import('esbuild')
+    const APP = `import { AIActionBar, AIDiffBlock, ThinkingOrbs, AIPlanCard, AIAssistantPanel, PromptInputBar, ReasoningTrace, FloatingAssistantWidget } from './wyber-ui'
+export default function App() {
+  return (
+    <div>
+      <AIActionBar onRetry={() => {}} onCopy={() => {}} onLike={() => {}} onDislike={() => {}} onShare={() => {}} />
+      <AIDiffBlock filename="App.tsx" lines={[{ text: 'const x = 1', type: 'context' }, { text: 'old', type: 'remove' }, { text: 'new', type: 'add' }]} />
+      <ThinkingOrbs label="Searching" />
+      <AIPlanCard title="Plan" progress="1/2" steps={[{ label: 'Read schema', status: 'done' }, { label: 'Migrate', status: 'active' }]} />
+      <AIAssistantPanel greeting="Hi" suggestions={['Summarize']} onSubmit={() => {}} />
+      <PromptInputBar value="" onChange={() => {}} onSubmit={() => {}} modes={['Agent', 'Auto']} mode="Agent" onModeChange={() => {}} />
+      <ReasoningTrace tabs={['Steps', 'Reasoning']} items={[{ label: 'Step one', done: true }]} />
+      <FloatingAssistantWidget open={false} onOpenChange={() => {}} title="Assistant">content</FloatingAssistantWidget>
+    </div>
+  )
+}`
+    const files: Record<string, string> = { 'src/App.tsx': APP, [WYBER_UI_KIT_PATH]: WYBER_UI_KIT_SOURCE }
+    const result = await build({
+      entryPoints: ['src/App.tsx'],
+      bundle: true,
+      write: false,
+      format: 'esm',
+      jsx: 'automatic',
+      external: ['react', 'react/jsx-runtime', 'framer-motion', 'clsx', 'lucide-react'],
+      plugins: [{
+        name: 'virtual-fs',
+        setup(b) {
+          b.onResolve({ filter: /^\./ }, (args) => {
+            const base = args.path.replace(/^\.\//, 'src/').replace(/\.tsx?$/, '')
+            return { path: base + '.tsx', namespace: 'v' }
+          })
+          b.onResolve({ filter: /^src\// }, (args) => ({ path: args.path, namespace: 'v' }))
+          b.onLoad({ filter: /.*/, namespace: 'v' }, (args) => {
+            const content = files[args.path]
+            return content != null ? { contents: content, loader: 'tsx' } : undefined
+          })
+        },
+      }],
+    })
+    expect(result.outputFiles[0].text.length).toBeGreaterThan(0)
+  })
+
   it('kit animations exist in the shared tailwind theme', async () => {
     const { TAILWIND_CONFIG_FILE, PREVIEW_TAILWIND_CONFIG } = await import('./design-system')
     for (const anim of ['marquee', 'aurora', 'gradient-spin']) {

@@ -5266,7 +5266,17 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       if (useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
           const { runClaudeParallel, classifyClaudeParallelFailure } = await import('@/lib/model-providers/claude-parallel')
-          const CLAUDE_PARALLEL_TIMEOUT_MS = Number(process.env.CLAUDE_PARALLEL_TIMEOUT_MS) || 45000
+          // 45s (the old default) is shorter than what this path's own config
+          // allows: PAGE_MAX_TOKENS defaults to 16000 (20000 in this env's
+          // .env.local), and this timeout races the ENTIRE batch — one page
+          // that needs a real chunk of that budget blows the ceiling and kills
+          // every other page's already-completed work too, forcing the much
+          // slower sequential-loop fallback. Measured Sonnet throughput from
+          // this session's own logs: ~24,000 output tokens in ~196s (~122
+          // tok/s); even allowing for Haiku being faster, 100s gives a
+          // page room to actually use its configured budget instead of the
+          // timeout firing on ordinary, not-unusually-large pages.
+          const CLAUDE_PARALLEL_TIMEOUT_MS = Number(process.env.CLAUDE_PARALLEL_TIMEOUT_MS) || 100000
 
           // Open the stream immediately so the client gets headers + heartbeats
           // during the parallel wait instead of a silent gap. A TransformStream
@@ -5319,7 +5329,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             handledByParallel = true
             totalInputTokens += parallelResult.usage.inputTokens
             totalOutputTokens += parallelResult.usage.outputTokens
-            console.log(`[generate cache] claude-parallel model=${MODELS[resolvedTier]} pagesFromTemplate=${parallelResult.pagesFromTemplate} pagesFullGen=${parallelResult.pagesFullGen} output=${parallelResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+            console.log(`[generate cache] buildId=${buildId ?? ''} stage=${stage} claude-parallel model=${MODELS[resolvedTier]} pagesFromTemplate=${parallelResult.pagesFromTemplate} pagesFullGen=${parallelResult.pagesFullGen} output=${parallelResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
           } else if (parallelResult && parallelFailure) {
             clearInterval(heartbeatInterval)
             try { parallelController.close() } catch { /* already closed */ }
@@ -5532,7 +5542,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                 totalOutputTokens += u.output_tokens ?? 0
                 totalCacheCreationTokens += u.cache_creation_input_tokens ?? 0
                 totalCacheReadTokens += u.cache_read_input_tokens ?? 0
-                console.log(`[generate cache] tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
+                console.log(`[generate cache] buildId=${buildId ?? ''} stage=${stage} tool-iter=${iter} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
                 // Bail out before the platform's hard maxDuration kill rather than
                 // starting another iteration we won't get to finish. iter>0 guards
@@ -5885,7 +5895,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               totalOutputTokens += u.output_tokens ?? 0
               totalCacheCreationTokens += u.cache_creation_input_tokens ?? 0
               totalCacheReadTokens += u.cache_read_input_tokens ?? 0
-              console.log(`[generate cache] pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
+              console.log(`[generate cache] buildId=${buildId ?? ''} stage=${stage} pass=${pass} model=${model} action=${actionType} stop=${finalMsg.stop_reason} creation=${u.cache_creation_input_tokens ?? 0} read=${u.cache_read_input_tokens ?? 0} input=${u.input_tokens} output=${u.output_tokens ?? 0} elapsed_ms=${Date.now() - requestStartTime}`)
 
               // Bail out before the platform's hard maxDuration kill rather than
               // starting another pass we won't get to finish. pass>0 guards the

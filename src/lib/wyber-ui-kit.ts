@@ -36,7 +36,7 @@ export const WYBER_UI_KIT_SOURCE = String.raw`// Wyber UI Kit — premium primit
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence, useInView, useScroll, useTransform, useReducedMotion, useMotionValue, useSpring } from 'framer-motion'
 import clsx from 'clsx'
-import { Menu, X, Check, ChevronDown, Star, ArrowUpRight, ArrowDownRight, GripVertical, Search, UploadCloud, ArrowRight, Lock, Wifi, BatteryFull, SignalHigh, Plus, Copy, Play, Smartphone, PlayCircle, ChevronRight, ChevronsLeft, ArrowUp, AlertTriangle, CheckCircle2, XCircle, Info, ChevronLeft, Cookie, Bell, Loader2 } from 'lucide-react'
+import { Menu, X, Check, ChevronDown, Star, ArrowUpRight, ArrowDownRight, GripVertical, Search, UploadCloud, ArrowRight, Lock, Wifi, BatteryFull, SignalHigh, Plus, Copy, Play, Smartphone, PlayCircle, ChevronRight, ChevronsLeft, ArrowUp, AlertTriangle, CheckCircle2, XCircle, Info, ChevronLeft, Cookie, Bell, Loader2, RotateCcw, ThumbsUp, ThumbsDown, Share2, Sparkles, Circle, MessageCircle } from 'lucide-react'
 
 type ClassValue = string | number | boolean | undefined | null | Record<string, unknown> | ClassValue[]
 export function cn(...inputs: ClassValue[]) { return clsx(...(inputs as never[])) }
@@ -6496,6 +6496,389 @@ export function ScrollHorizontalGallery({ children, className, trackClassName, d
     </div>
   )
 }
+
+/* ============================ AI / AGENT UI ============================ */
+
+export interface AIActionBarProps {
+  onRetry?: () => void
+  onCopy?: () => void
+  onLike?: () => void
+  onDislike?: () => void
+  onShare?: () => void
+  className?: string
+}
+
+export function AIActionBar({ onRetry, onCopy, onLike, onDislike, onShare, className }: AIActionBarProps) {
+  const [copied, setCopied] = useState(false)
+  const [reaction, setReaction] = useState<'up' | 'down' | null>(null)
+  const handleCopy = () => {
+    onCopy?.()
+    setCopied(true)
+    window.setTimeout(() => setCopied(false), 1400)
+  }
+  const btn = 'flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
+  return (
+    <div className={cn('flex items-center gap-0.5', className)}>
+      {onRetry && (
+        <button type="button" onClick={onRetry} className={btn} aria-label="Retry">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
+      )}
+      <button type="button" onClick={handleCopy} className={btn} aria-label="Copy">
+        {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+      {onLike && (
+        <button type="button" onClick={() => { setReaction(r => r === 'up' ? null : 'up'); onLike?.() }} className={cn(btn, reaction === 'up' && 'text-primary')} aria-label="Good response">
+          <ThumbsUp className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onDislike && (
+        <button type="button" onClick={() => { setReaction(r => r === 'down' ? null : 'down'); onDislike?.() }} className={cn(btn, reaction === 'down' && 'text-destructive')} aria-label="Bad response">
+          <ThumbsDown className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {onShare && (
+        <button type="button" onClick={onShare} className={btn} aria-label="Share">
+          <Share2 className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  )
+}
+
+export interface AIDiffLine {
+  text: string
+  type?: 'add' | 'remove' | 'context'
+}
+
+export interface AIDiffBlockProps {
+  filename?: string
+  lines: AIDiffLine[]
+  className?: string
+}
+
+export function AIDiffBlock({ filename, lines, className }: AIDiffBlockProps) {
+  const added = lines.filter(l => l.type === 'add').length
+  const removed = lines.filter(l => l.type === 'remove').length
+  return (
+    <div className={cn('overflow-hidden rounded-xl border border-border bg-card', className)}>
+      <div className="flex items-center justify-between border-b border-border bg-muted/40 px-4 py-2.5">
+        <span className="font-mono text-xs text-muted-foreground">{filename || 'diff'}</span>
+        <div className="flex items-center gap-2 font-mono text-[11px]">
+          {added > 0 && <span className="text-primary">+{added}</span>}
+          {removed > 0 && <span className="text-destructive">-{removed}</span>}
+        </div>
+      </div>
+      <div className="overflow-x-auto py-1.5">
+        <pre className="font-mono text-[13px] leading-6">
+          <code>
+            {lines.map((line, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'flex gap-3 px-4',
+                  line.type === 'add' && 'bg-primary/10',
+                  line.type === 'remove' && 'bg-destructive/10'
+                )}
+              >
+                <span className={cn(
+                  'w-3 shrink-0 select-none',
+                  line.type === 'add' ? 'text-primary' : line.type === 'remove' ? 'text-destructive' : 'text-transparent'
+                )}>
+                  {line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '}
+                </span>
+                <span className={cn(
+                  'whitespace-pre',
+                  line.type === 'add' && 'text-primary',
+                  line.type === 'remove' && 'text-destructive',
+                  (!line.type || line.type === 'context') && 'text-foreground/80'
+                )}>{line.text || ' '}</span>
+              </div>
+            ))}
+          </code>
+        </pre>
+      </div>
+    </div>
+  )
+}
+
+export interface ThinkingOrbsProps {
+  label?: string
+  className?: string
+}
+
+export function ThinkingOrbs({ label = 'Thinking', className }: ThinkingOrbsProps) {
+  return (
+    <div className={cn('flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2', className)}>
+      <div className="flex items-center gap-1">
+        {[0, 1, 2].map(i => (
+          <motion.span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-primary"
+            animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.15, ease: 'easeInOut' }}
+          />
+        ))}
+      </div>
+      <span className="font-mono text-xs text-muted-foreground">{label}…</span>
+    </div>
+  )
+}
+
+export interface AIPlanStep {
+  label: string
+  status: 'done' | 'active' | 'pending' | 'blocked'
+  meta?: string
+}
+
+export interface AIPlanCardProps {
+  title: string
+  progress?: string
+  steps: AIPlanStep[]
+  className?: string
+}
+
+export function AIPlanCard({ title, progress, steps, className }: AIPlanCardProps) {
+  return (
+    <div className={cn('overflow-hidden rounded-xl border border-border bg-card', className)}>
+      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+        <span className="text-sm font-semibold text-foreground">{title}</span>
+        {progress && <span className="font-mono text-[11px] text-muted-foreground">{progress}</span>}
+      </div>
+      <div className="flex flex-col divide-y divide-border">
+        {steps.map((step, i) => (
+          <div key={i} className="flex items-center gap-2.5 px-4 py-2 text-sm">
+            {step.status === 'done' && <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />}
+            {step.status === 'active' && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />}
+            {step.status === 'blocked' && <XCircle className="h-4 w-4 shrink-0 text-destructive" />}
+            {step.status === 'pending' && <Circle className="h-4 w-4 shrink-0 text-muted-foreground/40" />}
+            <span className={cn('flex-1', step.status === 'done' ? 'text-muted-foreground line-through decoration-muted-foreground/40' : 'text-foreground')}>
+              {step.label}
+            </span>
+            {step.meta && <span className="font-mono text-[11px] text-muted-foreground">{step.meta}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export interface AIAssistantPanelProps {
+  greeting?: string
+  subtitle?: string
+  suggestions?: string[]
+  onSuggestion?: (text: string) => void
+  onSubmit?: (text: string) => void
+  placeholder?: string
+  className?: string
+}
+
+export function AIAssistantPanel({ greeting = 'Hi, how can I help?', subtitle, suggestions = [], onSuggestion, onSubmit, placeholder = 'Ask anything…', className }: AIAssistantPanelProps) {
+  const [value, setValue] = useState('')
+  const handleSubmit = () => {
+    if (!value.trim()) return
+    onSubmit?.(value)
+    setValue('')
+  }
+  return (
+    <div className={cn('flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_16px_48px_hsl(var(--foreground)/0.1)]', className)}>
+      <div className="flex flex-col gap-1 px-5 pb-3 pt-5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Sparkles className="h-4 w-4" />
+        </div>
+        <span className="mt-2 text-base font-semibold text-foreground">{greeting}</span>
+        {subtitle && <span className="text-sm text-muted-foreground">{subtitle}</span>}
+      </div>
+      {suggestions.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 px-5 pb-4">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => onSuggestion ? onSuggestion(s) : setValue(s)}
+              className="rounded-full border border-border bg-muted/40 px-3 py-1.5 text-xs text-foreground transition-colors hover:bg-muted"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-2 border-t border-border px-4 py-3">
+        <input
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') handleSubmit() }}
+          placeholder={placeholder}
+          className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+        />
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform hover:scale-105 active:scale-95"
+        >
+          <ArrowUp className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export interface PromptInputBarProps {
+  value: string
+  onChange: (v: string) => void
+  onSubmit?: () => void
+  placeholder?: string
+  modes?: string[]
+  mode?: string
+  onModeChange?: (m: string) => void
+  className?: string
+}
+
+export function PromptInputBar({ value, onChange, onSubmit, placeholder = 'Build anything…', modes, mode, onModeChange, className }: PromptInputBarProps) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <div className={cn('relative rounded-2xl p-[1px]', className)}>
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500',
+          focused && 'opacity-100'
+        )}
+        style={{ background: 'conic-gradient(from 0deg, hsl(var(--primary)), hsl(var(--accent)), hsl(var(--primary)))' }}
+      />
+      <div className="relative flex flex-col gap-2 rounded-2xl border border-border bg-card px-4 py-3">
+        <textarea
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmit?.() } }}
+          placeholder={placeholder}
+          rows={2}
+          className="resize-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+        />
+        <div className="flex items-center justify-between">
+          {modes && modes.length > 0 ? (
+            <div className="flex items-center gap-1.5">
+              {modes.map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => onModeChange?.(m)}
+                  className={cn(
+                    'rounded-full px-2.5 py-1 font-mono text-[11px] transition-colors',
+                    mode === m ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted'
+                  )}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          ) : <span />}
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={!value.trim()}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform disabled:opacity-30 hover:scale-105 active:scale-95 disabled:hover:scale-100"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export interface ReasoningTraceProps {
+  tabs: string[]
+  activeTab?: string
+  onTabChange?: (t: string) => void
+  items: { label: string; done?: boolean }[]
+  className?: string
+}
+
+export function ReasoningTrace({ tabs, activeTab, onTabChange, items, className }: ReasoningTraceProps) {
+  const [internalTab, setInternalTab] = useState(tabs[0])
+  const current = activeTab ?? internalTab
+  return (
+    <div className={cn('overflow-hidden rounded-xl border border-border bg-card', className)}>
+      <div className="flex flex-col gap-3 px-4 py-3">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-center gap-2.5 text-sm">
+            <Check className={cn('h-3.5 w-3.5 shrink-0', item.done ? 'text-primary' : 'text-muted-foreground/30')} />
+            <span className={item.done ? 'text-foreground' : 'text-muted-foreground'}>{item.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-1 border-t border-border px-3 py-2">
+        {tabs.map(t => (
+          <button
+            key={t}
+            type="button"
+            onClick={() => { setInternalTab(t); onTabChange?.(t) }}
+            className={cn(
+              'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+              current === t ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export interface FloatingAssistantWidgetProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title?: string
+  children?: React.ReactNode
+  className?: string
+}
+
+export function FloatingAssistantWidget({ open, onOpenChange, title = 'Assistant', children, className }: FloatingAssistantWidgetProps) {
+  return (
+    <div className={cn('fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3', className)}>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={springFast}
+            className="flex w-80 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_24px_64px_hsl(var(--foreground)/0.16)]"
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">{title}</span>
+              <button type="button" onClick={() => onOpenChange(false)} className="text-muted-foreground transition-colors hover:text-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto p-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <button
+        type="button"
+        onClick={() => onOpenChange(!open)}
+        style={{ height: 52, width: 52 }}
+        className="flex shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_hsl(var(--primary)/0.4)] transition-transform hover:scale-105 active:scale-95"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {open ? (
+            <motion.span key="close" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
+              <X className="h-5 w-5" />
+            </motion.span>
+          ) : (
+            <motion.span key="open" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
+              <MessageCircle className="h-5 w-5" />
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
+    </div>
+  )
+}
 `
 
 // Map merged into both build pipelines (user files always win).
@@ -6506,7 +6889,7 @@ export const WYBER_UI_KIT_FILES: Record<string, string> = {
 // Project-type routing hint — injected ABOVE the full WYBER_UI_KIT_PROMPT
 // catalog (never in place of it) so the model's attention lands on the ~35-45
 // components most relevant to what it's actually building before it scans the
-// full 158-component list. Keys match the `projectType` values used throughout
+// full 166-component list. Keys match the `projectType` values used throughout
 // route.ts; 'mobile' is deliberately absent — the kit is never injected into
 // buildMobileSystemPrompt at all (React Native has no DOM/Tailwind to run it).
 // Every name below is cross-checked against WYBER_UI_KIT_SOURCE exports by the
@@ -6524,13 +6907,15 @@ Navigation: SidebarNav, Breadcrumbs, CommandPalette, PillTabNav, NotificationBel
 Data display: StickyTable, KanbanCard, ProgressRing, Sparkline, MiniBarChart, AvatarStack, FilterChipBar, ComparisonTable, RatingStars, StatCounterGrid, DataRow, StatBlock, AnimatedNumber
 Forms: FloatingLabelInput, OtpInput, StepperWizard, ChipToggleGroup, CustomCheckbox, CustomRadio, SearchWithSuggestions, RangeSlider
 Feedback & overlays: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu, ContextMenu, Dialog, EmptyState, ShimmerSkeletonCard, SpinnerRing, ProgressBar
-Surfaces & basics: Card, GlassPanel, SpotlightCard, ExpandableCard, Button, Badge, Switch, Tabs`,
+Surfaces & basics: Card, GlassPanel, SpotlightCard, ExpandableCard, Button, Badge, Switch, Tabs
+AI/agent features (if this product has any AI/assistant/automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, ThinkingOrbs, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget — reach for these instead of hand-rolling a chat box; a plain white-card dashboard with no signature surface is a build defect, not a valid minimal choice`,
   webapp: `PRIORITIZE THESE for this build (general web app) — reach for them before scanning the full catalog below; it's still there for anything not covered here.
 Core: Button, Card, GlassPanel, SpotlightCard, EmptyState, Tabs, Dialog, Accordion, Switch, Input, Textarea
 Data: DataRow, StatBlock, AnimatedNumber, ProgressRing, Sparkline, AvatarStack, FilterChipBar
 Feedback: ToastStack, ConfirmModal, Drawer, Tooltip, PopoverMenu, AnnouncementBar
 Forms: StepperWizard, CustomCheckbox, CustomRadio, RangeSlider
-Layout & hero: AuroraBackground, BackgroundGrid, HeroHeadline, SectionHeading, FeatureCard, BentoGrid, BentoCard, Navbar, Footer, CTASection`,
+Layout & hero: AuroraBackground, BackgroundGrid, HeroHeadline, SectionHeading, FeatureCard, BentoGrid, BentoCard, Navbar, Footer, CTASection
+AI/agent features (if this product has any AI/assistant/automation surface): AIAssistantPanel, PromptInputBar, AIPlanCard, ThinkingOrbs, AIActionBar, ReasoningTrace, AIDiffBlock, FloatingAssistantWidget`,
 }
 
 // Compact API reference injected into the generation system prompt — the ONLY
@@ -6540,7 +6925,7 @@ Layout & hero: AuroraBackground, BackgroundGrid, HeroHeadline, SectionHeading, F
 export const WYBER_UI_KIT_PROMPT = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WYBER UI KIT — PRE-BUILT PREMIUM COMPONENTS (USE THESE — do NOT hand-write equivalents)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The platform injects src/wyber-ui.tsx into every build: ~155 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
+The platform injects src/wyber-ui.tsx into every build: ~163 production-grade, motion-enabled components already themed by YOUR design tokens. Import them instead of writing your own buttons/cards/heroes — they make the app feel premium at zero token cost. Unused imports are tree-shaken.
 
 Import (relative — from src/App.tsx use './wyber-ui', from src/components/* use '../wyber-ui'):
 import { Button, SpotlightCard, BentoGrid, BentoCard, Reveal, Stagger, StaggerItem, SectionHeading, HeroHeadline, NoiseOverlay, StickyShowcase, ScrollStack, Parallax, SplitTextReveal, ScrollProgress, TiltCard, LiquidUnderline, Navbar, Footer, CTASection, PricingCard, TestimonialCard, FeatureCard, StatBlock, AnimatedNumber, Marquee, AuroraBackground, BackgroundGrid, GradientBorder, GlassPanel, Card, Badge, Input, Textarea, Tabs, Dialog, Accordion, Switch, Skeleton, EmptyState, MonoLabel, SectionNumber, EditorialHeadline, HairlineFrame, MediaFrame, PinnedStory, DataRow, CursorGlow, cn } from './wyber-ui'
@@ -6598,7 +6983,7 @@ SECTIONS (compose full pages fast):
 - <Footer brand description columns={[{title, links:[{label,href}]}]} note="© 2026 …" />
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-EXPANDED LIBRARY — 112 more components across 11 categories (same import path './wyber-ui', same token rules as above; grouped by category, one-liner API per component)
+EXPANDED LIBRARY — 120 more components across 12 categories (same import path './wyber-ui', same token rules as above; grouped by category, one-liner API per component)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 HERO & HEADLINE FX:
@@ -6746,6 +7131,16 @@ PREMIUM INTERACTIONS:
 <HoverImageGrid images={[{ id: '1', src: '/a.jpg', alt: 'A' }]} columns={3} /> — an image grid gallery where hovering one image scales it up slightly while the rest dim and desaturate, all with spring transitions; use for portfolio grids, photo galleries, or media showcases.
 <CursorFollowBlob size={220} color="primary" /> — place inside a relatively-positioned container to get a soft blurred glow blob that trails the cursor with spring lag (distinct from CursorGlow, which snaps to the exact pointer position); use behind hero content or interactive panels for an ambient premium feel.
 <ScrollHorizontalGallery distance={1200}>{items}</ScrollHorizontalGallery> — pins a horizontal row of children and translates it sideways as the user scrolls vertically past the section (scroll-jacked gallery); use for case-study showcases, image galleries, or step sequences you want to reveal horizontally during normal page scroll.
+
+AI / AGENT INTERFACES:
+- <AIActionBar onRetry={fn} onCopy={fn} onLike={fn} onDislike={fn} onShare={fn} /> — row of small icon buttons (retry, copy w/ "Copied" flash, thumbs up/down that toggle a persisted reaction color, share) that only renders the actions you pass handlers for; use under an AI/assistant message for response feedback.
+- <AIDiffBlock filename="src/App.tsx" lines={[{text:'  const x = 1', type:'context'},{text:'- old line', type:'remove'},{text:'+ new line', type:'add'}]} /> — code diff viewer with a filename header showing +added/-removed counts and per-line red/green tinted rows; use to show what an AI agent changed in a file.
+- <ThinkingOrbs label="Searching" /> — small pill with three bouncing dots and a label; use as the inline loading state while an AI response streams in or an agent is working.
+- <AIPlanCard title="Migrating the billing module" progress="4/7" steps={[{label:'Read schema', status:'done'},{label:'Write migration', status:'active'},{label:'Deploy', status:'pending'}]} /> — agent task/plan card listing steps with done (check)/active (spinner)/blocked (x)/pending (dot) status icons; use to show an agent's live execution plan.
+- <AIAssistantPanel greeting="Hi, how can I help?" suggestions={['Summarize this page','Find bugs']} onSuggestion={fn} onSubmit={fn} /> — self-contained assistant card: icon badge + greeting, optional suggestion chips, and an input row with a circular send button; use for an embedded AI panel or empty-state chat starter.
+- <PromptInputBar value={text} onChange={setText} onSubmit={fn} modes={['Agent','Auto']} mode={mode} onModeChange={setMode} placeholder="Build anything…" /> — multi-line prompt textarea whose border glows with an animated conic gradient on focus, with an optional mode-switcher pill row and a circular send button that disables when empty; use as the primary "ask the AI" input for agent/builder-style products.
+- <ReasoningTrace tabs={['Steps','Reasoning','Search']} items={[{label:'Read the current schema', done:true},{label:'Plan the column moves', done:true},{label:'Write the migration', done:false}]} /> — checklist of completed/pending reasoning steps above a tab row for switching views; use to visualize an agent's chain-of-thought or execution trace.
+- <FloatingAssistantWidget open={open} onOpenChange={setOpen} title="Assistant">{content}</FloatingAssistantWidget> — bottom-right floating launcher button that morphs into a spring-animated popup panel (rotating icon between chat/close); use for a site-wide support/AI-assistant widget.
 
 RULES:
 - PREFER kit components over hand-rolled ones for: nav, footer, pricing, testimonials, FAQ, stats, feature grids, CTAs, modals, tabs.
