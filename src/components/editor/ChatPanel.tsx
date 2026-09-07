@@ -1475,45 +1475,72 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
       let full = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        full += decoder.decode(value, { stream:true });
+      // Idle-stream watchdog: the only prior safety net here was genTimeout's
+      // 820s ABSOLUTE ceiling on the whole request — useless for catching a
+      // stall in real time, since a genuinely dead connection would sit with
+      // an empty, permanently 'streaming' bubble for up to 13+ minutes before
+      // that fires. Live-reproduced: of 5 concurrent completeness-retry
+      // batches on one real build, 2 came back with empty content and never
+      // resolved, while their network requests showed 200 OK — a stalled
+      // stream (dropped mid-body, same class of issue as an earlier ECONNRESET
+      // this session), not a code path that failed to finalize. reader.read()
+      // was just awaited forever with nothing to time it out. The heartbeat
+      // server-side sends a marker at least every 5-15s under normal
+      // operation, so 45s with truly zero bytes is already well past anything
+      // healthy — abort via the SAME genController the Stop button uses, so
+      // the existing AbortError branch below finalizes this bubble with a
+      // real error + Retry instead of leaving it stuck empty forever.
+      const IDLE_STREAM_TIMEOUT_MS = 45_000;
+      let idleTimer: ReturnType<typeof setTimeout> | null = null;
+      const armIdleTimer = () => {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => genController.abort(), IDLE_STREAM_TIMEOUT_MS);
+      };
+      try {
+        armIdleTimer();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          armIdleTimer();
+          full += decoder.decode(value, { stream:true });
 
-        // Extract [progress: ...] markers and surface them live
-        const steps = extractProgressLines(full);
-        // Deterministic batch notice for big builds: the system prompt asks the
-        // model to announce >5-file builds, but this guarantees the user is told
-        // regardless — pinned as the first progress line for the whole stream.
-        const fileTagCount = (full.match(/<file path="/g) || []).length;
-        const batchNotice = fileTagCount > 5
-          ? [t('bigBuildNoticeMsg').replace('{count}', String(fileTagCount))]
-          : [];
-        if (steps.length > 0 || batchNotice.length > 0) setProgressSteps([...batchNotice, ...steps]);
+          // Extract [progress: ...] markers and surface them live
+          const steps = extractProgressLines(full);
+          // Deterministic batch notice for big builds: the system prompt asks the
+          // model to announce >5-file builds, but this guarantees the user is told
+          // regardless — pinned as the first progress line for the whole stream.
+          const fileTagCount = (full.match(/<file path="/g) || []).length;
+          const batchNotice = fileTagCount > 5
+            ? [t('bigBuildNoticeMsg').replace('{count}', String(fileTagCount))]
+            : [];
+          if (steps.length > 0 || batchNotice.length > 0) setProgressSteps([...batchNotice, ...steps]);
 
-        // Live extended-thinking text (opt-in, new-build full generation only)
-        const reasoningSoFar = extractReasoning(full);
-        if (reasoningSoFar) setLiveReasoning(reasoningSoFar);
+          // Live extended-thinking text (opt-in, new-build full generation only)
+          const reasoningSoFar = extractReasoning(full);
+          if (reasoningSoFar) setLiveReasoning(reasoningSoFar);
 
-        // Agent-team feed: server-authored [agent:{...}] events render live on
-        // top of the turn's accumulated events (see agent-turn store).
-        if (AGENT_TEAM_ENABLED) {
-          const liveAgentEvents = extractAgentEvents(full);
-          if (liveAgentEvents.length || turnAgentEventsRef.current.length) {
-            useAgentTurnStore.getState().setEvents([...turnAgentEventsRef.current, ...liveAgentEvents]);
+          // Agent-team feed: server-authored [agent:{...}] events render live on
+          // top of the turn's accumulated events (see agent-turn store).
+          if (AGENT_TEAM_ENABLED) {
+            const liveAgentEvents = extractAgentEvents(full);
+            if (liveAgentEvents.length || turnAgentEventsRef.current.length) {
+              useAgentTurnStore.getState().setEvents([...turnAgentEventsRef.current, ...liveAgentEvents]);
+            }
           }
-        }
 
-        const cleanedFull = cleanStreamingDisplay(full)
-          .replace(/<agent>[\s\S]*?<\/agent>/g, '')
-          .replace(/<flow>[\s\S]*?<\/flow>/g, '')
-          // Strip [progress: ...] tags from visible chat text
-          .replace(/\[progress:[^\]]+\]/gi, '')
-          .trim();
-        // Internal passes (fill/scaffold/wire) share the chain bubble via sharedBubbleId.
-        // Don't leak their streaming prose into the chat — the chain bubble already
-        // shows "Building your app — X files planned" and that's all the user needs to see.
-        if (ownsBubble) setStreamingContent(cleanedFull || '');
+          const cleanedFull = cleanStreamingDisplay(full)
+            .replace(/<agent>[\s\S]*?<\/agent>/g, '')
+            .replace(/<flow>[\s\S]*?<\/flow>/g, '')
+            // Strip [progress: ...] tags from visible chat text
+            .replace(/\[progress:[^\]]+\]/gi, '')
+            .trim();
+          // Internal passes (fill/scaffold/wire) share the chain bubble via sharedBubbleId.
+          // Don't leak their streaming prose into the chat — the chain bubble already
+          // shows "Building your app — X files planned" and that's all the user needs to see.
+          if (ownsBubble) setStreamingContent(cleanedFull || '');
+        }
+      } finally {
+        if (idleTimer) clearTimeout(idleTimer);
       }
       const { files: newFiles, chatText } = parseGenerationOutput(full);
       const editBlocks = parseEditBlocks(full);
@@ -2309,10 +2336,25 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // same signal the ownsBubble branch inside executeGeneration already
         // respects (see the comment there). "Built it — check the preview"
         // here would be exactly the false-ready message that check exists to
-        // prevent — files are still actively being generated. Leave this
-        // bubble in its honest in-progress state; the repair pass renders its
-        // own visible "still working"/"done" bubble once it resolves.
-        updateMessage(chainId, { status: 'streaming' });
+        // prevent — files are still actively being generated.
+        //
+        // An earlier version of this fix left the bubble at status:'streaming'
+        // and stopped, trusting the repair pass's own bubble to be the one
+        // that resolves. Live-reproduced the result: since nothing ever comes
+        // back to THIS bubble (ownsBubble is false for the whole one-shot
+        // path, same reason it needed this finalization block in the first
+        // place), it spins forever — an orphaned "Working on your changes..."
+        // that never closes, sitting next to the repair pass's own messages
+        // that finalize normally. Traded a false "done" for a stuck spinner,
+        // which isn't a fix. Finalize it now instead, honestly: say what
+        // landed in THIS pass and that the rest is still coming, rather than
+        // claiming the build (or even this bubble) is finished.
+        const screenNamesSoFar = liveFilesOneShot.map(p => p.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? p);
+        const partialMsg = screenNamesSoFar.length > 0
+          ? `${screenNamesSoFar.length} file${screenNamesSoFar.length === 1 ? '' : 's'} in — wiring up the rest now, a few more updates coming below.`
+          : 'Wiring up the rest now — a few more updates coming below.';
+        updateMessage(chainId, { content: partialMsg, status: 'done', filesChanged: liveFilesOneShot });
+        persistMessage('assistant', partialMsg, liveFilesOneShot);
       } else if (oneShotOk) {
         const screenNamesOneShot = liveFilesOneShot.map(p => p.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? p);
         const screenListOneShot = screenNamesOneShot.length <= 1

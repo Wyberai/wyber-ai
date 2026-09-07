@@ -34,7 +34,22 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // Sonnet, not Opus — matches the existing Sonnet-first policy
 // (WYBER_SONNET_FIRST_BUILD in route.ts) and keeps each small, page-scoped
 // call cheap; there's no reason a single page needs Opus-level reasoning.
-const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-haiku-4-5-20251001'
+//
+// The default below was actually 'claude-haiku-4-5-20251001' — contradicting
+// this exact comment — with no CLAUDE_PARALLEL_MODEL_ID override set, so
+// EVERY claude-parallel page generation has silently been running on Haiku,
+// not Sonnet. Confirmed live: a real "CRM for a real estate agency" build
+// went through this path (buildId=2vx047z) and produced a page with zero
+// wyber-ui imports — bare Tailwind, plain white cards, default font — despite
+// the full WYBER_UI_KIT_PROMPT (166 components, explicit "USE THESE" rules)
+// being present in input.systemPrompt (route.ts passes the same
+// staticSystemPrompt used everywhere else). The kit was there; the model
+// reading it wasn't the one the comment says it should be. The `[generate
+// cache] ... claude-parallel model=...` log line was never a fix for this —
+// it logs route.ts's OWN resolvedTier→MODELS mapping (always 'claude-sonnet-5'
+// since Aug 2), not the model this file actually calls, so the discrepancy
+// stayed invisible in every log line printed all night.
+const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-sonnet-5'
 const MAX_PARALLEL_PAGES = Number(process.env.CLAUDE_PARALLEL_MAX_PAGES) || 6
 const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 16000
 // ts_rank scores are small — see the identical comment in wybercode.ts. A
