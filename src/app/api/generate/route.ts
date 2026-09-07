@@ -4777,7 +4777,39 @@ ${code}
     // clamp below) — most of those edits now complete in one call instead of
     // three or four, with no cost change (the model still stops at its own
     // natural end_turn; a higher ceiling doesn't make it write more).
-    const maxTokens = resolvedTier === 'fast' ? 24000 : resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
+    //
+    // 'fast' is now the ONLY tier real traffic reaches — resolveModelTier
+    // unconditionally returns 'fast' since 0f94433 (no more Opus
+    // auto-escalation; 'default'/'premium' only fire on an explicit user
+    // pick). That means EVERY build, not just small edits, has been living
+    // under this same 24000 cap since then — including genuine multi-file
+    // new builds and large edits, which the comment above never intended to
+    // constrain (its evidence was "a notifications dropdown or settings
+    // page"). Confirmed live tonight: a fresh multi-screen SaaS build and a
+    // 2-page edit ("Add a document editor page..., and an analytics page...")
+    // both hit the 24000 ceiling on tool-iter=0 and needed 3-4 chained
+    // continuations each — the exact 3-6+ minute, multi-continuation pattern
+    // this cap was raised to fix in the first place, just at a higher token
+    // count. Each additional continuation is another multi-minute single-
+    // tool-call stretch with no safe place to interleave a heartbeat (see
+    // HEARTBEAT_BYTES — suppressed for the whole time a file's content is
+    // streaming, since interleaving would corrupt it), so more continuations
+    // directly means more exposure to a dropped connection on a long-idle
+    // stretch, on top of the wasted wall-clock.
+    //
+    // A first attempt at this gated the raise behind prompt.length < 150
+    // (mirroring isSimpleEdit below) to keep the proven-good 24000 for
+    // genuinely small edits — but that exact "document editor + analytics
+    // page" prompt is only ~108 characters while asking for two full feature
+    // pages, so it was classified "simple" and got the unchanged 24000 cap
+    // right back, reproducing the identical failure on retest. Prompt LENGTH
+    // has no reliable relationship to how much code a request needs — this
+    // file already trusts "a higher ceiling doesn't make it write more" (the
+    // model stops at its own natural end_turn regardless), so there is no
+    // real cost to just always giving 'fast' tier the same 64000 headroom
+    // 'default' already gets, rather than trying to pre-guess scope from
+    // prompt text.
+    const maxTokens = resolvedTier === 'fable' ? 96000 : resolvedTier === 'premium' ? 96000 : 64000
 
     // These five lookups are all independent reads (none depends on another's
     // result) but used to run as five sequential awaits — on every single

@@ -530,6 +530,17 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const executeGenerationRef = useRef<((msg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => Promise<boolean>) | null>(null);
   // Cap consecutive self-heal (autofix) runs so a broken build can't loop and drain credits.
   const autofixCountRef = useRef(0);
+  // Set by executeGeneration whenever ITS OWN completeness check (4c) just
+  // dispatched a repair pass for files this turn never wrote — mirrors the
+  // ownsBubble-gated `completenessRetryFired` local var below, but exposed
+  // out-of-band so a caller with no bubble of its own (the one-shot path in
+  // runAgenticBuild, which passes sharedBubbleId and so never sees that gate)
+  // can still tell whether "done" would be the exact false-ready message the
+  // check exists to prevent. Reset at the top of every call, read right after
+  // the awaited call returns — safe because wyber-autofix dispatches run on a
+  // fresh call stack (deferred via setTimeout), never nested inside the call
+  // that fired them.
+  const completenessRetryFiredRef = useRef(false);
   // Tracks which file paths were written in the last edit turn so the NEXT
   // turn's file-scoring gives them a +50 boost. Without this, the model loses
   // track of its own edits on follow-up messages and rewrites files from scratch.
@@ -1033,6 +1044,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
+    completenessRetryFiredRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
     if (!opts?.silent) { autofixCountRef.current = 0; loopGuardRef.current.reset(); }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
@@ -1682,6 +1694,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           const missing = diffPlannedAgainstWritten(planned, writtenPaths)
           if (missing.length > 0) {
             completenessRetryFired = true
+            completenessRetryFiredRef.current = true
             pushAgentEvents({ agent: 'orchestrator', status: 'progress', detail: `Finishing ${missing.length} remaining file${missing.length === 1 ? '' : 's'}...` })
             // Dispatch in small concurrent batches instead of one request
             // asking for every missing file at once. A single big request
@@ -2290,7 +2303,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const plannedPaths = (staged?.files ?? manifest).map(f => f.path);
       const filesAtCloseOneShot = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
       const liveFilesOneShot = plannedPaths.filter(p => filesAtCloseOneShot[p] !== undefined);
-      if (oneShotOk) {
+      if (oneShotOk && completenessRetryFiredRef.current) {
+        // executeGeneration's own completeness check (4c) just found real
+        // planned files this pass never wrote and dispatched a repair pass —
+        // same signal the ownsBubble branch inside executeGeneration already
+        // respects (see the comment there). "Built it — check the preview"
+        // here would be exactly the false-ready message that check exists to
+        // prevent — files are still actively being generated. Leave this
+        // bubble in its honest in-progress state; the repair pass renders its
+        // own visible "still working"/"done" bubble once it resolves.
+        updateMessage(chainId, { status: 'streaming' });
+      } else if (oneShotOk) {
         const screenNamesOneShot = liveFilesOneShot.map(p => p.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? p);
         const screenListOneShot = screenNamesOneShot.length <= 1
           ? screenNamesOneShot[0]
