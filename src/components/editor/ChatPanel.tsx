@@ -1483,14 +1483,28 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // batches on one real build, 2 came back with empty content and never
       // resolved, while their network requests showed 200 OK — a stalled
       // stream (dropped mid-body, same class of issue as an earlier ECONNRESET
-      // this session), not a code path that failed to finalize. reader.read()
-      // was just awaited forever with nothing to time it out. The heartbeat
-      // server-side sends a marker at least every 5-15s under normal
-      // operation, so 45s with truly zero bytes is already well past anything
-      // healthy — abort via the SAME genController the Stop button uses, so
-      // the existing AbortError branch below finalizes this bubble with a
-      // real error + Retry instead of leaving it stuck empty forever.
-      const IDLE_STREAM_TIMEOUT_MS = 45_000;
+      // this session), not a code path that failed to finalize.
+      //
+      // First attempt at this used 45s, reasoning "the server heartbeat fires
+      // every 5-15s, so 45s of true silence is already abnormal" — wrong: the
+      // server heartbeat (route.ts's HEARTBEAT_BYTES) is deliberately
+      // SUPPRESSED for the entire time a <file>/<edit> body is open, because
+      // injecting a marker into literal file content would corrupt it. A
+      // single file can legitimately take over a minute to stream now that
+      // the max_tokens ceiling is fixed (64000, up from 24000) — that whole
+      // window has zero heartbeat coverage by design, not by bug. Live-
+      // reproduced the false positive TWICE — once at 45s, again at 120s
+      // still raised on top of a stale suppression window — a healthy
+      // build's sequential fallback killed with net::ERR_ABORTED, and the
+      // user correctly rejected "hit Retry" as an acceptable failure mode for
+      // a real customer. The real fix landed server-side (route.ts's
+      // MAX_SUPPRESSION_MS/MAX_TOOL_SUPPRESSION_MS): suppression itself is
+      // now capped at 60s, so a heartbeat is guaranteed at least every
+      // ~75s (60s cap + one 15s interval tick) no matter how long a single
+      // file takes to stream. 120s here is now a comfortable ~1.6x margin
+      // over that guarantee, not a guess — and still catches a genuinely
+      // dead connection in ~2 minutes instead of 13+.
+      const IDLE_STREAM_TIMEOUT_MS = 120_000;
       let idleTimer: ReturnType<typeof setTimeout> | null = null;
       const armIdleTimer = () => {
         if (idleTimer) clearTimeout(idleTimer);

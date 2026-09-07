@@ -5448,9 +5448,21 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // See HEARTBEAT_BYTES above. Skipped while a file/edit body or a
             // reasoning block is actively streaming — those bytes are literal
             // file content or displayed reasoning prose, not a safe place to
-            // interleave an out-of-band marker.
+            // interleave an out-of-band marker. Same MAX_SUPPRESSION_MS
+            // override as the legacy loop's heartbeat below — a single file
+            // can now legitimately stream for well over a minute (64000
+            // max_tokens), and unbounded suppression here fed the exact same
+            // false-abort failure live-reproduced on that path.
+            const MAX_TOOL_SUPPRESSION_MS = 60_000
+            let toolSuppressedSince: number | null = null
             const heartbeatTimer = setInterval(() => {
-              if (toolOpened || inThinkingBlock) return
+              const suppressed = toolOpened || inThinkingBlock
+              if (suppressed) {
+                if (toolSuppressedSince === null) toolSuppressedSince = Date.now()
+                if (Date.now() - toolSuppressedSince < MAX_TOOL_SUPPRESSION_MS) return
+              } else {
+                toolSuppressedSince = null
+              }
               try { controller.enqueue(HEARTBEAT_BYTES) } catch { /* stream closing */ }
             }, HEARTBEAT_INTERVAL_MS)
             try {
@@ -5897,8 +5909,32 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             const closes = (assistantSoFar.match(/<\/(?:file|edit)>/g) || []).length
             return opens > closes
           }
+          // How long suppression has been continuously in effect — a single
+          // file can legitimately take well over a minute to stream now that
+          // the max_tokens ceiling is fixed (64000, up from 24000), and for
+          // that whole window this suppression is total: zero bytes reach the
+          // client no matter how long it runs. Live-reproduced the failure
+          // mode this creates: the client's own idle-stream watchdog (added
+          // tonight for a different bug) has no way to tell "healthy but
+          // suppressed" apart from "actually stalled," and fired a real
+          // net::ERR_ABORTED on a build that was working fine — twice, even
+          // after raising its threshold from 45s to 120s, because suppression
+          // just stayed on longer than that too. A stray heartbeat marker
+          // landing inside one file's content (worst case: a harmless-looking
+          // stray comment-like string a human or self-heal pass can clean up)
+          // is a far smaller failure than the client killing the entire build
+          // with no signal to explain why — so past MAX_SUPPRESSION_MS of
+          // continuous suppression, send the heartbeat through anyway.
+          const MAX_SUPPRESSION_MS = 60_000
+          let suppressedSince: number | null = null
           const heartbeatTimer = stage === 'plan' ? null : setInterval(() => {
-            if (insideOpenTag() || inThinkingBlock) return
+            const suppressed = insideOpenTag() || inThinkingBlock
+            if (suppressed) {
+              if (suppressedSince === null) suppressedSince = Date.now()
+              if (Date.now() - suppressedSince < MAX_SUPPRESSION_MS) return
+            } else {
+              suppressedSince = null
+            }
             try { controller.enqueue(HEARTBEAT_BYTES) } catch { /* stream closing */ }
           }, HEARTBEAT_INTERVAL_MS)
           try {
