@@ -347,11 +347,6 @@ export async function bundleFiles(
 export function generateHTML(js: string, css: string, projectId: string): string {
   const importmap = JSON.stringify({ imports: EXTERNAL_DEPS }, null, 2)
 
-  // Wrap in try/catch for error display
-  const wrappedJS = `
-${js}
-`
-
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -382,9 +377,9 @@ ${js}
 <body>
   <div id="root"></div>
   <div id="wyber-error" style="display:none;position:fixed;inset:0;background:#09090b;color:#ef4444;font-family:monospace;padding:24px;font-size:13px;overflow:auto;z-index:9999;white-space:pre-wrap;"></div>
-  <script type="module">
+  <script>
     window.__WYBER_PROJECT_ID__ = '${projectId}';
-    
+
     // Error display
     function showError(msg) {
       const el = document.getElementById('wyber-error');
@@ -392,15 +387,13 @@ ${js}
       console.error('[WyberPreview]', msg);
     }
 
-    // Global error handler
+    // Global error handler — the module script below can't be wrapped in
+    // try/catch (a static import declaration inside a block is a
+    // SyntaxError, and the bundled js always has external imports like
+    // react at its top level), so this is the only net that catches a
+    // runtime error from it.
     window.addEventListener('error', e => showError(e.message + '\\n' + (e.filename ? e.filename + ':' + e.lineno : '')));
     window.addEventListener('unhandledrejection', e => showError(String(e.reason)));
-    
-    try {
-      ${wrappedJS}
-    } catch(e) {
-      showError(String(e) + '\\n\\n' + (e.stack || ''));
-    }
 
     // Phase 3: HMR via BroadcastChannel
     const hmrChannel = new BroadcastChannel('wyber-hmr-${projectId}');
@@ -409,6 +402,9 @@ ${js}
         window.location.reload();
       }
     });
+  </script>
+  <script type="module">
+${js}
   </script>
   ${WYBER_BRIDGE_SCRIPT}
 </body>
