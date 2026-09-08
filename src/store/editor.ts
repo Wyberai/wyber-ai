@@ -147,7 +147,7 @@ interface EditorState {
   markFileDirty: (path: string, dirty: boolean) => void;
 
   // Chat
-  setMessages: (msgs: ChatMessage[]) => void;
+  setMessages: (msgs: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => void;
   addMessage: (msg: ChatMessage) => void;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
   setIsGenerating: (v: boolean) => void;
@@ -320,7 +320,7 @@ export const useEditorStore = create<EditorState>()(
       if (s.files[path]) s.files[path].isDirty = dirty;
     }),
 
-    setMessages: (msgs) => set((s) => { s.messages = msgs; }),
+    setMessages: (msgs) => set((s) => { s.messages = typeof msgs === 'function' ? msgs(s.messages) : msgs; }),
     addMessage: (msg) => set((s) => { s.messages.push(msg); }),
     updateMessage: (id, updates) => set((s) => {
       const idx = s.messages.findIndex(m => m.id === id);
