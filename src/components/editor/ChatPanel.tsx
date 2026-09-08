@@ -559,6 +559,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const agentPassCountRef = useRef(0);
   const autoRetriedBuildIds = useRef<Set<string>>(new Set());
   const sessionMountTime = useRef(Date.now());
+  const buildAutoRetryCountRef = useRef(0);
   // Budget for internal staging passes (scaffold + fill batches + wire).
   // Typical app: 1 scaffold + 3 fill batches + 1 wire = 5 passes.
   // Large app (20 files): 1 scaffold + 7 fill batches (3 files each) + 1 wire = 9 passes.
@@ -1054,7 +1055,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     setLiveReasoning('');
     completenessRetryFiredRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent) { autofixCountRef.current = 0; loopGuardRef.current.reset(); }
+    if (!opts?.silent) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
     // self-heal/autofix rerun (silent), not a truncated-stream continuation,
     // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is
@@ -2952,7 +2953,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
   const handleRetry = useCallback(async (messageId: string) => {
     const msg = messages.find(m => m.id === messageId);
     if (!msg?.retryPrompt) return;
-    setMessages(messages.filter(m => m.id !== messageId));
+    setMessages(prev => prev.filter(m => m.id !== messageId));
     if (msg.retryLane === 'chat') {
       await handleConversational(msg.retryPrompt, null, true, { echoedUser: true });
     } else {
@@ -2960,15 +2961,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
   }, [messages, setMessages, handleConversational, executeGeneration]);
 
-  // Auto-retry a build that was interrupted — fires once per failed message,
-  // 2 s after the error lands. On the second failure (auto-retry already tried)
-  // the error stays visible so the user sees a Retry button instead of an loop.
+  // Auto-retry a build that was interrupted — fires at most ONCE per user-initiated
+  // build. The second failure stays visible so the user sees a Retry button.
   useEffect(() => {
     const errorMsg = [...messages].reverse().find(m => m.status === 'error' && m.retryLane === 'build' && m.retryPrompt);
     if (!errorMsg || isGenerating) return;
     if (autoRetriedBuildIds.current.has(errorMsg.id)) return;
     if (errorMsg.timestamp < sessionMountTime.current) return; // stale — DB-loaded from a previous session
+    if (buildAutoRetryCountRef.current >= 1) return; // already auto-retried once this build; surface the error
     autoRetriedBuildIds.current.add(errorMsg.id);
+    buildAutoRetryCountRef.current += 1;
     const timer = setTimeout(() => handleRetry(errorMsg.id), 2000);
     return () => clearTimeout(timer);
   }, [messages, isGenerating, handleRetry]);
