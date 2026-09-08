@@ -169,7 +169,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     securityFlaggedSuffixMsg: ', {count} flagged',
     workedThisTurnMsg: 'worked this turn',
     doneStatusMsg: 'done',
-    doneCheckPreviewMsg: 'Done — check the preview.',
+    doneCheckPreviewMsg: 'Done.',
   },
   hi: {
     planningAppMsg: 'आपका ऐप प्लान हो रहा है...',
