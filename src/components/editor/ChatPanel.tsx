@@ -558,6 +558,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // Internal passes used this turn (fills, fixes) — the anti-runaway budget.
   const agentPassCountRef = useRef(0);
   const autoRetriedBuildIds = useRef<Set<string>>(new Set());
+  const sessionMountTime = useRef(Date.now());
   // Budget for internal staging passes (scaffold + fill batches + wire).
   // Typical app: 1 scaffold + 3 fill batches + 1 wire = 5 passes.
   // Large app (20 files): 1 scaffold + 7 fill batches (3 files each) + 1 wire = 9 passes.
@@ -2960,7 +2961,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
     const errorMsg = [...messages].reverse().find(m => m.status === 'error' && m.retryLane === 'build' && m.retryPrompt);
     if (!errorMsg || isGenerating) return;
     if (autoRetriedBuildIds.current.has(errorMsg.id)) return;
-    if (Date.now() - errorMsg.timestamp > 15_000) return; // stale — page reload, not live failure
+    if (errorMsg.timestamp < sessionMountTime.current) return; // stale — DB-loaded from a previous session
     autoRetriedBuildIds.current.add(errorMsg.id);
     const timer = setTimeout(() => handleRetry(errorMsg.id), 2000);
     return () => clearTimeout(timer);
