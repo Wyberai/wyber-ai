@@ -135,7 +135,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     streamCutOffMsg: '✦ Still building — finishing the remaining files now.',
     emptyResponseMsg: "**Something went wrong** — the model returned an empty response, so nothing was changed. You weren't charged for this. Please try again.",
     nothingChangedMsg: "**No file changes were made** — try being more specific. Instead of \"add analytics\", try \"Build a full Analytics page with a line chart showing monthly revenue, a bar chart for deals by stage, and 4 KPI cards.\" You weren't charged for this.",
-    continuationDoneMsg: '✓ Finished applying the remaining files — the build is complete. Check the preview.',
+    continuationDoneMsg: '✓ Finished applying the remaining files — the build is complete.',
     hitOutputLimitMsg: '✦ Finishing your app — the rest lands in the next pass.',
     supabaseUnreachableMsg: "⚠ I couldn't reach your connected Supabase project, so this build doesn't have a working database. Check your keys in the Connectors tab, then ask me to rebuild the data layer.",
     gptTruncatedMsg: "⚠ This GPT build stopped after hitting its step limit — some files may already be in, but it may be incomplete. Ask me to continue and I'll pick up where it left off.",

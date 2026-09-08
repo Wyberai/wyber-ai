@@ -1030,7 +1030,7 @@ Change requested: ${editInstruction.trim()}`
             ref={iframeRef}
             title="Wyber Preview"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && !(error && healFailed && !revertedToGood) ? 'block' : 'none', background: '#09090b' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && (!error || (healFailed && revertedToGood)) ? 'block' : 'none', background: '#09090b' }}
           />
         )}
       </div>

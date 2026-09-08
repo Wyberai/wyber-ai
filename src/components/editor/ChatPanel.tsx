@@ -2385,7 +2385,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           ? screenNamesOneShot[0]
           : `${screenNamesOneShot.slice(0, -1).join(', ')} and ${screenNamesOneShot[screenNamesOneShot.length - 1]}`;
         const oneShotSummary = screenNamesOneShot.length > 0
-          ? `Built it — ${screenListOneShot} ${screenNamesOneShot.length === 1 ? 'is' : 'are'} live.\nCheck the preview, or tell me what to change next.`
+          ? `Built it — ${screenListOneShot} ${screenNamesOneShot.length === 1 ? 'is' : 'are'} live. Tell me what to change next.`
           : t('doneCheckPreviewMsg');
         updateMessage(chainId, { content: oneShotSummary, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', oneShotSummary, liveFilesOneShot);
@@ -2582,7 +2582,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       ? screenNames[0]
       : `${screenNames.slice(0, -1).join(', ')} and ${screenNames[screenNames.length - 1]}`;
     const summary = screenNames.length > 0
-      ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live.\nCheck the preview, or tell me what to change next.`
+      ? `Built it — ${screenList} ${screenNames.length === 1 ? 'is' : 'are'} live. Tell me what to change next.`
       : t('doneCheckPreviewMsg');
     // buildId ties this to the server-side [generate cache] elapsed_ms lines
     // for the same build — cross-reference to split "model latency" from
