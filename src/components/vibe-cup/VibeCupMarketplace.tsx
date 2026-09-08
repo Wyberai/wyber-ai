@@ -168,6 +168,20 @@ export function VibeCupMarketplace() {
 
 function EntryCard({ entry, isVoted, onVote }: { entry: Entry; isVoted: boolean; onVote: () => void }) {
   const award = entry.award ? AWARD_META[entry.award] : null
+  const [copied, setCopied] = useState(false)
+
+  function handleShare() {
+    const url = `${window.location.origin}/vibe-cup/marketplace`
+    const text = `Check out "${entry.app_name}" in the Wybe Cup — vote for the best AI-built app and win $2,000 💡`
+    if (navigator.share) {
+      navigator.share({ title: entry.app_name ?? 'Wybe Cup', text, url }).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(`${text}\n${url}`).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      })
+    }
+  }
 
   return (
     <div style={{ background: BG_RAISED, border: `1px solid ${BORDER}`, borderRadius: 16, padding: 24, display: 'flex', flexDirection: 'column', gap: 14, position: 'relative', transition: 'border-color 0.15s' }}>
@@ -194,7 +208,7 @@ function EntryCard({ entry, isVoted, onVote }: { entry: Entry; isVoted: boolean;
       )}
 
       {/* Actions row */}
-      <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
+      <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
         <a
           href={entry.demo_url}
           target="_blank"
@@ -207,7 +221,7 @@ function EntryCard({ entry, isVoted, onVote }: { entry: Entry; isVoted: boolean;
           onClick={onVote}
           style={{
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '10px 16px', borderRadius: 8, border: `1px solid ${isVoted ? BRAND : BORDER}`,
+            padding: '10px 14px', borderRadius: 8, border: `1px solid ${isVoted ? BRAND : BORDER}`,
             background: isVoted ? `${BRAND}20` : 'transparent',
             color: isVoted ? BRAND : 'rgba(255,255,255,0.5)',
             fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
@@ -216,6 +230,47 @@ function EntryCard({ entry, isVoted, onVote }: { entry: Entry; isVoted: boolean;
           <span style={{ fontSize: 16 }}>{isVoted ? '♥' : '♡'}</span>
           <span>{entry.vote_count}</span>
         </button>
+        <button
+          onClick={handleShare}
+          title="Share"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '10px 12px', borderRadius: 8, border: `1px solid ${BORDER}`,
+            background: copied ? 'rgba(34,197,94,0.12)' : 'transparent',
+            color: copied ? '#4ade80' : 'rgba(255,255,255,0.4)',
+            fontSize: 15, cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
+          }}
+        >
+          {copied ? '✓' : '↗'}
+        </button>
+      </div>
+
+      {/* Share row — WhatsApp + X + copy */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(`Check out "${entry.app_name}" built on WyberAi — vote for it in the Wybe Cup! wyberai.com/vibe-cup/marketplace`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ flex: 1, padding: '7px 0', borderRadius: 6, background: 'rgba(37,211,102,0.1)', border: '1px solid rgba(37,211,102,0.2)', color: '#25d366', fontSize: 11, fontWeight: 700, textDecoration: 'none', textAlign: 'center', letterSpacing: '0.03em' }}
+        >
+          WhatsApp
+        </a>
+        <a
+          href={`https://x.com/intent/tweet?text=${encodeURIComponent(`Just found "${entry.app_name}" in the Wybe Cup — world's first vibe coding competition. Vote for it! wyberai.com/vibe-cup/marketplace`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ flex: 1, padding: '7px 0', borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, textDecoration: 'none', textAlign: 'center', letterSpacing: '0.03em' }}
+        >
+          X / Twitter
+        </a>
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent('https://wyberai.com/vibe-cup/marketplace')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ flex: 1, padding: '7px 0', borderRadius: 6, background: 'rgba(10,102,194,0.1)', border: '1px solid rgba(10,102,194,0.25)', color: '#0a66c2', fontSize: 11, fontWeight: 700, textDecoration: 'none', textAlign: 'center', letterSpacing: '0.03em' }}
+        >
+          LinkedIn
+        </a>
       </div>
     </div>
   )
