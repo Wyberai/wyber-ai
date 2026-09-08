@@ -1787,7 +1787,13 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       // 4d. Verify a completeness retry (4c) actually finished the job.
       // Chains up to MAX_COMPLETENESS_RETRIES passes before telling the user.
-      const MAX_COMPLETENESS_RETRIES = 3
+      // Lowered 3→2: the initial 4c concurrent batches already cover the common
+      // case; chaining 3 more passes per batch was adding 4-6 extra minutes to
+      // new builds that wrote <50% of planned files (observed: 15min for a todo
+      // app). With MAX=2, retryCount starts at 1 so each batch gets exactly one
+      // follow-up chain — enough to recover a truncated batch, not enough to
+      // balloon build time.
+      const MAX_COMPLETENESS_RETRIES = 2
       if (opts?.completenessRetryFor?.length && !fileCut && !editCut) {
         const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
         const stillMissing = diffPlannedAgainstWritten(opts.completenessRetryFor, writtenPaths)
