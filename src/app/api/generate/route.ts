@@ -5297,7 +5297,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
       let handledByParallel = false
       if (useToolUse && isNewBuild && newBuildComplexity !== true && process.env.CLAUDE_PARALLEL_BUILD !== 'off') {
         try {
-          const { runClaudeParallel, classifyClaudeParallelFailure } = await import('@/lib/model-providers/claude-parallel')
+          const { runClaudeParallel, classifyClaudeParallelFailure, MODEL_ID: parallelModelId } = await import('@/lib/model-providers/claude-parallel')
           // 45s (the old default) is shorter than what this path's own config
           // allows: PAGE_MAX_TOKENS defaults to 16000 (20000 in this env's
           // .env.local), and this timeout races the ENTIRE batch — one page
@@ -5361,7 +5361,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             handledByParallel = true
             totalInputTokens += parallelResult.usage.inputTokens
             totalOutputTokens += parallelResult.usage.outputTokens
-            console.log(`[generate cache] buildId=${buildId ?? ''} stage=${stage} claude-parallel model=${MODELS[resolvedTier]} pagesFromTemplate=${parallelResult.pagesFromTemplate} pagesFullGen=${parallelResult.pagesFullGen} output=${parallelResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
+            console.log(`[generate cache] buildId=${buildId ?? ''} stage=${stage} claude-parallel model=${parallelModelId} pagesFromTemplate=${parallelResult.pagesFromTemplate} pagesFullGen=${parallelResult.pagesFullGen} output=${parallelResult.usage.outputTokens} elapsed_ms=${Date.now() - requestStartTime}`)
           } else if (parallelResult && parallelFailure) {
             clearInterval(heartbeatInterval)
             try { parallelController.close() } catch { /* already closed */ }
@@ -5657,7 +5657,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   // nothing mounts and a permanently blank preview.
                   let demandEntry = false
                   const entryPathMt = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
-                  if (iter >= MAX_TOOL_ITERATIONS - 1) {
+                  if (iter >= MAX_TOOL_ITERATIONS + securityFixesUsed - 1) {
                     const wroteEntryMt = assistantSoFar.includes(`path="${entryPathMt}"`)
                       || (projectType !== 'mobile' && assistantSoFar.includes('path="src/App.jsx"'))
                     if (!isNewBuild || wroteEntryMt || entryRetried
@@ -5823,6 +5823,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             } catch (err) { console.error('Tool-use stream error:', err) }
             finally {
               clearInterval(heartbeatTimer)
+              // Close any file tag that was open when the stream threw — without
+              // this, assistantSoFar ends with an unclosed <file path="..."> tag
+              // that parseGenerationOutput may count as a valid file, masking the
+              // failed build and suppressing the refund.
+              if (toolOpened) {
+                try { controller.enqueue(encoder.encode('\n</file>\n')) } catch { /* stream closing */ }
+                assistantSoFar += '\n</file>\n'
+              }
               emitAgent(controller, { agent: 'coder', status: 'done' })
               sentinelDone(controller)
               generatedText = assistantSoFar

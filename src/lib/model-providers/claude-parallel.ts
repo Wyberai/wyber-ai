@@ -49,7 +49,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // it logs route.ts's OWN resolvedTier→MODELS mapping (always 'claude-sonnet-5'
 // since Aug 2), not the model this file actually calls, so the discrepancy
 // stayed invisible in every log line printed all night.
-const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-sonnet-5'
+export const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-sonnet-5'
 const MAX_PARALLEL_PAGES = Number(process.env.CLAUDE_PARALLEL_MAX_PAGES) || 6
 const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 16000
 // ts_rank scores are small — see the identical comment in wybercode.ts. A
