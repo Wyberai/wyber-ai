@@ -630,9 +630,15 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     // Brand new project — seed starter template + greeting (skip if no template for this framework)
     const template = STARTER_TEMPLATES[framework];
     if (template) setFiles(template);
+    // Skip greeting when an auto-prompt is about to fire from the dashboard/homepage
+    // handoff — that path shows the Plan offer instead, and showing both produces a
+    // duplicate-message UX bug (WyberAi ready + plan offer both visible at once).
+    const pendingKey = resolvedProjectId ? `wyber_prompt_${resolvedProjectId}` : null;
+    const hasPendingPrompt = (pendingKey && sessionStorage.getItem(pendingKey)) || initialPrompt;
+    if (hasPendingPrompt) return;
     const greeting = { id: uid(), role:'assistant' as const, content:`**WyberAi ready** — describe what you want to build, or paste a screenshot to match.`, timestamp:Date.now(), status:'done' as const };
     addMessage(greeting);
-  }, [hydrated, hasInit, files, messages, framework, setFiles, addMessage]);
+  }, [hydrated, hasInit, files, messages, framework, setFiles, addMessage, resolvedProjectId, initialPrompt]);
 
   // Auto-trigger generation if a prompt was passed from dashboard/homepage
   useEffect(() => {
