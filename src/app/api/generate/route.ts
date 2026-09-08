@@ -3987,10 +3987,12 @@ export async function POST(req: NextRequest) {
     // same build so THIS function's knownBuildComplexity short-circuit above
     // can skip a redundant isComplexBuild call on every one of those passes.
     let responseBuildComplexity: boolean | undefined = knownBuildComplexity
-    // Extended thinking: only on genuinely complex new builds (Opus tier) — not on
-    // Sonnet builds where it adds cost with no quality gain for simple apps.
-    // NOTE: must be declared AFTER tier is resolved (tier is a let, not a const).
-    const useThinking = stage === 'full' && isNewBuild && !selfHeal && tier === 'default'
+    // Extended thinking disabled: thinking blocks suppress heartbeats with no cap,
+    // causing the client's 120s idle timer to fire on any build where the model
+    // thinks for >120s — guaranteed on complex apps. Builds complete faster and
+    // more reliably without it; re-enable only after adding heartbeat support
+    // during thinking blocks.
+    const useThinking = false
     // Tiered build pricing (see resolveBuildTier/BUILD_TIER_COSTS in
     // credits.ts): only the two charged-build request shapes need a size —
     // the staged 'scaffold' pass prices off the real Atlas plan file count
