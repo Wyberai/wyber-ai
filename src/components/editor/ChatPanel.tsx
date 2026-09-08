@@ -1049,13 +1049,13 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     })();
   }, [resolvedProjectId, resolvedUserId, addMessage, setProject]);
 
-  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string }) => {
+  const executeGeneration = useCallback(async (userMsg: string, img: AttachedImage | null, opts?: { silent?: boolean; continuation?: boolean; echoedUser?: boolean; displayContent?: string; paletteId?: string | null; stage?: 'scaffold' | 'fill' | 'wire' | 'agentFix'; stageFiles?: string[]; stagePurposes?: string[]; internalPass?: boolean; finalPass?: boolean; quietRetryEligible?: boolean; preserveAgentTurn?: boolean; completenessRetryFor?: PlannedFile[]; completenessRetryCount?: number; knownPlan?: PlannedFile[]; totalPlannedFiles?: number; buildId?: string; buildComplexity?: 'HIGH' | 'LOW'; sharedBubbleId?: string; autoRetry?: boolean }) => {
     // Clear any stale progress steps/reasoning from a previous generation before starting
     setProgressSteps([]);
     setLiveReasoning('');
     completenessRetryFiredRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; }
+    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
     // self-heal/autofix rerun (silent), not a truncated-stream continuation,
     // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is
@@ -2108,26 +2108,35 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const isActualNetworkDrop = isStreamTypeError && (!navigator.onLine || wasHiddenDuringGenRef.current);
         const isServerStreamLoss = isStreamTypeError && !isActualNetworkDrop;
         const isNetworkDrop = isActualNetworkDrop || isServerStreamLoss;
-        const errMsg = isSessionExpired
-          ? t('sessionExpiredBuildMsg')
-          : isAbort
-          ? (userStoppedRef.current
-              ? t('stoppedByUserMsg')
-              : t('buildTimedOutMsg'))
-          : isActualNetworkDrop
-          ? t('connectionDroppedMsg')
-          : isServerStreamLoss
-          ? t('serverStreamLostMsg')
-          : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('unknownErrorLabel')}`;
-        updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
-        if (isNetworkDrop) {
-          if (dropReloadTimerRef.current) clearTimeout(dropReloadTimerRef.current);
-          dropReloadTimerRef.current = setTimeout(() => {
-            dropReloadTimerRef.current = null;
-            window.location.reload();
-          }, 35_000);
+        // First timeout: silently remove the error bubble and retry once so
+        // the user doesn't have to retype. If the retry also times out,
+        // fall through to the visible error + manual Retry button.
+        if (isAbort && !userStoppedRef.current && buildAutoRetryCountRef.current < 1) {
+          buildAutoRetryCountRef.current += 1;
+          setMessages(prev => prev.filter(m => m.id !== assistantId));
+          setTimeout(() => executeGenerationRef.current?.(userMsg, img, { echoedUser: true, autoRetry: true }), 800);
+        } else {
+          const errMsg = isSessionExpired
+            ? t('sessionExpiredBuildMsg')
+            : isAbort
+            ? (userStoppedRef.current
+                ? t('stoppedByUserMsg')
+                : t('buildTimedOutMsg'))
+            : isActualNetworkDrop
+            ? t('connectionDroppedMsg')
+            : isServerStreamLoss
+            ? t('serverStreamLostMsg')
+            : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('unknownErrorLabel')}`;
+          updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
+          if (isNetworkDrop) {
+            if (dropReloadTimerRef.current) clearTimeout(dropReloadTimerRef.current);
+            dropReloadTimerRef.current = setTimeout(() => {
+              dropReloadTimerRef.current = null;
+              window.location.reload();
+            }, 35_000);
+          }
+          persistMessage('assistant', errMsg);
         }
-        persistMessage('assistant', errMsg);
       }
     } finally {
       clearTimeout(genTimeout);
@@ -2142,7 +2151,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       setProgressSteps([]);
     }
     return succeeded;
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setMessages, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
