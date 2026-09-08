@@ -10,7 +10,6 @@ export async function GET(req: NextRequest) {
   const { data: entries, error } = await db
     .from('vibe_cup_entries')
     .select('id, name, app_name, description, demo_url, vote_count, award, created_at')
-    .eq('is_approved', true)
     .order('vote_count', { ascending: false })
     .order('created_at', { ascending: false })
 
