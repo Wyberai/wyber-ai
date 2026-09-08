@@ -1510,11 +1510,12 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // MAX_SUPPRESSION_MS/MAX_TOOL_SUPPRESSION_MS): suppression itself is
       // now capped at 60s, so a heartbeat is guaranteed at least every
       // ~75s (60s cap + one 15s interval tick) no matter how long a single
-      // 300s: gives the server 5 minutes of silence before aborting.
-      // Heartbeats fire every 15s (max 60s suppression during file writes),
-      // so a healthy build never hits this — only a genuinely dead connection
-      // (Vercel crash, network drop) or an Anthropic cold-start > 5 min does.
-      const IDLE_STREAM_TIMEOUT_MS = 300_000;
+      // 600s: gives the server 10 minutes of silence before aborting.
+      // Builds for complex apps (tags, due dates, multi-component) can take
+      // 6-8 min to generate before the first file-write chunk arrives.
+      // Heartbeats fire every 15s normally (max 60s during writes), but
+      // certain generation paths suppress them — 600s prevents false aborts.
+      const IDLE_STREAM_TIMEOUT_MS = 600_000;
       let idleTimer: ReturnType<typeof setTimeout> | null = null;
       const armIdleTimer = () => {
         if (idleTimer) clearTimeout(idleTimer);
