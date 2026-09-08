@@ -156,7 +156,7 @@ export const EDITOR_CHATPANEL_STRINGS: Record<Locale, Record<string, string>> = 
     compactBuildMsg: 'compact build — one pass',
     buildingOnePassMsg: 'building in one pass',
     filesPlannedMsg: '{count} files planned',
-    scaffoldFailedMsg: "Something interrupted your build. Hit Retry and it'll pick up where it left off.",
+    scaffoldFailedMsg: "Something interrupted your build — retrying automatically…",
     passBudgetReachedMsg: "Almost there — some screens are still loading. Just say 'continue' and I'll finish them.",
     fillBatchStoppedMsg: "Almost there — {count} screen{plural} still loading. Just say 'continue' and I'll finish them.",
     editIncompleteMsg: "Almost done — {count} part(s) still applying: {names}. Say 'finish it' and I will.",

@@ -557,6 +557,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const turnAgentEventsRef = useRef<AgentEvent[]>([]);
   // Internal passes used this turn (fills, fixes) — the anti-runaway budget.
   const agentPassCountRef = useRef(0);
+  const autoRetriedBuildIds = useRef<Set<string>>(new Set());
   // Budget for internal staging passes (scaffold + fill batches + wire).
   // Typical app: 1 scaffold + 3 fill batches + 1 wire = 5 passes.
   // Large app (20 files): 1 scaffold + 7 fill batches (3 files each) + 1 wire = 9 passes.
@@ -2380,7 +2381,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
         updateMessage(chainId, { content: oneShotSummary, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', oneShotSummary, liveFilesOneShot);
       } else {
-        const oneShotErrMsg = "Something interrupted your build. Hit Retry and it'll pick up where it left off.";
+        const oneShotErrMsg = "Something interrupted your build — retrying automatically…";
         updateMessage(chainId, { content: oneShotErrMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
         persistMessage('assistant', oneShotErrMsg);
       }
@@ -2418,8 +2419,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
     if (!scaffoldOk) {
       // Show a clean error with a Retry button — no internal jargon.
-      updateMessage(chainId, { content: "Something interrupted your build. Hit Retry and it'll pick up where it left off.", status: 'error', retryPrompt: userMsg, retryLane: 'build' });
-      persistMessage('assistant', "Something interrupted your build. Hit Retry and it'll pick up where it left off.");
+      updateMessage(chainId, { content: "Something interrupted your build — retrying automatically…", status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+      persistMessage('assistant', "Something interrupted your build — retrying automatically…");
       console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=error failedAt=scaffold plan_ms=${planDoneTime - buildStartTime} total_ms=${Date.now() - buildStartTime}`);
       setIsGenerating(false);
       return;
@@ -2585,7 +2586,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // unhandled throw) lands here so isGenerating never gets stuck forever.
       const errMsg = (e?.message ?? '').includes('Not enough credits')
         ? `Your build ran out of credits mid-build. Not enough credits for this action. Add credits to try again.`
-        : `Something interrupted your build — hit Retry and it'll pick up where it left off.`;
+        : `Something interrupted your build — retrying automatically…`;
       updateMessage(chainId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
       persistMessage('assistant', errMsg);
       console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=error failedAt=${!planDoneTime ? 'plan' : !scaffoldDoneTime ? 'scaffold' : !fillDoneTime ? 'fill' : 'wire'} plan_ms=${planDoneTime ? planDoneTime - buildStartTime : null} scaffold_ms=${scaffoldDoneTime && planDoneTime ? scaffoldDoneTime - planDoneTime : null} fill_ms=${fillDoneTime && scaffoldDoneTime ? fillDoneTime - scaffoldDoneTime : null} total_ms=${Date.now() - buildStartTime}`);
@@ -2951,6 +2952,19 @@ const storeProjectId = useEditorStore.getState().project?.id;
       await executeGeneration(msg.retryPrompt, null, { echoedUser: true });
     }
   }, [messages, setMessages, handleConversational, executeGeneration]);
+
+  // Auto-retry a build that was interrupted — fires once per failed message,
+  // 2 s after the error lands. On the second failure (auto-retry already tried)
+  // the error stays visible so the user sees a Retry button instead of an loop.
+  useEffect(() => {
+    const errorMsg = [...messages].reverse().find(m => m.status === 'error' && m.retryLane === 'build' && m.retryPrompt);
+    if (!errorMsg || isGenerating) return;
+    if (autoRetriedBuildIds.current.has(errorMsg.id)) return;
+    if (Date.now() - errorMsg.timestamp > 15_000) return; // stale — page reload, not live failure
+    autoRetriedBuildIds.current.add(errorMsg.id);
+    const timer = setTimeout(() => handleRetry(errorMsg.id), 2000);
+    return () => clearTimeout(timer);
+  }, [messages, isGenerating, handleRetry]);
 
   const handleStartEdit = useCallback((msg: { id: string; content: string }) => {
     setEditingMessageId(msg.id);
