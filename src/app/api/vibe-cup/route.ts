@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 
-const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad', 'Other']
-
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as {
-    name?: string; email?: string; city?: string; project_url?: string; description?: string
+    name?: string; email?: string; app_name?: string
+    demo_url?: string; project_url?: string; description?: string
   }
 
-  const { name, email, city, project_url, description } = body
-  if (!name?.trim() || !email?.trim() || !city || !project_url?.trim()) {
+  const { name, email, app_name, demo_url, project_url, description } = body
+  if (!name?.trim() || !email?.trim() || !app_name?.trim() || !demo_url?.trim() || !project_url?.trim()) {
     return NextResponse.json({ error: 'All required fields must be filled.' }, { status: 400 })
   }
-  if (!CITIES.includes(city)) {
-    return NextResponse.json({ error: 'Invalid city.' }, { status: 400 })
+  if (!/^https?:\/\/.+/.test(demo_url.trim())) {
+    return NextResponse.json({ error: 'Demo URL must start with http:// or https://' }, { status: 400 })
   }
   if (!/^https?:\/\/.+/.test(project_url.trim())) {
     return NextResponse.json({ error: 'Project URL must start with http:// or https://' }, { status: 400 })
@@ -37,9 +36,11 @@ export async function POST(req: NextRequest) {
   const { error } = await db.from('vibe_cup_entries').insert({
     name: name.trim(),
     email: email.trim().toLowerCase(),
-    city,
+    app_name: app_name.trim(),
+    demo_url: demo_url.trim(),
     project_url: project_url.trim(),
     description: description?.trim() || null,
+    city: 'Worldwide',
   })
 
   if (error) {

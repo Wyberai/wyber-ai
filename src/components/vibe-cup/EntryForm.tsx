@@ -3,10 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-const SAFFRON = '#FF6B00'
-const GOLD = '#F59E0B'
 const BRAND = '#0EA5E9'
-const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad', 'Other']
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -32,7 +29,14 @@ const labelStyle: React.CSSProperties = {
 }
 
 export function EntryForm() {
-  const [form, setForm] = useState({ name: '', email: '', city: '', project_url: '', description: '' })
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    app_name: '',
+    demo_url: '',
+    project_url: '',
+    description: '',
+  })
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -61,7 +65,7 @@ export function EntryForm() {
         <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
         <div style={{ fontSize: 20, fontWeight: 700, color: '#fafafa', marginBottom: 10 }}>You&apos;re in!</div>
         <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>
-          Entry received. We&apos;ll review all submissions after October 31 and announce the winner on November 7. Good luck!
+          Entry received. We&apos;ll review your submission and list it in the marketplace once approved. Winners announced November 7, 2026.
         </div>
       </div>
     )
@@ -71,15 +75,12 @@ export function EntryForm() {
     <form onSubmit={handleSubmit} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, padding: 'clamp(24px,4vw,40px)', display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
-          <label style={labelStyle}>Full name *</label>
-          <input required style={inputStyle} placeholder="Rahul Sharma" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+          <label style={labelStyle}>Your name *</label>
+          <input required style={inputStyle} placeholder="Alex Johnson" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
         </div>
         <div>
-          <label style={labelStyle}>City *</label>
-          <select required style={{ ...inputStyle, appearance: 'none' as const, cursor: 'pointer' }} value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))}>
-            <option value="">Select city</option>
-            {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <label style={labelStyle}>App name *</label>
+          <input required style={inputStyle} placeholder="Grocery Genie" value={form.app_name} onChange={e => setForm(f => ({ ...f, app_name: e.target.value }))} />
         </div>
       </div>
 
@@ -89,9 +90,15 @@ export function EntryForm() {
       </div>
 
       <div>
+        <label style={labelStyle}>Live demo URL *</label>
+        <input required style={inputStyle} placeholder="https://your-app.wyberai.com" value={form.demo_url} onChange={e => setForm(f => ({ ...f, demo_url: e.target.value }))} />
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>Share the live URL of your WyberAi-built app so the community can try it.</div>
+      </div>
+
+      <div>
         <label style={labelStyle}>WyberAi project URL *</label>
         <input required style={inputStyle} placeholder="https://wyberai.com/app/your-project" value={form.project_url} onChange={e => setForm(f => ({ ...f, project_url: e.target.value }))} />
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>Share the link to your live WyberAi project.</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', marginTop: 6 }}>The link to your project inside WyberAi (so we can verify it was built here).</div>
       </div>
 
       <div>
@@ -105,7 +112,7 @@ export function EntryForm() {
         </div>
       )}
 
-      <button type="submit" disabled={status === 'loading'} style={{ padding: '16px', borderRadius: 10, background: status === 'loading' ? 'rgba(255,107,0,0.5)' : `linear-gradient(135deg, ${SAFFRON}, ${GOLD})`, color: '#000', fontSize: 15, fontWeight: 800, border: 'none', cursor: status === 'loading' ? 'not-allowed' : 'pointer', letterSpacing: '-0.01em', transition: 'opacity 0.15s' }}>
+      <button type="submit" disabled={status === 'loading'} style={{ padding: '16px', borderRadius: 10, background: status === 'loading' ? `rgba(14,165,233,0.4)` : BRAND, color: '#fff', fontSize: 15, fontWeight: 800, border: 'none', cursor: status === 'loading' ? 'not-allowed' : 'pointer', letterSpacing: '-0.01em', transition: 'opacity 0.15s' }}>
         {status === 'loading' ? 'Submitting…' : 'Submit My Entry →'}
       </button>
 
