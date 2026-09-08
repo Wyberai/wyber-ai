@@ -5452,11 +5452,17 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // override as the legacy loop's heartbeat below — a single file
             // can now legitimately stream for well over a minute (64000
             // max_tokens), and unbounded suppression here fed the exact same
-            // false-abort failure live-reproduced on that path.
+            // false-abort failure live-reproduced on that path. inThinkingBlock
+            // stays UNCONDITIONALLY suppressed (no override) — live-reproduced
+            // why on the legacy loop's identical override: extractReasoning()
+            // shows that content verbatim in the "show reasoning" panel with
+            // no marker-stripping, so forcing a heartbeat through mid-thought
+            // put the raw `[agent:{...}]` text directly in front of the user.
             const MAX_TOOL_SUPPRESSION_MS = 60_000
             let toolSuppressedSince: number | null = null
             const heartbeatTimer = setInterval(() => {
-              const suppressed = toolOpened || inThinkingBlock
+              if (inThinkingBlock) { toolSuppressedSince = null; return }
+              const suppressed = toolOpened
               if (suppressed) {
                 if (toolSuppressedSince === null) toolSuppressedSince = Date.now()
                 if (Date.now() - toolSuppressedSince < MAX_TOOL_SUPPRESSION_MS) return
@@ -5924,11 +5930,23 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           // stray comment-like string a human or self-heal pass can clean up)
           // is a far smaller failure than the client killing the entire build
           // with no signal to explain why — so past MAX_SUPPRESSION_MS of
-          // continuous suppression, send the heartbeat through anyway.
+          // continuous suppression inside a file/edit tag, send it anyway.
+          //
+          // inThinkingBlock is deliberately EXCLUDED from that override — live-
+          // reproduced why: extractReasoning() captures raw content between
+          // <reasoning> tags VERBATIM for the "show reasoning" panel, with no
+          // marker-stripping pass (unlike cleanStreamingDisplay for the main
+          // chat text). Forcing a heartbeat through mid-thinking-block put the
+          // literal `[agent:{"agent":"heartbeat",...}]` text directly into
+          // that user-visible panel — three times, once per concurrent fill
+          // batch that happened to be mid-thought when its 60s elapsed. File
+          // content isn't rendered directly to the user the same way, so it
+          // keeps the override; thinking blocks don't.
           const MAX_SUPPRESSION_MS = 60_000
           let suppressedSince: number | null = null
           const heartbeatTimer = stage === 'plan' ? null : setInterval(() => {
-            const suppressed = insideOpenTag() || inThinkingBlock
+            if (inThinkingBlock) { suppressedSince = null; return }
+            const suppressed = insideOpenTag()
             if (suppressed) {
               if (suppressedSince === null) suppressedSince = Date.now()
               if (Date.now() - suppressedSince < MAX_SUPPRESSION_MS) return
