@@ -1510,10 +1510,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // MAX_SUPPRESSION_MS/MAX_TOOL_SUPPRESSION_MS): suppression itself is
       // now capped at 60s, so a heartbeat is guaranteed at least every
       // ~75s (60s cap + one 15s interval tick) no matter how long a single
-      // file takes to stream. 120s here is now a comfortable ~1.6x margin
-      // over that guarantee, not a guess — and still catches a genuinely
-      // dead connection in ~2 minutes instead of 13+.
-      const IDLE_STREAM_TIMEOUT_MS = 120_000;
+      // 300s: gives the server 5 minutes of silence before aborting.
+      // Heartbeats fire every 15s (max 60s suppression during file writes),
+      // so a healthy build never hits this — only a genuinely dead connection
+      // (Vercel crash, network drop) or an Anthropic cold-start > 5 min does.
+      const IDLE_STREAM_TIMEOUT_MS = 300_000;
       let idleTimer: ReturnType<typeof setTimeout> | null = null;
       const armIdleTimer = () => {
         if (idleTimer) clearTimeout(idleTimer);
@@ -2961,19 +2962,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
     }
   }, [messages, setMessages, handleConversational, executeGeneration]);
 
-  // Auto-retry a build that was interrupted — fires at most ONCE per user-initiated
-  // build. The second failure stays visible so the user sees a Retry button.
-  useEffect(() => {
-    const errorMsg = [...messages].reverse().find(m => m.status === 'error' && m.retryLane === 'build' && m.retryPrompt);
-    if (!errorMsg || isGenerating) return;
-    if (autoRetriedBuildIds.current.has(errorMsg.id)) return;
-    if (errorMsg.timestamp < sessionMountTime.current) return; // stale — DB-loaded from a previous session
-    if (buildAutoRetryCountRef.current >= 1) return; // already auto-retried once this build; surface the error
-    autoRetriedBuildIds.current.add(errorMsg.id);
-    buildAutoRetryCountRef.current += 1;
-    const timer = setTimeout(() => handleRetry(errorMsg.id), 2000);
-    return () => clearTimeout(timer);
-  }, [messages, isGenerating, handleRetry]);
+  // Auto-retry disabled: silent retries burn credits without the user knowing.
+  // Builds that fail now surface a visible error + Retry button so the user
+  // can decide whether to retry. Re-enable only if builds fail transiently at
+  // a high rate from causes the user can't see (e.g. Anthropic 529).
+  // useEffect(() => {
+  //   const errorMsg = [...messages].reverse().find(m => m.status === 'error' && m.retryLane === 'build' && m.retryPrompt);
+  //   if (!errorMsg || isGenerating) return;
+  //   if (autoRetriedBuildIds.current.has(errorMsg.id)) return;
+  //   if (errorMsg.timestamp < sessionMountTime.current) return;
+  //   if (buildAutoRetryCountRef.current >= 1) return;
+  //   autoRetriedBuildIds.current.add(errorMsg.id);
+  //   buildAutoRetryCountRef.current += 1;
+  //   const timer = setTimeout(() => handleRetry(errorMsg.id), 2000);
+  //   return () => clearTimeout(timer);
+  // }, [messages, isGenerating, handleRetry]);
 
   const handleStartEdit = useCallback((msg: { id: string; content: string }) => {
     setEditingMessageId(msg.id);
