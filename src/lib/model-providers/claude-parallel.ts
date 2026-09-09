@@ -312,5 +312,10 @@ export function classifyClaudeParallelFailure(result: ClaudeParallelResult): Cla
   // output tokens is just boilerplate (CSS stub, a single empty component)
   // and will trigger self-heal, showing the user a confusing second message.
   if (result.usage.outputTokens < 500) return 'empty-output'
+  // If planPages matched fewer than 3 pages the prompt had no keywords the
+  // heuristic understands (e.g. "CRM for a real estate agency") — the result
+  // is a single stub home page + shell. Fall through to sequential so the
+  // full Sonnet path generates a complete app from context.
+  if (result.pagesFullGen + result.pagesFromTemplate < 3) return 'empty-output'
   return null
 }
