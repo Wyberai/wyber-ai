@@ -49,9 +49,13 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // it logs route.ts's OWN resolvedTier→MODELS mapping (always 'claude-sonnet-5'
 // since Aug 2), not the model this file actually calls, so the discrepancy
 // stayed invisible in every log line printed all night.
-export const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-sonnet-5'
+export const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-haiku-4-5-20251001'
 const MAX_PARALLEL_PAGES = Number(process.env.CLAUDE_PARALLEL_MAX_PAGES) || 6
-const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 16000
+// Haiku is fast and cheap — 8k is plenty for one page. Sonnet needed 16k.
+const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 8000
+// Hard budget: abort the whole parallel path if total output tokens exceed this.
+// At Haiku pricing ($1.25/M output), 80k tokens = ~$0.10. Safe ceiling per build.
+const MAX_TOTAL_OUTPUT_TOKENS = Number(process.env.CLAUDE_PARALLEL_MAX_OUTPUT_TOKENS) || 80_000
 // ts_rank scores are small — see the identical comment in wybercode.ts. A
 // low threshold errs toward "attempt a patch" while the library is small.
 const MATCH_SCORE_THRESHOLD = Number(process.env.CLAUDE_PARALLEL_MATCH_THRESHOLD) || 0.02
@@ -99,12 +103,38 @@ const PAGE_OUTPUT_RULE = `
 5. Never narrate between tool calls.
 `.trim()
 
+// Short mandatory UI kit header injected BEFORE the full system prompt so
+// the model sees the hard rules first. Haiku follows short explicit rules
+// much better than the 10k-token "PRIORITIZE THESE" version.
+const MANDATORY_KIT_HEADER = `
+━━━ WYBER UI KIT — MANDATORY ━━━
+RULE: Every page MUST import at least 2 components from 'wyber-ui'. Not doing so is a BUILD DEFECT.
+
+import { ComponentName } from 'wyber-ui'  ← this import path, always.
+
+Required usage by surface:
+• Background/hero: AuroraBackground | BackgroundGrid | MeshGradient | StarField
+• Headlines: GradientText | KineticHeadline | BlurReveal | TextScramble
+• Cards: HolographicCard | SpotlightCard | TiltCard | GlassCard
+• CTAs/buttons: ShimmerButton | MagneticButton | PulseButton
+• Navigation: FloatingDockNav | CommandPalette | SidebarNav
+• Data/stats: MetricCard | StatCounter | SparklineCard
+• Tables: DataTable | SortableTable
+• Forms: FloatingLabelInput | OTPInput | SearchBar
+• Modals: DrawerPanel | SlideOver | BottomSheet
+• Loaders: SkeletonCard | PulseLoader | ProgressRing
+• Notifications: ToastStack | AlertBanner | InlineAlert
+
+Colors: ONLY semantic tokens — var(--primary), var(--background), var(--foreground), var(--muted), var(--accent), var(--destructive). NEVER literal hex or rgb.
+Imports available: react, framer-motion, clsx, lucide-react, wyber-ui ONLY.
+`.trim()
+
 /** One page turn: system + user message in, `<file>`/`<edit>` tagged text out. */
 async function runPageTurn(systemPrompt: string, userPrompt: string): Promise<CodeGenResult> {
   const msg = await client.messages.create({
     model: MODEL_ID,
     max_tokens: PAGE_MAX_TOKENS,
-    system: `${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
+    system: `${MANDATORY_KIT_HEADER}\n\n${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
     messages: [{ role: 'user', content: userPrompt }],
     tools: [WRITE_FILE_TOOL, EDIT_FILE_TOOL],
   })
@@ -148,6 +178,9 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
   const outputs: string[] = new Array(pages.length).fill('')
 
   async function runOnePage(page: PageSpec, index: number) {
+    if (totalOutputTokens >= MAX_TOTAL_OUTPUT_TOKENS) {
+      throw new Error(`claude-parallel budget exceeded: ${totalOutputTokens} output tokens (limit ${MAX_TOTAL_OUTPUT_TOKENS})`)
+    }
     const targetPath = archetypeToPagePath(page.archetype, framework)
     const matches = await retrieve(page)
     const best = matches[0]
@@ -193,12 +226,69 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
   }
   await Promise.all(Array.from({ length: Math.min(tasks.length, MAX_PARALLEL_PAGES) }, worker))
 
+  // Sonnet quality pass — runs ONCE after all Haiku pages are done.
+  // Haiku is fast but weak on wyber-ui usage. Sonnet reviews every generated
+  // file in one call and rewrites any that missed kit components.
+  const haikusOutput = outputs.join('\n')
+  const qualityResult = await runQualityPass(haikusOutput, input.systemPrompt)
+  totalInputTokens += qualityResult.usage.inputTokens
+  totalOutputTokens += qualityResult.usage.outputTokens
+
+  // Merge: Haiku output is the base; quality pass rewrites OVERRIDE individual
+  // files but never discard files Sonnet didn't touch. Both are <file> tagged
+  // strings — downstream parsers apply last-write-wins per path, so appending
+  // qualityResult after haikusOutput means Sonnet's version wins for any path
+  // it emitted, while untouched files survive from Haiku.
+  const finalText = qualityResult.text.trim()
+    ? `${haikusOutput}\n${qualityResult.text}`
+    : haikusOutput
+
   return {
-    text: outputs.join('\n'),
+    text: finalText,
     usage: { inputTokens: totalInputTokens, outputTokens: totalOutputTokens },
     truncated: anyTruncated,
     pagesFromTemplate,
     pagesFullGen,
+  }
+}
+
+const QUALITY_PASS_MODEL = 'claude-sonnet-5'
+const QUALITY_PASS_MAX_TOKENS = 16000
+
+/**
+ * One Sonnet call that reviews all Haiku-generated files and rewrites any
+ * that are missing wyber-ui imports. Returns write_file tool calls for
+ * corrected files only — unchanged files are not re-emitted.
+ */
+async function runQualityPass(haikusOutput: string, systemPrompt: string): Promise<CodeGenResult> {
+  const userPrompt = `Below are files generated by a fast model. Review EVERY file.
+
+RULE: Each file must import at least 2 components from 'wyber-ui' and use semantic color tokens only (var(--primary) etc, never hex/rgb).
+
+For each file that violates this rule, call write_file with the corrected full content.
+For files that already follow the rule correctly, do NOT re-emit them.
+
+GENERATED FILES:
+${haikusOutput}`
+
+  const msg = await client.messages.create({
+    model: QUALITY_PASS_MODEL,
+    max_tokens: QUALITY_PASS_MAX_TOKENS,
+    system: `${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
+    messages: [{ role: 'user', content: userPrompt }],
+    tools: [WRITE_FILE_TOOL, EDIT_FILE_TOOL],
+  })
+
+  let output = ''
+  for (const block of msg.content) {
+    if (block.type !== 'tool_use') continue
+    output += toolCallToTag(block.name, JSON.stringify(block.input))
+  }
+  const usage = msg.usage as unknown as { input_tokens?: number; output_tokens?: number }
+  return {
+    text: output,
+    usage: { inputTokens: usage.input_tokens ?? 0, outputTokens: usage.output_tokens ?? 0 },
+    truncated: msg.stop_reason === 'max_tokens',
   }
 }
 
