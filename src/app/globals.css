@@ -538,80 +538,72 @@ input, textarea, select { font-family: var(--font-sans); }
   overflow-x: clip;
 }
 
-/* Starfield — two layered dot fields, pure CSS, no WebGL. */
+/* Starfield — very subtle, just enough for depth */
 .mk-stars {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 1px at 12% 24%, rgba(230,237,246,0.55) 50%, transparent 51%),
-    radial-gradient(1px 1px at 34% 71%, rgba(230,237,246,0.35) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 56% 12%, rgba(56,189,248,0.5) 50%, transparent 51%),
-    radial-gradient(1px 1px at 72% 48%, rgba(230,237,246,0.4) 50%, transparent 51%),
-    radial-gradient(1px 1px at 88% 82%, rgba(230,237,246,0.3) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 8% 88%, rgba(56,189,248,0.35) 50%, transparent 51%),
-    radial-gradient(1px 1px at 44% 42%, rgba(230,237,246,0.25) 50%, transparent 51%),
-    radial-gradient(1px 1px at 94% 18%, rgba(230,237,246,0.45) 50%, transparent 51%),
-    radial-gradient(1px 1px at 22% 55%, rgba(230,237,246,0.2) 50%, transparent 51%),
-    radial-gradient(1.5px 1.5px at 64% 92%, rgba(230,237,246,0.35) 50%, transparent 51%);
-  background-size: 720px 720px;
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35));
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), rgba(0,0,0,0.35));
+    radial-gradient(1px 1px at 12% 24%, rgba(230,237,246,0.28) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 71%, rgba(230,237,246,0.18) 50%, transparent 51%),
+    radial-gradient(1px 1px at 56% 12%, rgba(56,189,248,0.22) 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 48%, rgba(230,237,246,0.20) 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 82%, rgba(230,237,246,0.15) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 88%, rgba(56,189,248,0.18) 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 42%, rgba(230,237,246,0.12) 50%, transparent 51%),
+    radial-gradient(1px 1px at 94% 18%, rgba(230,237,246,0.22) 50%, transparent 51%);
+  background-size: 820px 820px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.1));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.1));
 }
 
-/* Film grain overlay */
+/* Film grain overlay — disabled; clean surfaces only */
 .mk-noise::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: var(--brand-noise);
-  pointer-events: none;
-  border-radius: inherit;
+  content: none;
 }
 
 .mk-section {
   max-width: 1120px;
   margin: 0 auto;
-  padding: clamp(64px, 9vw, 128px) clamp(20px, 5vw, 48px);
+  padding: clamp(72px, 10vw, 140px) clamp(20px, 5vw, 48px);
 }
 
 /* Mono eyebrow — "01 · TELEMETRY" style microlabel */
 .mk-eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--brand-mono);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--brand-accent);
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .mk-eyebrow::before {
-  content: '';
-  width: 20px;
-  height: 1px;
-  background: var(--brand-border-accent);
+  content: none;
 }
 
 /* Oversized editorial display headline */
 .mk-display {
   font-family: var(--font-display);
-  font-size: clamp(44px, 5.8vw, 80px);
+  font-size: clamp(46px, 6.2vw, 88px);
   font-weight: 700;
-  letter-spacing: -0.045em;
-  line-height: 0.98;
+  letter-spacing: -0.05em;
+  line-height: 0.96;
   color: var(--brand-text);
   margin: 0;
+  text-wrap: balance;
 }
 .mk-h2 {
   font-family: var(--font-display);
-  font-size: clamp(30px, 4.5vw, 54px);
+  font-size: clamp(30px, 4.5vw, 58px);
   font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.04;
+  letter-spacing: -0.038em;
+  line-height: 1.02;
   color: var(--brand-text);
   margin: 0;
+  text-wrap: balance;
 }
 /* Accent phrase inside a headline — same display face as the rest of the
    headline, sky. (Was Instrument Serif italic; Sumeet preferred the plain
@@ -621,10 +613,11 @@ input, textarea, select { font-family: var(--font-sans); }
 }
 
 .mk-lead {
-  font-size: clamp(16px, 1.9vw, 19px);
+  font-size: clamp(16px, 1.9vw, 20px);
   color: var(--brand-text-dim);
-  line-height: 1.7;
+  line-height: 1.72;
   margin: 0;
+  text-wrap: pretty;
 }
 .mk-mono {
   font-family: var(--brand-mono);
@@ -637,19 +630,21 @@ input, textarea, select { font-family: var(--font-sans); }
 .mk-card {
   background: var(--brand-bg-raised);
   border: 1px solid var(--brand-border);
-  border-radius: 14px;
+  border-radius: 18px;
   transition: border-color var(--brand-dur-base) var(--brand-ease),
               box-shadow var(--brand-dur-base) var(--brand-ease),
               transform var(--brand-dur-base) var(--brand-ease);
 }
 .mk-card:hover {
   border-color: var(--brand-border-accent);
-  box-shadow: 0 0 0 1px var(--brand-glow-soft), 0 8px 40px rgba(0,0,0,0.5), 0 0 32px var(--brand-glow-soft);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.25);
+  transform: translateY(-2px);
 }
 .mk-frame {
   background: var(--brand-bg-raised);
   border: 1px solid var(--brand-border);
-  border-radius: 14px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 16px 48px rgba(0,0,0,0.2);
 }
 
 /* Buttons */
@@ -657,19 +652,19 @@ input, textarea, select { font-family: var(--font-sans); }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 30px;
-  border-radius: 10px;
+  padding: 13px 28px;
+  border-radius: 980px;
   background: var(--brand-accent);
   color: #fff;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--font-display);
   letter-spacing: -0.01em;
   text-decoration: none;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 0 24px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25), 0 4px 16px var(--brand-glow-soft);
   transition: transform var(--brand-dur-fast) var(--brand-ease),
               box-shadow var(--brand-dur-base) var(--brand-ease),
               background var(--brand-dur-fast) var(--brand-ease);
@@ -677,15 +672,15 @@ input, textarea, select { font-family: var(--font-sans); }
 .mk-btn:hover {
   background: var(--brand-accent-hot);
   transform: translateY(-1px);
-  box-shadow: 0 0 40px var(--brand-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 28px var(--brand-glow-soft);
 }
 .mk-btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 13px 26px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.02);
+  padding: 12px 24px;
+  border-radius: 980px;
+  background: rgba(255,255,255,0.04);
   color: var(--brand-text-dim);
   font-size: 15px;
   font-weight: 500;
@@ -701,23 +696,25 @@ input, textarea, select { font-family: var(--font-sans); }
 .mk-btn-ghost:hover {
   border-color: var(--brand-border-accent);
   color: var(--brand-text);
-  background: rgba(14,165,233,0.05);
+  background: rgba(14,165,233,0.06);
 }
 
-/* Data row — mono telemetry strip entries */
+/* Data row — telemetry strip entries */
 .mk-stat {
-  font-family: var(--brand-mono);
-  font-size: clamp(22px, 3vw, 30px);
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 700;
   color: var(--brand-text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 .mk-stat-label {
   font-family: var(--brand-mono);
   font-size: 10px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--brand-text-faint);
+  margin-top: 6px;
 }
 
 /* Reduced motion: kill transforms/animation on mk primitives */

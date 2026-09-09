@@ -46,11 +46,11 @@ function Reveal({ children, delay = 0, y = 24 }: { children: React.ReactNode; de
 
 function WindowChrome({ title }: { title: string }) {
   return (
-    <div style={{ display: 'flex', gap: 6, marginBottom: 14, alignItems: 'center' }}>
-      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
-      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(255,255,255,0.12)' }} />
-      <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(56,189,248,0.5)' }} />
-      <span className="mk-mono" style={{ marginLeft: 8, fontSize: 10 }}>{title}</span>
+    <div style={{ display: 'flex', gap: 6, marginBottom: 16, alignItems: 'center' }}>
+      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5f57', boxShadow: '0 0 0 0.5px rgba(0,0,0,0.25)' }} />
+      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ffbd2e', boxShadow: '0 0 0 0.5px rgba(0,0,0,0.25)' }} />
+      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#28c840', boxShadow: '0 0 0 0.5px rgba(0,0,0,0.25)' }} />
+      <span className="mk-mono" style={{ marginLeft: 10, fontSize: 10, color: 'var(--brand-text-faint)' }}>{title}</span>
     </div>
   );
 }
@@ -62,7 +62,7 @@ function BuildConsole({ rows, accent = BRAND, title }: {
   title: string;
 }) {
   return (
-    <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
+    <div className="mk-frame" style={{ position: 'relative', padding: 22, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
       <WindowChrome title={title} />
       {rows.map((s, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: i < rows.length - 1 ? 12 : 0 }}>
@@ -105,7 +105,7 @@ const MOBILE_BUILD_ROWS = [
    clean — is fetched server-side in page.tsx and passed in as `stats`. */
 function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: number } | null; t: HomeStrings }) {
   return (
-    <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
+    <div className="mk-frame" style={{ position: 'relative', padding: 22, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
       <WindowChrome title={t.scanWindowTitle} />
       <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 10, letterSpacing: '0.06em' }}>
         {t.scanProbingLine}
@@ -216,7 +216,7 @@ function UserBuildsStrip({ builds, label, ctaLabel }: { builds: HomeUserBuild[];
 /* MCP console — the developer differentiator: drive WyberAi from your AI editor */
 function McpConsole() {
   return (
-    <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
+    <div className="mk-frame" style={{ position: 'relative', padding: 22, fontFamily: 'var(--brand-mono)', fontSize: 11 }}>
       <WindowChrome title="claude code — wyberai mcp" />
       <div style={{ color: 'var(--brand-text-faint)', fontSize: 10, marginBottom: 4, letterSpacing: '0.04em' }}>
         $ claude mcp add --transport http wyberai \
@@ -297,7 +297,7 @@ function buildStages(t: HomeStrings) {
     title: t.stageDescribeTitle,
     desc: t.stageDescribeDesc,
     visual: (
-      <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18, fontFamily: 'var(--brand-mono)', fontSize: 12 }}>
+      <div className="mk-frame" style={{ position: 'relative', padding: 22, fontFamily: 'var(--brand-mono)', fontSize: 12 }}>
         <WindowChrome title="wyberai.com — new project" />
         <div style={{ padding: '14px 16px', border: '1px solid var(--brand-border-strong)', borderRadius: 10, background: 'rgba(255,255,255,0.02)', color: 'var(--brand-text)', lineHeight: 1.7 }}>
           {t.stageDescribePrompt}
@@ -321,7 +321,7 @@ function buildStages(t: HomeStrings) {
     title: t.stageShipTitle,
     desc: t.stageShipDesc,
     visual: (
-      <div className="mk-frame mk-noise" style={{ position: 'relative', padding: 18 }}>
+      <div className="mk-frame" style={{ position: 'relative', padding: 22 }}>
         <WindowChrome title="crm-abc123.vercel.app" />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--brand-border)', background: 'rgba(255,255,255,0.02)', marginBottom: 14 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.8)' }} />
@@ -446,7 +446,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
     <div className="mk-page" data-theme="dark">
 
       {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(5,6,10,0.8)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--brand-border)' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(5,6,10,0.85)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
@@ -524,15 +524,15 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
               {/* The prompt box IS the primary CTA: the visitor's idea rides
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
-              <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 10, marginBottom: 14, borderColor: 'var(--brand-border-strong)' }}>
+              <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 12, marginBottom: 16, borderColor: 'var(--brand-border-strong)', borderRadius: 18 }}>
                 <textarea
                   ref={heroPromptRef}
                   value={heroPrompt}
                   onChange={e => setHeroPrompt(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitHeroPrompt(e); } }}
                   placeholder={t.heroPlaceholder}
-                  rows={2}
-                  style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--brand-text)', fontSize: 15, lineHeight: 1.55, fontFamily: 'var(--font-sans)', padding: '8px 10px' }}
+                  rows={3}
+                  style={{ width: '100%', resize: 'none', background: 'transparent', border: 'none', outline: 'none', color: 'var(--brand-text)', fontSize: 15, lineHeight: 1.6, fontFamily: 'var(--font-sans)', padding: '8px 10px' }}
                 />
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, paddingTop: 8, borderTop: '1px solid var(--brand-border)', flexWrap: 'wrap' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--brand-border)', flexWrap: 'wrap' }}>
@@ -649,10 +649,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         </Reveal>
 
         <Reveal delay={0.1}>
-          <div className="wyb-product-pills" style={{ display: 'flex', gap: 8, marginBottom: 36, flexWrap: 'wrap' }}>
+          <div className="wyb-product-pills" style={{ display: 'flex', gap: 6, marginBottom: 36, flexWrap: 'wrap', padding: '4px', background: 'rgba(255,255,255,0.03)', borderRadius: 980, border: '1px solid var(--brand-border)', width: 'fit-content' }}>
             {PRODUCTS.map((p, i) => (
               <button key={p.key} onClick={() => setActiveProduct(i)}
-                style={{ padding: '8px 18px', borderRadius: 8, border: `1px solid ${i === activeProduct ? 'var(--brand-border-accent)' : 'var(--brand-border)'}`, background: i === activeProduct ? 'rgba(14,165,233,0.08)' : 'transparent', color: i === activeProduct ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--brand-mono)', letterSpacing: '0.12em', transition: 'all 0.2s var(--brand-ease)', boxShadow: i === activeProduct ? '0 0 20px var(--brand-glow-soft)' : 'none' }}>
+                style={{ padding: '7px 20px', borderRadius: 980, border: 'none', background: i === activeProduct ? 'var(--brand-accent)' : 'transparent', color: i === activeProduct ? '#fff' : 'var(--brand-text-dim)', fontSize: 13, fontWeight: i === activeProduct ? 600 : 500, cursor: 'pointer', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em', transition: 'all 0.2s var(--brand-ease)', boxShadow: i === activeProduct ? '0 2px 8px var(--brand-glow-soft)' : 'none' }}>
                 {p.label}
               </button>
             ))}
@@ -709,11 +709,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
             <div>
               {PROOF.map((f, i) => (
                 <Reveal key={f.n} delay={i * 0.05}>
-                  <div style={{ display: 'flex', gap: 20, padding: '22px 0', borderTop: '1px solid var(--brand-border)', borderBottom: i === PROOF.length - 1 ? '1px solid var(--brand-border)' : 'none' }}>
-                    <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 12, paddingTop: 3, flexShrink: 0 }}>{f.n}</span>
+                  <div style={{ display: 'flex', gap: 24, padding: '26px 0', borderTop: '1px solid var(--brand-border)', borderBottom: i === PROOF.length - 1 ? '1px solid var(--brand-border)' : 'none' }}>
+                    <span style={{ fontFamily: 'var(--font-display)', color: 'var(--brand-border-strong)', fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', paddingTop: 2, flexShrink: 0, width: 28 }}>{f.n}</span>
                     <div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 6, fontFamily: 'var(--font-display)', letterSpacing: '-0.01em' }}>{f.title}</div>
-                      <p style={{ fontSize: 13.5, color: 'var(--brand-text-dim)', lineHeight: 1.65, margin: 0, maxWidth: 480 }}>{f.desc}</p>
+                      <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--brand-text)', marginBottom: 7, fontFamily: 'var(--font-display)', letterSpacing: '-0.015em', lineHeight: 1.25 }}>{f.title}</div>
+                      <p style={{ fontSize: 13.5, color: 'var(--brand-text-dim)', lineHeight: 1.7, margin: 0, maxWidth: 480 }}>{f.desc}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -797,9 +797,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   { name: 'PRO', price: '$199', credits: '1,500', highlight: false, badge: t.badgeBestValue },
                 ]
             ).map(p => (
-              <div key={p.name} className="mk-card" style={{ padding: '26px 22px', position: 'relative', borderColor: p.highlight ? 'var(--brand-border-accent)' : undefined, boxShadow: p.highlight ? '0 0 40px var(--brand-glow-soft)' : undefined }}>
-                {p.badge && <div className="mk-mono" style={{ position: 'absolute', top: -9, left: 20, background: p.highlight ? 'var(--brand-accent)' : 'var(--brand-bg-overlay)', color: p.highlight ? '#fff' : 'var(--brand-text-dim)', fontSize: 9, padding: '2px 10px', borderRadius: 20, whiteSpace: 'nowrap', border: p.highlight ? 'none' : '1px solid var(--brand-border-strong)' }}>{p.badge}</div>}
-                <div className="mk-mono" style={{ color: p.highlight ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', marginBottom: 12 }}>{p.name}</div>
+              <div key={p.name} className="mk-card" style={{ padding: '26px 22px', position: 'relative', borderColor: p.highlight ? 'var(--brand-border-accent)' : undefined, boxShadow: p.highlight ? '0 0 0 1px rgba(14,165,233,0.25), 0 20px 48px rgba(0,0,0,0.4)' : undefined }}>
+                {p.badge && <div className="mk-mono" style={{ display: 'inline-block', marginBottom: 14, background: p.highlight ? 'var(--brand-accent)' : 'rgba(255,255,255,0.06)', color: p.highlight ? '#fff' : 'var(--brand-text-dim)', fontSize: 9, padding: '3px 10px', borderRadius: 980, whiteSpace: 'nowrap', border: p.highlight ? 'none' : '1px solid var(--brand-border-strong)', letterSpacing: '0.1em' }}>{p.badge}</div>}
+                <div className="mk-mono" style={{ color: p.highlight ? 'var(--brand-accent-hot)' : 'var(--brand-text-faint)', marginBottom: p.badge ? 0 : 12 }}>{p.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 14 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 38, fontWeight: 700, color: 'var(--brand-text)', letterSpacing: '-0.03em' }}>{p.price}</span>
                   <span className="mk-mono" style={{ fontSize: 11 }}>{t.perMonthSuffix}</span>
