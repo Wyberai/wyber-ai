@@ -166,7 +166,7 @@ function archetypeToPagePath(archetype: string, framework: TemplateFramework): s
  * wiring the planned pages together (page paths are deterministic from
  * their archetype, so the shell pass doesn't wait on the other pages).
  */
-export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudeParallelResult> {
+export async function runClaudeParallel(input: CodeGenInput, onProgress?: (marker: string) => void): Promise<ClaudeParallelResult> {
   const framework: TemplateFramework = input.projectType === 'mobile' ? 'react-native' : 'react-web'
   const pages = planPages(input.userPrompt, framework)
 
@@ -176,6 +176,8 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
   let totalInputTokens = 0
   let totalOutputTokens = 0
   const outputs: string[] = new Array(pages.length).fill('')
+  let doneCount = 0
+  const totalAgents = pages.length + (input.isNewBuild ? 1 : 0) // pages + shell pass
 
   async function runOnePage(page: PageSpec, index: number) {
     if (totalOutputTokens >= MAX_TOTAL_OUTPUT_TOKENS) {
@@ -200,12 +202,20 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
     totalInputTokens += result.usage.inputTokens
     totalOutputTokens += result.usage.outputTokens
     if (result.truncated) anyTruncated = true
+    doneCount++
+    const remaining = totalAgents - doneCount
+    const agentLabel = `Agent ${index + 1}`
+    const progressMsg = remaining > 0
+      ? `[progress: ${agentLabel} done — ${remaining} agent${remaining === 1 ? '' : 's'} still running]\n`
+      : `[progress: All agents done — running quality pass]\n`
+    try { onProgress?.(progressMsg) } catch { /* stream may have closed */ }
   }
 
   const tasks = pages.map((page, index) => () => runOnePage(page, index))
 
   if (input.isNewBuild) {
     const pageManifest = pages.map(p => `- ${archetypeToPagePath(p.archetype, framework)} (${p.archetype})`).join('\n')
+    const shellIndex = pages.length // shell is the last task
     tasks.push(async () => {
       pagesFullGen++
       const userPrompt = `Write the app's entry/shell file, wiring together these pages (they are being generated separately — assume they exist at these exact paths and import them):\n${pageManifest}\n\nORIGINAL REQUEST: ${input.userPrompt}`
@@ -214,8 +224,19 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
       totalInputTokens += result.usage.inputTokens
       totalOutputTokens += result.usage.outputTokens
       if (result.truncated) anyTruncated = true
+      doneCount++
+      const remaining = totalAgents - doneCount
+      const progressMsg = remaining > 0
+        ? `[progress: Agent ${shellIndex + 1} (shell) done — ${remaining} agent${remaining === 1 ? '' : 's'} still running]\n`
+        : `[progress: All agents done — running quality pass]\n`
+      try { onProgress?.(progressMsg) } catch { /* stream may have closed */ }
     })
   }
+
+  // Announce how many agents are starting so the UI can show "Agent 1/3 starting..."
+  try {
+    onProgress?.(`[progress: Starting ${totalAgents} parallel agent${totalAgents === 1 ? '' : 's'}...]\n`)
+  } catch { /* stream may have closed */ }
 
   let cursor = 0
   async function worker() {
@@ -230,9 +251,11 @@ export async function runClaudeParallel(input: CodeGenInput): Promise<ClaudePara
   // Haiku is fast but weak on wyber-ui usage. Sonnet reviews every generated
   // file in one call and rewrites any that missed kit components.
   const haikusOutput = outputs.join('\n')
+  try { onProgress?.(`[progress: Quality pass running — checking wyber-ui components]\n`) } catch { /* stream may have closed */ }
   const qualityResult = await runQualityPass(haikusOutput, input.systemPrompt)
   totalInputTokens += qualityResult.usage.inputTokens
   totalOutputTokens += qualityResult.usage.outputTokens
+  try { onProgress?.(`[progress: Build complete]\n`) } catch { /* stream may have closed */ }
 
   // Merge: Haiku output is the base; quality pass rewrites OVERRIDE individual
   // files but never discard files Sonnet didn't touch. Both are <file> tagged

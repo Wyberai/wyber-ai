@@ -3597,20 +3597,38 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         ))}
 
-        {/* Fallback build indicator — ONLY when no streaming bubble exists yet
-            (before the first token arrives). A streaming assistant message
-            renders this same ticker inside its own bubble, so showing both
-            duplicated the "Setting up the design system... (15s)" row. ONE
-            canonical progress surface, always. */}
-        {isGenerating && progressSteps.length === 0 && !messages.some(m => m.status === 'streaming') && (
+        {/* Fallback build indicator — shows when isGenerating but no streaming bubble exists.
+            Shows progressSteps (parallel-agent progress) when present, else the time-based
+            buildMsg ticker. A streaming assistant message also renders steps inside its own
+            bubble — the !messages.some(streaming) guard prevents double-display. */}
+        {isGenerating && !messages.some(m => m.status === 'streaming') && (
           <div style={{ padding:'4px 12px' }}>
             <div style={{ display:'flex', gap:8, alignItems:'flex-start' }}>
               <div style={{ width:22, height:22, borderRadius:6, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginTop:2 }}>
                 <svg width="11" height="11" viewBox="0 0 32 32" fill="none"><path d="M20 7L11 16L20 25" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M23 11L28 16L23 21" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.4"/></svg>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:5, fontSize:12, color:'var(--ide-text3)' }}>
-                <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
-                <span className="ide-shimmer-text">{buildMsg}</span> {elapsed > 0 && `(${elapsed}s)`}
+              <div style={{ flex:1, paddingTop:3 }}>
+                {progressSteps.length > 0
+                  ? <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
+                      {progressSteps.map((step, i) => {
+                        const isLast = i === progressSteps.length - 1;
+                        return (
+                          <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
+                            {isLast
+                              ? <span style={{ width:9, height:9, borderRadius:'50%', border:'1.5px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block', flexShrink:0 }}/>
+                              : <span style={{ width:9, height:9, borderRadius:'50%', background:'var(--ide-green)', display:'inline-block', flexShrink:0 }}/>
+                            }
+                            {step}
+                          </span>
+                        );
+                      })}
+                      <span style={{ fontSize:10, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
+                    </div>
+                  : <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:2, fontSize:12, color:'var(--ide-text3)' }}>
+                      <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
+                      <span className="ide-shimmer-text">{buildMsg}</span> {elapsed > 0 && `(${elapsed}s)`}
+                    </div>
+                }
               </div>
             </div>
           </div>

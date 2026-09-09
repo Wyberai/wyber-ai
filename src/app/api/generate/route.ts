@@ -5330,13 +5330,19 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             try { parallelController.enqueue(HEARTBEAT_CHUNK) } catch { /* stream closing */ }
           }, 5000)
 
+          // Progress callback: push [progress: ...] markers into the live stream
+          // so the client can show per-agent status without waiting for all pages.
+          const pushProgress = (marker: string) => {
+            try { parallelController.enqueue(encoder.encode(marker)) } catch { /* stream closing */ }
+          }
+
           let parallelResult: Awaited<ReturnType<typeof runClaudeParallel>> | null = null
           let parallelFailure: ReturnType<typeof classifyClaudeParallelFailure> = null
           try {
             parallelResult = await Promise.race([
               runClaudeParallel({
                 systemPrompt: staticSystemPrompt, userPrompt: prompt, fileContext, projectType, isNewBuild,
-              }),
+              }, pushProgress),
               new Promise<never>((_, reject) =>
                 setTimeout(() => reject(new Error(`claude-parallel exceeded ${CLAUDE_PARALLEL_TIMEOUT_MS}ms`)), CLAUDE_PARALLEL_TIMEOUT_MS)
               ),
