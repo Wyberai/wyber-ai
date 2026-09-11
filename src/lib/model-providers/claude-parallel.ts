@@ -131,13 +131,23 @@ Imports available: react, framer-motion, clsx, lucide-react, wyber-ui ONLY.
 
 /** One page turn: system + user message in, `<file>`/`<edit>` tagged text out. */
 async function runPageTurn(systemPrompt: string, userPrompt: string): Promise<CodeGenResult> {
-  const msg = await client.messages.create({
+  // .stream().finalMessage() instead of .create(): the SDK refuses a plain
+  // non-streaming create() outright once max_tokens is large enough that it
+  // estimates the call COULD run past 10 minutes ("Streaming is required for
+  // operations that may take longer than 10 minutes") — which PAGE_MAX_TOKENS
+  // (20000 in this env) already trips on every single call. That's not a rare
+  // edge case, it's every page turn — the fast path was silently guaranteed
+  // to throw and fall back to the slow sequential loop 100% of the time.
+  // finalMessage() returns the same shape as create()'s response once the
+  // stream ends, so nothing below needs to change.
+  const stream = client.messages.stream({
     model: MODEL_ID,
     max_tokens: PAGE_MAX_TOKENS,
     system: `${MANDATORY_KIT_HEADER}\n\n${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
     messages: [{ role: 'user', content: userPrompt }],
     tools: [WRITE_FILE_TOOL, EDIT_FILE_TOOL],
   })
+  const msg = await stream.finalMessage()
   let output = ''
   for (const block of msg.content) {
     if (block.type !== 'tool_use') continue
@@ -183,6 +193,7 @@ export async function runClaudeParallel(input: CodeGenInput, onProgress?: (marke
     if (totalOutputTokens >= MAX_TOTAL_OUTPUT_TOKENS) {
       throw new Error(`claude-parallel budget exceeded: ${totalOutputTokens} output tokens (limit ${MAX_TOTAL_OUTPUT_TOKENS})`)
     }
+    try { onProgress?.(`[progress: Agent ${index + 1} is working...]\n`) } catch { /* stream may have closed */ }
     const targetPath = archetypeToPagePath(page.archetype, framework)
     const matches = await retrieve(page)
     const best = matches[0]
@@ -218,6 +229,7 @@ export async function runClaudeParallel(input: CodeGenInput, onProgress?: (marke
     const shellIndex = pages.length // shell is the last task
     tasks.push(async () => {
       pagesFullGen++
+      try { onProgress?.(`[progress: Agent ${shellIndex + 1} is working...]\n`) } catch { /* stream may have closed */ }
       const userPrompt = `Write the app's entry/shell file, wiring together these pages (they are being generated separately — assume they exist at these exact paths and import them):\n${pageManifest}\n\nORIGINAL REQUEST: ${input.userPrompt}`
       const result = await runPageTurn(input.systemPrompt, userPrompt)
       outputs.push(result.text)
@@ -294,13 +306,16 @@ For files that already follow the rule correctly, do NOT re-emit them.
 GENERATED FILES:
 ${haikusOutput}`
 
-  const msg = await client.messages.create({
+  // Same fix as runPageTurn above — QUALITY_PASS_MAX_TOKENS (32000) also trips
+  // the SDK's non-streaming 10-minute guard on every call.
+  const stream = client.messages.stream({
     model: QUALITY_PASS_MODEL,
     max_tokens: QUALITY_PASS_MAX_TOKENS,
     system: `${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
     messages: [{ role: 'user', content: userPrompt }],
     tools: [WRITE_FILE_TOOL, EDIT_FILE_TOOL],
   })
+  const msg = await stream.finalMessage()
 
   let output = ''
   for (const block of msg.content) {
