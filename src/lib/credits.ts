@@ -283,8 +283,8 @@ const BUILD_TIER_TOKEN_BUDGET: Record<BuildSizeTier, number> = {
 // reintroduction of usage metering for the common case.
 const OVERAGE_THRESHOLD_MULTIPLIER = 1.75
 
-function tierPrice(t: BuildSizeTier, modelTier: ModelTier): number {
-  const costs = BUILD_TIER_COSTS[t]
+function tierPrice(t: BuildSizeTier, modelTier: ModelTier, table: Record<BuildSizeTier, { fast: number; default: number }> = BUILD_TIER_COSTS): number {
+  const costs = table[t]
   return modelTier === 'fast' ? costs.fast : costs.default
 }
 
@@ -322,6 +322,66 @@ export function computeOverageCharge(opts: {
  * Compute the credit cost for an action + model tier.
  * Always at least 1 credit.
  */
+/**
+ * Real tiered edit settlement — replaces the old capped overage formula
+ * (`Math.min(extraPasses * cost, cost * 4)`, maxing out at 8cr regardless of
+ * actual work done). Confirmed live: a "Settings page" edit request fanned
+ * out into a full Supabase auth system, then a 6-page marketing site — real
+ * measured cost ~$10, billed a handful of 2cr small-edit turns.
+ *
+ * Edits have no upfront file-count plan to classify from the way builds do
+ * (the completeness-check "architect" planner call runs CONCURRENTLY with
+ * the real edit, not before it — confirmed via generate/route.ts and
+ * production logs showing two near-simultaneous /api/generate POSTs), so
+ * there's nothing to price against before the work happens. Instead, price
+ * from the SAME real output-token total already collected for the old
+ * overage check, using the same tiers/token budgets builds already use
+ * (a build and an edit that both emit 150K output tokens did comparable
+ * work) — but unlike `computeOverageCharge` (which caps a build at ONE
+ * tier step up, because a build's initial tier guess is assumed roughly
+ * right), an edit starts with NO size classification at all, so a
+ * small-edit-priced request that did XL-build-sized work must be able to
+ * land on XL pricing directly, not be capped one step above a 2cr floor.
+ */
+const EDIT_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = {
+  small:  { fast: 2,  default: 5 },
+  medium: { fast: 10, default: 18 },
+  large:  { fast: 22, default: 40 },
+  xl:     { fast: 45, default: 85 },
+}
+
+// Same thresholds BUILD_TIER_TOKEN_BUDGET already uses — comparable output
+// volume implies comparable real cost regardless of whether it arrived via
+// a "build" or an "edit" action type.
+const EDIT_TIER_TOKEN_BUDGET = BUILD_TIER_TOKEN_BUDGET
+
+/** Reverse lookup: which tier does this much REAL output represent. */
+export function resolveEditTierFromTokens(totalOutputTokens: number): BuildSizeTier {
+  if (totalOutputTokens > EDIT_TIER_TOKEN_BUDGET.large) return 'xl'
+  if (totalOutputTokens > EDIT_TIER_TOKEN_BUDGET.medium) return 'large'
+  if (totalOutputTokens > EDIT_TIER_TOKEN_BUDGET.small) return 'medium'
+  return 'small'
+}
+
+/**
+ * Additional credits to charge for an edit whose real output tokens landed
+ * in a heavier tier than what was already collected upfront. Returns 0 for
+ * the overwhelming majority of edits (small, within budget) — this is a
+ * settlement on top of the flat small-edit charge already taken, not a
+ * replacement for it; the two together always equal the resolved tier's
+ * sticker price.
+ */
+export function computeEditSettlement(opts: {
+  alreadyCharged: number
+  modelTier: ModelTier
+  actualOutputTokens: number
+}): number {
+  const { alreadyCharged, modelTier, actualOutputTokens } = opts
+  const tier = resolveEditTierFromTokens(actualOutputTokens)
+  const owed = tierPrice(tier, modelTier, EDIT_TIER_COSTS)
+  return Math.max(0, owed - alreadyCharged)
+}
+
 export function creditCost(action: ActionType, tier: ModelTier = 'default', buildTier?: BuildSizeTier): number {
   // Edits are priced explicitly, not by multiplier. Same pricing for all users.
   // Small edits: 2cr (fast) or 5cr (default)

@@ -3,7 +3,7 @@ import { NextRequest, after } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { getTemplateReference } from '@/lib/template-reference'
-import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, type ModelTier } from '@/lib/credits'
+import { MODEL_IDS, creditCost, tierAllowedForPlan, resolveBuildTier, computeOverageCharge, computeEditSettlement, resolveEditTierFromTokens, type ModelTier } from '@/lib/credits'
 import { sendCreditLowEmail, sendFirstBuildEmail } from '@/lib/email'
 import { notify } from '@/lib/push'
 import { userCurrency } from '@/lib/user-currency'
@@ -4723,42 +4723,44 @@ ${code}
             }
           }
         }
-        // Edit overage safety valve — mirrors the buildTier valve above, for
-        // the one action class it doesn't cover. 'small-edit'/'complex-edit'
-        // are flat-priced (2cr) assuming a single short generation pass, but
-        // the max_tokens retry-continuation loop (~line 3896) can legitimately
-        // chain up to MAX_TOOL_ITERATIONS full stageMaxTokens passes for an
-        // edit that keeps hitting the token ceiling — confirmed live via
-        // generation_usage_log: 'small-edit' rows regularly landing at
-        // 30-51K output tokens (1.5-2x a single 24K 'fast'-tier pass) while
-        // charged the same flat 2 credits every time. Builds already have a
-        // valve for this exact shape of overrun; edits never did. Same bounded-
-        // tail-only philosophy as computeOverageCharge: nothing below the
-        // threshold, a small capped charge above it — never open-ended
-        // metering, and single-request-scoped so no cross-request idempotency
-        // bookkeeping is needed (unlike the multi-request buildId case above).
+        // Edit settlement — mirrors the buildTier valve above, for the one
+        // action class it didn't cover. 'small-edit'/'complex-edit' are
+        // flat-priced (2cr/5cr) assuming a single short generation pass, but
+        // an edit request can silently fan out into build-sized work (a
+        // "Settings page" ask that grew into a full Supabase auth system,
+        // then a 6-page marketing site — confirmed live: ~$10 real cost,
+        // billed a handful of 2cr turns). The old formula
+        // (`Math.min(extraPasses * cost, cost * 4)`) capped the top-up at
+        // 8cr total regardless of actual work — structurally incapable of
+        // reflecting XL-build-sized output. computeEditSettlement() instead
+        // resolves a real tier from actual output tokens (same tiers/
+        // thresholds builds use) and charges the difference from what's
+        // already been collected, so a small-edit-priced request that did
+        // XL-build-sized work lands on XL pricing, not a 4x-capped patch.
+        // Single-request-scoped, same as before — no cross-request
+        // idempotency bookkeeping needed (unlike the multi-request buildId
+        // case above).
         if (!buildTier && !selfHeal && !isInternalPass && stage !== 'plan' && authedUserId && cost > 0 && !creditsSettled) {
-          const editOverageThreshold = stageMaxTokens * 1.5
-          if (totalOutputTokens > editOverageThreshold) {
-            const extraPasses = Math.ceil((totalOutputTokens - stageMaxTokens) / stageMaxTokens)
-            const editOverage = Math.min(extraPasses * cost, cost * 4)
-            if (editOverage > 0) {
-              const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: editOverage })
-              if (overageRpc?.new_credits !== undefined) {
-                await admin.from('generation_usage_log').insert({
-                  user_id: authedUserId, project_id: projectId || null, build_id: buildId || null,
-                  action_type: 'edit-overage', stage, model_tier: resolvedTier,
-                  model_id: MODELS[resolvedTier] ?? String(resolvedTier),
-                  output_tokens: totalOutputTokens, credits_charged: editOverage,
+          const editSettlement = computeEditSettlement({
+            alreadyCharged: cost, modelTier: resolvedTier, actualOutputTokens: totalOutputTokens,
+          })
+          if (editSettlement > 0) {
+            const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: editSettlement })
+            if (overageRpc?.new_credits !== undefined) {
+              const settledTier = resolveEditTierFromTokens(totalOutputTokens)
+              await admin.from('generation_usage_log').insert({
+                user_id: authedUserId, project_id: projectId || null, build_id: buildId || null,
+                action_type: 'edit-overage', stage, model_tier: resolvedTier,
+                model_id: MODELS[resolvedTier] ?? String(resolvedTier),
+                output_tokens: totalOutputTokens, credits_charged: editSettlement,
+              })
+              if (projectId) {
+                await admin.from('project_messages').insert({
+                  project_id: projectId,
+                  role: 'assistant',
+                  content: `This turn built out a lot more than a typical edit (${settledTier}-sized work, ~${Math.round(totalOutputTokens / 1000)}K tokens generated) — an extra ${editSettlement} credit${editSettlement === 1 ? '' : 's'} was charged to cover it.`,
+                  files_changed: [],
                 })
-                if (projectId) {
-                  await admin.from('project_messages').insert({
-                    project_id: projectId,
-                    role: 'assistant',
-                    content: `This edit ran heavier than usual (~${Math.round(totalOutputTokens / 1000)}K tokens generated) — an extra ${editOverage} credit${editOverage === 1 ? '' : 's'} was charged to cover it.`,
-                    files_changed: [],
-                  })
-                }
               }
             }
           }

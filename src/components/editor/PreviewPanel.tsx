@@ -599,7 +599,12 @@ export function PreviewPanel() {
   // and tryToFix changes files — so the cap never bit and a build that failed
   // for any reason auto-fix couldn't resolve looped "Build failed → finishing
   // touches →…" forever. Once the budget is spent we stop and surface the error.
-  const MAX_HEAL = 3
+  // EMERGENCY STOPGAP (2026-09-11): cut from 3 — this budget is independent
+  // of ChatPanel's MAX_TOTAL_REPAIR_PASSES, so the two together compounded
+  // into repeated paid retries against failures that can't be fixed by
+  // patching files (e.g. an incompatible dependency added by the model).
+  // Revert once the two budgets are unified into one shared counter.
+  const MAX_HEAL = 1
   // When heal gives up but an earlier build worked, fall back to that build in
   // the iframe (with an error strip on top) instead of a full-screen error —
   // a broken update (e.g. mid-connector integration) must never blank out a

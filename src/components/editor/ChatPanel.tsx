@@ -585,8 +585,20 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // This is the one choke point every wyber-autofix dispatch passes through
   // (see autofixHandler below), so it's the one place that can bound the
   // TOTAL regardless of which mechanism is asking.
-  const MAX_TOTAL_REPAIR_PASSES = 4;
+  // EMERGENCY STOPGAP (2026-09-11): cut from 4 — live-reproduced a project
+  // that kept "succeeding" (chat said "build is complete" twice) while the
+  // live preview stayed hard-crashed (dual-React-instance error from an
+  // incompatible dependency the model had added), burning real repair-pass
+  // spend on retries that could never succeed. Halving the budget fails
+  // fast and cheap instead. Revert once the real fix (react-router-dom ban
+  // extended to buildSystemPrompt(), tiered edit pricing) ships.
+  const MAX_TOTAL_REPAIR_PASSES = 2;
   const totalRepairPassesRef = useRef(0);
+  // One-shot guard so an already-exhausted budget only ever posts its
+  // loopStop/"budget reached" message once per turn, regardless of how many
+  // separate mechanisms (ChatPanel's own retries, PreviewPanel's independent
+  // heal loop) keep dispatching wyber-autofix against it.
+  const repairBudgetNotifiedRef = useRef(false);
   // How many of the (bounded) repair passes ride free before charging like a
   // normal generation. One free top-up covers the common "forgot a file"
   // case; past that, a build needing MANY repairs is doing real work for
@@ -804,6 +816,15 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       // for a build that's still missing planned files.
       if (totalRepairPassesRef.current >= MAX_TOTAL_REPAIR_PASSES) {
         console.warn('[wyber] total repair-pass budget reached — stopping to bound build time/cost')
+        // PreviewPanel's own heal loop (a SEPARATE budget, MAX_HEAL) dispatches
+        // through this same wyber-autofix event and keeps retrying on its own
+        // timer even after THIS budget is spent — every one of those lands
+        // here and, without this guard, re-posted an identical loopStop card
+        // each time (live-reproduced: the same "I've made several repair
+        // passes..." message three times in a row for one failure). Only the
+        // first exhaustion for a given turn actually needs to tell the user.
+        if (repairBudgetNotifiedRef.current) return
+        repairBudgetNotifiedRef.current = true
         // detail.error means THIS dispatch was fixing an actual build/runtime
         // error, not just topping up missing files — if the budget runs out
         // while that's still true, the app is still broken right now, and a
@@ -1135,7 +1156,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     setLiveReasoning('');
     completenessRetryFiredRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; }
+    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; repairBudgetNotifiedRef.current = false; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
     // self-heal/autofix rerun (silent), not a truncated-stream continuation,
     // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is

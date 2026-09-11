@@ -3,7 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildFixFileList } from '@/lib/auto-fix-context'
 
-export const maxDuration = 60
+// Was 60 — /api/generate (comparable Claude-call work) gets 800. A Haiku
+// repair pass on a project that's grown large (many files in the fix
+// context) can genuinely run past 60s; confirmed live via 504s on every
+// retry attempt against a scope-exploded project — pure wasted API spend
+// with zero chance of returning a result. 300 stays well under generate's
+// budget while covering a realistic large-project repair pass.
+export const maxDuration = 300
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
