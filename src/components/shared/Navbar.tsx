@@ -58,6 +58,16 @@ const NAV_LINKS: [label: string, href: string, soon?: boolean][] = [
   ['Pricing', '/pricing'],
 ];
 
+// Premier League gets its own headline treatment (gold, trophy) instead of a
+// plain wy-nav-link — it was previously only reachable via ads/SEO/the
+// /pricing and /ecommerce pages, with no path from the main site at all.
+const PREMIER_LEAGUE_HREF = '/premier-league';
+const premierLeagueStyle: CSSProperties = {
+  display: 'inline-flex', alignItems: 'center', gap: 5,
+  fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em',
+  color: '#f5b942', textDecoration: 'none', transition: 'opacity 0.15s',
+};
+
 const soonPillStyle: CSSProperties = { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#f59e0b', background: 'rgba(245,158,11,0.12)', borderRadius: 4, padding: '1px 4px', lineHeight: 1.4 };
 
 export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
@@ -188,6 +198,13 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
             </Link>
           ))}
 
+          <Link href={lp(PREMIER_LEAGUE_HREF)} style={premierLeagueStyle}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity = '0.8'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity = '1'}
+          >
+            🏆 Win $1,000
+          </Link>
+
           {/* Resources trigger */}
           <div style={{ position: 'relative' }}>
             <button
@@ -316,6 +333,11 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
               {label}{soon && <span style={soonPillStyle}>soon</span>}
             </Link>
           ))}
+
+          <Link href={lp(PREMIER_LEAGUE_HREF)} onClick={() => setMenuOpen(false)}
+            style={{ fontSize: 15, fontWeight: 700, color: '#f5b942', padding: '11px 0', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            🏆 Win $1,000
+          </Link>
 
           {/* Mobile Resources accordion */}
           <button
