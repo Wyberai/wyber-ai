@@ -420,6 +420,27 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     () => [...messages].reverse().find(m => m.status === 'done' && !!m.agentReport)?.id,
     [messages],
   );
+  // Collapse consecutive orphaned "streaming, nothing to show yet" bubbles
+  // into just the most recent one. A multi-pass build (fill/completeness
+  // passes chained back to back) can leave an earlier pass's message stuck
+  // at status:'streaming' — never flipped to 'done' — while the next pass
+  // opens its OWN streaming message; every such bubble falls back to the
+  // exact same generic "Working on your changes..." label (buildMsg is a
+  // single shared, elapsed-time-derived string, not per-message), so a run
+  // of orphans renders as N visually-identical rows. This doesn't touch
+  // when/why a bubble gets orphaned (a real state bug worth its own fix) —
+  // it just stops rendering the stale ones once a newer one exists.
+  const visibleMessages = useMemo(() => {
+    const isEmptyStreamingBubble = (m: typeof messages[number]) =>
+      m.role === 'assistant' && m.status === 'streaming' && !m.content && !m.reasoning && !m.filesChanged?.length;
+    const out: typeof messages = [];
+    for (const msg of messages) {
+      const prev = out[out.length - 1];
+      if (prev && isEmptyStreamingBubble(prev) && isEmptyStreamingBubble(msg)) out[out.length - 1] = msg;
+      else out.push(msg);
+    }
+    return out;
+  }, [messages]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -489,6 +510,14 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // most once per project (planOfferShownRef), regardless of outcome.
   const [pendingPlanOffer, setPendingPlanOffer] = useState<{ prompt: string; img: AttachedImage | null; hasAttachments: boolean } | null>(null);
   const planOfferShownRef = useRef(false);
+  // Set just before the dashboard/homepage auto-fire programmatically clicks
+  // send (see the wyber_auto_generate listener below) so handleSend can tell
+  // that submission apart from a message the user actually typed themselves.
+  // The user already stated their build intent once, on the dashboard's
+  // create screen — showing the plan-offer card again here just freezes the
+  // input behind a click the auto-fire never makes (it only ever clicks
+  // send), so this path skips straight to a real build instead.
+  const autoFireRef = useRef(false);
   // Design direction picked on the offer card's palette cards (null = server
   // prompt-matches one). PlanMode shows its own cards, so this only feeds the
   // "Just build it" path.
@@ -546,6 +575,24 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // track of its own edits on follow-up messages and rewrites files from scratch.
   const lastChangedPathsRef = useRef<Set<string>>(new Set());
   const MAX_AUTOFIX = 2;
+  // Combined ceiling across EVERY repair mechanism for one build turn — the
+  // build-error autofix (capped at MAX_AUTOFIX) AND the completeness-check
+  // (4c/4d), which dispatches one batch of FILL_BATCH_SIZE files per gap AND
+  // lets each batch retry up to MAX_COMPLETENESS_RETRIES on its own, with NO
+  // shared cap across batches. A big plan (e.g. 27 files, ~19 unwritten after
+  // the first pass) can fan out into 7+ batches, each its own multi-minute
+  // pass — live-reproduced: 8 repair passes, ~20 extra minutes, on one build.
+  // This is the one choke point every wyber-autofix dispatch passes through
+  // (see autofixHandler below), so it's the one place that can bound the
+  // TOTAL regardless of which mechanism is asking.
+  const MAX_TOTAL_REPAIR_PASSES = 4;
+  const totalRepairPassesRef = useRef(0);
+  // How many of the (bounded) repair passes ride free before charging like a
+  // normal generation. One free top-up covers the common "forgot a file"
+  // case; past that, a build needing MANY repairs is doing real work for
+  // free, not a repair — live-reproduced: 8 free passes, ~$3 of the ~$3.49
+  // real cost on one build, because every repair pass was billed at 0.
+  const FREE_REPAIR_PASSES = 1;
   // Futility detection on top of the volume cap: the SAME error signature
   // twice means the fix strategy is failing — stop and show LoopStopCard
   // instead of burning the remaining budget (see lib/agents/loop-guard.ts).
@@ -692,6 +739,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       const { prompt } = e.detail;
       if (!prompt) return;
       setInput(prompt);
+      autoFireRef.current = true;
       setTimeout(() => {
         const btn = document.querySelector('[data-send-button]') as HTMLButtonElement;
         if (btn) btn.click();
@@ -749,6 +797,38 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
           return
         }
       }
+      // Combined ceiling across every repair mechanism (see MAX_TOTAL_REPAIR_PASSES
+      // above) — checked first, before either mechanism's own per-type cap, since
+      // this is the one point ALL of them dispatch through. Tell the user plainly
+      // instead of just stopping silently — "done" would be a false-ready claim
+      // for a build that's still missing planned files.
+      if (totalRepairPassesRef.current >= MAX_TOTAL_REPAIR_PASSES) {
+        console.warn('[wyber] total repair-pass budget reached — stopping to bound build time/cost')
+        // detail.error means THIS dispatch was fixing an actual build/runtime
+        // error, not just topping up missing files — if the budget runs out
+        // while that's still true, the app is still broken right now, and a
+        // cheerful "ask me to continue" would hide that. Use the same
+        // loopStop card the futility guard above shows for "stuck on the
+        // same error" — same honesty, same one-click retry action — instead
+        // of a plain message that undersells a currently-broken preview.
+        if (detail.error) {
+          useEditorStore.getState().addMessage({
+            id: uid(), role: 'assistant', status: 'done', timestamp: Date.now(),
+            loopStop: {
+              errorSummary: String(detail.error).slice(0, 300),
+              attempts: MAX_TOTAL_REPAIR_PASSES,
+              retryPrompt: `The app still isn't building after ${MAX_TOTAL_REPAIR_PASSES} repair passes: "${String(detail.error).slice(0, 180)}". Take a DIFFERENT approach: identify the component responsible and rewrite it from scratch as a complete <file> block instead of patching the failing line.`,
+            },
+          })
+        } else {
+          useEditorStore.getState().addMessage({
+            id: uid(), role: 'assistant', status: 'done', timestamp: Date.now(),
+            content: t('repairBudgetReachedMsg'),
+          })
+        }
+        return
+      }
+      totalRepairPassesRef.current += 1
       // Stop runaway self-heal: cap consecutive autofix passes per user turn.
       // Completeness retries (completenessRetryFor set) have their own cap and bypass this.
       if (autofixCountRef.current >= MAX_AUTOFIX && !detail.completenessRetryFor?.length) {
@@ -1055,7 +1135,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     setLiveReasoning('');
     completenessRetryFiredRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
-    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; }
+    if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
     // self-heal/autofix rerun (silent), not a truncated-stream continuation,
     // not runAgenticBuild's own fallback re-entry (preserveAgentTurn). This is
@@ -1105,11 +1185,18 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       }).catch(() => {});
     }
 
-    // Self-heal/autofix runs (silent) are FREE — they repair work the user
-    // already paid for. Skip the optimistic client decrement; the server is
-    // told `selfHeal: true` below and skips the deduction entirely.
+    // Self-heal/autofix runs (silent) are meant to be FREE — repairing work
+    // the user already paid for. That holds for a small top-up (the common
+    // "forgot 1 file" case), but past FREE_REPAIR_PASSES a build is using
+    // repair passes to do most of its real work for free (live-reproduced:
+    // 8 free repair passes, ~$3 of ~$3.49 real cost, on one build). Billing
+    // only cares whether THIS pass is still within the free allowance —
+    // isSelfHeal itself keeps its original meaning ("this is a silent/
+    // background pass") for the UI/eligibility checks elsewhere that don't
+    // care about money.
     const isSelfHeal = !!opts?.silent;
-    if (!isSelfHeal) consumeCredit();
+    const freeSelfHeal = isSelfHeal && totalRepairPassesRef.current <= FREE_REPAIR_PASSES;
+    if (!freeSelfHeal) consumeCredit();
     // displayContent lets a caller send a large/technical userMsg to the model
     // (e.g. an approved plan's full spec) while showing something clean and
     // readable as the user's own chat bubble — same distinction Claude.ai
@@ -1392,7 +1479,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // stays in control, same as before the picker existed.
           framework, fileContext, history, knowledge: knowledgeStr,
           userId: resolvedUserId, projectId: resolvedProjectId,
-          projectType, selfHeal: isSelfHeal,
+          projectType, selfHeal: freeSelfHeal,
           // The server can't infer "first build" from fileContext — the
           // auto-seeded starter scaffold makes it non-empty on the very first
           // message, so its length heuristic classified EVERY build as an
@@ -1775,7 +1862,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                   detail: {
                     continuation: true,
                     completenessRetryFor: batch,
-                    prompt: `Your previous response addressed part of the request but left ${batch.length} planned file${batch.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied. AUTOMATED CONTINUATION: after the last </file> or </edit> tag, write ZERO additional words — no questions, no offers, no recap.`,
+                    prompt: `Your previous response addressed part of the request but left ${batch.length} planned file${batch.length === 1 ? '' : 's'} unfinished (${nameList}${extra}). Details: ${detail}. Output the COMPLETE <file> block for anything new, or an <edit> block for anything that needs wiring into an existing file (e.g. navigation/router/App entry), so the original request is fully satisfied. Before finishing, check every import these files add against an existing file (e.g. a mock-data module) — if the named export doesn't actually exist there yet, add it via an <edit> block instead of assuming it's already there. AUTOMATED CONTINUATION: after the last </file> or </edit> tag, write ZERO additional words — no questions, no offers, no recap.`,
                   },
                 }))
               }, 600 + batchIndex * 150)
@@ -1818,7 +1905,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                     continuation: true,
                     completenessRetryFor: batch,
                     completenessRetryCount: retryCount + 1,
-                    prompt: `Your previous response still left ${batch.length} planned file${batch.length === 1 ? '' : 's'} unfinished (${batchNames}${batchExtra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words — no questions, no offers, no recap.`,
+                    prompt: `Your previous response still left ${batch.length} planned file${batch.length === 1 ? '' : 's'} unfinished (${batchNames}${batchExtra}). Details: ${detailList}. Output the COMPLETE <file> block for each missing file. Do not write any other files. Before finishing, check every import these files add against an existing file (e.g. a mock-data module) — if the named export doesn't actually exist there yet, add it via an <edit> block instead of assuming it's already there. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words — no questions, no offers, no recap.`,
                   },
                 }))
               }, 600 + batchIndex * 150)
@@ -2935,11 +3022,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // brand-new project gets an auto-seeded starter-template scaffold on
       // mount (see the hydration effect above) so `files` is never actually
       // empty by the time the user can type anything.
-      if (isFirstBuild && !img && !planOfferShownRef.current) {
+      //
+      // Skipped for the dashboard/homepage auto-fire (autoFireRef): that
+      // submission already carries the prompt the user typed on the create
+      // screen to state their build intent once — showing the offer again
+      // here just freezes input/send behind a card the auto-fire never
+      // clicks through, silently stranding the project with no build, no
+      // charge, and no visible error (the bug behind most new signups never
+      // actually generating anything).
+      if (isFirstBuild && !img && !planOfferShownRef.current && !autoFireRef.current) {
         planOfferShownRef.current = true;
         setPendingPlanOffer({ prompt: userMsg, img, hasAttachments });
         return;
       }
+      planOfferShownRef.current = true;
+      autoFireRef.current = false;
 
       await proceedPastPlanOffer(userMsg, img, hasAttachments);
     } finally {
@@ -3341,7 +3438,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
 
       {/* Messages */}
       <div style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin' }}>
-        {messages.map(msg => (
+        {visibleMessages.map(msg => (
           <div key={msg.id} style={{ padding:'4px 12px', marginBottom:1 }}>
             {msg.role === 'user' ? (
               editingMessageId === msg.id ? (
