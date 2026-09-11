@@ -218,8 +218,25 @@ export async function bundleFiles(
       // it), so `import.meta.env` is otherwise undefined and any generated
       // connector client reading e.g. VITE_CONNECTOR_MODE crashes the preview.
       // Shim it to a plain object so unset VITE_* keys resolve to `undefined`
-      // instead of throwing on `.env` itself.
+      // instead of throwing on `.env` itself. Both keys are needed: esbuild's
+      // `define` only substitutes the EXACT reference expression it's given —
+      // `import.meta.env` covers direct access (`import.meta.env.X`), but code
+      // that destructures the bare meta object first (`const { env } =
+      // import.meta`) never contains that literal expression, so without also
+      // defining `import.meta` itself it falls through to the browser's real
+      // (env-less) import.meta and crashes reading `.X` off `undefined`.
       define: {
+        'import.meta': JSON.stringify({
+          url: '',
+          env: {
+            MODE: 'development',
+            DEV: true,
+            PROD: false,
+            SSR: false,
+            VITE_CONNECTOR_MODE: 'demo',
+            VITE_CONNECTOR_PROXY_URL: '',
+          },
+        }),
         'import.meta.env': JSON.stringify({
           MODE: 'development',
           DEV: true,
