@@ -632,8 +632,14 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <textarea ref={textareaRef} value={promptInput} onChange={e => setPromptInput(e.target.value)} onKeyDown={handleKeyDown}
                 placeholder={t('promptPlaceholder')} rows={3}
                 style={{ width: '100%', padding: '16px 18px 12px', border: 'none', background: 'transparent', color: TEXT, fontSize: 15, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.55 }} />
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: 'auto' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: isMobile ? 'wrap' : 'nowrap', padding: '10px 14px 14px', gap: 10, borderTop: `1px solid ${BORDER}` }}>
+                {/* On mobile this card clips overflow (see the wrapping div above),
+                    and this whole toolbar row is wider than a phone screen — with
+                    justify-content:flex-end + marginRight:auto pushing this picker
+                    left, IT was the thing getting clipped off, taking Web App and
+                    Mobile with it and leaving no way to scroll back to them. Full
+                    width + its own scroll box on mobile keeps every option reachable. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '3px 4px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, marginRight: isMobile ? undefined : 'auto', width: isMobile ? '100%' : undefined, overflowX: isMobile ? 'auto' : undefined }}>
                   {([
                     { mode: 'app' as const, label: t('webAppLabel'), color: '#0EA5E9', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg> },
                     { mode: 'mobile' as const, label: t('mobileAppLabel'), color: '#f97316', icon: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
