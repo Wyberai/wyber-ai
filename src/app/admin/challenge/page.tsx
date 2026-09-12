@@ -1,19 +1,19 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { currentChallengeWeek } from '@/lib/challenge'
+import { currentWplMonth } from '@/lib/challenge'
 import { AdminChallengeClient, type AdminEntry } from './AdminChallengeClient'
 
 export const dynamic = 'force-dynamic'
 
 const ADMIN_EMAILS = ['hello@wyberai.com', 'sumit@reconsignal.com', 'sumit.sutar259@gmail.com', 'admin@reconsignal.com']
 
-export default async function AdminChallengePage({ searchParams }: { searchParams: Promise<{ week?: string }> }) {
+export default async function AdminChallengePage({ searchParams }: { searchParams: Promise<{ period?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || !ADMIN_EMAILS.includes((user.email ?? '').toLowerCase())) redirect('/dashboard')
 
-  const { week: weekParam } = await searchParams
-  const week = weekParam || currentChallengeWeek()
+  const { period: periodParam } = await searchParams
+  const period = periodParam || currentWplMonth()
   const db = createServiceClient()
 
   let entries: AdminEntry[] = []
@@ -21,8 +21,8 @@ export default async function AdminChallengePage({ searchParams }: { searchParam
   try {
     const { data, error } = await db
       .from('challenge_entries')
-      .select('id, user_id, title, description, handle, live_url, vote_count, status, award, awarded_credits, created_at')
-      .eq('week', week)
+      .select('id, user_id, title, description, handle, live_url, video_url, vote_count, status, award, awarded_usd, created_at')
+      .eq('period', period)
       .order('vote_count', { ascending: false })
       .order('created_at', { ascending: false })
     if (error) throw error
@@ -39,5 +39,5 @@ export default async function AdminChallengePage({ searchParams }: { searchParam
     tableReady = false // migration not applied yet
   }
 
-  return <AdminChallengeClient week={week} entries={entries} tableReady={tableReady} />
+  return <AdminChallengeClient period={period} entries={entries} tableReady={tableReady} />
 }

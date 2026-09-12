@@ -122,13 +122,21 @@ function p(text: string): string {
 }
 
 function infoBox(rows: [string, string][], borderColor = '#2e2e38'): string {
-  return `<div style="background:#1a1a1e;border:1px solid ${borderColor};border-radius:10px;padding:20px;margin:0 0 24px">
-    ${rows.map(([label, value]) => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
-        <span style="font-size:13px;color:#8888a0">${label}</span>
-        <span style="font-size:13px;color:#f0f0f4;font-weight:500">${value}</span>
-      </div>`).join('<hr style="border:none;border-top:1px solid #2e2e38;margin:4px 0"/>')}
-  </div>`
+  // Table layout, not flexbox — Gmail's HTML sanitizer strips `display:flex`
+  // entirely, which collapsed the label and value spans together with no
+  // gap at all ("Month2026-09" instead of "Month  2026-09"). Tables are the
+  // one layout primitive every major email client renders consistently.
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#1a1a1e;border:1px solid ${borderColor};border-radius:10px;margin:0 0 24px">
+    <tr><td style="padding:14px 20px 6px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    ${rows.map(([label, value], i) => `
+      <tr>
+        <td style="font-size:13px;color:#8888a0;padding:6px 12px 6px 0;border-top:${i === 0 ? 'none' : '1px solid #2e2e38'};white-space:nowrap">${label}</td>
+        <td style="font-size:13px;color:#f0f0f4;font-weight:500;padding:6px 0;border-top:${i === 0 ? 'none' : '1px solid #2e2e38'};text-align:right">${value}</td>
+      </tr>`).join('')}
+    </table>
+    </td></tr>
+  </table>`
 }
 
 function divider(): string {
@@ -282,19 +290,18 @@ export async function sendAdminPaperLeakTip(opts: {
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📝 Paper leak tip: ${opts.examName}`, html })
 }
 
-export async function sendChallengeWinnerEmail(to: string, placeLabel: string, credits: number, newBalance?: number) {
+export async function sendChallengeWinnerEmail(to: string, placeLabel: string, usd: number) {
   const html = wrap(`
     ${h1(`You won ${placeLabel} 🏆`)}
-    ${p(`Your build took <strong style="color:#f0f0f4">${placeLabel}</strong> in this week's WyberAi Build Challenge. Real app, real win — congratulations.`)}
+    ${p(`Your build took <strong style="color:#f0f0f4">${placeLabel}</strong> in this month's Wyber Premier League. Real app, real cash — congratulations.`)}
     ${infoBox([
-      ['Prize', `${credits.toLocaleString()} credits`],
-      ...(typeof newBalance === 'number' ? [['New balance', newBalance.toLocaleString()] as [string, string]] : []),
-      ['Credited', 'Instantly — already in your account'],
+      ['Prize', `$${usd.toLocaleString()}`],
+      ['Payout', 'We’ll email you separately to arrange bank transfer or PayPal'],
     ], '#f59e0b55')}
     <div style="text-align:center;margin:0 0 24px">${btn('Keep building →', `${APP_URL}/dashboard`)}</div>
-    ${p('Enter again next week — new challenge every Monday, winners every Sunday.')}
-  `, `You won ${placeLabel} — ${credits} credits added`)
-  return sendMail({ from: FROM, to, subject: `🏆 You won ${placeLabel} — ${credits} credits added`, html })
+    ${p('Enter again next month — unlimited entries, new winners on the 1st.')}
+  `, `You won ${placeLabel} — $${usd.toLocaleString()}`)
+  return sendMail({ from: FROM, to, subject: `🏆 You won ${placeLabel} — $${usd.toLocaleString()}`, html })
 }
 
 export async function sendCommunityRewardEmail(to: string, programLabel: string, credits: number, discountNote?: string, discountCode?: string) {
@@ -336,23 +343,60 @@ export async function sendChallengeEntryAlert(entry: {
   description: string
   handle?: string | null
   liveUrl?: string | null
-  week: string
+  videoUrl?: string | null
+  period: string
 }) {
   // Internal-only: every contest submission lands in the founder's inbox, so
   // entries are never a hashtag scavenger hunt — this is the canonical feed.
   const html = wrap(`
-    ${h1('New challenge entry 🏆')}
-    ${p(`<strong style="color:#f0f0f4">${entry.title}</strong> was just submitted to the Weekly Build Challenge.`)}
+    ${h1('New Wyber Premier League entry 🏆')}
+    ${p(`<strong style="color:#f0f0f4">${entry.title}</strong> was just submitted to Wyber Premier League.`)}
     ${infoBox([
       ['Builder', entry.userEmail],
       ['Handle', entry.handle || '—'],
-      ['Week', entry.week],
+      ['Month', entry.period],
       ['Pitch', entry.description],
-      ...(entry.liveUrl ? [['Live', entry.liveUrl] as [string, string]] : [['Live link', 'not shared (screenshot only)'] as [string, string]]),
+      ['Project URL', entry.liveUrl || '—'],
+      ...(entry.videoUrl ? [['Demo video', entry.videoUrl] as [string, string]] : []),
     ], '#0EA5E944')}
     ${entry.liveUrl ? `<div style="text-align:center;margin:0 0 8px">${btn('Open the build ↗', entry.liveUrl)}</div>` : ''}
   `, `New entry: ${entry.title}`)
-  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 Challenge entry: ${entry.title} — ${entry.userEmail}`, html })
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 WPL entry: ${entry.title} — ${entry.userEmail}`, html })
+}
+
+export async function sendWplEntryConfirmation(to: string, title: string, period: string, entryId: string) {
+  // Entrant-facing receipt — separate from sendChallengeEntryAlert (which is
+  // the internal founder notification). Sent right after a successful submit.
+  // Your entry is never listed publicly — this vote link is the only way
+  // anyone finds it, and only you decide who to share it with.
+  const voteUrl = `${APP_URL}/premier-league/vote/${entryId}`
+  const html = wrap(`
+    ${h1("You're entered 🏆")}
+    ${p(`<strong style="color:#f0f0f4">${title}</strong> is officially in the running for Wyber Premier League. Your idea is never shown publicly — this private link is the only way anyone sees it.`)}
+    ${infoBox([
+      ['Month', period],
+      ['Judging', 'WPL Champion & Most Creative picked by our team · Fan Favorite by community vote'],
+      ['Winners announced', '1st of next month'],
+      ['Prizes', '$1,000 / $500 / $300'],
+    ], '#0EA5E955')}
+    ${p('Share your private link to rack up votes for Fan Favorite — and feel free to enter as many builds as you want this month.')}
+    <div style="text-align:center;margin:0 0 24px">${btn('Open your vote link →', voteUrl)}</div>
+  `, `You're entered — ${title} is in Wyber Premier League`)
+  return sendMail({ from: FROM, to, subject: `🏆 You're entered — ${title} is in Wyber Premier League`, html })
+}
+
+export async function sendWplMonthlyReminder(period: string, top: Array<{ title: string; vote_count: number; award: string | null }>) {
+  // Internal-only: fires a few days before month-end so WPL Champion and Most
+  // Creative never go un-assigned when the period rolls (Fan Favorite is
+  // automatic by vote count — this is just the shortlist for the two manual picks).
+  const rows = top.slice(0, 10).map(e => `${e.title} — ${e.vote_count} votes${e.award ? ` (already: ${e.award})` : ''}`)
+  const html = wrap(`
+    ${h1('WPL month closing soon 🏆')}
+    ${p(`${period} rolls over in a few days. Assign <strong style="color:#f0f0f4">WPL Champion</strong> and <strong style="color:#f0f0f4">Most Creative</strong> before then — Fan Favorite is picked automatically by vote count.`)}
+    ${infoBox(rows.length ? rows.map((r, i) => [String(i + 1), r] as [string, string]) : [['—', 'No entries yet this month']], '#f59e0b55')}
+    <div style="text-align:center;margin:0 0 24px">${btn('Open admin →', `${APP_URL}/admin/challenge`)}</div>
+  `, `WPL ${period} closing soon — pick your winners`)
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 WPL ${period} closing soon — pick your winners`, html })
 }
 
 // ── 2a. Free-scanner lead magnet (/tools) ─────────────────────────────────────
@@ -901,11 +945,13 @@ export async function sendAIEmployeesWaitlistEmail(to: string) {
     ${p("We're putting the finishing touches on a new kind of team member: AI workers that connect to your tools, run on a schedule you set, and handle the work that eats your day.")}
     <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:20px;margin:0 0 24px">
       <p style="margin:0 0 12px;font-size:13px;color:#8888a0;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">What's coming</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${['AI SDR — qualifies leads & logs them to your CRM', 'AI Inbox Manager — drafts replies, starts your day at zero', 'AI Ops Assistant — connects your tools & runs workflows', 'AI Research Analyst — monitors topics & delivers briefs', '+ 6 more roles across Sales, Support, Marketing & Admin'].map(item => `
-        <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid #2e2e38">
-          <span style="color:#0EA5E9;font-size:13px;flex-shrink:0">→</span>
-          <span style="font-size:14px;color:#f0f0f4">${item}</span>
-        </div>`).join('')}
+        <tr style="border-bottom:1px solid #2e2e38">
+          <td width="20" style="color:#0EA5E9;font-size:13px;padding:8px 10px 8px 0;vertical-align:top">→</td>
+          <td style="font-size:14px;color:#f0f0f4;padding:8px 0">${item}</td>
+        </tr>`).join('')}
+      </table>
     </div>
     <div style="text-align:center;margin:28px 0">
       ${btn('Explore WyberAi now →', `${APP_URL}/dashboard`)}
@@ -965,24 +1011,30 @@ export async function sendAIEmployeeDigestEmail(
   const kpiHtml = run.kpiResults && run.kpiResults.length > 0 ? `
     <div style="background:#071e2e;border:1px solid #0c3a52;border-radius:10px;padding:20px;margin:0 0 20px">
       <p style="margin:0 0 14px;font-size:11px;font-weight:700;color:#555566;text-transform:uppercase;letter-spacing:0.07em">KPI Results</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${run.kpiResults.map(k => `
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #0c3a52">
-          <span style="font-size:13px;color:#8888a0">${k.name}</span>
-          <span style="font-size:15px;font-weight:700;color:#0EA5E9">${k.value} <span style="font-size:11px;font-weight:400;color:#555566">${k.unit}</span></span>
-        </div>`).join('')}
+        <tr style="border-bottom:1px solid #0c3a52">
+          <td style="font-size:13px;color:#8888a0;padding:8px 12px 8px 0">${k.name}</td>
+          <td style="font-size:15px;font-weight:700;color:#0EA5E9;padding:8px 0;text-align:right">${k.value} <span style="font-size:11px;font-weight:400;color:#555566">${k.unit}</span></td>
+        </tr>`).join('')}
+      </table>
     </div>` : ''
 
   const actionsHtml = run.actionsTaken.length > 0 ? `
     <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:20px;margin:0 0 20px">
       <p style="margin:0 0 14px;font-size:11px;font-weight:700;color:#555566;text-transform:uppercase;letter-spacing:0.07em">Actions taken</p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${run.actionsTaken.map(a => `
-        <div style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e26">
-          <img src="https://img.logo.dev/${a.tool.toLowerCase()}.com?token=pk_placeholder&size=20" width="20" height="20" style="border-radius:4px;margin-top:1px;flex-shrink:0" onerror="this.style.display='none'" />
-          <div>
+        <tr style="border-bottom:1px solid #1e1e26">
+          <td width="20" style="padding:10px 12px 10px 0;vertical-align:top">
+            <img src="https://img.logo.dev/${a.tool.toLowerCase()}.com?token=pk_placeholder&size=20" width="20" height="20" style="border-radius:4px;display:block" onerror="this.style.display='none'" />
+          </td>
+          <td style="padding:10px 0">
             <span style="font-size:11px;font-family:monospace;color:#0EA5E9;background:rgba(14,165,233,0.1);padding:2px 7px;border-radius:5px">${a.action}</span>
             <p style="margin:5px 0 0;font-size:12px;color:#8888a0;line-height:1.5">${a.result_summary.slice(0, 150)}</p>
-          </div>
-        </div>`).join('')}
+          </td>
+        </tr>`).join('')}
+      </table>
     </div>` : ''
 
   const html = wrap(`

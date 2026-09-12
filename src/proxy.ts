@@ -124,6 +124,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/designers') ||
     path.startsWith('/affiliates') ||
     path.startsWith('/challenge') ||
+    // Wyber Premier League (formerly the Weekly Build Challenge at /challenge,
+    // which now 301s here) — ad traffic, public landing page.
+    path.startsWith('/premier-league') ||
     // Independence Day contest — ad traffic, public landing page.
     path.startsWith('/independence-day') ||
     // Public browse + detail pages, AND /marketplace/sell — that page enforces

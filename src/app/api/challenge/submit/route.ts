@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { currentChallengeWeek } from '@/lib/challenge'
-import { sendChallengeEntryAlert } from '@/lib/email'
+import { currentWplMonth } from '@/lib/challenge'
+import { sendChallengeEntryAlert, sendWplEntryConfirmation } from '@/lib/email'
 
-// Submit an opt-in build to this week's challenge. Entering IS the consent:
-// nothing about a user's app is exposed until they call this route.
+const URL_RE = /^https?:\/\/.+/
+
+// Submit an opt-in build to this month's Wyber Premier League. Entering IS the
+// consent: nothing about a user's app is exposed until they call this route.
+// Entries are unlimited per user per month by design — the more builds, the
+// better (see src/lib/challenge.ts header).
 export async function POST(req: NextRequest) {
   const auth = await createClient()
   const { data: { user } } = await auth.auth.getUser()
@@ -16,7 +20,7 @@ export async function POST(req: NextRequest) {
     description?: string
     handle?: string
     liveUrl?: string
-    showLive?: boolean // include a live demo link (default true when a project has one)
+    videoUrl?: string
   }
 
   const title = (body.title ?? '').trim()
@@ -25,26 +29,13 @@ export async function POST(req: NextRequest) {
   if (!description || description.length > 200) return NextResponse.json({ error: 'A one-line description is required (max 200 chars).' }, { status: 400 })
 
   const db = createServiceClient()
-  const week = currentChallengeWeek()
+  const period = currentWplMonth()
 
-  // One active entry per user per week.
-  const { data: existing } = await db
-    .from('challenge_entries')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('week', week)
-    .neq('status', 'hidden')
-    .limit(1)
-  if (existing?.length) {
-    return NextResponse.json({ error: "You've already entered this week. Winners are picked Sunday — check back then." }, { status: 400 })
-  }
-
-  // If they attached one of their projects, verify ownership and pull its live
-  // URL + thumbnail. Sharing the live link is opt-in (showLive); when they opt
-  // in we flip the project public so /p/[id] resolves — never otherwise.
+  // Project/live URL is required — real cash prizes need a working link to
+  // judge and to vote on. Optionally attach one of their own projects (verified
+  // ownership below) to auto-pull its live URL + thumbnail.
   let liveUrl: string | null = (body.liveUrl ?? '').trim() || null
   let thumbnailUrl: string | null = null
-  const showLive = body.showLive !== false
 
   if (body.projectId) {
     const { data: project } = await db
@@ -56,10 +47,17 @@ export async function POST(req: NextRequest) {
     if (!project) return NextResponse.json({ error: 'Project not found.' }, { status: 404 })
 
     thumbnailUrl = project.thumbnail_url ?? null
-    if (showLive) {
-      liveUrl = liveUrl || project.deployed_url || project.published_url || null
-      if (liveUrl) await db.from('projects').update({ is_public: true }).eq('id', project.id)
-    }
+    liveUrl = liveUrl || project.deployed_url || project.published_url || null
+    if (liveUrl) await db.from('projects').update({ is_public: true }).eq('id', project.id)
+  }
+
+  if (!liveUrl || !URL_RE.test(liveUrl)) {
+    return NextResponse.json({ error: 'A project URL (http:// or https://) is required.' }, { status: 400 })
+  }
+
+  const videoUrl = (body.videoUrl ?? '').trim() || null
+  if (videoUrl && !URL_RE.test(videoUrl)) {
+    return NextResponse.json({ error: 'Demo video link must start with http:// or https://' }, { status: 400 })
   }
 
   const { data: entry, error } = await db
@@ -67,21 +65,23 @@ export async function POST(req: NextRequest) {
     .insert({
       user_id: user.id,
       project_id: body.projectId ?? null,
-      week,
+      period,
       title,
       description,
       handle: (body.handle ?? '').trim() || null,
       live_url: liveUrl,
+      video_url: videoUrl,
       thumbnail_url: thumbnailUrl,
       status: 'approved',
     })
-    .select('id, title, description, handle, live_url, thumbnail_url, vote_count, created_at')
+    .select('id, title, description, handle, live_url, video_url, thumbnail_url, vote_count, created_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Best-effort owner notification — never fail the submission on email trouble.
-  try { await sendChallengeEntryAlert({ userEmail: user.email ?? 'unknown', title, description, handle: entry.handle, liveUrl, week }) } catch {}
+  // Best-effort notifications — never fail the submission on email trouble.
+  try { await sendChallengeEntryAlert({ userEmail: user.email ?? 'unknown', title, description, handle: entry.handle, liveUrl, videoUrl, period }) } catch {}
+  if (user.email) { try { await sendWplEntryConfirmation(user.email, title, period, entry.id) } catch {} }
 
   return NextResponse.json({ ok: true, entry })
 }

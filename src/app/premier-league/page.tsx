@@ -1,20 +1,19 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { WyberLogo } from '@/components/shared/WyberLogo'
-import { SocialShare } from '@/components/shared/SocialShare'
-import { ChallengeSection } from '@/components/challenge/ChallengeSection'
+import { EntrySubmit } from '@/components/challenge/ChallengeSection'
 import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { CHALLENGE_GALLERY_ENABLED } from '@/lib/challenge'
 
 
 export const metadata: Metadata = {
-  title: 'Weekly Build Challenge — Win Credits Every Week | WyberAi',
-  description: 'Build a real app on WyberAi and enter. Our team picks the top build; the community upvotes the runner-up. Win credits every week. Free to enter.',
+  title: 'Wyber Premier League — Win $1,000 Every Month | WyberAi',
+  description: 'Build a real web app, website, or SaaS on WyberAi and enter Wyber Premier League. Free to enter, unlimited entries. $1,000 / $500 / $300 up for grabs every single month.',
   openGraph: {
-    title: 'WyberAi Weekly Build Challenge — Win Credits Every Week',
-    description: 'Build an MVP on WyberAi, submit it, and win credits. Team pick takes the top prize; most-upvoted takes second. Free to enter.',
-    url: 'https://wyberai.com/challenge',
+    title: 'Wyber Premier League — Win $1,000 Every Month',
+    description: 'Build your best web app, website, or SaaS on WyberAi, submit it, and win real cash. Free to enter, unlimited entries, new winners on the 1st of every month. Your idea is never shown publicly.',
+    url: 'https://wyberai.com/premier-league',
   },
 }
 
@@ -25,15 +24,21 @@ export const dynamic = 'force-dynamic'
 const BRAND = '#0EA5E9'
 
 const PRIZES = [
-  { key: 'editor', title: "Editor's Pick", amount: '2,000 credits', worthUSD: 'worth $199', worthINR: 'worth ₹20,000', color: '#f59e0b', emoji: '🏆', by: 'Chosen by the WyberAi team — the build we think is best.' },
-  { key: 'upvoted', title: 'Most Upvoted', amount: '1,000 credits', worthUSD: 'worth $99', worthINR: 'worth ₹10,000', color: '#0EA5E9', emoji: '🥈', by: 'Voted by the community — the most-upvoted build wins.' },
+  { key: 'editor', title: 'WPL Champion', amount: '$1,000', worthINR: '₹83,000', color: '#f59e0b', emoji: '🏆', by: 'Chosen by the WyberAi team — the build we think is best.' },
+  { key: 'upvoted', title: 'Fan Favorite', amount: '$500', worthINR: '₹41,500', color: '#0EA5E9', emoji: '🥈', by: 'Voted by the community — the most-upvoted build wins.' },
+  { key: 'creative', title: 'Most Creative', amount: '$300', worthINR: '₹24,900', color: '#a855f7', emoji: '🎨', by: "Chosen by the WyberAi team — the build that made us say wow." },
 ]
 
 const RULES = [
-  { icon: '🛠', title: 'Build your MVP on WyberAi', desc: 'Ship at least a working MVP on WyberAi — a free account is enough to start. No credits for ideas; you have to actually build.' },
-  { icon: '🚀', title: 'Submit it to the gallery', desc: 'Publish your build and submit it to this week’s challenge. Your apps stay private by default — only what you enter is shown.' },
-  { icon: '📣', title: 'Share for upvotes', desc: 'Share your build on X, Instagram, Facebook, or WhatsApp with #BuiltOnWyber. The most-upvoted build wins the community prize.' },
-  { icon: '🔁', title: 'Winners every Sunday', desc: 'Our team picks the top build; the community’s most-upvoted takes second. Credits land in your account instantly.' },
+  { icon: '🛠', title: 'Build a web app, website, or SaaS on WyberAi', desc: 'Ship the best, most polished build you can — the stronger it is, the better your odds. Web apps, websites, and SaaS only, no mobile apps this round.' },
+  { icon: '🚀', title: 'Submit as many builds as you want', desc: 'Free to enter, unlimited entries — every build you publish this month is another shot at the prize pool.' },
+  { icon: '📣', title: 'Share your private link for votes', desc: 'Every entry gets its own private link, never listed publicly. Share it wherever you want — the most-upvoted build wins Fan Favorite.' },
+  { icon: '🔁', title: 'Winners on the 1st of every month', desc: 'Our team picks WPL Champion and Most Creative; the community’s most-upvoted takes Fan Favorite. One win per person per month.' },
+]
+
+const TRUST = [
+  { icon: '🔒', title: 'Your idea stays yours', desc: 'Entries are never published in a public gallery — there’s no browsable list of everyone’s ideas. Only you get the link to your entry, and only you decide who to share it with.' },
+  { icon: '🌐', title: 'Never locked in', desc: 'Connect your own domain and run your app independently — you’re free to use it however you want, not dependent on WyberAi to keep it alive.' },
 ]
 
 const CRITERIA = [
@@ -54,11 +59,10 @@ const IDEAS = [
   'A restaurant ordering system with menu and cart',
 ]
 
-export default async function ChallengePage() {
+export default async function PremierLeaguePage() {
   const currency = await resolveRegion()
   const isIndia = currency === 'INR'
   const owner = await isOwnerPreview()
-  const shareText = "I'm entering the WyberAi Weekly Build Challenge — build a real app, win credits. Come build with me!"
 
   return (
     <div style={{ minHeight: '100vh', background: '#09090b', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
@@ -78,13 +82,13 @@ export default async function ChallengePage() {
         <div style={{ position: 'relative', zIndex: 1, maxWidth: 700, margin: '0 auto' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🏆</div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,6vw,56px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 16 }}>
-            Weekly{' '}
+            Wyber{' '}
             <span style={{ background: 'linear-gradient(135deg, #a855f7, #0EA5E9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              Build Challenge
+              Premier League
             </span>
           </h1>
-          <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 32, maxWidth: 560, margin: '0 auto 32px' }}>
-            Build a real app on WyberAi and enter. No credits for ideas — you ship at least an MVP. Our team picks the top build; the community upvotes the runner-up. <strong style={{ color: '#fafafa' }}>Win credits every week.</strong>
+          <p style={{ fontSize: 18, color: '#a1a1aa', lineHeight: 1.6, marginBottom: 24, maxWidth: 560, margin: '0 auto 24px' }}>
+            Build a real web app, website, or SaaS on WyberAi and enter — free, unlimited entries. Our team picks the top build; the community upvotes the runner-up. <strong style={{ color: '#fafafa' }}>Win up to {isIndia ? '₹83,000' : '$1,000'}, every single month.</strong>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
@@ -94,32 +98,31 @@ export default async function ChallengePage() {
               How it works
             </a>
           </div>
-          <p style={{ fontSize: 12, color: '#52525b', marginTop: 16 }}>Free to enter · New winners every Sunday · Enter every week</p>
+          <p style={{ fontSize: 12, color: '#52525b', marginTop: 16 }}>Free to enter · Unlimited entries · New winners on the 1st of every month</p>
         </div>
       </section>
 
       {/* Prizes */}
-      <section style={{ padding: '20px clamp(20px,4vw,48px) 60px', maxWidth: 760, margin: '0 auto' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>This week&apos;s prizes</h2>
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 36 }}>Credits added to your account instantly — enter every week</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
+      <section style={{ padding: '20px clamp(20px,4vw,48px) 60px', maxWidth: 900, margin: '0 auto' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>This month&apos;s prizes</h2>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 36 }}>Real cash, paid out by bank transfer or PayPal — enter every month</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
           {PRIZES.map(p => (
             <div key={p.key} style={{ padding: '24px', borderRadius: 16, border: `1px solid ${p.color}55`, background: `${p.color}0d`, textAlign: 'left' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <span style={{ fontSize: 26 }}>{p.emoji}</span>
                 <span style={{ fontSize: 12, fontWeight: 800, color: p.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{p.title}</span>
               </div>
-              <div style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>{p.amount}</div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: p.color, margin: '2px 0 10px' }}>{isIndia ? p.worthINR : p.worthUSD}</div>
-              <div style={{ fontSize: 12.5, color: '#71717a', lineHeight: 1.5 }}>{p.by}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.03em' }}>{isIndia ? p.worthINR : p.amount}</div>
+              <div style={{ fontSize: 12.5, color: '#71717a', lineHeight: 1.5, marginTop: 10 }}>{p.by}</div>
             </div>
           ))}
         </div>
-        <p style={{ textAlign: 'center', fontSize: 12, color: '#52525b', marginTop: 16 }}>Plus runner-up credits for standout builds we love.</p>
+        <p style={{ textAlign: 'center', fontSize: 12, color: '#52525b', marginTop: 16 }}>{isIndia ? '₹1,49,400' : '$1,800'} up for grabs, every month. One win per person per month.</p>
       </section>
 
-      {/* Gallery + submit */}
-      {CHALLENGE_GALLERY_ENABLED && <ChallengeSection enabled={CHALLENGE_GALLERY_ENABLED} />}
+      {/* Submit — private by design, see EntrySubmit */}
+      {CHALLENGE_GALLERY_ENABLED && <EntrySubmit enabled={CHALLENGE_GALLERY_ENABLED} />}
 
       {/* Rules */}
       <section id="rules" style={{ padding: '40px clamp(20px,4vw,48px)', maxWidth: 800, margin: '0 auto' }}>
@@ -135,21 +138,23 @@ export default async function ChallengePage() {
         </div>
       </section>
 
-      {/* Share */}
-      <section style={{ padding: '40px clamp(20px,4vw,48px)', maxWidth: 640, margin: '0 auto' }}>
-        <div style={{ padding: '24px', borderRadius: 16, border: '1px solid rgba(14,165,233,0.2)', background: 'rgba(14,165,233,0.05)', textAlign: 'center' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6, letterSpacing: '-0.02em' }}>Spread the word, win the vote</h2>
-          <p style={{ fontSize: 13, color: '#71717a', marginBottom: 18, lineHeight: 1.5 }}>Share your build with <strong style={{ color: '#0EA5E9' }}>#BuiltOnWyber</strong> to rack up upvotes — the most-upvoted build takes the community prize.</p>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <SocialShare url="https://wyberai.com/challenge" text={shareText} align="center" />
-          </div>
+      {/* Trust — idea privacy + no lock-in */}
+      <section style={{ padding: '40px clamp(20px,4vw,48px)', maxWidth: 800, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
+          {TRUST.map(t => (
+            <div key={t.title} style={{ padding: '24px', borderRadius: 16, border: '1px solid rgba(14,165,233,0.2)', background: 'rgba(14,165,233,0.05)' }}>
+              <div style={{ fontSize: 24, marginBottom: 10 }}>{t.icon}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>{t.title}</div>
+              <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6 }}>{t.desc}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Judging */}
       <section style={{ padding: '40px clamp(20px,4vw,48px) 60px', maxWidth: 800, margin: '0 auto' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>How we pick the top build</h2>
-        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 36 }}>The community vote decides second place — this is how our team chooses first.</p>
+        <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.03em' }}>How we pick the top builds</h2>
+        <p style={{ textAlign: 'center', fontSize: 14, color: '#71717a', marginBottom: 36 }}>The community vote decides Fan Favorite — this is how our team chooses WPL Champion and Most Creative.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {CRITERIA.map(c => (
             <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
@@ -178,7 +183,7 @@ export default async function ChallengePage() {
       <section style={{ padding: '40px clamp(20px,4vw,48px) 80px', textAlign: 'center' }}>
         <div style={{ maxWidth: 500, margin: '0 auto', padding: '48px 32px', borderRadius: 20, background: 'linear-gradient(135deg, rgba(168,85,247,0.1), rgba(14,165,233,0.1))', border: '1px solid rgba(168,85,247,0.2)' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, letterSpacing: '-0.03em' }}>Ready to build?</h2>
-          <p style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 24 }}>Ship an app on WyberAi and enter. Best builds get credits every Sunday.</p>
+          <p style={{ fontSize: 14, color: '#a1a1aa', marginBottom: 24 }}>Ship a web app, website, or SaaS on WyberAi and enter. Winners announced the 1st of every month.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '14px 40px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 0 30px rgba(14,165,233,0.3)' }}>
             Start Building — It&apos;s Free →
           </Link>

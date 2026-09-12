@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 
 const BRAND = '#0EA5E9'
 
@@ -10,105 +10,58 @@ type Entry = {
   description: string
   handle: string | null
   live_url: string | null
+  video_url: string | null
   thumbnail_url: string | null
   vote_count: number
   created_at: string
 }
 
-// A deterministic soft gradient for entries without a thumbnail, so the wall
-// still looks alive instead of a grid of grey boxes.
-function gradientFor(id: string): string {
-  let h = 0
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360
-  return `linear-gradient(135deg, hsl(${h} 70% 22%), hsl(${(h + 60) % 360} 70% 16%))`
-}
-
-export function ChallengeSection({ enabled }: { enabled: boolean }) {
-  const [entries, setEntries] = useState<Entry[]>([])
-  const [voted, setVoted] = useState<Set<string>>(new Set())
-  const [loading, setLoading] = useState(true)
+// Deliberately NOT a public gallery — entries aren't listed anywhere a stranger
+// could browse them (see product decision: builders don't want their idea
+// shown to competitors browsing the contest). Submitting gives the builder
+// their OWN private vote link (src/app/premier-league/vote/[id]) to share on
+// their own terms; nobody else can discover it any other way.
+export function EntrySubmit({ enabled }: { enabled: boolean }) {
   const [open, setOpen] = useState(false)
+  const [submitted, setSubmitted] = useState<Entry | null>(null)
+  const [copied, setCopied] = useState(false)
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/challenge/entries', { cache: 'no-store' })
-      const data = await res.json()
-      setEntries(data.entries ?? [])
-      setVoted(new Set<string>(data.votedIds ?? []))
-    } catch { /* leave empty */ } finally {
-      setLoading(false)
-    }
-  }, [])
+  const voteUrl = submitted ? `${window.location.origin}/premier-league/vote/${submitted.id}` : ''
 
-  useEffect(() => { load() }, [load])
-
-  const upvote = useCallback(async (id: string) => {
-    const wasVoted = voted.has(id)
-    // Optimistic.
-    setVoted(prev => { const n = new Set(prev); wasVoted ? n.delete(id) : n.add(id); return n })
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, vote_count: e.vote_count + (wasVoted ? -1 : 1) } : e))
-
-    const res = await fetch('/api/challenge/vote', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entryId: id }),
-    })
-    if (!res.ok) { load(); return } // reconcile on failure (voting is open — no login needed)
-    const data = await res.json()
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, vote_count: data.count } : e))
-    setVoted(prev => { const n = new Set(prev); data.voted ? n.add(id) : n.delete(id); return n })
-  }, [voted, load])
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(voteUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch {}
+  }
 
   return (
-    <section style={{ padding: '20px clamp(20px,4vw,48px) 60px', maxWidth: 960, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 8 }}>
-        <div>
-          <h2 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.03em', margin: 0 }}>This week&apos;s builds</h2>
-          <p style={{ fontSize: 14, color: '#71717a', margin: '6px 0 0' }}>Opt-in only — upvote your favourites. The most-upvoted wins the community prize.</p>
-        </div>
-        <button onClick={() => setOpen(true)} style={{ padding: '12px 22px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 0 24px rgba(14,165,233,0.25)' }}>
-          Submit your build →
-        </button>
-      </div>
-
+    <section style={{ padding: '20px clamp(20px,4vw,48px) 60px', maxWidth: 640, margin: '0 auto' }}>
       {!enabled && (
-        <p style={{ fontSize: 12, color: '#a16207', background: 'rgba(161,98,7,0.1)', border: '1px solid rgba(161,98,7,0.25)', borderRadius: 8, padding: '8px 12px', margin: '12px 0 0', display: 'inline-block' }}>
-          Owner preview — gallery is dark for the public until the flag is flipped.
+        <p style={{ fontSize: 12, color: '#a16207', background: 'rgba(161,98,7,0.1)', border: '1px solid rgba(161,98,7,0.25)', borderRadius: 8, padding: '8px 12px', margin: '0 0 16px', display: 'inline-block' }}>
+          Owner preview — entries are dark for the public until the flag is flipped.
         </p>
       )}
 
-      <div style={{ marginTop: 28 }}>
-        {loading ? (
-          <p style={{ textAlign: 'center', color: '#52525b', fontSize: 14, padding: '40px 0' }}>Loading builds…</p>
-        ) : entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 24px', borderRadius: 16, border: '1px dashed rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.02)' }}>
-            <div style={{ fontSize: 32, marginBottom: 10 }}>🚀</div>
-            <p style={{ fontSize: 15, fontWeight: 700, margin: '0 0 4px' }}>No builds yet this week</p>
-            <p style={{ fontSize: 13, color: '#71717a', margin: 0 }}>Be the first — submit your build and start collecting upvotes.</p>
+      {submitted ? (
+        <div style={{ textAlign: 'center', padding: '32px 28px', borderRadius: 16, border: '1px solid rgba(14,165,233,0.25)', background: 'rgba(14,165,233,0.06)' }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>🎉</div>
+          <p style={{ fontSize: 16, fontWeight: 700, margin: '0 0 6px' }}>&quot;{submitted.title}&quot; is entered</p>
+          <p style={{ fontSize: 13, color: '#a1a1aa', margin: '0 0 20px', lineHeight: 1.5 }}>This link is yours alone — share it wherever you want to collect Fan Favorite votes. It&apos;s never listed anywhere else.</p>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px' }}>
+            <span style={{ flex: 1, fontSize: 13, color: '#e4e4e7', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{voteUrl}</span>
+            <button onClick={copyLink} style={{ padding: '6px 14px', borderRadius: 7, border: 'none', background: BRAND, color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+              {copied ? 'Copied ✓' : 'Copy link'}
+            </button>
           </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-            {entries.map(e => (
-              <div key={e.id} style={{ borderRadius: 14, border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ height: 140, background: e.thumbnail_url ? `center/cover no-repeat url(${e.thumbnail_url})` : gradientFor(e.id) }} />
-                <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em' }}>{e.title}</div>
-                  <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.5, flex: 1 }}>{e.description}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-                    <div style={{ fontSize: 12, color: '#71717a' }}>
-                      {e.handle ? <span>{e.handle}</span> : null}
-                      {e.live_url ? <a href={e.live_url} target="_blank" rel="noopener noreferrer" style={{ color: BRAND, textDecoration: 'none', marginLeft: e.handle ? 8 : 0, fontWeight: 700 }}>View live ↗</a> : null}
-                    </div>
-                    <button onClick={() => upvote(e.id)} aria-pressed={voted.has(e.id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', borderRadius: 20, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 800, border: `1px solid ${voted.has(e.id) ? BRAND : 'rgba(255,255,255,0.14)'}`, background: voted.has(e.id) ? 'rgba(14,165,233,0.15)' : 'transparent', color: voted.has(e.id) ? BRAND : '#e4e4e7' }}>
-                      <span style={{ fontSize: 12 }}>▲</span>{e.vote_count}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center' }}>
+          <button onClick={() => setOpen(true)} style={{ padding: '14px 32px', borderRadius: 10, background: BRAND, color: '#fff', fontSize: 15, fontWeight: 700, border: 'none', cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 0 24px rgba(14,165,233,0.25)' }}>
+            Submit your build →
+          </button>
+          <p style={{ fontSize: 12, color: '#52525b', margin: '12px 0 0' }}>Private by default — only you get the link to share.</p>
+        </div>
+      )}
 
-      {open && <SubmitModal onClose={() => setOpen(false)} onSubmitted={(entry) => { setEntries(prev => [entry, ...prev]); setOpen(false) }} />}
+      {open && <SubmitModal onClose={() => setOpen(false)} onSubmitted={(entry) => { setSubmitted(entry); setOpen(false) }} />}
     </section>
   )
 }
@@ -118,7 +71,7 @@ function SubmitModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitte
   const [description, setDescription] = useState('')
   const [handle, setHandle] = useState('')
   const [liveUrl, setLiveUrl] = useState('')
-  const [showLive, setShowLive] = useState(true)
+  const [videoUrl, setVideoUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -127,9 +80,9 @@ function SubmitModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitte
     try {
       const res = await fetch('/api/challenge/submit', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, handle, liveUrl: showLive ? liveUrl : '', showLive }),
+        body: JSON.stringify({ title, description, handle, liveUrl, videoUrl }),
       })
-      if (res.status === 401) { window.location.href = '/login?next=/challenge'; return }
+      if (res.status === 401) { window.location.href = '/login?next=/premier-league'; return }
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Something went wrong.'); return }
       onSubmitted(data.entry)
@@ -143,7 +96,7 @@ function SubmitModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitte
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 1000 }}>
       <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 460, background: '#111113', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18, padding: 28, maxHeight: '90vh', overflowY: 'auto' }}>
         <h3 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', margin: '0 0 4px' }}>Submit your build</h3>
-        <p style={{ fontSize: 13, color: '#71717a', margin: '0 0 20px', lineHeight: 1.5 }}>Only what you enter is ever shown — your other apps stay private. Winners picked Sunday.</p>
+        <p style={{ fontSize: 13, color: '#71717a', margin: '0 0 20px', lineHeight: 1.5 }}>Web apps and websites only, no mobile apps this round. Private by default — never listed publicly. Enter as many builds as you want.</p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
@@ -159,21 +112,17 @@ function SubmitModal({ onClose, onSubmitted }: { onClose: () => void; onSubmitte
             <input value={handle} onChange={e => setHandle(e.target.value)} maxLength={60} placeholder="@you" style={field} />
           </div>
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#e4e4e7', cursor: 'pointer' }}>
-              <input type="checkbox" checked={showLive} onChange={e => setShowLive(e.target.checked)} />
-              Include a live demo link (uncheck to enter without exposing a working product)
-            </label>
+            <label style={label}>Project URL <span style={{ color: '#ef4444' }}>*</span></label>
+            <input value={liveUrl} onChange={e => setLiveUrl(e.target.value)} placeholder="https://…" style={field} />
           </div>
-          {showLive && (
-            <div>
-              <label style={label}>Live URL (optional)</label>
-              <input value={liveUrl} onChange={e => setLiveUrl(e.target.value)} placeholder="https://…" style={field} />
-            </div>
-          )}
+          <div>
+            <label style={label}>Demo video link (optional)</label>
+            <input value={videoUrl} onChange={e => setVideoUrl(e.target.value)} placeholder="YouTube, Loom, Drive…" style={field} />
+          </div>
           {error && <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{error}</p>}
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             <button onClick={onClose} style={{ flex: 1, padding: '11px', borderRadius: 9, border: '1px solid rgba(255,255,255,0.14)', background: 'transparent', color: '#a1a1aa', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
-            <button onClick={submit} disabled={busy || !title.trim() || !description.trim()} style={{ flex: 2, padding: '11px', borderRadius: 9, border: 'none', background: busy || !title.trim() || !description.trim() ? '#1f2937' : BRAND, color: '#fff', fontSize: 14, fontWeight: 700, cursor: busy ? 'default' : 'pointer', fontFamily: 'inherit', opacity: busy ? 0.7 : 1 }}>
+            <button onClick={submit} disabled={busy || !title.trim() || !description.trim() || !liveUrl.trim()} style={{ flex: 2, padding: '11px', borderRadius: 9, border: 'none', background: busy || !title.trim() || !description.trim() || !liveUrl.trim() ? '#1f2937' : BRAND, color: '#fff', fontSize: 14, fontWeight: 700, cursor: busy ? 'default' : 'pointer', fontFamily: 'inherit', opacity: busy ? 0.7 : 1 }}>
               {busy ? 'Submitting…' : 'Submit entry'}
             </button>
           </div>

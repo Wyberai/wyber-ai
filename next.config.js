@@ -27,6 +27,8 @@ const nextConfig = {
       // NOTE: the old `/build → /dashboard` vanity alias was removed Jul 2026:
       // /build is now the programmatic-SEO namespace (app/build/*).
       { source: '/lp/ecommerce-dashboard', destination: '/ecommerce', permanent: false },
+      // Weekly Build Challenge rebranded + relaunched as Wyber Premier League.
+      { source: '/challenge', destination: '/premier-league', permanent: true },
     ]
   },
   async headers() {
