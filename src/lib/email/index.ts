@@ -2,40 +2,34 @@ import { memeImg } from './memes'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 
-// Dogfooding our own product: every transactional/lifecycle email in this
-// file now sends through Continuum instead of Resend. Same call shape as
-// Resend's SDK ({from, to, subject, html}) on purpose — every one of the
-// ~59 functions below already calls `sendMail({...})` with
-// exactly this shape, so swapping the transport didn't require touching a
-// single call site's arguments, only the function they call.
-const CONTINUUM_API_URL = 'https://api.continuumapi.com/v1/send'
-
-function parseFromAddress(from: string): { from_name?: string; from_email: string } {
-  const match = from.match(/^(.*)<(.+)>$/)
-  if (match) return { from_name: match[1].trim(), from_email: match[2].trim() }
-  return { from_email: from.trim() }
-}
+// Temporarily back on Resend as of 2026-09-12: the Continuum migration's
+// sending domain (wyberai.com) sat unverified in Continuum from 2026-09-04
+// to 2026-09-11, so every transactional email — including auth/login-link —
+// silently failed for a week (each call site wraps sendMail in .catch(() =>
+// {}), so nothing surfaced). Reverted here rather than left half-fixed while
+// Continuum trust is re-established. Every one of the ~59 functions below
+// calls `sendMail({...})` with the same {from, to, subject, html} shape, so
+// the transport swaps back without touching a single call site.
+const RESEND_API_URL = 'https://api.resend.com/emails'
 
 async function sendMail(opts: { from: string; to: string; subject: string; html: string }): Promise<{ id: string | null }> {
-  const apiKey = process.env.CONTINUUM_API_KEY
-  if (!apiKey) throw new Error('CONTINUUM_API_KEY is not set — cannot send email')
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) throw new Error('RESEND_API_KEY is not set — cannot send email')
 
-  const { from_name, from_email } = parseFromAddress(opts.from)
-  const res = await fetch(CONTINUUM_API_URL, {
+  const res = await fetch(RESEND_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
+      from: opts.from,
       to: opts.to,
-      from_name,
-      from_email,
       subject: opts.subject,
-      html_body: opts.html,
+      html: opts.html,
     }),
   })
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`Continuum send failed (${res.status}): ${text.slice(0, 300)}`)
+    throw new Error(`Resend send failed (${res.status}): ${text.slice(0, 300)}`)
   }
 
   const data = await res.json().catch(() => ({})) as { id?: string }
