@@ -495,40 +495,52 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
             </>
           )}
         </div>
-        <div style={{ width: 1, height: 18, background: 'var(--ide-border)' }} />
-        {onToggleCode && Object.keys(files).length > 0 && (
-          <button onClick={onToggleCode} title={showCode ? t('hideCode') : t('viewCodeDevMode')}
-            style={{ ...btn, padding: '5px 8px', background: showCode ? 'var(--accent-glow)' : (btn as any).background, color: showCode ? 'var(--accent)' : (btn as any).color }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        <div style={{ width: 1, height: 18, background: 'var(--ide-border)', flexShrink: 0 }} />
+        {/* This cluster is "nice to have" chrome (dev-mode toggle, team, version
+            history, export, GitHub, Supabase) — unlike Publish, losing sight of
+            it briefly is fine. On a narrow phone browser the row has no wrap and
+            .ide-root clips overflow, so without its own shrink+scroll box these
+            buttons used to push Publish (the last, and only truly load-bearing,
+            item) off the right edge entirely — it wasn't disabled, it was just
+            never rendered on-screen. Give this group its own bounded, scrollable
+            box so it absorbs the squeeze instead of Publish. */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flexShrink: 1, overflowX: 'auto' }}>
+          {onToggleCode && Object.keys(files).length > 0 && (
+            <button onClick={onToggleCode} title={showCode ? t('hideCode') : t('viewCodeDevMode')}
+              style={{ ...btn, padding: '5px 8px', flexShrink: 0, background: showCode ? 'var(--accent-glow)' : (btn as any).background, color: showCode ? 'var(--accent)' : (btn as any).color }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </button>
+          )}
+          {projectId && (
+            <button onClick={openTeam} title={t('teamTooltip')} style={{ ...btn, padding: '5px 8px', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+          )}
+          {Object.keys(files).length > 2 && (
+            <button onClick={openSnapshots} title={t('versionHistory')} style={{ ...btn, padding: '5px 8px', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </button>
+          )}
+          <button onClick={handleExport} disabled={exporting} title={t('exportZip')} style={{ ...btn, padding: '5px 8px', flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
           </button>
-        )}
-        {projectId && (
-          <button onClick={openTeam} title={t('teamTooltip')} style={{ ...btn, padding: '5px 8px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          </button>
-        )}
-        {Object.keys(files).length > 2 && (
-          <button onClick={openSnapshots} title={t('versionHistory')} style={{ ...btn, padding: '5px 8px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </button>
-        )}
-        <button onClick={handleExport} disabled={exporting} title={t('exportZip')} style={{ ...btn, padding: '5px 8px' }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M8 2v8M5 7l3 3 3-3M2 12v1a1 1 0 001 1h10a1 1 0 001-1v-1"/></svg>
-        </button>
-        {Object.keys(files).length > 2 && (
-          <button onClick={handleGitHubPush} disabled={pushing} title={t('pushToGithub')} style={{ ...btn, padding: '5px 8px', color: pushUrl ? '#22c55e' : 'var(--ide-text2)' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.929.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-          </button>
-        )}
-        {Object.keys(files).length > 2 && (
-          <button onClick={() => setShowSupabase(true)} title={t('connectSupabase')} style={{ ...btn, padding: '5px 8px' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
-          </button>
-        )}
+          {Object.keys(files).length > 2 && (
+            <button onClick={handleGitHubPush} disabled={pushing} title={t('pushToGithub')} style={{ ...btn, padding: '5px 8px', flexShrink: 0, color: pushUrl ? '#22c55e' : 'var(--ide-text2)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.929.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+            </button>
+          )}
+          {Object.keys(files).length > 2 && (
+            <button onClick={() => setShowSupabase(true)} title={t('connectSupabase')} style={{ ...btn, padding: '5px 8px', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L2.203 12.424l-.401.562a1.04 1.04 0 0 0 .836 1.659H12v8.959a.396.396 0 0 0 .716.233l9.081-12.261.401-.562a1.04 1.04 0 0 0-.836-1.66z" fill="#3ECF8E"/></svg>
+            </button>
+          )}
+        </div>
         {/* Already live → open the Publish & Share modal (URL, share, re-publish
             live inside it). Publishing again should be an explicit click in
-            there, not a side effect of wanting to see your URL. */}
-        <button onClick={() => deployUrl ? setShowShareModal(true) : handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1, boxShadow: !deploying && Object.keys(files).length >= 2 ? '0 0 12px var(--brand-glow-soft, rgba(14,165,233,0.15))' : 'none' }}>
+            there, not a side effect of wanting to see your URL.
+            flexShrink:0 is load-bearing on narrow screens — see comment above
+            the icon cluster this button follows. */}
+        <button onClick={() => deployUrl ? setShowShareModal(true) : handleDeploy()} disabled={deploying || Object.keys(files).length < 2} style={{ background: deploying ? 'var(--bg-elevated)' : '#0EA5E9', color: deploying ? 'var(--ide-text3)' : 'white', border: 'none', borderRadius: 7, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: deploying || Object.keys(files).length < 2 ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', opacity: Object.keys(files).length < 2 ? 0.4 : 1, boxShadow: !deploying && Object.keys(files).length >= 2 ? '0 0 12px var(--brand-glow-soft, rgba(14,165,233,0.15))' : 'none', flexShrink: 0 }}>
           {deploying ? <><div style={{ width: 9, height: 9, border: '1.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />{t('deploying')}{deploySecs ? ` ${deploySecs}s` : ''}…</> : republished ? t('updated') : deployUrl ? t('live') : tc('publish')}
         </button>
         <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}@keyframes spin{to{transform:rotate(360deg)}}`}</style>

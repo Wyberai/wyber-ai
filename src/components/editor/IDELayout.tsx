@@ -40,7 +40,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   // is reachable. Below the breakpoint we show ONE panel at a time with a bottom
   // tab bar so the preview is always reachable.
   const [isNarrow, setIsNarrow] = useState(false);
-  const [mobileView, setMobileView] = useState<'preview' | 'chat' | 'code'>('chat');
+  const [mobileView, setMobileView] = useState<'preview' | 'chat'>('chat');
   const { isGenerating, hasGeneratedFiles } = useEditorStore();
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -59,7 +59,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
   // it dispatches this instead of reaching into layout state directly.
   useEffect(() => {
     const handler = (e: Event) => {
-      const view = (e as CustomEvent).detail as 'preview' | 'chat' | 'code' | undefined;
+      const view = (e as CustomEvent).detail as 'preview' | 'chat' | undefined;
       if (view) setMobileView(view);
     };
     window.addEventListener('wyber-request-mobile-view', handler);
@@ -188,10 +188,6 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'flex' : 'none', flexDirection: 'column' }}>
             <PreviewPanel />
           </div>
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'code' ? 'flex' : 'none', flexDirection: 'column' }}>
-            <TabBar />
-            <div style={{ flex: 1, overflow: 'hidden' }}><CodeEditor /></div>
-          </div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'chat' ? 'flex' : 'none', flexDirection: 'column' }}>
             <RightPanel
               projectId={initialProject?.id}
@@ -202,7 +198,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
             />
           </div>
           <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid var(--ide-border)', background: 'var(--bg-base)' }}>
-            {([['chat', t('ideTabChat')], ['preview', tc('preview')], ['code', t('ideTabCode')]] as const).map(([key, label]) => (
+            {([['chat', t('ideTabChat')], ['preview', tc('preview')]] as const).map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setMobileView(key)}
