@@ -169,6 +169,7 @@ export async function sendWelcomeEmail(to: string, name?: string, source: Welcom
     </div>
     ${divider()}
     ${p('<strong style="color:#f0f0f4">Bring a friend, you both win</strong> — share your invite link from Settings → Referrals. You get 50 credits per signup, they start with 50 free too.')}
+    ${p(`Also — <strong style="color:#f0f0f4">Wyber Premier League</strong> is running right now: build anything and enter for a shot at <strong style="color:#f0f0f4">$1,800</strong> in monthly prizes, free and unlimited entries, new winners on the 1st. <a href="${APP_URL}/premier-league" style="color:#0EA5E9">See this month's contest →</a>`)}
     ${p(`I'm building WyberAi in the open — every feature, every number, real. <a href="${FOUNDER_X_URL}" style="color:#0EA5E9">Follow along on X</a> or <a href="${FOUNDER_LINKEDIN_URL}" style="color:#0EA5E9">LinkedIn</a> if that's useful to you.`)}
     ${p('Questions? Just reply — this goes straight to me.')}
     ${p('— Sumeet, founder')}
