@@ -393,6 +393,31 @@ export async function sendWplMonthlyReminder(period: string, top: Array<{ title:
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏆 WPL ${period} closing soon — pick your winners`, html })
 }
 
+// ── 2a0. Missed-email recovery (Sep 2026 Continuum outage) ───────────────────
+// One-off campaign, not an automatic trigger — call manually for anyone who
+// signed up 2026-09-04 to 2026-09-11 and never got a welcome or login-link
+// email during that window (see feedback-no-blame-in-comms: framed as high
+// demand, never as a breakdown/bug on our end).
+export async function sendMissedEmailRecoveryEmail(to: string) {
+  const html = wrap(`
+    ${h1("You're in — but you might not have heard from us yet")}
+    ${p("Wyber Premier League saw more entries in the last week than we'd planned for — by a wide margin. A few of you signed up but never got your welcome email or login link because of it.")}
+    ${p("If that's you: you haven't missed anything. Your account, your 50 free credits, and your shot at this month's <strong style=\"color:#f0f0f4\">$1,800</strong> in prizes are all still there.")}
+    <div style="text-align:center;margin:28px 0">
+      ${btn('Sign in now →', `${APP_URL}/login?next=%2Fdashboard`)}
+    </div>
+    ${p("If your first sign-in attempt didn't send you a link, it will this time.")}
+    ${divider()}
+    ${p('Building for the contest? Web app, website, or SaaS — free, unlimited entries, winners announced the 1st of next month.')}
+    <div style="text-align:center;margin:0 0 24px">
+      ${btn('Start building →', `${APP_URL}/dashboard`, '#3d3d4a')}
+    </div>
+    ${p('— Sumeet, founder')}
+  `, 'Some of you never got this email')
+
+  return sendMail({ from: FROM, to, subject: 'Some of you never got this email', html })
+}
+
 // ── 2a. Free-scanner lead magnet (/tools) ─────────────────────────────────────
 // Visitor ran a security/SEO scan and asked us to email the full report. This is
 // the lead-magnet delivery — it honours the "email me the report" promise AND
