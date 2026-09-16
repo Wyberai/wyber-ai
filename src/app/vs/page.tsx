@@ -97,7 +97,7 @@ export default function VsIndex() {
 
         {/* Six products banner */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 10, marginBottom: 56 }}>
-          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🔗','27 Integrations','Supabase, Stripe, OpenAI...'],['🚀','One-click Deploy','Live URL in seconds'],['📦','GitHub Sync','Own your code'],['🏆','Weekly Challenge','$500 in prizes']].map(([icon,label,sub])=>(
+          {[['🖥','Web Apps','Full-stack React app'],['📱','Mobile Apps','React Native + Expo'],['🔗','27 Integrations','Supabase, Stripe, OpenAI...'],['🚀','One-click Deploy','Live URL in seconds'],['📦','GitHub Sync','Own your code'],['🏆','Premier League','$1,800 in monthly prizes']].map(([icon,label,sub])=>(
             <div key={label} style={{ background: s.card, border: `1px solid rgba(14,165,233,0.15)`, borderRadius: 12, padding: '16px 18px', textAlign: 'center' }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
               <div style={{ fontSize: 13, fontWeight: 700, color: s.sky, marginBottom: 2 }}>{label}</div>
@@ -140,7 +140,7 @@ export default function VsIndex() {
 
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 50 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Try WyberAi free — 30 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>Web app, mobile app, AI agent, or workflow. No credit card required.</p>
           <Link href="/signup" style={{ display: 'inline-block', padding: '12px 28px', borderRadius: 10, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
             Start building free →

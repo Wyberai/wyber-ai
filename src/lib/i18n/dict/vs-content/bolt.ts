@@ -24,7 +24,7 @@ export const BOLT_CONTENT: Record<Locale, VsContent> = {
     rows: [
       { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$25/mo', winner: 'tie' },
       { feature: 'Starter credits/mo', wyber: '150', other: '~250 tokens equiv', winner: 'other' },
-      { feature: 'Free tier', wyber: '50 credits/month', other: '1M tokens/mo', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 credits/month', other: '1M tokens/mo', winner: 'tie' },
       { feature: 'Usage model', wyber: 'Fixed credits', other: 'Tokens (per char)', winner: 'wyber' },
       { feature: 'Unused credits rollover', wyber: '✓ Always', other: '✓ Up to 2 months', winner: 'wyber' },
       { feature: 'Daily bonus', wyber: '8 credits/day', other: 'None', winner: 'wyber' },

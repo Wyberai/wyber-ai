@@ -177,7 +177,7 @@ export default async function BuildPage({ params }: { params: Promise<{ slug: st
 
         {/* CTA footer */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 50 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Your {page.noun} live in minutes.</p>
           <StartBuildButton prompt={page.promptExample} target={page.target} slug={page.slug} label={`Build my ${page.noun} →`} color={color} variant="compact" />
         </div>

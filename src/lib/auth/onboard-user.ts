@@ -29,12 +29,12 @@ export interface OnboardParams {
 export async function onboardUser({ user, supabase, ipCountry, refCode, origin, next, clientIp, userAgent, fbp, fbc }: OnboardParams): Promise<{ isFirstSignup: boolean }> {
   const isStudent = !!(user.email?.endsWith('.edu') || user.email?.includes('.edu.'));
 
-  // Backstop the handle_new_user trigger: create the row at the base 50 if it
+  // Backstop the handle_new_user trigger: create the row at the base 30 if it
   // didn't run. ignoreDuplicates → never overwrites an existing balance/plan.
   await supabase.from('profiles').upsert({
     id: user.id,
     email: user.email ?? '',
-    credits: 50,
+    credits: 30,
     plan: 'free',
     onboarded: true,
     updated_at: new Date().toISOString(),

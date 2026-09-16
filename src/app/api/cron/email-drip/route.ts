@@ -297,8 +297,11 @@ export async function GET(req: NextRequest) {
       if (!u.email) continue
       if (events.get(`${u.id}:early-credit-warn`)) continue // once, ever
       // Only warn users who have actually built something — fresh signups start
-      // at 50 credits, so "credits <= 50" without this check fires immediately
-      // on day 1 before they've even tried the product.
+      // at 30 credits (was 50, cut 2026-09-16), so "credits <= 50" without this
+      // check fires immediately on day 1 before they've even tried the product.
+      // NOTE: the 21-50 band and generate/route.ts's LOW=20 credit-low threshold
+      // were both calibrated for a 50-credit baseline and haven't been rescaled —
+      // worth revisiting since LOW=20 now fires after using just 10 of 30 credits.
       const { count: builtCount } = await admin.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', u.id)
       if ((builtCount ?? 0) === 0) continue
       try {

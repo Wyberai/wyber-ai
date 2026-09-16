@@ -47,7 +47,7 @@ export default function Post() {
           <p>Click Publish. Get a live URL at yourapp.wyberai.app. Share it immediately. Deploy to Vercel from the Deploy tab when ready -- one click, zero configuration.</p>
           <p>Total: under an hour. From blank screen to live URL.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 50 free credits -- no card required.</p>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 30 free credits -- no card required.</p>
             <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
           </div>
         </div>

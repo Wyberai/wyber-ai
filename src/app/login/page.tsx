@@ -199,7 +199,7 @@ export default function LoginPage() {
               </form>
 
               <p style={{ textAlign: 'center', color: '#7A9BBE', fontSize: 13, marginTop: 20, marginBottom: 0 }}>
-                No account? <Link href={signupHref} style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Start free — 50 credits</Link>
+                No account? <Link href={signupHref} style={{ color: '#0EA5E9', textDecoration: 'none', fontWeight: 600 }}>Start free — 30 credits</Link>
               </p>
             </div>
           )}

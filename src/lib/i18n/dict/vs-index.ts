@@ -32,7 +32,7 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
       { label: '27 Integrations', sub: 'Supabase, Stripe, OpenAI...' },
       { label: 'One-click Deploy', sub: 'Live URL in seconds' },
       { label: 'GitHub Sync', sub: 'Own your code' },
-      { label: 'Weekly Challenge', sub: '$500 in prizes' },
+      { label: 'Premier League', sub: '$1,800 in monthly prizes' },
     ],
     comparisons: {
       lovable: { summary: 'WyberAi offers ~56% more credits at a lower price, plus mobile apps, agents, and workflows Lovable doesn\'t have.', wyberWins: ['300 credits/month on Builder ($99)', 'Top-ups never expire', 'Mobile + agents + workflows + AI employees + GTM', '6 products vs Lovable\'s 1'] },
@@ -43,7 +43,7 @@ export const VS_INDEX_CONTENT: Record<Locale, VsIndexContent> = {
       softr: { summary: 'Softr hosts your app on their platform from $269/mo for Business. WyberAi generates real React code you own — web + mobile — from $29/mo.', wyberWins: ['Real code, GitHub export, zero lock-in', 'Native mobile apps (React Native)', 'Live database security scan', 'A tenth of the price for solo founders'] },
     },
     seeComparison: 'See comparison →',
-    ctaHeading: 'Try WyberAi free — 50 credits/month',
+    ctaHeading: 'Try WyberAi free — 30 credits/month',
     ctaBody: 'Web app, mobile app, AI agent, or workflow. No credit card required.',
     ctaButton: 'Start building free →',
   },

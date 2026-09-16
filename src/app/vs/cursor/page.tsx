@@ -24,7 +24,7 @@ const ROWS = [
   { feature: 'Any language/framework',  wyber: 'React/React Native',      other: '✓ All languages',          winner: 'other' as const },
   { feature: 'Codebase refactoring',    wyber: 'Limited',                  other: '✓ Excellent',              winner: 'other' as const },
   { feature: 'Multi-file edits',        wyber: 'AI-managed',               other: '✓ Composer agent',         winner: 'other' as const },
-  { feature: 'Free tier',               wyber: '50 credits/month',         other: '2-week trial',             winner: 'wyber' as const },
+  { feature: 'Free tier',               wyber: '30 credits/month',         other: '2-week trial',             winner: 'wyber' as const },
   { feature: 'Supabase integration',    wyber: '✓ Auto',                   other: 'Manual setup',             winner: 'wyber' as const },
   { feature: 'GitHub sync',             wyber: '✓',                        other: '✓',                        winner: 'tie'   as const },
   { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' as const },

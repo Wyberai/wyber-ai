@@ -13,7 +13,7 @@ export const USE_CASES_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> 
     starterPromptHeading: 'Copy this prompt and paste it into WyberAi',
     tryThisPromptFree: 'Try this prompt free →',
     faqHeading: 'Frequently asked questions',
-    ctaFooterHeading: 'Start building for free — 50 credits/month',
+    ctaFooterHeading: 'Start building for free — 30 credits/month',
     ctaFooterBody: 'No credit card required. Your first app in minutes.',
     compareWyberAi: 'Compare WyberAi',
     vsPrefix: 'vs',

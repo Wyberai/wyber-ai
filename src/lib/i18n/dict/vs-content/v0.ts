@@ -36,7 +36,7 @@ export const V0_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Figma import', wyber: '✓ Built-in', other: '✓', winner: 'other' },
       { feature: 'Code generation', wyber: 'Always fresh AI code', other: 'Component library', winner: 'wyber' },
       { feature: 'Non-technical users', wyber: '✓ Guided', other: 'Developer-focused', winner: 'wyber' },
-      { feature: 'Free tier', wyber: '50 credits/month', other: 'Limited free', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 credits/month', other: 'Limited free', winner: 'tie' },
       { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' },
       { feature: 'India/APAC pricing', wyber: '✓ INR soon', other: 'USD only', winner: 'wyber' },
     ],

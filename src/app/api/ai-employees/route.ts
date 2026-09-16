@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     id: user.id,
     email: user.email,
     full_name: user.email?.split('@')[0] ?? 'User',
-    credits: 50,
+    credits: 30,
     plan: 'free',
   }, { onConflict: 'id', ignoreDuplicates: true })
 

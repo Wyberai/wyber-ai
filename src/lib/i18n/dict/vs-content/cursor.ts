@@ -36,7 +36,7 @@ export const CURSOR_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Any language/framework', wyber: 'React/React Native', other: '✓ All languages', winner: 'other' },
       { feature: 'Codebase refactoring', wyber: 'Limited', other: '✓ Excellent', winner: 'other' },
       { feature: 'Multi-file edits', wyber: 'AI-managed', other: '✓ Composer agent', winner: 'other' },
-      { feature: 'Free tier', wyber: '50 credits/month', other: '2-week trial', winner: 'wyber' },
+      { feature: 'Free tier', wyber: '30 credits/month', other: '2-week trial', winner: 'wyber' },
       { feature: 'Supabase integration', wyber: '✓ Auto', other: 'Manual setup', winner: 'wyber' },
       { feature: 'GitHub sync', wyber: '✓', other: '✓', winner: 'tie' },
       { feature: 'Live database security scan', wyber: '✓ Probes RLS with anon key', other: '✗', winner: 'wyber' },

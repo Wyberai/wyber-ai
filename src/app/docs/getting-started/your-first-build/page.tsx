@@ -11,7 +11,7 @@ export default function Page() {
       intro="From sign-up to a live, shareable web app — this walkthrough covers the exact steps."
       requirements={[
         { label: 'A WyberAi account', note: 'free, sign up at wyberai.com/signup' },
-        { label: '30 credits', note: 'new accounts start with 50 credits (plus 3 daily)' },
+        { label: '30 credits', note: 'new accounts start with 30 credits (plus 3 daily)' },
       ]}
     >
       <DocSection title="Step-by-step">

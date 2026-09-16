@@ -25,7 +25,7 @@ export const REPLIT_CONTENT: Record<Locale, VsContent> = {
       { feature: 'Primary use case', wyber: 'AI app builder', other: 'Cloud IDE + AI agent', winner: 'tie' },
       { feature: 'Starter price', wyber: '$29/mo (Starter)', other: '$20/mo (Core)', winner: 'tie' },
       { feature: 'Cost predictability', wyber: 'Fixed credits', other: 'Usage-based overages', winner: 'wyber' },
-      { feature: 'Free tier', wyber: '50 credits/month', other: 'Free (limited)', winner: 'tie' },
+      { feature: 'Free tier', wyber: '30 credits/month', other: 'Free (limited)', winner: 'tie' },
       { feature: 'Mobile app builder', wyber: '✓ React Native', other: '✗', winner: 'wyber' },
       { feature: 'AI agent builder', wyber: '✓ Built-in', other: 'Replit Agent (IDE-based)', winner: 'wyber' },
       { feature: 'Workflow automation', wyber: '✓ Built-in', other: '✗', winner: 'wyber' },

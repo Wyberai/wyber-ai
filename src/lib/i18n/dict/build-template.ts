@@ -29,7 +29,7 @@ export const BUILD_TEMPLATE_STRINGS: Record<Locale, Record<string, string>> = {
     starterPromptHeading: 'The exact prompt to build your {noun}',
     useThisPromptFree: 'Use this prompt free →',
     faqHeading: 'Questions people ask about building a {noun}',
-    ctaFooterHeading: 'Start building for free — 50 credits/month',
+    ctaFooterHeading: 'Start building for free — 30 credits/month',
     ctaFooterBody: 'No credit card required. Your {noun} live in minutes.',
     buildMyNounFree: 'Build my {noun} — free →',
     buildMyNoun: 'Build my {noun} →',

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const ROWS = [
   { feature: 'Starter price',           wyber: '$29/mo (Starter)',            other: '$25/mo',            winner: 'tie'   as const },
   { feature: 'Starter credits/mo',      wyber: '150',               other: '~250 tokens equiv', winner: 'other' as const },
-  { feature: 'Free tier',               wyber: '50 credits/month',  other: '1M tokens/mo',      winner: 'tie'   as const },
+  { feature: 'Free tier',               wyber: '30 credits/month',  other: '1M tokens/mo',      winner: 'tie'   as const },
   { feature: 'Usage model',             wyber: 'Fixed credits',     other: 'Tokens (per char)', winner: 'wyber' as const },
   { feature: 'Unused credits rollover', wyber: '✓ Always',          other: '✓ Up to 2 months',  winner: 'wyber' as const },
   { feature: 'Daily bonus',             wyber: '8 credits/day',     other: 'None',              winner: 'wyber' as const },

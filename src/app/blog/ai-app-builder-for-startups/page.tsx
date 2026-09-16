@@ -59,11 +59,11 @@ export default function Post() {
           <p>The gap is not 2x or 5x. It is 100x on cost and 100x on speed. That changes the calculus for every founder who needs to move fast and preserve capital.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>How to get started</h2>
-          <p>WyberAi gives you 50 free credits when you sign up — no credit card required. Describe your app, pick web or mobile (React Native with Expo), and have a working prototype live before lunch. If it works, upgrade to Pro. If it does not, you spent nothing.</p>
+          <p>WyberAi gives you 30 free credits when you sign up — no credit card required. Describe your app, pick web or mobile (React Native with Expo), and have a working prototype live before lunch. If it works, upgrade to Pro. If it does not, you spent nothing.</p>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Ship your MVP today, not next quarter</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 free credits on signup. Your first app in minutes.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>30 free credits on signup. Your first app in minutes.</p>
             <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free &rarr;</Link>
           </div>
         </div>

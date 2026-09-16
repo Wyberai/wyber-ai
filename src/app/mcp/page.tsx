@@ -21,7 +21,7 @@ const GROUPS: { label: string; accent?: boolean; tools: [string, string][] }[] =
 const FAQ: [string, string][] = [
   ['What is MCP?', 'The Model Context Protocol is an open standard that lets AI clients like Claude call external tools. WyberAi runs a remote MCP server, so any MCP-capable assistant can operate your WyberAi workspace directly.'],
   ['Which clients can I use?', 'Anything that speaks MCP over Streamable HTTP: Claude.ai, Claude Code, Cursor, and more. Add it as a custom connector with your API key.'],
-  ['Is it included in my plan?', 'Yes. The MCP server is available on every plan, including the free tier (50 credits). Reads are free; builds spend credits at the same rates as the web editor.'],
+  ['Is it included in my plan?', 'Yes. The MCP server is available on every plan, including the free tier (30 credits). Reads are free; builds spend credits at the same rates as the web editor.'],
   ['Do I need OAuth or an API key?', 'Claude.ai connects via OAuth — just sign in when prompted, no key to copy. Claude Code and other MCP clients use a WyberAi API key (created in Settings > API Keys) sent as an x-api-key header. Both are scoped to your account and revocable anytime.'],
 ]
 

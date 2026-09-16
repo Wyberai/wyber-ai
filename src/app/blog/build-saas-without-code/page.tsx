@@ -43,7 +43,7 @@ export default function Post() {
           <p>AI app builders handle the code. You still handle the product. The bottleneck is no longer technical -- it is clarity. Know what you are building and for whom, and the rest is fast.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Try it yourself</div>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>50 credits/month free -- no card required.</p>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>30 credits/month free -- no card required.</p>
             <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
           </div>
         </div>

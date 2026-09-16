@@ -52,7 +52,7 @@ export default function Post() {
               ['Products included', '6 (web, mobile, agents, workflows, employees, GTM)', '1 (web only)'],
               ['Templates', 'Always fresh AI code', 'Limited'],
               ['Top-up expiry', 'Never', 'Monthly'],
-              ['Free tier', '50 credits/month', '5/day (~30/month)'],
+              ['Free tier', '30 credits/month', '5/day (~30/month)'],
               ['Error fixes', 'Self-healing (always free)', 'Cost credits'],
             ].map(([feat, wyber, lovable], i) => (
               <div key={feat} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', padding: '11px 16px', fontSize: 13, borderTop: `1px solid ${s.border}`, background: i % 2 === 0 ? s.card : 'transparent' }}>
@@ -71,7 +71,7 @@ export default function Post() {
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>See for yourself</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 free credits a month. No credit card required.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>30 free credits a month. No credit card required.</p>
             <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
           </div>
         </div>

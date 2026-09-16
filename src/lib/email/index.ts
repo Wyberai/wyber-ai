@@ -156,7 +156,7 @@ export async function sendWelcomeEmail(to: string, name?: string, source: Welcom
     ${memeImg('welcome')}
     ${h1('Welcome to WyberAi ⚡')}
     ${p(welcomeHook(source, displayName))}
-    ${p('You have <strong style="color:#f0f0f4">50 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
+    ${p('You have <strong style="color:#f0f0f4">30 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
     ${p('Here\'s what you can do:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
       <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">web app</strong> — just describe it in plain English</td></tr>
@@ -168,12 +168,12 @@ export async function sendWelcomeEmail(to: string, name?: string, source: Welcom
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
     ${divider()}
-    ${p('<strong style="color:#f0f0f4">Bring a friend, you both win</strong> — share your invite link from Settings → Referrals. You get 50 credits per signup, they start with 50 free too.')}
+    ${p('<strong style="color:#f0f0f4">Bring a friend, you both win</strong> — share your invite link from Settings → Referrals. You get 50 credits per signup, they start with 30 free too.')}
     ${p(`Also — <strong style="color:#f0f0f4">Wyber Premier League</strong> is running right now: build anything and enter for a shot at <strong style="color:#f0f0f4">$1,800</strong> in monthly prizes, free and unlimited entries, new winners on the 1st. <a href="${APP_URL}/premier-league" style="color:#0EA5E9">See this month's contest →</a>`)}
     ${p(`I'm building WyberAi in the open — every feature, every number, real. <a href="${FOUNDER_X_URL}" style="color:#0EA5E9">Follow along on X</a> or <a href="${FOUNDER_LINKEDIN_URL}" style="color:#0EA5E9">LinkedIn</a> if that's useful to you.`)}
     ${p('Questions? Just reply — this goes straight to me.')}
     ${p('— Sumeet, founder')}
-  `, 'Your 50 free credits are ready')
+  `, 'Your 30 free credits are ready')
 
   return sendMail({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
 }
@@ -403,7 +403,7 @@ export async function sendMissedEmailRecoveryEmail(to: string) {
   const html = wrap(`
     ${h1("You're in — but you might not have heard from us yet")}
     ${p("Wyber Premier League saw more entries in the last week than we'd planned for — by a wide margin. A few of you signed up but never got your welcome email or login link because of it.")}
-    ${p("If that's you: you haven't missed anything. Your account, your 50 free credits, and your shot at this month's <strong style=\"color:#f0f0f4\">$1,800</strong> in prizes are all still there.")}
+    ${p("If that's you: you haven't missed anything. Your account, your 30 free credits, and your shot at this month's <strong style=\"color:#f0f0f4\">$1,800</strong> in prizes are all still there.")}
     <div style="text-align:center;margin:28px 0">
       ${btn('Sign in now →', `${APP_URL}/login?next=%2Fdashboard`)}
     </div>
@@ -484,7 +484,7 @@ export async function sendScannerLeadAlert(opts: {
 type AuthAction = 'signup' | 'magiclink' | 'recovery' | 'invite' | 'email_change' | 'reauthentication' | string
 export async function sendAuthEmail(to: string, action: AuthAction, url: string, token?: string) {
   const cfg: Record<string, { subject: string; heading: string; body: string; cta: string }> = {
-    signup:          { subject: 'Confirm your WyberAi account',        heading: 'Confirm your email',      body: 'Welcome to WyberAi! Confirm your email to activate your account and claim your 50 free credits.', cta: 'Confirm email' },
+    signup:          { subject: 'Confirm your WyberAi account',        heading: 'Confirm your email',      body: 'Welcome to WyberAi! Confirm your email to activate your account and claim your 30 free credits.', cta: 'Confirm email' },
     magiclink:       { subject: 'Your WyberAi login link',             heading: 'Your login link',          body: 'Click below to sign in to WyberAi. This link expires in 1 hour and can only be used once.',       cta: 'Sign in to WyberAi' },
     recovery:        { subject: 'Reset your WyberAi password',         heading: 'Reset your password',      body: "Click below to choose a new password. This link expires in 1 hour. If you didn't request this, you can safely ignore this email.", cta: 'Reset password' },
     invite:          { subject: "You're invited to WyberAi",          heading: "You're invited to WyberAi", body: "You've been invited to WyberAi. Click below to accept and set up your account.",                  cta: 'Accept invite' },
@@ -730,7 +730,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
 export async function sendGettingStartedNudgeEmail(to: string, name: string, unsubUrl: string) {
   const html = wrap(`
     ${memeImg('still-waiting')}
-    ${h1('Your 50 free credits are still unspent')}
+    ${h1('Your 30 free credits are still unspent')}
     ${p(`Hey ${name}, you signed up but haven't built anything yet. Your credits have been sitting there so long they've gone full skeleton. Building the first app takes about 60 seconds — less time than it took to read this far.`)}
     ${p('Type one sentence, get a working app:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
@@ -743,7 +743,7 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
     </div>
     ${p('Stuck or skeptical? Reply to this email and tell us what you want to build — a human reads every reply.')}
   `, 'Your free credits are waiting', unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Your 50 free credits are still waiting ⚡', html })
+  return sendMail({ from: FROM, to, subject: 'Your 30 free credits are still waiting ⚡', html })
 }
 
 // ── 7d. Built-but-never-published nudge — 2-touch (was one-shot only) ───────
@@ -1139,7 +1139,7 @@ export async function sendQuickStartNudgeEmail(to: string, name: string, unsubUr
     <div style="text-align:center;margin:28px 0">
       ${btn('Try it now →', `${APP_URL}/dashboard`)}
     </div>
-    ${p('No pressure — your 50 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
+    ${p('No pressure — your 30 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
   `, "Your first app takes about 60 seconds", unsubUrl)
   return sendMail({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
 }
@@ -1172,7 +1172,7 @@ export async function sendSocialProofEmail(to: string, name: string) {
       <tr><td style="padding:10px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;A mobile habit tracker with streaks and charts, published to the Play Store</td></tr>
       <tr><td style="padding:10px 0;font-size:14px;color:#8888a0">→ &nbsp;An internal inventory tool that replaced a spreadsheet three people were fighting over</td></tr>
     </table>
-    ${p('None of these people were developers. Same 50 free credits you have right now.')}
+    ${p('None of these people were developers. Same 30 free credits you have right now.')}
     <div style="text-align:center;margin:28px 0">
       ${btn('Browse the gallery →', `${APP_URL}/gallery`)}
     </div>
@@ -1228,7 +1228,7 @@ export async function sendFeatureSpotlightEmail(to: string, key: FeatureSpotligh
 export async function sendReferralNudgeEmail(to: string, name: string, referralCode: string) {
   const html = wrap(`
     ${h1('Give 50, get 50')}
-    ${p(`${name}, if anyone you know has been talking about wanting an app built — this is the easy version. Share your link, they start with 50 free credits, you get 50 the moment they sign up.`)}
+    ${p(`${name}, if anyone you know has been talking about wanting an app built — this is the easy version. Share your link, they start with 30 free credits, you get 50 the moment they sign up.`)}
     <div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:16px 20px;margin:0 0 24px;text-align:center">
       <span style="font-size:14px;color:#8888a0">Your code</span><br/>
       <span style="font-size:20px;font-weight:700;color:#0EA5E9;letter-spacing:0.05em">${referralCode}</span>

@@ -72,7 +72,7 @@ export default function Post() {
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Try AI code generation for free</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 free credits on signup. Generate a full app from a prompt — keep the code forever.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>30 free credits on signup. Generate a full app from a prompt — keep the code forever.</p>
             <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.sky, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free &rarr;</Link>
           </div>
         </div>

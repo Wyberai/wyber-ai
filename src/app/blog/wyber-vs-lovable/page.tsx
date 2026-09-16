@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const COMPARISON = [
   { feature: 'Frameworks', wyber: 'React, Next.js, Vue, Vanilla JS', lovable: 'React / TanStack only' },
   { feature: 'SSR by default', wyber: 'Yes -- Next.js default', lovable: 'Yes -- TanStack Start' },
-  { feature: 'Free tier', wyber: '50 credits/month', lovable: '5 daily (~30/month)' },
+  { feature: 'Free tier', wyber: '30 credits/month', lovable: '5 daily (~30/month)' },
   { feature: 'Starting price', wyber: '$99/month (Builder)', lovable: '$25/month' },
   { feature: 'Products included', wyber: '6 (web, mobile, agents, workflows, employees, GTM)', lovable: '1 (web only)' },
   { feature: 'Templates', wyber: 'Always fresh AI code', lovable: 'Limited' },
@@ -67,7 +67,7 @@ export default function Post() {
           <h2>The bottom line</h2>
           <p>Choose Lovable if you want the most mature tool with the largest community. Choose WyberAi if you want framework flexibility, free error fixes, and lower pricing.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
-            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Try WyberAi free -- 50 credits/month, no card required.</p>
+            <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Try WyberAi free -- 30 credits/month, no card required.</p>
             <Link href="/signup" style={{ fontSize: 13, padding: '8px 18px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontWeight: 700, textDecoration: 'none', display: 'inline-block' }}>Start building free &rarr;</Link>
           </div>
         </div>

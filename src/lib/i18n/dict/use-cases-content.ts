@@ -160,7 +160,7 @@ export const USE_CASES_CONTENT: Record<Locale, Record<string, TranslatedUseCase>
         { q: 'What makes WyberAi different from Webflow or Bubble?', a: 'Webflow and Bubble have visual editors you build in manually. WyberAi generates the complete app from plain English in seconds. There\'s nothing to drag and drop — you describe it and it\'s built.' },
         { q: 'Is the output real code I can export?', a: 'Yes. WyberAi outputs clean React + Vite code. Export it anytime and take it to GitHub, a developer, or your own hosting.' },
         { q: 'Can it build apps with a real database?', a: 'Yes. Connect your Supabase project in Settings → Connectors and WyberAi rewrites the app to use real Postgres with auth and Row Level Security.' },
-        { q: 'How many apps can I build on the free plan?', a: 'The free plan gives you 50 credits/month. Each generation costs 1 credit, so you can build and iterate 50 times per month for free.' },
+        { q: 'How many apps can I build on the free plan?', a: 'The free plan gives you 30 credits/month. Each generation costs 1 credit, so you can build and iterate 30 times per month for free.' },
         { q: 'Can I use WyberAi to build an app for a client?', a: 'Yes. Many Wyber users build apps for clients, then export the code and hand it over. You can also deploy directly to the client\'s Vercel account.' },
       ],
     },

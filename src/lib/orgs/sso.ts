@@ -32,7 +32,7 @@ export async function reconcileSsoLogin(profile: WorkosProfile): Promise<{ email
   await db.from('profiles').upsert({
     id: userId,
     email,
-    credits: 50,
+    credits: 30,
     plan: 'free',
     onboarded: true,
     updated_at: new Date().toISOString(),

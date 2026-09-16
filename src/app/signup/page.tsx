@@ -104,7 +104,7 @@ export default function SignupPage() {
               <span style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.05em', color: '#0B1627' }}>Wyber<span style={{ color: '#0EA5E9' }}>AI</span></span>
             </Link>
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.04em', color: '#0B1627', margin: '0 0 8px' }}>Start building for free</h1>
-            <p style={{ fontSize: 14, color: '#7A9BBE', margin: 0 }}>50 free credits · No card required · Cancel anytime</p>
+            <p style={{ fontSize: 14, color: '#7A9BBE', margin: 0 }}>30 free credits · No card required · Cancel anytime</p>
             {/* Social proof — reassure first-time signups (matches homepage stats) */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 14, marginTop: 18, padding: '8px 16px', background: '#fff', border: '1px solid #E4ECF6', borderRadius: 999, boxShadow: '0 1px 2px rgba(11,22,39,0.04)' }}>
               <span style={{ fontSize: 12.5, fontWeight: 700, color: '#0B1627' }}>2,400+ <span style={{ color: '#7A9BBE', fontWeight: 500 }}>apps built</span></span>

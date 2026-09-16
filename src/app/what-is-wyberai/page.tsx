@@ -26,7 +26,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Does WyberAi have a free plan?',
-    a: 'Yes. WyberAi is free to start — 50 credits per month, no credit card required. Paid plans add more credits and capabilities, with an entry tier from a few dollars a month and higher plans up to around $199/month. See wyberai.com/pricing for current pricing in your region.',
+    a: 'Yes. WyberAi is free to start — 30 credits per month, no credit card required. Paid plans add more credits and capabilities, with an entry tier from a few dollars a month and higher plans up to around $199/month. See wyberai.com/pricing for current pricing in your region.',
   },
   {
     q: 'How is WyberAi different from Lovable, Bolt, v0, and Replit?',
@@ -86,7 +86,7 @@ export default function WhatIsWyberAiPage() {
         {/* CTA */}
         <div style={{ textAlign: 'center', padding: '48px 0 24px' }}>
           <a href="/signup" style={{ display: 'inline-block', padding: '13px 28px', borderRadius: 10, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 15 }}>Start building free →</a>
-          <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 16 }}>50 credits/month · no credit card required</p>
+          <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 16 }}>30 credits/month · no credit card required</p>
         </div>
       </div>
 

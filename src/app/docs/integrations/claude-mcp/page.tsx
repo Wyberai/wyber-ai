@@ -58,7 +58,7 @@ export default function Page() {
       title="Connect WyberAi to Claude (MCP)"
       intro="WyberAi ships a remote MCP (Model Context Protocol) server. Connect it to Claude, Claude Code, Cursor, or any MCP client, and your assistant can create WyberAi projects, build and iterate on apps, and publish them to live URLs — using your account and your credits."
       requirements={[
-        { label: 'A WyberAi account (free tier works — 50 credits included)' },
+        { label: 'A WyberAi account (free tier works — 30 credits included)' },
         { label: 'A WyberAi API key', note: 'created in Settings → API Keys' },
       ]}
     >

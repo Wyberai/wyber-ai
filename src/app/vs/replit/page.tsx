@@ -13,7 +13,7 @@ const ROWS = [
   { feature: 'Primary use case',        wyber: 'AI app builder',           other: 'Cloud IDE + AI agent',    winner: 'tie'   as const },
   { feature: 'Starter price',           wyber: '$29/mo (Starter)',                   other: '$20/mo (Core)',           winner: 'tie'   as const },
   { feature: 'Cost predictability',     wyber: 'Fixed credits',            other: 'Usage-based overages',    winner: 'wyber' as const },
-  { feature: 'Free tier',               wyber: '50 credits/month',         other: 'Free (limited)',          winner: 'tie'   as const },
+  { feature: 'Free tier',               wyber: '30 credits/month',         other: 'Free (limited)',          winner: 'tie'   as const },
   { feature: 'Mobile app builder',      wyber: '✓ React Native',           other: '✗',                       winner: 'wyber' as const },
   { feature: 'AI agent builder',        wyber: '✓ Built-in',               other: 'Replit Agent (IDE-based)',winner: 'wyber' as const },
   { feature: 'Workflow automation',     wyber: '✓ Built-in',               other: '✗',                       winner: 'wyber' as const },

@@ -28,7 +28,7 @@ export const PLAN_FACTS: Record<PlanFacts['id'], PlanFacts> = {
   free: {
     id: 'free', name: 'Free',
     monthlyPrice: null, annualPrice: null, monthlyPriceINR: null, annualPriceINR: null,
-    credits: 50, color: '#52525b',
+    credits: 30, color: '#52525b',
     hideForINR: true, // India users must start with Spark (100 credits/month for ₹499)
   },
   spark: {

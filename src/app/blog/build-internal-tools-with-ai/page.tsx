@@ -77,7 +77,7 @@ export default function Post() {
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.green}10`, border: `1px solid ${s.green}25`, borderRadius: 12 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: s.text, marginBottom: 8 }}>Build your first internal tool today</div>
-            <p style={{ fontSize: 14, margin: '0 0 16px' }}>50 free credits on signup. Describe the tool, generate it, deploy it — all in one session.</p>
+            <p style={{ fontSize: 14, margin: '0 0 16px' }}>30 free credits on signup. Describe the tool, generate it, deploy it — all in one session.</p>
             <Link href="/signup" style={{ display: 'inline-block', padding: '10px 22px', borderRadius: 8, background: s.green, color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Start building free &rarr;</Link>
           </div>
         </div>

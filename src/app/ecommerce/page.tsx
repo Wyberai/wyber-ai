@@ -111,7 +111,7 @@ export default function EcommerceDashboardLanding() {
         {/* Weekly challenge nudge — real numbers, verified against /challenge */}
         <section style={{ marginBottom: 64, textAlign: 'center', padding: '24px', border: `1px solid ${s.border}`, borderRadius: 14 }}>
           <div style={{ fontSize: 15, color: s.muted }}>
-            Build it this week and enter the <Link href="/challenge" style={{ color, textDecoration: 'none', fontWeight: 700 }}>Weekly Build Challenge</Link> — winners get up to 2,000 free credits, that's 60+ more builds, free.
+            Build it this month and enter <Link href="/premier-league" style={{ color, textDecoration: 'none', fontWeight: 700 }}>Wyber Premier League</Link> — free to enter, unlimited entries, winners take home up to $1,000.
           </div>
         </section>
 
@@ -133,7 +133,7 @@ export default function EcommerceDashboardLanding() {
 
         {/* Footer CTA */}
         <div style={{ textAlign: 'center', padding: 'clamp(24px,4vw,40px)', background: s.card, borderRadius: 14, border: `1px solid ${s.border}` }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 50 credits/month</h2>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, margin: '0 0 8px' }}>Start building for free — 30 credits/month</h2>
           <p style={{ fontSize: 14, color: s.muted, margin: '0 0 20px' }}>No credit card required. Live in minutes.</p>
           <StartBuildButton prompt={DEFAULT_PROMPT} target="web" slug="ecommerce-footer" label="Build my dashboard →" color={color} variant="compact" projectLabel="Ecommerce Dashboard" />
         </div>

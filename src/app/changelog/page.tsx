@@ -84,7 +84,7 @@ const RELEASES = [
     { type:'new', text:'Public launch — WyberAi is live at wyberai.com' },
     { type:'new', text:'Core AI generation — React, Vue, Next.js, Vanilla JS from plain English' },
     { type:'new', text:'E2B sandbox — live preview of every generation' },
-    { type:'new', text:'Free tier — 50 credits/month, no card required' },
+    { type:'new', text:'Free tier — 30 credits/month, no card required' },
     { type:'new', text:'Export as ZIP — download your full project anytime' },
     { type:'new', text:'AI error fixes always free' },
   ]},

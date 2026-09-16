@@ -120,7 +120,7 @@ export default async function PublicProjectPage({ params }: Props) {
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(20px,3vw,28px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 8, color: '#fafafa' }}>
             Build your own app in 60 seconds
           </div>
-          <div style={{ fontSize: 14, color: '#71717a', marginBottom: 24 }}>No code required. 50 free credits. No card needed.</div>
+          <div style={{ fontSize: 14, color: '#71717a', marginBottom: 24 }}>No code required. 30 free credits. No card needed.</div>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ padding: '13px 28px', borderRadius: 10, background: '#0EA5E9', color: '#fff', fontSize: 14, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}>
               Start building free →
