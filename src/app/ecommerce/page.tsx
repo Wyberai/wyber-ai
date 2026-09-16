@@ -35,7 +35,7 @@ const FAQS = [
   { q: 'What file formats can I upload?', a: '.csv, .xlsx, and .xls — export your orders from Amazon Seller Central, Shopify, Etsy, or any spreadsheet and drop it in.' },
   { q: 'Is my sales data safe?', a: 'The upload preview is parsed entirely in your browser using client-side JavaScript — the file is never sent to a server or stored anywhere.' },
   { q: 'Does the real dashboard connect live to Amazon or Shopify?', a: 'Not out of the box — it\'s built around your export files or manual entry, which avoids depending on marketplace APIs that can change or get revoked. A bulk-import screen can always be added once you\'re building.' },
-  { q: 'What does it cost to build?', a: 'The 50 free monthly credits cover your first build (30 credits); small edits after that are 2 credits each. No card required to start.' },
+  { q: 'What does it cost to build?', a: 'The 30 free monthly credits cover your first build (30 credits); small edits after that are 2 credits each. No card required to start.' },
 ]
 
 export default function EcommerceDashboardLanding() {

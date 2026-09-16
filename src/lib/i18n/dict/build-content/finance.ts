@@ -39,7 +39,7 @@ export const FINANCE_BUILD_CONTENT: Record<Locale, Record<string, TranslatedBuil
         { q: 'Can it handle more than one currency?', a: 'Yes — add a currency per expense in your prompt, set a home currency, and totals convert at rates you control.' },
         { q: 'Can I attach receipts?', a: 'Add a photo field to expenses and each entry stores its receipt image — tax-season you will thank present-day you.' },
         { q: 'Does it connect to my bank?', a: 'Generated apps don\'t link to bank feeds out of the box — this is a deliberate-entry tracker, which is also why its categories are always right.' },
-        { q: 'What does building it cost?', a: 'The 50 free monthly credits cover your first build (30 credits); after that, changes are 2-credit edits. No card needed to start.' },
+        { q: 'What does building it cost?', a: 'The 30 free monthly credits cover your first build (30 credits); after that, changes are 2-credit edits. No card needed to start.' },
       ],
     },
     'budget-planner-app': {

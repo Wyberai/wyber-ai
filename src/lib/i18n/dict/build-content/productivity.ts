@@ -40,7 +40,7 @@ export const PRODUCTIVITY_BUILD_CONTENT: Record<Locale, Record<string, Translate
         { q: 'Can the streak logic handle skipped days or rest days?', a: 'Yes — describe the rule you want ("weekends don\'t break streaks" or "one skip per week is allowed") and the generated logic follows it. You can change the rule later in chat.' },
         { q: 'Does it work on both iPhone and Android?', a: 'The app is generated as React Native + Expo, which runs on both platforms from one codebase. You preview it instantly on your own phone via Expo.' },
         { q: 'Can I add reminders later?', a: 'You can add a reminders screen and schedule structure now, and wire push notifications when you export or publish — the schema is ready for it.' },
-        { q: 'What does it cost to build?', a: 'Your first build is covered by the 50 free monthly credits — a full app build costs 30 credits, and small edits cost 2. No card required to start.' },
+        { q: 'What does it cost to build?', a: 'Your first build is covered by the 30 free monthly credits — a full app build costs 30 credits, and small edits cost 2. No card required to start.' },
       ],
     },
     'freelance-time-tracker': {
