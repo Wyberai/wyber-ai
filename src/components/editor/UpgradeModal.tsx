@@ -89,6 +89,30 @@ const PLANS_INR: PlanConfig[] = [
   },
 ]
 
+interface TopupConfig {
+  key: string
+  credits: number
+  price: string
+  label: string
+  desc: string
+  badge?: boolean
+}
+
+// Same numbers as the pricing page's top-up section (lib/i18n/dict/pricing.ts
+// topupDescBoost/Power/Studio) — one-time, no subscription. This is the
+// low-commitment option for the out-of-credits moment: someone mid-build who
+// just wants to finish, not sign up for a year.
+const TOPUPS_USD: TopupConfig[] = [
+  { key: 'topup_200', credits: 200, price: '$19', label: 'Boost', desc: '~6 web builds' },
+  { key: 'topup_600', credits: 600, price: '$49', label: 'Power', desc: '~20 web builds' },
+  { key: 'topup_2000', credits: 2000, price: '$99', label: 'Studio', desc: '~66 web builds', badge: true },
+]
+const TOPUPS_INR: TopupConfig[] = [
+  { key: 'topup_200', credits: 200, price: '₹399', label: 'Boost', desc: '~6 web builds' },
+  { key: 'topup_600', credits: 600, price: '₹999', label: 'Power', desc: '~20 web builds' },
+  { key: 'topup_2000', credits: 2000, price: '₹1,999', label: 'Studio', desc: '~66 web builds', badge: true },
+]
+
 // Countdown resets every time the modal is first opened in a session.
 // Stored in sessionStorage (not localStorage) so it's always fresh each visit.
 const TIMER_KEY = 'wy_upgrade_offer_session_v3'
@@ -132,10 +156,12 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
   const [showMonthly, setShowMonthly] = useState(false)
   const { timeLeft, expired } = useOfferCountdown()
   const plans = currency === 'INR' ? PLANS_INR : PLANS_USD
+  const topups = currency === 'INR' ? TOPUPS_INR : TOPUPS_USD
+  const isOutOfCredits = trigger === 'out-of-credits'
 
   if (!open) return null
 
-  const startCheckout = async (planKey: string, plan: PlanConfig, billing: 'annual' | 'monthly') => {
+  const runCheckout = async (planKey: string, billing: 'annual' | 'monthly' | 'topup') => {
     setLoading(planKey)
     setCheckoutError(null)
     track('editor_upgrade_modal_plan_clicked', { planKey, currency, billing })
@@ -163,6 +189,9 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
       setLoading(null)
     }
   }
+
+  const startCheckout = (planKey: string, _plan: PlanConfig, billing: 'annual' | 'monthly') => runCheckout(planKey, billing)
+  const startTopupCheckout = (topupKey: string) => runCheckout(topupKey, 'topup')
 
   return (
     <div
@@ -199,27 +228,83 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#f97316', textTransform: 'uppercase', marginBottom: 8 }}>
-            {trigger === 'out-of-credits' ? "YOU'VE RUN OUT OF CREDITS" : 'ANNUAL PLAN — SAVE 20%'}
+            {isOutOfCredits ? "YOU'VE RUN OUT OF CREDITS" : 'ANNUAL PLAN — SAVE 20%'}
           </div>
           <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
-            {trigger === 'out-of-credits' ? 'Keep building.' : 'Lock in your annual rate.'}
+            {isOutOfCredits ? 'Keep building.' : 'Lock in your annual rate.'}
           </h2>
 
-          {/* Countdown */}
-          {!expired && timeLeft ? (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12, padding: '6px 14px', borderRadius: 20, background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.35)' }}>
-              <span style={{ fontSize: 10, color: '#f97316', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Annual price locks in</span>
-              <span style={{ fontSize: 14, color: '#fb923c', fontWeight: 800, fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace', minWidth: 42 }}>{timeLeft}</span>
-            </div>
+          {isOutOfCredits ? (
+            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>Top up in seconds, or subscribe for ongoing credits.</p>
           ) : (
-            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>Annual billing. Cancel any time.</p>
-          )}
+            <>
+              {/* Countdown */}
+              {!expired && timeLeft ? (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 12, padding: '6px 14px', borderRadius: 20, background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.35)' }}>
+                  <span style={{ fontSize: 10, color: '#f97316', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Annual price locks in</span>
+                  <span style={{ fontSize: 14, color: '#fb923c', fontWeight: 800, fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace', minWidth: 42 }}>{timeLeft}</span>
+                </div>
+              ) : (
+                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>Annual billing. Cancel any time.</p>
+              )}
 
-          {/* Social proof */}
-          <div style={{ marginTop: 10, fontSize: 11, color: '#52525b' }}>
-            <span style={{ color: '#22c55e', fontWeight: 700 }}>●</span> {currency === 'INR' ? '120+ builders' : '200+ builders'} upgraded to annual this month
-          </div>
+              {/* Social proof */}
+              <div style={{ marginTop: 10, fontSize: 11, color: '#52525b' }}>
+                <span style={{ color: '#22c55e', fontWeight: 700 }}>●</span> {currency === 'INR' ? '120+ builders' : '200+ builders'} upgraded to annual this month
+              </div>
+            </>
+          )}
         </div>
+
+        {/* Quick top-up — lead option when blocked mid-build. One-time, no
+            subscription: the highest-intent moment shouldn't force a year-long
+            commitment on someone who just wants to finish the thing they're
+            building right now. */}
+        {isOutOfCredits && (
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {topups.map(tu => {
+                const isLoading = loading === tu.key
+                return (
+                  <button
+                    key={tu.key}
+                    onClick={() => startTopupCheckout(tu.key)}
+                    disabled={!!loading}
+                    style={{
+                      flex: 1,
+                      position: 'relative',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                      padding: '14px 8px',
+                      borderRadius: 12,
+                      border: tu.badge ? '1px solid rgba(14,165,233,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                      background: isLoading ? '#1a1a22' : tu.badge ? 'linear-gradient(160deg,#0d1a26,#0a1318)' : '#111113',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontFamily: 'inherit',
+                      boxShadow: tu.badge ? '0 0 24px rgba(14,165,233,0.1)' : 'none',
+                    }}
+                  >
+                    {tu.badge && (
+                      <div style={{ position: 'absolute', top: -9, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(90deg,#0ea5e9,#7c3aed)', color: '#fff', fontSize: 8, fontWeight: 800, padding: '2px 9px', borderRadius: 20, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>BEST VALUE</div>
+                    )}
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#71717a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{tu.label}</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: '#fafafa', letterSpacing: '-0.02em' }}>{isLoading ? '…' : tu.price}</span>
+                    <span style={{ fontSize: 10, color: '#22c55e', fontWeight: 700 }}>{tu.credits} credits</span>
+                    <span style={{ fontSize: 9, color: '#52525b' }}>{tu.desc}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <div style={{ textAlign: 'center', fontSize: 10.5, color: '#3f3f46', marginTop: 8 }}>One-time payment · Credits never expire</div>
+          </div>
+        )}
+
+        {isOutOfCredits && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '0 0 14px' }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+            <span style={{ fontSize: 10, color: '#3f3f46', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>or subscribe for ongoing credits</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.08)' }} />
+          </div>
+        )}
 
         {/* Plan cards — annual pricing shown by default */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>

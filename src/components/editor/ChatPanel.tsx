@@ -3662,7 +3662,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', cursor:'pointer', fontFamily:'inherit' }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
-                      {creditsCurrency === 'INR' ? 'Upgrade — from ₹399/mo annual (save 20%)' : 'Upgrade — from $23/mo annual (save 20%)'}
+                      Add credits & keep building →
                     </button>
                   )}
                   {msg.designSuggestion && !dismissedSuggestions.has(msg.id) && (
