@@ -178,9 +178,16 @@ export async function POST(req: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const eventDataAny = (event.data as any)
+    // product_cart/items cover one-time cart-style payment payloads. Dodo's
+    // Subscription resource (subscription.active/.renewed, and a subscription's
+    // payment.succeeded) carries product_id as a top-level field instead —
+    // confirmed via docs.dodopayments.com's Subscription object schema after
+    // the first-ever live subscription purchase (2026-09-16, Spark/INR) came
+    // through with an empty productId here and silently granted nothing.
     const productId = String(
       eventDataAny?.product_cart?.[0]?.product_id ||
       eventDataAny?.items?.[0]?.product_id ||
+      eventDataAny?.product_id ||
       event.product_id || ''
     )
 
@@ -417,7 +424,9 @@ export async function POST(req: NextRequest) {
 
       const planConfig = PLANS[productId]
       if (!planConfig) {
-        console.warn('Dodo webhook: unknown product, no plan change:', productId)
+        // Dump the raw data keys/values (truncated) so a future shape mismatch
+        // is diagnosable from logs alone, not by re-deriving it from timestamps.
+        console.warn('Dodo webhook: unknown product, no plan change:', productId, '— raw data:', JSON.stringify(eventDataAny).slice(0, 500))
         return NextResponse.json({ received: true, warning: 'unknown product' })
       }
 
