@@ -5573,12 +5573,29 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                           const vetoes = sentinelReview(controller, parsed.path, parsed.content)
                           if (vetoes.length) vetoByPath.set(parsed.path, vetoes)
                           else vetoByPath.delete(parsed.path)
+                          // Only clear tool state on a genuine success. See the
+                          // catch branch below for why a failed/incomplete call
+                          // deliberately leaves this state in place instead.
+                          toolJson = ''
+                          toolName = ''
+                          toolOpened = false
+                          toolEmittedLen = 0
                         }
-                      } catch (e) { console.error('[generate tool-use] bad write_file JSON:', e) }
-                      toolJson = ''
-                      toolName = ''
-                      toolOpened = false
-                      toolEmittedLen = 0
+                      } catch (e) {
+                        console.error('[generate tool-use] bad write_file JSON:', e)
+                        // Do NOT reset toolName/toolJson/toolOpened here. Anthropic's
+                        // own docs warn the accumulated partial_json for a tool call
+                        // can be invalid JSON if generation stopped mid-argument (e.g.
+                        // a max_tokens cutoff) — previously this catch just logged and
+                        // fell through to an unconditional reset, silently discarding
+                        // the whole call with zero recovery and zero <file>/<edit>
+                        // block emitted. Leaving this state set lets the stop_reason
+                        // check right after this event loop (originally max_tokens-only)
+                        // also catch THIS failure mode and run the exact same
+                        // close-dangling-tag + one-shot-retry recovery it already has.
+                        // Confirmed live: RIRA Capital project, 52 of 92 turns came
+                        // back as a guaranteed "No file changes were made" this way.
+                      }
                     } else if (toolName === 'edit_file' && toolJson) {
                       // Edits are small — buffer the whole call and emit once, same
                       // pattern as sub-phase 1's original write_file approach. No live
@@ -5594,10 +5611,14 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                           // service-role) run on a fragment — see ReviewOptions.
                           const vetoes = sentinelReview(controller, parsed.path, parsed.replace, true)
                           if (vetoes.length) vetoByPath.set(parsed.path, vetoes)
+                          // Only clear on success — see the write_file catch above.
+                          toolJson = ''
+                          toolName = ''
                         }
-                      } catch (e) { console.error('[generate tool-use] bad edit_file JSON:', e) }
-                      toolJson = ''
-                      toolName = ''
+                      } catch (e) {
+                        console.error('[generate tool-use] bad edit_file JSON:', e)
+                        // Deliberately no reset — see the write_file catch above.
+                      }
                     }
                   }
                 }
@@ -5627,7 +5648,12 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   break
                 }
 
-                if (finalMsg.stop_reason === 'max_tokens') {
+                // Also fires on a leftover toolName/toolJson from the content_block_stop
+                // handler above: that handler now only clears this state on a genuine
+                // parse success, so a tool call whose accumulated JSON was invalid or
+                // incomplete (max_tokens cutoff, or any other malformed-argument case)
+                // falls into this exact same recovery instead of being silently dropped.
+                if (finalMsg.stop_reason === 'max_tokens' || (toolName && toolJson)) {
                   // Sub-phase 3: a tool call cut off mid-JSON can't be replayed as
                   // an assistant prefill (same restriction as the legacy path) NOR
                   // as a genuine tool_use continuation (write_file has no "append"
@@ -6099,13 +6125,28 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         ? userContent
         : (userContent as Array<{ type: string; text?: string }>).filter(b => b.type === 'text').map(b => b.text).join('\n')
 
+      // This fallback is plain text generation only — no `tools` are ever sent
+      // to Gemini here. staticSystemPrompt, though, ends in whichever output
+      // rule the Anthropic call above was built for: on the (default) tool-use
+      // path that's toolUseOutputRule, which tells the model to call
+      // write_file/edit_file instead of emitting <file>/<edit> tags. Gemini has
+      // no tools to call, so it was left with no way to comply — it just wrote
+      // prose, parseGenerationOutput/parseEditBlocks found zero blocks, and
+      // every single fallback turn came back as a guaranteed, deterministic
+      // "no file changes" (refunded but still an unusable turn). Swap back to
+      // the tag-based outputRule so a Gemini fallback can still produce a
+      // parseable result.
+      const geminiSystemPrompt = useToolUse
+        ? staticSystemPrompt.replace(toolUseOutputRule, outputRule)
+        : staticSystemPrompt
+
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${vertexKey}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            system_instruction: { parts: [{ text: staticSystemPrompt }] },
+            system_instruction: { parts: [{ text: geminiSystemPrompt }] },
             contents: [{ role: 'user', parts: [{ text: userText }] }],
             generationConfig: { maxOutputTokens: stageMaxTokens, temperature: 0.7 },
           }),
