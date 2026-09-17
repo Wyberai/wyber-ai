@@ -53,6 +53,16 @@ export async function POST(req: NextRequest) {
     if (!referrer) return NextResponse.json({ error: 'Invalid referral code' }, { status: 404 })
     if (referrer.id === user.id) return NextResponse.json({ error: 'Cannot use your own code' }, { status: 400 })
 
+    // Cap how many times a single code can be redeemed — otherwise one person
+    // can keep signing up fresh accounts under their own code indefinitely,
+    // refilling the same referrer account each time. No cap on genuine
+    // one-off friend referrals below this; it only kicks in once a single
+    // code has already paid out 3 times.
+    const REFERRAL_LIMIT = 3
+    if ((referrer.referral_count ?? 0) >= REFERRAL_LIMIT) {
+      return NextResponse.json({ error: 'This referral code has reached its usage limit' }, { status: 400 })
+    }
+
     // Check not already redeemed
     const { data: me } = await admin.from('profiles')
       .select('referred_by, credits').eq('id', user.id).single()
