@@ -3924,6 +3924,40 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // ── Free-plan-stage abuse guard ──────────────────────────────────────
+    // The 60/hour guard above exists to stop a single account looping
+    // self-heal/fill passes; it does nothing about the cost pattern actually
+    // observed live on 2026-09-18 — a wave of brand-new free signups, each
+    // making exactly ONE 'plan' call (a real Anthropic call, ~$0.01-$0.04)
+    // and never building anything: 5 of 6 sampled signups cost real money
+    // and produced zero engagement. A new account needs zero credits to
+    // trigger this, so cap it separately and much tighter, per account per
+    // day. Safe to cap hard: every client call site treats a non-OK plan
+    // response as "no manifest" and silently falls back to a one-shot build
+    // (see fetchPlanManifest/editPlanPromise/newBuildPlanPromise in
+    // ChatPanel.tsx) — this only removes the free preview, never blocks or
+    // charges for the real, credited build that follows.
+    if (stage === 'plan') {
+      const FREE_PLAN_CALLS_PER_DAY = 5
+      const guardAdmin = await createAdminClient()
+      const dayAgo = new Date(Date.now() - 24 * 3600_000).toISOString()
+      const { count: planCount } = await guardAdmin
+        .from('credit_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reason', 'free-pass-plan')
+        .gte('created_at', dayAgo)
+      if ((planCount ?? 0) >= FREE_PLAN_CALLS_PER_DAY) {
+        return new Response(JSON.stringify({
+          error: 'Free plan-preview limit reached for today.',
+        }), { status: 429 })
+      }
+      await guardAdmin.from('credit_usage').insert({
+        user_id: user.id, amount: 0, reason: 'free-pass-plan',
+        credits_before: 0, credits_after: 0,
+      })
+    }
+
     // Determine action type for cost calculation. The client sends isFirstBuild
     // explicitly (its store knows whether this project ever completed a
     // generation) because fileContext is NEVER small — every brand-new project
