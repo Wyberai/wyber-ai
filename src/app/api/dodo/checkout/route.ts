@@ -55,6 +55,28 @@ export async function POST(req: NextRequest) {
 
     const { planKey, currency } = await req.json() as { planKey: string; currency?: 'USD' | 'INR' }
 
+    // Block a second subscription checkout for a plan the user already has
+    // active — confirmed live: nothing here stopped a customer from creating
+    // 3 separate concurrent Spark subscriptions in 2 days (3 distinct Dodo
+    // subscription_ids, all billing independently next month) just by
+    // hitting "Subscribe" again. Only applies to subscription plan keys
+    // (never topup_* — those are legitimately repeatable one-time buys).
+    // Base plan name = planKey with the _monthly/_annual suffix stripped,
+    // matching profiles.plan values ('spark', 'starter', 'builder', ...).
+    if (!planKey.startsWith('topup_')) {
+      const basePlan = planKey.replace(/_monthly$|_annual$/, '')
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('plan, subscription_status')
+        .eq('id', user.id)
+        .single()
+      if (existing?.plan === basePlan && existing.subscription_status === 'active') {
+        return NextResponse.json({
+          error: `You already have an active ${basePlan} subscription — manage or cancel it before starting a new one.`,
+        }, { status: 409 })
+      }
+    }
+
     // INR is only allowed from an Indian IP (or the owner/admin previewing).
     // This stops a US visitor from forcing the cheaper India price via a crafted
     // request or the ?region override.
