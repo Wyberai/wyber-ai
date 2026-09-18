@@ -91,7 +91,7 @@ function btn(label: string, url: string, color = '#0EA5E9'): string {
 const TOPUPS: [label: string, key: string][] = [
   ['200 credits', 'topup_200'],
   ['600 credits', 'topup_600'],
-  ['2,000 credits', 'topup_2000'],
+  ['1,200 credits', 'topup_2000'],
 ]
 function topUpBlock(currency: Currency = 'USD'): string {
   const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE

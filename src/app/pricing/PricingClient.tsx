@@ -109,7 +109,7 @@ const PLANS = [
 const TOPUPS = [
   { credits: 200,  price: 19,  priceINR: 399,  key: 'topup_200',  label: 'Boost',  descKey: 'topupDescBoost' },
   { credits: 600,  price: 49,  priceINR: 999,  key: 'topup_600',  label: 'Power',  descKey: 'topupDescPower' },
-  { credits: 2000, price: 99,  priceINR: 1999, key: 'topup_2000', label: 'Studio', descKey: 'topupDescStudio', hasBadge: true },
+  { credits: 1200, price: 99,  priceINR: 1999, key: 'topup_2000', label: 'Studio', descKey: 'topupDescStudio', hasBadge: true },
 ]
 
 // Costs are computed from src/lib/credits.ts (the actual charging logic), not

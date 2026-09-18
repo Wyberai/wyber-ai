@@ -24,11 +24,11 @@ function getAdmin() {
 const TOPUPS: Record<string, number> = {
   [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 200,
   [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 600,
-  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 2000,
+  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 1200,
   // India (INR) top-ups — same credit packs, separate INR-priced products.
   [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 200,
   [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 600,
-  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 2000,
+  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 1200,
 }
 
 // Plan config, shared by the USD and INR products (same tier, same credits —

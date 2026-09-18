@@ -105,12 +105,12 @@ interface TopupConfig {
 const TOPUPS_USD: TopupConfig[] = [
   { key: 'topup_200', credits: 200, price: '$19', label: 'Boost', desc: '~6 web builds' },
   { key: 'topup_600', credits: 600, price: '$49', label: 'Power', desc: '~20 web builds' },
-  { key: 'topup_2000', credits: 2000, price: '$99', label: 'Studio', desc: '~66 web builds', badge: true },
+  { key: 'topup_2000', credits: 1200, price: '$99', label: 'Studio', desc: '~40 web builds', badge: true },
 ]
 const TOPUPS_INR: TopupConfig[] = [
   { key: 'topup_200', credits: 200, price: '₹399', label: 'Boost', desc: '~6 web builds' },
   { key: 'topup_600', credits: 600, price: '₹999', label: 'Power', desc: '~20 web builds' },
-  { key: 'topup_2000', credits: 2000, price: '₹1,999', label: 'Studio', desc: '~66 web builds', badge: true },
+  { key: 'topup_2000', credits: 1200, price: '₹1,999', label: 'Studio', desc: '~40 web builds', badge: true },
 ]
 
 // Countdown resets every time the modal is first opened in a session.
