@@ -3907,7 +3907,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         </div>
       </div>
-      <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currency={creditsCurrency} trigger={upgradeTrigger} />
+      <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currency={creditsCurrency} trigger={upgradeTrigger} currentPlan={userPlan} />
     </div>
   );
 }

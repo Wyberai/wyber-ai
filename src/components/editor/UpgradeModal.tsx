@@ -145,17 +145,22 @@ function useOfferCountdown() {
   return { timeLeft, expired }
 }
 
-export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credits' }: {
+export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credits', currentPlan }: {
   open: boolean
   onClose: () => void
   currency: Currency
   trigger?: 'nudge' | 'out-of-credits'
+  /** The plan the viewer is already on — never worth showing as an "upgrade". */
+  currentPlan?: string
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
   const [showMonthly, setShowMonthly] = useState(false)
   const { timeLeft, expired } = useOfferCountdown()
-  const plans = currency === 'INR' ? PLANS_INR : PLANS_USD
+  // Never re-offer the plan someone is already paying for — most relevant for
+  // Spark, the recurring re-subscribe case (a customer who tops out on Spark
+  // and re-buys it instead of moving to a top-up or a higher tier).
+  const plans = (currency === 'INR' ? PLANS_INR : PLANS_USD).filter(p => p.id !== currentPlan)
   const topups = currency === 'INR' ? TOPUPS_INR : TOPUPS_USD
   const isOutOfCredits = trigger === 'out-of-credits'
 
