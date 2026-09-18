@@ -384,13 +384,22 @@ export async function POST(req: NextRequest) {
 
     if (eventType === 'payment.succeeded' || eventType === 'subscription.active') {
       // Mark the matching checkout_attempts row converted so the cart-
-      // abandonment cron never nudges someone who already paid. Best-effort:
-      // most recent unconverted attempt for this user, table may not exist
-      // yet if migration 20260726000000 hasn't been applied.
-      admin.from('checkout_attempts')
-        .update({ converted: true, converted_at: new Date().toISOString() })
-        .eq('user_id', userId).eq('converted', false)
-        .then(() => {}, () => {})
+      // abandonment cron never nudges someone who already paid. Scoped to
+      // the plan_key actually paid for (metadata.plan, set at checkout
+      // creation) — NOT just "any unconverted row for this user". Confirmed
+      // live: an unscoped update marked an unrelated, never-paid Starter
+      // attempt as "converted" the moment a completely different purchase
+      // succeeded for the same user, which would have hidden a real broken-
+      // price incident (a mispriced annual product) behind a false-positive
+      // conversion. Best-effort; table may not exist yet if migration
+      // 20260726000000 hasn't been applied.
+      const paidPlanKey = metadata.plan as string | undefined
+      if (paidPlanKey) {
+        admin.from('checkout_attempts')
+          .update({ converted: true, converted_at: new Date().toISOString() })
+          .eq('user_id', userId).eq('plan_key', paidPlanKey).eq('converted', false)
+          .then(() => {}, () => {})
+      }
 
       // Check if it's a top-up first
       const topupCredits = TOPUPS[productId]
