@@ -89,9 +89,9 @@ function btn(label: string, url: string, color = '#0EA5E9'): string {
 // which collapsed the card spacing). Currency-aware: pass 'INR' to show rupee
 // price points to Indian users; defaults to USD so existing callers are unchanged.
 const TOPUPS: [label: string, key: string][] = [
-  ['200 credits', 'topup_200'],
-  ['600 credits', 'topup_600'],
-  ['1,200 credits', 'topup_2000'],
+  ['40 credits', 'topup_200'],
+  ['100 credits', 'topup_600'],
+  ['200 credits', 'topup_2000'],
 ]
 function topUpBlock(currency: Currency = 'USD'): string {
   const prices = currency === 'INR' ? PLAN_VALUE_INR : PLAN_VALUE
@@ -698,7 +698,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     {
       subject: 'Your projects are waiting on WyberAi',
       heading: 'Still there. Still saved.',
-      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. 200 credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
+      body: `Everything you built is safe in your dashboard — it just needs credits to keep evolving. 40 credits is ${formatPrice(prices.topup_200, currency)} and they never expire.`,
     },
     {
       subject: 'Your credits are still at zero and honestly... same 🚬',

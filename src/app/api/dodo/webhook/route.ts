@@ -21,14 +21,22 @@ function getAdmin() {
   )
 }
 
+// Credits cut ~5x (200/600/1200 -> 40/100/200) from the original amounts,
+// price unchanged. Confirmed live: a topup's per-credit cost was ~5x cheaper
+// than Spark's own per-credit rate (INR ₹1.99/credit vs Spark's ₹9.98), so a
+// one-time ₹399 topup was flatly a better deal than paying for the
+// subscription it's supposed to complement — a real customer bought one
+// instead of renewing Spark. Cutting credits (not raising Dodo's price) so
+// this ships without touching the Dodo product catalog again; new rate is
+// ~₹9.98-9.99/credit, matching Spark exactly.
 const TOPUPS: Record<string, number> = {
-  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 200,
-  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 600,
-  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 1200,
+  [process.env.DODO_TOPUP_200      || 'TOPUP_UNSET1']: 40,
+  [process.env.DODO_TOPUP_600      || 'TOPUP_UNSET2']: 100,
+  [process.env.DODO_TOPUP_2000     || 'TOPUP_UNSET3']: 200,
   // India (INR) top-ups — same credit packs, separate INR-priced products.
-  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 200,
-  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 600,
-  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 1200,
+  [process.env.DODO_TOPUP_200_INR  || 'TOPUP_UNSET4']: 40,
+  [process.env.DODO_TOPUP_600_INR  || 'TOPUP_UNSET5']: 100,
+  [process.env.DODO_TOPUP_2000_INR || 'TOPUP_UNSET6']: 200,
 }
 
 // Plan config, shared by the USD and INR products (same tier, same credits —

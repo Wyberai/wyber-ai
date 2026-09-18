@@ -100,9 +100,9 @@ function getUpgradeOptions(currentPlan: string, costNeeded: number, currentCredi
   }
 
   const topups: UpgradeOption[] = [
-    { planKey: 'topup_200', title: 'Quick Top-up', creditsGranted: 200 },
-    { planKey: 'topup_600', title: 'Standard Top-up', creditsGranted: 600 },
-    { planKey: 'topup_2000', title: 'Mega Top-up', creditsGranted: 1200 },
+    { planKey: 'topup_200', title: 'Quick Top-up', creditsGranted: 40 },
+    { planKey: 'topup_600', title: 'Standard Top-up', creditsGranted: 100 },
+    { planKey: 'topup_2000', title: 'Mega Top-up', creditsGranted: 200 },
   ]
 
   const plans: UpgradeOption[] = []

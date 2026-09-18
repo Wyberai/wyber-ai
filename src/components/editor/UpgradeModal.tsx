@@ -103,14 +103,14 @@ interface TopupConfig {
 // low-commitment option for the out-of-credits moment: someone mid-build who
 // just wants to finish, not sign up for a year.
 const TOPUPS_USD: TopupConfig[] = [
-  { key: 'topup_200', credits: 200, price: '$19', label: 'Boost', desc: '~6 web builds' },
-  { key: 'topup_600', credits: 600, price: '$49', label: 'Power', desc: '~20 web builds' },
-  { key: 'topup_2000', credits: 1200, price: '$99', label: 'Studio', desc: '~40 web builds', badge: true },
+  { key: 'topup_200', credits: 40, price: '$19', label: 'Boost', desc: '~1 web build' },
+  { key: 'topup_600', credits: 100, price: '$49', label: 'Power', desc: '~3 web builds' },
+  { key: 'topup_2000', credits: 200, price: '$99', label: 'Studio', desc: '~5 web builds', badge: true },
 ]
 const TOPUPS_INR: TopupConfig[] = [
-  { key: 'topup_200', credits: 200, price: '₹399', label: 'Boost', desc: '~6 web builds' },
-  { key: 'topup_600', credits: 600, price: '₹999', label: 'Power', desc: '~20 web builds' },
-  { key: 'topup_2000', credits: 1200, price: '₹1,999', label: 'Studio', desc: '~40 web builds', badge: true },
+  { key: 'topup_200', credits: 40, price: '₹399', label: 'Boost', desc: '~1 web build' },
+  { key: 'topup_600', credits: 100, price: '₹999', label: 'Power', desc: '~3 web builds' },
+  { key: 'topup_2000', credits: 200, price: '₹1,999', label: 'Studio', desc: '~5 web builds', badge: true },
 ]
 
 // Countdown resets every time the modal is first opened in a session.

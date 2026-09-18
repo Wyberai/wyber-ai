@@ -18,7 +18,7 @@ Pricing (all features unlocked on every plan — no feature gates):
 - Builder: $79/month ($63/mo annual) — 500 credits/month
 - Pro: $199/month ($159/mo annual) — 1,500 credits/month
 - Enterprise: custom pricing (SSO, audit logs, org roles)
-- Top-ups: 200cr/$19 · 600cr/$49 · 2,000cr/$99 — credits never expire
+- Top-ups: 40cr/$19 · 100cr/$49 · 200cr/$99 — credits never expire
 
 Credit costs: Any build (web app, mobile app, website, or SaaS) = 30cr · Edit/iteration = 2cr · Build plan (Plan Mode) = 5cr · Image = 3cr · Deploy/export/GitHub push = always free. Failed generations are auto-refunded.
 
