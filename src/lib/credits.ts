@@ -225,11 +225,21 @@ const BUILD_ACTIONS: ActionType[] = ['web-build', 'mobile-build', 'website-build
  * ('fast') prices scale down from Opus by roughly its real ~2.5× cheaper
  * per-token rate, not the old flat 0.5×.
  */
+// Doubled from the original {15,25}/{25,45}/{40,80}/{60,130} — the flat
+// per-tier price was going underwater on any build landing near the TOP of
+// its tier's token range (BUILD_TIER_TOKEN_BUDGET), since the same price
+// covers a build at either end. Confirmed live: real Anthropic cost on
+// several turns exceeded the revenue these prices implied. Doubling is a
+// blunt fix, not a proportional one — a build at the bottom of a tier is now
+// comfortably profitable, one at the top is closer to breakeven-plus-margin
+// instead of a loss. A real fix would price continuously within each tier
+// instead of as a step function; this buys margin back immediately without
+// that larger rework.
 const BUILD_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = {
-  small:  { fast: 15, default: 25 },
-  medium: { fast: 25, default: 45 },
-  large:  { fast: 40, default: 80 },
-  xl:     { fast: 60, default: 130 },
+  small:  { fast: 30, default: 50 },
+  medium: { fast: 50, default: 90 },
+  large:  { fast: 80, default: 160 },
+  xl:     { fast: 120, default: 260 },
 }
 
 /**
@@ -343,11 +353,18 @@ export function computeOverageCharge(opts: {
  * small-edit-priced request that did XL-build-sized work must be able to
  * land on XL pricing directly, not be capped one step above a 2cr floor.
  */
+// Doubled from the original {2,5}/{10,18}/{22,40}/{45,85} — same reasoning as
+// BUILD_TIER_COSTS above: a turn landing near the top of a tier (e.g. ~58K
+// output tokens, near the 60K "medium" ceiling) was settling at the same
+// price as one at the bottom (~21K tokens), and the real Anthropic cost on
+// the heavier end exceeded what that price covered. Confirmed live: a
+// single Spark customer's edit turns this session ran real cost up to $0.59
+// while settling at the same 10 credits as turns costing a third of that.
 const EDIT_TIER_COSTS: Record<BuildSizeTier, { fast: number; default: number }> = {
-  small:  { fast: 2,  default: 5 },
-  medium: { fast: 10, default: 18 },
-  large:  { fast: 22, default: 40 },
-  xl:     { fast: 45, default: 85 },
+  small:  { fast: 4,  default: 10 },
+  medium: { fast: 20, default: 36 },
+  large:  { fast: 44, default: 80 },
+  xl:     { fast: 90, default: 170 },
 }
 
 // Same thresholds BUILD_TIER_TOKEN_BUDGET already uses — comparable output
@@ -384,8 +401,9 @@ export function computeEditSettlement(opts: {
 
 export function creditCost(action: ActionType, tier: ModelTier = 'default', buildTier?: BuildSizeTier): number {
   // Edits are priced explicitly, not by multiplier. Same pricing for all users.
-  // Small edits: 2cr (fast) or 5cr (default)
-  if (action === 'small-edit') return tier === 'fast' ? 2 : 5
+  // Small edits: 4cr (fast) or 10cr (default) — matches EDIT_TIER_COSTS.small
+  // so a genuinely small edit is charged once upfront with no settlement top-up.
+  if (action === 'small-edit') return tier === 'fast' ? 4 : 10
   // Tiered build pricing (see BUILD_TIER_COSTS above) — only applies when the
   // caller actually resolved a size tier; omitting buildTier (an older client,
   // or a call site not yet updated) falls through to the flat price below so

@@ -96,10 +96,10 @@ describe('resolveBuildTier', () => {
 describe('creditCost with buildTier (tiered build pricing)', () => {
   const BUILD_ACTIONS = ['web-build', 'mobile-build', 'website-build', 'saas-build'] as const
   const EXPECTED: Record<BuildSizeTier, { fast: number; default: number }> = {
-    small: { fast: 15, default: 25 },
-    medium: { fast: 25, default: 45 },
-    large: { fast: 40, default: 80 },
-    xl: { fast: 60, default: 130 },
+    small: { fast: 30, default: 50 },
+    medium: { fast: 50, default: 90 },
+    large: { fast: 80, default: 160 },
+    xl: { fast: 120, default: 260 },
   }
 
   it('matches the documented tier price for every build action and tier', () => {
@@ -160,15 +160,15 @@ describe('computeOverageCharge', () => {
   })
 
   it('caps the top-up at the jump to the next tier\'s price', () => {
-    // small(25) -> medium(45) on default tier: cap should be exactly 20
-    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'default', actualOutputTokens: 1_000_000 })).toBe(20)
-    // small(15) -> medium(25) on fast tier: cap should be exactly 10
-    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'fast', actualOutputTokens: 1_000_000 })).toBe(10)
+    // small(50) -> medium(90) on default tier: cap should be exactly 40
+    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'default', actualOutputTokens: 1_000_000 })).toBe(40)
+    // small(30) -> medium(50) on fast tier: cap should be exactly 20
+    expect(computeOverageCharge({ buildTier: 'small', modelTier: 'fast', actualOutputTokens: 1_000_000 })).toBe(20)
   })
 
   it('xl has no tier above it to borrow a cap from, so it reuses the large->xl increment', () => {
-    // large(80) -> xl(130) on default tier: cap should be exactly 50, even at extreme usage
-    expect(computeOverageCharge({ buildTier: 'xl', modelTier: 'default', actualOutputTokens: 50_000_000 })).toBe(50)
+    // large(160) -> xl(260) on default tier: cap should be exactly 100, even at extreme usage
+    expect(computeOverageCharge({ buildTier: 'xl', modelTier: 'default', actualOutputTokens: 50_000_000 })).toBe(100)
   })
 
   it('never returns a negative or zero charge once triggered', () => {
