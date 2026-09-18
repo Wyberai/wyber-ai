@@ -3958,6 +3958,38 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // ── Free-self-heal abuse guard ───────────────────────────────────────
+    // Self-heal is free by design ("self-healing is always free" — it's
+    // repairing a turn the user already paid for), and the 60/hour guard
+    // above only catches a runaway loop within a single hour. Confirmed
+    // live: a near-empty-balance account kept generating real Anthropic
+    // cost through free self-heal passes ($0.26 of a $1.25 burst came from
+    // 3 self-heal calls) with no per-day ceiling at all. Cap it separately
+    // and much tighter per account per day — generous enough that a real
+    // actively-building customer's normal repair traffic never hits it, but
+    // bounded instead of open-ended for an account whose project is stuck
+    // looping errors.
+    if (selfHeal) {
+      const FREE_SELFHEAL_CALLS_PER_DAY = 20
+      const guardAdmin = await createAdminClient()
+      const dayAgo = new Date(Date.now() - 24 * 3600_000).toISOString()
+      const { count: selfHealCount } = await guardAdmin
+        .from('credit_usage')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('reason', 'free-pass-selfheal')
+        .gte('created_at', dayAgo)
+      if ((selfHealCount ?? 0) >= FREE_SELFHEAL_CALLS_PER_DAY) {
+        return new Response(JSON.stringify({
+          error: 'Free auto-fix limit reached for today.',
+        }), { status: 429 })
+      }
+      await guardAdmin.from('credit_usage').insert({
+        user_id: user.id, amount: 0, reason: 'free-pass-selfheal',
+        credits_before: 0, credits_after: 0,
+      })
+    }
+
     // Determine action type for cost calculation. The client sends isFirstBuild
     // explicitly (its store knows whether this project ever completed a
     // generation) because fileContext is NEVER small — every brand-new project
@@ -4731,11 +4763,13 @@ ${code}
             })
             let chargedOverage = 0
             if (overage > 0) {
-              const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: overage })
-              // Best-effort: an insufficient/stale balance just means we
-              // collect less, never blocks or reverses a build that already
-              // shipped. The sentinel row below still records the attempt
-              // either way, so this buildId is never re-checked.
+              // settle_credits_allow_negative (not the plain balance-gated
+              // deduct_credits) — this is collecting for work that already
+              // shipped, priced off real measured tokens. An account too low
+              // to cover it goes negative rather than writing the overage
+              // off; the ordinary `balance < cost` gate on the NEXT request
+              // is what actually stops further free building from there.
+              const { data: overageRpc } = await admin.rpc('settle_credits_allow_negative', { p_user_id: authedUserId, p_amount: overage })
               if (overageRpc?.new_credits !== undefined) chargedOverage = overage
             }
             // Sentinel row — marks this buildId as resolved regardless of
@@ -4779,7 +4813,12 @@ ${code}
             alreadyCharged: cost, modelTier: resolvedTier, actualOutputTokens: totalOutputTokens,
           })
           if (editSettlement > 0) {
-            const { data: overageRpc } = await admin.rpc('deduct_credits', { p_user_id: authedUserId, p_amount: editSettlement })
+            // Same reasoning as the build-overage valve above: this collects
+            // for a turn that already ran, so it must never write the
+            // shortfall off just because the balance is thin — allow going
+            // negative and let the next request's balance gate take it from
+            // there.
+            const { data: overageRpc } = await admin.rpc('settle_credits_allow_negative', { p_user_id: authedUserId, p_amount: editSettlement })
             if (overageRpc?.new_credits !== undefined) {
               const settledTier = resolveEditTierFromTokens(totalOutputTokens)
               await admin.from('generation_usage_log').insert({
