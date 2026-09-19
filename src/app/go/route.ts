@@ -13,6 +13,15 @@ const SOURCES: Record<string, string> = {
 export async function GET(req: NextRequest) {
   const code = (req.nextUrl.searchParams.get('s') || '').toLowerCase().slice(0, 16)
   const source = SOURCES[code] || (code || 'direct')
+  // Both optional, both backward-compatible: omitting them reproduces the
+  // exact old behavior (medium=social, campaign=leak-check, dest=homepage)
+  // for every link already shared with the old 2-param shape.
+  const medium = (req.nextUrl.searchParams.get('m') || 'social').slice(0, 32)
+  const campaign = (req.nextUrl.searchParams.get('camp') || 'leak-check').slice(0, 64)
+  // dest must be a same-origin path — never an absolute/protocol-relative
+  // URL, which would turn this into an open redirect.
+  const rawDest = req.nextUrl.searchParams.get('dest') || '/'
+  const destPath = rawDest.startsWith('/') && !rawDest.startsWith('//') ? rawDest : '/'
 
   try {
     const admin = createServiceClient()
@@ -24,9 +33,9 @@ export async function GET(req: NextRequest) {
     }).then(() => {}, () => {})
   } catch { /* best-effort */ }
 
-  const dest = new URL('/', req.nextUrl.origin)
+  const dest = new URL(destPath, req.nextUrl.origin)
   dest.searchParams.set('utm_source', source)
-  dest.searchParams.set('utm_medium', 'social')
-  dest.searchParams.set('utm_campaign', 'leak-check')
+  dest.searchParams.set('utm_medium', medium)
+  dest.searchParams.set('utm_campaign', campaign)
   return NextResponse.redirect(dest)
 }
