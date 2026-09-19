@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { notify } from '@/lib/push'
+import { REFERRAL_LIMIT } from '@/lib/referral'
 
 // GET - get user's referral code and stats
 export async function GET() {
@@ -57,8 +58,11 @@ export async function POST(req: NextRequest) {
     // can keep signing up fresh accounts under their own code indefinitely,
     // refilling the same referrer account each time. No cap on genuine
     // one-off friend referrals below this; it only kicks in once a single
-    // code has already paid out 3 times.
-    const REFERRAL_LIMIT = 3
+    // code has already paid out this many times. Shared with the other
+    // redemption path (src/lib/auth/onboard-user.ts, the ?ref= link-based
+    // signup flow) via lib/referral.ts — the two drifted out of sync once
+    // before (3 here, 5 there, and the other path didn't even fully stop
+    // past its own cap), so this constant must not be redefined locally again.
     if ((referrer.referral_count ?? 0) >= REFERRAL_LIMIT) {
       return NextResponse.json({ error: 'This referral code has reached its usage limit' }, { status: 400 })
     }
