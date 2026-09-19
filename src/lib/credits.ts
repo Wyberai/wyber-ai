@@ -22,6 +22,7 @@ export type ActionType =
   | 'saas-build'
   | 'plan'
   | 'security-scan'
+  | 'seo-scan'
   | 'agent-create'
   | 'agent-run'
   | 'workflow-create'
@@ -78,9 +79,10 @@ export const MODEL_PROVIDERS: Record<ModelTier, ModelProvider> = {
  * actions that still use flat BASE_COSTS × multiplier pricing — builds
  * (web-build/mobile-build/website-build/saas-build) moved to tiered pricing
  * (BUILD_TIER_COSTS above) and no longer read this at all; small-edit never
- * did. Remaining consumers: component, security-scan, agent-create/run,
- * workflow-create/run, ai-helper, execution, employee-run, gtm-icp-sequence,
- * gtm-lead-enrich.
+ * did. Remaining consumers: component, agent-create/run, workflow-create/run,
+ * ai-helper, execution, employee-run, gtm-icp-sequence, gtm-lead-enrich.
+ * security-scan/seo-scan moved to flat pricing (see creditCost() below) —
+ * not affected by this table.
  *
  * default/premium (Opus) bumped 1.0 → 2.5: checked against Anthropic's
  * published per-token pricing 2026-08-01 — Sonnet $2/$10, Opus $5/$25 per
@@ -156,7 +158,14 @@ const BASE_COSTS: Record<ActionType, number> = {
   'website-build':     30,
   'saas-build':        30,
   'plan':               5,
-  'security-scan':     10,
+  // "Beast" scans — comprehensive deterministic checklists (16 security
+  // checks / 18 SEO+AI-search checks) run against the project's real files,
+  // reachable from both Wyberman chat and their dedicated tabs. Flat,
+  // tier-agnostic price like hero-image-gen/audio-gen/preview-access: these
+  // are static-analysis passes, not a model call, so MODEL_MULTIPLIERS tier
+  // scaling doesn't apply — 100cr regardless of which model tier is selected.
+  'security-scan':    100,
+  'seo-scan':         100,
   'agent-create':       5,
   'agent-run':          5,
   'workflow-create':    2,
@@ -417,7 +426,7 @@ export function creditCost(action: ActionType, tier: ModelTier = 'default', buil
   // them (see BASE_COSTS comments). Forced to 1× here, not just by omitting
   // the tier argument at call sites, so a future caller that DOES pass a
   // tier (e.g. 'fable', 2×) can't silently break the documented flat price.
-  if (action === 'hero-image-gen' || action === 'audio-gen' || action === 'preview-access') return BASE_COSTS[action]
+  if (action === 'hero-image-gen' || action === 'audio-gen' || action === 'preview-access' || action === 'security-scan' || action === 'seo-scan') return BASE_COSTS[action]
   const base = BASE_COSTS[action]
   const multiplier = MODEL_MULTIPLIERS[tier]
   return Math.max(1, Math.round(base * multiplier))

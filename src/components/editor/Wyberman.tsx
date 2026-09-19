@@ -6,6 +6,11 @@ import { creditCost } from '@/lib/credits'
 import { useT } from '@/lib/i18n/useT'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 import { EDITOR_CANVAS_STRINGS } from '@/lib/i18n/dict/editor-canvas'
+import { SECURITY_BEAST_CHECKLIST, SECURITY_FIX_PROMPTS } from '@/lib/security-beast-scan'
+import { SEO_BEAST_CHECKLIST, SEO_FIX_PROMPTS } from '@/lib/seo-beast-checklist'
+import { BeastScanChecklist } from './BeastScanChecklist'
+import { useBeastScanRunner } from './useBeastScanRunner'
+import { applyBeastFixes } from './applyBeastFixes'
 
 interface Message { role: 'user' | 'assistant'; content: string }
 
@@ -23,9 +28,9 @@ interface ProposedFix {
   diffs: DiffEntry[]
 }
 
-const SECURITY_COST = creditCost('security-scan', 'default')
+const SECURITY_SCAN_COST = creditCost('security-scan')
+const SEO_SCAN_COST = creditCost('seo-scan')
 const LANG_MAP: Record<string, string> = { ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript', css: 'css', html: 'html', json: 'json' }
-const SEVERITY_ICON: Record<string, string> = { critical: '\u{1F534}', high: '\u{1F7E0}', medium: '\u{1F7E1}', low: '\u{1F535}' }
 
 function summarize(text: string, max = 220): string {
   return text.length > max ? text.slice(0, max) + '…' : text
@@ -113,9 +118,9 @@ function WybermanInner() {
   const previewHealFailed = useEditorStore(s => s.previewHealFailed)
   const isGenerating = useEditorStore(s => s.isGenerating)
   const files = useEditorStore(s => s.files)
+  const project = useEditorStore(s => s.project)
   const setFiles = useEditorStore(s => s.setFiles)
   const pushCheckpoint = useEditorStore(s => s.pushCheckpoint)
-  const framework = useEditorStore(s => s.framework)
   const selectionConsumer = useEditorStore(s => s.selectionConsumer)
   const askModeActive = selectionConsumer === 'wyberman'
   const t = useT(EDITOR_CANVAS_STRINGS)
@@ -128,8 +133,10 @@ function WybermanInner() {
   const [isNarrow, setIsNarrow] = useState(false)
   const [fixStatus, setFixStatus] = useState<'idle' | 'looking' | 'proposed' | 'applying' | 'applied' | 'none-found'>('idle')
   const [proposedFix, setProposedFix] = useState<ProposedFix | null>(null)
-  const [secConfirm, setSecConfirm] = useState(false)
-  const [secBusy, setSecBusy] = useState(false)
+  const secScan = useBeastScanRunner()
+  const seoScan = useBeastScanRunner()
+  const secAnnounced = useRef(false)
+  const seoAnnounced = useRef(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const announcedError = useRef<string | null>(null)
@@ -306,52 +313,120 @@ function WybermanInner() {
     setFixStatus('idle')
   }
 
-  const runSecurityCheck = async () => {
-    if (isGenerating || secBusy) return
+  // Security Beast / SEO & Marketing Beast — deterministic checklist scans
+  // (src/lib/security-beast-scan.ts, src/app/api/seo/scan/route.ts) run
+  // against the project's real saved files, not an LLM guess. Shows the full
+  // checklist up front; nothing is charged until the user hits "Go ahead".
+  const startSecurityScan = () => {
+    if (isGenerating || secScan.phase !== 'idle') return
     if (Object.keys(files).length === 0) {
       setMessages(m => [...m, { role: 'assistant', content: t('noAppToScanMessage') }])
       return
     }
-    if (!secConfirm) { setSecConfirm(true); return }
-    setSecConfirm(false)
-    setSecBusy(true)
-    setMessages(m => [...m, { role: 'assistant', content: t('scanningAppMessage') }])
-    try {
-      const fileContext = Object.entries(files).slice(0, 20).map(([p, f]) => `<file path="${p}">\n${((f as { content?: string })?.content ?? '').slice(0, 2000)}\n</file>`).join('\n\n')
-      const prompt = `You are a security auditor reviewing AI-generated code. Analyze these files for vulnerabilities.\n\n${fileContext}\n\nRespond ONLY with a JSON object, no markdown:\n{\n  "score": <0-100 security score>,\n  "vulnerabilities": [{ "severity": "critical|high|medium|low", "file": "path/to/file", "issue": "Description", "fix": "How to fix it in one sentence" }],\n  "passed": ["Check that passed", ...]\n}\n\nCheck for: hardcoded secrets/API keys, missing input validation, XSS, open CORS, missing auth checks, SQL injection risks, exposed sensitive data, insecure direct object references.`
-
-      const res = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, framework, fileContext: '', history: [] }),
-      })
-      if (!res.ok || !res.body) throw new Error('scan failed')
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let full = ''
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        full += decoder.decode(value, { stream: true })
-      }
-      const clean = full.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean) as { score: number; vulnerabilities?: { severity: string; file: string; issue: string; fix: string }[] }
-      const lines = [`${t('securityScoreLabel')} ${parsed.score}/100`, '']
-      const vulns = parsed.vulnerabilities ?? []
-      if (vulns.length === 0) {
-        lines.push(t('noIssuesFoundMessage'))
-      } else {
-        for (const v of vulns.slice(0, 5)) {
-          lines.push(`${SEVERITY_ICON[v.severity] ?? '•'} ${v.file}: ${v.issue}\n   ${t('fixLabel')} ${v.fix}`)
-        }
-        if (vulns.length > 5) lines.push(`\n+${vulns.length - 5} ${t('moreAskElaborateSuffix')}`)
-      }
-      setMessages(m => [...m.slice(0, -1), { role: 'assistant', content: lines.join('\n') }])
-    } catch {
-      setMessages(m => [...m.slice(0, -1), { role: 'assistant', content: t('couldNotCompleteScanMessage') }])
-    }
-    setSecBusy(false)
+    secScan.showPreview()
   }
+  const startSeoScan = () => {
+    if (isGenerating || seoScan.phase !== 'idle') return
+    if (Object.keys(files).length === 0) {
+      setMessages(m => [...m, { role: 'assistant', content: t('noAppToScanMessage') }])
+      return
+    }
+    seoScan.showPreview()
+  }
+  const goAheadSecurity = async () => {
+    if (!project?.id) {
+      setMessages(m => [...m, { role: 'assistant', content: t('noAppToScanMessage') }])
+      secScan.cancelPreview()
+      return
+    }
+    const failure = await secScan.run(() => fetch('/api/security/beast-scan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: project.id }),
+    }))
+    if (failure) setMessages(m => [...m, { role: 'assistant', content: failure.toLowerCase().includes('credit') ? failure : t('couldNotCompleteScanMessage') }])
+  }
+  const goAheadSeo = async () => {
+    if (!project?.id) {
+      setMessages(m => [...m, { role: 'assistant', content: t('noAppToScanMessage') }])
+      seoScan.cancelPreview()
+      return
+    }
+    const failure = await seoScan.run(() => fetch('/api/seo/scan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: project.id }),
+    }))
+    if (failure) setMessages(m => [...m, { role: 'assistant', content: failure.toLowerCase().includes('credit') ? failure : t('couldNotCompleteScanMessage') }])
+  }
+
+  // Wyberman floats outside RightPanel's tab tree, so it can't call an
+  // onSwitchToChat prop directly like SeoScanPanel/SecurityBeastPanel do —
+  // this event is RightPanel's existing deep-link mechanism (also used by
+  // SecurityReportCard) for forcing the main Chat tab to mount before a
+  // wyber:chat-prompt is dispatched into it.
+  const switchToMainChat = () => window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'chat' }))
+
+  const applyAllFixesSecurity = () => {
+    if (!secScan.report) return
+    const result = applyBeastFixes({
+      report: secScan.report, files, setFiles, pushCheckpoint,
+      checkpointLabel: 'Before Security Beast fixes',
+      promptForRemaining: id => SECURITY_FIX_PROMPTS[id],
+      onSwitchToChat: switchToMainChat,
+    })
+    secScan.markChecksFixed(secScan.report.fixedCheckIds ?? [])
+    setMessages(m => [...m, { role: 'assistant', content: [
+      result.filesWritten > 0 ? `✅ Wrote ${result.filesWritten} file${result.filesWritten !== 1 ? 's' : ''} directly into the project.` : null,
+      result.remainingPromptSent ? '✨ Asked the AI to fix the rest — check the main chat.' : null,
+    ].filter(Boolean).join('\n') }])
+  }
+  const applyAllFixesSeo = () => {
+    if (!seoScan.report) return
+    const result = applyBeastFixes({
+      report: seoScan.report, files, setFiles, pushCheckpoint,
+      checkpointLabel: 'Before SEO & Marketing Beast fixes',
+      promptForRemaining: id => SEO_FIX_PROMPTS[id],
+      onSwitchToChat: switchToMainChat,
+    })
+    seoScan.markChecksFixed(seoScan.report.fixedCheckIds ?? [])
+    setMessages(m => [...m, { role: 'assistant', content: [
+      result.filesWritten > 0 ? `✅ Wrote ${result.filesWritten} file${result.filesWritten !== 1 ? 's' : ''} directly into the project.` : null,
+      result.remainingPromptSent ? '✨ Asked the AI to fix the rest — check the main chat.' : null,
+    ].filter(Boolean).join('\n') }])
+  }
+
+  // Once each scan finishes, drop one summary message into the chat feed —
+  // the checklist card above stays visible with the full detail, this is
+  // just the "here's the headline" note. Guarded by a ref so it fires once
+  // per completed run, not on every re-render while phase stays 'done'.
+  useEffect(() => {
+    if (secScan.phase === 'preview' || secScan.phase === 'scanning') secAnnounced.current = false
+    if (secScan.phase === 'done' && secScan.report && !secAnnounced.current) {
+      secAnnounced.current = true
+      const failing = secScan.report.checks.filter(c => c.status !== 'pass')
+      const lines = [`${t('securityScoreLabel')} ${secScan.report.score}/100`, '']
+      if (failing.length === 0) lines.push(t('noIssuesFoundMessage'))
+      else {
+        for (const c of failing.slice(0, 5)) lines.push(`${c.status === 'fail' ? '\u{1F534}' : '\u{1F7E1}'} ${c.detail}`)
+        if (failing.length > 5) lines.push(`\n+${failing.length - 5} ${t('moreAskElaborateSuffix')}`)
+      }
+      setMessages(m => [...m, { role: 'assistant', content: lines.join('\n') }])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secScan.phase, secScan.report])
+
+  useEffect(() => {
+    if (seoScan.phase === 'preview' || seoScan.phase === 'scanning') seoAnnounced.current = false
+    if (seoScan.phase === 'done' && seoScan.report && !seoAnnounced.current) {
+      seoAnnounced.current = true
+      const failing = seoScan.report.checks.filter(c => c.status !== 'pass')
+      const lines = [`${t('seoScoreLabel')} ${seoScan.report.score}/100`, '']
+      if (failing.length === 0) lines.push(t('noIssuesFoundMessage'))
+      else {
+        for (const c of failing.slice(0, 5)) lines.push(`${c.status === 'fail' ? '\u{1F534}' : '\u{1F7E1}'} ${c.detail}`)
+        if (failing.length > 5) lines.push(`\n+${failing.length - 5} ${t('moreAskElaborateSuffix')}`)
+      }
+      setMessages(m => [...m, { role: 'assistant', content: lines.join('\n') }])
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seoScan.phase, seoScan.report])
 
   const statusColor = previewError ? (previewHealFailed ? 'var(--ide-red, #ef4444)' : 'var(--ide-amber, #f59e0b)') : 'var(--ide-green, #22c55e)'
   const statusLabel = previewError
@@ -489,13 +564,67 @@ function WybermanInner() {
               </div>
             )}
 
-            {secConfirm && (
-              <div style={{ fontSize: 12, color: 'var(--ide-text, #EEEEF4)', border: '1px solid var(--ide-border, #2A2A35)', borderRadius: 8, padding: '8px 10px' }}>
-                {t('securityConfirmMessage').replace('{cost}', String(SECURITY_COST))}
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <button onClick={runSecurityCheck} style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: 'pointer' }}>{t('yesScanButton')}</button>
-                  <button onClick={() => setSecConfirm(false)} style={{ padding: '5px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('cancel')}</button>
+            {secScan.phase !== 'idle' && (
+              <div style={{ border: '1px solid var(--ide-border, #2A2A35)', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ padding: '7px 10px', fontSize: 11.5, fontWeight: 700, color: 'var(--ide-text, #EEEEF4)', background: 'var(--bg-elevated, #18181F)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{secScan.phase === 'preview' ? t('willCheckAllLabel') : secScan.phase === 'scanning' ? t('scanningAppMessage') : t('runSecurityCheckLabel')}</span>
+                  {secScan.phase === 'done' && secScan.report && (
+                    <span style={{ fontWeight: 700, color: secScan.report.score >= 85 ? '#34D399' : secScan.report.score >= 50 ? '#F5A623' : '#F0524B' }}>{secScan.report.score}/100</span>
+                  )}
                 </div>
+                <div style={{ maxHeight: 220, overflow: 'auto', padding: '8px 10px' }}>
+                  <BeastScanChecklist items={SECURITY_BEAST_CHECKLIST} results={secScan.results} revealCount={secScan.revealCount} phase={secScan.phase} compact />
+                </div>
+                {secScan.phase === 'preview' && (
+                  <div style={{ display: 'flex', gap: 8, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
+                    <button onClick={goAheadSecurity} style={{ flex: 1, padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: '#F0524B', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                      {t('goAheadChargeCreditsButton').replace('{cost}', String(SECURITY_SCAN_COST))}
+                    </button>
+                    <button onClick={secScan.cancelPreview} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('cancel')}</button>
+                  </div>
+                )}
+                {secScan.phase === 'done' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
+                    {secScan.report && secScan.report.checks.some(c => c.status !== 'pass') && (
+                      <button onClick={applyAllFixesSecurity} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: '#F0524B', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                        {'\u{1F527}'} Apply all fixes ({secScan.report.checks.filter(c => c.status !== 'pass').length})
+                      </button>
+                    )}
+                    <button onClick={secScan.reset} style={{ width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('done')}</button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {seoScan.phase !== 'idle' && (
+              <div style={{ border: '1px solid var(--ide-border, #2A2A35)', borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ padding: '7px 10px', fontSize: 11.5, fontWeight: 700, color: 'var(--ide-text, #EEEEF4)', background: 'var(--bg-elevated, #18181F)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>{seoScan.phase === 'preview' ? t('willCheckAllLabel') : seoScan.phase === 'scanning' ? t('scanningSeoMessage') : t('runSeoCheckLabel')}</span>
+                  {seoScan.phase === 'done' && seoScan.report && (
+                    <span style={{ fontWeight: 700, color: seoScan.report.score >= 85 ? '#34D399' : seoScan.report.score >= 50 ? '#F5A623' : '#F0524B' }}>{seoScan.report.score}/100</span>
+                  )}
+                </div>
+                <div style={{ maxHeight: 220, overflow: 'auto', padding: '8px 10px' }}>
+                  <BeastScanChecklist items={SEO_BEAST_CHECKLIST} results={seoScan.results} revealCount={seoScan.revealCount} phase={seoScan.phase} compact />
+                </div>
+                {seoScan.phase === 'preview' && (
+                  <div style={{ display: 'flex', gap: 8, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
+                    <button onClick={goAheadSeo} style={{ flex: 1, padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                      {t('goAheadChargeCreditsButton').replace('{cost}', String(SEO_SCAN_COST))}
+                    </button>
+                    <button onClick={seoScan.cancelPreview} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('cancel')}</button>
+                  </div>
+                )}
+                {seoScan.phase === 'done' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '8px 10px', borderTop: '1px solid var(--ide-border, #2A2A35)' }}>
+                    {seoScan.report && seoScan.report.checks.some(c => c.status !== 'pass') && (
+                      <button onClick={applyAllFixesSeo} style={{ padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, background: 'var(--accent, #0EA5E9)', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                        {'\u{1F527}'} Apply all fixes ({seoScan.report.checks.filter(c => c.status !== 'pass').length})
+                      </button>
+                    )}
+                    <button onClick={seoScan.reset} style={{ width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2, #7878A0)', border: '1px solid var(--ide-border, #2A2A35)', cursor: 'pointer' }}>{tc('done')}</button>
+                  </div>
+                )}
               </div>
             )}
             <div ref={bottomRef} />
@@ -533,11 +662,18 @@ function WybermanInner() {
                 {askModeActive ? t('clickAnythingCancelLabel') : t('pointAtSomethingLabel')}
               </button>
               <button
-                onClick={runSecurityCheck}
-                disabled={isGenerating || secBusy}
-                style={{ fontSize: 11, color: 'var(--ide-text2, #7878A0)', background: 'transparent', border: 'none', cursor: isGenerating || secBusy ? 'default' : 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+                onClick={startSecurityScan}
+                disabled={isGenerating || secScan.phase !== 'idle'}
+                style={{ fontSize: 11, color: 'var(--ide-text2, #7878A0)', background: 'transparent', border: 'none', cursor: isGenerating || secScan.phase !== 'idle' ? 'default' : 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
               >
                 {t('runSecurityCheckLabel')}
+              </button>
+              <button
+                onClick={startSeoScan}
+                disabled={isGenerating || seoScan.phase !== 'idle'}
+                style={{ fontSize: 11, color: 'var(--ide-text2, #7878A0)', background: 'transparent', border: 'none', cursor: isGenerating || seoScan.phase !== 'idle' ? 'default' : 'pointer', padding: 0, textDecoration: 'underline', textUnderlineOffset: 2 }}
+              >
+                {t('runSeoCheckLabel')}
               </button>
             </div>
           </div>

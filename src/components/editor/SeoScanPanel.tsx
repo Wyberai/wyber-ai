@@ -1,15 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { useEditorStore } from '@/store/editor';
+import { SEO_BEAST_CHECKLIST, SEO_FIX_PROMPTS } from '@/lib/seo-beast-checklist';
+import { BeastScanChecklist, type ChecklistResult } from './BeastScanChecklist';
+import { useBeastScanRunner } from './useBeastScanRunner';
+import { applyBeastFixes } from './applyBeastFixes';
 
-interface Check { id: string; label: string; status: 'pass' | 'warn' | 'fail'; detail: string }
-interface Report { score: number; checks: Check[]; scannedAt: string }
-
-const STATUS_STYLE: Record<Check['status'], { color: string; icon: string }> = {
-  pass: { color: '#34D399', icon: '✓' },
-  warn: { color: '#F5A623', icon: '!' },
-  fail: { color: '#F0524B', icon: '✕' },
-};
+type Check = ChecklistResult;
 
 // "Make it a Marketing Beast" — a curated bundle of the launch-readiness
 // content every real project needs, distinct from the checks above (those
@@ -153,9 +150,8 @@ function resolveMarketingBeastType(projectType?: string): MarketingBeastType {
 }
 
 export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitchToChat }: { projectId: string; projectType?: string; onSwitchToChat?: () => void }) {
-  const [scanning, setScanning] = useState(false);
-  const [report, setReport] = useState<Report | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { phase, results, revealCount, report, error, showPreview, cancelPreview, run, reset, markChecksFixed } = useBeastScanRunner();
+  const [expandedAllDone, setExpandedAllDone] = useState(true);
   const [beastArmed, setBeastArmed] = useState(false);
   const project = useEditorStore(s => s.project);
   const projectType = projectTypeProp ?? project?.project_type;
@@ -170,44 +166,110 @@ export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitch
     setTimeout(() => window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: beast.prompt })), 60);
   };
 
-  const scan = async () => {
-    setScanning(true); setError(null);
-    try {
-      const res = await fetch('/api/seo/scan', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId }),
-      });
-      const json = await res.json();
-      if (!res.ok) setError(json.error || 'Scan failed');
-      else setReport(json);
-    } catch (e) { setError(String(e)); }
-    setScanning(false);
-  };
+  const files = useEditorStore(s => s.files);
+  const setFiles = useEditorStore(s => s.setFiles);
+  const pushCheckpoint = useEditorStore(s => s.pushCheckpoint);
+  const [applyResult, setApplyResult] = useState<{ filesWritten: number; remainingPromptSent: boolean } | null>(null);
+
+  const goAhead = () => { setApplyResult(null); run(() =>
+    fetch('/api/seo/scan', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId }),
+    })
+  ); };
 
   const fixWithAi = (check: Check) => {
-    const prompts: Record<string, string> = {
-      title: 'Set a descriptive, keyword-rich <title> tag in index.html for this app.',
-      description: 'Add a compelling <meta name="description"> (under 160 characters) to index.html.',
-      opengraph: 'Add complete Open Graph meta tags (og:title, og:description, og:image, og:url) to index.html so shared links show a rich preview.',
-      'structured-data': 'Add appropriate schema.org JSON-LD structured data to index.html for this type of site.',
-      robots: 'Add a public/robots.txt that allows all crawlers and points to the sitemap.',
-      sitemap: 'Add a public/sitemap.xml listing all the routes in this app.',
-      'llms-txt': 'Create a public/llms.txt file following the llms.txt convention (llmstxt.org) — a clean markdown summary of what this site/product is, its key pages, and its purpose, so AI assistants like ChatGPT and Claude can read and cite it accurately without scraping rendered HTML.',
-    };
     onSwitchToChat?.();
-    setTimeout(() => window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: prompts[check.id] || `Fix this SEO issue: ${check.label}` })), 60);
+    const label = SEO_BEAST_CHECKLIST.find(c => c.id === check.id)?.label ?? check.id;
+    setTimeout(() => window.dispatchEvent(new CustomEvent('wyber:chat-prompt', { detail: SEO_FIX_PROMPTS[check.id] || `Fix this SEO issue: ${label}` })), 60);
+  };
+
+  const applyAllFixes = () => {
+    if (!report) return;
+    const result = applyBeastFixes({
+      report, files, setFiles, pushCheckpoint,
+      checkpointLabel: 'Before SEO & Marketing Beast fixes',
+      promptForRemaining: id => SEO_FIX_PROMPTS[id],
+      onSwitchToChat,
+    });
+    markChecksFixed(report.fixedCheckIds ?? []);
+    setApplyResult(result);
   };
 
   return (
     <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 14, overflow: 'auto', height: '100%' }}>
       <div style={{ background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--ide-text2, #9aa)', lineHeight: 1.6 }}>
-        🔎 <strong>Real SEO & AI-search scan.</strong> Reads your actual generated index.html and public/ files — not a guess from a template.
+        🔎 <strong>SEO & Marketing Beast scan.</strong> 18 real checks against your actual generated files — meta tags, social previews, accessibility, analytics, cookie consent, robots/sitemap/llms.txt. Not a guess from a template.
       </div>
 
-      <button onClick={scan} disabled={scanning}
-        style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 600, cursor: scanning ? 'default' : 'pointer', opacity: scanning ? 0.7 : 1 }}>
-        {scanning ? '⟳ Scanning…' : '🔎 Scan SEO & AI-search readiness'}
-      </button>
+      {phase === 'idle' && (
+        <button onClick={showPreview}
+          style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+          🔎 Run SEO & Marketing Beast scan — 100 credits
+        </button>
+      )}
+
+      {phase !== 'idle' && (
+        <div style={{ border: '1px solid var(--ide-border)', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 12px', fontSize: 12, fontWeight: 700, color: 'var(--ide-text)', background: 'var(--bg-surface, #16181d)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span>{phase === 'preview' ? "We'll check all of this:" : phase === 'scanning' ? 'Scanning…' : 'SEO & Marketing Beast scan'}</span>
+            {phase === 'done' && report && (
+              <span style={{ fontSize: 16, fontWeight: 700, color: report.score >= 85 ? '#34D399' : report.score >= 50 ? '#F5A623' : '#F0524B' }}>{report.score}/100</span>
+            )}
+          </div>
+          <div style={{ padding: '12px', maxHeight: phase === 'done' && !expandedAllDone ? 0 : 480, overflow: 'auto', transition: 'max-height 0.2s' }}>
+            <BeastScanChecklist items={SEO_BEAST_CHECKLIST} results={results} revealCount={revealCount} phase={phase} />
+          </div>
+
+          {phase === 'preview' && (
+            <div style={{ display: 'flex', gap: 8, padding: '10px 12px', borderTop: '1px solid var(--ide-border)' }}>
+              <button onClick={goAhead} style={{ flex: 1, padding: '8px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 700, background: '#0EA5E9', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                🔎 Go ahead — charge 100 credits
+              </button>
+              <button onClick={cancelPreview} style={{ padding: '8px 12px', borderRadius: 7, fontSize: 12.5, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2)', border: '1px solid var(--ide-border)', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {phase === 'done' && (
+            <div style={{ display: 'flex', gap: 8, padding: '10px 12px', borderTop: '1px solid var(--ide-border)' }}>
+              <button onClick={() => setExpandedAllDone(v => !v)} style={{ flex: 1, padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2)', border: '1px solid var(--ide-border)', cursor: 'pointer' }}>
+                {expandedAllDone ? 'Hide details' : 'Show details'}
+              </button>
+              <button onClick={reset} style={{ padding: '7px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, background: 'transparent', color: 'var(--ide-text2)', border: '1px solid var(--ide-border)', cursor: 'pointer' }}>
+                Run again
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {phase === 'done' && report && report.checks.some(c => c.status !== 'pass') && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <button onClick={applyAllFixes}
+            style={{ alignSelf: 'flex-start', fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#0EA5E9', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>
+            🔧 Apply all fixes ({report.checks.filter(c => c.status !== 'pass').length})
+          </button>
+          {applyResult && (
+            <div style={{ fontSize: 11.5, color: 'var(--ide-text2)', lineHeight: 1.6 }}>
+              {applyResult.filesWritten > 0 && <>✅ Wrote {applyResult.filesWritten} file{applyResult.filesWritten !== 1 ? 's' : ''} directly into the project.<br /></>}
+              {applyResult.remainingPromptSent && <>✨ Asked the AI to fix the rest — check the chat.</>}
+            </div>
+          )}
+          <details>
+            <summary style={{ fontSize: 11, color: 'var(--ide-text3)', cursor: 'pointer' }}>Fix individually instead</summary>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+              {report.checks.filter(c => c.status !== 'pass').map(c => (
+                <button key={c.id} onClick={() => fixWithAi(c)}
+                  style={{ alignSelf: 'flex-start', fontSize: 11.5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0d0e12)', color: '#0EA5E9', cursor: 'pointer', fontWeight: 600 }}>
+                  ✨ Fix &quot;{SEO_BEAST_CHECKLIST.find(x => x.id === c.id)?.label ?? c.id}&quot; with AI
+                </button>
+              ))}
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* Make it a Marketing Beast — bundled launch-readiness generator,
           distinct from the scan above (that finds what's broken; this adds
@@ -239,39 +301,6 @@ export function SeoScanPanel({ projectId, projectType: projectTypeProp, onSwitch
 
       {error && (
         <div style={{ fontSize: 12, color: '#F0524B', background: 'rgba(240,82,75,0.08)', border: '1px solid rgba(240,82,75,0.25)', borderRadius: 8, padding: '10px 12px' }}>{error}</div>
-      )}
-
-      {report && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: 'var(--bg-surface, #16181d)', borderRadius: 10, border: '1px solid var(--ide-border)' }}>
-            <div style={{ fontSize: 36, fontWeight: 700, color: report.score >= 85 ? '#34D399' : report.score >= 50 ? '#F5A623' : '#F0524B', letterSpacing: '-0.03em' }}>{report.score}</div>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>SEO & AI-search score</div>
-              <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>{report.checks.filter(c => c.status === 'pass').length} of {report.checks.length} checks passing</div>
-            </div>
-          </div>
-
-          {report.checks.map(c => {
-            const s = STATUS_STYLE[c.status];
-            return (
-              <div key={c.id} style={{ padding: '11px 13px', borderRadius: 8, border: `1px solid ${s.color}40`, background: `${s.color}0c` }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5, gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <span style={{ width: 16, height: 16, borderRadius: '50%', background: s.color, color: '#000', fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{s.icon}</span>
-                    <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ide-text)' }}>{c.label}</span>
-                  </div>
-                  {c.status !== 'pass' && (
-                    <button onClick={() => fixWithAi(c)}
-                      style={{ fontSize: 11, padding: '3px 9px', borderRadius: 5, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0d0e12)', color: '#0EA5E9', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>
-                      ✨ Fix with AI
-                    </button>
-                  )}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>{c.detail}</div>
-              </div>
-            );
-          })}
-        </>
       )}
     </div>
   );
