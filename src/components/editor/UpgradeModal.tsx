@@ -145,13 +145,29 @@ function useOfferCountdown() {
   return { timeLeft, expired }
 }
 
-export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credits', currentPlan }: {
+export interface NextFeatureSuggestion {
+  title: string
+  description: string
+  estimatedCredits: number
+}
+
+export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credits', currentPlan, projectName, suggestions, suggestionsLoading }: {
   open: boolean
   onClose: () => void
   currency: Currency
-  trigger?: 'nudge' | 'out-of-credits'
+  /** 'low-credit' is the proactive version of 'out-of-credits' — shown BEFORE
+   * a message actually fails, when the balance is getting low, so the same
+   * pricing + next-feature-suggestions layout applies with a softer header. */
+  trigger?: 'nudge' | 'out-of-credits' | 'low-credit'
   /** The plan the viewer is already on — never worth showing as an "upgrade". */
   currentPlan?: string
+  /** For the suggestions section header — "Based on 'RJ Finserv', you'll..." */
+  projectName?: string
+  /** AI-generated, project-specific "what you'll probably build next" — see
+   * /api/credits/next-feature-suggestions. Undefined/empty renders nothing;
+   * this is a decoration on top of the normal pricing, never a blocker. */
+  suggestions?: NextFeatureSuggestion[]
+  suggestionsLoading?: boolean
 }) {
   const [loading, setLoading] = useState<string | null>(null)
   const [checkoutError, setCheckoutError] = useState<string | null>(null)
@@ -162,7 +178,8 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
   // and re-buys it instead of moving to a top-up or a higher tier).
   const plans = (currency === 'INR' ? PLANS_INR : PLANS_USD).filter(p => p.id !== currentPlan)
   const topups = currency === 'INR' ? TOPUPS_INR : TOPUPS_USD
-  const isOutOfCredits = trigger === 'out-of-credits'
+  const isOutOfCredits = trigger === 'out-of-credits' || trigger === 'low-credit'
+  const isLowCredit = trigger === 'low-credit'
 
   if (!open) return null
 
@@ -233,14 +250,14 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', color: '#f97316', textTransform: 'uppercase', marginBottom: 8 }}>
-            {isOutOfCredits ? "YOU'VE RUN OUT OF CREDITS" : 'ANNUAL PLAN — SAVE 20%'}
+            {isLowCredit ? 'RUNNING LOW ON CREDITS' : isOutOfCredits ? "YOU'VE RUN OUT OF CREDITS" : 'ANNUAL PLAN — SAVE 20%'}
           </div>
           <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
             {isOutOfCredits ? 'Keep building.' : 'Lock in your annual rate.'}
           </h2>
 
           {isOutOfCredits ? (
-            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>Top up in seconds, or subscribe for ongoing credits.</p>
+            <p style={{ margin: '10px 0 0', fontSize: 13, color: '#71717a' }}>{isLowCredit ? "Top up now so your next message doesn't get blocked." : 'Top up in seconds, or subscribe for ongoing credits.'}</p>
           ) : (
             <>
               {/* Countdown */}
@@ -260,6 +277,39 @@ export function UpgradeModal({ open, onClose, currency, trigger = 'out-of-credit
             </>
           )}
         </div>
+
+        {/* Contextual "what you'll build next" — the actual point of this
+            change: a customer maxing out mid-build isn't just told a price,
+            they're shown what their OWN project plausibly needs next (from
+            /api/credits/next-feature-suggestions, grounded in their real
+            files) so the upgrade is framed around their roadmap, not a
+            generic paywall. Renders nothing if there's nothing to show — this
+            is a decoration on the real pricing below, never a blocker. */}
+        {isOutOfCredits && (suggestionsLoading || (suggestions && suggestions.length > 0)) && (
+          <div style={{ marginBottom: 18, padding: '12px 14px', borderRadius: 12, background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.22)' }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 9 }}>
+              Based on {projectName ? `"${projectName}"` : 'what you’re building'}, you’ll probably want next
+            </div>
+            {suggestionsLoading ? (
+              <div style={{ fontSize: 12, color: '#71717a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ animation: 'wy-upgrade-spin 0.8s linear infinite', display: 'inline-block' }}>⟳</span> Looking at your project…
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                {suggestions!.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fafafa' }}>{s.title}</div>
+                      <div style={{ fontSize: 11, color: '#a1a1aa', marginTop: 2, lineHeight: 1.4 }}>{s.description}</div>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', whiteSpace: 'nowrap', padding: '3px 8px', borderRadius: 20, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)', flexShrink: 0 }}>~{s.estimatedCredits}cr</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <style>{`@keyframes wy-upgrade-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }`}</style>
+          </div>
+        )}
 
         {/* Quick top-up — lead option when blocked mid-build. One-time, no
             subscription: the highest-intent moment shouldn't force a year-long

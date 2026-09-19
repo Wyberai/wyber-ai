@@ -408,6 +408,17 @@ export function computeEditSettlement(opts: {
   return Math.max(0, owed - alreadyCharged)
 }
 
+/**
+ * Rough credit-cost estimate for a plausible NEXT feature, used by the
+ * out-of-credits upsell (see /api/credits/next-feature-suggestions) to show
+ * "this would cost ~Ncr" next to an AI-suggested feature. Reuses the same
+ * EDIT_TIER_COSTS numbers a real edit that size is actually charged from —
+ * never a separate, made-up pricing table that could drift from reality.
+ */
+export function estimateFeatureCost(sizeTier: BuildSizeTier, modelTier: ModelTier = 'default'): number {
+  return tierPrice(sizeTier, modelTier, EDIT_TIER_COSTS)
+}
+
 export function creditCost(action: ActionType, tier: ModelTier = 'default', buildTier?: BuildSizeTier): number {
   // Edits are priced explicitly, not by multiplier. Same pricing for all users.
   // Small edits: 4cr (fast) or 10cr (default) — matches EDIT_TIER_COSTS.small

@@ -26,7 +26,8 @@ import { TurnReceipt } from './agent-team/TurnReceipt';
 import { SecurityReportCard } from './agent-team/SecurityReportCard';
 import { LoopStopCard } from './agent-team/LoopStopCard';
 import { FixOfferCard } from './agent-team/FixOfferCard';
-import { UpgradeModal } from './UpgradeModal';
+import { UpgradeModal, type NextFeatureSuggestion } from './UpgradeModal';
+import { PLAN_FACTS } from '@/lib/plans';
 import { PlanMode } from './PlanMode';
 import { DirectionCards } from './DirectionCards';
 import { VoiceButton } from './VoiceButton';
@@ -414,8 +415,28 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // no store/DB change (the suggestion itself is already non-persisted).
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set());
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeTrigger, setUpgradeTrigger] = useState<'nudge' | 'out-of-credits'>('nudge');
+  const [upgradeTrigger, setUpgradeTrigger] = useState<'nudge' | 'out-of-credits' | 'low-credit'>('nudge');
   const [buildNudgeDismissed, setBuildNudgeDismissed] = useState(false);
+  const [lowCreditNudgeDismissed, setLowCreditNudgeDismissed] = useState(false);
+  // AI-generated, project-specific "what you'll build next" for the
+  // out-of-credits modal (see /api/credits/next-feature-suggestions) — fetched
+  // fresh each time the modal opens for this trigger, not cached across
+  // projects/sessions.
+  const [nextFeatureSuggestions, setNextFeatureSuggestions] = useState<NextFeatureSuggestion[] | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const fetchNextFeatureSuggestions = useCallback(() => {
+    if (!resolvedProjectId) return;
+    setSuggestionsLoading(true);
+    setNextFeatureSuggestions(null);
+    fetch('/api/credits/next-feature-suggestions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId: resolvedProjectId }),
+    })
+      .then(r => r.json())
+      .then(d => setNextFeatureSuggestions(Array.isArray(d.suggestions) ? d.suggestions : []))
+      .catch(() => setNextFeatureSuggestions([]))
+      .finally(() => setSuggestionsLoading(false));
+  }, [resolvedProjectId]);
   const lastBuildMsgId = useMemo(
     () => [...messages].reverse().find(m => m.status === 'done' && !!m.agentReport)?.id,
     [messages],
@@ -3631,6 +3652,39 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       </div>
                     </div>
                   )}
+                  {/* Proactive version of the out-of-credits moment below —
+                      fires while the balance is just getting low (10% of the
+                      plan's monthly allotment, floor 5), before a message
+                      actually fails. Suppressed when the free-plan nudge above
+                      is already showing for this same message so the two
+                      don't stack. */}
+                  {msg.status === 'done' && msg.id === lastBuildMsgId && !lowCreditNudgeDismissed
+                    && !(userPlan === 'free' && !buildNudgeDismissed)
+                    && credits > 0
+                    && credits <= Math.max(5, Math.round((PLAN_FACTS[userPlan as keyof typeof PLAN_FACTS]?.credits ?? PLAN_FACTS.free.credits) * 0.1))
+                    && (
+                    <div style={{ marginTop:10, padding:'12px 14px', borderRadius:10, border:'1px solid rgba(249,115,22,0.2)', background:'linear-gradient(135deg,rgba(249,115,22,0.07),rgba(249,115,22,0.02))' }}>
+                      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
+                        <div>
+                          <div style={{ fontSize:12, fontWeight:700, color:'#f97316', marginBottom:4 }}>Running low on credits.</div>
+                          <div style={{ fontSize:12, color:'var(--ide-text2)', lineHeight:1.5 }}>
+                            Only {credits} credit{credits === 1 ? '' : 's'} left — top up now so your next message doesn't get blocked mid-build.
+                          </div>
+                        </div>
+                        <button onClick={() => setLowCreditNudgeDismissed(true)} style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:16, lineHeight:1, padding:2, flexShrink:0 }}>×</button>
+                      </div>
+                      <div style={{ display:'flex', gap:8, marginTop:10 }}>
+                        <button
+                          onClick={() => { track('editor_low_credit_nudge_upgrade_clicked'); setUpgradeTrigger('low-credit'); setUpgradeModalOpen(true); fetchNextFeatureSuggestions(); }}
+                          style={{ fontSize:12, fontWeight:700, padding:'6px 14px', borderRadius:7, border:'none', background:'linear-gradient(135deg,#f97316,#ea580c)', color:'#fff', cursor:'pointer', fontFamily:'inherit' }}
+                        >Top up →</button>
+                        <button
+                          onClick={() => setLowCreditNudgeDismissed(true)}
+                          style={{ fontSize:12, padding:'6px 14px', borderRadius:7, border:'1px solid rgba(255,255,255,0.1)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontFamily:'inherit' }}
+                        >Maybe later</button>
+                      </div>
+                    </div>
+                  )}
                   {(msg.status === 'done' || msg.status === 'error') && (
                     <div style={{ marginTop:5, display:'flex', gap:4 }}>
                       <button
@@ -3658,7 +3712,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       to see, mid-session, right after wanting to do more. */}
                   {msg.status === 'error' && msg.content.includes('Not enough credits') && (
                     <button
-                      onClick={() => { track('editor_out_of_credits_upgrade_clicked'); setUpgradeTrigger('out-of-credits'); setUpgradeModalOpen(true); }}
+                      onClick={() => { track('editor_out_of_credits_upgrade_clicked'); setUpgradeTrigger('out-of-credits'); setUpgradeModalOpen(true); fetchNextFeatureSuggestions(); }}
                       style={{ marginTop:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(14,165,233,0.35)', background:'linear-gradient(135deg, rgba(14,165,233,0.16), rgba(14,165,233,0.06))', color:'#38bdf8', cursor:'pointer', fontFamily:'inherit' }}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 11-14h-7l1-6z"/></svg>
@@ -3907,7 +3961,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
           </div>
         </div>
       </div>
-      <UpgradeModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} currency={creditsCurrency} trigger={upgradeTrigger} currentPlan={userPlan} />
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        currency={creditsCurrency}
+        trigger={upgradeTrigger}
+        currentPlan={userPlan}
+        projectName={project?.name}
+        suggestions={nextFeatureSuggestions ?? undefined}
+        suggestionsLoading={suggestionsLoading}
+      />
     </div>
   );
 }
