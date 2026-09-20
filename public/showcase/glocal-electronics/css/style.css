@@ -65,8 +65,8 @@ section{padding:34px 0}
 
 .heroSide{display:flex;flex-direction:column;gap:16px}
 .sideBanner{flex:1;border-radius:20px;padding:22px;display:flex;flex-direction:column;justify-content:flex-end;min-height:130px;border:1px solid var(--border)}
-.sb1{background:linear-gradient(135deg,#0f172a,#1e2456)}
-.sb2{background:linear-gradient(135deg,#052e2b,#0b4a45)}
+.sb1{background:linear-gradient(135deg,rgba(15,23,42,.82),rgba(30,36,86,.88)),url('https://images.unsplash.com/photo-1610465299993-e6675c9f9efa?w=700&q=70&auto=format&fit=crop') center/cover}
+.sb2{background:linear-gradient(135deg,rgba(5,46,43,.82),rgba(11,74,69,.88)),url('https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=700&q=70&auto=format&fit=crop') center/cover}
 .sideBanner b{color:#fff;font-size:15px;font-weight:700}
 .sideBanner span{color:#c9c9e0;font-size:11.5px;display:block;margin-top:3px}
 
@@ -84,6 +84,19 @@ section{padding:34px 0}
 
 .brandstrip{display:flex;gap:12px;flex-wrap:wrap}
 .brandchip{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;font-weight:700;font-size:14px;letter-spacing:.02em;color:var(--text)}
+
+/* ── shop by category photo tiles ──────────────────────────────────────── */
+.catgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;grid-template-rows:auto auto;gap:14px}
+.cattile{border-radius:20px;position:relative;overflow:hidden;min-height:150px;display:flex;flex-direction:column;justify-content:flex-end;padding:20px;color:#fff}
+.cattile.big{grid-row:span 2;min-height:340px}
+.cattile h3{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600}
+.cattile p{font-size:12px;color:#d8d6ef;margin-top:3px}
+.cattile .aitag2{position:absolute;top:16px;left:16px;background:rgba(124,58,237,.35);border:1px solid rgba(196,181,253,.5);color:#ede9fe;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:100px;backdrop-filter:blur(4px)}
+.ct1{background:linear-gradient(180deg,rgba(30,10,60,.15),rgba(15,15,26,.85)),url('https://images.unsplash.com/photo-1510717029971-27681a0e9da9?w=800&q=70&auto=format&fit=crop') center/cover}
+.ct2{background:linear-gradient(180deg,rgba(8,40,50,.1),rgba(15,15,26,.82)),url('https://images.unsplash.com/photo-1610465299993-e6675c9f9efa?w=800&q=70&auto=format&fit=crop') center/cover}
+.ct3{background:linear-gradient(180deg,rgba(60,20,50,.05),rgba(15,15,26,.8)),url('https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=800&q=70&auto=format&fit=crop') center/cover}
+.ct4{background:linear-gradient(180deg,rgba(10,50,45,.05),rgba(15,15,26,.82)),url('https://images.unsplash.com/photo-1567690187548-f07b1d7bf5a9?w=800&q=70&auto=format&fit=crop') center/cover}
+@media (max-width:1000px){.catgrid{grid-template-columns:1fr 1fr}.cattile.big{grid-column:span 2}}
 
 /* product cards */
 .rail{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
@@ -263,4 +276,98 @@ footer .fgrid a{display:block;color:#a5a3bd;margin-bottom:8px}
   .pdp{grid-template-columns:1fr}
   .cartgrid,.checkgrid{grid-template-columns:1fr}
   .formrow{grid-template-columns:1fr}
+  .statgrid{grid-template-columns:repeat(2,1fr)}
+  .aimodal{width:94vw}
+  .aimodal .cmp2{grid-template-columns:1fr}
 }
+
+/* ── aurora background ─────────────────────────────────────────────────── */
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.aurora span{position:absolute;border-radius:50%;filter:blur(70px);opacity:.22}
+.aurora .a1{width:480px;height:480px;background:var(--violet);top:-160px;left:-120px;animation:auroraFloat 18s ease-in-out infinite}
+.aurora .a2{width:420px;height:420px;background:var(--cyan);top:200px;right:-140px;animation:auroraFloat 22s ease-in-out infinite reverse}
+.aurora .a3{width:380px;height:380px;background:var(--coral);bottom:-140px;left:30%;animation:auroraFloat 20s ease-in-out infinite}
+@keyframes auroraFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,30px) scale(1.08)}}
+
+/* ── header scroll shadow ──────────────────────────────────────────────── */
+header.scrolled{box-shadow:0 8px 24px -12px rgba(20,20,31,.15)}
+
+/* ── mic / voice search ────────────────────────────────────────────────── */
+.micbtn{width:34px;height:34px;border-radius:8px;border:none;background:var(--surface);color:var(--muted);font-size:14px;flex-shrink:0;position:relative}
+.micbtn.listening{color:var(--coral)}
+.micbtn.listening::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--coral);animation:micpulse 1s ease-out infinite}
+@keyframes micpulse{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+
+/* ── live activity ticker ──────────────────────────────────────────────── */
+.tickerwrap{background:#0f0e1c;color:#e4e2f7;overflow:hidden;position:relative}
+.ticker{display:flex;gap:48px;white-space:nowrap;padding:9px 0;animation:tickerScroll 26s linear infinite;font-size:12.5px}
+.ticker span{display:flex;align-items:center;gap:8px;color:#c9c7e0}
+.ticker b{color:#a78bfa}
+.ticker .livedot{width:6px;height:6px;border-radius:50%;background:#4ade80;box-shadow:0 0 6px #4ade80;flex-shrink:0;animation:pulse2 1.4s ease-in-out infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── AI stat strip ─────────────────────────────────────────────────────── */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.statcard{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;text-align:center;position:relative;overflow:hidden}
+.statcard .num{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.statcard .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── AI compare modal ──────────────────────────────────────────────────── */
+.aioverlay{position:fixed;inset:0;background:rgba(10,10,15,.55);backdrop-filter:blur(3px);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+.aioverlay.open{display:flex}
+.aimodal{background:#fff;border-radius:22px;max-width:680px;width:100%;max-height:88vh;overflow:auto;padding:28px;position:relative;box-shadow:0 40px 100px -30px rgba(0,0,0,.4)}
+.aimodal .close{position:absolute;top:18px;right:18px;width:32px;height:32px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);font-size:14px}
+.aimodal h3{font-family:'Space Grotesk',sans-serif;font-size:19px;display:flex;align-items:center;gap:8px}
+.aimodal .scanning{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--violet);margin-top:6px}
+.aimodal .dotflash{display:flex;gap:3px}
+.aimodal .dotflash span{width:5px;height:5px;border-radius:50%;background:var(--violet);animation:dotflash 1s ease-in-out infinite}
+.aimodal .dotflash span:nth-child(2){animation-delay:.15s}.aimodal .dotflash span:nth-child(3){animation-delay:.3s}
+@keyframes dotflash{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.cmp2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px}
+.cmp2 .cp{text-align:center;border:1px solid var(--border);border-radius:14px;padding:16px}
+.cmp2 .cp .stage{height:90px;margin-bottom:8px}
+.metric{margin-top:10px;text-align:left}
+.metric .mlbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.metric .track{height:6px;background:var(--border2);border-radius:4px;overflow:hidden}
+.metric .fill{height:100%;background:var(--grad);border-radius:4px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.cmp2verdict{margin-top:20px;background:linear-gradient(120deg,#f1ebfe,#e8f4fb);border:1px solid #e0d3fb;border-radius:14px;padding:16px 18px;font-size:13.5px;line-height:1.7;color:#3a2f66}
+
+/* ── AI confidence meter (PDP) ─────────────────────────────────────────── */
+.confmeter{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.confmeter .clbl{font-size:12px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.confrow{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+.confrow .cn{width:90px;color:var(--muted);flex-shrink:0}
+.confrow .track{flex:1;height:7px;background:var(--border2);border-radius:4px;overflow:hidden}
+.confrow .fill{height:100%;background:var(--grad);border-radius:4px;width:0;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.confrow .cv{width:34px;text-align:right;font-weight:700;color:var(--text);flex-shrink:0}
+
+/* ── proactive AI nudge bubble ──────────────────────────────────────────── */
+.nudge{position:fixed;bottom:96px;right:26px;z-index:199;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 16px;max-width:250px;box-shadow:0 20px 50px -20px rgba(0,0,0,.3);font-size:12.5px;line-height:1.5;display:none;animation:nudgeIn .4s ease}
+.nudge.show{display:block}
+.nudge .x{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--muted2);font-size:12px}
+@keyframes nudgeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── chat typing indicator ─────────────────────────────────────────────── */
+.typing{display:flex;gap:3px;padding:11px 14px}
+.typing span{width:5px;height:5px;border-radius:50%;background:#7d7ba0;animation:dotflash 1s ease-in-out infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+
+/* ── scroll reveal (progressive enhancement — visible by default; JS opts
+   elements INTO the hidden-then-revealed state, never the reverse) ──────── */
+.reveal.js-armed{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease}
+.reveal.js-armed.in{opacity:1;transform:translateY(0)}
+
+/* ── button shine ──────────────────────────────────────────────────────── */
+.btn.primary,.btn.coral{position:relative;overflow:hidden}
+.btn.primary::after,.btn.coral::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg)}
+.btn.primary:hover::after,.btn.coral:hover::after{animation:shine .9s ease}
+@keyframes shine{from{left:-60%}to{left:130%}}
+
+/* ── card glow on hover (upgrade) ──────────────────────────────────────── */
+.pcard{transition:transform .2s, box-shadow .2s, border-color .2s}
+.pcard:hover{transform:translateY(-3px)}
+
+/* ── fab breathing halo ────────────────────────────────────────────────── */
+.fab{animation:fabPulse 2.6s ease-in-out infinite}
+@keyframes fabPulse{0%,100%{box-shadow:0 14px 30px -10px rgba(67,56,202,.55),0 0 0 0 rgba(124,58,237,.4)}50%{box-shadow:0 14px 30px -10px rgba(67,56,202,.55),0 0 0 10px rgba(124,58,237,0)}}

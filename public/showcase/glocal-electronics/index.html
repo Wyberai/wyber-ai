@@ -10,6 +10,8 @@
 </head>
 <body>
 
+<div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
+
 <div class="utility"><div class="in">
   <div>Delivering electronics across India — <a href="#">Update pincode</a></div>
   <div style="display:flex;gap:18px"><a href="#">Track Order</a><a href="#">Download App</a><a href="#">Sell on Glocal</a><a href="#">Help</a></div>
@@ -21,6 +23,7 @@
     <div class="loc">Deliver to<b>400001 · Mumbai ▾</b></div>
     <div class="searchwrap">
       <input id="askInput" placeholder="Search for phones, laptops, TVs & more…"/>
+      <button class="micbtn" title="Search by voice">🎙️</button>
       <button class="aitoggle">✦ Ask AI</button>
       <button class="searchbtn" onclick="location.href='listing.html'">🔍</button>
     </div>
@@ -34,6 +37,19 @@
 
 <div class="catstrip"><div class="in">
   <a href="listing.html">Mobiles</a><a href="listing.html">Laptops</a><a href="listing.html">Audio</a><a href="listing.html">Smart Wearables</a><a href="listing.html">TVs &amp; Home Theatre</a><a href="listing.html">Cameras</a><a href="listing.html">Gaming</a><a href="listing.html">Large Appliances</a><a href="listing.html">Small Appliances</a><a href="listing.html">Accessories</a><a href="listing.html" style="color:var(--coral)">⚡ Deals of the Day</a>
+</div></div>
+
+<div class="tickerwrap"><div class="ticker">
+  <span><span class="livedot"></span> <b>1,204</b> people shopping right now</span>
+  <span>🛒 Someone in Bengaluru just bought <b>Pulse X13 Pro 5G</b></span>
+  <span>✦ Glocal AI scanned <b>42,318</b> prices in the last hour</span>
+  <span>📉 Price drop detected on <b>Vista 55" QLED TV</b> — down 6%</span>
+  <span>🛒 Someone in Pune just bought <b>Echo Buds Air ANC</b></span>
+  <span><span class="livedot"></span> <b>1,204</b> people shopping right now</span>
+  <span>🛒 Someone in Bengaluru just bought <b>Pulse X13 Pro 5G</b></span>
+  <span>✦ Glocal AI scanned <b>42,318</b> prices in the last hour</span>
+  <span>📉 Price drop detected on <b>Vista 55" QLED TV</b> — down 6%</span>
+  <span>🛒 Someone in Pune just bought <b>Echo Buds Air ANC</b></span>
 </div></div>
 
 <main>
@@ -61,7 +77,17 @@
   </div>
 </section>
 
-<section>
+<section class="reveal">
+  <div class="sechead"><div class="sectitle">Shop by category</div><div style="font-size:12px;color:var(--muted)">AI-ranked within every category</div></div>
+  <div class="catgrid">
+    <a class="cattile big ct1" href="listing.html"><span class="aitag2">✦ AI camera comparison</span><h3>Smartphones</h3><p>128 models</p></a>
+    <a class="cattile ct2" href="listing.html"><h3>Laptops</h3><p>64 models</p></a>
+    <a class="cattile ct3" href="listing.html"><h3>Audio</h3><p>92 models</p></a>
+    <a class="cattile ct4" href="listing.html"><h3>Smart TVs</h3><p>41 models</p></a>
+  </div>
+</section>
+
+<section class="reveal">
   <div class="sechead"><div class="sectitle">Shop by budget</div></div>
   <div class="budgetgrid">
     <a class="budget" href="listing.html">📱<div class="amt">Under ₹10,000<small>142 products</small></div></a>
@@ -71,7 +97,17 @@
   </div>
 </section>
 
-<section>
+<section class="reveal">
+  <div class="sechead"><div class="sectitle">Glocal AI, by the numbers</div></div>
+  <div class="statgrid">
+    <div class="statcard"><div class="num" data-count="42318">0</div><div class="lbl">Prices scanned today</div></div>
+    <div class="statcard"><div class="num" data-count="2.4" data-suffix="Cr">0</div><div class="lbl">Saved for shoppers this month (₹)</div></div>
+    <div class="statcard"><div class="num" data-count="98.2" data-suffix="%">0</div><div class="lbl">AI recommendation accuracy</div></div>
+    <div class="statcard"><div class="num" data-count="3.2" data-suffix="s">0</div><div class="lbl">Average AI reply time</div></div>
+  </div>
+</section>
+
+<section class="reveal">
   <div class="sechead"><div class="sectitle">Shop by Glocal exclusive brands</div></div>
   <div class="brandstrip">
     <div class="brandchip">PULSE</div><div class="brandchip">AERO</div><div class="brandchip">ORBIT</div><div class="brandchip">ECHO</div><div class="brandchip">VISTA</div><div class="brandchip">VOLT</div>
@@ -148,11 +184,11 @@
   </div>
 </section>
 
-<section>
+<section class="reveal">
   <div class="comparestrip">
     <div class="aiIco">✦</div>
     <div><b>Not sure which phone to pick?</b><p>Ask Glocal AI to compare any two products by real specs, not marketing copy.</p></div>
-    <button class="btn primary">Compare with AI →</button>
+    <button class="btn primary openCompare">Compare with AI →</button>
   </div>
 </section>
 
@@ -178,6 +214,40 @@
   </div>
   <div class="bottomline">© 2026 Glocal Electronics · Genuine products · 7-day replacement · No-cost EMI · Pan-India delivery</div>
 </footer>
+
+<div class="nudge" id="aiNudge">
+  <button class="x">✕</button>
+  <b>👋 Deciding between phones?</b>
+  <p style="margin:6px 0 10px;color:var(--muted)">I compared 128 options against your budget — want the shortlist?</p>
+  <button class="btn coral nudgeAsk" style="padding:7px 14px;font-size:12px">Ask Glocal AI →</button>
+</div>
+
+<div class="aioverlay" id="aiOverlay">
+  <div class="aimodal">
+    <button class="close">✕</button>
+    <h3>✦ AI Comparison</h3>
+    <div class="scanning">Analyzed 2,847 + 1,392 verified reviews <span class="dotflash"><span></span><span></span><span></span></span></div>
+    <div class="cmp2">
+      <div class="cp">
+        <div class="stage"><svg width="55" height="85" viewBox="0 0 55 85"><rect x="3" y="3" width="49" height="79" rx="11" fill="#fff" stroke="#e2ddf8" stroke-width="2"/><rect x="8" y="9" width="39" height="56" rx="4" fill="url(#cm1)"/><defs><linearGradient id="cm1" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#0891b2"/></linearGradient></defs></svg></div>
+        <div class="pname">Pulse X13 Pro</div>
+        <div class="pprice" style="justify-content:center"><span class="now">₹42,999</span></div>
+        <div class="metric"><div class="mlbl"><span>Camera</span><span>9.2</span></div><div class="track"><div class="fill" data-pct="92"></div></div></div>
+        <div class="metric"><div class="mlbl"><span>Battery</span><span>8.7</span></div><div class="track"><div class="fill" data-pct="87"></div></div></div>
+        <div class="metric"><div class="mlbl"><span>Value</span><span>9.4</span></div><div class="track"><div class="fill" data-pct="94"></div></div></div>
+      </div>
+      <div class="cp">
+        <div class="stage"><svg width="55" height="85" viewBox="0 0 55 85"><rect x="3" y="3" width="49" height="79" rx="11" fill="#fff" stroke="#e2ddf8" stroke-width="2"/><rect x="8" y="9" width="39" height="56" rx="4" fill="url(#cm2)"/><defs><linearGradient id="cm2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff5a36"/><stop offset="1" stop-color="#f5a623"/></linearGradient></defs></svg></div>
+        <div class="pname">Nova S24</div>
+        <div class="pprice" style="justify-content:center"><span class="now">₹47,499</span></div>
+        <div class="metric"><div class="mlbl"><span>Camera</span><span>8.1</span></div><div class="track"><div class="fill" data-pct="81"></div></div></div>
+        <div class="metric"><div class="mlbl"><span>Battery</span><span>8.9</span></div><div class="track"><div class="fill" data-pct="89"></div></div></div>
+        <div class="metric"><div class="mlbl"><span>Value</span><span>8.0</span></div><div class="track"><div class="fill" data-pct="80"></div></div></div>
+      </div>
+    </div>
+    <div class="cmp2verdict">✦ <b>Verdict:</b> Pulse X13 Pro pulls ahead at night — its sensor is 35% larger, so low-light shots have noticeably less grain. Nova S24 charges faster (65W vs 45W) and is ₹4,500 cheaper. Pick Pulse if you shoot after dark often; pick Nova if charging speed matters more.</div>
+  </div>
+</div>
 
 <button class="fab" id="fabBtn"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2l2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5z"/></svg></button>
 <div class="panel" id="aiPanel">
