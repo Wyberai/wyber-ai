@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Checkout — Glocal Electronics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="logo" href="index.html"><span class="mark">G</span>glocal</a>
+    <div style="margin-left:auto;font-size:12.5px;color:var(--muted)">🔒 Secure Checkout</div>
+  </div>
+</header>
+
+<main>
+  <div class="steps"><b>1. Address</b> → <b>2. Payment</b> → <span>3. Confirm</span></div>
+
+  <section style="padding-top:0">
+    <div class="checkgrid">
+      <div>
+        <div class="formcard">
+          <h3>Delivery Address</h3>
+          <div class="formrow">
+            <div class="formfield"><label>Full Name</label><input value="Rahul Mehta"/></div>
+            <div class="formfield"><label>Phone Number</label><input value="+91 98765 43210"/></div>
+          </div>
+          <div class="formrow">
+            <div class="formfield full"><label>Address</label><input value="14, Sunrise Apartments, Linking Road"/></div>
+          </div>
+          <div class="formrow">
+            <div class="formfield"><label>City</label><input value="Mumbai"/></div>
+            <div class="formfield"><label>State</label><input value="Maharashtra"/></div>
+          </div>
+          <div class="formrow">
+            <div class="formfield"><label>Pincode</label><input value="400001"/></div>
+            <div class="formfield"><label>Landmark (optional)</label><input placeholder="e.g. Near Bandra station"/></div>
+          </div>
+          <div class="aibox">✦ <b>Glocal AI:</b> This pincode qualifies for free next-day delivery on all 3 items in your cart.</div>
+        </div>
+
+        <div class="formcard">
+          <h3>Payment Method</h3>
+          <label class="paymethod on"><input type="radio" name="pay" checked/><div><div class="pname2">UPI</div><div class="psub">Pay via Google Pay, PhonePe, Paytm & more</div></div></label>
+          <label class="paymethod"><input type="radio" name="pay"/><div><div class="pname2">Credit / Debit Card</div><div class="psub">Visa, Mastercard, RuPay, Amex</div></div></label>
+          <label class="paymethod"><input type="radio" name="pay"/><div><div class="pname2">No-Cost EMI</div><div class="psub">₹3,583/mo for 12 months, zero interest</div></div></label>
+          <label class="paymethod"><input type="radio" name="pay"/><div><div class="pname2">Net Banking</div><div class="psub">All major Indian banks</div></div></label>
+          <label class="paymethod"><input type="radio" name="pay"/><div><div class="pname2">Cash on Delivery</div><div class="psub">Pay when your order arrives</div></div></label>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <h3>Order Summary</h3>
+        <div class="sumrow"><span>Pulse X13 Pro 5G × 1</span><span>₹42,999</span></div>
+        <div class="sumrow"><span>Echo Buds Air ANC × 1</span><span>₹3,499</span></div>
+        <div class="sumrow"><span>Orbit Watch SE × 1</span><span>₹6,999</span></div>
+        <div class="sumrow"><span>Discount</span><span class="g">− ₹10,999</span></div>
+        <div class="sumrow"><span>Delivery</span><span class="g">Free</span></div>
+        <div class="sumrow total"><span>Total</span><span>₹42,498</span></div>
+        <a class="btn coral block lg" href="order-success.html" style="margin-top:14px">Place Order</a>
+        <div class="trustrow2" style="margin-top:14px"><span>✓ 256-bit encrypted</span><span>✓ 7-day replacement</span></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="bottomline" style="margin-top:0;padding-top:16px">© 2026 Glocal Electronics · Genuine products · 7-day replacement · No-cost EMI · Pan-India delivery</div>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>

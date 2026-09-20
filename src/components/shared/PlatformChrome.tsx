@@ -14,7 +14,9 @@ import { InstallPrompt } from '@/components/shared/InstallPrompt'
 // published app is the CUSTOMER's visitor, not ours — tracking them with our
 // GA/Reddit/Meta pixels is a privacy problem, not just a branding one.
 // (/p/[id] is intentionally NOT here — it's our branded share/growth page.)
-const WHITE_LABEL_ROUTES = ['/app/']
+// /showcase/ is a client sales demo (a prospect's own concept site) — same
+// reasoning: it must read as THEIR site, not ours.
+const WHITE_LABEL_ROUTES = ['/app/', '/showcase/']
 
 export function PlatformChrome() {
   const pathname = usePathname()

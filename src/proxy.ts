@@ -144,6 +144,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/m/') ||
     path.startsWith('/unsubscribe') ||
     path.startsWith('/space-journey') ||
+    // Client-facing sales demos (e.g. /showcase/glocal-electronics) — sent to
+    // prospects who have no account, must be public.
+    path.startsWith('/showcase') ||
     path === '/' ||
     path.includes('.')
   ) {
