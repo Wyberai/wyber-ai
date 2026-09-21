@@ -12,6 +12,7 @@ import {
 import { sendMetaEvent } from '@/lib/meta-capi'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { templateFilesToProjectFiles } from '@/lib/template-to-project'
+import { accrueAffiliateCommission, reverseAffiliateCommissionForPayment } from '@/lib/affiliate'
 
 function getAdmin() {
   return createClient(
@@ -215,10 +216,11 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await admin
       .from('profiles')
-      .select('email, credits, plan')
+      .select('email, credits, plan, referred_by')
       .eq('id', userId)
       .single()
     const userEmail = profile?.email as string | undefined
+    const referredByUserId = profile?.referred_by as string | undefined
 
     // Payment failed → dunning email, escalating tone across up to 3 retries.
     // Attempt count lives in email_events (kind='payment-failed') and is reset
@@ -239,9 +241,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    // Refund → confirmation email
+    // Refund → confirmation email + reverse any affiliate commission tied to
+    // this payment (see src/lib/affiliate.ts — a no-op if there isn't one,
+    // and it deliberately does NOT touch a commission already marked paid).
     if (eventType === 'refund.succeeded' || eventType === 'payment.refunded' || eventType === 'refund.created') {
       if (userEmail) sendRefundEmail(userEmail).catch(() => {})
+      const refundedPaymentId = String(eventDataAny?.payment_id || '')
+      // Awaited (not fire-and-forget): a serverless function can be frozen
+      // the moment the response is sent, which would silently drop an
+      // un-awaited background task — same reasoning as reportMetaPurchase
+      // below. reverseAffiliateCommissionForPayment never throws itself.
+      if (refundedPaymentId) await reverseAffiliateCommissionForPayment(admin, refundedPaymentId)
       console.log(`Refund processed for ${userId}`)
       return NextResponse.json({ received: true })
     }
@@ -501,6 +511,24 @@ export async function POST(req: NextRequest) {
       // Report the Meta Purchase once — on the event that actually grants (the
       // payment.succeeded / subscription.active pair fires twice per subscribe).
       if (grantCredits) await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
+
+      // Affiliate commission — only on the event that actually grants (same
+      // guard as the Meta report above, so the payment.succeeded/
+      // subscription.active pair never double-accrues). Deliberately scoped
+      // to plan subscriptions only, not one-time top-ups (top-ups return
+      // earlier, above) — known v1 limitation, not an oversight.
+      if (grantCredits) {
+        const commissionPaymentId = String(evData?.payment_id || dedupeId || '')
+        const chargeUsd = PLAN_VALUE[String(metadata.plan || '')] ?? 0
+        // Awaited, same reasoning as reportMetaPurchase above — this never
+        // throws itself, but an un-awaited call risks being silently
+        // dropped if the serverless function freezes right after response.
+        await accrueAffiliateCommission(admin, {
+          referredByUserId, referredUserId: userId,
+          dodoEventType: eventType, dodoPaymentId: commissionPaymentId,
+          planKey: String(metadata.plan || ''), chargeUsd,
+        })
+      }
     }
 
     if (eventType === 'subscription.renewed') {
@@ -520,6 +548,18 @@ export async function POST(req: NextRequest) {
         }
         // Renewal succeeded — clear any payment-failed dunning streak.
         admin.from('email_events').delete().eq('user_id', userId).eq('kind', 'payment-failed').then(() => {}, () => {})
+
+        // Affiliate commission on renewal too — the advertised program is
+        // "30% recurring, for the lifetime of the subscription," not a
+        // one-time payout, so this has to fire on every renewal independently
+        // from the initial payment.succeeded/subscription.active accrual above.
+        const renewalPaymentId = String(eventDataAny?.payment_id || dedupeId || '')
+        const renewalChargeUsd = PLAN_VALUE[String(metadata.plan || '')] ?? 0
+        await accrueAffiliateCommission(admin, {
+          referredByUserId, referredUserId: userId,
+          dodoEventType: eventType, dodoPaymentId: renewalPaymentId,
+          planKey: String(metadata.plan || ''), chargeUsd: renewalChargeUsd,
+        })
       }
     }
 

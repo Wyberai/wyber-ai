@@ -147,6 +147,9 @@ export async function proxy(request: NextRequest) {
     // Client-facing sales demos (e.g. /showcase/glocal-electronics) — sent to
     // prospects who have no account, must be public.
     path.startsWith('/showcase') ||
+    // Client delivery pages (src/app/client/[slug]) — sent to a paying
+    // client who has no WyberAi account, must be public.
+    path.startsWith('/client/') ||
     path === '/' ||
     path.includes('.')
   ) {

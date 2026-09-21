@@ -16,6 +16,8 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [insights, setInsights] = useState<string[]>([]);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!projectId) return;
@@ -30,6 +32,23 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
   }, [projectId, range]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!projectId || !summary || summary.pageViews === 0) return;
+    let cancelled = false;
+    setInsightsLoading(true);
+    fetch('/api/analytics/insights', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ projectId, days: range }),
+    })
+      .then(r => r.json())
+      .then(json => { if (!cancelled) setInsights(json.insights || []); })
+      .catch(() => { if (!cancelled) setInsights([]); })
+      .finally(() => { if (!cancelled) setInsightsLoading(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, range, summary?.pageViews]);
 
   const maxDaily = summary?.daily.length ? Math.max(...summary.daily.map(d => d.count)) : 0;
 
@@ -68,6 +87,19 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
               </div>
             ))}
           </div>
+
+          {summary.pageViews > 0 && (insightsLoading || insights.length > 0) && (
+            <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✨ Insights</div>
+              {insightsLoading ? (
+                <div style={{ fontSize: 12, color: 'var(--ide-text3)' }}>Thinking…</div>
+              ) : (
+                insights.map((text, i) => (
+                  <div key={i} style={{ fontSize: 12, color: 'var(--ide-text)', lineHeight: 1.5 }}>{text}</div>
+                ))
+              )}
+            </div>
+          )}
 
           {summary.pageViews === 0 ? (
             <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.6, padding: '10px 0' }}>

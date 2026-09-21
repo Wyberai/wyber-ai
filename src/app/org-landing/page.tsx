@@ -9,7 +9,7 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
   const db = createServiceClient()
   const { data: org } = await db
     .from('organizations')
-    .select('*, ai_employees(id, name, emoji, role, slug, is_active)')
+    .select('*, ai_employees(id, name, emoji, role, slug, is_active), clients(id, name, slug, status)')
     .eq('custom_domain', domain)
     .single()
 
@@ -24,6 +24,11 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
   }
 
   const employees = org.ai_employees?.filter((e: { is_active: boolean }) => e.is_active) ?? []
+  // Tier-A white-labeling: this branded portal LINKS OUT to wyberai.com/client/[slug]
+  // rather than serving it on this domain — true per-client custom domains
+  // would need new domain-verification infra (see the agency-mode plan's
+  // explicit Phase 4 note), not composition of what already exists.
+  const clients = (org.clients ?? []).filter((c: { status: string }) => c.status === 'active')
 
   return (
     <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
@@ -53,6 +58,20 @@ export default async function OrgLandingPage({ searchParams }: { searchParams: P
             </Link>
           ))}
         </div>
+
+        {clients.length > 0 && (
+          <>
+            <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em', color: '#fff', margin: '48px 0 8px' }}>Clients</h2>
+            <p style={{ color: '#52525b', fontSize: 13, margin: '0 0 20px' }}>{clients.length} active client{clients.length !== 1 ? 's' : ''}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+              {clients.map((c: { id: string; name: string; slug: string }) => (
+                <a key={c.id} href={`https://wyberai.com/client/${c.slug}`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                  <div style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 12, padding: '14px 16px', fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{c.name} ↗</div>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   )

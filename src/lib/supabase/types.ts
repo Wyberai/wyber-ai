@@ -11,6 +11,9 @@ export interface Profile {
   credits_reset_at: string;
   stripe_customer_id: string | null;
   github_token: string | null;
+  referred_by?: string | null;
+  affiliate_pending_usd?: number;
+  affiliate_paid_usd?: number;
   created_at: string;
   updated_at: string;
 }
@@ -19,6 +22,7 @@ export interface Project {
   id: string;
   user_id: string;
   org_id?: string | null;
+  client_id?: string | null;
   name: string;
   description: string | null;
   framework: Framework;
@@ -102,6 +106,68 @@ export interface OrgSsoConnection {
   workos_connection_id: string | null;
   domain: string | null;
   status: 'pending' | 'active' | 'disabled';
+  created_at: string;
+  updated_at: string;
+}
+
+// ── Client delivery pages (additive — see migrations 20260921000000/010000) ─
+
+export interface Client {
+  id: string;
+  owner_id: string;
+  org_id?: string | null; // see 20260923000000_clients_org_scoping.sql
+  name: string;
+  slug: string;
+  company_name: string | null;
+  contact_email: string | null;
+  contact_name: string | null;
+  logo_url: string | null;
+  brand_color: string;
+  intro_text: string | null;
+  status: 'lead' | 'active' | 'paused' | 'archived';
+  consultation_meeting_id: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ClientDeliverable {
+  id: string;
+  client_id: string;
+  project_id: string;
+  headline: string | null;
+  description: string | null;
+  sort_order: number;
+  is_visible: boolean;
+  created_at: string;
+}
+
+// ── Self-serve affiliates (additive — see migration 20260922000000) ────────
+
+export interface Affiliate {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'approved' | 'rejected' | 'suspended';
+  payout_email: string | null;
+  payout_method: string | null;
+  applied_at: string;
+  approved_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AffiliateCommission {
+  id: string;
+  affiliate_id: string;
+  referred_user_id: string | null;
+  dodo_event_type: string;
+  dodo_payment_id: string | null;
+  plan_key: string | null;
+  charge_usd: number;
+  commission_rate: number;
+  commission_usd: number;
+  status: 'pending' | 'paid' | 'reversed';
   created_at: string;
   updated_at: string;
 }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { persistProjectFiles } from '@/lib/persist-project'
 import { SkeletonList, EmptyState } from './ui'
+import { VersionPreviewModal } from './VersionPreviewModal'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_SHELL_STRINGS } from '@/lib/i18n/dict/editor-shell'
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
@@ -14,6 +15,18 @@ interface Version {
   files: Record<string, { path: string; content: string; language: string }>
 }
 
+// Cheap file-level diff (added / removed / modified paths) against the
+// current working copy — no line-by-line diff, just enough to answer
+// "would restoring this actually change anything, and how much?"
+function countChanged(a: Record<string, { content?: string }>, b: Record<string, { content?: string }>): number {
+  const paths = new Set([...Object.keys(a || {}), ...Object.keys(b || {})])
+  let changed = 0
+  for (const p of paths) {
+    if ((a?.[p]?.content ?? null) !== (b?.[p]?.content ?? null)) changed++
+  }
+  return changed
+}
+
 export function VersionHistory({ projectId }: { projectId: string }) {
   const t = useT(EDITOR_SHELL_STRINGS)
   const tc = useT(COMMON_STRINGS)
@@ -23,6 +36,7 @@ export function VersionHistory({ projectId }: { projectId: string }) {
   const [restoring, setRestoring] = useState<string | null>(null)
   const [naming, setNaming] = useState(false)
   const [labelInput, setLabelInput] = useState('')
+  const [previewing, setPreviewing] = useState<Version | null>(null)
   const { files, setFiles, setHasGeneratedFiles, project } = useEditorStore()
 
   useEffect(() => { loadVersions() }, [projectId])
@@ -109,19 +123,42 @@ export function VersionHistory({ projectId }: { projectId: string }) {
             title={t('vhEmptyTitle')}
             hint={t('vhEmptyHint')}
           />
-        ) : versions.map(v => (
+        ) : versions.map(v => {
+          const changed = countChanged(v.files, files)
+          return (
           <div key={v.id} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', marginBottom: 6 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{v.label}</div>
             <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 8 }}>
               {new Date(v.created_at).toLocaleString()} · {Object.keys(v.files || {}).length} {t('vhFilesWord')}
+              {changed > 0 && <> · {changed} different from current</>}
             </div>
-            <button onClick={() => restore(v)} disabled={restoring === v.id}
-              style={{ width: '100%', padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: restoring === v.id ? 'rgba(14,165,233,0.1)' : 'transparent', color: restoring === v.id ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              {restoring === v.id ? t('vhRestoredLabel') : t('vhRestoreBtn')}
-            </button>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setPreviewing(v)}
+                style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Preview
+              </button>
+              <button onClick={() => restore(v)} disabled={restoring === v.id}
+                style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: restoring === v.id ? 'rgba(14,165,233,0.1)' : 'transparent', color: restoring === v.id ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {restoring === v.id ? t('vhRestoredLabel') : t('vhRestoreBtn')}
+              </button>
+            </div>
           </div>
-        ))}
+          )
+        })}
       </div>
+
+      {previewing && (
+        <VersionPreviewModal
+          key={previewing.id}
+          label={previewing.label}
+          createdAt={previewing.created_at}
+          files={previewing.files}
+          projectId={project?.id || ''}
+          restoring={restoring === previewing.id}
+          onClose={() => setPreviewing(null)}
+          onRestore={async () => { await restore(previewing); setPreviewing(null) }}
+        />
+      )}
     </div>
   )
 }

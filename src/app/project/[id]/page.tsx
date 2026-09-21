@@ -1,5 +1,6 @@
 ﻿import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { isAdminEmail } from '@/lib/admin'
+import { getOrgRole } from '@/lib/org-access'
 import { redirect } from 'next/navigation'
 import { IDELayout } from '@/components/editor/IDELayout'
 import { AgentCanvas } from '@/components/editor/AgentCanvas'
@@ -49,7 +50,20 @@ export default async function ProjectPage({ params, searchParams }: Props) {
 
   if (!project) redirect('/dashboard')
   const supportMode = admin && project.user_id !== user.id
-  if (project.user_id !== user.id && !project.is_public && !supportMode) redirect('/dashboard')
+
+  // Org-scoped project: RLS (042_org_scoped_rls.sql) already lets a member
+  // read this row, but that alone doesn't reach this page — this redirect
+  // is an application-layer gate independent of RLS, so it needs its own
+  // explicit check. Computed via the service-role client (not the session
+  // client) so this doesn't depend on organization_members having a
+  // self-read RLS policy — same posture /api/organizations/route.ts already
+  // uses for the equivalent lookup.
+  let orgRole = null
+  if (project.org_id && project.user_id !== user.id) {
+    orgRole = await getOrgRole(await createAdminClient(), project.org_id, user.id)
+  }
+
+  if (project.user_id !== user.id && !project.is_public && !supportMode && !orgRole) redirect('/dashboard')
 
   const { data: profile } = await supabase
     .from('profiles')

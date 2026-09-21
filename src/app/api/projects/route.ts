@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin';
+import { getOrgRole, canEditOrgProject } from '@/lib/org-access';
 
 export async function PATCH(req: NextRequest) {
   const supabase = await createClient();
@@ -35,16 +36,38 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true, supportMode: true, updatedAt: nowIso });
   }
 
-  let query = supabase.from('projects').update({ files, updated_at: nowIso }).eq('id', projectId).eq('user_id', user.id)
+  // Access check, done BEFORE any write. RLS (042_org_scoped_rls.sql) already
+  // lets an org member's session client read an org-scoped project, so a
+  // stranger's project resolves to null here exactly as it always has.
+  const { data: projectRow } = await supabase.from('projects').select('id, user_id, org_id').eq('id', projectId).maybeSingle()
+  if (!projectRow) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  let orgEditAllowed = false
+  if (projectRow.org_id && projectRow.user_id !== user.id) {
+    const admin = await createAdminClient()
+    orgEditAllowed = canEditOrgProject(await getOrgRole(admin, projectRow.org_id, user.id))
+  }
+  if (projectRow.user_id !== user.id && !orgEditAllowed) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
+  // For a personal (non-org) project this keeps the EXACT original filter —
+  // must never change for the overwhelming majority of projects, which have
+  // no org_id. An org project being saved by a verified non-owner member is
+  // already gated by the check above, so the write only needs to match on id.
+  let query = supabase.from('projects').update({ files, updated_at: nowIso }).eq('id', projectId)
+  if (!projectRow.org_id) query = query.eq('user_id', user.id)
   if (expectedUpdatedAt) query = query.eq('updated_at', expectedUpdatedAt)
   const { data, error } = await query.select('id, updated_at')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (expectedUpdatedAt && (!data || data.length === 0)) {
     // Distinguish "conflict" (row exists, updated_at moved) from "not yours/
-    // doesn't exist" (already covered by the id+user_id filters above) so the
+    // doesn't exist" (already covered by the access check above) so the
     // client gets a specific, actionable signal either way.
-    const { data: current } = await supabase.from('projects').select('updated_at').eq('id', projectId).eq('user_id', user.id).maybeSingle()
+    let currentQuery = supabase.from('projects').select('updated_at').eq('id', projectId)
+    if (!projectRow.org_id) currentQuery = currentQuery.eq('user_id', user.id)
+    const { data: current } = await currentQuery.maybeSingle()
     if (current) {
       return NextResponse.json({ error: 'Conflict: this project was modified elsewhere', conflict: true, currentUpdatedAt: current.updated_at }, { status: 409 })
     }

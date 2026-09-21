@@ -90,8 +90,8 @@ export function parsePlanManifest(raw: string): PlannedFile[] {
  * Given a parsed manifest, build the staging plan: decide whether to stage,
  * split scaffold vs fill, and batch the fill files.
  */
-export function buildStagedPlan(files: PlannedFile[]): StagedPlan {
-  const shouldStage = files.length >= STAGE_THRESHOLD
+export function buildStagedPlan(files: PlannedFile[], threshold: number = STAGE_THRESHOLD): StagedPlan {
+  const shouldStage = files.length >= threshold
 
   if (!shouldStage) {
     return { files, shouldStage: false, scaffoldPaths: [], fillBatches: [] }
@@ -208,8 +208,16 @@ export function wireLooksApplied(
   const missing: string[] = []
   for (const s of screens) {
     const name = s.path.split('/').pop()?.replace(/\.(tsx?|jsx?)$/, '') ?? s.path
-    // A screen is wired if its name appears in the router (as an import or JSX tag)
-    if (!routerAfter.includes(name)) missing.push(s.path)
+    // A screen is wired if its name appears in the router as a real
+    // identifier (import specifier or JSX tag) — a plain substring check
+    // false-positives when the router still has an UNRELATED placeholder
+    // that happens to contain the name, e.g. "OverviewDashboardPlaceholder"
+    // contains "Overview" but never actually imports/renders the Overview
+    // screen (deterministicWire's swap never matched, so wiring silently
+    // failed). Word-bounded matching requires the name not be glued to
+    // adjacent identifier characters on either side.
+    const nameRe = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`)
+    if (!nameRe.test(routerAfter)) missing.push(s.path)
   }
   // Only report as applied if something actually changed AND nothing is missing
   const changed = routerBefore !== routerAfter

@@ -30,6 +30,10 @@ function copyFor(type: string, payload?: Record<string, unknown> | null): { titl
       return { title: 'Published 🎉', body: 'Your project is live.' }
     case 'referral':
       return { title: 'Referral reward', body: 'You earned credits from a referral.' }
+    case 'preview_comment': {
+      const msg = payload && typeof payload.message === 'string' ? (payload.message as string) : 'New feedback on your project.'
+      return { title: 'New feedback 💬', body: msg }
+    }
     case 'credits_low': {
       const bal = payload && typeof payload.balance === 'number' ? (payload.balance as number) : null
       return {

@@ -44,6 +44,16 @@ describe('buildStagedPlan', () => {
     expect(buildStagedPlan(files).shouldStage).toBe(false)
   })
 
+  it('never stages against the real (currently disabled) default threshold, even for a large manifest', () => {
+    // Documents the kill-switch itself: with the real STAGE_THRESHOLD (999),
+    // every build one-shots regardless of size, by design, while the staged
+    // pipeline is stabilised. If this test ever fails, it means someone
+    // lowered STAGE_THRESHOLD back down — a real, intentional re-enable, not
+    // a regression to "fix" by raising it again.
+    const files: PlannedFile[] = Array.from({ length: 20 }, (_, i) => ({ path: `src/components/F${i}.tsx`, purpose: `feature ${i}` }))
+    expect(buildStagedPlan(files).shouldStage).toBe(false)
+  })
+
   it('stages larger apps and puts scaffold-hinted files first', () => {
     const files: PlannedFile[] = [
       { path: 'src/App.tsx', purpose: 'shell' },
@@ -52,7 +62,13 @@ describe('buildStagedPlan', () => {
       { path: 'src/components/A.tsx', purpose: 'feature a' },
       { path: 'src/components/B.tsx', purpose: 'feature b' },
     ]
-    const plan = buildStagedPlan(files)
+    // STAGE_THRESHOLD is currently 999 — a deliberate kill-switch forcing
+    // one-shot generation for all builds while the staged pipeline is
+    // stabilised (see the comment on STAGE_THRESHOLD in staged-plan.ts).
+    // The scaffold/fill-batching logic below still exists and still matters
+    // for when staging is re-enabled, so exercise it via the optional
+    // threshold override rather than via the real (disabled) default.
+    const plan = buildStagedPlan(files, 3)
     expect(plan.shouldStage).toBe(true)
     expect(plan.scaffoldPaths).toEqual(['src/App.tsx', 'src/index.css', 'src/components/Sidebar.tsx'])
     expect(plan.fillBatches.flat().map(f => f.path)).toEqual(['src/components/A.tsx', 'src/components/B.tsx'])

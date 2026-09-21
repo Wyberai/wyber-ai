@@ -1,11 +1,12 @@
+import Link from 'next/link';
 import { NavbarClient as Navbar } from '@/components/shared/NavbarClient';
 import { Footer } from '@/components/shared/FooterClient';
 import type { Metadata } from 'next';
 export const metadata: Metadata = { title: 'Affiliates', description: 'Earn 30% recurring commission for every customer you refer to WyberAi.', alternates: { canonical: 'https://wyberai.com/affiliates' } };
 const STEPS = [
-  { n:'01', title:'Apply and get your link', desc:'Email us. We approve within 24 hours and send you a unique referral link tracked to your account.' },
+  { n:'01', title:'Apply from your dashboard', desc:'Sign up, apply in a click — same referral link your account already has. Approved within 24 hours.' },
   { n:'02', title:'Share with your audience', desc:'Post it in your newsletter, YouTube description, blog, Twitter, Discord — any format works.' },
-  { n:'03', title:'Earn recurring commission', desc:'30% of every payment your referrals make — for the lifetime of their subscription. Paid monthly via Dodo.' },
+  { n:'03', title:'Earn recurring commission', desc:'30% of every payment your referrals make — for the lifetime of their subscription. Tracked live in your dashboard, paid out monthly.' },
 ];
 export default function AffiliatesPage() {
   return (
@@ -16,7 +17,7 @@ export default function AffiliatesPage() {
         <h1 className="wy-h2">Earn 30% <em>recurring</em></h1>
         <p style={{ fontSize:17, color:'var(--text2)', maxWidth:520, lineHeight:1.75, marginBottom:40 }}>Refer developers and founders to WyberAi. Earn 30% commission on every payment — forever, not just the first month.</p>
         <div style={{ display:'flex', gap:40, marginBottom:56, flexWrap:'wrap' }}>
-          {[['30%','recurring commission'],['Forever','not just month one'],['Monthly','payouts via Dodo']].map(([n,l])=>(
+          {[['30%','recurring commission'],['Forever','not just month one'],['Live','tracked in your dashboard']].map(([n,l])=>(
             <div key={l}>
               <div style={{ fontFamily:'var(--font-display)', fontSize:36, fontWeight: 700, color:'var(--sky)', letterSpacing:'-0.04em', lineHeight:1 }}>{n}</div>
               <div style={{ fontSize:12, color:'var(--text3)', marginTop:4 }}>{l}</div>
@@ -35,9 +36,9 @@ export default function AffiliatesPage() {
         </div>
         <div className="wy-sec-tag">Apply now</div>
         <p style={{ fontSize:14, color:'var(--text2)', maxWidth:480, lineHeight:1.75, marginTop:16, marginBottom:24 }}>
-          Email <a href="mailto:affiliates@wyberai.com" style={{ color:'var(--sky)', fontWeight:600 }}>affiliates@wyberai.com</a> with your name, website or social profile, and how you plan to promote WyberAi. Approved within 24 hours.
+          Sign in (or create a free account) and apply from your affiliate dashboard — takes a few seconds, approved within 24 hours.
         </p>
-        <a href="mailto:affiliates@wyberai.com?subject=WyberAi Affiliate Application" className="wy-btn-primary" style={{ display:'inline-flex' }}>Apply via email →</a>
+        <Link href="/affiliate/dashboard" className="wy-btn-primary" style={{ display:'inline-flex' }}>Apply from your dashboard →</Link>
         <p style={{ fontSize:12, color:'var(--text3)', marginTop:16, maxWidth:400, lineHeight:1.65 }}>
           Open to newsletters, YouTubers, bloggers, and developers with an audience. No minimum follower count.
         </p>

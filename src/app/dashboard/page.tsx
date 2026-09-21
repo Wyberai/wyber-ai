@@ -52,11 +52,34 @@ export default async function DashboardPage() {
     await claimDemos(createServiceClient(), user.id, { email: user.email, token: claimToken });
   } catch (e) { console.error('gtm demo claim failed:', e); }
 
-  const { data: projects } = await supabase
+  const { data: ownProjects } = await supabase
     .from('projects')
-    .select('id,name,framework,is_public,deployed_url,published_url,thumbnail_url,updated_at,project_type')
+    .select('id,name,framework,is_public,deployed_url,published_url,thumbnail_url,updated_at,project_type,org_id')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false });
+
+  // Org-scoped projects the user can access as a member (see 038/042 — the
+  // FK and RLS have existed for a while, but nothing surfaced these in the
+  // dashboard until now). Reuses the same service-role membership lookup
+  // /api/organizations/route.ts already does, rather than trusting an RLS
+  // self-read policy on organization_members that may or may not exist.
+  const orgAdmin = createServiceClient();
+  const { data: memberships } = await orgAdmin.from('organization_members').select('org_id').eq('user_id', user.id);
+  const orgIds = (memberships ?? []).map(m => m.org_id).filter(Boolean);
+
+  let orgProjects: typeof ownProjects = [];
+  if (orgIds.length > 0) {
+    const { data } = await supabase
+      .from('projects')
+      .select('id,name,framework,is_public,deployed_url,published_url,thumbnail_url,updated_at,project_type,org_id')
+      .in('org_id', orgIds)
+      .order('updated_at', { ascending: false });
+    orgProjects = data ?? [];
+  }
+
+  const ownIds = new Set((ownProjects ?? []).map(p => p.id));
+  const projects = [...(ownProjects ?? []), ...orgProjects.filter(p => !ownIds.has(p.id))]
+    .sort((a, b) => new Date(b.updated_at ?? 0).getTime() - new Date(a.updated_at ?? 0).getTime());
 
   // Latest security scan per project, for the dashboard's security chrome.
   // Reads only our own security_scans table — never live-probes a customer's

@@ -73,6 +73,11 @@ export interface Project {
   // that's landed in between is detected instead of silently overwritten.
   updated_at?: string;
   first_prompt?: string;
+  // Present only for an org-scoped project (see api/projects PATCH's access
+  // check) — the editor doesn't yet branch on these beyond carrying them
+  // through; that's the "peripheral routes" follow-up work, not this pass.
+  org_id?: string | null;
+  client_id?: string | null;
 }
 
 export interface Connector {
