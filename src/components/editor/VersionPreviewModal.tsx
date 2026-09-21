@@ -1,9 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { bundleFiles, generateHTML } from '@/lib/wyber-preview/engine'
+import { sanitizeFiles } from '@/lib/sanitize-files'
 
 interface VersionFiles {
-  [path: string]: { content?: string }
+  [path: string]: { content?: string; language?: string }
 }
 
 interface Props {
@@ -16,11 +16,17 @@ interface Props {
   restoring: boolean
 }
 
-// Renders a saved snapshot's files through the same client-side bundler the
-// live preview uses (see PreviewPanel.tsx), entirely off to the side — it
-// never touches useEditorStore, so looking at an old version can't clobber
-// whatever's currently in the working copy. Restoring is still a separate,
-// explicit action from here.
+// Renders a saved snapshot's files through the server-side bundler
+// (/api/web-bundle) — the SAME one the live preview uses by default
+// (PreviewPanel.tsx's betaBundler defaults to true). Deliberately NOT the
+// client-side esbuild-wasm path (wyber-preview/engine.ts's bundleFiles):
+// confirmed live, that path silently produced a blank preview for a project
+// this exact server bundler renders correctly — it's the app's own
+// unadvertised fallback (flagged with a ⚠ warning icon in PreviewPanel's own
+// UI when a user switches to it manually), not the reliable default.
+// Entirely off to the side from useEditorStore either way, so looking at an
+// old version can't clobber whatever's currently in the working copy.
+// Restoring is still a separate, explicit action from here.
 export function VersionPreviewModal({ label, createdAt, files, projectId, onClose, onRestore, restoring }: Props) {
   const [html, setHtml] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -29,17 +35,22 @@ export function VersionPreviewModal({ label, createdAt, files, projectId, onClos
   useEffect(() => {
     let cancelled = false
     ;(async () => {
-      const fileMap: Record<string, string> = {}
-      for (const [path, file] of Object.entries(files)) {
-        if (file?.content) fileMap[path] = file.content
+      try {
+        const sanitized = sanitizeFiles(files, { appId: projectId })
+        const res = await fetch('/api/web-bundle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ files: sanitized, projectId }),
+        })
+        const data = await res.json() as { html?: string; error?: string }
+        if (cancelled) return
+        if (!data.html) { setError(data.error || 'Could not build this snapshot'); return }
+        const blobUrl = URL.createObjectURL(new Blob([data.html], { type: 'text/html' }))
+        blobUrlRef.current = blobUrl
+        setHtml(blobUrl)
+      } catch (e) {
+        if (!cancelled) setError(String(e))
       }
-      const { js, css, error: bundleErr } = await bundleFiles(fileMap)
-      if (cancelled) return
-      if (!js) { setError(bundleErr || 'Could not build this snapshot'); return }
-      const builtHtml = generateHTML(js, css, projectId)
-      const blobUrl = URL.createObjectURL(new Blob([builtHtml], { type: 'text/html' }))
-      blobUrlRef.current = blobUrl
-      setHtml(blobUrl)
     })()
     return () => {
       cancelled = true
