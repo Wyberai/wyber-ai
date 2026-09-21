@@ -138,7 +138,26 @@ function hashContent(content: string): string {
  * PHASE 1 + 3: Bundle files using esbuild-wasm
  * Returns compiled JS string
  */
+// esbuild-wasm's single worker instance cannot safely handle overlapping
+// .build() calls — confirmed live: the always-mounted live PreviewPanel's
+// own background build raced a VersionPreviewModal build (both call this
+// same function) and produced genuinely corrupted output — no build-time
+// error, just a runtime "Unexpected token" once the browser tried to
+// execute the resulting JS. Every call is queued onto one chain so only one
+// esbuild.build() is ever in flight; a failed build never poisons the queue
+// for the next caller.
+let buildQueue: Promise<unknown> = Promise.resolve()
+
 export async function bundleFiles(
+  files: Record<string, string>,
+  entryPoint = '/src/App.tsx'
+): Promise<{ js: string; css: string; error?: string }> {
+  const run = buildQueue.then(() => bundleFilesInternal(files, entryPoint))
+  buildQueue = run.catch(() => {})
+  return run
+}
+
+async function bundleFilesInternal(
   files: Record<string, string>,
   entryPoint = '/src/App.tsx'
 ): Promise<{ js: string; css: string; error?: string }> {
