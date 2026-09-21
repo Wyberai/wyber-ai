@@ -37,8 +37,17 @@ ${COMMENTS_MARKER}
     var toggle = document.createElement('button');
     toggle.textContent = '💬 Feedback';
     toggle.setAttribute('aria-label', 'Leave feedback');
+    // Deliberately NOT bottom-right or bottom-left: /app/[slug] renders the
+    // published app inside a sandboxed srcDoc iframe (see track-snippet.ts),
+    // and the platform's own "Built with WyberAi" badge (bottom-right) and
+    // "Report" button (bottom-left) are fixed-position elements in the OUTER
+    // document, not this one. Since z-index only competes within a single
+    // stacking context, nothing inside this iframe — regardless of z-index —
+    // can ever paint above a same-position element in the parent document;
+    // confirmed live, the badge sat directly on top of this button and made
+    // it fully unclickable. Bottom-center avoids both.
     Object.assign(toggle.style, {
-      position: 'fixed', bottom: '16px', right: '16px', zIndex: 2147483000,
+      position: 'fixed', bottom: '16px', left: '50%', transform: 'translateX(-50%)', zIndex: 2147483000,
       background: '#111827', color: '#fff', border: 'none', borderRadius: '999px',
       padding: '10px 16px', fontSize: '13px', fontFamily: 'system-ui,-apple-system,sans-serif',
       fontWeight: '600', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
