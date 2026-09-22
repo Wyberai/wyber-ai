@@ -591,6 +591,22 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // fresh call stack (deferred via setTimeout), never nested inside the call
   // that fired them.
   const completenessRetryFiredRef = useRef(false);
+  // Same out-of-band signal as completenessRetryFiredRef, but for the OTHER
+  // wyber-autofix continuations a pass can dispatch: the stream got cut off
+  // mid-<file>/mid-<edit> (fileCut/editCut), the entry file is still the
+  // starter placeholder (4b), or Verity's QA pass found a structural issue
+  // (4b²) — each fires its own continuation the same way 4c does, but (unlike
+  // 4c) none of them told the one-shot caller in runAgenticBuild it had
+  // happened. That caller used to check only completenessRetryFiredRef before
+  // declaring "Built it — tell me what to change next", so any of these three
+  // OTHER follow-ups sailed right past that guard and got the same false-
+  // ready message while their own continuation was still about to run.
+  // Live-reproduced twice on the same todo-app build: first with a genuine
+  // fileCut (3 of 8 planned files written), then again — after fixing that —
+  // with the placeholder-retry path (4b) firing instead, because App.tsx was
+  // still detected as the starter placeholder after the pass. Set at every
+  // one of those dispatch sites, not just fileCut/editCut.
+  const streamCutRef = useRef(false);
   // Tracks which file paths were written in the last edit turn so the NEXT
   // turn's file-scoring gives them a +50 boost. Without this, the model loses
   // track of its own edits on follow-up messages and rewrites files from scratch.
@@ -1176,6 +1192,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     setProgressSteps([]);
     setLiveReasoning('');
     completenessRetryFiredRef.current = false;
+    streamCutRef.current = false;
     // A fresh user-initiated turn resets the self-heal budget (silent autofix runs do not).
     if (!opts?.silent && !opts?.autoRetry) { autofixCountRef.current = 0; loopGuardRef.current.reset(); buildAutoRetryCountRef.current = 0; totalRepairPassesRef.current = 0; repairBudgetNotifiedRef.current = false; }
     // A genuinely fresh visible turn — not a staged pass (stage set), not a
@@ -1710,6 +1727,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const fileCut = lastFileOpen !== -1 && full.indexOf('</file>', lastFileOpen) === -1;
       const editCut = lastEditOpen !== -1 && full.indexOf('</edit>', lastEditOpen) === -1;
       if (fileCut || editCut) {
+        streamCutRef.current = true;
         const cutAt = fileCut ? lastFileOpen : lastEditOpen;
         const cm = full.slice(cutAt).match(/path="([^"]+)"/);
         const cutPath = cm ? cm[1] : 'the last file';
@@ -1817,6 +1835,10 @@ const storeProjectId = useEditorStore.getState().project?.id;
       let editIncompleteReported = false
       if (newFiles.length >= 2 && !isSelfHeal && !fileCut && !editCut && isPlaceholderApp(appAfter?.content)) {
         placeholderRetryFired = true
+        // Same out-of-band signal fileCut/editCut sets above — this dispatches
+        // its own wyber-autofix continuation just like those do, so the
+        // one-shot caller needs to know about it too (see streamCutRef).
+        streamCutRef.current = true
         const entry = projectType === 'mobile' ? 'App.tsx' : 'src/App.tsx'
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('wyber-autofix', {
@@ -1841,6 +1863,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const qaIssues = runQaChecks(updatedFiles, projectType).filter(i => i.kind !== 'missing-entry')
         if (qaIssues.length > 0) {
           qaRetryFired = true
+          // Same reasoning as the placeholder-retry branch above.
+          streamCutRef.current = true
           // Deliberately silent, same as the runtime self-heal above: this is
           // still a free, invisible fix pass, but it no longer pushes each
           // finding + a "structural issue(s) found — fixing" summary into the
@@ -1911,6 +1935,47 @@ const storeProjectId = useEditorStore.getState().project?.id;
               batchIndex++
             }
           }
+        }
+      }
+
+      // 4c². Design-token completeness — a fresh build can pass every other
+      // check (right file count, every component using semantic classes —
+      // see assessDesignFreshness below) while still shipping the bland
+      // monochrome fallback look, because none of those checks look at
+      // whether src/index.css itself ever got a real palette.
+      // sanitizeFiles' DEFAULT_TOKENS_CSS injection (design-system.ts) exists
+      // purely so an app is never fully UNSTYLED — it was never meant to be
+      // the final look, but if the model runs out of room before writing its
+      // own :root tokens, that generic near-black/near-white fallback is all
+      // that ships, and nothing downstream ever asks for a real one. Live-
+      // reproduced: a todo-app build's entire src/index.css was
+      // `*, *::before, *::after { box-sizing: border-box; } body { margin: 0;
+      // padding: 0; }` — zero custom properties — while every component
+      // correctly used bg-primary/text-foreground/etc, so
+      // assessDesignFreshness (class-name hygiene only, no visibility into
+      // the token VALUES those classes resolve to) saw nothing wrong.
+      // Lowest priority, same as 4c: only fires if nothing else already
+      // claimed this pass, and only for a genuine fresh first build (mirrors
+      // assessDesignFreshness's own gate) — never mobile (no Tailwind CSS
+      // tokens there) and never a repair pass itself, so a failed attempt
+      // can't loop.
+      if (!isSelfHeal && !hasGeneratedFiles && projectType !== 'mobile'
+          && !fileCut && !editCut && !placeholderRetryFired && !qaRetryFired && !completenessRetryFired
+          && (newFiles.length > 0 || editBlocks.length > 0)) {
+        const cssEntry = updatedFiles['src/index.css'] as { content?: string } | string | undefined
+        const cssContent = typeof cssEntry === 'string' ? cssEntry : (cssEntry?.content ?? '')
+        if (cssContent && !/--background\s*:/.test(cssContent)) {
+          completenessRetryFired = true
+          completenessRetryFiredRef.current = true
+          pushAgentEvents({ agent: 'design', status: 'fixing', detail: 'index.css has no custom palette yet — asking for one' })
+          setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('wyber-autofix', {
+              detail: {
+                continuation: true,
+                prompt: `src/index.css only has a bare CSS reset — it never defines this app's own color palette as CSS custom properties (--background, --foreground, --card, --card-foreground, --primary, --primary-foreground, --secondary, --muted, --muted-foreground, --accent, --accent-foreground, --destructive, --border, --input, --ring, each as an HSL triplet like "240 10% 3.9%"). Every component already references these via bg-primary/text-foreground/etc, so right now they're all resolving to a generic fallback. Output the COMPLETE <file> block for src/index.css with the @tailwind directives plus a real, distinctive :root token palette that actually fits this app (and .dark overrides if the app supports dark mode) — not the generic near-black/near-white default. Do not change any other file. AUTOMATED CONTINUATION: after the last </file> tag, write ZERO additional words — no questions, no offers, no recap.`,
+              },
+            }))
+          }, 650)
         }
       }
 
@@ -2499,13 +2564,15 @@ const storeProjectId = useEditorStore.getState().project?.id;
       const plannedPaths = (staged?.files ?? manifest).map(f => f.path);
       const filesAtCloseOneShot = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
       const liveFilesOneShot = plannedPaths.filter(p => filesAtCloseOneShot[p] !== undefined);
-      if (oneShotOk && completenessRetryFiredRef.current) {
-        // executeGeneration's own completeness check (4c) just found real
-        // planned files this pass never wrote and dispatched a repair pass —
-        // same signal the ownsBubble branch inside executeGeneration already
-        // respects (see the comment there). "Built it — check the preview"
-        // here would be exactly the false-ready message that check exists to
-        // prevent — files are still actively being generated.
+      if (oneShotOk && (completenessRetryFiredRef.current || streamCutRef.current)) {
+        // executeGeneration just dispatched its own follow-up pass — either
+        // its completeness check (4c) found real planned files this pass
+        // never wrote, OR the stream itself got cut off mid-<file>/mid-<edit>
+        // (streamCutRef; see its declaration). Both are the same signal the
+        // ownsBubble branch inside executeGeneration already respects (see
+        // the comment there). "Built it — check the preview" here would be
+        // exactly the false-ready message that check exists to prevent —
+        // files are still actively being generated.
         //
         // An earlier version of this fix left the bubble at status:'streaming'
         // and stopped, trusting the repair pass's own bubble to be the one

@@ -106,6 +106,38 @@ const HEARTBEAT_BYTES = new TextEncoder().encode('\n[agent:{"agent":"heartbeat",
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
+// A dropped TCP connection to Anthropic (ECONNRESET, or undici's generic
+// "terminated") while OPENING a new stream() call is a transient network
+// blip, not a real failure — but the tool-use loop's one outer try/catch
+// (see 'Tool-use stream error:' below) treats it exactly like a genuine
+// model/API error: log it and give up on the whole pass, discarding however
+// many iterations of real tool-call output already landed. Live-reproduced:
+// a todo-app build died with exactly this after 3.9 minutes and 0 files
+// written. The SDK's own retry logic only covers connection SETUP, not a
+// reset that happens to land right as a fresh stream() call is issued — so
+// wrap just that one call, retried once, at both of its call sites (first
+// iteration and the loop's continuation). Never wraps the `for await`
+// consumption of an already-open stream: content from that may already be
+// enqueued to the client, so blindly re-issuing the request there risks
+// duplicate <file> output.
+function isTransientStreamError(e: unknown): boolean {
+  const msg = String((e as { message?: string })?.message ?? e)
+  const cause = (e as { cause?: unknown })?.cause
+  const causeMsg = String((cause as { message?: string })?.message ?? cause ?? '')
+  const causeCode = (cause as { cause?: { code?: string } })?.cause?.code ?? (cause as { code?: string })?.code
+  return /ECONNRESET|terminated|socket hang up|ETIMEDOUT|EPIPE/i.test(`${msg} ${causeMsg} ${causeCode ?? ''}`)
+}
+async function streamWithRetry(params: Parameters<typeof client.messages.stream>[0]) {
+  try {
+    return await client.messages.stream(params)
+  } catch (e) {
+    if (!isTransientStreamError(e)) throw e
+    console.log('[generate] transient stream error opening a new pass, retrying once:', String(e))
+    await new Promise(r => setTimeout(r, 500))
+    return await client.messages.stream(params)
+  }
+}
+
 // Use central model map — single source of truth
 const MODELS = MODEL_IDS
 
@@ -4692,16 +4724,33 @@ ${code}
       // (Sonnet's intro rate runs through 2026-08-31, then reverts to
       // $3/$15 — recalibrate this table then too). gpt/wybercode don't
       // bill through Anthropic; left at 0 rather than guessed.
-      const RATE_PER_MTOK: Record<string, { input: number; output: number }> = {
-        fast: { input: 2, output: 10 },
-        default: { input: 5, output: 25 },
-        premium: { input: 5, output: 25 },
-        fable: { input: 10, output: 50 },
-        gpt: { input: 0, output: 0 },
-        wybercode: { input: 0, output: 0 },
+      //
+      // cacheWrite/cacheRead were MISSING entirely until now — this route
+      // sends every system prompt with cache_control:{type:'ephemeral'}
+      // (5-min TTL, standard 1.25x-write/0.1x-read multiplier on the base
+      // input rate), and totalCacheCreationTokens/totalCacheReadTokens were
+      // already being tracked and written to their own DB columns, but never
+      // folded into costUsd. For an iterative code editor that re-sends the
+      // same large file context every turn (a near-ideal cache-hit pattern),
+      // cache tokens routinely dwarf raw input tokens — confirmed live on one
+      // real account's full history: cache read+write exceeded 6M tokens
+      // against a few dozen raw input tokens, and the logged cost was ~4x
+      // UNDER the true figure once cache is priced in ($16.35 logged vs
+      // $65.27 true). Every "real cost" number this table has ever produced
+      // was wrong by roughly that multiplier.
+      const RATE_PER_MTOK: Record<string, { input: number; output: number; cacheWrite: number; cacheRead: number }> = {
+        fast: { input: 2, output: 10, cacheWrite: 2.5, cacheRead: 0.2 },
+        default: { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
+        premium: { input: 5, output: 25, cacheWrite: 6.25, cacheRead: 0.5 },
+        fable: { input: 10, output: 50, cacheWrite: 12.5, cacheRead: 1 },
+        gpt: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
+        wybercode: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0 },
       }
       const rate = RATE_PER_MTOK[resolvedTier] ?? RATE_PER_MTOK.default
-      const costUsd = (totalInputTokens / 1_000_000) * rate.input + (totalOutputTokens / 1_000_000) * rate.output
+      const costUsd = (totalInputTokens / 1_000_000) * rate.input
+        + (totalOutputTokens / 1_000_000) * rate.output
+        + (totalCacheCreationTokens / 1_000_000) * rate.cacheWrite
+        + (totalCacheReadTokens / 1_000_000) * rate.cacheRead
       try {
         const { createServiceClient } = await import('@/lib/supabase/server')
         const admin = createServiceClient()
@@ -5476,17 +5525,53 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         // "File written." results, iteration 2 lets the model add its usual
         // one-line recap. MAX_TOOL_ITERATIONS caps runaway loops; in practice
         // this should almost always take exactly 2 passes.
-        const firstStream = await client.messages.stream({
-          model,
-          max_tokens: stageMaxTokens,
-          system: systemBlocks,
-          messages: finalMessages,
-          tools: [writeFileTool, editFileTool],
-          ...thinkingParam,
-        })
-
         readable = new ReadableStream({
           async start(controller) {
+            // Arm the heartbeat BEFORE the initial Anthropic call, not after —
+            // this used to be `const firstStream = await client.messages.stream(...)`
+            // sitting OUTSIDE this ReadableStream entirely, which meant zero
+            // bytes (not even a heartbeat) went out to the client from the
+            // moment the request landed until that first call resolved. Under
+            // normal load that's fast enough not to matter; live-reproduced the
+            // failure mode when it isn't: a real build died with
+            // net::ERR_CONNECTION_CLOSED at ~270s total, having spent only
+            // ~1 cent of Claude usage — some intermediary killed the visibly
+            // idle connection while still waiting on the FIRST stream to even
+            // start, long before our own 800s maxDuration or the client's 600s
+            // idle-stream guard could ever fire. Same fix already proven above
+            // on the claude-parallel path ("Open the stream immediately so the
+            // client gets headers + heartbeats during the parallel wait").
+            let inThinkingBlock = false
+            let toolOpened = false
+            const MAX_TOOL_SUPPRESSION_MS = 60_000
+            let toolSuppressedSince: number | null = null
+            const heartbeatTimer = setInterval(() => {
+              if (inThinkingBlock) { toolSuppressedSince = null; return }
+              const suppressed = toolOpened
+              if (suppressed) {
+                if (toolSuppressedSince === null) toolSuppressedSince = Date.now()
+                if (Date.now() - toolSuppressedSince < MAX_TOOL_SUPPRESSION_MS) return
+              } else {
+                toolSuppressedSince = null
+              }
+              try { controller.enqueue(HEARTBEAT_BYTES) } catch { /* stream closing */ }
+            }, HEARTBEAT_INTERVAL_MS)
+
+            let stream: Awaited<ReturnType<typeof client.messages.stream>>
+            try {
+              stream = await streamWithRetry({
+                model,
+                max_tokens: stageMaxTokens,
+                system: systemBlocks,
+                messages: finalMessages,
+                tools: [writeFileTool, editFileTool],
+                ...thinkingParam,
+              })
+            } catch (e) {
+              clearInterval(heartbeatTimer)
+              throw e
+            }
+
             // Iteration budget: balance completeness vs latency.
             // New builds: Sonnet gets 3, Opus gets 6 (needs exploration).
             // Simple edits (small prompt, <5 files touched): Sonnet gets 1-2 (30-90s max).
@@ -5513,8 +5598,6 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               try { controller.enqueue(encoder.encode(startMarker)) } catch { /* stream closing */ }
             }
             let loopMessages: Anthropic.MessageParam[] = [...finalMessages]
-            let stream = firstStream
-            let inThinkingBlock = false
             let toolJson = ''
             let toolName = ''
             // Live per-file streaming (sub-phase 2): the SDK's own partial-JSON
@@ -5529,37 +5612,25 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             // content_block_stop.
             let pathStreamer = makeJsonFieldStreamer('path')
             let contentStreamer = makeJsonFieldStreamer('content')
-            let toolOpened = false
             let toolEmittedLen = 0
             // One-shot: forced follow-up when a new build ends without its
             // entry file (see the end_turn branch below).
             let entryRetried = false
-            // See HEARTBEAT_BYTES above. Skipped while a file/edit body or a
-            // reasoning block is actively streaming — those bytes are literal
-            // file content or displayed reasoning prose, not a safe place to
-            // interleave an out-of-band marker. Same MAX_SUPPRESSION_MS
-            // override as the legacy loop's heartbeat below — a single file
-            // can now legitimately stream for well over a minute (64000
-            // max_tokens), and unbounded suppression here fed the exact same
-            // false-abort failure live-reproduced on that path. inThinkingBlock
-            // stays UNCONDITIONALLY suppressed (no override) — live-reproduced
-            // why on the legacy loop's identical override: extractReasoning()
-            // shows that content verbatim in the "show reasoning" panel with
-            // no marker-stripping, so forcing a heartbeat through mid-thought
-            // put the raw `[agent:{...}]` text directly in front of the user.
-            const MAX_TOOL_SUPPRESSION_MS = 60_000
-            let toolSuppressedSince: number | null = null
-            const heartbeatTimer = setInterval(() => {
-              if (inThinkingBlock) { toolSuppressedSince = null; return }
-              const suppressed = toolOpened
-              if (suppressed) {
-                if (toolSuppressedSince === null) toolSuppressedSince = Date.now()
-                if (Date.now() - toolSuppressedSince < MAX_TOOL_SUPPRESSION_MS) return
-              } else {
-                toolSuppressedSince = null
-              }
-              try { controller.enqueue(HEARTBEAT_BYTES) } catch { /* stream closing */ }
-            }, HEARTBEAT_INTERVAL_MS)
+            // heartbeatTimer/inThinkingBlock/toolOpened/MAX_TOOL_SUPPRESSION_MS/
+            // toolSuppressedSince are all armed above, before the initial
+            // client.messages.stream() call — see the comment there. Skipped
+            // while a file/edit body or a reasoning block is actively
+            // streaming — those bytes are literal file content or displayed
+            // reasoning prose, not a safe place to interleave an out-of-band
+            // marker. A single file can now legitimately stream for well over
+            // a minute (64000 max_tokens), and unbounded suppression here fed
+            // the exact same false-abort failure live-reproduced on that path.
+            // inThinkingBlock stays UNCONDITIONALLY suppressed (no override) —
+            // live-reproduced why on the legacy loop's identical override:
+            // extractReasoning() shows that content verbatim in the "show
+            // reasoning" panel with no marker-stripping, so forcing a
+            // heartbeat through mid-thought put the raw `[agent:{...}]` text
+            // directly in front of the user.
             try {
               // `<=` — one pass past MAX_TOOL_ITERATIONS is reserved for the
               // entry-file guarantee: even when the continuation budget is
@@ -5817,7 +5888,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                       ],
                     },
                   ]
-                  stream = await client.messages.stream({
+                  stream = await streamWithRetry({
                     model,
                     max_tokens: stageMaxTokens,
                     system: systemBlocks,
@@ -5850,7 +5921,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                       { role: 'assistant', content: finalMsg.content },
                       { role: 'user', content: `You finished without writing ${entryPath} — the app cannot render without its entry file. Call write_file now with the COMPLETE ${entryPath}, wiring together the components you already created. Do not rewrite any other file.` },
                     ]
-                    stream = await client.messages.stream({
+                    stream = await streamWithRetry({
                       model,
                       max_tokens: stageMaxTokens,
                       system: systemBlocks,
@@ -5875,7 +5946,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                         { role: 'assistant', content: finalMsg.content },
                         { role: 'user', content: `${sqlVetoes.map(v => v.fixInstruction).join('\n')}\nRe-emit ONLY the corrected "SQL TO RUN IN SUPABASE" comment block, complete — do not repeat anything else and do not call any tools.` },
                       ]
-                      stream = await client.messages.stream({
+                      stream = await streamWithRetry({
                         model,
                         max_tokens: stageMaxTokens,
                         system: systemBlocks,
@@ -5926,7 +5997,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   { role: 'assistant', content: finalMsg.content },
                   { role: 'user', content: toolResults },
                 ]
-                stream = await client.messages.stream({
+                stream = await streamWithRetry({
                   model,
                   max_tokens: stageMaxTokens,
                   system: systemBlocks,
