@@ -1,7 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
-import { notify } from '@/lib/push';
 import { REFERRAL_LIMIT } from '@/lib/referral';
 
 // The post-authentication side effects every sign-in path (OAuth, clicked
@@ -100,26 +99,28 @@ export async function onboardUser({ user, supabase, ipCountry, refCode, origin, 
 
         if (cleanRefCode) {
           const { data: referrer } = await admin.from('profiles')
-            .select('id, referral_count, referral_credits_earned')
+            .select('id, referral_count')
             .eq('referral_code', cleanRefCode).maybeSingle();
           // Once a code has paid out REFERRAL_LIMIT times it stops working
-          // entirely — no referred_by link, no new-account welcome bonus,
-          // no referrer payout. Previously only the referrer's payout was
-          // capped (at 5, not 3) while new accounts kept farming the
-          // welcome bonus off the same link indefinitely — confirmed live,
-          // one code was reused across 4 accounts in ~3 hours with no
-          // ceiling on the new-account side at all.
+          // entirely — no referred_by link, no new-account welcome bonus.
+          // Previously only the referrer's payout was capped (at 5, not 3)
+          // while new accounts kept farming the welcome bonus off the same
+          // link indefinitely — confirmed live, one code was reused across
+          // 4 accounts in ~3 hours with no ceiling on the new-account side
+          // at all.
+          //
+          // The referrer's own 50-credit reward no longer pays out here —
+          // it used to fire at signup regardless of whether the referred
+          // friend ever paid, which just farmed free signups. It now pays
+          // out on that friend's first real payment instead (see
+          // rewardReferrerOnFirstPayment in lib/referral.ts, called from
+          // the Dodo webhook).
           const referralCount = referrer?.referral_count ?? 0;
           if (referrer && referrer.id !== user.id && referralCount < REFERRAL_LIMIT) {
             await admin.rpc('adjust_credits', { p_user_id: user.id, p_delta: 20 });
             await admin.from('profiles').update({ referred_by: referrer.id }).eq('id', user.id);
-            await admin.rpc('adjust_credits', { p_user_id: referrer.id, p_delta: 50 });
-            await admin.from('profiles').update({
-              referral_count: referralCount + 1,
-              referral_credits_earned: (referrer.referral_credits_earned ?? 0) + 50,
-            }).eq('id', referrer.id);
+            await admin.from('profiles').update({ referral_count: referralCount + 1 }).eq('id', referrer.id);
             if (user.email) sendAdminSignupAlert(user.email, `referred by ${cleanRefCode}`).catch(() => {});
-            notify(admin, referrer.id, 'referral', { credits: 50 }).catch(() => {});
           }
         }
       } catch (e) { console.error('signup perks (referral/student) failed:', e); }

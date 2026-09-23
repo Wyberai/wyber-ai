@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
-import { notify } from '@/lib/push'
 import { REFERRAL_LIMIT } from '@/lib/referral'
 
 // GET - get user's referral code and stats
@@ -48,7 +47,7 @@ export async function POST(req: NextRequest) {
 
     // Find referrer
     const { data: referrer } = await admin.from('profiles')
-      .select('id, credits, referral_count, referral_credits_earned')
+      .select('id, referral_count')
       .eq('referral_code', code.toUpperCase()).single()
 
     if (!referrer) return NextResponse.json({ error: 'Invalid referral code' }, { status: 404 })
@@ -72,19 +71,21 @@ export async function POST(req: NextRequest) {
       .select('referred_by, credits').eq('id', user.id).single()
     if (me?.referred_by) return NextResponse.json({ error: 'Already redeemed a referral code' }, { status: 400 })
 
-    // Give 20 bonus credits to new user, 50 to referrer
+    // Give 20 bonus credits to the new user now. The referrer's own 50-credit
+    // reward no longer pays out here — it used to fire on redemption
+    // regardless of whether the referred friend ever paid, which just farmed
+    // free signups. It now pays out on that friend's first real payment
+    // instead (see rewardReferrerOnFirstPayment in lib/referral.ts, called
+    // from the Dodo webhook). referral_count still increments here so the
+    // REFERRAL_LIMIT abuse cap keeps working the same way.
     await admin.from('profiles').update({
       credits: (me?.credits ?? 0) + 20,
       referred_by: referrer.id,
     }).eq('id', user.id)
 
     await admin.from('profiles').update({
-      credits: (referrer.credits ?? 0) + 50,
       referral_count: (referrer.referral_count ?? 0) + 1,
-      referral_credits_earned: (referrer.referral_credits_earned ?? 0) + 50,
     }).eq('id', referrer.id)
-
-    notify(admin, referrer.id, 'referral', { credits: 50 }).catch(() => {})
 
     return NextResponse.json({ success: true, bonusCredits: 20 })
   } catch (err) {

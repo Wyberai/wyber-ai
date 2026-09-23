@@ -13,6 +13,7 @@ import { sendMetaEvent } from '@/lib/meta-capi'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { templateFilesToProjectFiles } from '@/lib/template-to-project'
 import { accrueAffiliateCommission, reverseAffiliateCommissionForPayment } from '@/lib/affiliate'
+import { rewardReferrerOnFirstPayment } from '@/lib/referral'
 
 function getAdmin() {
   return createClient(
@@ -446,6 +447,10 @@ export async function POST(req: NextRequest) {
           sendAdminPaymentAlert(userEmail, `Top-up: ${topupCredits} credits`).catch(() => {})
         }
         await reportMetaPurchase(req, event, metadata, userEmail, dedupeId)
+        // A top-up is a real payment — the referred-by-a-friend reward is
+        // "first real payment", not "first subscription", so it fires here
+        // too. Idempotent on the referred user (see rewardReferrerOnFirstPayment).
+        await rewardReferrerOnFirstPayment(admin, referredByUserId, userId)
         return NextResponse.json({ received: true })
       }
 
@@ -528,6 +533,12 @@ export async function POST(req: NextRequest) {
           dodoEventType: eventType, dodoPaymentId: commissionPaymentId,
           planKey: String(metadata.plan || ''), chargeUsd,
         })
+        // Free-credit referral reward — "first real payment", same guard as
+        // the affiliate accrual above so the payment.succeeded/
+        // subscription.active pair never double-pays. Idempotent on the
+        // referred user regardless, so this is a belt-and-braces guard, not
+        // the only one.
+        await rewardReferrerOnFirstPayment(admin, referredByUserId, userId)
       }
     }
 
