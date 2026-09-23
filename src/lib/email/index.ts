@@ -12,20 +12,9 @@ import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 // the transport swaps back without touching a single call site.
 const RESEND_API_URL = 'https://api.resend.com/emails'
 
-async function sendMail(opts: { from: string; to: string; subject: string; html: string; unsubUrl?: string }): Promise<{ id: string | null }> {
+async function sendMail(opts: { from: string; to: string; subject: string; html: string }): Promise<{ id: string | null }> {
   const apiKey = process.env.RESEND_API_KEY
   if (!apiKey) throw new Error('RESEND_API_KEY is not set — cannot send email')
-
-  // RFC 8058 one-click unsubscribe: only on emails that already carry an
-  // unsubUrl (lifecycle/drip), never on transactional sends. Without this,
-  // Gmail's native "Unsubscribe" button (if shown) posts straight to Resend
-  // and never touches our own /unsubscribe page — email_opt_out never gets
-  // set. The webhook handler (src/app/api/resend/webhook) is the backstop
-  // for whichever path the mailbox provider actually takes.
-  const headers = opts.unsubUrl ? {
-    'List-Unsubscribe': `<${opts.unsubUrl}>`,
-    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-  } : undefined
 
   const res = await fetch(RESEND_API_URL, {
     method: 'POST',
@@ -35,7 +24,6 @@ async function sendMail(opts: { from: string; to: string; subject: string; html:
       to: opts.to,
       subject: opts.subject,
       html: opts.html,
-      ...(headers ? { headers } : {}),
     }),
   })
 
@@ -224,22 +212,6 @@ export async function sendAdminClinicLeadAlert(leadEmail: string, source: string
     ${infoBox([['Email', leadEmail], ['Source', source], ['When', new Date().toUTCString()]])}
   `, `New clinic-ops lead: ${leadEmail}`)
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🦷 New clinic-ops lead: ${leadEmail}`, html })
-}
-
-export async function sendAdminEnterpriseLeadAlert(lead: { name: string; email: string; company: string; teamSize?: string; message?: string }) {
-  const html = wrap(`
-    ${h1('New enterprise enquiry 🏢')}
-    ${p(`<strong style="color:#f0f0f4">${lead.name}</strong> from <strong style="color:#f0f0f4">${lead.company}</strong> submitted the Enterprise contact form.`)}
-    ${infoBox([['Name', lead.name], ['Email', lead.email], ['Company', lead.company], ['Team size', lead.teamSize || 'not given'], ['When', new Date().toUTCString()]])}
-    ${lead.message ? `<div style="background:#1a1a1e;border:1px solid #2e2e38;border-radius:10px;padding:18px;margin:0 0 24px">
-      <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#555566;text-transform:uppercase;letter-spacing:0.06em">Message</p>
-      <p style="margin:0;font-size:14px;color:#8888a0;line-height:1.65">${lead.message}</p>
-    </div>` : ''}
-    <div style="text-align:center;margin:0 0 24px">
-      ${btn('View in admin →', `${APP_URL}/admin/enterprise-leads`)}
-    </div>
-  `, `Enterprise enquiry: ${lead.company}`)
-  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🏢 Enterprise enquiry: ${lead.company} (${lead.name})`, html })
 }
 
 export async function sendAdminMcpProjectAlert(userEmail: string, projectName: string, framework: string) {
@@ -751,7 +723,7 @@ export async function sendCreditsExhaustedEmail(to: string, sendNumber: number, 
     </div>
     ${p('Every plan includes every feature. Unused credits roll over; top-ups never expire.')}
   `, v.heading, unsubUrl)
-  return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html, unsubUrl })
+  return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
 
 // ── 7c. Never-built nudge (signed up, never generated an app) ────────────────
@@ -771,7 +743,7 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
     </div>
     ${p('Stuck or skeptical? Reply to this email and tell us what you want to build — a human reads every reply.')}
   `, 'Your free credits are waiting', unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Your 30 free credits are still waiting ⚡', html, unsubUrl })
+  return sendMail({ from: FROM, to, subject: 'Your 30 free credits are still waiting ⚡', html })
 }
 
 // ── 7d. Built-but-never-published nudge — 2-touch (was one-shot only) ───────
@@ -800,7 +772,7 @@ export async function sendPublishNudgeEmail(to: string, projectName: string, pro
     </div>
     ${p('You can also connect your own domain, push to GitHub, or export the full source as a ZIP.')}
   `, v.subject, unsubUrl)
-  return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html, unsubUrl })
+  return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
 
 // ── 8. App deployed successfully ──────────────────────────────────────────────
@@ -1169,7 +1141,7 @@ export async function sendQuickStartNudgeEmail(to: string, name: string, unsubUr
     </div>
     ${p('No pressure — your 30 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
   `, "Your first app takes about 60 seconds", unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html, unsubUrl })
+  return sendMail({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
 }
 
 // ── 23. Post-first-build nurture — fires the day after the aha-moment email ─
@@ -1319,7 +1291,7 @@ export async function sendWinBackEmail(to: string, name: string, remaining: numb
       ${btn('Pick up where you left off →', `${APP_URL}/dashboard`)}
     </div>
   `, "Still there? Your credits are waiting", unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Still there? 👋', html, unsubUrl })
+  return sendMail({ from: FROM, to, subject: 'Still there? 👋', html })
 }
 
 // ── 32. Unused credits — 3+ days old, 0 builds, credits ≥ 45 ───────────────
@@ -1352,7 +1324,7 @@ export async function sendUnusedCreditsEmail(to: string, name: string, credits: 
     </table>
     ${p("Once you've built your first thing, you'll wonder what took you so long.")}
   `, `You have ${credits} credits doing nothing`, unsubUrl)
-  return sendMail({ from: FROM, to, subject: `${name}, your ${credits} free credits are doing nothing`, html, unsubUrl })
+  return sendMail({ from: FROM, to, subject: `${name}, your ${credits} free credits are doing nothing`, html })
 }
 
 // ── 31. Breakup email — 45–60 days silent, last touch, no meme on purpose ──
@@ -1365,7 +1337,7 @@ export async function sendBreakupEmail(to: string, name: string, unsubUrl: strin
       ${btn('Still interested →', `${APP_URL}/dashboard`, '#3d3d4a')}
     </div>
   `, "Should we close your file?", unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Should we close your file?', html, unsubUrl })
+  return sendMail({ from: FROM, to, subject: 'Should we close your file?', html })
 }
 
 // ── 32. Milestone celebration — 1000 creators ──
@@ -1379,7 +1351,7 @@ export async function sendMilestoneEmail(to: string, name?: string, unsubUrl?: s
       ${btn('Keep building →', `${APP_URL}/dashboard`)}
     </div>
   `, 'We hit 1,000 creators', unsubUrl)
-  return sendMail({ from: FROM, to, subject: '🎉 We hit 1,000 creators', html, unsubUrl })
+  return sendMail({ from: FROM, to, subject: '🎉 We hit 1,000 creators', html })
 }
 
 // ── Free US scoping-call lifecycle (src/app/api/cal/webhook, src/app/api/cron/consultation-reminders) ──

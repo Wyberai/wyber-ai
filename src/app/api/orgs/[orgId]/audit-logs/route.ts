@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   const db = createServiceClient()
   const { data, error } = await db
     .from('audit_logs')
-    .select('id, user_id, action, resource_type, resource_id, created_at, profiles(email)')
+    .select('id, user_id, action, resource_type, resource_id, created_at')
     .eq('org_id', orgId)
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
