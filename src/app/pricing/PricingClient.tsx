@@ -238,7 +238,7 @@ function PlanCard({
         </button>
       ) : (
         <a
-          href="mailto:hello@wyberai.com?subject=Enterprise enquiry"
+          href="/enterprise"
           style={{
             display: 'block', width: '100%', padding: '13px 0', borderRadius: 10,
             background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)',

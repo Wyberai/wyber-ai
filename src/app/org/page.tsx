@@ -158,7 +158,10 @@ export default function OrgPage() {
                     <div style={{ fontSize:12, color:'#3f3f46' }}>wyberai.com/org/{org.slug} · {org.plan} plan</div>
                     {org.industry && <div style={{ fontSize:12, color:'#52525b', marginTop:4 }}>{org.industry}{org.company_size ? ` · ${org.company_size} employees` : ''}</div>}
                   </div>
-                  <span style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:10, background:'rgba(14,165,233,0.08)', color:SKY, textTransform:'uppercase', letterSpacing:'0.05em' }}>{org.plan}</span>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:10, background:'rgba(14,165,233,0.08)', color:SKY, textTransform:'uppercase', letterSpacing:'0.05em' }}>{org.plan}</span>
+                    <Link href={`/org/${org.id}`} style={{ fontSize:12, color:SKY, textDecoration:'none', padding:'5px 12px', borderRadius:7, border:`1px solid ${SKY}33` }}>Team &amp; security</Link>
+                  </div>
                 </div>
 
                 {/* Custom domain section */}

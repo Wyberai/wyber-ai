@@ -57,5 +57,16 @@ export async function POST(req: NextRequest) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Every RBAC-protected /api/orgs/[orgId] route checks organization_members, not
+  // organizations.owner_id — without this row the owner would be locked out of their
+  // own org (invite members, SSO, audit logs, settings) the moment they create it.
+  const { error: memberError } = await db.from('organization_members')
+    .insert({ org_id: data.id, user_id: user.id, role: 'owner', invited_via: 'manual' })
+  if (memberError) {
+    await db.from('organizations').delete().eq('id', data.id)
+    return NextResponse.json({ error: memberError.message }, { status: 500 })
+  }
+
   return NextResponse.json({ organization: data }, { status: 201 })
 }

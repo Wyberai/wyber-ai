@@ -10,6 +10,7 @@ export type OrgCapability =
   | 'org.invite_members'
   | 'org.remove_members'
   | 'org.change_member_role'
+  | 'org.delete'
   | 'project.view'
   | 'project.create'
   | 'project.update'
@@ -18,7 +19,7 @@ export type OrgCapability =
 const MATRIX: Record<OrgRole, OrgCapability[]> = {
   owner: [
     'org.manage_settings', 'org.manage_billing', 'org.manage_sso', 'org.view_audit_logs',
-    'org.invite_members', 'org.remove_members', 'org.change_member_role',
+    'org.invite_members', 'org.remove_members', 'org.change_member_role', 'org.delete',
     'project.view', 'project.create', 'project.update', 'project.delete',
   ],
   admin: [
