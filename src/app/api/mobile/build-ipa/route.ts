@@ -22,20 +22,20 @@ async function refundBuildCost(admin: ReturnType<typeof createAdminClient>, user
   } catch (e) { console.error('[mobile/build-ipa] refund failed', e) }
 }
 
-// This route authenticates to Expo's EAS API with the user's GitHub OAuth
-// token, which is not a valid Expo credential — the EAS call 401s every time
-// (no EXPO_TOKEN is configured anywhere in this project). Gated off at the
-// route level, not just in the MCP tool wrapper, so the web editor's own
-// Export IPA button (MobilePreviewPanel.tsx) can't deduct-then-refund 50cr on
-// a build that's guaranteed to fail either. Flip back on once a real build
-// backend (EAS with a real token, or the GitHub-Actions self-build pattern
-// the companion app moved to) is wired up here.
-const MOBILE_BUILD_BACKEND_ENABLED = process.env.MOBILE_BUILD_BACKEND_ENABLED === 'true'
+// build-apk/route.ts now has a real backend (GitHub Actions + EXPO_TOKEN,
+// see that file's comment). This route is deliberately kept on its OWN flag
+// rather than reusing that one: a real iOS build additionally needs Apple
+// Developer Program signing credentials (any distribution — ad-hoc, TestFlight,
+// or App Store — requires real Apple certs; EAS can't produce an installable
+// IPA without them). Don't flip this on just because APK_BUILD_ENABLED is on;
+// wire up Apple credentials + an ios build job in build-artifact.yml first.
+// See build-apk/route.ts's identical constant for why this is NEXT_PUBLIC_-prefixed.
+const IPA_BUILD_BACKEND_ENABLED = process.env.NEXT_PUBLIC_MOBILE_IPA_BUILD_ENABLED === 'true'
 
 export async function POST(req: NextRequest) {
-  if (!MOBILE_BUILD_BACKEND_ENABLED) {
+  if (!IPA_BUILD_BACKEND_ENABLED) {
     return NextResponse.json(
-      { error: 'IPA export isn\'t available right now — the mobile build pipeline needs a real build backend. No credits are charged. Use Export Code to download the project and build it yourself in the meantime.' },
+      { error: 'IPA export isn\'t available right now — real iOS builds need Apple Developer Program signing credentials, which aren\'t configured yet. No credits are charged. Use Export Code to download the project and build it yourself in the meantime.' },
       { status: 503 },
     )
   }

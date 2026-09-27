@@ -654,7 +654,7 @@ const handler = createMcpHandler(
 
     server.tool(
       'export_mobile_build',
-      'Export APK or IPA for mobile app. Currently unavailable — always returns an error, no credits charged.',
+      'Export APK or IPA for mobile app. APK builds run on a real backend (GitHub Actions + EAS); IPA still needs Apple Developer credentials and stays unavailable.',
       {
         project_id: z.string().describe('Project ID'),
         format: z.enum(['apk', 'ipa']).describe('Export format'),
@@ -664,13 +664,28 @@ const handler = createMcpHandler(
         const userId = userIdFromAuth(extra.authInfo as AuthInfo | undefined)
         if (!userId) return errorResult('Unauthorized')
 
-        // /api/mobile/build-apk|ipa authenticates to Expo's EAS API with the
-        // user's GitHub OAuth token, which isn't a valid Expo credential — every
-        // EAS call 401s server-side and no EXPO_TOKEN is configured anywhere.
-        // Refuse here instead of deducting 50cr for a build that can only fail.
-        return errorResult(
-          `${args.format.toUpperCase()} export isn't available yet — the mobile build pipeline needs to be reconnected to a real build backend. No credits were charged. Use export_code to download the project and build it yourself in the meantime.`
-        )
+        try {
+          const res = await fetch(`${APP_URL}/api/mobile/build-${args.format}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Scheduler-User-Id': userId,
+              'X-Scheduler-Secret': internalSecret(),
+            },
+            body: JSON.stringify({ projectId: args.project_id }),
+          })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok) return errorResult(data.error || `${args.format.toUpperCase()} export failed (${res.status})`)
+
+          return jsonResult({
+            success: true,
+            buildId: data.buildId,
+            status: data.status,
+            message: `${args.format.toUpperCase()} build queued (${data.creditsDeducted} credits) — takes about 5-10 minutes. Poll status via the project's mobile build panel.`,
+          })
+        } catch (err) {
+          return errorResult(`Could not start ${args.format.toUpperCase()} export: ${String(err).slice(0, 100)}`)
+        }
       },
     )
 

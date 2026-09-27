@@ -17,6 +17,18 @@ const PREVIEW_ACCESS_APP_COST = creditCost('preview-access')
 const APK_BUILD_COST = 50
 const IPA_BUILD_COST = 50
 
+// Mirrors the server-side gates in build-apk/route.ts and build-ipa/route.ts —
+// kept as two separate flags (not one shared flag) because APK builds run on
+// a real backend today (GitHub Actions + EXPO_TOKEN) while IPA builds still
+// need Apple Developer Program signing credentials that aren't configured;
+// flipping APK on must never silently also enable a guaranteed-to-fail IPA
+// build. Each flag lets the idle screen show the honest "not available yet"
+// reason up front instead of "Insufficient credits", which used to be the
+// only reason ever shown here and was misleading for anyone under 50 credits
+// (buying more wouldn't have helped).
+const APK_BUILD_BACKEND_ENABLED = process.env.NEXT_PUBLIC_MOBILE_APK_BUILD_ENABLED === 'true'
+const IPA_BUILD_BACKEND_ENABLED = process.env.NEXT_PUBLIC_MOBILE_IPA_BUILD_ENABLED === 'true'
+
 // ── Mode system ────────────────────────────────────────────────────────────────
 // inapp      → RNW bundle rendered in-browser (instant, zero deps)
 // wyberaigo  → WyberAi companion app: QR deep-link, pre-bundles for fast load
@@ -99,33 +111,8 @@ export function MobilePreviewPanel({ projectId }: Props) {
   const apkPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const ipaPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // GitHub connection state
-  const [githubConnected, setGithubConnected] = useState(false)
-  const [checkingGithub, setCheckingGithub] = useState(true)
-
   const [error, setError] = useState<string | null>(null)
   const lastKeyRef = useRef<string>('')
-
-  // Check GitHub connection status
-  useEffect(() => {
-    async function checkGithub() {
-      try {
-        const { createClient } = await import('@/lib/supabase/client')
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          setCheckingGithub(false)
-          return
-        }
-        const { data } = await supabase.from('github_connections').select('github_username').eq('user_id', user.id).single()
-        setGithubConnected(!!data)
-      } catch { /* ignore errors */ }
-      finally {
-        setCheckingGithub(false)
-      }
-    }
-    checkGithub()
-  }, [])
 
   // v8: removed 'snack' mode
   useEffect(() => {
@@ -587,8 +574,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
                 loading={buildLoading}
                 hasProject={!!projectId}
                 hasCredits={credits >= APK_BUILD_COST}
-                githubConnected={githubConnected}
-                checkingGithub={checkingGithub}
+                backendEnabled={APK_BUILD_BACKEND_ENABLED}
               />
             )}
           </div>
@@ -611,8 +597,7 @@ export function MobilePreviewPanel({ projectId }: Props) {
                 loading={buildLoading}
                 hasProject={!!projectId}
                 hasCredits={credits >= IPA_BUILD_COST}
-                githubConnected={githubConnected}
-                checkingGithub={checkingGithub}
+                backendEnabled={IPA_BUILD_BACKEND_ENABLED}
               />
             )}
           </div>
@@ -896,7 +881,7 @@ function AppetizeError({ error, onRetry, loading }: { error: string | null; onRe
 // ── Mobile build sub-components ────────────────────────────────────────────
 
 function MobileBuildIdle({
-  platform, cost, onBuild, loading, hasProject, hasCredits, githubConnected, checkingGithub,
+  platform, cost, onBuild, loading, hasProject, hasCredits, backendEnabled,
 }: {
   platform: 'apk' | 'ipa'
   cost: number
@@ -904,11 +889,13 @@ function MobileBuildIdle({
   loading: boolean
   hasProject: boolean
   hasCredits: boolean
-  githubConnected: boolean
-  checkingGithub: boolean
+  backendEnabled: boolean
 }) {
   const platformName = platform === 'apk' ? 'Android APK' : 'iOS IPA'
   const platformIcon = platform === 'apk' ? '🔨' : '🍎'
+  const disabledMessage = platform === 'apk'
+    ? 'Not available yet — the mobile build pipeline needs a real build backend. Use Export Code to build it yourself in the meantime.'
+    : 'Not available yet — real iOS builds need Apple Developer Program signing credentials. Use Export Code to build it yourself in the meantime.'
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24, padding: '24px 28px' }}>
@@ -925,14 +912,14 @@ function MobileBuildIdle({
         <div style={{ color: '#f4f4f5', fontSize: 18, fontWeight: 700, letterSpacing: '-0.03em', marginBottom: 8 }}>{platformIcon} {platformName} Build</div>
         <div style={{ color: '#71717a', fontSize: 12, lineHeight: 1.7, maxWidth: 240 }}>
           {platform === 'apk'
-            ? 'Compile to a real Android APK. Sign in with your GitHub account to start building.'
+            ? 'Compile to a real, installable Android APK.'
             : 'Compile to a real iOS IPA. Requires TestFlight or Apple Developer account.'}
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 260 }}>
         {(platform === 'apk'
-          ? [{ icon: '🤖', label: 'Real Android APK (compilable)' }, { icon: '🔗', label: 'GitHub authentication required' }, { icon: '📥', label: 'Download & install on device' }]
-          : [{ icon: '🍏', label: 'Real iOS IPA (compilable)' }, { icon: '🔗', label: 'GitHub authentication required' }, { icon: '📦', label: 'Upload to TestFlight' }]
+          ? [{ icon: '🤖', label: 'Real Android APK (compilable)' }, { icon: '📥', label: 'Download & install on device' }, { icon: '🚫', label: 'No Play Store needed' }]
+          : [{ icon: '🍏', label: 'Real iOS IPA (compilable)' }, { icon: '📦', label: 'Upload to TestFlight' }]
         ).map(f => (
           <div key={f.icon} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 14 }}>{f.icon}</span>
@@ -942,75 +929,48 @@ function MobileBuildIdle({
       </div>
       {hasProject ? (
         <>
-          {githubConnected ? (
-            <>
-              <button
-                onClick={onBuild}
-                disabled={loading || !hasCredits}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  width: '100%',
-                  maxWidth: 260,
-                  padding: '14px 20px',
-                  borderRadius: 14,
-                  border: 'none',
-                  background: loading || !hasCredits ? '#1c1c2e' : 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)',
-                  color: loading || !hasCredits ? '#52525b' : '#fff',
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: loading || !hasCredits ? 'not-allowed' : 'pointer',
-                  letterSpacing: '-0.02em',
-                  boxShadow: loading || !hasCredits ? 'none' : '0 8px 28px rgba(14,165,233,0.3)',
-                }}
-              >
-                {loading ? (
-                  <>
-                    <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                    Starting build…
-                  </>
-                ) : (
-                  `${platformIcon} Build ${platformName} (${cost} credits)`
-                )}
-              </button>
-              {!hasCredits && <div style={{ color: '#fca5a5', fontSize: 11, textAlign: 'center' }}>Insufficient credits (need {cost})</div>}
-            </>
-          ) : (
-            <a
-              href="/api/auth/github"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                width: '100%',
-                maxWidth: 260,
-                padding: '14px 20px',
-                borderRadius: 14,
-                border: 'none',
-                background: 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)',
-                color: '#fff',
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: checkingGithub ? 'default' : 'pointer',
-                letterSpacing: '-0.02em',
-                textDecoration: 'none',
-                boxShadow: checkingGithub ? 'none' : '0 8px 28px rgba(14,165,233,0.3)',
-                opacity: checkingGithub ? 0.6 : 1,
-              }}
-            >
-              {checkingGithub ? (
-                <>
-                  <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                  Checking…
-                </>
-              ) : (
-                <>🔗 Connect GitHub </>
-              )}
-            </a>
-          )}
+          <button
+            onClick={onBuild}
+            disabled={loading || !hasCredits || !backendEnabled}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              width: '100%',
+              maxWidth: 260,
+              padding: '14px 20px',
+              borderRadius: 14,
+              border: 'none',
+              background: loading || !hasCredits || !backendEnabled ? '#1c1c2e' : 'linear-gradient(135deg, #8b5cf6 0%, #0EA5E9 100%)',
+              color: loading || !hasCredits || !backendEnabled ? '#52525b' : '#fff',
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: loading || !hasCredits || !backendEnabled ? 'not-allowed' : 'pointer',
+              letterSpacing: '-0.02em',
+              boxShadow: loading || !hasCredits || !backendEnabled ? 'none' : '0 8px 28px rgba(14,165,233,0.3)',
+            }}
+          >
+            {loading ? (
+              <>
+                <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.15)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                Starting build…
+              </>
+            ) : (
+              `${platformIcon} Build ${platformName} (${cost} credits)`
+            )}
+          </button>
+          {/* backendEnabled is checked first — being short on credits is
+              never the real blocker while the build pipeline itself is
+              off, and telling someone otherwise just sends them to buy
+              credits that won't fix anything. */}
+          {!backendEnabled ? (
+            <div style={{ color: '#a1a1aa', fontSize: 11, textAlign: 'center', maxWidth: 240 }}>
+              {disabledMessage}
+            </div>
+          ) : !hasCredits ? (
+            <div style={{ color: '#fca5a5', fontSize: 11, textAlign: 'center' }}>Insufficient credits (need {cost})</div>
+          ) : null}
         </>
       ) : (
         <div style={{ color: '#3f3f46', fontSize: 11, textAlign: 'center' }}>Save your project first to build</div>

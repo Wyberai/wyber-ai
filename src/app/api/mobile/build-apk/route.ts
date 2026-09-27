@@ -3,7 +3,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 
 const BUILD_COST = 50
-const EAS_API_BASE = 'https://api.expo.io'
+
+const GITHUB_BUILD_TOKEN = process.env.GITHUB_BUILD_TOKEN   // PAT with repo+workflow scope
+const GITHUB_BUILD_REPO  = process.env.GITHUB_BUILD_REPO    // e.g. 'Wyberai/mobile-builds'
+const MOBILE_BUILD_WEBHOOK_SECRET = process.env.MOBILE_BUILD_WEBHOOK_SECRET
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://wyberai.com'
 
 // Never charge for a build that never actually started. Same adjust_credits
 // RPC (migration 20260702130000) /api/generate uses to refund failed builds,
@@ -22,22 +26,27 @@ async function refundBuildCost(admin: ReturnType<typeof createAdminClient>, user
   } catch (e) { console.error('[mobile/build-apk] refund failed', e) }
 }
 
-// This route authenticates to Expo's EAS API with the user's GitHub OAuth
-// token, which is not a valid Expo credential — the EAS call 401s every time
-// (no EXPO_TOKEN is configured anywhere in this project). Gated off at the
-// route level, not just in the MCP tool wrapper, so the web editor's own
-// Export APK button (MobilePreviewPanel.tsx) can't deduct-then-refund 50cr on
-// a build that's guaranteed to fail either. Flip back on once a real build
-// backend (EAS with a real token, or the GitHub-Actions self-build pattern
-// the companion app moved to) is wired up here.
-const MOBILE_BUILD_BACKEND_ENABLED = process.env.MOBILE_BUILD_BACKEND_ENABLED === 'true'
+// Dispatches a real build to the Wyberai/mobile-builds GitHub Actions repo
+// (build-artifact.yml), which scaffolds the generated project into an Expo
+// app and runs `eas build` with a real EXPO_TOKEN — same pattern already
+// proven by /api/appetize/build for the Cloud Device preview. The workflow
+// calls back to /api/mobile/build-webhook with the final status + download
+// URL once EAS finishes (~5-10 min), instead of this route trying to poll
+// or call Expo's API directly (there is no simple synchronous "create build"
+// REST endpoint — that's why the old direct-fetch implementation here never
+// worked, independent of which token it used).
+const APK_BUILD_BACKEND_ENABLED = process.env.NEXT_PUBLIC_MOBILE_APK_BUILD_ENABLED === 'true'
 
 export async function POST(req: NextRequest) {
-  if (!MOBILE_BUILD_BACKEND_ENABLED) {
+  if (!APK_BUILD_BACKEND_ENABLED) {
     return NextResponse.json(
-      { error: 'APK export isn\'t available right now — the mobile build pipeline needs a real build backend. No credits are charged. Use Export Code to download the project and build it yourself in the meantime.' },
+      { error: 'APK export isn\'t available right now. No credits are charged. Use Export Code to download the project and build it yourself in the meantime.' },
       { status: 503 },
     )
+  }
+
+  if (!GITHUB_BUILD_TOKEN || !GITHUB_BUILD_REPO || !MOBILE_BUILD_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: 'Build service not configured (set GITHUB_BUILD_TOKEN + GITHUB_BUILD_REPO + MOBILE_BUILD_WEBHOOK_SECRET)' }, { status: 503 })
   }
 
   try {
@@ -62,16 +71,18 @@ export async function POST(req: NextRequest) {
 
     const admin = await createAdminClient()
 
-    // Verify project ownership
+    // Verify project ownership and grab a files snapshot for the build worker
+    // to fetch (shared with the Appetize preview pipeline's snapshot column —
+    // both flows just need "the files as of when the build was requested").
     const { data: project } = await admin
       .from('projects')
-      .select('id, user_id')
+      .select('id, user_id, files')
       .eq('id', projectId)
       .eq('user_id', user.id)
       .single()
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 })
 
-    // Get user profile with credits and GitHub token
+    // Get user profile with credits
     const { data: profile } = await admin
       .from('profiles')
       .select('credits, id')
@@ -87,16 +98,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check for GitHub connection
-    const { data: githubConn } = await admin
-      .from('github_connections')
-      .select('access_token')
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    if (!githubConn?.access_token) {
-      return NextResponse.json({ error: 'GitHub not connected' }, { status: 403 })
-    }
+    await admin.from('projects').update({ appetize_build_snapshot: project.files }).eq('id', projectId)
 
     // Create mobile_builds record
     const { data: buildRecord, error: recordErr } = await admin
@@ -144,73 +146,53 @@ export async function POST(req: NextRequest) {
       })
       .then(() => {}, () => {})
 
-    // Trigger Expo EAS build
-    // This calls Expo's build service using the user's GitHub token
+    // Dispatch the real build to GitHub Actions
+    const filesUrl    = `${APP_URL}/api/appetize/files?projectId=${projectId}&secret=${encodeURIComponent(process.env.APPETIZE_BUILD_SECRET || '')}`
+    const callbackUrl = `${APP_URL}/api/mobile/build-webhook`
+
     try {
-      const easRes = await fetch(`${EAS_API_BASE}/v2/builds`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${githubConn.access_token}`,
-          'Content-Type': 'application/json',
+      const ghRes = await fetch(
+        `https://api.github.com/repos/${GITHUB_BUILD_REPO}/actions/workflows/build-artifact.yml/dispatches`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${GITHUB_BUILD_TOKEN}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ref: 'main',
+            inputs: { build_id: buildId, project_id: projectId, platform: 'android', files_url: filesUrl, callback_url: callbackUrl },
+          }),
         },
-        body: JSON.stringify({
-          platform: 'android',
-          appId: `org.wyberai.builder.${projectId.slice(0, 8)}`,
-          buildProfile: 'preview',
-        }),
-      })
+      )
 
-      if (!easRes.ok) {
-        const errText = await easRes.text()
-        console.error('[mobile/build-apk] EAS API error:', errText)
-        // Update build status to error
+      if (!ghRes.ok) {
+        const errText = await ghRes.text()
+        console.error('[mobile/build-apk] Workflow dispatch failed:', ghRes.status, errText)
         await admin
           .from('mobile_builds')
-          .update({ status: 'error', error_message: `EAS API error: ${easRes.status}` })
+          .update({ status: 'error', error_message: `Build trigger failed: ${ghRes.status}` })
           .eq('id', buildId)
-        await refundBuildCost(admin, user.id, BUILD_COST, 'eas-build-failed')
-        return NextResponse.json(
-          { error: 'Failed to start build with Expo' },
-          { status: 500 },
-        )
+        await refundBuildCost(admin, user.id, BUILD_COST, 'dispatch-failed')
+        return NextResponse.json({ error: 'Failed to start build' }, { status: 500 })
       }
 
-      const easData = await easRes.json() as { id?: string }
-      const easBuildId = easData.id
-
-      if (!easBuildId) {
-        console.error('[mobile/build-apk] No build ID from EAS response')
-        await admin
-          .from('mobile_builds')
-          .update({ status: 'error', error_message: 'No build ID from EAS' })
-          .eq('id', buildId)
-        await refundBuildCost(admin, user.id, BUILD_COST, 'eas-build-failed')
-        return NextResponse.json(
-          { error: 'Failed to get build ID from Expo' },
-          { status: 500 },
-        )
-      }
-
-      // Update build record with EAS build ID
-      await admin
-        .from('mobile_builds')
-        .update({ status: 'building', eas_build_id: easBuildId })
-        .eq('id', buildId)
+      await admin.from('mobile_builds').update({ status: 'queued' }).eq('id', buildId)
 
       return NextResponse.json({
         success: true,
         buildId,
-        easBuildId,
-        status: 'building',
+        status: 'queued',
         creditsDeducted: BUILD_COST,
       })
     } catch (err) {
-      console.error('[mobile/build-apk] EAS call error:', err)
+      console.error('[mobile/build-apk] dispatch error', err)
       await admin
         .from('mobile_builds')
         .update({ status: 'error', error_message: String(err) })
         .eq('id', buildId)
-      await refundBuildCost(admin, user.id, BUILD_COST, 'eas-build-failed')
+      await refundBuildCost(admin, user.id, BUILD_COST, 'dispatch-failed')
       return NextResponse.json({ error: 'Build initiation failed' }, { status: 500 })
     }
   } catch (err) {
