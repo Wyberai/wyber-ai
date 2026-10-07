@@ -878,17 +878,12 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
               retryPrompt: `The app still isn't building after ${MAX_TOTAL_REPAIR_PASSES} repair passes: "${String(detail.error).slice(0, 180)}". Take a DIFFERENT approach: identify the component responsible and rewrite it from scratch as a complete <file> block instead of patching the failing line.`,
             },
           })
-        } else {
-          // status 'error' + retryPrompt is what renders the Retry button the
-          // message tells the user to tap (see the msg.status === 'error' &&
-          // msg.retryPrompt gate on the bubble's action row).
-          useEditorStore.getState().addMessage({
-            id: uid(), role: 'assistant', status: 'error', timestamp: Date.now(),
-            content: t('repairBudgetReachedMsg'),
-            retryPrompt: 'Continue the build: output every planned file that is still missing or incomplete as a complete <file> block, and make sure src/App.tsx imports and renders them.',
-            retryLane: 'build',
-          })
         }
+        // No detail.error: this dispatch was only a completeness top-up, and
+        // the preview is building fine. Stop quietly — posting a "build
+        // stopped, tap Retry" message here fired on healthy builds that had
+        // simply used both top-up passes (live: a working todo app got it
+        // right after "I'll create the three missing components").
         return
       }
       totalRepairPassesRef.current += 1
