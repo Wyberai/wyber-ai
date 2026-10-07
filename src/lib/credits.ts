@@ -45,7 +45,7 @@ export type ActionType =
  * strings independently and are a separate, out-of-scope cleanup.
  */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-sonnet-5',
+  fast:    'claude-sonnet-5-5',
   default: 'claude-opus-5',
   premium: 'claude-opus-5',
   fable:   'claude-fable-5',

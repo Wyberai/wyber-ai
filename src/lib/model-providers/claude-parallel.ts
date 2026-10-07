@@ -287,7 +287,7 @@ export async function runClaudeParallel(input: CodeGenInput, onProgress?: (marke
   }
 }
 
-const QUALITY_PASS_MODEL = 'claude-sonnet-5'
+const QUALITY_PASS_MODEL = 'claude-sonnet-5-5'
 const QUALITY_PASS_MAX_TOKENS = 32000
 
 /**
