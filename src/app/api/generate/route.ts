@@ -5334,7 +5334,20 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
     // Extended thinking (opt-in, new-build full generation only — see useThinking
     // above). 'adaptive' is the current API for Opus 4.8/Fable 5/Sonnet 4.6+;
     // budget_tokens is deprecated/rejected on these models.
-    const thinkingParam = useThinking ? { thinking: { type: 'adaptive' as const, display: 'summarized' as const } } : {}
+    //
+    // Sonnet 5.5 is different: omitting `thinking` runs adaptive thinking with
+    // display "omitted", so it streams long empty thinking blocks — and the
+    // heartbeat is suppressed while inThinkingBlock, so the client sees zero
+    // bytes for minutes and the connection gets idle-killed (live: build
+    // 994jm36, 307s silent tool-iter=0, client errored at ~140s, 160cr charged).
+    // `between_tools` is its documented thinking-off mode (no other fields,
+    // effort ≤ high — we use the default high). Not in SDK 0.98's types, hence
+    // the cast. Never send it to other models — it 400s there.
+    const thinkingParam = useThinking
+      ? { thinking: { type: 'adaptive' as const, display: 'summarized' as const } }
+      : model === 'claude-sonnet-5-5'
+      ? { thinking: { type: 'between_tools' } as unknown as Anthropic.ThinkingConfigParam }
+      : {}
 
     // ── Sentinel: in-stream security review (flag-gated, deterministic) ──
     // Reviews every file the coder emits, DURING the generation. Blocking

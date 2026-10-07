@@ -314,6 +314,10 @@ ${haikusOutput}`
     system: `${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
     messages: [{ role: 'user', content: userPrompt }],
     tools: [WRITE_FILE_TOOL, EDIT_FILE_TOOL],
+    // Sonnet 5.5 thinks by default when `thinking` is omitted — keep this
+    // pass thinking-off like it was on Sonnet 5 (see generate/route.ts
+    // thinkingParam). Not in SDK 0.98's types, hence the cast.
+    thinking: { type: 'between_tools' } as unknown as Anthropic.ThinkingConfigParam,
   })
   const msg = await stream.finalMessage()
 
