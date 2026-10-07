@@ -8,6 +8,25 @@ export interface ParseResult {
 }
 const FILE_BLOCK_RE = /<file\s+path="([^"]+)">([\s\S]*?)<\/file>/g;
 
+// Internal generation markers ([agent:...], [progress:...], [plan:...],
+// [complete:...]) are meant to be out-of-band signals, never file content —
+// but the heartbeat in particular is deliberately force-sent mid-file after
+// MAX_SUPPRESSION_MS of continuous suppression (see generate/route.ts), which
+// means it can land INSIDE an open <file> tag and get captured as part of
+// that file's content. Confirmed live: a leaked `[agent:{"agent":"heartbeat",
+// ...}]` as literal line 1 of App.tsx broke the bundler, and since self-heal's
+// own long writes are equally vulnerable, it just moved the same corruption to
+// a different file on retry instead of fixing it. Stripping here, at the one
+// place all file content is captured (both the final parse and the streaming
+// parser below), fixes it at the source instead of chasing it after the fact.
+export function stripInternalMarkers(text: string): string {
+  return text
+    .replace(/\[agent:\{[^\n\]]*\}\]/g, '')
+    .replace(/\[progress:[^\]]+\]/gi, '')
+    .replace(/\[plan:[^\]]+\]/gi, '')
+    .replace(/\[complete:[^\]]+\]/gi, '');
+}
+
 // Strip <thinking>...</thinking> blocks (banned model-authored prose, see the
 // CRITICAL OUTPUT RULES in generate/route.ts) and <reasoning>...</reasoning>
 // blocks (real extended-thinking output, opt-in on new-build full generation —
@@ -43,7 +62,7 @@ export function parseGenerationOutput(raw: string): ParseResult {
   let working = stripThinking(raw);
   // Remove file blocks entirely from chat text — don't replace with anything
   let chatText = working.replace(FILE_BLOCK_RE, (_, path, content) => {
-    files.push({ path: path.trim(), content: content.trim() });
+    files.push({ path: path.trim(), content: stripInternalMarkers(content).trim() });
     return '';
   });
   // Strip <edit> diff blocks from chat text (they're handled separately by parseEditBlocks)
@@ -120,7 +139,7 @@ export class StreamingFileParser {
     let lastIndex = 0;
     let match: RegExpExecArray | null;
     while ((match = re.exec(this.buffer)) !== null) {
-      found.push({ path: match[1].trim(), content: match[2].trim() });
+      found.push({ path: match[1].trim(), content: stripInternalMarkers(match[2]).trim() });
       lastIndex = re.lastIndex;
     }
     if (lastIndex > 0) this.buffer = this.buffer.slice(lastIndex);
