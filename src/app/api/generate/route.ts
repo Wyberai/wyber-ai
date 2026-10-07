@@ -5001,6 +5001,17 @@ ${code}
         },
         required: ['path', 'content'],
       },
+      // Without this the API buffers a tool call's input and delivers it in
+      // one burst once complete — after the path arrives (toolOpened=true,
+      // heartbeat suppressed up to 60s) the client sees silence for the whole
+      // file. Measured on claude-sonnet-5-5: one ~7K-token file = 33.4s
+      // silent gap (2.9s with this on); bigger files pass 60s and the
+      // connection gets idle-killed between the browser and Vercel (live:
+      // builds 994jm36, m07go5r — "Something interrupted your build" ~120-140s
+      // in while the server kept going). The raw partial_json is parsed here
+      // with its own invalid-JSON recovery (see content_block_stop below), so
+      // the API skipping input validation in this mode is already covered.
+      eager_input_streaming: true,
     }
 
     const editFileTool = {
@@ -5015,6 +5026,8 @@ ${code}
         },
         required: ['path', 'search', 'replace'],
       },
+      // See writeFileTool — same buffering silence, same recovery path.
+      eager_input_streaming: true,
     }
 
     const wyberDNA = '' // merged into system prompt
@@ -5558,8 +5571,18 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             let toolOpened = false
             const MAX_TOOL_SUPPRESSION_MS = 60_000
             let toolSuppressedSince: number | null = null
+            // Last time a model stream event arrived (each one typically
+            // enqueues bytes). A heartbeat only exists to keep an IDLE
+            // connection alive — with eager_input_streaming on the tools,
+            // file content flows every few seconds, so a heartbeat is never
+            // needed mid-file. Without this check the 60s override below
+            // still forced heartbeats into long-but-flowing files (live:
+            // markers landed inside 2 of 4 files in one local build), and
+            // stripping them later leaves stray newlines mid-line.
+            let lastStreamEventAt = Date.now()
             const heartbeatTimer = setInterval(() => {
               if (inThinkingBlock) { toolSuppressedSince = null; return }
+              if (Date.now() - lastStreamEventAt < HEARTBEAT_INTERVAL_MS) { toolSuppressedSince = null; return }
               const suppressed = toolOpened
               if (suppressed) {
                 if (toolSuppressedSince === null) toolSuppressedSince = Date.now()
@@ -5655,6 +5678,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
               for (let iter = 0; iter <= MAX_TOOL_ITERATIONS + securityFixesUsed; iter++) {
                 const iterStartedAt = Date.now()
                 for await (const event of stream) {
+                  lastStreamEventAt = Date.now()
                   if (event.type === 'content_block_start') {
                     if (event.content_block.type === 'thinking') {
                       inThinkingBlock = true
