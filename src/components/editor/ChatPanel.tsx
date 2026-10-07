@@ -879,9 +879,14 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
             },
           })
         } else {
+          // status 'error' + retryPrompt is what renders the Retry button the
+          // message tells the user to tap (see the msg.status === 'error' &&
+          // msg.retryPrompt gate on the bubble's action row).
           useEditorStore.getState().addMessage({
-            id: uid(), role: 'assistant', status: 'done', timestamp: Date.now(),
+            id: uid(), role: 'assistant', status: 'error', timestamp: Date.now(),
             content: t('repairBudgetReachedMsg'),
+            retryPrompt: 'Continue the build: output every planned file that is still missing or incomplete as a complete <file> block, and make sure src/App.tsx imports and renders them.',
+            retryLane: 'build',
           })
         }
         return
