@@ -103,7 +103,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const seo = extractSeo(loaded.html)
   const title = seo.title || `${loaded.name} — Built with WyberAi`
   const description = seo.description || 'Built with WyberAi'
-  const canonical = `https://${slug}.wyberai.app`
+  // Not ${slug}.wyberai.app — that wildcard domain doesn't resolve, so the
+  // canonical pointed search engines at a dead URL. This is the live address
+  // /api/publish returns.
+  const canonical = `https://wyberai.com/app/${slug}`
+  // Generated apps rarely set their own og:image, so shared links used to
+  // render as a bare URL. Fall back to the app's generated share card.
+  const ogImage = seo.ogImage || `https://wyberai.com/api/og/app/${encodeURIComponent(slug)}`
 
   return {
     title,
@@ -125,13 +131,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: seo.ogDescription || description,
       url: canonical,
       type: seo.ogType ?? 'website',
-      images: seo.ogImage ? [seo.ogImage] : undefined,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: seo.ogTitle || title }],
     },
     twitter: {
       card: 'summary_large_image',
       title: seo.ogTitle || title,
       description: seo.ogDescription || description,
-      images: seo.ogImage ? [seo.ogImage] : undefined,
+      images: [ogImage],
     },
   }
 }

@@ -162,7 +162,7 @@ DEPLOYMENT & EXPORT:
 - One-click deploy to Vercel — live URL in minutes
 - GitHub sync — push generated code to any repo with one click
 - Export full source code anytime — user owns it completely
-- Free subdomain: yourapp.wyberai.app
+- Free hosting: every published app is live at wyberai.com/app/your-app (custom domains supported)
 
 CREDITS & PLANS:
 - Starter ($29/mo): 150 credits/month — all features unlocked

@@ -8,6 +8,8 @@ import { useT } from '@/lib/i18n/useT';
 import { EDITOR_TOPBAR_STRINGS } from '@/lib/i18n/dict/editor-topbar';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import { estimateCost } from '@/lib/credits';
+import { LaunchKit } from './LaunchKit';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 interface Props {
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
@@ -645,6 +647,12 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
                   <span style={{ fontSize: 11, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('shareYourApp')}</span>
                   <SocialShare url={liveUrl} text={t('shareText')} />
                 </div>
+
+                {projectId && (
+                  <ErrorBoundary fallbackMessage="Launch kit is unavailable right now.">
+                    <LaunchKit projectId={projectId} liveUrl={liveUrl} />
+                  </ErrorBoundary>
+                )}
 
                 <div style={{ height: 1, background: 'var(--ide-border)' }} />
 
