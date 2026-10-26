@@ -23,6 +23,7 @@ import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
 import { LiveErrorsBanner } from './LiveErrorsBanner';
+import { WebsiteLaunchChecklist } from './WebsiteLaunchChecklist';
 import { TurnReceipt } from './agent-team/TurnReceipt';
 import { SecurityReportCard } from './agent-team/SecurityReportCard';
 import { LoopStopCard } from './agent-team/LoopStopCard';
@@ -3612,6 +3613,11 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       {resolvedProjectId && (
         <AgentFeedBoundary>
           <LiveErrorsBanner projectId={resolvedProjectId} />
+        </AgentFeedBoundary>
+      )}
+      {resolvedProjectId && projectType === 'website' && (
+        <AgentFeedBoundary>
+          <WebsiteLaunchChecklist projectId={resolvedProjectId} />
         </AgentFeedBoundary>
       )}
       <div style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin' }}>

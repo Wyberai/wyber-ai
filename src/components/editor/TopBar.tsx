@@ -103,6 +103,14 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
     return () => window.removeEventListener('wyber-open-supabase', open);
   }, []);
 
+  // WebsiteLaunchChecklist opens the Publish & Share modal (publish, custom
+  // domain, launch kit) — the modal already handles the unpublished state.
+  useEffect(() => {
+    const open = () => setShowShareModal(true);
+    window.addEventListener('wyber-open-publish', open);
+    return () => window.removeEventListener('wyber-open-publish', open);
+  }, []);
+
   // Close + reset so the next open starts without a stale "done" state.
   const closeShareModal = () => { setShowShareModal(false); setRepublished(false); };
 
@@ -255,6 +263,7 @@ export function TopBar({ initialProfile, projectId, showCode, onToggleCode }: Pr
       const url = data.publishedUrl || data.url;
       if (url) {
         setDeployUrl(url);
+        window.dispatchEvent(new CustomEvent('wyber-published', { detail: url }));
         // First publish: open the modal so the user can copy/share their new
         // live URL. Re-publish: no popup — the top-bar button itself flips to
         // "✓ Updated" (and the in-modal button shows Done if it's already open).
