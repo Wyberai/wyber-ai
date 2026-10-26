@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
 import { buildAppManifest } from '@/lib/pwa/manifest'
 import { getOrCreateIcon } from '@/lib/pwa/icon'
+import { snapshotToMarkdown } from '@/lib/seo/static-snapshot'
 
 // Paths with dedicated handling on a published app's origin. Everything else
 // falls through to the existing behavior (serve index.html) — these MUST stay
@@ -67,6 +68,23 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    // AI-search files on the app's own origin. Without these, /robots.txt
+    // and /llms.txt fell through to index.html like every other path.
+    if (path === '/robots.txt') {
+      return new NextResponse('User-agent: *\nAllow: /\n', { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } })
+    }
+    const { data: snapFile } = await admin.storage.from('published-apps').download(`${project.id}/snapshot.html`)
+    const snapshot = snapFile ? await snapFile.text() : null
+    if (path === '/llms.txt') {
+      if (!snapshot) return new NextResponse('Not found', { status: 404 })
+      return new NextResponse(`# ${project.name}
+
+${snapshotToMarkdown(snapshot)}
+`, {
+        headers: { 'Content-Type': 'text/markdown; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+      })
+    }
+
     // Get built HTML from Supabase Storage
     const { data: fileData } = await admin.storage
       .from('published-apps')
@@ -74,7 +92,13 @@ export async function GET(req: NextRequest) {
 
     if (!fileData) return new NextResponse('App not built yet', { status: 404 })
 
-    const html = await fileData.text()
+    let html = await fileData.text()
+    // Same AI-search snapshot /app/[slug] serves: rendered content for
+    // crawlers that don't run JS, inside <noscript> (see static-snapshot.ts).
+    if (snapshot) {
+      const block = `<noscript><main>${snapshot}</main></noscript>`
+      html = html.includes('</body>') ? html.replace('</body>', `${block}</body>`) : html + block
+    }
 
     return new NextResponse(html, {
       headers: {

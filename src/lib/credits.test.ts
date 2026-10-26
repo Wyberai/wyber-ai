@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PLAN_RANK, MODEL_META, MODEL_MULTIPLIERS, tierAllowedForPlan, creditCost, estimateCost, resolveBuildTier, computeOverageCharge, type ModelTier, type PlanId, type BuildSizeTier, largestAffordableSmallerBuild } from './credits'
+import { PLAN_RANK, MODEL_META, MODEL_MULTIPLIERS, tierAllowedForPlan, creditCost, estimateCost, resolveBuildTier, computeOverageCharge, websiteLaunchEstimate, type ModelTier, type PlanId, type BuildSizeTier, largestAffordableSmallerBuild } from './credits'
 
 const TIERS: ModelTier[] = ['fast', 'default', 'premium', 'fable', 'gpt']
 const PLANS: PlanId[] = ['free', 'spark', 'starter', 'builder', 'pro', 'growth', 'scale']
@@ -192,5 +192,18 @@ describe('largestAffordableSmallerBuild', () => {
   it('charges the normal tier price (no discount)', () => {
     const offer = largestAffordableSmallerBuild('saas-build', 'xl', 100)!
     expect(offer.cost).toBe(creditCost('saas-build', 'fast', offer.tier))
+  })
+})
+
+describe('websiteLaunchEstimate', () => {
+  it('sums the real per-step prices (no package price)', () => {
+    const e = websiteLaunchEstimate()
+    expect(e.min).toBe(e.steps.reduce((s, x) => s + x.credits, 0))
+    expect(e.steps.find(s => s.key === 'seo')!.credits).toBe(creditCost('seo-scan'))
+    expect(e.steps.find(s => s.key === 'build')!.credits).toBe(creditCost('website-build', 'fast', 'small'))
+    expect(e.max).toBeGreaterThan(e.min)
+  })
+  it('needs more than the free signup credits', () => {
+    expect(websiteLaunchEstimate().min).toBeGreaterThan(30)
   })
 })

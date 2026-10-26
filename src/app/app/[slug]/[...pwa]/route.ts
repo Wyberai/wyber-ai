@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { buildAppManifest } from '@/lib/pwa/manifest'
 import { getOrCreateIcon } from '@/lib/pwa/icon'
+import { snapshotToMarkdown } from '@/lib/seo/static-snapshot'
 
 // PWA endpoints for published apps served on the MAIN domain
 // (wyberai.com/app/{slug}). Each app is its own installable PWA on the shared
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
   const { slug, pwa } = await ctx.params
   const file = pwa.join('/')
 
-  if (!['manifest.webmanifest', 'pwa-icon-192.png', 'pwa-icon-512.png'].includes(file)) {
+  if (!['manifest.webmanifest', 'pwa-icon-192.png', 'pwa-icon-512.png', 'llms.txt'].includes(file)) {
     return new NextResponse('Not found', { status: 404 })
   }
 
@@ -26,6 +27,22 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ slug: strin
     .eq('is_public', true)
     .single()
   if (!project) return new NextResponse('Not found', { status: 404 })
+
+  // llms.txt — a Markdown summary AI assistants can read directly, built from
+  // the publish-time snapshot (Website projects; see lib/seo/static-snapshot).
+  if (file === 'llms.txt') {
+    const { data: snap } = await supabase.storage.from('published-apps').download(`${project.id}/snapshot.html`)
+    if (!snap) return new NextResponse('Not found', { status: 404 })
+    const body = `# ${project.name}
+
+> https://wyberai.com/app/${slug}
+
+${snapshotToMarkdown(await snap.text())}
+`
+    return new NextResponse(body, {
+      headers: { 'Content-Type': 'text/markdown; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+    })
+  }
 
   if (file === 'manifest.webmanifest') {
     const base = `/app/${slug}`

@@ -279,6 +279,33 @@ const BUILD_TIER_ORDER: BuildSizeTier[] = ['small', 'medium', 'large', 'xl']
 const BUILD_TIER_MAX_FILES: Record<Exclude<BuildSizeTier, 'xl'>, number> = { small: 4, medium: 10, large: 20 }
 
 /**
+ * A "complete website" from /websites, priced as the sum of the existing
+ * per-step prices — not a package price, so a bigger site naturally costs
+ * more (founder decision 2026-10-26). Read by the /websites page (shown to
+ * visitors) and by the dashboard's upfront credit check for /websites builds,
+ * so the number shown and the number required can never drift apart.
+ * Build range: one-shot website builds are priced by complexity — simple
+ * (small) or complex (large).
+ */
+export const WEBSITE_LAUNCH_PHOTOS = 4
+export const WEBSITE_LAUNCH_EDITS = 5
+export function websiteLaunchEstimate(): {
+  steps: { key: string; label: string; credits: number; max?: number }[]
+  min: number
+  max: number
+} {
+  const steps = [
+    { key: 'build', label: 'Build your multi-page website', credits: creditCost('website-build', 'fast', 'small'), max: creditCost('website-build', 'fast', 'large') },
+    { key: 'photos', label: `${WEBSITE_LAUNCH_PHOTOS} professional photos`, credits: WEBSITE_LAUNCH_PHOTOS * creditCost('hero-image-gen') },
+    { key: 'seo', label: 'SEO + AI-search pass (18 checks + auto-fixes)', credits: creditCost('seo-scan') },
+    { key: 'edits', label: `About ${WEBSITE_LAUNCH_EDITS} edits to make it yours`, credits: WEBSITE_LAUNCH_EDITS * creditCost('small-edit', 'fast') },
+  ]
+  const min = steps.reduce((s, x) => s + x.credits, 0)
+  const max = steps.reduce((s, x) => s + (x.max ?? x.credits), 0)
+  return { steps, min, max }
+}
+
+/**
  * For the first-build credit wall: the biggest build SMALLER than the planned
  * one that the user's balance already covers, at the normal price for that
  * size (creditCost, same as the server charges — no discount). Returns null

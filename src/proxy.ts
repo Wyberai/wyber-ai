@@ -64,6 +64,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/login') ||
     path.startsWith('/signup') ||
     path.startsWith('/pricing') ||
+    path.startsWith('/websites') ||
     path.startsWith('/gallery') ||
     path.startsWith('/agents') ||
     path.startsWith('/flows') ||

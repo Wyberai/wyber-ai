@@ -1,5 +1,5 @@
 import { internalSecret } from '@/lib/internal-auth'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { sanitizeFiles } from '@/lib/sanitize-files'
 import { runSmokeTest } from '@/lib/smoke-test'
@@ -16,6 +16,7 @@ import { injectAnalytics } from '@/lib/analytics/track-snippet'
 import { injectComments } from '@/lib/feedback/comment-snippet'
 import { extractThemeColor, BRAND_THEME_COLOR } from '@/lib/pwa/manifest'
 import { warmPwaIcons } from '@/lib/pwa/icon'
+import { renderStaticSnapshot } from '@/lib/seo/static-snapshot'
 
 // The publish flow runs a full remote build (30–45s) then fetches + stores the
 // output. Without this, the serverless function is killed at the platform's
@@ -261,6 +262,9 @@ export async function POST(req: NextRequest) {
       .replace(/src="\.\/assets\//g, `src="${baseUrl}/assets/`)
       .replace(/href="\.\/assets\//g, `href="${baseUrl}/assets/`)
       .replace(/from "\.\/assets\//g, `from "${baseUrl}/assets/`)
+    // Captured BEFORE the PWA/analytics/comment snippets are injected, so the
+    // AI-search snapshot render below never fires a page view or error beacon.
+    const htmlForSnapshot = fixedHtml
 
     // Make the published app an installable PWA: manifest link + apple metas +
     // the install-pill runtime. The runtime is inert inside the shell iframe /
@@ -318,6 +322,24 @@ export async function POST(req: NextRequest) {
     // Generate a dashboard card thumbnail from the live published URL.
     // Best-effort — fires after response is returned, failure is silent.
     generateThumbnail(admin, projectId, publishedUrl).catch(() => {})
+
+    // AI-search snapshot (Website projects): render once in headless Chrome
+    // and store a clean semantic copy that /app/[slug] serves in <noscript>
+    // and as llms.txt — AI crawlers don't run JS, so without this they saw
+    // only the page title. after() so publishing doesn't wait on it; a
+    // failure just leaves the previous snapshot (or none) in place.
+    if (project.project_type === 'website') {
+      after(async () => {
+        try {
+          const snapshot = await renderStaticSnapshot(htmlForSnapshot)
+          if (snapshot) {
+            await admin.storage.from('published-apps').upload(`${projectId}/snapshot.html`, snapshot, { contentType: 'text/html', upsert: true })
+          }
+        } catch (e) {
+          console.error('[publish] snapshot failed:', e)
+        }
+      })
+    }
 
     // Notify: project published (in-app Activity row + push). Best-effort.
     notify(admin, user.id, 'published', { projectId, url: publishedUrl }).catch(() => {})

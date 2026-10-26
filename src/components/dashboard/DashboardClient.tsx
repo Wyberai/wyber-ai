@@ -23,6 +23,8 @@ import { useLocale } from '@/lib/i18n/LocaleProvider';
 import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 import { DASHBOARD_STRINGS } from '@/lib/i18n/dict/dashboard';
 import { isLocale, LOCALE_SPEECH_CODE } from '@/lib/i18n/locales';
+import { WebsiteCreditGate } from '@/components/websites/WebsiteCreditGate';
+import { websiteLaunchEstimate } from '@/lib/credits';
 
 // Deterministic, timezone/locale-independent date label. toLocaleDateString()
 // renders differently on the server vs the client (different TZ/locale), which
@@ -147,6 +149,8 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<string | undefined>(undefined);
+  // /websites upfront-credit gate (see WebsiteCreditGate).
+  const [websiteGate, setWebsiteGate] = useState<{ go: () => void; name: string | null } | null>(null);
   const [promptInput, setPromptInput] = useState('');
   const [buildMode, setBuildMode] = useState<'app' | 'mobile' | 'website' | 'saas'>('app');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -247,7 +251,13 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
     let pending: string | null = null;
     let pendingType: string | null = null;
     let pendingLabel: string | null = null;
+    let pendingSource: string | null = null;
+    let pendingName: string | null = null;
     try {
+      pendingSource = localStorage.getItem('wyber-pending-source');
+      pendingName = localStorage.getItem('wyber-pending-project-name');
+      if (pendingSource) localStorage.removeItem('wyber-pending-source');
+      if (pendingName) localStorage.removeItem('wyber-pending-project-name');
       pending = localStorage.getItem('wyber-pending-prompt');
       pendingType = localStorage.getItem('wyber-pending-type');
       pendingLabel = localStorage.getItem('wyber-pending-project-label');
@@ -265,6 +275,22 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
       // Honor the homepage hero's 4-type toggle; fall back to keyword detection.
       const DIRECT_TYPES = ['app', 'mobile', 'website', 'saas'] as const;
       const resolvedType = DIRECT_TYPES.find(t => t === pendingType);
+      // /websites builds need the complete-website credits upfront (see
+      // WebsiteCreditGate). Short → keep the plan stashed and open the gate.
+      if (pendingSource === 'websites' && resolvedType === 'website') {
+        const go = () => { setWebsiteGate(null); startProject(pending!.trim(), 'website', pendingName || nameOverride); };
+        if ((profile?.credits ?? 0) >= websiteLaunchEstimate().min) go();
+        else {
+          try {
+            localStorage.setItem('wyber-pending-prompt', pending);
+            localStorage.setItem('wyber-pending-type', 'website');
+            localStorage.setItem('wyber-pending-source', 'websites');
+            if (pendingName) localStorage.setItem('wyber-pending-project-name', pendingName);
+          } catch { /* storage blocked */ }
+          setWebsiteGate({ go, name: pendingName });
+        }
+        return;
+      }
       if (resolvedType) startProject(pending.trim(), resolvedType, nameOverride);
       else openChooser(pending.trim(), nameOverride);
     }
@@ -804,6 +830,15 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         
         @keyframes spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
       `}</style>
+      {websiteGate && (
+        <WebsiteCreditGate
+          have={profile?.credits ?? 0}
+          currency={(profile as (typeof profile & { country?: string | null }))?.country === 'IN' ? 'INR' : 'USD'}
+          businessName={websiteGate.name}
+          onReady={() => { try { ['wyber-pending-prompt', 'wyber-pending-type', 'wyber-pending-source', 'wyber-pending-project-name'].forEach(k => localStorage.removeItem(k)); } catch { /* */ } websiteGate.go(); }}
+          onCancel={() => { try { ['wyber-pending-prompt', 'wyber-pending-type', 'wyber-pending-source', 'wyber-pending-project-name'].forEach(k => localStorage.removeItem(k)); } catch { /* */ } setWebsiteGate(null); }}
+        />
+      )}
       <ProjectTypeChooser
         open={showTypePicker}
         onClose={() => setShowTypePicker(false)}

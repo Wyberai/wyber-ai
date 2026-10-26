@@ -53,7 +53,7 @@ function extractSeo(html: string): AppSeo {
   }
 }
 
-async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean } | null> {
+async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean; snapshot: string | null } | null> {
   try {
     return await loadHtmlInner(slug)
   } catch {
@@ -64,7 +64,7 @@ async function loadHtml(slug: string): Promise<{ name: string; html: string; own
   }
 }
 
-async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean } | null> {
+async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean; snapshot: string | null } | null> {
   // Service client, not the session client: this is a PUBLIC page (anonymous
   // visitors, shared links, the mobile app's in-app browser). The `projects`
   // RLS policy doesn't grant anon SELECT on is_public rows, so the session
@@ -92,7 +92,14 @@ async function loadHtmlInner(slug: string): Promise<{ name: string; html: string
       .from('profiles').select('plan').eq('id', project.user_id).single()
     if (owner?.plan) ownerPlan = String(owner.plan)
   } catch { /* fall back to free */ }
-  return { name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo }
+  // AI-search snapshot (Website projects, written by /api/publish) — the
+  // rendered content as clean HTML for crawlers that don't run JS.
+  let snapshot: string | null = null
+  try {
+    const { data: snap } = await supabase.storage.from('published-apps').download(`${project.id}/snapshot.html`)
+    if (snap) snapshot = await snap.text()
+  } catch { /* none yet */ }
+  return { name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo, snapshot }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -118,7 +125,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // with placeholder data — must never be indexed (thin/duplicate content +
     // brand-exposure risk). Cleared to a normal page once the founder claims it.
     ...(loaded.isDemo ? { robots: { index: false, follow: false } } : {}),
-    alternates: { canonical },
+    alternates: { canonical, ...(loaded.snapshot ? { types: { 'text/markdown': `${canonical}/llms.txt` } } : {}) },
     // Each published app is its own PWA. Without these overrides the root
     // layout's metadata leaks here and this page advertises the PLATFORM's
     // manifest + icons — Chrome would offer to install "WyberAi" on top of a
@@ -189,6 +196,15 @@ export default async function PublishedAppPage({ params }: Props) {
               channel; utm+ref make it measurable in GA/PostHog. */}
           <a href={`https://wyberai.com/?utm_source=made-with-badge&utm_medium=badge&utm_campaign=${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, fontWeight: 700, color: '#0EA5E9', textDecoration: 'none', fontFamily: 'var(--font-sans)' }}>WyberAi</a>
         </div>
+      )}
+      {/* What non-JS clients (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot…)
+          read: the app's own rendered content, captured at publish by
+          lib/seo/static-snapshot.ts and rebuilt from a tag/attribute
+          allowlist. Browsers with JS never render <noscript>; it's the same
+          content the app shows, so this is progressive enhancement, not
+          cloaking. */}
+      {loaded.snapshot && (
+        <noscript dangerouslySetInnerHTML={{ __html: `<main>${loaded.snapshot}</main>` }} />
       )}
       {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
       <iframe

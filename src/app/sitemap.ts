@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: 'weekly', priority: 1.0 },
     { url: `${base}/pricing`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${base}/websites`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${base}/gallery`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${base}/premier-league`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
     { url: `${base}/vs/lovable`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
