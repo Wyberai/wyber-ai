@@ -4,6 +4,7 @@ import { logDemoEvent } from '@/lib/gtm/events'
 import { Metadata } from 'next'
 import ReportButton from './ReportButton'
 import InstallPrompt from './InstallPrompt'
+import { SandboxedApp } from './SandboxedApp'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -53,7 +54,7 @@ function extractSeo(html: string): AppSeo {
   }
 }
 
-async function loadHtml(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean; snapshot: string | null } | null> {
+async function loadHtml(slug: string): Promise<{ id: string; name: string; html: string; ownerPlan: string; isDemo: boolean; snapshot: string | null } | null> {
   try {
     return await loadHtmlInner(slug)
   } catch {
@@ -64,7 +65,7 @@ async function loadHtml(slug: string): Promise<{ name: string; html: string; own
   }
 }
 
-async function loadHtmlInner(slug: string): Promise<{ name: string; html: string; ownerPlan: string; isDemo: boolean; snapshot: string | null } | null> {
+async function loadHtmlInner(slug: string): Promise<{ id: string; name: string; html: string; ownerPlan: string; isDemo: boolean; snapshot: string | null } | null> {
   // Service client, not the session client: this is a PUBLIC page (anonymous
   // visitors, shared links, the mobile app's in-app browser). The `projects`
   // RLS policy doesn't grant anon SELECT on is_public rows, so the session
@@ -99,7 +100,7 @@ async function loadHtmlInner(slug: string): Promise<{ name: string; html: string
     const { data: snap } = await supabase.storage.from('published-apps').download(`${project.id}/snapshot.html`)
     if (snap) snapshot = await snap.text()
   } catch { /* none yet */ }
-  return { name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo, snapshot }
+  return { id: project.id, name: project.name, html: await fileData.text(), ownerPlan, isDemo: !!project.is_demo, snapshot }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -206,13 +207,11 @@ export default async function PublishedAppPage({ params }: Props) {
       {loaded.snapshot && (
         <noscript dangerouslySetInnerHTML={{ __html: `<main>${loaded.snapshot}</main>` }} />
       )}
-      {/* Sandboxed iframe prevents XSS from user-generated app HTML executing in the wyberai.com origin */}
-      <iframe
-        srcDoc={html}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }}
-        title={name}
-      />
+      {/* User-generated app, isolated from wyberai.com: opaque-origin iframe
+          (no allow-same-origin) + a storage shim scoped to this app — see
+          lib/published-app-sandbox.ts. It used to run with allow-same-origin,
+          which let any published app read visitors' wyberai.com session. */}
+      <SandboxedApp html={html} slug={slug} projectId={loaded.id} title={name} />
       {/* UGC abuse-report control — required on every published app regardless of plan. */}
       <ReportButton slug={slug} />
       {/* Install pill — the shell is the top-level document Chrome reads the
