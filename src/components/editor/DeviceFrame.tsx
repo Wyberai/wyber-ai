@@ -2,6 +2,8 @@
 import { useMemo, useRef, useState, useEffect, useLayoutEffect } from 'react'
 import type { Device } from '@/lib/devices'
 import { buildPreviewHtml, type PreviewPlatform } from '@/lib/rnw-preview/shell'
+import { EDITOR_PREVIEW_SANDBOX, sandboxPreviewHtml, usePreviewStorageBridge } from '@/lib/preview-sandbox'
+import { useEditorStore } from '@/store/editor'
 import { useT } from '@/lib/i18n/useT'
 import { EDITOR_CORE_UI_STRINGS } from '@/lib/i18n/dict/editor-core-ui'
 
@@ -26,6 +28,9 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 export function DeviceFrame({ device, js, platform }: Props) {
   const t = useT(EDITOR_CORE_UI_STRINGS)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<HTMLIFrameElement>(null)
+  const projectId = useEditorStore(s => s.project?.id)
+  usePreviewStorageBridge(() => frameRef.current, projectId)
   const [box, setBox] = useState<{ h: number; w: number }>(() => ({
     h: typeof window !== 'undefined' ? window.innerHeight - 120 : 720,
     w: typeof window !== 'undefined' ? Math.min(520, window.innerWidth) : 420,
@@ -65,20 +70,20 @@ export function DeviceFrame({ device, js, platform }: Props) {
     [js, platform, device.insets],
   )
 
-  // Deliver via a blob URL (not srcDoc) with an allow-same-origin sandbox —
-  // exactly like the web preview (WyberPreview.tsx). A srcDoc frame WITHOUT
-  // allow-same-origin runs as an opaque origin, where react-native-web /
-  // react-dom throw on storage access during boot → the whole preview blanks.
+  // Opaque-origin frame (no allow-same-origin — see lib/preview-sandbox.ts).
+  // react-native-web / react-dom throw on storage access in an opaque origin
+  // and the preview blanks, so the HTML carries the storage shim, which gives
+  // them working localStorage/sessionStorage/cookie before anything boots.
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const prevBlob = useRef<string | null>(null)
   useEffect(() => {
     if (!html) { setBlobUrl(null); return }
-    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
+    const url = URL.createObjectURL(new Blob([sandboxPreviewHtml(html, projectId, { relayErrors: false })], { type: 'text/html' }))
     if (prevBlob.current) URL.revokeObjectURL(prevBlob.current)
     prevBlob.current = url
     setBlobUrl(url)
     return () => { URL.revokeObjectURL(url); if (prevBlob.current === url) prevBlob.current = null }
-  }, [html])
+  }, [html, projectId])
 
   // Surface a runtime failure INSIDE the bezel instead of a black void. The
   // shell postMessages { type:'wyber-preview-error' } on any boot/async error.
@@ -127,7 +132,8 @@ export function DeviceFrame({ device, js, platform }: Props) {
               <iframe
                 key={blobUrl}
                 src={blobUrl}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                ref={frameRef}
+                sandbox={EDITOR_PREVIEW_SANDBOX}
                 style={{ width: '100%', height: '100%', border: 'none', display: 'block', background: '#0A0A0B' }}
                 title={`${device.name} ${t('deviceFramePreviewTitleSuffix')}`}
               />

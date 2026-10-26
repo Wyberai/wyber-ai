@@ -15,6 +15,7 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common'
 import { DEVICES, DEFAULT_DEVICE_ID, getDevice } from '@/lib/devices'
 import { bundleFiles, generateHTML } from '@/lib/wyber-preview/engine'
 import { WYBER_GAME_SRC } from '@/lib/build-game'
+import { EDITOR_PREVIEW_SANDBOX, sandboxPreviewHtml, usePreviewStorageBridge } from '@/lib/preview-sandbox'
 
 // Keys only — hooks (useT) can't run at module scope, so the actual translated
 // text is resolved inside the component (see `messages` below), the same
@@ -49,6 +50,7 @@ export function PreviewPanel() {
   const tc = useT(COMMON_STRINGS)
   const messages = MESSAGE_KEYS.map(k => t(k))
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  usePreviewStorageBridge(() => iframeRef.current, project?.id)
   const [html, setHtml] = useState<string | null>(null)
   const [building, setBuilding] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -189,7 +191,7 @@ export function PreviewPanel() {
       setElapsed(Math.round((Date.now() - start) / 100) / 10)
 
       if (builtHtml) {
-        const blobUrl = URL.createObjectURL(new Blob([builtHtml], { type: 'text/html' }))
+        const blobUrl = URL.createObjectURL(new Blob([sandboxPreviewHtml(builtHtml, project?.id)], { type: 'text/html' }))
         if (html) lastGoodUrl.current = html
         setHtml(blobUrl)
         if (!buildError) {
@@ -307,25 +309,16 @@ export function PreviewPanel() {
 
   useEffect(() => {
     if (iframeRef.current && html) {
+      // The frame is opaque-origin (lib/preview-sandbox.ts), so runtime errors
+      // arrive via the relay baked into its HTML, not window.onerror injected
+      // from here. Start the startup grace window now — errors can be relayed
+      // before 'load' fires — and restart it on load.
+      loadedAt.current = Date.now()
       iframeRef.current.src = html
-      // Inject runtime error capture after iframe loads
       const iframe = iframeRef.current
-      const injectErrorCapture = () => {
-        loadedAt.current = Date.now()
-        try {
-          const iframeWindow = iframe.contentWindow
-          if (!iframeWindow) return
-          iframeWindow.onerror = (msg, source, lineno) => {
-            window.postMessage({ type: 'wyber-runtime-error', message: String(msg), source: source?.split('/').pop(), lineno }, '*')
-            return true
-          }
-          iframeWindow.onunhandledrejection = (e: PromiseRejectionEvent) => {
-            window.postMessage({ type: 'wyber-runtime-error', message: String(e.reason) }, '*')
-          }
-        } catch { /* cross-origin iframe — can't inject, which is fine */ }
-      }
-      iframe.addEventListener('load', injectErrorCapture, { once: true })
-      return () => iframe.removeEventListener('load', injectErrorCapture)
+      const markLoaded = () => { loadedAt.current = Date.now() }
+      iframe.addEventListener('load', markLoaded, { once: true })
+      return () => iframe.removeEventListener('load', markLoaded)
     }
   }, [html])
 
@@ -1003,7 +996,7 @@ Change requested: ${editInstruction.trim()}`
               position: 'absolute', top: 0, left: 0,
             }}>
               <iframe ref={iframeRef} title="Wyber Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                sandbox={EDITOR_PREVIEW_SANDBOX}
                 style={{ width: previewDevice.width, height: previewDevice.height, border: 'none', borderRadius: previewDevice.radius, background: '#09090b', display: 'block' }} />
               {/* Dynamic Island */}
               {previewDevice.notch === 'island' && (
@@ -1034,7 +1027,7 @@ Change requested: ${editInstruction.trim()}`
           <iframe
             ref={iframeRef}
             title="Wyber Preview"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+            sandbox={EDITOR_PREVIEW_SANDBOX}
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', display: html && (!error || (healFailed && revertedToGood)) ? 'block' : 'none', background: '#09090b' }}
           />
         )}

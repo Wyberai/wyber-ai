@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { sanitizeFiles } from '@/lib/sanitize-files'
+// Old snapshots get the same isolation as the live preview; their storage
+// writes are deliberately not persisted (no bridge) — looking is read-only.
+import { EDITOR_PREVIEW_SANDBOX, sandboxPreviewHtml } from '@/lib/preview-sandbox'
 
 interface VersionFiles {
   [path: string]: { content?: string; language?: string }
@@ -45,7 +48,7 @@ export function VersionPreviewModal({ label, createdAt, files, projectId, onClos
         const data = await res.json() as { html?: string; error?: string }
         if (cancelled) return
         if (!data.html) { setError(data.error || 'Could not build this snapshot'); return }
-        const blobUrl = URL.createObjectURL(new Blob([data.html], { type: 'text/html' }))
+        const blobUrl = URL.createObjectURL(new Blob([sandboxPreviewHtml(data.html, projectId)], { type: 'text/html' }))
         blobUrlRef.current = blobUrl
         setHtml(blobUrl)
       } catch (e) {
@@ -82,7 +85,7 @@ export function VersionPreviewModal({ label, createdAt, files, projectId, onClos
         {error ? (
           <div style={{ padding: 20, fontSize: 13, color: '#dc2626' }}>{error}</div>
         ) : html ? (
-          <iframe src={html} title="Version preview" style={{ width: '100%', height: '100%', border: 'none' }} />
+          <iframe src={html} title="Version preview" sandbox={EDITOR_PREVIEW_SANDBOX} style={{ width: '100%', height: '100%', border: 'none' }} />
         ) : (
           <div style={{ padding: 20, fontSize: 13, color: '#6b7280' }}>Building preview…</div>
         )}

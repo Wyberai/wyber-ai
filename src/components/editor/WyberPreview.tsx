@@ -378,7 +378,7 @@ export default function WyberPreview({
           ref={iframeRef}
           src={previewURL || 'about:blank'}
           title={t('previewIframeTitle')}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"
+          sandbox="allow-scripts allow-forms allow-popups allow-modals allow-downloads"
           style={{
             width: '100%',
             height: '100%',

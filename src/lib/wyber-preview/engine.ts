@@ -439,7 +439,8 @@ ${js}
     }
 
     // Phase 3: HMR via BroadcastChannel
-    const hmrChannel = new BroadcastChannel('wyber-hmr-${projectId}');
+    // BroadcastChannel throws in an opaque-origin (sandboxed) frame.
+    let hmrChannel; try { hmrChannel = new BroadcastChannel('wyber-hmr-${projectId}'); } catch (e) { hmrChannel = { addEventListener() {} }; }
     hmrChannel.addEventListener('message', (e) => {
       if (e.data?.type === 'reload') {
         window.location.reload();
