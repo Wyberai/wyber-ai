@@ -275,6 +275,28 @@ export function resolveBuildTier(opts: { totalPlannedFiles?: number; isComplex?:
 
 const BUILD_TIER_ORDER: BuildSizeTier[] = ['small', 'medium', 'large', 'xl']
 
+/** Largest planned-file count each tier covers — the inverse of resolveBuildTier. */
+const BUILD_TIER_MAX_FILES: Record<Exclude<BuildSizeTier, 'xl'>, number> = { small: 4, medium: 10, large: 20 }
+
+/**
+ * For the first-build credit wall: the biggest build SMALLER than the planned
+ * one that the user's balance already covers, at the normal price for that
+ * size (creditCost, same as the server charges — no discount). Returns null
+ * when not even the smallest build fits. Pricing is untouched; this only
+ * lets the user choose a simpler app instead of hitting a dead end.
+ */
+export function largestAffordableSmallerBuild(
+  action: ActionType, plannedTier: BuildSizeTier, credits: number,
+): { tier: BuildSizeTier; maxFiles: number; cost: number } | null {
+  const below = BUILD_TIER_ORDER.slice(0, BUILD_TIER_ORDER.indexOf(plannedTier)) as Exclude<BuildSizeTier, 'xl'>[]
+  for (let i = below.length - 1; i >= 0; i--) {
+    const tier = below[i]
+    const cost = creditCost(action, 'fast', tier)
+    if (cost <= credits) return { tier, maxFiles: BUILD_TIER_MAX_FILES[tier], cost }
+  }
+  return null
+}
+
 /**
  * Representative total output-token budget each tier's fixed price above is
  * calibrated against (see the BUILD_TIER_COSTS comment) — used ONLY to

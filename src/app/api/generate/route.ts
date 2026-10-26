@@ -5200,10 +5200,22 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
         // for model-tier routing (isComplexBuild) — HIGH examples explicitly
         // include "a full marketplace with vendor accounts, inventory, and
         // checkout", which is this exact class of request.
-        planIsComplex = await isComplexBuild(prompt)
-        const planCount = isMobilePlan
+        // "Build a simpler version" at the first-build credit wall (ChatPanel
+        // runAgenticBuild opts.maxFiles): plan at most that many files so the
+        // build lands in a tier the user's balance covers, at that tier's
+        // normal price. It's a simple app by definition, so skip the
+        // complexity call and report LOW.
+        const rawMax = Number(body.maxPlannedFiles)
+        const maxPlannedFiles = Number.isFinite(rawMax) && rawMax >= 3 && rawMax <= 20 ? Math.floor(rawMax) : null
+        planIsComplex = maxPlannedFiles ? false : await isComplexBuild(prompt)
+        const planCount = maxPlannedFiles
+          ? `${Math.max(3, maxPlannedFiles - 3)}-${maxPlannedFiles} (never more than ${maxPlannedFiles})`
+          : isMobilePlan
           ? (planIsComplex ? '20-32' : '8-14')
           : (planIsComplex ? '18-30' : '6-10')
+        const simpleVersionHint = maxPlannedFiles
+          ? ` This is a SIMPLER VERSION of the request, limited to ${maxPlannedFiles} files: keep only the core screens that make the app genuinely usable end-to-end (its main purpose working with realistic data), and leave out secondary features, admin areas and extra roles entirely — do not add placeholder files for them.`
+          : ''
         // Skeleton file-structure hint — tells the planner which paths/roles each
         // project type uses (e.g. src/index.css first for webapps, App.tsx at root
         // for mobile). This enforces correct architecture without loading skeleton
@@ -5215,7 +5227,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
           : projectType === 'website'
           ? ' Follow this file layout for websites: src/index.css FIRST, src/App.tsx SECOND (contains all sections or a useHashRoute router), then src/components/ with one file per section (Navbar, Hero, Features, Pricing, Testimonials, FAQ, Footer etc). No react-router-dom.'
           : ' Follow this file layout for web apps: src/index.css FIRST, src/App.tsx SECOND (state-based routing with useState — no react-router-dom), then src/components/ (Sidebar, one component per section). App.tsx under 200 lines — all useState at top, section-switcher only.'
-        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''}${skeletonHint} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
+        staticSystemPrompt = `You are a software architect. Given an app request, output ONLY a JSON array of the files to build. Each item: {"path":"...","purpose":"one sentence — exactly what this file implements, naming the specific UI elements, data displayed, or logic (e.g. \\"HomeScreen showing wallet balance, last 5 transactions as cards, and Send/Receive action buttons\\" not just \\"home screen\\")"}. List shell/navigation files (e.g. ${planExamples}) FIRST, then one file per screen, component, or module.${planIsComplex ? ' This is a large multi-feature build (e.g. distinct roles/portals, or many interconnected modules) — plan EVERY screen and role it actually needs; do not compress a genuinely large app down to a token-saving handful of files.' : ''}${skeletonHint}${simpleVersionHint} Aim for ${planCount} files. Output ONLY the raw JSON array. No prose, no markdown fences.`
       }
       // Only the from-scratch branch above actually ran isComplexBuild — the
       // hasExisting (edit-completeness) branch leaves planIsComplex at its

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { forgeLine, buildStagedPlan, parsePlanManifest, diffPlannedAgainstWritten, type PlannedFile } from './staged-plan'
+import { forgeLine, buildStagedPlan, parsePlanManifest, diffPlannedAgainstWritten, type PlannedFile, capPlannedFiles } from './staged-plan'
 
 describe('forgeLine', () => {
   it('uses a normal purpose as-is', () => {
@@ -120,5 +120,22 @@ describe('parsePlanManifest', () => {
 
   it('returns empty for unparseable input', () => {
     expect(parsePlanManifest('not json at all')).toEqual([])
+  })
+})
+
+describe('capPlannedFiles', () => {
+  const f = (path: string) => ({ path, purpose: '' })
+  it('returns the plan unchanged when it already fits', () => {
+    const plan = [f('src/index.css'), f('src/App.tsx')]
+    expect(capPlannedFiles(plan, 10)).toBe(plan)
+  })
+  it('keeps an entry file listed last (SaaS layout puts App.tsx at the end)', () => {
+    const plan = [f('src/index.css'), f('src/hooks/useHashRoute.ts'), f('src/pages/A.tsx'), f('src/pages/B.tsx'), f('src/pages/C.tsx'), f('src/App.tsx')]
+    const out = capPlannedFiles(plan, 4).map((x) => x.path)
+    expect(out).toEqual(['src/index.css', 'src/hooks/useHashRoute.ts', 'src/pages/A.tsx', 'src/App.tsx'])
+  })
+  it('never exceeds max', () => {
+    const plan = Array.from({ length: 26 }, (_, i) => f(`src/pages/P${i}.tsx`))
+    expect(capPlannedFiles(plan, 10)).toHaveLength(10)
   })
 })

@@ -242,3 +242,24 @@ export function forgeLine(batch: PlannedFile[], phase: 'scaffold' | 'fill'): str
   const name = batch[0].path.split('/').pop()?.replace(/\.(tsx|jsx|ts|js)$/, '') || 'feature'
   return `Building ${name}`
 }
+
+/**
+ * Caps a plan to `max` files for the "simpler version" first build (see
+ * runAgenticBuild's maxFiles). Entry files — App.*, index.*, main.* — always
+ * survive, because some layouts list them LAST (SaaS puts src/App.tsx at the
+ * end) and a plan without its entry file builds nothing. Remaining slots go
+ * to the other files in the planner's own order. Original order is kept.
+ */
+export function capPlannedFiles(files: PlannedFile[], max: number): PlannedFile[] {
+  if (files.length <= max) return files
+  const isEntry = (p: string) => {
+    const base = p.toLowerCase().split('/').pop() ?? ''
+    return base.startsWith('app.') || base.startsWith('index.') || base.startsWith('main.')
+  }
+  const keep = new Set(files.filter((f) => isEntry(f.path)).slice(0, max))
+  for (const f of files) {
+    if (keep.size >= max) break
+    keep.add(f)
+  }
+  return files.filter((f) => keep.has(f))
+}

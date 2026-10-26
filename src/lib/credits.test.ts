@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { PLAN_RANK, MODEL_META, MODEL_MULTIPLIERS, tierAllowedForPlan, creditCost, estimateCost, resolveBuildTier, computeOverageCharge, type ModelTier, type PlanId, type BuildSizeTier } from './credits'
+import { PLAN_RANK, MODEL_META, MODEL_MULTIPLIERS, tierAllowedForPlan, creditCost, estimateCost, resolveBuildTier, computeOverageCharge, type ModelTier, type PlanId, type BuildSizeTier, largestAffordableSmallerBuild } from './credits'
 
 const TIERS: ModelTier[] = ['fast', 'default', 'premium', 'fable', 'gpt']
 const PLANS: PlanId[] = ['free', 'spark', 'starter', 'builder', 'pro', 'growth', 'scale']
@@ -176,5 +176,21 @@ describe('computeOverageCharge', () => {
       const charge = computeOverageCharge({ buildTier, modelTier: 'default', actualOutputTokens: 10_000_000 })
       expect(charge).toBeGreaterThanOrEqual(1)
     }
+  })
+})
+
+describe('largestAffordableSmallerBuild', () => {
+  it('offers a medium build to a 60-credit user facing an xl plan', () => {
+    expect(largestAffordableSmallerBuild('web-build', 'xl', 60)).toEqual({ tier: 'medium', maxFiles: 10, cost: creditCost('web-build', 'fast', 'medium') })
+  })
+  it('only offers tiers smaller than the planned one', () => {
+    expect(largestAffordableSmallerBuild('web-build', 'medium', 1000)?.tier).toBe('small')
+  })
+  it('returns null when not even the smallest build fits', () => {
+    expect(largestAffordableSmallerBuild('web-build', 'xl', creditCost('web-build', 'fast', 'small') - 1)).toBeNull()
+  })
+  it('charges the normal tier price (no discount)', () => {
+    const offer = largestAffordableSmallerBuild('saas-build', 'xl', 100)!
+    expect(offer.cost).toBe(creditCost('saas-build', 'fast', offer.tier))
   })
 })

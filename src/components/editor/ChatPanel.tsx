@@ -16,9 +16,9 @@ import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/age
 const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
-import { parsePlanManifest, buildStagedPlan, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
+import { parsePlanManifest, buildStagedPlan, capPlannedFiles, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
 import { deterministicWire } from '@/lib/deterministic-wire';
-import { resolveBuildTier } from '@/lib/credits';
+import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
@@ -2376,16 +2376,21 @@ const storeProjectId = useEditorStore.getState().project?.id;
   // pass server-side. Falls back to the classic one-shot build whenever the
   // plan is missing or small — the fallback still shows the team feed via the
   // server's coder/security events. Flag-gated by NEXT_PUBLIC_AGENT_TEAM.
-  const runAgenticBuild = useCallback(async (userMsg: string, img: AttachedImage | null, paletteId?: string | null) => {
+  // opts.maxFiles: the user picked "build a simple version" at the credit wall —
+  // the plan is scoped (server prompt) and capped (below) to that many files,
+  // so it lands in a tier their balance covers, at that tier's normal price.
+  const runAgenticBuild = useCallback(async (userMsg: string, img: AttachedImage | null, paletteId?: string | null, opts?: { maxFiles?: number; echoedUser?: boolean }) => {
     turnAgentEventsRef.current = [];
     agentPassCountRef.current = 0;
     turnCreditsRef.current = 0;
     useAgentTurnStore.getState().resetTurn();
     pushAgentEvents({ agent: 'planner', status: 'start', detail: t('mappingBuildMsg') });
     // Echo the user message immediately so the chat isn't blank during the plan pass.
-    const userMsgId = uid();
-    addMessage({ id: userMsgId, role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
-    persistMessage('user', userMsg, undefined, userMsgId);
+    if (!opts?.echoedUser) {
+      const userMsgId = uid();
+      addMessage({ id: userMsgId, role: 'user', content: userMsg, timestamp: Date.now(), status: 'done' });
+      persistMessage('user', userMsg, undefined, userMsgId);
+    }
     // Show a "Planning..." bubble immediately — replaced by the credit estimate
     // once the plan pass returns, or updated to the chain bubble for the full build.
     const chainId = uid();
@@ -2428,6 +2433,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
             prompt: userMsg, stage: 'plan', projectType,
             userId: resolvedUserId, projectId: resolvedProjectId,
             isFirstBuild: true,
+            maxPlannedFiles: opts?.maxFiles,
           }),
         });
         if (!res.ok) return [];
@@ -2481,6 +2487,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
       await new Promise(r => setTimeout(r, 800));
       manifest = await fetchPlanManifest();
     }
+    // Simple-version backstop: the server already asked the planner for at
+    // most maxFiles; if it overshoots, cap it (entry files always kept).
+    if (opts?.maxFiles) manifest = capPlannedFiles(manifest, opts.maxFiles);
+    // Without a plan, the fallback below would one-shot the FULL request —
+    // the opposite of what the user just chose. Stop instead; nothing charged.
+    if (opts?.maxFiles && !manifest.length) {
+      updateMessage(chainId, { content: "I couldn't plan the simpler version just now. Nothing was charged — please try again in a moment.", status: 'error' });
+      setIsGenerating(false);
+      return;
+    }
     const staged: ReturnType<typeof buildStagedPlan> | null = manifest.length ? buildStagedPlan(manifest) : null;
     planDoneTime = Date.now();
 
@@ -2493,7 +2509,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // Always Haiku (fast tier)
     const effectiveModelTier: ModelTier = 'fast';
     const plannedFileCount = staged?.files.length ?? manifest.length;
-    const estimateBuildTier = plannedFileCount > 0 ? resolveBuildTier({ totalPlannedFiles: plannedFileCount }) : undefined;
+    // Must match what the server will actually charge (generate/route.ts
+    // buildTier): a staged build is priced by its planned file count, but the
+    // one-shot path (every build while STAGE_THRESHOLD is 999) is priced by
+    // the server's complexity call only — LOW = small, HIGH = large. This
+    // used to price every build by file count, so a 26-file complex plan was
+    // quoted 120 credits (server charges 80) and a simple 6-10 file plan was
+    // quoted 50 (server charges 30), walling users who could afford it.
+    const isOneShotBuild = !staged || !staged.shouldStage;
+    const estimateBuildTier = plannedFileCount > 0
+      ? (isOneShotBuild ? resolveBuildTier({ isComplex: buildComplexity === 'HIGH' }) : resolveBuildTier({ totalPlannedFiles: plannedFileCount }))
+      : undefined;
     if (estimateBuildTier) {
       const buildActionType: ActionType = projectType === 'mobile' ? 'mobile-build'
         : projectType === 'website' ? 'website-build'
@@ -2508,9 +2534,24 @@ const storeProjectId = useEditorStore.getState().project?.id;
         // matches on to show the Upgrade button — same reusable upsell moment
         // a post-hoc 402 already triggers, just surfaced before any credits
         // are spent instead of after a failed build.
-        const shortMsg = `This build needs ~${estimatedCost} credits (${estimateBuildTier} tier, ${plannedFileCount} files planned) — you have ${freshCredits}. Not enough credits for this action. Add credits, upgrade, or describe something smaller and I'll check again.`;
+        // Instead of a dead end, offer a simpler app the balance already
+        // covers, at the normal price for that size (pricing unchanged). On
+        // the one-shot path that is the standard simple build (LOW = small
+        // tier, a 6-10 file plan); on a staged build, the biggest smaller
+        // file-count tier. Not offered again on a run that is already simple.
+        const smallCost = creditCost(buildActionType, effectiveModelTier, 'small');
+        const simple = opts?.maxFiles ? null
+          : isOneShotBuild
+          ? (estimateBuildTier !== 'small' && smallCost <= freshCredits ? { maxFiles: 10, cost: smallCost } : null)
+          : largestAffordableSmallerBuild(buildActionType, estimateBuildTier, freshCredits);
+        const shortMsg = simple
+          ? `This is a complex app (${plannedFileCount} files planned), so the full version costs ${estimatedCost} credits. You have ${freshCredits}. Not enough credits for the full version.
+
+I can build a **simpler version** instead: just the core screens (up to ${simple.maxFiles} files) for ${simple.cost} credits. Or add credits to build everything you asked for.`
+          : `This build needs ~${estimatedCost} credits (${estimateBuildTier} tier, ${plannedFileCount} files planned) — you have ${freshCredits}. Not enough credits for this action. Add credits, upgrade, or describe something smaller and I'll check again.`;
         const msgId = uid();
-        addMessage({ id: msgId, role: 'assistant', content: shortMsg, timestamp: Date.now(), status: 'error' });
+        addMessage({ id: msgId, role: 'assistant', content: shortMsg, timestamp: Date.now(), status: 'error',
+          ...(simple ? { simpleBuildOffer: { prompt: userMsg, maxFiles: simple.maxFiles, cost: simple.cost, paletteId } } : {}) });
         persistMessage('assistant', shortMsg);
         pushAgentEvents({ agent: 'planner', status: 'done', detail: t('filesPlannedMsg').replace('{count}', String(plannedFileCount)) });
         setIsGenerating(false);
@@ -2559,7 +2600,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // isNewBuildCompletenessEligible in executeGeneration.
       // echoedUser: user message already added at the top of runAgenticBuild.
       // sharedBubbleId: reuse the planning/credit bubble created above.
-      const oneShotOk = await executeGenerationRef.current?.(userMsg, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
+      // Simpler version: the one-shot build reads the prompt, not the plan, so
+      // spell out the capped plan or it would build the whole complex app.
+      const genPrompt = opts?.maxFiles && staged?.files.length
+        ? `${userMsg}
+
+SIMPLER VERSION — the user chose a simple build that fits their credits. Build ONLY these files: ${staged.files.map(f => `${f.path} (${f.purpose})`).join('; ')}. Leave every other feature out entirely; do not add placeholder screens or nav links for them.`
+        : userMsg;
+      const oneShotOk = await executeGenerationRef.current?.(genPrompt, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
       // The one-shot path uses sharedBubbleId, so ownsBubble=false inside executeGeneration
       // and its finally block never calls setIsGenerating(false) or clears progress. Do it here.
       setIsGenerating(false);
@@ -3791,6 +3839,20 @@ const storeProjectId = useEditorStore.getState().project?.id;
                       got blocked by credits. A plain error bubble was a dead
                       end here — this is the one place a free user is guaranteed
                       to see, mid-session, right after wanting to do more. */}
+                  {msg.simpleBuildOffer && (
+                    <button
+                      disabled={isGenerating}
+                      onClick={() => {
+                        const offer = msg.simpleBuildOffer!;
+                        track('editor_simple_build_chosen', { maxFiles: offer.maxFiles, cost: offer.cost });
+                        updateMessage(msg.id, { simpleBuildOffer: undefined });
+                        runAgenticBuild(offer.prompt, null, offer.paletteId, { maxFiles: offer.maxFiles, echoedUser: true });
+                      }}
+                      style={{ marginTop:8, marginRight:8, display:'inline-flex', alignItems:'center', gap:6, fontSize:12, fontWeight:700, padding:'7px 13px', borderRadius:8, border:'1px solid rgba(34,197,94,0.35)', background:'linear-gradient(135deg, rgba(34,197,94,0.16), rgba(34,197,94,0.06))', color:'#4ade80', cursor: isGenerating ? 'default' : 'pointer', opacity: isGenerating ? 0.5 : 1, fontFamily:'inherit' }}
+                    >
+                      Build simpler version · {msg.simpleBuildOffer.cost} credits →
+                    </button>
+                  )}
                   {msg.status === 'error' && msg.content.includes('Not enough credits') && (
                     <button
                       onClick={() => { track('editor_out_of_credits_upgrade_clicked'); setUpgradeTrigger('out-of-credits'); setUpgradeModalOpen(true); fetchNextFeatureSuggestions(); }}

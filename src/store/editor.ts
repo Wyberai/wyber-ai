@@ -50,6 +50,10 @@ export interface ChatMessage {
   // Ask-first autonomy: a free fix pass OFFERED instead of auto-run (see
   // agent-turn store `autonomy`). Fix dispatches the self-heal; Dismiss clears.
   fixOffer?: { prompt: string; error?: string; label: string };
+  // Credit-wall choice on a first build: the full plan costs more than the
+  // balance, so offer a simple version capped at maxFiles (priced at the
+  // normal tier for that size — no discount). Client-session only.
+  simpleBuildOffer?: { prompt: string; maxFiles: number; cost: number; paletteId?: string | null };
 }
 
 export interface Checkpoint {
