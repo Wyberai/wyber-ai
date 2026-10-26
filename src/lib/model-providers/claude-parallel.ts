@@ -28,33 +28,21 @@ import { planPages, retrieve, fetchTemplateFiles } from '@/lib/template-library'
 import type { TemplateFramework, PageSpec, TemplateFiles } from '@/lib/template-library/types'
 import { toolCallToTag } from './openai-coding'
 import type { CodeGenInput, CodeGenResult } from './types'
+import { CODE_MODEL } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// Sonnet, not Opus — matches the existing Sonnet-first policy
-// (WYBER_SONNET_FIRST_BUILD in route.ts) and keeps each small, page-scoped
-// call cheap; there's no reason a single page needs Opus-level reasoning.
-//
-// The default below was actually 'claude-haiku-4-5-20251001' — contradicting
-// this exact comment — with no CLAUDE_PARALLEL_MODEL_ID override set, so
-// EVERY claude-parallel page generation has silently been running on Haiku,
-// not Sonnet. Confirmed live: a real "CRM for a real estate agency" build
-// went through this path (buildId=2vx047z) and produced a page with zero
-// wyber-ui imports — bare Tailwind, plain white cards, default font — despite
-// the full WYBER_UI_KIT_PROMPT (166 components, explicit "USE THESE" rules)
-// being present in input.systemPrompt (route.ts passes the same
-// staticSystemPrompt used everywhere else). The kit was there; the model
-// reading it wasn't the one the comment says it should be. The `[generate
-// cache] ... claude-parallel model=...` log line was never a fix for this —
-// it logs route.ts's OWN resolvedTier→MODELS mapping (always 'claude-sonnet-5'
-// since Aug 2), not the model this file actually calls, so the discrepancy
-// stayed invisible in every log line printed all night.
-export const MODEL_ID = process.env.CLAUDE_PARALLEL_MODEL_ID || 'claude-haiku-4-5-20251001'
+// Sonnet, not Opus or Haiku. This used to default to Haiku 4.5, which ignored
+// the Wyber UI kit (bare Tailwind, plain cards, default font — build
+// 2vx047z) even though the full kit prompt was in systemPrompt.
+// Two-model policy (src/lib/models.ts): page code is written by CODE_MODEL;
+// the old CLAUDE_PARALLEL_MODEL_ID override is gone on purpose.
+export const MODEL_ID = CODE_MODEL
 const MAX_PARALLEL_PAGES = Number(process.env.CLAUDE_PARALLEL_MAX_PAGES) || 6
-// Haiku is fast and cheap — 8k is plenty for one page. Sonnet needed 16k.
-const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 8000
+// Sonnet writes fuller pages than Haiku did — 8k truncated them; 16k fits.
+const PAGE_MAX_TOKENS = Number(process.env.CLAUDE_PARALLEL_PAGE_MAX_TOKENS) || 16000
 // Hard budget: abort the whole parallel path if total output tokens exceed this.
-// At Haiku pricing ($1.25/M output), 80k tokens = ~$0.10. Safe ceiling per build.
+// At Sonnet 5.5 pricing ($10/M output), 80k tokens = ~$0.80. Safe ceiling per build.
 const MAX_TOTAL_OUTPUT_TOKENS = Number(process.env.CLAUDE_PARALLEL_MAX_OUTPUT_TOKENS) || 80_000
 // ts_rank scores are small — see the identical comment in wybercode.ts. A
 // low threshold errs toward "attempt a patch" while the library is small.
@@ -146,6 +134,9 @@ async function runPageTurn(systemPrompt: string, userPrompt: string): Promise<Co
     system: `${MANDATORY_KIT_HEADER}\n\n${systemPrompt}\n\n${PAGE_OUTPUT_RULE}`,
     messages: [{ role: 'user', content: userPrompt }],
     tools: [WRITE_FILE_TOOL, EDIT_FILE_TOOL],
+    // Thinking off, same as the quality pass below — Sonnet 5.5 thinks by
+    // default, which would slow every page and eat its token budget.
+    thinking: { type: 'between_tools' } as unknown as Anthropic.ThinkingConfigParam,
   })
   const msg = await stream.finalMessage()
   let output = ''

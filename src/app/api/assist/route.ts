@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 // 120s: a full-length streamed answer (4k tokens) over a large cached context
 // can brush past 60s — getting killed mid-stream reads as another truncation.
@@ -13,8 +14,8 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // upload") and asking users for things it already had — the chat lane is the
 // product's voice, and with prompt caching on the file context the real cost
 // per turn is cents, not dollars.
-const CLASSIFY_MODEL = 'claude-haiku-4-5-20251001'
-const REPLY_MODEL = 'claude-haiku-4-5-20251001'
+const CLASSIFY_MODEL = CHEAP_MODEL
+const REPLY_MODEL = CHEAP_MODEL
 
 /**
  * Conversational assist endpoint for the builder.
@@ -103,6 +104,7 @@ export async function POST(req: NextRequest) {
     const encoder = new TextEncoder()
     const stream = await client.messages.stream({
       model: REPLY_MODEL,
+      thinking: CHEAP_THINKING,
       // 800 was enough for chat answers but silently truncated the one thing
       // this lane is explicitly allowed to emit in full: runnable SQL/CLI
       // blocks. A 6-table schema is ~2.5k tokens — users got scripts cut off
@@ -209,6 +211,7 @@ async function classifyWithHaiku(prompt: string, hasFiles: boolean, history: Arr
     ]
     const res = await client.messages.create({
       model: CLASSIFY_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 5,
       system: `You are an intent classifier for an AI app builder. The user ${hasFiles ? 'already has an app with code' : 'has no app yet'}. Given the conversation so far, decide if the user's LATEST message is:
 - ACTION: a request to build, create, change, add, remove, fix, or otherwise modify the app's code — including a short confirmation ("go ahead", "yes please", "do it") when the assistant's immediately preceding message proposed a specific change and asked the user to confirm it.

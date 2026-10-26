@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildFixFileList } from '@/lib/auto-fix-context'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 // Was 60 — /api/generate (comparable Claude-call work) gets 800. A Haiku
 // repair pass on a project that's grown large (many files in the fix
@@ -74,27 +75,23 @@ RULES:
 - Return ONLY <file> blocks, no prose`
 
   try {
-    // Assistant-turn prefill: the prompt already says "no prose" in words, but
-    // confirmed live that Haiku ignores it under real errors — it wrote a
-    // paragraph of diagnosis before the <file> block. That prose ate into the
-    // (also too-small) 8192-token output budget, so a large file's rewrite got
-    // cut off mid-file with no closing </file> tag, and the regex below found
-    // zero matches — the fix silently did nothing. Prefilling the assistant
-    // turn forces the response to continue directly from the tag: no prose is
-    // structurally possible, and the full token budget goes to file content.
-    // Anthropic returns only the CONTINUATION after a prefill, so it must be
-    // prepended back before parsing.
-    const PREFILL = '<file path="'
+    // This used to prefill the assistant turn with '<file path="' because
+    // Haiku 4.5 wrote a paragraph of diagnosis first, which ate the output
+    // budget and truncated the file. Haiku 5.5 rejects prefill (400), so the
+    // same constraint now lives in the system prompt. The regex below finds
+    // <file> blocks anywhere in the reply, and 16k tokens leaves room for a
+    // stray sentence before the first tag.
     const res = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 16000,
+      system: 'Your reply must start with `<file path="` and contain nothing but <file> blocks. No diagnosis, no explanation, no prose before, between, or after the blocks.',
       messages: [
         { role: 'user', content: prompt },
-        { role: 'assistant', content: PREFILL },
       ],
     })
 
-    const text = PREFILL + res.content
+    const text = res.content
       .filter(b => b.type === 'text')
       .map(b => (b as { type: 'text'; text: string }).text)
       .join('')

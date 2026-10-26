@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -54,7 +55,7 @@ OUTPUT FORMAT (return exactly this structure):
         "label": "Plain English label (e.g. 'Draft a reply')",
         "subtitle": "What the AI decides",
         "config": {
-          "model": "claude-haiku-4-5-20251001",
+          "model": "claude-haiku-5-5",
           "instructions": "Specific instructions for what the AI should do with the inputs"
         },
         "status": "idle"
@@ -91,7 +92,8 @@ export async function POST(req: NextRequest) {
     if (!prompt?.trim()) return NextResponse.json({ error: 'prompt required' }, { status: 400 })
 
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 2000,
       system: [{ type: 'text' as const, text: SYSTEM, cache_control: { type: 'ephemeral' as const } }],
       messages: [{ role: 'user', content: `Build an agent for: ${prompt}` }],

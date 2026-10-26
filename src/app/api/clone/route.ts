@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
 Output <file path="...">...</file> blocks only.`
 
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 8000,
       messages: [{ role: 'user', content: prompt }],
     })

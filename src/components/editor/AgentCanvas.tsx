@@ -758,15 +758,6 @@ function ConfigPanel() {
         {nodeType === 'aiagent' && (
           <>
             <div>
-              <label style={labelStyle}>{t('whichAiModel')}</label>
-              <select value={(node.data.config as Record<string,string>).model || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), model: e.target.value } })} style={fieldStyle}>
-                <option value="claude-haiku-4-5-20251001">{t('modelClaudeSonnet')}</option>
-                <option value="claude-haiku-4-5-20251001">{t('modelClaudeOpus')}</option>
-                <option value="gpt-4o">{t('modelGpt4o')}</option>
-                <option value="gpt-4o-mini">{t('modelGpt4oMini')}</option>
-              </select>
-            </div>
-            <div>
               <label style={labelStyle}>{t('whatShouldAiDo')}</label>
               <textarea value={(node.data.config as Record<string,string>).instructions || ''} onChange={e => updateNodeData(node.id, { config: { ...(node.data.config as Record<string,string>), instructions: e.target.value } })} placeholder="e.g. Read the email, extract the customer name and issue type, and draft a polite reply." rows={4} style={{ ...fieldStyle, resize: 'vertical' }} />
             </div>

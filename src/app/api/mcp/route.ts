@@ -291,9 +291,9 @@ const handler = createMcpHandler(
           .single()
 
         // Determine model tier and currency
-        const planRank: Record<string, number> = { free: 0, spark: 0, starter: 1, builder: 2, pro: 3, growth: 4, scale: 5 }
-        const userPlanRank = planRank[profile.plan as string] ?? 0
-        const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
+        // Two-model policy: every build runs (and is priced) on the 'fast' tier,
+        // matching what /api/generate actually runs — see src/lib/models.ts.
+        const modelTier: ModelTier = 'fast'
         const currency = await getUserCurrency(userId)
 
         // Calculate cost — must mirror /api/generate's real pricing decision
@@ -384,9 +384,9 @@ const handler = createMcpHandler(
         const availableCredits = profile.credits ?? 0
         const isFirstBuild = !project.files || Object.keys(project.files as Record<string, unknown>).length === 0
 
-        const planRank: Record<string, number> = { free: 0, spark: 0, starter: 1, builder: 2, pro: 3, growth: 4, scale: 5 }
-        const userPlanRank = planRank[profile.plan as string] ?? 0
-        const modelTier: ModelTier = userPlanRank >= 1 ? 'default' : 'fast'
+        // Two-model policy: every build runs (and is priced) on the 'fast' tier,
+        // matching what /api/generate actually runs — see src/lib/models.ts.
+        const modelTier: ModelTier = 'fast'
 
         // Must mirror /api/generate's real pricing decision — any build on a
         // project that already has files is charged as a flat 'small-edit'

@@ -3,6 +3,8 @@
  * Keep all cost logic here; routes import from here, never hardcode elsewhere.
  */
 
+import { CODE_MODEL } from './models'
+
 export type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt' | 'wybercode'
 export type ModelProvider = 'anthropic' | 'openai' | 'wybercode'
 /**
@@ -38,17 +40,17 @@ export type ActionType =
   | 'preview-access'
 
 /**
- * Anthropic model IDs for each tier. Bumped from claude-haiku-4-5-20251001/opus-4-8 to
- * the current Sonnet 5 / Opus 5 generation — same-or-cheaper pricing, better
- * agentic-coding performance. Scoped to ONLY this builder tier system; other
- * subsystems (AI Employees, Agent Canvas, GTM flows) hardcode their own model
- * strings independently and are a separate, out-of-scope cleanup.
+ * Anthropic model IDs for each tier. Two-model policy (src/lib/models.ts):
+ * every Claude tier resolves to CODE_MODEL — no Opus or Fable. The tier names
+ * survive only because pricing and stored usage rows still reference them;
+ * /api/generate no longer accepts a client-chosen tier at all, so this map is
+ * a safety net for any path that still names one.
  */
 export const MODEL_IDS: Record<ModelTier, string> = {
-  fast:    'claude-sonnet-5-5',
-  default: 'claude-opus-5',
-  premium: 'claude-opus-5',
-  fable:   'claude-fable-5',
+  fast:    CODE_MODEL,
+  default: CODE_MODEL,
+  premium: CODE_MODEL,
+  fable:   CODE_MODEL,
   // GPT-5.6 Sol — OpenAI's current flagship for complex reasoning/coding with
   // Functions tool support, confirmed against OpenAI's live model catalog
   // (developers.openai.com/api/docs/models, checked 2026-07-26). Still an

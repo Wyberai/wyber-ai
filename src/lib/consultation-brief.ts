@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic()
 
@@ -90,7 +91,8 @@ Write a JSON brief with EXACTLY this shape (no markdown, no explanation, just ra
 }`
 
   const msg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: CHEAP_MODEL,
+    thinking: CHEAP_THINKING,
     max_tokens: 1800,
     messages: [{ role: 'user', content: prompt }],
   })

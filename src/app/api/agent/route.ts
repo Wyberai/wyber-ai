@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -72,7 +73,8 @@ export async function POST(req: NextRequest) {
           ]
 
           const stream = await client.messages.stream({
-            model: 'claude-haiku-4-5-20251001',
+            model: CHEAP_MODEL,
+            thinking: CHEAP_THINKING,
             max_tokens: 16000,
             system: AGENT_SYSTEM,
             messages,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { estimateFeatureCost, type BuildSizeTier } from '@/lib/credits'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 // Powers the out-of-credits upsell's "you'll probably want next" section
 // (UpgradeModal.tsx) — the moment a user hits their credit limit mid-build,
@@ -65,7 +66,8 @@ ${paths.slice(0, 100).join('\n').slice(0, 1500)}
 ${snippets ? `\nKey file contents:\n${snippets.slice(0, 3000)}` : ''}`
 
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 500,
       system: `You're looking at a real, in-progress app someone is building. Based on what it already does, suggest exactly 3 SPECIFIC, concrete features they will plausibly want to add next — never generic advice like "add tests" or "improve the design". Ground every suggestion in what THIS particular app is (e.g. a finance app might need a loan/EMI calculator; a CRM might need a pipeline view or email sync; a booking app might need reminders or a waitlist).
 

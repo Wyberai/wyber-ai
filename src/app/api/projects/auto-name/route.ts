@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
@@ -49,7 +50,8 @@ export async function POST(req: NextRequest) {
     if (!stillAuto) return NextResponse.json({ name: project.name, skipped: true })
 
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 20,
       system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, not the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
       messages: [{ role: 'user', content: promptStr.slice(0, 500) }],

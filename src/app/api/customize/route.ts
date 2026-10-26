@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -39,7 +40,8 @@ RULES:
     const userPrompt = `EXISTING CODE:\n${fileSnapshot}\n\nCUSTOMIZATION:\n${customPrompt}\n\nAccent: ${accent}\nApp name: ${appName}`
 
     const stream = await client.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 6000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],

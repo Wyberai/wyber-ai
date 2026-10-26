@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 const ANON_COOKIE = 'wyb_anon_id'
@@ -103,7 +104,8 @@ export async function POST(req: NextRequest) {
     const recentMessages = messages.slice(-10)
 
     const stream = await anthropic.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       // 400 truncated any answer with real steps in it mid-sentence.
       max_tokens: 1000,
       system: SYSTEM,

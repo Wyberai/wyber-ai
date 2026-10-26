@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -97,7 +98,8 @@ Rules:
 
     try {
       const aiRes = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: CHEAP_MODEL,
+        thinking: CHEAP_THINKING,
         max_tokens: 512,
         messages: [{ role: 'user', content: prompt }],
       })

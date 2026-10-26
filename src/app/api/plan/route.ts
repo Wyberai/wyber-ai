@@ -209,11 +209,13 @@ ${knownDeps.length > 0 ? `\nAlready detected as needed: ${knownDeps.join(', ')}.
     const userText = `User wants to build: ${prompt}${qaLines ? `\n\nClarifications:\n${qaLines}` : ''}`;
 
     const msg = await client.messages.create({
-      model: MODEL_IDS.default,
-      max_tokens: 4096,
+      model: MODEL_IDS.fast,
+      // Was Opus 5 at 4096. Thinking counts against max_tokens, so leave room
+      // for it on top of the plan JSON; medium effort keeps Plan Mode snappy.
+      max_tokens: 16000,
       thinking: { type: 'adaptive', display: 'summarized' },
       system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-      output_config: { format: { type: 'json_schema', schema: PLAN_SCHEMA } },
+      output_config: { effort: 'medium', format: { type: 'json_schema', schema: PLAN_SCHEMA } },
       messages: [{
         role: 'user',
         content: fileContext ? `Current project:\n${fileContext.slice(0, 3000)}\n\n${userText}` : userText,

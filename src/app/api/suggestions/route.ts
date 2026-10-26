@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
@@ -85,7 +86,8 @@ export async function GET() {
     const weekday = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 700,
       system: `You suggest app ideas a user could build today with an AI app builder. Return ONLY a JSON array of exactly 6 objects: {"title": "2-3 words", "prompt": "one concrete build instruction under 25 words", "category": one of ${JSON.stringify(CATEGORIES)}}. Ideas must be buildable as a small web or mobile app (forms, lists, dashboards, booking, stores — no hardware, no crypto). Vary the categories. If past projects are given, make 2-3 ideas feel like natural next apps for that person; the rest fresh. No markdown, no prose, JSON array only.`,
       messages: [{

@@ -6,6 +6,7 @@ import { creditCost } from '@/lib/credits'
 import { Composio } from '@composio/core'
 import { sendWorkflowCompletedEmail, sendWorkflowFailedEmail } from '@/lib/email'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -103,7 +104,9 @@ async function executeAiAgent(
   sourceId?: string,
 ): Promise<{ output: unknown; log: string[]; toolResults: Record<string, unknown> }> {
   const instructions = node.data.config.instructions || node.data.subtitle || 'Process the input and respond.'
-  const model = node.data.config.model || 'claude-haiku-4-5-20251001'
+  // Two-model policy: canvas agents always run on CHEAP_MODEL, whatever an
+  // older saved node config says (those still name Haiku 4.5 / gpt-4o).
+  const model = CHEAP_MODEL
   const upstreamContext = Object.keys(state).length
     ? `\n\nUpstream data:\n${JSON.stringify(state, null, 2)}`
     : ''
@@ -134,6 +137,7 @@ async function executeAiAgent(
   if (toolNodes.length === 0) {
     const response = await anthropic.messages.create({
       model,
+      thinking: CHEAP_THINKING,
       max_tokens: 4096,
       messages: [{ role: 'user', content: instructions + memoryBlock + upstreamContext }],
     })
@@ -185,6 +189,7 @@ async function executeAiAgent(
   for (let iter = 0; iter < MAX_TOOL_ITERATIONS; iter++) {
     const response = await anthropic.messages.create({
       model,
+      thinking: CHEAP_THINKING,
       max_tokens: 4096,
       tools,
       messages: withCacheBreakpoint(messages),
@@ -272,7 +277,8 @@ async function saveAgentMemory(
     const db = createServiceClient()
     // Build concise summary with AI
     const summaryRes = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 400,
       messages: [{
         role: 'user',

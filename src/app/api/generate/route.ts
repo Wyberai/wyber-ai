@@ -15,6 +15,7 @@ import { CONNECTOR_INFRA_PROMPT } from '@/lib/connector-infra'
 import { formatAgentEvent, type AgentEvent } from '@/lib/agents/events'
 import { reviewEmittedFile, createFindingIdGenerator, type SecurityRuleFinding } from '@/lib/agents/security-rules'
 import { shouldAutoRouteToWyberCode } from '@/lib/model-providers/wybercode'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 // A build/edit turn only did something real if it produced an actual <file> or
 // <edit> block — not just because the model streamed text. Without this check,
@@ -3640,13 +3641,14 @@ async function resolveModelTier(opts: {
 async function isComplexBuild(prompt: string): Promise<boolean> {
   try {
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 5,
-      // Pinned — without this, the same prompt can flip LOW/HIGH between
-      // calls on borderline requests (confirmed: one real prompt split
-      // roughly 50/50 across 8 identical calls), so the same build could
-      // randomly cost 15cr or 30cr with no relation to actual complexity.
-      temperature: 0,
+      // No temperature: 0 here — Haiku 5.5 400s on any non-default sampling
+      // param, and the catch below would silently turn that into "always
+      // LOW". Haiku 4.5 needed it pinned because borderline prompts flipped
+      // LOW/HIGH (~50/50 on one real prompt), changing the build price; if
+      // that recurs on 5.5, fix it in the prompt, not with sampling params.
       system: `You rate a from-scratch app-build request as LOW or HIGH complexity.
 HIGH = a large multi-feature platform (e.g. "a full marketplace with vendor accounts, inventory, and checkout", "a project management tool with teams, permissions, and Gantt charts", "a multi-tenant SaaS admin panel"), OR explicitly asks for many deeply interconnected screens/modules, OR heavy custom business logic (complex scoring, scheduling, or workflow engines).
 LOW = the common case: a landing page, a single-purpose tool (todo list, habit tracker, CRM, portfolio, blog), a dashboard, a form-based app — even with several screens, as long as they're not a deeply interconnected custom system.
@@ -3718,7 +3720,8 @@ async function updateProjectMemory(opts: {
       .trim()
       .slice(0, 1200)
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 700,
       system: `You maintain a compact long-term memory of a web/mobile app a user is building with an AI builder. Merge the new turn into the existing memory. Keep ONLY durable facts that help future edits: what the app is, its main screens/features, the data model/schema, design conventions, integrations (e.g. Supabase), and standing user preferences. Drop one-off chatter. Terse note form, <=900 characters. Output ONLY the updated memory text — no preamble, no markdown headers.`,
       messages: [{
@@ -3760,7 +3763,8 @@ async function nameNewProject(projectId: string, userPrompt: string): Promise<vo
     const stillAuto = autoNames.includes(project.name) || /^New Project( |$)/.test(project.name ?? '')
     if (!stillAuto) return
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 20,
       system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, not the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
       messages: [{ role: 'user', content: userPrompt.slice(0, 500) }],
@@ -3850,6 +3854,11 @@ export async function POST(req: NextRequest) {
     // checked once the caller's plan is known (below, alongside the existing
     // tierAllowedForPlan gate).
     let { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false, buildComplexity } = body
+    // Two-model policy (src/lib/models.ts): no client-chosen tier. Dropping it
+    // here sends every request down the same automatic path the editor uses
+    // (it sends no modelTier), so a stale client, the MCP connector, or a
+    // hand-crafted request can't pick Opus, Fable, GPT or WyberCode.
+    modelTier = undefined
     // Set by the client from the 'plan' stage's response header (see
     // X-Build-Complexity below) and echoed back on every subsequent staged
     // request (scaffold/fill/wire) of the SAME build — reuses the one Haiku

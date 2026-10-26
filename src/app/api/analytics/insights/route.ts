@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 // Powers the "Insights" card in AnalyticsPanel.tsx — turns the raw page_views
 // aggregates that /api/analytics/summary already computes into 2-3 plain-English,
@@ -73,7 +74,8 @@ Top referrers: ${topReferrers.map(([s, c]) => `${s} (${c})`).join(', ') || 'none
 Single-page sessions (left after one page): ${singlePageSessions} of ${visitors}`
 
     const res = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 300,
       system: `You're a product analyst looking at real traffic for one specific app. Write 2-3 short, concrete observations a founder can act on today — never generic advice like "monitor your traffic" or "add more content". Ground every observation in the actual numbers given (name the specific page or referrer). If the data doesn't support a real insight, return fewer items rather than padding with filler.
 

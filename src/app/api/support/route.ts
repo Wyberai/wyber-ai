@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { rateLimit } from '@/lib/rate-limit'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
     if (!messages?.length) return new Response('No messages', { status: 400 })
 
     const stream = await client.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       // 400 cut multi-step troubleshooting answers off mid-sentence.
       max_tokens: 1500,
       system: SYSTEM,

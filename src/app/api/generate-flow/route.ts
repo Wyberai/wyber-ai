@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -52,7 +53,8 @@ export async function POST(req: NextRequest) {
     if (!prompt) return NextResponse.json({ error: 'Prompt required' }, { status: 400 })
 
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 4000,
       system: SYSTEM,
       messages: [{ role: 'user', content: `Create a workflow for: ${prompt}` }],

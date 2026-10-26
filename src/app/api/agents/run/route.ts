@@ -7,10 +7,11 @@ import { creditCost } from '@/lib/credits'
 import { sendAgentCompletedEmail, sendAgentFailedEmail } from '@/lib/email'
 import { withCacheBreakpoint } from '@/lib/anthropic-cache'
 import { internalSecret } from '@/lib/internal-auth'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// Cost per Anthropic call in this route (model is always claude-haiku-4-5-20251001 = default tier)
+// Cost per Anthropic call in this route (model is always CHEAP_MODEL = default tier)
 const ITER_COST = creditCost('execution', 'default') // 2 credits
 
 export async function POST(req: NextRequest) {
@@ -236,7 +237,8 @@ Execute now. Return a structured summary of what you did and what you found.`
     let response: Anthropic.Message
     try {
       response = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: CHEAP_MODEL,
+        thinking: CHEAP_THINKING,
         max_tokens: 4096,
         system: cachedSystem,
         tools: claudeTools,
@@ -311,7 +313,8 @@ Execute now. Return a structured summary of what you did and what you found.`
 
       try {
         currentResponse = await anthropic.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+          model: CHEAP_MODEL,
+          thinking: CHEAP_THINKING,
           max_tokens: 4096,
           system: cachedSystem,
           tools: claudeTools,

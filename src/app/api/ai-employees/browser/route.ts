@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -78,7 +79,8 @@ export async function POST(req: NextRequest) {
       const fields = body.extract_fields?.length ? body.extract_fields : ['title', 'description', 'main content']
 
       const aiRes = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: CHEAP_MODEL,
+        thinking: CHEAP_THINKING,
         max_tokens: 1024,
         messages: [{
           role: 'user',

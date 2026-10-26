@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic()
 
@@ -24,7 +25,8 @@ export async function POST(req: NextRequest) {
   if (body.action === 'scrape') {
     try {
       const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: CHEAP_MODEL,
+        thinking: CHEAP_THINKING,
         max_tokens: 1024,
         messages: [{
           role: 'user',

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit } from '@/lib/rate-limit'
 import { getRoleBySlug } from '@/lib/employee-roles'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -50,7 +51,8 @@ export async function POST(req: NextRequest) {
     const recentMessages = messages.slice(-12)
 
     const stream = await anthropic.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: CHEAP_MODEL,
+      thinking: CHEAP_THINKING,
       max_tokens: 900,
       system: buildInterviewPrompt(role),
       messages: recentMessages.length ? recentMessages : [{ role: 'user', content: "Hi — thanks for coming in. Introduce yourself for the role." }],

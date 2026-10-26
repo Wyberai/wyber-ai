@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 
 // Integration tool map — covers all 35 integrations from agent_workflows data
 const TOOL_NODE_MAP: Record<string, { label: string; color: string; icon: string }> = {
@@ -152,7 +153,8 @@ function buildCanvas(agentName: string, requiredTools: string, outcome: string, 
       label: agentName,
       subtitle: outcome?.slice(0, 100) || '',
       config: {
-        model: 'claude-haiku-4-5-20251001',
+        model: CHEAP_MODEL,
+        thinking: CHEAP_THINKING,
         instructions: `You are ${agentName}.\n\nProblem: ${problem || ''}\n\nOutcome: ${outcome || ''}\n\nAnalyze inputs carefully and take precise, high-quality actions.`,
       },
       status: 'idle',
