@@ -6,12 +6,12 @@ import { WebsitesClient } from './WebsitesClient'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Get your business found on Google and ChatGPT — AI website builder',
-  description: 'Paste your old website or describe your business. WyberAi plans a fast, multi-page site that Google and AI assistants like ChatGPT can actually read — with WhatsApp, maps and your real details. See your plan free.',
+  title: 'Your Instagram page isn’t your business — own your website',
+  description: 'Move from a rented social profile to a website you own — found on Google and ChatGPT, taking orders on WhatsApp. Paste your Instagram bio or old site and see your plan free.',
   alternates: { canonical: 'https://wyberai.com/websites' },
   openGraph: {
-    title: 'Your business, found on Google and ChatGPT',
-    description: 'Paste your old website — see the plan for a new one, free. Built for shops, clinics, restaurants, tutors and local services.',
+    title: 'Your Instagram page isn’t your business. Your website is.',
+    description: 'Instagram is rented. A website is yours — found on Google and ChatGPT. See the plan for yours, free.',
     url: 'https://wyberai.com/websites',
     type: 'website',
   },

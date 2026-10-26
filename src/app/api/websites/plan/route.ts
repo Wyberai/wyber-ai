@@ -149,7 +149,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'We can only rebuild your own business’s website.' }, { status: 400 })
     }
     return NextResponse.json({ plan, prompt: buildPrompt(plan, sourceUrl), sourceUrl: sourceUrl ?? null })
-  } catch {
+  } catch (e) {
+    console.error('[websites/plan] model call failed:', e)
     return NextResponse.json({ error: 'We couldn’t plan that right now — try again in a moment.' }, { status: 502 })
   }
 }
