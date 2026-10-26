@@ -12,7 +12,12 @@ const MAX_VALUE = 2_000_000
 
 export function SandboxedApp({ html, slug, projectId, title }: { html: string; slug: string; projectId: string; title: string }) {
   const frame = useRef<HTMLIFrameElement>(null)
-  const [srcDoc, setSrcDoc] = useState<string | null>(null)
+  // Server-rendered with an empty seed so the app shows even if this page's
+  // JS never hydrates (it did on prod once — the app went blank because the
+  // srcDoc was only ever set from an effect). The effect below swaps in the
+  // visitor's saved data only when there is some, so most loads never reload
+  // the frame.
+  const [srcDoc, setSrcDoc] = useState<string>(() => injectStorageShim(html, {}))
   const prefix = storagePrefix(slug)
 
   useEffect(() => {
@@ -35,7 +40,7 @@ export function SandboxedApp({ html, slug, projectId, title }: { html: string; s
         }
       }
     } catch { /* storage blocked — app still runs, just without saved data */ }
-    setSrcDoc(injectStorageShim(html, seed))
+    if (Object.keys(seed).length > 0) setSrcDoc(injectStorageShim(html, seed))
   }, [html, prefix, projectId])
 
   useEffect(() => {
@@ -63,7 +68,7 @@ export function SandboxedApp({ html, slug, projectId, title }: { html: string; s
   return (
     <iframe
       ref={frame}
-      srcDoc={srcDoc ?? undefined}
+      srcDoc={srcDoc}
       sandbox={PUBLISHED_APP_SANDBOX}
       style={{ width: '100%', height: '100vh', border: 'none', display: 'block' }}
       title={title}
