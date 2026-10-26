@@ -1211,7 +1211,7 @@ const FEATURE_SPOTLIGHTS = {
   domain: {
     subject: 'Put your own domain on it',
     heading: 'Your app, your domain',
-    body: "Publishing gives you a free wyberai.app link — but you can point your own custom domain at any published project in Settings, no extra hosting to manage.",
+    body: "Publishing gives you a free wyberai.com/app/ link — but you can point your own custom domain at any published project in Settings, no extra hosting to manage.",
     cta: 'Connect a domain →',
     url: `${APP_URL}/dashboard`,
   },

@@ -170,7 +170,7 @@ export const BUSINESS_PAGES: BuildPage[] = [
     faqs: [
       { q: 'Does it connect directly to my Amazon or Shopify account?', a: 'Not out of the box — this is a describe-your-numbers dashboard, so you log or paste in orders yourself. That avoids depending on a marketplace API that can change or get revoked; ask for a bulk-paste or CSV-import screen in your prompt and it can be added.' },
       { q: 'Can it handle more than three channels?', a: 'Yes — the Channels page holds however many you describe, each with its own fee percentage, and the dashboard rolls them all into one margin view.' },
-      { q: 'Do I need my own website or hosting?', a: 'No — publish and it\'s live instantly on a free wyberai.app subdomain; connect your own domain later only if you want one.' },
+      { q: 'Do I need my own website or hosting?', a: 'No — publish and it\'s live instantly at a free wyberai.com/app/ address; connect your own domain later only if you want one.' },
       { q: 'Is this cheaper than a multi-channel seller tool?', a: 'You build it once with free monthly credits and own it outright — no per-order or per-channel fee that grows as your sales do.' },
     ],
     related: ['inventory-management-app', 'expense-tracker-app'],

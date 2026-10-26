@@ -52,11 +52,11 @@ export default function Post() {
           <p>This step catches 90% of production issues. If something looks wrong, fix it in the builder with a chat message before deploying.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 4: Deploy to Vercel</h2>
-          <p>Click the <strong style={{ color: s.text }}>Deploy</strong> button in your WyberAi project. The app is packaged as a standard Vite build and published to Vercel. Within a few minutes, you get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>yourapp.wyberai.app</code>.</p>
+          <p>Click the <strong style={{ color: s.text }}>Deploy</strong> button in your WyberAi project. The app is packaged as a standard Vite build and published to Vercel. Within a few minutes, you get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>wyberai.com/app/yourapp</code>.</p>
           <p>Vercel handles SSL certificates, CDN distribution, and auto-scaling. A typical AI-generated app with Supabase backend can serve thousands of concurrent users without any infrastructure configuration.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 5: Add a custom domain</h2>
-          <p>The default <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>wyberai.app</code> subdomain works, but for a production product you want your own domain. In your Vercel dashboard (linked from WyberAi), add your domain and update DNS. Point an A record or CNAME to Vercel's servers. SSL is provisioned automatically.</p>
+          <p>The default <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>wyberai.com/app/</code> address works, but for a production product you want your own domain. In your Vercel dashboard (linked from WyberAi), add your domain and update DNS. Point an A record or CNAME to Vercel's servers. SSL is provisioned automatically.</p>
           <p>Once DNS propagates (usually under 10 minutes with most registrars), your app is live at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>app.yourdomain.com</code>.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>After deployment: iteration</h2>

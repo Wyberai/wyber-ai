@@ -46,14 +46,14 @@ export default function Post() {
           <p>The generated app works with local state by default. To make it production-ready, connect a Supabase project in Settings → Connectors. WyberAi rewrites the app to use a live Postgres database with Row Level Security — each user only sees their own data. Auth (sign-up, login, password reset) is included automatically.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 4: Deploy to a live URL</h2>
-          <p>Click <strong style={{ color: s.text }}>Deploy</strong> and the app publishes to Vercel in minutes. You get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>yourapp.wyberai.app</code>. Share it with your first five users the same day you had the idea.</p>
+          <p>Click <strong style={{ color: s.text }}>Deploy</strong> and the app publishes to Vercel in minutes. You get a live URL at <code style={{ fontSize: 13, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4 }}>wyberai.com/app/yourapp</code>. Share it with your first five users the same day you had the idea.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>Step 5: Iterate based on feedback</h2>
           <p>Every change is a chat message. "Add an export to CSV button on the invoices table." "Show a red badge on the sidebar when there are overdue invoices." "Add a notes field to each client record." Each edit costs 2 credits and takes a few minutes.</p>
 
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em', color: s.text, margin: '36px 0 14px' }}>The full stack you get</h2>
           <ul style={{ paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['React + Vite frontend', 'Supabase Postgres with RLS', 'Auth (sign-up, login, password reset)', 'Vercel deployment with wyberai.app subdomain', 'Full source code export — you own it completely'].map(i => <li key={i}>{i}</li>)}
+            {['React + Vite frontend', 'Supabase Postgres with RLS', 'Auth (sign-up, login, password reset)', 'Free hosting at wyberai.com/app/your-app', 'Full source code export — you own it completely'].map(i => <li key={i}>{i}</li>)}
           </ul>
 
           <div style={{ marginTop: 36, padding: '24px 28px', background: `${s.sky}10`, border: `1px solid ${s.sky}25`, borderRadius: 12 }}>

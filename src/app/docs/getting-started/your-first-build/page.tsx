@@ -54,7 +54,7 @@ export default function Page() {
           </Step>
           <Step n={6} title="Publish">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Click <strong>Publish</strong> in the top bar. Wyber deploys your app to Vercel and gives you a public URL (e.g. <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12 }}>yourapp.wyberai.app</code>). Publishing is free. The URL updates instantly every time you re-publish after iterating.
+              Click <strong>Publish</strong> in the top bar. Wyber deploys your app to Vercel and gives you a public URL (e.g. <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12 }}>wyberai.com/app/yourapp</code>). Publishing is free. The URL updates instantly every time you re-publish after iterating.
             </p>
             <ScreenshotPlaceholder label="Publish button + live URL" />
           </Step>

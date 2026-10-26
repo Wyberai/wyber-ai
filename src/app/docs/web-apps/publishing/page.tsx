@@ -29,7 +29,7 @@ export default function Page() {
           </Step>
           <Step n={3} title="Your app is live">
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7 }}>
-              Once deployed, a live URL appears in the top bar (e.g. <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12 }}>yourapp.wyberai.app</code>). Click to open it or copy it to share. Publishing is free — it doesn't cost credits.
+              Once deployed, a live URL appears in the top bar (e.g. <code style={{ background: 'rgba(255,255,255,0.08)', padding: '1px 5px', borderRadius: 4, fontSize: 12 }}>wyberai.com/app/yourapp</code>). Click to open it or copy it to share. Publishing is free — it doesn't cost credits.
             </p>
             <ScreenshotPlaceholder label="Live URL confirmation" />
           </Step>

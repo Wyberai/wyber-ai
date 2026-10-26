@@ -58,7 +58,7 @@ export default function Page() {
           </thead>
           <tbody>
             {[
-              ['Free', '15 on signup', '3/day', '~50'],
+              ['Free', '30 on signup', '5/day', 'Refills up to 30'],
               ['Starter ($29/mo)', '150', '—', '150'],
               ['Builder ($79/mo)', '500', '—', '500'],
               ['Pro ($199/mo)', '1,500', '—', '1,500'],

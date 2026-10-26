@@ -136,7 +136,7 @@ export function DeployAnimation() {
         {step >= 3 && (
           <div style={{ padding: '10px 14px', borderRadius: 9, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', animation: 'fadeIn 0.4s ease' }}>
             <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 700, marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Live URL</div>
-            <div style={{ fontSize: 12, color: '#fafafa', fontFamily: 'monospace' }}>https://nestfinder.wyberai.app</div>
+            <div style={{ fontSize: 12, color: '#fafafa', fontFamily: 'monospace' }}>https://wyberai.com/app/nestfinder</div>
           </div>
         )}
       </div>

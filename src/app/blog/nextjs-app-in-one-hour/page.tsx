@@ -44,7 +44,7 @@ export default function Post() {
             "Add email/password auth using Supabase. After login, redirect to /dashboard."
           </div>
           <h2>Step 4: Publish (5 minutes)</h2>
-          <p>Click Publish. Get a live URL at yourapp.wyberai.app. Share it immediately. Deploy to Vercel from the Deploy tab when ready -- one click, zero configuration.</p>
+          <p>Click Publish. Get a live URL at wyberai.com/app/yourapp. Share it immediately. Deploy to Vercel from the Deploy tab when ready -- one click, zero configuration.</p>
           <p>Total: under an hour. From blank screen to live URL.</p>
           <div style={{ padding: '20px 24px', borderRadius: 12, background: 'var(--sky3)', border: '1px solid rgba(14,165,233,0.2)', marginTop: 24 }}>
             <p style={{ fontSize: 14, color: 'var(--text2)', margin: '0 0 14px' }}>Ready to try it? 30 free credits -- no card required.</p>

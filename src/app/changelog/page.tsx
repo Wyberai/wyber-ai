@@ -63,7 +63,7 @@ const RELEASES = [
     { type:'new', text:'Draw on images — upload a screenshot, draw what to change, AI fixes exactly that area' },
     { type:'new', text:'Test / Live environments — promote builds to live without breaking production' },
     { type:'new', text:'Figma import — paste a URL, get a production React component' },
-    { type:'new', text:'Project subdomains — one-click publish to projectname.wyberai.app' },
+    { type:'new', text:'Project subdomains — one-click publish to wyberai.com/app/projectname' },
     { type:'new', text:'Image generation (DALL-E 3) — generate assets directly in the IDE' },
     { type:'new', text:'SEO + AI search audit — score, fix recommendations, AI crawler optimization' },
     { type:'new', text:'Voice input — mic button in chat (UI shipped; server-side transcription coming)' },

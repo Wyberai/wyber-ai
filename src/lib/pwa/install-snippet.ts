@@ -1,7 +1,7 @@
 // PWA head tags + install-pill runtime injected into every published app's
 // index.html at publish time (publish/route.ts, right before upload).
 //
-// The runtime only activates on the app's OWN origin ({slug}.wyberai.app or a
+// The runtime only activates on the app's OWN origin (wyberai.com/app/{slug} or a
 // custom domain) — when the same HTML renders inside the main-domain shell
 // iframe or an editor preview, `window.top !== window.self` and the script
 // exits immediately. Same isolation philosophy as the crash-guard: zero
