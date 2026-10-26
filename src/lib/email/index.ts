@@ -796,6 +796,25 @@ export async function sendDeploySuccessEmail(to: string, projectName: string, ur
   return sendMail({ from: FROM_NOTIF, to, subject: `IT'S HAPPENING — ${projectName} is live 💥`, html })
 }
 
+// ── 8b. Live app error ─────────────────────────────────────────────────────────
+// Sent at most once per project per 24h (see /api/app-errors) when real
+// visitors hit a JavaScript error on a published app. Calm, not meme-y —
+// something is broken for their users. The message comes from anonymous
+// visitors' browsers, so it is escaped (esc) before going into the HTML.
+
+export async function sendLiveAppErrorEmail(to: string, projectName: string, projectId: string, liveUrl: string, message: string, unsubUrl: string) {
+  const html = wrap(`
+    ${h1(`Visitors hit an error on ${esc(projectName)}`)}
+    ${p(`Someone using your live app just ran into this error. It may be stopping a page or a button from working for them.`)}
+    <div style="background:#1a1a1e;border:1px solid #f0525233;border-radius:10px;padding:16px 18px;margin:0 0 24px;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#f0b4b4;word-break:break-word">${esc(message.slice(0, 300))}</div>
+    <div style="text-align:center;margin:0 0 24px">
+      ${btn('Fix it in WyberAi →', `${APP_URL}/project/${projectId}`)}
+    </div>
+    ${p(`Open the project and tap <strong style="color:#f0f0f4">Fix it</strong> on the alert, then republish. We'll only email about new errors once a day. <a href="${liveUrl}" style="color:#8888a0">Open the live app</a>`)}
+  `, `An error is affecting visitors on ${projectName}`, unsubUrl)
+  return sendMail({ from: FROM_NOTIF, to, subject: `Visitors hit an error on ${projectName}`, html })
+}
+
 // ── 9. Security / deploy blocked ─────────────────────────────────────────────
 export async function sendSecurityAlertEmail(to: string, projectName: string, flags: string[]) {
   const html = wrap(`

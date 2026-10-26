@@ -28,6 +28,10 @@ function copyFor(type: string, payload?: Record<string, unknown> | null): { titl
       return { title: 'Build complete', body: 'Your app finished building and is ready to preview.' }
     case 'published':
       return { title: 'Published 🎉', body: 'Your project is live.' }
+    case 'app_error': {
+      const name = payload && typeof payload.projectName === 'string' ? (payload.projectName as string) : 'your app'
+      return { title: 'Visitors hit an error', body: `Something broke on ${name}. Open it to fix.` }
+    }
     case 'referral':
       return { title: 'Referral reward', body: 'You earned credits from a referral.' }
     case 'preview_comment': {

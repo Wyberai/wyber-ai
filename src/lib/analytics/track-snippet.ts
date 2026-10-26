@@ -46,12 +46,41 @@ ${ANALYTICS_MARKER}
       referrer: document.referrer || null,
       sessionId: sessionId,
     });
-    var url = 'https://wyberai.com/api/analytics/track';
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
-    } else {
-      fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(function () {});
-    }
+    var send = function (url, body) {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));
+      } else {
+        fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {});
+      }
+    };
+    send('https://wyberai.com/api/analytics/track', payload);
+
+    // Live-error alerts: report uncaught errors real visitors hit, so the
+    // owner gets "visitors hit an error → Fix it" (/api/app-errors). Each
+    // distinct message is sent once per page load, max 5 per load.
+    var seen = {}, sent = 0;
+    var report = function (message, stack, source) {
+      try {
+        message = String(message || '').slice(0, 500);
+        if (!message || seen[message] || sent >= 5) return;
+        seen[message] = 1; sent++;
+        send('https://wyberai.com/api/app-errors', JSON.stringify({
+          projectId: ${JSON.stringify(projectId)},
+          path: ${JSON.stringify(publicPath)},
+          message: message,
+          stack: String(stack || '').slice(0, 2000),
+          source: String(source || '').slice(0, 300),
+        }));
+      } catch (e) {}
+    };
+    window.addEventListener('error', function (e) {
+      if (!e || !e.message) return; // resource-load errors (img/script 404s) carry no message
+      report(e.message, e.error && e.error.stack, e.filename);
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      var r = e && e.reason;
+      report(r && r.message ? r.message : r, r && r.stack, '');
+    });
   } catch (e) {}
 })();
 </script>`

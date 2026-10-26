@@ -22,6 +22,7 @@ import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
 import type { ChatMessage } from '@/store/editor';
 import { AgentTeamFeed, AgentFeedBoundary } from './agent-team/AgentTeamFeed';
+import { LiveErrorsBanner } from './LiveErrorsBanner';
 import { TurnReceipt } from './agent-team/TurnReceipt';
 import { SecurityReportCard } from './agent-team/SecurityReportCard';
 import { LoopStopCard } from './agent-team/LoopStopCard';
@@ -3608,6 +3609,11 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       )}
 
       {/* Messages */}
+      {resolvedProjectId && (
+        <AgentFeedBoundary>
+          <LiveErrorsBanner projectId={resolvedProjectId} />
+        </AgentFeedBoundary>
+      )}
       <div style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin' }}>
         {visibleMessages.map(msg => (
           <div key={msg.id} style={{ padding:'4px 12px', marginBottom:1 }}>
