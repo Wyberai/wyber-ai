@@ -235,7 +235,7 @@ export function WebsitesClient({ currency, estimate }: { currency: 'INR' | 'USD'
             </div>
           ))}
         </div>
-        <p className="mk-mono ws-note">YOUR OWN DOMAIN CONNECTS ON THE BUILDER PLAN · UNTIL THEN YOUR SITE IS LIVE AT WYBERAI.COM/APP/YOURNAME</p>
+        <p className="mk-mono ws-note">YOUR OWN DOMAIN CONNECTS ON ANY PAID PLAN · UNTIL THEN YOUR SITE IS LIVE AT WYBERAI.COM/APP/YOURNAME</p>
       </section>
 
       {/* ── KEEP INSTAGRAM. POINT IT HOME. ──────────────────── */}
@@ -336,7 +336,7 @@ Q: Do you deliver? A: Yes, within 5 km
             ['Is the plan really free?', 'Yes. Planning your site costs nothing and needs no sign-up. You only use credits when you build.'],
             ['How much will my website cost?', `A complete site — build, ${estimate.steps.find(s => s.key === 'photos')?.label.toLowerCase()}, an SEO + AI-search pass and a few edits — uses about ${estimate.min}–${estimate.max} credits (${money(estimate.min, currency)}–${money(estimate.max, currency)}). Larger sites use more. You need ${estimate.min} credits before the build starts.`],
             ['Will I show up on Google and ChatGPT?', 'We make your site readable and well-described for search engines and AI assistants — the part most small-business sites get wrong. Nobody can promise a ranking, and anyone who does is guessing.'],
-            ['Can I use my own domain?', 'Yes — connect a domain you own on the Builder plan or above. Until then your site is live on a free wyberai.com link.'],
+            ['Can I use my own domain?', 'Yes — connect a domain you own on any paid plan (a domain you buy through WyberAi works on any plan). Until then your site is live on a free wyberai.com link.'],
             ['Can it be in Hindi or my language?', 'Yes. Ask for Hindi, Kannada, Telugu, Tamil or any language — in the plan or later as an edit.'],
           ].map(([q, a]) => <details key={q}><summary>{q}</summary><p>{a}</p></details>)}
         </div>

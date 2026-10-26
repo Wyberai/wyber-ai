@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
             .maybeSingle()
           if (!bought) {
             return NextResponse.json({
-              error: 'Connecting your own domain is available on the Builder plan and up. Upgrade to connect it — or buy a new domain right here and it works on any plan.',
+              error: 'Connecting your own domain is available on any paid plan. Upgrade to connect it — or buy a new domain right here and it works on any plan.',
             }, { status: 402 })
           }
         }

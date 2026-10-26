@@ -205,6 +205,11 @@ const BASE_COSTS: Record<ActionType, number> = {
 // lives beside BASE_COSTS rather than inside creditCost()'s tier logic.
 export const PREVIEW_ACCESS_GAME_COST = 5
 
+// Standard (non-hero) AI image — generated during a build or regenerated from
+// the Images panel. Flat 1 credit; one constant so the pricing page can't
+// drift from what /api/images/regenerate and billBuildImage charge.
+export const IMAGE_GEN_COST = 1
+
 export type BuildSizeTier = 'small' | 'medium' | 'large' | 'xl'
 const BUILD_ACTIONS: ActionType[] = ['web-build', 'mobile-build', 'website-build', 'saas-build']
 

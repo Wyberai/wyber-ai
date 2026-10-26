@@ -86,7 +86,7 @@ const WEB_BUILD_ROWS = [
   { done: true,  active: false, label: 'CREATING DATABASE',     detail: 'RLS policies · 6 tables · indexes' },
   { done: true,  active: false, label: 'SECURITY SCAN',         detail: 'No leaks found · all policies verified' },
   { done: true,  active: false, label: 'PUSHING TO GITHUB',     detail: 'wyberai/crm-abc123' },
-  { done: false, active: true,  label: 'DEPLOYING TO VERCEL',   detail: 'crm-abc123.vercel.app' },
+  { done: false, active: true,  label: 'PUBLISHING LIVE',       detail: 'wyberai.com/app/crm-abc123' },
   { done: false, active: false, label: 'SELF-HEAL ENABLED',     detail: 'Monitoring · auto-fix on error' },
 ];
 
@@ -229,7 +229,7 @@ function McpConsole() {
       {[
         { t: 'create_project',  d: 'waitlist-app · react-vite' },
         { t: 'start_build',     d: 'building… 12 files generated' },
-        { t: 'publish_to_web',  d: 'live at waitlist-x1.wyber.app' },
+        { t: 'publish_to_web',  d: 'live at wyberai.com/app/waitlist-x1' },
       ].map((r, i) => (
         <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '7px 0', borderBottom: '1px solid var(--brand-border)' }}>
           <span style={{ color: 'var(--brand-accent)', fontSize: 10, width: 128, flexShrink: 0 }}>{r.t}</span>
@@ -322,10 +322,10 @@ function buildStages(t: HomeStrings) {
     desc: t.stageShipDesc,
     visual: (
       <div className="mk-frame" style={{ position: 'relative', padding: 22 }}>
-        <WindowChrome title="crm-abc123.vercel.app" />
+        <WindowChrome title="wyberai.com/app/crm-abc123" />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--brand-border)', background: 'rgba(255,255,255,0.02)', marginBottom: 14 }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.8)' }} />
-          <span className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-dim)' }}>https://crm-abc123.vercel.app — LIVE</span>
+          <span className="mk-mono" style={{ fontSize: 10, color: 'var(--brand-text-dim)' }}>https://wyberai.com/app/crm-abc123 — LIVE</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 8 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -440,7 +440,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   // route it through localePath so picking a non-English locale doesn't get
   // dropped the moment the visitor leaves the homepage. /space-journey and
   // /pricing have no locale-prefixed variant and self-translate client-side.
-  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
+  const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
     <div className="mk-page" data-theme="dark">
@@ -502,25 +502,25 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 55% at 68% 20%, rgba(14,165,233,0.10) 0%, transparent 62%)', pointerEvents: 'none' }} />
         <div className="mk-section" style={{ position: 'relative', display: 'grid', gridTemplateColumns: canPin ? '1.1fr 0.9fr' : '1fr', gap: 'clamp(32px,5vw,72px)', alignItems: 'flex-start', paddingTop: 'clamp(40px,5vw,72px)', paddingBottom: 'clamp(64px,9vw,112px)' }}>
           <div>
-            <Reveal y={16}>
+            <div>
               <div className="mk-eyebrow" style={{ marginBottom: 26 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px rgba(34,197,94,0.9)', animation: 'pulse 2s infinite' }} />
                 <span style={{ textDecoration: 'line-through', color: 'var(--brand-text-faint)', opacity: 0.7 }}>{t.eyebrowStrike}</span>
                 {' '}{t.eyebrowMain}
               </div>
-            </Reveal>
-            <Reveal delay={0.08}>
+            </div>
+            <div>
               <h1 className="mk-display" style={{ marginBottom: 26 }}>
                 {t.heroLine1}<br />
                 <span className="mk-serif">{t.heroLine2}</span>
               </h1>
-            </Reveal>
-            <Reveal delay={0.16}>
+            </div>
+            <div>
               <p className="mk-lead" style={{ maxWidth: 520, marginBottom: 36 }}>
                 {t.heroLead}
               </p>
-            </Reveal>
-            <Reveal delay={0.24}>
+            </div>
+            <div>
               {/* The prompt box IS the primary CTA: the visitor's idea rides
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
@@ -580,20 +580,30 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--brand-text-dim)', fontWeight: 500 }}>📱 {t.upiLine}</span>
                 </div>
               )}
-            </Reveal>
+            </div>
           </div>
           {canPin && (
             <div style={{ paddingTop: 'clamp(48px,4vw,56px)' }}>
-              <Reveal delay={0.2} y={32}>
+              <div>
                 <div style={{ position: 'relative' }}>
                   <div style={{ position: 'absolute', inset: -24, background: 'radial-gradient(ellipse at center, rgba(14,165,233,0.14), transparent 70%)', pointerEvents: 'none' }} />
                   <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />
                 </div>
-              </Reveal>
+              </div>
             </div>
           )}
         </div>
       </section>
+
+      {/* ── /websites cross-link: the "rented vs owned" story for businesses
+             that only have a social profile ── */}
+      <Link href="/websites" className="wyb-websites-strip" onClick={() => track('homepage_websites_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
+        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
+          <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>WEBSITES</span>
+          <span style={{ color: 'var(--brand-text)', fontSize: 15, fontWeight: 600 }}>{t.websitesStripText}</span>
+          <span style={{ color: 'var(--brand-accent-hot)', fontSize: 15, fontWeight: 600 }}>{t.websitesStripCta}</span>
+        </div>
+      </Link>
 
       {/* ── TELEMETRY STRIP — India only; US homepage omits unverifiable stats ── */}
       {inr && (
@@ -601,7 +611,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
             { value: appsBuiltStat ?? '2,400+', label: t.statAppsBuilt },
-            { value: '30s', label: t.statAvgBuildTime },
+            { value: '5', label: t.statAvgBuildTime },
             { value: '99.9%', label: t.statUptimeTarget, href: '/status' },
           ].map(s => (
             <div key={s.label}>

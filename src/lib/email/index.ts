@@ -1279,7 +1279,7 @@ export async function sendPaywallHitEmail(to: string, tier: string, currency: Cu
     <div style="text-align:center;margin:28px 0">
       ${btn('See what unlocks it →', `${APP_URL}/pricing`, '#f0a429')}
     </div>
-    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and includes every model tier.`)}
+    ${p(`Builder plan starts at ${formatPrice(prices.builder_monthly, currency)}/mo and comes with 500 credits a month.`)}
   `, `${tier} needs a higher plan`)
   return sendMail({ from: FROM_NOTIF, to, subject: `That model needs a higher plan`, html })
 }

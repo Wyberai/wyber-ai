@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { generateAndPersistImage } from '@/lib/generate-image-persist'
 import { ratioToSize } from '@/lib/image-directives'
 import { rateLimit } from '@/lib/rate-limit'
-import { creditCost } from '@/lib/credits'
+import { creditCost, IMAGE_GEN_COST } from '@/lib/credits'
 
 // Regenerate one image for the Images panel: fresh nonce variant + force so
 // the idempotent cache can never hand back the old picture. Returns a NEW
@@ -14,7 +14,7 @@ export const maxDuration = 120
 // BILLING (pending Sumeet's sign-off — flagged in the Session C PR): each
 // regenerate is a real OpenAI call (~$0.04–0.06 COGS), charged at 1 credit.
 // Uploads are free (no model call). Set to 0 to make regens free.
-const REGEN_CREDIT_COST = 1
+const REGEN_CREDIT_COST = IMAGE_GEN_COST
 // Hero-quality path (quality: 'high' — real COGS ~$0.19/image on gpt-image-2)
 // prices from the shared table in credits.ts, not a local constant, so it
 // stays the one place that pricing decision lives.

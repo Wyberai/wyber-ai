@@ -8,7 +8,7 @@ import { useLocale } from '@/lib/i18n/LocaleProvider'
 import { I18N_ENABLED } from '@/lib/i18n/locales'
 import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
-import { creditCost, PREVIEW_ACCESS_GAME_COST, type ActionType, type ModelTier } from '@/lib/credits'
+import { creditCost, estimateFeatureCost, PREVIEW_ACCESS_GAME_COST, IMAGE_GEN_COST } from '@/lib/credits'
 import { track } from '@/lib/track'
 
 const BRAND = '#0EA5E9'
@@ -85,7 +85,8 @@ const PLANS = [
     credits: 1500,
     perCredit: '$0.13',
     perCreditINR: '₹6.7',
-    featureKeys: ['featurePro1', 'featurePro2', 'featurePro3', 'featurePro4', 'featurePro5', 'featurePro6', 'featurePro7'],
+    // featurePro6 ("Fable model access") retired with the two-model policy.
+    featureKeys: ['featurePro1', 'featurePro2', 'featurePro3', 'featurePro4', 'featurePro5', 'featurePro7'],
   },
   {
     id: 'enterprise',
@@ -116,16 +117,24 @@ const TOPUPS = [
 // hand-maintained here — this table used to hardcode "30 credits" etc. as
 // literal translated strings duplicated across 5 locales, which could silently
 // drift from what a build actually charges the moment credits.ts changed.
-const CREDIT_TABLE: { actionKey: string; icon: string; action?: ActionType; tier?: ModelTier; free?: true }[] = [
-  { actionKey: 'creditActionWebBuild',    icon: '🌐', action: 'web-build',   tier: 'default' },
-  { actionKey: 'creditActionMobileBuild', icon: '📱', action: 'mobile-build', tier: 'default' },
-  { actionKey: 'creditActionEdit',        icon: '✏️', action: 'small-edit',  tier: 'fast' },
-  { actionKey: 'creditActionComplexEdit', icon: '🧩', action: 'small-edit',  tier: 'default' },
-  { actionKey: 'creditActionBuildPlan',   icon: '🗺️', action: 'plan',        tier: 'default' },
-  { actionKey: 'creditActionImageGen',    icon: '🎨', action: 'image-gen',   tier: 'default' },
-  { actionKey: 'creditActionHeroImageRegen', icon: '✨', action: 'hero-image-gen', tier: 'default' },
-  { actionKey: 'creditActionAudioGen',    icon: '🎙️', action: 'audio-gen',   tier: 'default' },
-  { actionKey: 'creditActionPreviewAccess', icon: '📱', action: 'preview-access', tier: 'default' },
+// Each value is what the real charge point bills (see the comments), all on
+// the 'fast' tier every build/edit now runs on (two-model policy). This used
+// to pass tier 'default' (the retired Opus 2.5x multiplier) with no build
+// size, so it advertised a 75-credit build that actually costs 30 or 80.
+const CREDIT_TABLE: { actionKey: string; icon: string; cost?: string; free?: true }[] = [
+  // One-shot builds are priced by complexity: simple = small tier, complex = large tier.
+  { actionKey: 'creditActionWebBuild',    icon: '🌐', cost: `${creditCost('web-build', 'fast', 'small')}–${creditCost('web-build', 'fast', 'large')}` },
+  { actionKey: 'creditActionMobileBuild', icon: '📱', cost: `${creditCost('mobile-build', 'fast', 'small')}–${creditCost('mobile-build', 'fast', 'large')}` },
+  { actionKey: 'creditActionEdit',        icon: '✏️', cost: String(creditCost('small-edit', 'fast')) },
+  // Bigger edits settle by measured size (EDIT_TIER_COSTS, medium..xl).
+  { actionKey: 'creditActionComplexEdit', icon: '🧩', cost: `${estimateFeatureCost('medium', 'fast')}–${estimateFeatureCost('xl', 'fast')}` },
+  // /api/plan charges creditCost('plan', 'default').
+  { actionKey: 'creditActionBuildPlan',   icon: '🗺️', cost: String(creditCost('plan', 'default')) },
+  { actionKey: 'creditActionImageGen',    icon: '🎨', cost: String(IMAGE_GEN_COST) },
+  { actionKey: 'creditActionHeroImageRegen', icon: '✨', cost: String(creditCost('hero-image-gen')) },
+  { actionKey: 'creditActionSeoScan',     icon: '🔎', cost: String(creditCost('seo-scan')) },
+  { actionKey: 'creditActionAudioGen',    icon: '🎙️', cost: String(creditCost('audio-gen')) },
+  { actionKey: 'creditActionPreviewAccess', icon: '📱', cost: String(creditCost('preview-access')) },
   { actionKey: 'creditActionDeploy',      icon: '🚀', free: true },
   { actionKey: 'creditActionGithub',      icon: '📦', free: true },
   { actionKey: 'creditActionAutoFix',     icon: '🔧', free: true },
@@ -350,16 +359,17 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
     <div style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
       {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(9,9,11,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--brand-border)' }}>
+      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'rgba(5,6,10,0.85)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
           <WyberLogo markSize={26} wordmarkSize={15} />
         </Link>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <Link href="/premier-league" style={{ fontSize: 13, color: '#a855f7', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 600 }}>{t('navWeeklyChallenge')}</Link>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0 }}>
+          <Link href="/websites" className="wyb-pnav-secondary" style={{ fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 500 }}>Websites</Link>
+          <Link href="/premier-league" className="wyb-pnav-secondary" style={{ fontSize: 13, color: '#a855f7', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 600 }}>{t('navWeeklyChallenge')}</Link>
           {currency === 'INR' && I18N_ENABLED && <LanguageToggle locale={locale} onChange={setLocale} />}
           {user
-            ? <Link href="/dashboard" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>{t('navDashboard')}</Link>
-            : <Link href="/signup" style={{ padding: '7px 16px', borderRadius: 8, background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>{t('navGetStarted')}</Link>
+            ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t('navDashboard')}</Link>
+            : <Link href="/signup" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t('navGetStarted')}</Link>
           }
         </div>
       </nav>
@@ -409,11 +419,11 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
               {CREDIT_TABLE.map(row => {
                 const costLabel = row.free
                   ? t('costFree' as any)
-                  : t('creditsAmount' as any).replace('{count}', String(creditCost(row.action!, row.tier)))
+                  : t('creditsAmount' as any).replace('{count}', row.cost!).replace(row.cost === '1' ? /credits/ : /$^/, 'credit')
                 // Preview-access charges more for game projects — surfaced
                 // here as a second line so the flat cost badge above doesn't
                 // silently misrepresent what a game preview actually costs.
-                const gameNote = row.action === 'preview-access'
+                const gameNote = row.actionKey === 'creditActionPreviewAccess'
                   ? t('creditActionPreviewAccessGameNote' as any).replace('{count}', String(PREVIEW_ACCESS_GAME_COST))
                   : null
                 return (
@@ -541,7 +551,10 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(22px,3vw,32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32, textAlign: 'center' }}>{t('faqHeading')}</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {[
-              [t('faq1Q'), t('faq1A')],
+              [t('faq1Q'), t('faq1A')
+                .replace('{simple}', String(creditCost('web-build', 'fast', 'small')))
+                .replace('{complex}', String(creditCost('web-build', 'fast', 'large')))
+                .replace('{edit}', String(creditCost('small-edit', 'fast')))],
               [t('faq2Q'), t('faq2A')],
               [t('faq3Q'), t('faq3A')],
               [t('faq4Q'), t('faq4A')],
@@ -647,6 +660,9 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         details[open] > summary span { transform: rotate(45deg); display: inline-block; }
         details summary::-webkit-details-marker { display: none; }
+        @media (max-width: 560px) {
+          .wyb-pnav-secondary { display: none !important; }
+        }
         @media (max-width: 768px) {
           .wyb-pricing-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
         }

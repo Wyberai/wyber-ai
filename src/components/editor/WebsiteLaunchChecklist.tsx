@@ -74,7 +74,7 @@ export function WebsiteLaunchChecklist({ projectId }: { projectId: string }) {
     },
     {
       key: 'domain', title: 'Put it on your own domain', done: !!status?.custom_domain_verified,
-      detail: status?.custom_domain && !status.custom_domain_verified ? `${status.custom_domain} — waiting for DNS` : 'Connect a domain you own (Builder plan) · then add the link to your Instagram bio',
+      detail: status?.custom_domain && !status.custom_domain_verified ? `${status.custom_domain} — waiting for DNS` : 'Connect a domain you own (any paid plan) · then add the link to your Instagram bio',
       action: { label: 'Connect domain', run: openPublish },
     },
   ]

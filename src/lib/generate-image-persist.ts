@@ -6,6 +6,7 @@
 // fall back to a gradient — image generation is never allowed to break a build.
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { IMAGE_GEN_COST } from '@/lib/credits'
 
 export const GENERATED_IMAGES_BUCKET = 'generated-images'
 
@@ -195,11 +196,11 @@ export async function billBuildImage(admin: SupabaseClient, userId: string, proj
     console.error('[image-billing] free-slot check failed:', e)
   }
   try {
-    const { data: result } = await admin.rpc('deduct_credits', { p_user_id: userId, p_amount: 1 })
+    const { data: result } = await admin.rpc('deduct_credits', { p_user_id: userId, p_amount: IMAGE_GEN_COST })
     const credits = result?.new_credits ?? null
     admin.from('credit_usage').insert({
-      user_id: userId, amount: 1, reason: 'build-image-gen',
-      credits_before: credits !== null ? credits + 1 : null, credits_after: credits,
+      user_id: userId, amount: IMAGE_GEN_COST, reason: 'build-image-gen',
+      credits_before: credits !== null ? credits + IMAGE_GEN_COST : null, credits_after: credits,
     }).then(() => {}, () => {})
     return { free: false, charged: credits !== null }
   } catch (e) {
