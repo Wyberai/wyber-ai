@@ -358,6 +358,16 @@ function OverviewTab({ databases, usage, onProvision }: any) {
                     {db.status}
                   </span>
                 </div>
+                {/* A bare "provisioning" badge with no timeframe reads as stuck
+                    after a minute or two — real Cloud SQL provisioning takes
+                    5-10 minutes (see the comment in api/cloud/create-database),
+                    and without this, an impatient user is liable to delete a
+                    database that's actually working normally. */}
+                {db.status === 'provisioning' && (
+                  <p className="text-slate-500 text-xs mt-2">
+                    Usually takes 5–10 minutes — safe to leave this panel and come back.
+                  </p>
+                )}
               </div>
             ))}
           </div>

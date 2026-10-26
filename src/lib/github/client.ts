@@ -31,13 +31,20 @@ export async function pushFilesToGitHub(opts: {
     const commitData = await octokit.git.getCommit({ owner, repo, commit_sha: baseSha });
     baseTreeSha = commitData.data.tree.sha;
   } catch {
-    // Repo might be empty — create initial commit
-    const initBlob = await octokit.git.createBlob({ owner, repo, content: '# WyberAi Project', encoding: 'utf-8' });
-    const initTree = await octokit.git.createTree({ owner, repo, tree: [{ path: 'README.md', mode: '100644', type: 'blob', sha: initBlob.data.sha }] });
-    const initCommit = await octokit.git.createCommit({ owner, repo, message: 'Initial commit', tree: initTree.data.sha, parents: [] });
-    await octokit.git.createRef({ owner, repo, ref: `refs/heads/${branch}`, sha: initCommit.data.sha });
-    baseSha = initCommit.data.sha;
-    baseTreeSha = initTree.data.sha;
+    // Repo is empty (no refs yet). The Git Data API used everywhere else in
+    // this function can't bootstrap a truly empty repo — even createBlob
+    // 409s with "Git Repository is empty." The Contents API is the one
+    // GitHub endpoint documented to work here, so use it just for this one
+    // bootstrap file; every push after this one has a real ref/tree and goes
+    // through the normal Git Data path above.
+    const initCommit = await octokit.repos.createOrUpdateFileContents({
+      owner, repo, path: 'README.md',
+      message: 'Initial commit',
+      content: Buffer.from('# WyberAi Project').toString('base64'),
+      branch,
+    });
+    baseSha = initCommit.data.commit.sha!;
+    baseTreeSha = initCommit.data.commit.tree!.sha!;
   }
 
   // Create blobs for all files
@@ -77,6 +84,13 @@ export async function listUserRepos(token: string) {
 
 export async function createRepo(token: string, name: string, isPrivate = false) {
   const octokit = getOctokit(token);
-  const { data } = await octokit.repos.createForAuthenticatedUser({ name, private: isPrivate, auto_init: false });
+  // auto_init: true — GitHub's Git Data API (createBlob/createTree/createCommit,
+  // used by pushFilesToGitHub below) can't bootstrap a truly empty repo: even
+  // the first createBlob call 409s with "Git Repository is empty." A repo
+  // created auto_init:false stays in that state until initialized some other
+  // way, so every "Connect GitHub" → push flow's first commit failed. Letting
+  // GitHub create the initial README commit itself gives the Git Data API a
+  // real ref/tree to build the first real push on top of.
+  const { data } = await octokit.repos.createForAuthenticatedUser({ name, private: isPrivate, auto_init: true });
   return { full_name: data.full_name, default_branch: data.default_branch ?? 'main' };
 }

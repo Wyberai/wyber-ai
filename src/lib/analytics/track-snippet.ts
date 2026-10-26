@@ -21,7 +21,7 @@ const PREVIEW_BUILDER_HOST = (() => {
   catch { return 'preview-builder.wyberai.com' }
 })()
 
-function buildSnippet(projectId: string): string {
+function buildSnippet(projectId: string, publicPath: string): string {
   return String.raw`
 ${ANALYTICS_MARKER}
 <script>
@@ -36,7 +36,13 @@ ${ANALYTICS_MARKER}
     }
     var payload = JSON.stringify({
       projectId: ${JSON.stringify(projectId)},
-      path: location.pathname,
+      // Every published app is served inside a sandboxed srcDoc iframe
+      // (src/app/app/[slug]/page.tsx, for XSS isolation), where
+      // location.pathname is always the literal string "srcdoc" — using it
+      // meant the Analytics panel's "Top Pages" showed "srcdoc" for 100% of
+      // real visitors on every published app, not just this one. The real
+      // path is known once, at publish time, so it's baked in here instead.
+      path: ${JSON.stringify(publicPath)},
       referrer: document.referrer || null,
       sessionId: sessionId,
     });
@@ -51,9 +57,9 @@ ${ANALYTICS_MARKER}
 </script>`
 }
 
-export function injectAnalytics(html: string, opts: { projectId: string }): string {
+export function injectAnalytics(html: string, opts: { projectId: string; publicPath?: string }): string {
   if (html.includes(ANALYTICS_MARKER)) return html
-  const snippet = buildSnippet(opts.projectId)
+  const snippet = buildSnippet(opts.projectId, opts.publicPath || '/')
   return html.includes('</body>')
     ? html.replace('</body>', `${snippet}\n</body>`)
     : html + snippet

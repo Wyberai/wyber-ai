@@ -142,15 +142,32 @@ function IntegrationsTab() {
 
   const handleConnect = async (toolkit: string) => {
     setConnecting(toolkit)
+    // Open the popup synchronously, in direct response to the click, and
+    // point it at the real URL once the fetch resolves. Chrome/Firefox drop
+    // the "user activation" flag as soon as an `await` happens, so opening
+    // the popup AFTER the fetch (as this used to) gets silently blocked —
+    // window.open() then returns null, and since `popup?.closed` on a null
+    // popup is always undefined (never true), the polling loop below never
+    // fires and the button was stuck on "Connecting..." forever with no
+    // error shown. This is very unlikely to have been a Claude-in-Chrome-only
+    // artifact — the browsers' own popup-trust rules quietly killed the
+    // ENTIRE integrations feature for real users, which is exactly the
+    // reported "connectors not working" symptom.
+    const popup = window.open('', 'composio_oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+    if (!popup) {
+      setConnecting(null)
+      alert('Your browser blocked the connection popup. Please allow popups for this site and try again.')
+      return
+    }
     try {
       const res = await fetch(`/api/composio/connect?toolkit=${toolkit.toLowerCase()}`)
       const data = await res.json()
-      if (!data.redirectUrl) { setConnecting(null); return }
-      const popup = window.open(data.redirectUrl, 'composio_oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+      if (!data.redirectUrl) { popup.close(); setConnecting(null); return }
+      popup.location.href = data.redirectUrl
       const check = setInterval(() => {
-        if (popup?.closed) { clearInterval(check); setConnecting(null); setTimeout(load, 1500) }
+        if (popup.closed) { clearInterval(check); setConnecting(null); setTimeout(load, 1500) }
       }, 500)
-    } catch { setConnecting(null) }
+    } catch { popup.close(); setConnecting(null) }
   }
 
   const handleDisconnect = async (accountId: string) => {

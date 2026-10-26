@@ -66,9 +66,15 @@ export async function GET(req: NextRequest) {
     else if (range === '90d') monthsBack = 3
     else monthsBack = 1 // 7d still shows current + previous month
 
-    const startMonth = new Date(now.getFullYear(), now.getMonth() - monthsBack, 1)
+    // billing_month is a Postgres `date` column — it needs a full date
+    // string, not the truncated "YYYY-MM" this used to send (Postgres
+    // rejects that outright: "invalid input syntax for type date", code
+    // 22007). The query below silently swallows that error and falls back
+    // to all-zero metrics, so real usage never showed even once a database
+    // was live and in use.
+    const startMonth = `${new Date(now.getFullYear(), now.getMonth() - monthsBack, 1)
       .toISOString()
-      .slice(0, 7)
+      .slice(0, 7)}-01`
 
     // Get usage metrics for the date range
     const { data: usageMetrics, error: usageError } = await admin

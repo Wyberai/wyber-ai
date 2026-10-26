@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Pins the workspace root explicitly — without this, Turbopack finds the
+  // stray C:\Users\sumit\package-lock.json one directory up and infers THAT
+  // as the root instead of this project, which breaks its dev-mode route
+  // manifest (App Router routes 404 unpredictably even though the files
+  // exist — reproduced with src/app/auth/callback/route.ts).
+  turbopack: { root: __dirname },
   serverExternalPackages: ['esbuild', 'googleapis', 'google-auth-library'],
   productionBrowserSourceMaps: false,
   typescript: {

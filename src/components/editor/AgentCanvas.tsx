@@ -293,24 +293,37 @@ function ComposioConnectButton({ toolkit, onConnected }: { toolkit: string; onCo
 
   const handleConnect = async () => {
     setConnecting(true)
+    // Open synchronously, inside the click, then redirect once the URL is
+    // fetched — window.open() after an await loses the browser's "user
+    // activation" flag and gets silently blocked (returns null), which left
+    // this stuck on "connecting" forever since `popup?.closed` on a null
+    // popup never becomes true. See settings-client.tsx's handleConnect for
+    // the full writeup — same bug, independently copy-pasted here.
+    const popup = window.open('', 'composio_oauth', 'width=600,height=700,scrollbars=yes,resizable=yes')
+    if (!popup) {
+      setConnecting(false)
+      alert('Your browser blocked the connection popup. Please allow popups for this site and try again.')
+      return
+    }
     try {
       const res = await fetch(`/api/composio/connect?toolkit=${toolkit.toLowerCase()}`)
       const data = await res.json()
       if (!data.redirectUrl) {
+        popup.close()
         setConnecting(false)
         return
       }
-      const popup = window.open(data.redirectUrl, 'composio_oauth',
-        'width=600,height=700,scrollbars=yes,resizable=yes')
+      popup.location.href = data.redirectUrl
 
       const check = setInterval(() => {
-        if (popup?.closed) {
+        if (popup.closed) {
           clearInterval(check)
           setConnecting(false)
           onConnected?.()
         }
       }, 500)
     } catch {
+      popup.close()
       setConnecting(false)
     }
   }

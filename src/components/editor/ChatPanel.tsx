@@ -1588,13 +1588,27 @@ const storeProjectId = useEditorStore.getState().project?.id;
         if (res.status === 401) {
           throw new Error('SESSION_EXPIRED');
         }
-        // Parse 402 credit errors
+        // Parse 402 credit errors. The throw used to sit inside the try, so its
+        // own catch swallowed it — every 402 showed the bare generic line and
+        // the server's real reason ("costs 80 and you have 60") never reached
+        // the user. Parse first, throw after.
         const errText = await res.text();
         if (res.status === 402) {
-          try {
-            const errJson = JSON.parse(errText);
-            throw new Error(errJson.error || 'Not enough credits');
-          } catch { throw new Error('Not enough credits for this action'); }
+          let errJson: { error?: string; code?: string } = {};
+          try { errJson = JSON.parse(errText); } catch { /* non-JSON body */ }
+          const serverMsg = typeof errJson.error === 'string' ? errJson.error : '';
+          // The per-build API cost cap is a 402 too, but it's not a credit
+          // shortage (credits were refunded) — keep its message, no upsell.
+          if (errJson.code === 'BUILD_COST_CAP' && serverMsg) throw new Error(serverMsg);
+          // "Not enough credits" (verbatim) is what the message renderer keys
+          // the Upgrade button on — keep it in every credit-shortage message.
+          if (serverMsg.includes('Not enough credits')) {
+            throw new Error(`${serverMsg} Add credits, upgrade, or describe something smaller and I'll check again.`);
+          }
+          if (serverMsg && !/insufficient credits/i.test(serverMsg)) {
+            throw new Error(`${serverMsg} Not enough credits for this action on your current plan.`);
+          }
+          throw new Error('Not enough credits for this action. Add credits, upgrade, or describe something smaller.');
         }
         throw new Error(errText);
       }

@@ -34,12 +34,20 @@ export async function POST(req: NextRequest) {
     const { access_token: token, github_username: username } = conn
     const repo = repoName || projectName?.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'wyber-app'
 
-    // Create repo if it doesn't exist
-    await fetch('https://api.github.com/user/repos', {
+    // Create repo if it doesn't exist. 422 here means the repo already exists
+    // (expected on a repeat push to the same project) — anything else (bad
+    // token, rate limit, name validation) is a real failure that used to be
+    // silently ignored, so every file push below would then 404 against a
+    // repo that was never created, with no indication why.
+    const createRes = await fetch('https://api.github.com/user/repos', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: repo, private: false, auto_init: false, description: `Built with WyberAi - wyberai.com` }),
+      body: JSON.stringify({ name: repo, private: false, auto_init: true, description: `Built with WyberAi - wyberai.com` }),
     })
+    if (!createRes.ok && createRes.status !== 422) {
+      const body = await createRes.text().catch(() => '')
+      return NextResponse.json({ error: `Could not create GitHub repo "${repo}": ${createRes.status} ${body}` }, { status: 502 })
+    }
 
     // Push all files
     const results = []
@@ -65,7 +73,18 @@ export async function POST(req: NextRequest) {
       results.push({ path: cleanPath, ok: pushRes.ok })
     }
 
+    // The 200 response used to be unconditional — a repo full of individual
+    // per-file 404s/409s (e.g. a bad path, a stale sha on a concurrent edit)
+    // still came back looking like a clean success, with the per-file results
+    // computed but never even included in the response.
+    const failed = results.filter(r => !r.ok)
     const repoUrl = `https://github.com/${username}/${repo}`
+    if (failed.length > 0) {
+      return NextResponse.json(
+        { error: `${failed.length} of ${results.length} files failed to push`, repoUrl, results, username, repo },
+        { status: 502 },
+      )
+    }
     return NextResponse.json({ repoUrl, files: results.length, username, repo })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
