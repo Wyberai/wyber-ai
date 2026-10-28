@@ -776,7 +776,13 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     return null;
   }, [resolvedProjectId, resolvedUserId, updateMessage, setFiles, setHasGeneratedFiles]);
 
+  // One rescue per bubble: live, a dropped edit persisted its "Done" receipt
+  // twice (31s apart, same bubble id) — a second caller re-entered the same
+  // recovery. Whatever the trigger, a bubble is only ever rescued once.
+  const rescuedBubblesRef = useRef<Set<string>>(new Set());
   const failBuildAfterDrop = useCallback(async (chainId: string, userMsg: string) => {
+    if (rescuedBubblesRef.current.has(chainId)) return;
+    rescuedBubblesRef.current.add(chainId);
     const rescued = await recoverDroppedBuild(chainId);
     if (rescued) {
       const msg = 'Done — it\'s live in the preview. Tell me what to change next.';
