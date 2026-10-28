@@ -718,6 +718,47 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     }).catch(() => {});
   }, [resolvedProjectId]);
 
+  // A build whose connection dropped (flaky mobile data, laptop sleep,
+  // ERR_CONNECTION_RESET) usually still finishes on the server, which then
+  // saves the files itself (persistGeneratedFiles in /api/generate). Wait for
+  // that save and load it instead of showing a failure — the credits were
+  // already charged for that work. Resolves the rescued paths, or null if
+  // nothing arrived (the build really didn't finish → offer Retry).
+  const recoverDroppedBuild = useCallback(async (chainId: string): Promise<string[] | null> => {
+    if (!resolvedProjectId) return null;
+    updateMessage(chainId, { content: 'Your connection dropped — your app is still being built on our side. Hang on, loading it…', status: 'streaming' });
+    const snapshot = (f: Record<string, unknown> | null | undefined) => JSON.stringify(Object.entries(f ?? {}).map(([p, v]) => [p, (v as { content?: string })?.content ?? '']).sort());
+    const startFiles = snapshot(useEditorStore.getState().files as Record<string, unknown>);
+    try {
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      // Server builds run up to a few minutes past the point a client drops.
+      for (let i = 0; i < 36; i++) {
+        await new Promise(r => setTimeout(r, 5000));
+        const { data } = await supabase.from('projects').select('files').eq('id', resolvedProjectId).single();
+        const saved = data?.files as Record<string, { path: string; content: string; language: string }> | null;
+        if (saved && Object.keys(saved).length > 0 && snapshot(saved) !== startFiles) {
+          setFiles(saved as Parameters<typeof setFiles>[0]);
+          return Object.keys(saved);
+        }
+      }
+    } catch { /* fall through to Retry */ }
+    return null;
+  }, [resolvedProjectId, updateMessage, setFiles]);
+
+  const failBuildAfterDrop = useCallback(async (chainId: string, userMsg: string) => {
+    const rescued = await recoverDroppedBuild(chainId);
+    if (rescued) {
+      const msg = 'Built it — your connection dropped mid-build, but the app was saved and is loaded now. Tell me what to change next.';
+      updateMessage(chainId, { content: msg, status: 'done', filesChanged: rescued });
+      persistMessage('assistant', msg, rescued);
+    } else {
+      const msg = 'Your connection dropped before the build could finish. Tap Retry to build it again.';
+      updateMessage(chainId, { content: msg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+      persistMessage('assistant', msg);
+    }
+  }, [recoverDroppedBuild, updateMessage, persistMessage]);
+
   // Init ONLY for brand-new projects — wait for hydration, only seed if truly empty
   useEffect(() => {
     if (!hydrated || hasInit) return;
@@ -2666,9 +2707,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
         updateMessage(chainId, { content: oneShotSummary, status: 'done', filesChanged: liveFilesOneShot });
         persistMessage('assistant', oneShotSummary, liveFilesOneShot);
       } else {
-        const oneShotErrMsg = "Something interrupted your build — retrying automatically…";
-        updateMessage(chainId, { content: oneShotErrMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
-        persistMessage('assistant', oneShotErrMsg);
+        await failBuildAfterDrop(chainId, userMsg);
       }
       return;
     }
@@ -2703,9 +2742,9 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       scaffoldOk = await runScaffold();
     }
     if (!scaffoldOk) {
-      // Show a clean error with a Retry button — no internal jargon.
-      updateMessage(chainId, { content: "Something interrupted your build — retrying automatically…", status: 'error', retryPrompt: userMsg, retryLane: 'build' });
-      persistMessage('assistant', "Something interrupted your build — retrying automatically…");
+      // Usually a dropped connection while the server kept building — load the
+      // server-saved result if it lands, else a clean error with Retry.
+      await failBuildAfterDrop(chainId, userMsg);
       console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=error failedAt=scaffold plan_ms=${planDoneTime - buildStartTime} total_ms=${Date.now() - buildStartTime}`);
       setIsGenerating(false);
       return;
@@ -2869,11 +2908,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
     } catch (e: any) {
       // Any unhandled exception in the build chain (network error, 402 mid-fill,
       // unhandled throw) lands here so isGenerating never gets stuck forever.
-      const errMsg = (e?.message ?? '').includes('Not enough credits')
-        ? `Your build ran out of credits mid-build. Not enough credits for this action. Add credits to try again.`
-        : `Something interrupted your build — retrying automatically…`;
-      updateMessage(chainId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
-      persistMessage('assistant', errMsg);
+      if ((e?.message ?? '').includes('Not enough credits')) {
+        const errMsg = `Your build ran out of credits mid-build. Not enough credits for this action. Add credits to try again.`;
+        updateMessage(chainId, { content: errMsg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
+        persistMessage('assistant', errMsg);
+      } else {
+        await failBuildAfterDrop(chainId, userMsg);
+      }
       console.log(`[build timing] buildId=${buildId} projectType=${projectType} path=error failedAt=${!planDoneTime ? 'plan' : !scaffoldDoneTime ? 'scaffold' : !fillDoneTime ? 'fill' : 'wire'} plan_ms=${planDoneTime ? planDoneTime - buildStartTime : null} scaffold_ms=${scaffoldDoneTime && planDoneTime ? scaffoldDoneTime - planDoneTime : null} fill_ms=${fillDoneTime && scaffoldDoneTime ? fillDoneTime - scaffoldDoneTime : null} total_ms=${Date.now() - buildStartTime}`);
     } finally {
       // Always clear generating state — the individual happy paths above do this
@@ -2883,7 +2924,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       clearStreamingContent();
       setProgressSteps([]);
     }
-  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents, addMessage, updateMessage, persistMessage, setIsGenerating, clearStreamingContent, t]);
+  }, [projectType, resolvedUserId, resolvedProjectId, pushAgentEvents, addMessage, updateMessage, persistMessage, failBuildAfterDrop, setIsGenerating, clearStreamingContent, t]);
 
   // The ONE entry point for "start a build/edit now" — the agentic staged
   // path for first builds (flag-gated), the classic single request otherwise.

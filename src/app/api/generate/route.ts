@@ -3788,14 +3788,19 @@ async function persistGeneratedFiles(projectId: string, generatedText: string): 
   try {
     const { createServiceClient } = await import('@/lib/supabase/server')
     const db = createServiceClient()
-    const before = await db.from('projects').select('updated_at').eq('id', projectId).single()
+    const before = await db.from('projects').select('files').eq('id', projectId).single()
     if (!before.data) return
     await new Promise(r => setTimeout(r, 8000))
-    const { data: proj } = await db.from('projects').select('files, updated_at').eq('id', projectId).single()
+    const { data: proj } = await db.from('projects').select('files').eq('id', projectId).single()
     if (!proj) return
-    // updated_at moved during the window → the client is alive and saved (its
+    // files changed during the window → the client is alive and saved (its
     // save also runs sanitize passes this rescue skips) — nothing to do.
-    if (proj.updated_at !== before.data.updated_at) return
+    // Compares files, NOT updated_at: updateProjectMemory runs alongside this
+    // in the same after() and bumps updated_at with its memory_summary write,
+    // which made the rescue stand down on every dropped build (live: build
+    // ckyyvci, Oct 28 — server finished, client got ERR_CONNECTION_RESET,
+    // 29 credits charged, project left with zero files).
+    if (JSON.stringify(proj.files ?? {}) !== JSON.stringify(before.data.files ?? {})) return
 
     const { parseGenerationOutput, parseEditBlocks } = await import('@/lib/file-parser')
     const { applyEdits } = await import('@/lib/patch-applier')
