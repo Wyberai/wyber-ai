@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { collectMissingStubs } from './stub-missing-imports'
+import { collectMissingStubs, isImportedButMissing } from './stub-missing-imports'
 import { sanitizeFiles } from './sanitize-files'
 
 const c = (content: string) => ({ content })
@@ -77,5 +77,29 @@ describe('sanitizeFiles integration', () => {
     expect(textOf(out['src/components/Dashboard.tsx'])).toContain('coming soon')
     // and it should NOT clobber the real Sidebar
     expect(textOf(out['src/components/Sidebar.tsx'])).toContain('return <nav/>')
+  })
+})
+
+describe('isImportedButMissing', () => {
+  // Live 2026-10-28: plan said Header/Sidebar/types.ts, the build chose
+  // utils.ts + TaskViews instead. Only files the code imports should be chased.
+  const files = {
+    'src/main.tsx': c("import App from './App'"),
+    'src/App.tsx': c("import { TaskViews } from './components/TaskViews'\nimport { Task } from './lib/utils'\nimport TodoList from './components/TodoList'"),
+    'src/lib/utils.ts': c('export interface Task { id: string }'),
+    'src/components/TaskViews.tsx': c("import { Task } from '../lib/utils'\nexport const TaskViews = () => null"),
+  }
+  it('is true for a planned file the app imports but that was never written', () => {
+    expect(isImportedButMissing(files, 'src/components/TodoList.tsx')).toBe(true)
+  })
+  it('matches regardless of extension', () => {
+    expect(isImportedButMissing(files, 'src/components/TodoList.jsx')).toBe(true)
+  })
+  it('is false for planned files nothing imports', () => {
+    expect(isImportedButMissing(files, 'src/components/Header.tsx')).toBe(false)
+    expect(isImportedButMissing(files, 'src/types.ts')).toBe(false)
+  })
+  it('is false for files that already exist', () => {
+    expect(isImportedButMissing(files, 'src/lib/utils.ts')).toBe(false)
   })
 })

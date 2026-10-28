@@ -75,6 +75,18 @@ function componentLabel(base: string): string {
 
 interface StubInfo { named: Set<string>; css: boolean; json: boolean }
 
+const stripExt = (p: string) => p.trim().replace(/\.[a-z0-9]+$/i, '')
+
+/**
+ * True when some file in the map imports `plannedPath` but it doesn't exist
+ * yet — i.e. the app genuinely needs it. A planned file nothing imports is
+ * one the build designed its way around; generating it only adds dead code.
+ */
+export function isImportedButMissing(files: Record<string, FileVal>, plannedPath: string): boolean {
+  const want = stripExt(plannedPath)
+  return Object.keys(collectMissingStubs(files)).some(p => stripExt(p) === want)
+}
+
 /**
  * Returns a map of stub files to add for every unresolved local import.
  * Pure — does not mutate the input.

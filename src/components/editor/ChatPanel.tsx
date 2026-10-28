@@ -17,6 +17,7 @@ const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, buildStagedPlan, capPlannedFiles, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
+import { isImportedButMissing } from '@/lib/stub-missing-imports';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
@@ -215,7 +216,12 @@ function stripInternalMarkers(text: string): string {
 function cleanMessage(text: string, doneFallback: string): string {
   let t = stripInternalMarkers(text);
   t = t.replace(/```[\s\S]*?```/g, '');
-  t = t.replace(/`src\/[^`]+`/g, '');
+  // Shorten `src/lib/utils.ts` to `utils.ts` rather than deleting it — a bare
+  // delete left holes mid-sentence ("already exists in , so I didn't…").
+  t = t.replace(/`src\/([^`]+)`/g, (_m, rest: string) => {
+    const name = rest.replace(/\/+$/, '').split('/').pop();
+    return name ? '`' + name + '`' : 'the project';
+  });
   const lines = t.split('\n').map(l => l.trim()).filter(l => {
     if (!l) return false;
     if (l.startsWith('<file')) return false;
@@ -1953,7 +1959,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
         const planned = await completenessPlanPromise
         if (planned.length >= EDIT_COMPLETENESS_MIN_FILES) {
           const writtenPaths = [...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)]
+          // On a NEW build the plan is only a forecast: the build model often
+          // lands on a different file layout (live: planned Header/Sidebar/
+          // types.ts, built TaskViews + utils.ts instead). Filling every
+          // unwritten planned file then shipped ~220 lines nothing imported
+          // plus a duplicate list UI. So only chase planned files the written
+          // code actually imports (the truncated-build case this exists for).
+          // Edits keep the plain diff — there a missing planned file is often
+          // the router/App wiring, which is imported by main.tsx and exists.
           const missing = diffPlannedAgainstWritten(planned, writtenPaths)
+            .filter(f => editPlanPromise || isImportedButMissing(updatedFiles, f.path))
           if (missing.length > 0) {
             completenessRetryFired = true
             completenessRetryFiredRef.current = true
