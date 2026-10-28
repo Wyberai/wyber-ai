@@ -3858,7 +3858,7 @@ export async function POST(req: NextRequest) {
     // matters when it's the explicit 'gpt' choice from the model dropdown,
     // checked once the caller's plan is known (below, alongside the existing
     // tierAllowedForPlan gate).
-    let { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false, buildComplexity } = body
+    let { prompt, fileContext, history, image, userId, projectId, knowledge, stage = 'full', stageFiles = [], stagePurposes = [], projectType, selfHeal = false, assets = [], attachedText = [], documents = [], isFirstBuild, paletteId, internalPass = false, modelTier, totalPlannedFiles, buildId, finalPass = false, buildComplexity, turnId } = body
     // Two-model policy (src/lib/models.ts): no client-chosen tier. Dropping it
     // here sends every request down the same automatic path the editor uses
     // (it sends no modelTier), so a stale client, the MCP connector, or a
@@ -6395,6 +6395,25 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
             await logUsageAndCheckOverage()
           }
         },
+      })
+    }
+
+    // Resumable turns: the browser↔Vercel stream drops mid-turn on ~1 in 6
+    // customer builds (ERR_CONNECTION_RESET / HTTP2_PING_FAILED) while this
+    // function keeps generating. Save the finished output under the client's
+    // turnId so a dropped client can fetch it (GET /api/generate/turn) and
+    // finish the turn through its normal path — same checks, same receipt.
+    if (typeof turnId === 'string' && /^[0-9a-f-]{36}$/i.test(turnId) && stage !== 'plan') {
+      const turnUserId = user.id
+      after(async () => {
+        try {
+          const { createServiceClient } = await import('@/lib/supabase/server')
+          await createServiceClient().from('generations').upsert({
+            id: turnId, project_id: projectId || null, user_id: turnUserId,
+            prompt: String(prompt ?? '').slice(0, 4000), response_text: generatedText,
+            status: generatedText ? 'turn-done' : 'turn-empty',
+          })
+        } catch (e) { console.error('[turn-result] save failed', e) }
       })
     }
 

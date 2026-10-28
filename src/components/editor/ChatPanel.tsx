@@ -1605,12 +1605,16 @@ const storeProjectId = useEditorStore.getState().project?.id;
     // so every early-exit path in this function explicitly `return false`s.
     // succeeded only flips true right before the try block's normal exit.
     let succeeded = false;
+    // Lets a dropped stream pick up the server's finished output (see the
+    // reader loop below and "Resumable turns" in api/generate/route.ts).
+    const turnId = crypto.randomUUID();
     try {
       const res = await fetch('/api/generate', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         signal: genController.signal,
         body: JSON.stringify({
+          turnId,
           prompt: userMsg || (img ? 'Build a UI matching this screenshot exactly.' : 'Build this using the attached files.'),
           // Only send a tier once the user has actually picked one — otherwise
           // the server's own complexity-aware auto-routing (resolveModelTier)
@@ -1803,6 +1807,30 @@ const storeProjectId = useEditorStore.getState().project?.id;
           // shows "Building your app — X files planned" and that's all the user needs to see.
           if (ownsBubble) setStreamingContent(cleanedFull || '');
         }
+      } catch (readErr) {
+        // The connection dropped mid-stream (TypeError: ERR_CONNECTION_RESET,
+        // HTTP2_PING_FAILED…) but the server keeps going and saves the whole
+        // output under turnId. Fetch it and carry on as if the stream had
+        // ended normally, so parsing, completeness checks, receipt and file
+        // chips all run exactly as usual. A user Stop (abort) is not a drop.
+        if (!(readErr instanceof TypeError) || genController.signal.aborted) throw readErr;
+        if (idleTimer) clearTimeout(idleTimer);
+        clearTimeout(genTimeout);
+        let recovered: string | null = null;
+        const deadline = Date.now() + 7 * 60_000;
+        while (Date.now() < deadline && !genController.signal.aborted) {
+          await new Promise(r => setTimeout(r, 3000));
+          try {
+            const r = await fetch(`/api/generate/turn?id=${turnId}`, { cache: 'no-store' });
+            if (r.status === 404) continue;
+            if (!r.ok) continue;
+            const data = await r.json() as { status?: string; text?: string };
+            recovered = data.text ?? '';
+            break;
+          } catch { /* still offline — keep waiting */ }
+        }
+        if (recovered === null) throw readErr;
+        full = recovered;
       } finally {
         if (idleTimer) clearTimeout(idleTimer);
       }
