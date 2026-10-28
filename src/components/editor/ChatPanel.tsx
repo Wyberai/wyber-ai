@@ -11,14 +11,14 @@ import { detectDeps, detectDepsInCode, detectRegulated, RegulatedDomain } from '
 import { classifyIntent } from '@/lib/intent';
 import { windowedHistory } from '@/lib/chat-history-window';
 import { assessDesignFreshness } from '@/lib/design-quality-check';
-import { extractAgentEvents, deriveAgentLanes, type AgentEvent } from '@/lib/agents/events';
+import { extractAgentEvents, deriveAgentLanes, stripAgentEvents, type AgentEvent } from '@/lib/agents/events';
 // Disable agent team completely for simple per-file generation
 const AGENT_TEAM_ENABLED = false;
 import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, buildStagedPlan, capPlannedFiles, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
 import { isImportedButMissing } from '@/lib/stub-missing-imports';
-import { breaksCopyRules } from '@/lib/customer-copy-rules';
+import { scrubCopy } from '@/lib/customer-copy-rules';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
@@ -223,7 +223,9 @@ function cleanMessage(text: string, doneFallback: string): string {
     const name = rest.replace(/\/+$/, '').split('/').pop();
     return name ? '`' + name + '`' : 'the project';
   });
-  const lines = t.split('\n').map(l => l.trim()).filter(l => {
+  // Founder copy rules (customer-copy-rules.ts) bind the model's own words
+  // too: offending sentences are cut, the rest of the line stays.
+  const lines = t.split('\n').map(l => scrubCopy(l.trim())).filter(l => {
     if (!l) return false;
     if (l.startsWith('<file')) return false;
     if (l.startsWith('import ')) return false;
@@ -261,9 +263,6 @@ function cleanMessage(text: string, doneFallback: string): string {
     // everything is narration, the caller falls back to "Done" + file chips.
     if (/:$/.test(l) && !l.startsWith('- ') && !/^#{1,4} /.test(l)) return false;
     if (/^(now |let me |i'll (?:go|now|start|then|also)|looking at|checking |verifying |first,? |next,? )/i.test(l)) return false;
-    // Founder copy rules (customer-copy-rules.ts) also bind the model's own
-    // words: no "I haven't tested this", no "the missing pieces", etc.
-    if (breaksCopyRules(l)) return false;
     return true;
   });
   let result = lines.join('\n').trim();
@@ -760,6 +759,10 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
           // project is left without them (download/export break).
           const merged = { ...storeFiles, ...saved };
           setFiles(merged as Parameters<typeof setFiles>[0]);
+          // The normal apply path sets this; without it the project still
+          // reads as never-built and the NEXT edit is billed as a 30-credit
+          // new build (live: a dark-mode toggle charged web-build, Oct 28).
+          setHasGeneratedFiles(true);
           if (Object.keys(merged).length > Object.keys(saved).length) {
             fetch('/api/projects', {
               method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -771,7 +774,7 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
       }
     } catch { /* fall through to Retry */ }
     return null;
-  }, [resolvedProjectId, resolvedUserId, updateMessage, setFiles]);
+  }, [resolvedProjectId, resolvedUserId, updateMessage, setFiles, setHasGeneratedFiles]);
 
   const failBuildAfterDrop = useCallback(async (chainId: string, userMsg: string) => {
     const rescued = await recoverDroppedBuild(chainId);
@@ -2263,7 +2266,9 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // reply when the model skipped its recap. No recap → plain "Done."
       // plus the file chips, never the notes.
       const lastBlockEnd = Math.max(full.lastIndexOf('</file>'), full.lastIndexOf('</edit>'));
-      const recapText = lastBlockEnd === -1 ? chatText : full.slice(lastBlockEnd).replace(/^<\/(file|edit)>/, '');
+      // `full` is raw stream text, so drop the [agent:{…}] status markers
+      // chatText had already lost (live: they were persisted into history).
+      const recapText = lastBlockEnd === -1 ? chatText : stripAgentEvents(full.slice(lastBlockEnd).replace(/^<\/(file|edit)>/, ''));
       let finalContent = cleanMessage(recapText, t('doneCheckPreviewMsg'));
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
