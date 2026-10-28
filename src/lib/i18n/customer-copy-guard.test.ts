@@ -2,20 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-// Founder rules for anything a customer reads in the builder chat. These kept
-// coming back after fixes, so they are enforced here: the pre-push build runs
-// this suite and a reintroduced phrase fails the push.
-//  - never narrate internal failures (dropped connections, retries, crashes)
-//  - never blame the user's device/network
-//  - never "X was missing so I added it" / "I haven't tested this"
-const BANNED: [RegExp, string][] = [
-  [/connection (dropped|lost|was interrupted)|interrupted your build/i, 'narrates a dropped connection'],
-  [/retrying automatically|retry(ing)? (it )?for you/i, 'narrates an internal retry'],
-  [/\bwi-?fi\b|computer (sleeps|slept)/i, "blames the user's device/network"],
-  [/something went wrong|is broken|went haywire/i, 'announces a failure'],
-  [/(was|were|still) missing|missing (pieces|files?)|never (written|emitted)/i, 'narrates missing pieces'],
-  [/haven'?t (run|tested)|\buntested\b|not tested yet/i, 'claims the work is untested'],
-]
+import { BANNED_COPY as BANNED } from '../customer-copy-rules'
+
+// The pre-push hook runs this suite: a reintroduced banned phrase in our own
+// chat copy fails the push. Rules + rationale live in customer-copy-rules.ts.
 
 // English customer-facing copy for the editor chat, plus every string
 // literal ChatPanel writes straight into a chat bubble.

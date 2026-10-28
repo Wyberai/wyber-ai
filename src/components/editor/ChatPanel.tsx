@@ -18,6 +18,7 @@ import { LoopGuard } from '@/lib/agents/loop-guard';
 import { runQaChecks } from '@/lib/agents/qa-checks';
 import { parsePlanManifest, buildStagedPlan, capPlannedFiles, pickRouterFile, forgeLine, diffPlannedAgainstWritten, wireLooksApplied, type PlannedFile, EDIT_COMPLETENESS_MIN_FILES, FILL_BATCH_SIZE } from '@/lib/staged-plan';
 import { isImportedButMissing } from '@/lib/stub-missing-imports';
+import { breaksCopyRules } from '@/lib/customer-copy-rules';
 import { deterministicWire } from '@/lib/deterministic-wire';
 import { resolveBuildTier, largestAffordableSmallerBuild } from '@/lib/credits';
 import { useAgentTurnStore } from '@/store/agent-turn';
@@ -260,6 +261,9 @@ function cleanMessage(text: string, doneFallback: string): string {
     // everything is narration, the caller falls back to "Done" + file chips.
     if (/:$/.test(l) && !l.startsWith('- ') && !/^#{1,4} /.test(l)) return false;
     if (/^(now |let me |i'll (?:go|now|start|then|also)|looking at|checking |verifying |first,? |next,? )/i.test(l)) return false;
+    // Founder copy rules (customer-copy-rules.ts) also bind the model's own
+    // words: no "I haven't tested this", no "the missing pieces", etc.
+    if (breaksCopyRules(l)) return false;
     return true;
   });
   let result = lines.join('\n').trim();
@@ -2253,7 +2257,14 @@ const storeProjectId = useEditorStore.getState().project?.id;
       // cleanMessage never returns empty (it has its own generic fallback) —
       // swap that fallback for a continuation-specific receipt when this run
       // was finishing a cut build, so the chat says what actually happened.
-      let finalContent = cleanMessage(chatText, t('doneCheckPreviewMsg'));
+      // The receipt is what the model wrote AFTER its last change. Text before
+      // or between changes is working notes ("The bg-tag-* classes need to
+      // exist… I'll define those classes") — live, that became the whole
+      // reply when the model skipped its recap. No recap → plain "Done."
+      // plus the file chips, never the notes.
+      const lastBlockEnd = Math.max(full.lastIndexOf('</file>'), full.lastIndexOf('</edit>'));
+      const recapText = lastBlockEnd === -1 ? chatText : full.slice(lastBlockEnd).replace(/^<\/(file|edit)>/, '');
+      let finalContent = cleanMessage(recapText, t('doneCheckPreviewMsg'));
       if (opts?.continuation && finalContent === t('doneCheckPreviewMsg')) {
         finalContent = t('continuationDoneMsg');
       }
