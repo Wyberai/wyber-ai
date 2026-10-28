@@ -418,6 +418,9 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const { locale } = useLocale();
 
   const [input, setInput] = useState('');
+  // A message typed while a build/edit is running; sent once it finishes.
+  const [queuedMsg, setQueuedMsg] = useState<string | null>(null);
+  const autoSendQueuedRef = useRef<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   // Locally-dismissed design-quality suggestion chips — component-local only,
   // no store/DB change (the suggestion itself is already non-persisted).
@@ -730,11 +733,14 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   // that save and load it instead of showing a failure — the credits were
   // already charged for that work. Resolves the rescued paths, or null if
   // nothing arrived (the build really didn't finish → offer Retry).
+  // The user never hears about the drop: the bubble just keeps reading as an
+  // in-progress build ("Finishing up…") until the saved copy lands.
   const recoverDroppedBuild = useCallback(async (chainId: string): Promise<string[] | null> => {
     if (!resolvedProjectId) return null;
-    updateMessage(chainId, { content: 'Your connection dropped — your app is still being built on our side. Hang on, loading it…', status: 'streaming' });
+    updateMessage(chainId, { content: 'Finishing up…', status: 'streaming' });
     const snapshot = (f: Record<string, unknown> | null | undefined) => JSON.stringify(Object.entries(f ?? {}).map(([p, v]) => [p, (v as { content?: string })?.content ?? '']).sort());
-    const startFiles = snapshot(useEditorStore.getState().files as Record<string, unknown>);
+    const storeFiles = (useEditorStore.getState().files ?? {}) as Record<string, { path: string; content: string; language: string }>;
+    const startFiles = snapshot(storeFiles);
     try {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
@@ -744,22 +750,33 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
         const { data } = await supabase.from('projects').select('files').eq('id', resolvedProjectId).single();
         const saved = data?.files as Record<string, { path: string; content: string; language: string }> | null;
         if (saved && Object.keys(saved).length > 0 && snapshot(saved) !== startFiles) {
-          setFiles(saved as Parameters<typeof setFiles>[0]);
-          return Object.keys(saved);
+          // The server only saves what the model wrote; on a first build the
+          // starter files (index.html, main.tsx, package.json…) live only in
+          // the store. Merge instead of replace, and save the merge, or the
+          // project is left without them (download/export break).
+          const merged = { ...storeFiles, ...saved };
+          setFiles(merged as Parameters<typeof setFiles>[0]);
+          if (Object.keys(merged).length > Object.keys(saved).length) {
+            fetch('/api/projects', {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ projectId: resolvedProjectId, files: merged, userId: resolvedUserId || 'auto' }),
+            }).catch(() => {});
+          }
+          return Object.keys(saved).filter(p => snapshot({ [p]: saved[p] }) !== snapshot({ [p]: storeFiles[p] }));
         }
       }
     } catch { /* fall through to Retry */ }
     return null;
-  }, [resolvedProjectId, updateMessage, setFiles]);
+  }, [resolvedProjectId, resolvedUserId, updateMessage, setFiles]);
 
   const failBuildAfterDrop = useCallback(async (chainId: string, userMsg: string) => {
     const rescued = await recoverDroppedBuild(chainId);
     if (rescued) {
-      const msg = 'Built it — your connection dropped mid-build, but the app was saved and is loaded now. Tell me what to change next.';
+      const msg = 'Done — it\'s live in the preview. Tell me what to change next.';
       updateMessage(chainId, { content: msg, status: 'done', filesChanged: rescued });
       persistMessage('assistant', msg, rescued);
     } else {
-      const msg = 'Your connection dropped before the build could finish. Tap Retry to build it again.';
+      const msg = 'That one didn\'t finish. Tap Retry to run it again.';
       updateMessage(chainId, { content: msg, status: 'error', retryPrompt: userMsg, retryLane: 'build' });
       persistMessage('assistant', msg);
     }
@@ -2388,6 +2405,11 @@ const storeProjectId = useEditorStore.getState().project?.id;
           buildAutoRetryCountRef.current += 1;
           setMessages(prev => prev.filter(m => m.id !== assistantId));
           setTimeout(() => executeGenerationRef.current?.(userMsg, img, { echoedUser: true, autoRetry: true }), 800);
+        } else if (isNetworkDrop && !isSessionExpired) {
+          // The server keeps going and saves the result itself — quietly wait
+          // for it instead of telling the user their wifi broke and forcing a
+          // page reload (live: ~1 in 6 customer builds hit a dropped stream).
+          await failBuildAfterDrop(assistantId, userMsg);
         } else {
           const errMsg = isSessionExpired
             ? t('sessionExpiredBuildMsg')
@@ -2395,19 +2417,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
             ? (userStoppedRef.current
                 ? t('stoppedByUserMsg')
                 : t('buildTimedOutMsg'))
-            : isActualNetworkDrop
-            ? t('connectionDroppedMsg')
-            : isServerStreamLoss
-            ? t('serverStreamLostMsg')
             : `${t('errorPrefix')} ${err instanceof Error ? err.message : t('unknownErrorLabel')}`;
           updateMessage(assistantId, { content: errMsg, status:'error', retryPrompt: userMsg, retryLane: 'build' });
-          if (isNetworkDrop) {
-            if (dropReloadTimerRef.current) clearTimeout(dropReloadTimerRef.current);
-            dropReloadTimerRef.current = setTimeout(() => {
-              dropReloadTimerRef.current = null;
-              window.location.reload();
-            }, 35_000);
-          }
           persistMessage('assistant', errMsg);
         }
       }
@@ -2424,7 +2435,7 @@ const storeProjectId = useEditorStore.getState().project?.id;
       setProgressSteps([]);
     }
     return succeeded;
-  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setMessages, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents]);
+  }, [credits, files, messages, framework, resolvedProjectId, resolvedUserId, knowledge, addMessage, updateMessage, setMessages, setIsGenerating, bumpGenerationTurn, setStreamingContent, clearStreamingContent, consumeCredit, setFiles, hasGeneratedFiles, setHasGeneratedFiles, saveProject, persistMessage, pushCheckpoint, project, setProject, pushAgentEvents, failBuildAfterDrop]);
 
   // Assign on every render so the autofix event handler always has the latest closure
   executeGenerationRef.current = executeGeneration;
@@ -3273,6 +3284,26 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
     }
   }, [input, attachedImage, attachedFiles, isGenerating, planMode, isFirstBuild, proceedPastPlanOffer]);
 
+  // Flush the queued message once the run finishes. The short settle delay
+  // lets a build's own follow-up passes (completeness/continuation) claim
+  // isGenerating first, so the queued edit never races them.
+  useEffect(() => {
+    if (isGenerating || !queuedMsg) return;
+    const timer = setTimeout(() => {
+      if (useEditorStore.getState().isGenerating) return;
+      autoSendQueuedRef.current = queuedMsg;
+      setQueuedMsg(null);
+      setInput(queuedMsg);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isGenerating, queuedMsg]);
+  useEffect(() => {
+    if (autoSendQueuedRef.current !== null && input === autoSendQueuedRef.current && !isGenerating) {
+      autoSendQueuedRef.current = null;
+      handleSend();
+    }
+  }, [input, isGenerating, handleSend]);
+
   // Halts an in-flight generation via the ref-lifted AbortController (see
   // executeGeneration). userStoppedRef distinguishes this from the 320s
   // auto-timeout hitting the same controller, so the resulting message is honest
@@ -3280,6 +3311,9 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
   const handleStop = useCallback(() => {
     userStoppedRef.current = true;
     abortControllerRef.current?.abort();
+    // Stop means stop: hand a queued message back to the box instead of
+    // auto-sending it the moment the cancelled run winds down.
+    setQueuedMsg(q => { if (q) setInput(prev => prev ? `${q}\n${prev}` : q); return null; });
   }, []);
 
   const handleCopyMessage = useCallback((id: string, content: string) => {
@@ -3357,7 +3391,20 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
   }, [editingMessageId, editingText, isGenerating, messages, setMessages, resolvedProjectId, dispatchTurn]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      // Mid-generation, Enter queues instead of sending (the box used to be
+      // disabled while still looking live, so whatever the user typed was
+      // silently thrown away). A second queued line is appended to the first.
+      if (isGenerating) {
+        const text = input.trim();
+        if (!text) return;
+        setQueuedMsg(prev => prev ? `${prev}\n${text}` : text);
+        setInput('');
+        return;
+      }
+      handleSend();
+    }
   };
 
   return (
@@ -4110,6 +4157,16 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               })}
             </div>
           )}
+          {queuedMsg && (
+            <div style={{ display:'flex', alignItems:'flex-start', gap:8, margin:'8px 10px 0', padding:'6px 10px', borderRadius:8, background:'var(--bg-overlay)', border:'1px solid var(--ide-border)', fontSize:11, color:'var(--ide-text2)' }}>
+              <span style={{ flexShrink:0, color:'var(--accent)', fontWeight:600 }}>Up next</span>
+              <span style={{ flex:1, minWidth:0, whiteSpace:'pre-wrap', wordBreak:'break-word', maxHeight:54, overflow:'hidden' }}>{queuedMsg}</span>
+              <button onClick={() => { setInput(prev => prev ? `${queuedMsg}\n${prev}` : queuedMsg); setQueuedMsg(null); }} title="Edit queued message"
+                style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:11, padding:0 }}>Edit</button>
+              <button onClick={() => setQueuedMsg(null)} title="Remove queued message"
+                style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:13, lineHeight:1, padding:0 }}>&times;</button>
+            </div>
+          )}
           <textarea
             ref={textareaRef} value={input}
             onChange={e => {
@@ -4120,8 +4177,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             }}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
-            placeholder={credits <= 0 ? t('noCreditsPlaceholder') : planMode ? t('planModePlaceholder') : pendingGenArgs ? t('pendingKeysPlaceholder') : t('defaultPlaceholder')}
-            disabled={isGenerating || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer}
+            placeholder={credits <= 0 ? t('noCreditsPlaceholder') : planMode ? t('planModePlaceholder') : pendingGenArgs ? t('pendingKeysPlaceholder') : isGenerating ? 'Type your next change — it runs as soon as this one finishes' : t('defaultPlaceholder')}
+            disabled={!!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer}
             rows={1}
             style={{ width:'100%', border:'none', outline:'none', background:'transparent', resize:'none', padding:'10px 12px 6px', fontFamily:'var(--font-sans)', fontSize:13, color:'var(--ide-text)', lineHeight:1.55, minHeight:44, maxHeight:160, overflowY:'auto', letterSpacing:'-0.01em' }}
           />
@@ -4148,27 +4205,34 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 );
               })()}
             </div>
+            {(() => {
+            // Mid-run with text typed, the button queues it (it used to be the
+            // Stop button, so "send" killed the running build instead).
+            const showStop = isGenerating && !input.trim();
+            return (
             <button
-              onClick={isGenerating ? handleStop : handleSend}
+              onClick={showStop ? handleStop : isGenerating ? () => { const text = input.trim(); setQueuedMsg(prev => prev ? `${prev}\n${text}` : text); setInput(''); } : handleSend}
               data-send-button="true"
-              title={isGenerating ? t('stopGeneratingTooltip') : undefined}
+              title={showStop ? t('stopGeneratingTooltip') : isGenerating ? 'Queue — runs when this one finishes' : undefined}
               disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer)}
               style={{
                 width: 30, height: 30, borderRadius: 8, border: 'none', flexShrink: 0,
-                background: isGenerating ? 'var(--ide-red)' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--bg-overlay)' : 'var(--accent)',
-                color: isGenerating ? 'white' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--ide-text3)' : 'white',
-                cursor: isGenerating ? 'pointer' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'not-allowed' : 'pointer',
-                boxShadow: !isGenerating && (input.trim() || attachedImage || attachedFiles.length > 0) ? '0 0 12px var(--brand-glow, rgba(14,165,233,0.35))' : 'none',
+                background: showStop ? 'var(--ide-red)' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--bg-overlay)' : 'var(--accent)',
+                color: showStop ? 'white' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'var(--ide-text3)' : 'white',
+                cursor: showStop ? 'pointer' : (!input.trim() && !attachedImage && attachedFiles.length === 0) ? 'not-allowed' : 'pointer',
+                boxShadow: !showStop && (input.trim() || attachedImage || attachedFiles.length > 0) ? '0 0 12px var(--brand-glow, rgba(14,165,233,0.35))' : 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'background var(--brand-dur-fast, 0.15s) var(--brand-ease, ease), box-shadow var(--brand-dur-base, 0.24s) var(--brand-ease, ease), transform var(--brand-dur-fast, 0.15s) var(--brand-ease-spring, ease)',
-                transform: !isGenerating && (input.trim() || attachedImage || attachedFiles.length > 0) ? 'scale(1.05)' : 'scale(1)',
+                transform: !showStop && (input.trim() || attachedImage || attachedFiles.length > 0) ? 'scale(1.05)' : 'scale(1)',
               }}
             >
-              {isGenerating
+              {showStop
                 ? <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
                 : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
               }
             </button>
+            );
+            })()}
           </div>
         </div>
       </div>
