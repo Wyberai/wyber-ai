@@ -2305,14 +2305,17 @@ const storeProjectId = useEditorStore.getState().project?.id;
       if (ownsBubble && completenessRetryFired) {
         updateMessage(assistantId, { status: 'streaming' });
       } else if (ownsBubble) {
+        // Edit turns change files via <edit>/edit_file, not new <file>
+        // blocks — list those too or an edit's receipt has no file chips.
+        const changedPaths = [...new Set([...newFiles.map(f => f.path), ...editBlocks.map(e => e.path)])];
         updateMessage(assistantId, {
           content: finalContent,
           status:'done',
-          filesChanged: newFiles.map(f => f.path),
+          filesChanged: changedPaths,
           reasoning: finalReasoning || undefined,
           agentReport,
         });
-        persistMessage('assistant', finalContent, newFiles.map(f => f.path));
+        persistMessage('assistant', finalContent, changedPaths);
       }
       // Design-quality advisory — heuristic-only, non-blocking, never
       // persisted (same treatment as `reasoning` above). !isSelfHeal and
@@ -2692,6 +2695,7 @@ I can build a **simpler version** instead: just the core screens (up to ${simple
 
 SIMPLER VERSION — the user chose a simple build that fits their credits. Build ONLY these files: ${staged.files.map(f => `${f.path} (${f.purpose})`).join('; ')}. Leave every other feature out entirely; do not add placeholder screens or nav links for them.`
         : userMsg;
+      const filesBeforeOneShot = { ...(useEditorStore.getState().files ?? {}) } as Record<string, unknown>;
       const oneShotOk = await executeGenerationRef.current?.(genPrompt, img, { paletteId, preserveAgentTurn: true, knownPlan: staged?.files, finalPass: true, buildId, buildComplexity, echoedUser: true, sharedBubbleId: chainId });
       // The one-shot path uses sharedBubbleId, so ownsBubble=false inside executeGeneration
       // and its finally block never calls setIsGenerating(false) or clears progress. Do it here.
@@ -2710,7 +2714,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
       // finishChain(); this is the one-shot path's equivalent finalization.
       const plannedPaths = (staged?.files ?? manifest).map(f => f.path);
       const filesAtCloseOneShot = (useEditorStore.getState().files ?? {}) as Record<string, unknown>;
-      const liveFilesOneShot = plannedPaths.filter(p => filesAtCloseOneShot[p] !== undefined);
+      // No plan (the plan pass failed or hit its daily cap) → name what this
+      // build actually changed; an empty list made the receipt a bare "Done."
+      // with no file chips (live, Oct 28).
+      const contentOfOneShot = (v: unknown) => (typeof v === 'string' ? v : (v as { content?: string } | undefined)?.content ?? '');
+      const liveFilesOneShot = plannedPaths.length > 0
+        ? plannedPaths.filter(p => filesAtCloseOneShot[p] !== undefined)
+        : Object.keys(filesAtCloseOneShot).filter(p => /\.(tsx?|jsx?)$/.test(p) && contentOfOneShot(filesAtCloseOneShot[p]) !== contentOfOneShot(filesBeforeOneShot[p]));
       if (oneShotOk && (completenessRetryFiredRef.current || streamCutRef.current)) {
         // executeGeneration just dispatched its own follow-up pass — either
         // its completeness check (4c) found real planned files this pass

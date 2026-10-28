@@ -201,6 +201,8 @@ WHEN the app is a personal tool where the user creates or tracks their own data 
   clientActions.remove(id); clientActions.clear()
 Every record type needs an \`id: string\` field. Seed with the same 8-15 realistic records you would have used as mock data — they appear on first run, then the user's own changes persist. Also import { exportData, importData } from './wyber-store' and expose a small "Export data" action (Settings row or footer button) that downloads/copies exportData().
 
+EDITS THAT ADD A FIELD to a stored record type (tags, category, status, …): the user's device already holds the OLD records — changing the seed array does NOT reach them, so the new field is missing on every existing item. Backfill it where the collection is read (e.g. \`const items = raw.map(t => ({ ...t, tags: t.tags ?? seedTagsById[t.id] ?? [] }))\`) so existing items, including the original demo records, get sensible values. In your recap, only say existing items have the new field if you wrote that backfill.
+
 WHEN the app is a content/marketing/landing site with nothing user-editable: plain useState as usual — do not force storage in.
 
 Do NOT import or reference Supabase. Do NOT add any storage-notice banner or warning about data persistence — the platform handles that externally.`
