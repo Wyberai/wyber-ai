@@ -20,9 +20,11 @@ import { COMMON_STRINGS } from '@/lib/i18n/dict/common';
 interface Props {
   initialProject?: Partial<Project> | null;
   initialProfile?: { credits: number; plan: string; email: string; id?: string } | null;
+  /** Visitor is in India (IP country, same rule as pricing) — unlocks India-only tabs like Grow. */
+  indiaFeatures?: boolean;
 }
 
-export function IDELayout({ initialProject, initialProfile }: Props = {}) {
+export function IDELayout({ initialProject, initialProfile, indiaFeatures = false }: Props = {}) {
   const t = useT(EDITOR_SHELL_STRINGS);
   const tc = useT(COMMON_STRINGS);
   const {
@@ -195,6 +197,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
               projectName={initialProject?.name}
               githubRepo={(initialProject as any)?.github_repo}
               lastCommitSha={(initialProject as any)?.last_commit_sha}
+              indiaFeatures={indiaFeatures}
             />
           </div>
           <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid var(--ide-border)', background: 'var(--bg-base)' }}>
@@ -233,6 +236,7 @@ export function IDELayout({ initialProject, initialProfile }: Props = {}) {
             projectName={initialProject?.name}
             githubRepo={(initialProject as any)?.github_repo}
             lastCommitSha={(initialProject as any)?.last_commit_sha}
+            indiaFeatures={indiaFeatures}
           />
         </div>
       </div>

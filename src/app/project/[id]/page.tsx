@@ -3,6 +3,7 @@ import { isAdminEmail } from '@/lib/admin'
 import { getOrgRole } from '@/lib/org-access'
 import { redirect } from 'next/navigation'
 import { IDELayout } from '@/components/editor/IDELayout'
+import { resolveRegion } from '@/lib/region'
 import { AgentCanvas } from '@/components/editor/AgentCanvas'
 import { MobileLayout } from '@/components/editor/MobileLayout'
 import type { Metadata } from 'next'
@@ -123,6 +124,7 @@ export default async function ProjectPage({ params, searchParams }: Props) {
       <IDELayout
         initialProject={project}
         initialProfile={initialProfile}
+        indiaFeatures={(await resolveRegion()) === 'INR'}
       />
     </>
   )

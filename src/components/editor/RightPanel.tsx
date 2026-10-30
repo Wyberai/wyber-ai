@@ -38,7 +38,11 @@ interface Props {
   githubRepo?: string;
   lastCommitSha?: string;
   onClose?: () => void;
+  /** India-only tabs (Grow: WhatsApp + UPI) — see IDELayout. */
+  indiaFeatures?: boolean;
 }
+
+const INDIA_ONLY_TABS: ReadonlySet<Tab> = new Set<Tab>(['grow']);
 
 type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'github' | 'cloud' | 'payments' | 'grow' | 'seo' | 'analytics' | 'feedback';
 
@@ -104,7 +108,7 @@ const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; de
   { id: 'cloud',      labelKey: 'rpTabCloudLabel',      descKey: 'rpTabCloudDesc' },
 ];
 
-export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClose }: Props) {
+export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClose, indiaFeatures = false }: Props) {
   const t = useT(EDITOR_SHELL_STRINGS);
   const [active, setActive] = useState<Tab>('chat');
   const scrollStyle = { height: '100%', overflowY: 'auto' as const };
@@ -132,7 +136,8 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
 
   // Resolve tab copy at render time (hooks can't run at module scope) —
   // see ProjectTypeChooser.tsx for the same pattern.
-  const TABS = TAB_DEFS.map(def => ({ id: def.id, label: t(def.labelKey), desc: t(def.descKey) }));
+  const visibleDefs = TAB_DEFS.filter(def => indiaFeatures || !INDIA_ONLY_TABS.has(def.id));
+  const TABS = visibleDefs.map(def => ({ id: def.id, label: t(def.labelKey), desc: t(def.descKey) }));
 
   // Deep-link into a specific tab from elsewhere in the editor (e.g. the
   // SecurityReportCard's "Open full security scan" → 'security'). Same
@@ -140,11 +145,11 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
   useEffect(() => {
     const handler = (e: Event) => {
       const tab = (e as CustomEvent).detail;
-      if (typeof tab === 'string' && TAB_DEFS.some(d => d.id === tab)) setActive(tab as Tab);
+      if (typeof tab === 'string' && TAB_DEFS.some(d => d.id === tab) && (indiaFeatures || !INDIA_ONLY_TABS.has(tab as Tab))) setActive(tab as Tab);
     };
     window.addEventListener('wyber-open-panel-tab', handler);
     return () => window.removeEventListener('wyber-open-panel-tab', handler);
-  }, []);
+  }, [indiaFeatures]);
 
   // FigmaImportPanel callback — add the imported component to the editor store and switch to chat
   const handleFigmaImport = (code: string, fileName: string) => {
@@ -245,7 +250,7 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
             {active === 'images'     && <div style={scrollStyle}><ImagesPanel projectId={projectId} /></div>}
             {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'payments'   && <div style={scrollStyle}><PaymentsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
-            {active === 'grow'       && <div style={scrollStyle}><GrowPanel /></div>}
+            {active === 'grow'       && indiaFeatures && <div style={scrollStyle}><GrowPanel /></div>}
             {active === 'seo'       && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'analytics'  && <div style={scrollStyle}><AnalyticsPanel projectId={projectId || ''} /></div>}
             {active === 'feedback'   && <div style={scrollStyle}><FeedbackPanel projectId={projectId || ''} /></div>}
