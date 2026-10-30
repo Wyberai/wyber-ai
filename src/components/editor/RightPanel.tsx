@@ -25,6 +25,7 @@ const FounderChecklistPanel = dynamic(() => import('./FounderChecklistPanel').th
 const ImagesPanel     = dynamic(() => import('./ImagesPanel').then(m => ({ default: m.ImagesPanel })), { ssr: false });
 const CloudTab        = dynamic(() => import('../cloud/CloudTab').then(m => ({ default: m.CloudTab })), { ssr: false });
 const PaymentsPanel   = dynamic(() => import('./PaymentsPanel').then(m => ({ default: m.PaymentsPanel })), { ssr: false });
+const GrowPanel       = dynamic(() => import('./GrowPanel').then(m => ({ default: m.GrowPanel })), { ssr: false });
 const SeoScanPanel    = dynamic(() => import('./SeoScanPanel').then(m => ({ default: m.SeoScanPanel })), { ssr: false });
 const AnalyticsPanel  = dynamic(() => import('./AnalyticsPanel').then(m => ({ default: m.AnalyticsPanel })), { ssr: false });
 const FeedbackPanel   = dynamic(() => import('./FeedbackPanel').then(m => ({ default: m.FeedbackPanel })), { ssr: false });
@@ -39,7 +40,7 @@ interface Props {
   onClose?: () => void;
 }
 
-type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'github' | 'cloud' | 'payments' | 'seo' | 'analytics' | 'feedback';
+type Tab = 'chat' | 'agent' | 'figma' | 'knowledge' | 'templates' | 'database' | 'security' | 'themes' | 'suggestions' | 'images' | 'connectors' | 'history' | 'github' | 'cloud' | 'payments' | 'grow' | 'seo' | 'analytics' | 'feedback';
 
 const TAB_ICONS: Record<string, ReactElement> = {
   chat: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>,
@@ -54,6 +55,7 @@ const TAB_ICONS: Record<string, ReactElement> = {
   images: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>,
   connectors: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 13.5l7 3.5M15.5 7l-7 3.5"/></svg>,
   payments: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>,
+  grow: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>,
   seo: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>,
   analytics: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   feedback: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H8l-5 4V6a2 2 0 012-2h14a2 2 0 012 2z"/><circle cx="9" cy="11" r="0.8" fill="currentColor" stroke="none"/><circle cx="13" cy="11" r="0.8" fill="currentColor" stroke="none"/><circle cx="17" cy="11" r="0.8" fill="currentColor" stroke="none"/></svg>,
@@ -93,7 +95,8 @@ const TAB_DEFS: { id: Tab; labelKey: keyof typeof EDITOR_SHELL_STRINGS['en']; de
   { id: 'images',     labelKey: 'rpTabImagesLabel',     descKey: 'rpTabImagesDesc' },
   { id: 'connectors', labelKey: 'rpTabConnectorsLabel', descKey: 'rpTabConnectorsDesc' },
   { id: 'payments',   labelKey: 'rpTabPaymentsLabel',   descKey: 'rpTabPaymentsDesc' },
-  { id: 'seo',        labelKey: 'rpTabSeoLabel',        descKey: 'rpTabSeoDesc' },
+  { id: 'grow',       labelKey: 'rpTabGrowLabel',       descKey: 'rpTabGrowDesc' },
+  { id: 'seo',      labelKey: 'rpTabSeoLabel',        descKey: 'rpTabSeoDesc' },
   { id: 'analytics',  labelKey: 'rpTabAnalyticsLabel',  descKey: 'rpTabAnalyticsDesc' },
   { id: 'feedback',   labelKey: 'rpTabFeedbackLabel',   descKey: 'rpTabFeedbackDesc' },
   { id: 'history',    labelKey: 'rpTabHistoryLabel',    descKey: 'rpTabHistoryDesc' },
@@ -242,7 +245,8 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
             {active === 'images'     && <div style={scrollStyle}><ImagesPanel projectId={projectId} /></div>}
             {active === 'connectors' && <div style={scrollStyle}><ConnectorsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'payments'   && <div style={scrollStyle}><PaymentsPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
-            {active === 'seo'        && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
+            {active === 'grow'       && <div style={scrollStyle}><GrowPanel /></div>}
+            {active === 'seo'       && <div style={scrollStyle}><SeoScanPanel projectId={projectId || ''} onSwitchToChat={() => setActive('chat')} /></div>}
             {active === 'analytics'  && <div style={scrollStyle}><AnalyticsPanel projectId={projectId || ''} /></div>}
             {active === 'feedback'   && <div style={scrollStyle}><FeedbackPanel projectId={projectId || ''} /></div>}
             {active === 'history'    && <div style={scrollStyle}><VersionHistory projectId={projectId || ''} /></div>}
