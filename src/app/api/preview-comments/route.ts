@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     }
 
     notify(admin, project.user_id, 'preview_comment', {
+      projectId,
       projectName: project.name,
       message: authorName ? `${authorName} left feedback on ${project.name || 'your project'}` : `New feedback on ${project.name || 'your project'}`,
     }).catch(() => {})
