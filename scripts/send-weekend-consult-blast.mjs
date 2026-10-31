@@ -15,10 +15,11 @@ const env = Object.fromEntries(
 
 const SUPABASE_URL     = env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_KEY      = env.SUPABASE_SERVICE_ROLE_KEY
-const RESEND_API_KEY   = env.RESEND_API_KEY
+const CONTINUUM_API_KEY = env.CONTINUUM_API_KEY
+process.env.CONTINUUM_API_KEY = CONTINUUM_API_KEY ?? ''
 const APP_URL          = 'https://wyberai.com'
 
-if (!SUPABASE_URL || !SERVICE_KEY || !RESEND_API_KEY) {
+if (!SUPABASE_URL || !SERVICE_KEY || !CONTINUUM_API_KEY) {
   console.error('Missing env vars'); process.exit(1)
 }
 
@@ -137,7 +138,8 @@ async function main() {
 
   if (targets.length === 0) { console.log('Nothing to send.'); return }
 
-  // 4. Send via Resend in batches of 100
+  // 4. Send via Continuum /v1/send/batch in batches of 100
+  const { sendBatch } = await import('./lib/continuum-send.mjs')
   let sent = 0, failed = 0
   const BATCH = 100
   for (let i = 0; i < targets.length; i += BATCH) {
@@ -146,25 +148,20 @@ async function main() {
         .split(' ')[0]
         .replace(/[^a-zA-Z]/g, '') || 'there'
       return {
-        from: 'Sumeet from WyberAi <hello@wyberai.com>',
         to: u.email,
         subject: 'Got 15 minutes this weekend? (founder call)',
         html: emailHtml(firstName),
       }
     })
 
-    const res = await fetch('https://api.resend.com/emails/batch', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(batch),
-    })
-    const result = await res.json()
-    if (!res.ok) {
-      console.error(`Batch ${i / BATCH + 1} failed:`, JSON.stringify(result))
+    try {
+      const result = await sendBatch({ from: 'Sumeet from WyberAi <hello@wyberai.com>', messages: batch })
+      sent += result.sent
+      failed += batch.length - result.sent
+      console.log(`Batch ${i / BATCH + 1}: sent ${result.sent}/${batch.length} (total sent: ${sent})`)
+    } catch (e) {
+      console.error(`Batch ${i / BATCH + 1} failed:`, e.message)
       failed += batch.length
-    } else {
-      sent += batch.length
-      console.log(`Batch ${i / BATCH + 1}: sent ${batch.length} (total sent: ${sent})`)
     }
 
     // Brief pause between batches

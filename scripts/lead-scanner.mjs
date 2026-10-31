@@ -9,7 +9,7 @@
 //   node scripts/lead-scanner.mjs                 # scan, write digest to Desktop
 //   node scripts/lead-scanner.mjs --since=72h     # look back further (default 48h)
 //   node scripts/lead-scanner.mjs --min-score=4   # only stronger-intent leads
-//   node scripts/lead-scanner.mjs --email         # also email the digest (needs RESEND_API_KEY)
+//   node scripts/lead-scanner.mjs --email         # also email the digest (needs CONTINUUM_API_KEY)
 //   node scripts/lead-scanner.mjs --all           # ignore the "already seen" memory
 //
 // Output: <Desktop>/Wyber Ai/leads/  (leads-<date>.md + leads-<date>.json + seen state)
@@ -259,9 +259,8 @@ ${leads.length ? '' : '_No new leads this run. Try `--since=96h` or lower `--min
 }
 
 async function emailDigest(leads, stamp) {
-  if (!process.env.RESEND_API_KEY) { console.warn('  ! --email set but RESEND_API_KEY missing; skipping.'); return }
-  const { Resend } = await import('resend')
-  const resend = new Resend(process.env.RESEND_API_KEY)
+  if (!process.env.CONTINUUM_API_KEY) { console.warn('  ! --email set but CONTINUUM_API_KEY missing; skipping.'); return }
+  const { sendEmail } = await import('./lib/continuum-send.mjs')
   const rows = leads.slice(0, 25).map(l => {
     const age = Math.round((Date.now() - l.created) / 3600000)
     return `<tr>
@@ -277,7 +276,7 @@ async function emailDigest(leads, stamp) {
     <table style="width:100%;border-collapse:collapse;background:#141416;border-radius:12px">${rows}</table>
     <p style="color:#555566;font-size:12px;margin-top:16px">Full digest saved to your Desktop → Wyber Ai → leads.</p>
   </div>`
-  await resend.emails.send({
+  await sendEmail({
     from: 'WyberAi <hello@wyberai.com>',
     to: process.env.OWNER_EMAIL || 'hello@wyberai.com',
     subject: `🎯 ${leads.length} app-build leads — ${stamp}`,
