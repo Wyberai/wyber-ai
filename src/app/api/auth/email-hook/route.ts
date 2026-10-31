@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
 import { sendAuthEmail } from '@/lib/email'
 
 // Supabase "Send Email Hook": when enabled, Supabase POSTs auth email events
@@ -62,8 +62,21 @@ export async function POST(req: NextRequest) {
   })
   const verifyUrl = `${supabaseUrl}/auth/v1/verify?${params.toString()}`
 
+  // Supabase gives the hook 5s, and Continuum's /v1/send takes ~4-5s, so we
+  // can't simply await it. Start the send, keep the function alive for it via
+  // after(), and answer Supabase within 3.5s either way. A send that fails
+  // fast still surfaces as a 500; one that is merely slow is reported 200 and
+  // any later failure is logged/alerted by the transport ([email-transport]).
+  const sending = sendAuthEmail(to, ed.email_action_type, verifyUrl, ed.token)
+  after(() => sending.catch(() => {}))
+
+  const SLOW = Symbol('slow')
   try {
-    await sendAuthEmail(to, ed.email_action_type, verifyUrl, ed.token)
+    const first = await Promise.race([
+      sending,
+      new Promise<typeof SLOW>((resolve) => setTimeout(() => resolve(SLOW), 3500)),
+    ])
+    if (first === SLOW) console.warn('Auth email hook: send still running after 3.5s; responding 200')
   } catch (err) {
     console.error('Auth email hook: send failed:', String(err))
     return NextResponse.json({ error: 'Send failed' }, { status: 500 })

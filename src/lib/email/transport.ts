@@ -9,6 +9,8 @@
 // they are logged under a greppable tag and, when ALERT_WEBHOOK_URL is set,
 // posted there (Slack-compatible {text}).
 
+import { after } from 'next/server'
+
 const CONTINUUM_API_URL = process.env.CONTINUUM_API_URL ?? 'https://api.continuumapi.com/v1/send'
 const SEND_TIMEOUT_MS = 15_000
 
@@ -80,7 +82,7 @@ async function sendOne(input: SendEmailInput, to: string, apiKey: string): Promi
   throw new Error(lastErr)
 }
 
-export async function sendEmail(input: SendEmailInput): Promise<{ id: string | null }> {
+async function deliver(input: SendEmailInput): Promise<{ id: string | null }> {
   const apiKey = process.env.CONTINUUM_API_KEY
   if (!apiKey) {
     await alertFailure(`CONTINUUM_API_KEY is not set — cannot send "${input.subject}"`)
@@ -102,4 +104,21 @@ export async function sendEmail(input: SendEmailInput): Promise<{ id: string | n
     }
   }
   return { id: firstId }
+}
+
+/**
+ * Continuum takes ~4-5s per send, and many callers fire-and-forget
+ * (sendWelcomeEmail(...).catch(() => {})). On Vercel the function can be frozen
+ * as soon as the response is sent, dropping an unawaited send. after() keeps
+ * the invocation alive until the send settles; outside a request (scripts) it
+ * throws, which is fine because the process stays up on its own.
+ */
+export function sendEmail(input: SendEmailInput): Promise<{ id: string | null }> {
+  const sending = deliver(input)
+  try {
+    after(() => sending.then(() => {}, () => {}))
+  } catch {
+    // not inside a Next request scope
+  }
+  return sending
 }
