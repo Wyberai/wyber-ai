@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
+import { cleanAppName } from '@/lib/app-name'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
@@ -56,12 +57,10 @@ export async function POST(req: NextRequest) {
       system: `Name an app based on what the user asked to build. 2-4 words, title case, no quotes, no punctuation, not the word "app" unless it's part of a proper name. Output ONLY the name, nothing else.`,
       messages: [{ role: 'user', content: promptStr.slice(0, 500) }],
     })
-    const name = res.content
+    const name = cleanAppName(res.content
       .filter(b => b.type === 'text')
       .map(b => (b.type === 'text' ? b.text : ''))
-      .join('')
-      .trim()
-      .slice(0, 60)
+      .join(''))
     if (!name) return NextResponse.json({ name: project.name })
 
     await supabase.from('projects').update({ name }).eq('id', projectId).eq('user_id', user.id)
