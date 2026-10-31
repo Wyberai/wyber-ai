@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'node:crypto'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/email/transport'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getRoleBySlug } from '@/lib/employee-roles'
 import { buildEmailIdentity } from '@/lib/ai-employees/email-identity'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://wyberai.com'
 
 // Dodo uses the Standard Webhooks spec (HMAC-SHA256, whsec_ secret) — same scheme
@@ -61,7 +60,7 @@ async function provision(db: ReturnType<typeof createServiceClient>, hr: {
   }).eq('id', hr.id)
 
   if (hr.requester_email) {
-    resend.emails.send({
+    sendEmail({
       from: 'WyberAi <hello@wyberai.com>', to: hr.requester_email,
       subject: `${hr.employee_name} is hired! 🎉`,
       text: `Payment received — ${hr.employee_name}, your ${role.title}, is ready.\n\nSet them up here: ${APP_URL}/ai-employees/${employeeId}/onboard`,

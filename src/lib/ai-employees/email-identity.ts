@@ -1,6 +1,4 @@
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY!)
+import { sendEmail } from '@/lib/email/transport'
 
 // Wyber-owned default domain for employee mailboxes. Enterprise customers can
 // override per-employee with a delegated domain (stored in ai_employees.email_domain).
@@ -62,22 +60,19 @@ export interface SendAsEmployeeArgs {
 }
 
 // Send mail AS the employee, from its own address. Requires the employee domain
-// to be verified for sending in Resend (SPF/DKIM) — otherwise Resend rejects it.
+// to be verified for sending in Continuum (SPF/DKIM) — otherwise the send fails.
 export async function sendAsEmployee(args: SendAsEmployeeArgs) {
   const headers: Record<string, string> = {}
   if (args.inReplyTo) {
     headers['In-Reply-To'] = args.inReplyTo
     headers['References'] = args.references ?? args.inReplyTo
   }
-  // Resend's CreateEmailOptions is a union requiring text OR html; ensure at least
-  // one is present, then satisfy the type.
-  const text = args.text ?? (args.html ? undefined : '')
-  return resend.emails.send({
+  return sendEmail({
     from: `${args.fromName} <${args.fromAddress}>`,
     to: args.to,
     subject: args.subject,
-    text,
+    text: args.text,
     html: args.html,
     headers: Object.keys(headers).length ? headers : undefined,
-  } as Parameters<typeof resend.emails.send>[0])
+  })
 }

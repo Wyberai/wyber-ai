@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/email/transport'
 
 // Run this SQL once in your Supabase dashboard to create the table:
 //
@@ -14,7 +14,6 @@ import { Resend } from 'resend'
 //   created_at timestamptz default now()
 // );
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
 const FOUNDER_EMAIL = 'hello@wyberai.com'
 
 export async function POST(req: NextRequest) {
@@ -53,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   // Notify founder immediately
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: 'WyberAi <hello@wyberai.com>',
       to: FOUNDER_EMAIL,
       subject: `🇮🇳 New Independence Day Entry: ${name}`,

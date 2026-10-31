@@ -2,38 +2,14 @@ import { memeImg } from './memes'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 
-// Temporarily back on Resend as of 2026-09-12: the Continuum migration's
-// sending domain (wyberai.com) sat unverified in Continuum from 2026-09-04
-// to 2026-09-11, so every transactional email — including auth/login-link —
-// silently failed for a week (each call site wraps sendMail in .catch(() =>
-// {}), so nothing surfaced). Reverted here rather than left half-fixed while
-// Continuum trust is re-established. Every one of the ~59 functions below
-// calls `sendMail({...})` with the same {from, to, subject, html} shape, so
-// the transport swaps back without touching a single call site.
-const RESEND_API_URL = 'https://api.resend.com/emails'
+// All sends go through Continuum (SES, with SMTP2GO fallback) via the shared
+// transport in ./transport — it retries once, logs failures under
+// [email-transport] and posts to ALERT_WEBHOOK_URL. Every function below calls
+// sendMail({from, to, subject, html}), so call sites are unchanged.
+import { sendEmail } from './transport'
 
 async function sendMail(opts: { from: string; to: string; subject: string; html: string }): Promise<{ id: string | null }> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) throw new Error('RESEND_API_KEY is not set — cannot send email')
-
-  const res = await fetch(RESEND_API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      from: opts.from,
-      to: opts.to,
-      subject: opts.subject,
-      html: opts.html,
-    }),
-  })
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`Resend send failed (${res.status}): ${text.slice(0, 300)}`)
-  }
-
-  const data = await res.json().catch(() => ({})) as { id?: string }
-  return { id: data.id ?? null }
+  return sendEmail(opts)
 }
 
 const FROM       = 'WyberAi <hello@wyberai.com>'

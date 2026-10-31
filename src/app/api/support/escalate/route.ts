@@ -60,10 +60,9 @@ export async function POST(req: NextRequest) {
 
     if (!delivered) {
       try {
-        const { Resend } = await import('resend')
-        const resend = new Resend(process.env.RESEND_API_KEY)
+        const { sendEmail } = await import('@/lib/email/transport')
         const to = process.env.ADMIN_NOTIFY_EMAIL || 'hello@wyberai.com'
-        await resend.emails.send({
+        await sendEmail({
           from: 'WyberAi Support <notifications@wyberai.com>',
           to,
           replyTo: cleanEmail,
