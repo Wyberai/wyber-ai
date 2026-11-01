@@ -5,6 +5,15 @@ import { OWNER_COOKIE, isOwnerToken } from '@/lib/owner-preview'
 export async function proxy(request: NextRequest) {
   const rawPath = request.nextUrl.pathname
 
+  // Gujarat Tech Expo: wyberai.com/Gujaratexpo (any capitalisation) -> /gujaratexpo.
+  // Done here, not in next.config.js, because redirect sources match
+  // case-insensitively there and a case-only redirect would loop forever.
+  if (/^\/gujaratexpo\/?$/i.test(rawPath) && rawPath !== '/gujaratexpo') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/gujaratexpo'
+    return NextResponse.redirect(url)
+  }
+
   // ── Site-wide maintenance gate (temporary, flip MAINTENANCE_MODE off when
   // done) ──────────────────────────────────────────────────────────────────
   // Deliberately does NOT touch /app/ (other users' already-published apps),
@@ -100,6 +109,9 @@ export async function proxy(request: NextRequest) {
     // India layoff-anxiety carousel campaign's own tracking URL for the same
     // /consult page (scripts/meta-ad-india-layoff.mjs), must be public.
     path.startsWith('/india-consult') ||
+    // Gujarat Tech Expo booth-meeting landing page — Meta/LinkedIn/email ad
+    // traffic, must be public. Its form posts to /api/expo-lead.
+    path.startsWith('/gujaratexpo') ||
     // Inventory intelligence demo — live under /app/inventory, public for customer demos.
     path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||

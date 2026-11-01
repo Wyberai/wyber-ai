@@ -35,6 +35,11 @@ const nextConfig = {
       { source: '/lp/ecommerce-dashboard', destination: '/ecommerce', permanent: false },
       // Weekly Build Challenge rebranded + relaunched as Wyber Premier League.
       { source: '/challenge', destination: '/premier-league', permanent: true },
+      // Gujarat Tech Expo landing page lives at /gujaratexpo. The short link
+      // lands there too. (Mixed-case forms are handled in src/proxy.ts: Next
+      // matches redirect sources case-insensitively, so a case-only redirect
+      // here would loop.)
+      { source: '/expo', destination: '/gujaratexpo', permanent: false },
     ]
   },
   async headers() {

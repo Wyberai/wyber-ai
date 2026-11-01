@@ -190,6 +190,39 @@ export async function sendAdminClinicLeadAlert(leadEmail: string, source: string
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `🦷 New clinic-ops lead: ${leadEmail}`, html })
 }
 
+export interface ExpoLeadAlert {
+  name: string
+  whatsapp: string
+  email: string
+  business: string
+  painPoint: string
+  day: string
+  audience: string
+  source: string
+}
+
+const escHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
+  const e = (s: string) => escHtml(s || '—')
+  const html = wrap(`
+    ${h1('New booth meeting request')}
+    ${p(`<strong style="color:#f0f0f4">${e(lead.name)}</strong> asked for a slot at the Gujarat Tech Expo booth.`)}
+    ${infoBox([
+      ['Name', e(lead.name)],
+      ['WhatsApp', e(lead.whatsapp)],
+      ['Email', e(lead.email)],
+      ['Business', e(lead.business)],
+      ['Describes them', e(lead.audience)],
+      ['Preferred day', e(lead.day)],
+      ['Source', e(lead.source)],
+      ['Pain point', e(lead.painPoint)],
+    ])}
+  `, `Booth request: ${lead.name}`)
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📅 Booth request: ${lead.name.slice(0, 60)}`, html })
+}
+
 export async function sendAdminMcpProjectAlert(userEmail: string, projectName: string, framework: string) {
   const html = wrap(`
     ${h1('Built via Claude MCP ⚡')}
