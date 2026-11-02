@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import { motion, transform, useMotionTemplate, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
+import { motion, transform, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
 import s from './expo.module.css'
 import { AppMock } from './AppMock'
@@ -49,24 +49,29 @@ function Chapter({ p, win, keepStart, keepEnd, className, children }: { p: Motio
   return <motion.div className={className} style={{ opacity, y, pointerEvents: events as unknown as 'auto' }}>{children}</motion.div>
 }
 
-/** One photoreal object: drifts in the clutter, lines up into a grid, is absorbed into the app. */
-function Obj({ src, i, p, chaos, grid, app }: { src: string; i: number; p: MotionValue<number>; chaos: Pose; grid: { x: number; y: number; s: number }; app: { x: number; y: number } }) {
-  const left = useMap(p, [0, 0.08, 0.32, 0.44, 0.56], [`${chaos.x}%`, `${chaos.x}%`, `${grid.x}%`, `${grid.x}%`, `${app.x}%`])
-  const top = useMap(p, [0, 0.08, 0.32, 0.44, 0.56], [`${chaos.y}%`, `${chaos.y}%`, `${grid.y}%`, `${grid.y}%`, `${app.y}%`])
+/**
+ * One photoreal object: drifts in the clutter, lines up into a grid, is absorbed into the app.
+ * Performance rules, learned the hard way: scroll only drives transform and opacity (never
+ * left/top, never filter), so the browser can move each photo on the GPU without re-laying
+ * out or repainting. The depth-of-field blur is a CSS transition toggled once, not per frame.
+ */
+const Obj = memo(function Obj({ src, i, p, chaos, grid, app, size, sharp }: { src: string; i: number; p: MotionValue<number>; chaos: Pose; grid: { x: number; y: number; s: number }; app: { x: number; y: number }; size: { w: number; h: number }; sharp: boolean }) {
+  const T = [0, 0.08, 0.32, 0.44, 0.56]
+  const px = (pct: number, dim: number) => (pct / 100) * dim
+  const x = useMap(p, T, [px(chaos.x, size.w), px(chaos.x, size.w), px(grid.x, size.w), px(grid.x, size.w), px(app.x, size.w)])
+  const y = useMap(p, T, [px(chaos.y, size.h), px(chaos.y, size.h), px(grid.y, size.h), px(grid.y, size.h), px(app.y, size.h)])
   const rotate = useMap(p, [0, 0.08, 0.32], [chaos.r, chaos.r, 0])
-  const scale = useMap(p, [0, 0.08, 0.32, 0.44, 0.56], [chaos.s, chaos.s, grid.s, grid.s, 0.14])
+  const scale = useMap(p, T, [chaos.s, chaos.s, grid.s, grid.s, 0.14])
   const opacity = useMap(p, [0, 0.48, 0.56], [1, 1, 0])
-  const blur = useMap(p, [0, 0.32], [chaos.b, 0])
-  const filter = useMotionTemplate`blur(${blur}px)`
   return (
-    <motion.div className={s.obj} style={{ left, top, rotate, scale, opacity, filter, x: '-50%', y: '-50%' }}>
+    <motion.div className={`${s.obj} ${sharp ? s.objSharp : ''}`} style={{ x, y, rotate, scale, opacity, '--b': `${chaos.b}px` } as CSSProperties}>
       <div className={s.float} style={{ animationDuration: `${7 + (i % 4) * 1.3}s`, animationDelay: `${-i * 0.9}s` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" width={720} height={720} draggable={false} />
+        <img src={src} alt="" width={720} height={720} draggable={false} decoding="async" />
       </div>
     </motion.div>
   )
-}
+})
 
 export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: ReactNode }) {
   const reduce = useReducedMotion()
@@ -81,21 +86,49 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
   const grid = mobile ? GRID_MOBILE : GRID_DESKTOP
   const app = mobile ? { x: 50, y: 63 } : { x: 70, y: 54 }
 
+  const stageRef = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ w: 1280, h: 800 })
+  const [ready, setReady] = useState(false)
+  useLayoutEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const measure = () => {
+      const w = el.clientWidth
+      const h = el.clientHeight
+      // Ignore small height changes (mobile browser bars sliding away while scrolling).
+      setSize(prev => (prev.w === w && Math.abs(prev.h - h) < 120 ? prev : { w, h }))
+      setReady(true)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  // These only change at a few scroll thresholds, so React re-renders a handful of times per scroll,
+  // not once per frame. The typing effect writes straight to the DOM for the same reason.
   const [chapter, setChapter] = useState(0)
-  const [typed, setTyped] = useState(0)
   const [steps, setSteps] = useState(0)
   const [shaped, setShaped] = useState(false)
   const [locked, setLocked] = useState(false)
+  const [sharp, setSharp] = useState(false)
+  const promptRef = useRef<HTMLSpanElement>(null)
+  const typedN = useRef(-1)
 
   const sync = (v: number) => {
     setChapter(v < 0.2 ? 0 : v < 0.46 ? 1 : v < 0.64 ? 2 : v < 0.76 ? 3 : v < 0.88 ? 4 : 5)
-    setTyped(Math.round(clamp((v - 0.28) / 0.15, 0, 1) * first.say.length))
     setSteps(clamp(Math.floor((v - 0.54) / 0.012), 0, 7))
     setShaped(v > 0.7)
     setLocked(v > 0.8)
+    setSharp(v > 0.03)
+    const n = Math.round(clamp((v - 0.28) / 0.15, 0, 1) * first.say.length)
+    if (n !== typedN.current && promptRef.current) {
+      typedN.current = n
+      promptRef.current.textContent = first.say.slice(0, n)
+    }
   }
   useMotionValueEvent(p, 'change', sync)
-  useEffect(() => { sync(p.get()) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { typedN.current = -1; sync(p.get()) }, [audience]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const appScale = useMap(p, [0.44, 0.6], [0.7, 1])
   const appOpacity = useMap(p, [0.46, 0.58], [0, 1])
@@ -140,14 +173,14 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
   }
 
   return (
-    <div ref={ref} className={s.story} style={{ height: mobile ? '560vh' : '660vh' }}>
-      <div className={s.stage}>
+    <div ref={ref} className={s.story} style={{ height: mobile ? '400vh' : '440vh' }}>
+      <div ref={stageRef} className={`${s.stage} ${ready ? s.ready : ''}`}>
         <motion.div className={s.glow} style={{ opacity: glow, left: `${app.x}%`, top: `${app.y}%` }} />
 
         <motion.div className={s.scrim} style={{ opacity: scrim }} />
 
         {slugs.map((sl, i) => (
-          <Obj key={`${audience}-${sl}`} src={`/expo/${audience}/${sl}.webp`} i={i} p={p} chaos={chaos[i]} grid={grid[i]} app={app} />
+          <Obj key={`${audience}-${sl}`} src={`/expo/${audience}/${sl}.webp`} i={i} p={p} chaos={chaos[i]} grid={grid[i]} app={app} size={size} sharp={sharp} />
         ))}
 
         {/* the app the clutter turns into */}
@@ -176,7 +209,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
         </Chapter>
         <motion.div className={s.prompt} style={{ opacity: promptOpacity }}>
           <b>SAY THIS</b>
-          <p>{first.say.slice(0, typed)}<span className={s.caret} /></p>
+          <p><span ref={promptRef} /><span className={s.caret} /></p>
         </motion.div>
 
         {/* chapter 2: built */}

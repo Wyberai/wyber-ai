@@ -126,15 +126,17 @@
 }
 
 /* ================= cinematic story ================= */
-.navBar { position: fixed; top: 0; left: 0; right: 0; z-index: 60; background: rgba(5, 6, 10, 0.55); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+.navBar { position: fixed; top: 0; left: 0; right: 0; z-index: 60; background: rgba(5, 6, 10, 0.9); border-bottom: 1px solid var(--border); }
 .navBar .nav { border-bottom: 0; }
 .story { position: relative; }
-.stage { position: sticky; top: 0; height: 100vh; overflow: hidden; background: radial-gradient(ellipse at 70% 54%, rgba(14, 165, 233, 0.07), transparent 60%), var(--bg); }
+.stage { position: sticky; top: 0; height: 100vh; overflow: hidden; contain: layout paint; isolation: isolate; background: radial-gradient(ellipse at 70% 54%, rgba(14, 165, 233, 0.07), transparent 60%), var(--bg); }
 .stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 9; opacity: 0.9;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
-.glow { position: absolute; width: 70vmin; height: 70vmin; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(14, 165, 233, 0.55), transparent 65%); filter: blur(30px); z-index: 1; pointer-events: none; }
-.obj { position: absolute; width: clamp(110px, 17vw, 250px); z-index: 2; pointer-events: none; will-change: transform, filter; }
-.obj img { width: 100%; height: auto; display: block; filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.6)); user-select: none; }
+.glow { position: absolute; width: 70vmin; height: 70vmin; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgba(14, 165, 233, 0.55), transparent 65%); z-index: 1; pointer-events: none; will-change: opacity; }
+.obj { position: absolute; left: 0; top: 0; translate: -50% -50%; width: clamp(110px, 17vw, 250px); z-index: 2; pointer-events: none; will-change: transform, opacity; }
+.stage:not(.ready) .obj { visibility: hidden; }
+.objSharp { --b: 0px !important; }
+.obj img { width: 100%; height: auto; display: block; filter: blur(var(--b, 0px)) drop-shadow(0 20px 30px rgba(0, 0, 0, 0.6)); transition: filter 0.7s ease; user-select: none; }
 .float { animation: drift ease-in-out infinite alternate; }
 @keyframes drift { from { transform: translateY(-9px) rotate(-1deg); } to { transform: translateY(9px) rotate(1deg); } }
 
@@ -162,15 +164,15 @@
 .lockRow b { color: var(--green); font-size: 11px; letter-spacing: 0.1em; }
 .lockRow small { grid-column: 1 / -1; color: var(--dim); font-size: 10.5px; }
 
-.textBlock { position: absolute; left: 6vw; top: 0; bottom: 0; width: min(520px, 42vw); display: flex; flex-direction: column; justify-content: center; z-index: 5; }
-.textTop { position: absolute; left: 0; right: 0; top: 11vh; text-align: center; z-index: 5; }
+.textBlock { will-change: opacity, transform; position: absolute; left: 6vw; top: 0; bottom: 0; width: min(520px, 42vw); display: flex; flex-direction: column; justify-content: center; z-index: 5; }
+.textTop { will-change: opacity, transform; position: absolute; left: 0; right: 0; top: 11vh; text-align: center; z-index: 5; }
 .storyH1 { font-size: clamp(34px, 5.4vw, 78px); font-weight: 900; letter-spacing: -0.045em; line-height: 0.98; margin: 0; }
 .storyH2 { font-size: clamp(56px, 9vw, 132px); font-weight: 900; letter-spacing: -0.055em; line-height: 0.92; margin: 0; }
 .liveH { color: var(--hot); }
 .storySub { margin: 16px 0 0; font-size: clamp(15px, 1.7vw, 20px); line-height: 1.55; color: var(--dim); max-width: 460px; }
 .textTop .storySub { margin-left: auto; margin-right: auto; }
 .pickerWrap { margin-top: 24px; }
-.prompt { position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); width: min(780px, 88vw); z-index: 6; border: 1px solid var(--border2); border-radius: 14px; background: rgba(10, 12, 20, 0.92); padding: 14px 18px; }
+.prompt { will-change: opacity; position: absolute; left: 50%; bottom: 7vh; transform: translateX(-50%); width: min(780px, 88vw); z-index: 6; border: 1px solid var(--border2); border-radius: 14px; background: rgba(10, 12, 20, 0.92); padding: 14px 18px; }
 .prompt b { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: var(--hot); display: block; margin-bottom: 8px; }
 .prompt p { font-family: var(--mono); font-size: clamp(12px, 1.35vw, 15px); line-height: 1.65; color: var(--text); margin: 0; min-height: 3.3em; }
 .caret { display: inline-block; width: 8px; height: 1.1em; background: var(--hot); vertical-align: text-bottom; margin-left: 3px; animation: blink 1s steps(1) infinite; }
