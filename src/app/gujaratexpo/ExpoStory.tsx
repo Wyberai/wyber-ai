@@ -154,7 +154,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
     return (
       <section className={s.staticHero}>
         <div className={s.wrap}>
-          <div className={s.eyebrow}><span className={s.live}>●</span> GUJARAT TECH EXPO · 27–29 NOV</div>
+          <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · 27–29 NOV</div>
           <h1 className={s.h1}>Build any digital product. <em>Ship it in minutes.</em></h1>
           <p className={s.sub}>Describe it once and WyberAi engineers it from scratch. <b>Bring your pain point to our booth and we&apos;ll build it while you watch.</b></p>
           <div style={{ margin: '24px 0' }}>{picker}</div>
@@ -196,7 +196,7 @@ export function ExpoStory({ audience, picker }: { audience: AudienceId; picker: 
 
         {/* chapter 0: clutter */}
         <Chapter p={p} win={[0, 0.005, 0.1, 0.2]} keepStart className={s.textBlock}>
-          <div className={s.eyebrow}><span className={s.live}>●</span> GUJARAT TECH EXPO · 27–29 NOV</div>
+          <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · 27–29 NOV</div>
           <h1 className={s.storyH1}>{copy.head}</h1>
           <p className={s.storySub}>{copy.sub}</p>
           <div className={s.pickerWrap}>{picker}</div>

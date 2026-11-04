@@ -38,7 +38,7 @@ export const USE_CASES: Record<AudienceId, UseCase[]> = {
     {
       tag: 'PROTOTYPE',
       title: 'Pitch prototype, on the call',
-      scene: 'A pharma stockist explains how he takes orders on WhatsApp. You send a link to a working version before the call ends.',
+      scene: 'A pharma stockist explains how retailers send orders on WhatsApp. You send a link to a working version before the call ends.',
       gets: ['A clickable prototype', 'Real code you keep', 'A strong first impression'],
       say: 'Build a prototype for a pharma stockist to take retailer orders and track medicine expiry dates, with a login and an order status screen.',
       slug: 'stockist-orders', files: '15 files', tables: '5 tables',

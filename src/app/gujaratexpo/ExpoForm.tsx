@@ -11,6 +11,12 @@ const field: React.CSSProperties = {
 }
 const label: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: s.muted, marginBottom: 6 }
 
+const PLACEHOLDER: Record<AudienceId, string> = {
+  software: 'e.g. We never know which client projects are running late',
+  business: 'e.g. I never know which supplier invoices are missing from GSTR-2B',
+  student: 'e.g. I cannot keep track of my placement rounds',
+}
+
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
 }
@@ -62,7 +68,7 @@ export function ExpoForm({ audience, onAudienceChange }: { audience: AudienceId;
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0 }} />
       <div>
         <label htmlFor="expo-pain" style={label}>What is the one thing your current software cannot do? *</label>
-        <textarea id="expo-pain" name="painPoint" required rows={4} maxLength={800} placeholder="e.g. I never know which supplier invoices are missing from GSTR-2B" style={{ ...field, resize: 'vertical' }} />
+        <textarea id="expo-pain" name="painPoint" required rows={4} maxLength={800} placeholder={PLACEHOLDER[audience]} style={{ ...field, resize: 'vertical' }} />
       </div>
       <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))' }}>
         <div>

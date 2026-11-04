@@ -208,7 +208,7 @@ export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
   const e = (s: string) => escHtml(s || '—')
   const html = wrap(`
     ${h1('New booth meeting request')}
-    ${p(`<strong style="color:#f0f0f4">${e(lead.name)}</strong> asked for a slot at the Gujarat Tech Expo booth.`)}
+    ${p(`<strong style="color:#f0f0f4">${e(lead.name)}</strong> asked for a slot at the Tech Expo Gujarat booth.`)}
     ${infoBox([
       ['Name', e(lead.name)],
       ['WhatsApp', e(lead.whatsapp)],
