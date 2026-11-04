@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useEditorStore } from '@/store/editor';
 import { useT } from '@/lib/i18n/useT';
 import { EDITOR_CONNECTORS_STRINGS } from '@/lib/i18n/dict/editor-connectors';
+import { GoLiveChecklist } from './GoLiveChecklist';
 
 // Real brand logos, pulled from Composio's public logo CDN purely for art —
 // no OAuth or connection tie — falls back to the emoji glyph if it 404s.
@@ -225,6 +226,7 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
         />
       </div>
       <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px' }}>
+        <GoLiveChecklist projectId={projectId} />
         {recommended.length > 0 && !search && (
           <div style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>

@@ -1,5 +1,6 @@
 import { creditCost, resolveBuildTier, type BuildSizeTier } from '@/lib/credits'
-import { INFRA, featureFit, requiredInfra, type ModelFit, type NeedKind } from './infra'
+import { featureFit, requiredInfra, type ModelFit, type NeedKind } from './infra'
+import { settingsForNeeds } from '../go-live'
 
 /**
  * BYOS quote + hand-off prompt. Pricing is NOT new: the quote maps the picked
@@ -46,10 +47,11 @@ export function composeBuildPrompt(opts: {
     `It must do ONLY the features listed below — nothing else, no extra modules. ` +
     `Include sign-in and sample data that work without a backend, structured so the app can switch to the owner's own Supabase database later. Design it as an original product: do not copy ${product}'s name, logo, wording or visual design.`
 
-  const services = requiredInfra(features).map(k => `${INFRA[k].label} via ${INFRA[k].provider}`)
+  const kinds = requiredInfra(features)
+  const settings = settingsForNeeds(kinds).map(s => `${s.label}: ${s.names.join(', ')}`)
   const tail = [
-    services.length
-      ? `Outside services: write the real integration code for each, read credentials from environment settings, and add a Setup screen listing what the owner must configure with a live connection status. Never simulate or fake them. ${services.join('; ')}.`
+    kinds.length
+      ? `Outside services: put ALL server code in Vercel serverless functions under api/ (one file per service, Node style "export default async function handler(req, res)"), calling each provider with fetch where possible and adding any SDK to package.json. Read credentials only from process.env using exactly these names. ${settings.join('; ')}. Take AI model names from optional ANTHROPIC_MODEL or OPENAI_MODEL settings, defaulting to claude-sonnet-5-5 for Anthropic. Never ask the owner to host a separate server. Add api/status.ts reporting which services have their settings, and a Setup screen showing that status (when it cannot be reached, say server features run once the app is deployed). Never simulate or fake a service.`
       : '',
     connectLive.length ? `Connect for real: ${connectLive.join(', ')}.` : '',
     connectPlaceholder.length ? `Add clearly-labelled placeholder settings (no fake data) for: ${connectPlaceholder.join(', ')}.` : '',
