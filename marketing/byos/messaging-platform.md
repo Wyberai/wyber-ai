@@ -59,7 +59,7 @@ Three pillars. Each has one proof that exists in the product today.
 |---|---|---|
 | **Pick** | Pay for the slice you use, not the whole tool. | Paste a URL, get the tool's features grouped, tick what you use. 44 tools are instant. |
 | **Honest** | We tell you what we can't build, before you spend. | Every feature is tagged. Slack, Zoom and HubSpot get "not a one-to-one replacement". The quote shows the outside services you'd need (for example Amazon SES for bulk email). |
-| **Own** | It's your code and your data, with no seats. | Code export to GitHub, working sign-in with sample data, a built-in security scan, an estimated price before you start. |
+| **Own** | It's your code and your data, with no seats. | Code export to GitHub, working sign-in with sample data, a database that is yours (your own Supabase account, never ours), a built-in security scan, an estimated price before you start. |
 
 ### Vocabulary (use these words)
 - "the tool you pay for" (not "legacy SaaS")
@@ -220,7 +220,7 @@ The rule: **open with the artifact, not with "I noticed".** The artifact is the 
 | We tell you what needs an outside service | Verified | Fixed catalog: Amazon SES, Twilio, Stripe, etc. |
 | Code export to GitHub | Exists in code, not re-tested here | Test before claiming in ads. |
 | Built-in security scan | Exists in code | Same. |
-| Real sign-in and real database | **Disproved by the Nov 4 test build** | The Pipedrive test build shipped localStorage auth with demo accounts and seeded data, no Supabase, despite the prompt asking for a real database. Do not claim it. Say "working sign-in with sample data". |
+| Real sign-in and real database | **Disproved by the Nov 4 test build** | The Pipedrive test build shipped localStorage auth with demo accounts and seeded data, no Supabase, despite the prompt asking for a real database. Do not claim it. Say "working sign-in with sample data; connect your own database to go live, so your data is stored with you, never with us". Founder decision (Nov 4): we do not host customer databases. |
 | "You pay for 100 features, you use 5" | **Rhetorical, not our data** | Our extraction finds about 24 distinct features per tool (capped by the extractor) and an average of about 8 flagged "everyday" by a model guess, not usage data. Keep it as the hook, never as a statistic. Safer: "You pay for the whole tool. You use a slice." |
 | "Most teams use about N" | **Removed** | It was a model guess. The replace pages now ask "How many does your team use?" |
 | "First version in minutes" | **Unverified for BYOS-size builds** | Measure on the test build before using any time claim. |

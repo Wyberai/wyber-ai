@@ -437,7 +437,7 @@ export function ByosClient() {
             </div>
             <ul style={{ margin: '0 0 26px', padding: 0, listStyle: 'none', display: 'grid', gap: 8, fontSize: 15, color: s.muted }}>
               <li>You own the code, and you can export it to GitHub.</li>
-              <li>Starts with working sign-in and sample data, so you can try it before you trust it.</li>
+              <li>Starts with working sign-in and sample data. Connect your own free Supabase account to go live, so your data is stored with you, never with us.</li>
               <li>A security scan is built in, so you can check it before you trust it.</li>
               <li>An original design. We don&rsquo;t copy {analysis.product}&rsquo;s branding.</li>
             </ul>

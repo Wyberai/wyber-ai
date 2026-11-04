@@ -44,7 +44,7 @@ export function composeBuildPrompt(opts: {
   const head =
     `Build our own internal ${category || 'business'} tool to replace ${product}. ` +
     `It must do ONLY the features listed below — nothing else, no extra modules. ` +
-    `Use real sign-in and a real database. Design it as an original product: do not copy ${product}'s name, logo, wording or visual design.`
+    `Include sign-in and sample data that work without a backend, structured so the app can switch to the owner's own Supabase database later. Design it as an original product: do not copy ${product}'s name, logo, wording or visual design.`
 
   const services = requiredInfra(features).map(k => `${INFRA[k].label} via ${INFRA[k].provider}`)
   const tail = [
