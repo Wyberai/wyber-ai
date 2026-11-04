@@ -47,7 +47,6 @@ export default async function ReplaceToolPage({ params }: { params: Promise<{ to
   const features = a.modules.flatMap(m => m.features)
   const { verdict, counts } = productVerdict(features, a.isPlatform)
   const vc = VERDICT_COPY[verdict]
-  const coreCount = features.filter(f => f.core).length
   const infra = requiredInfra(features)
   const cants = features.filter(f => featureFit(f) === 'cant')
   const related = LIBRARY_TOOLS.filter(t => t.slug !== tool.slug).sort((x, y) => Number(y.category === tool.category) - Number(x.category === tool.category)).slice(0, 8)
@@ -65,7 +64,7 @@ export default async function ReplaceToolPage({ params }: { params: Promise<{ to
         <h1 style={{ fontSize: 'clamp(30px,5.5vw,54px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.08, margin: '0 0 18px' }}>
           {a.isPlatform
             ? `${a.product} is a platform, not a feature list.`
-            : `${a.product} has ${features.length} features. Most teams use about ${coreCount}.`}
+            : `${a.product} lists ${features.length} features. How many does your team use?`}
         </h1>
         <p style={{ fontSize: 'clamp(16px,2vw,19px)', color: s.muted, lineHeight: 1.6, maxWidth: 660, margin: '0 0 26px' }}>
           {a.isPlatform

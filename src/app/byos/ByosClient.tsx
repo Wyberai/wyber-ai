@@ -380,10 +380,10 @@ export function ByosClient() {
               {picked.length} of {allFeatures.length} features{pickedIntegrations.size ? `, ${pickedIntegrations.size} connection${pickedIntegrations.size > 1 ? 's' : ''}` : ''}{importCsv ? ', CSV import' : ''}. Nothing else.
             </p>
             <div style={{ padding: '22px 24px', borderRadius: 14, border: `1px solid ${s.border}`, background: s.card, marginBottom: 18 }}>
-              <div style={{ ...eyebrow, margin: 0 }}>Building it, once</div>
-              <div style={{ fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>{quote.credits} credits</div>
+              <div style={{ ...eyebrow, margin: 0 }}>Estimated cost to build, once</div>
+              <div style={{ fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>About {quote.credits} credits</div>
               <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.6 }}>
-                {TIER_LABEL[quote.tier]} build, priced by size like every WyberAi build. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
+                Estimated as a {TIER_LABEL[quote.tier].toLowerCase()} build from what you picked. The final size is set when your build is planned, and it is priced by size like every WyberAi build. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
               </div>
             </div>
             {(infraNeeded.length > 0 || simplifiedPicks.length > 0) && (
