@@ -359,7 +359,7 @@ export function ByosClient() {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Slack, Stripe, Google Sheets…" aria-label="Search connections"
               style={{ width: '100%', maxWidth: 360, boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: `1px solid ${s.border}`, background: s.card, color: s.text, fontSize: 14, fontFamily: 'inherit', marginBottom: 12, outline: 'none' }} />
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 26 }}>
-              {catalog.map(n => <Pill key={n} on={pickedIntegrations.has(n)} onClick={() => toggle(setPickedIntegrations, n)} tag="Live">{n}</Pill>)}
+              {catalog.map(n => <Pill key={n} on={pickedIntegrations.has(n)} onClick={() => toggle<string>(setPickedIntegrations, n)} tag="Live">{n}</Pill>)}
               {!catalog.length && <span style={{ fontSize: 14, color: s.dim }}>No match. We can leave a placeholder for anything not listed.</span>}
             </div>
             <label style={{ display: 'flex', gap: 10, alignItems: 'center', fontSize: 15, cursor: 'pointer' }}>
@@ -381,9 +381,9 @@ export function ByosClient() {
             </p>
             <div style={{ padding: '22px 24px', borderRadius: 14, border: `1px solid ${s.border}`, background: s.card, marginBottom: 18 }}>
               <div style={{ ...eyebrow, margin: 0 }}>Estimated cost to build, once</div>
-              <div style={{ fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>About {quote.credits} credits</div>
+              <div style={{ fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>About {quote.credits}–{quote.maxCredits} credits</div>
               <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.6 }}>
-                Estimated as a {TIER_LABEL[quote.tier].toLowerCase()} build from what you picked. The final size is set when your build is planned, and it is priced by size like every WyberAi build. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
+                Estimated as a {TIER_LABEL[quote.tier].toLowerCase()} build from what you picked. The final size is set when your build is planned, and it is priced by size like every WyberAi build. More complex builds are charged at the upper end. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
               </div>
             </div>
             {(infraNeeded.length > 0 || simplifiedPicks.length > 0) && (

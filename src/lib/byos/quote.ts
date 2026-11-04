@@ -4,7 +4,7 @@ import { INFRA, featureFit, requiredInfra, type ModelFit, type NeedKind } from '
 /**
  * BYOS quote + hand-off prompt. Pricing is NOT new: the quote maps the picked
  * scope to a planned-file count and prices it with the existing saas-build size
- * tiers (src/lib/credits.ts), so what the visitor sees here is what the build
+ * tiers (src/lib/credits.ts), so the range shown here brackets what the build
  * is actually charged. Free of any new price point.
  */
 
@@ -22,10 +22,11 @@ export function estimatePlannedFiles(featureCount: number, integrationCount: num
   return 4 + featureCount * 2 + integrationCount
 }
 
-export function quoteBuild(featureCount: number, integrationCount: number): { tier: BuildSizeTier; credits: number; plannedFiles: number } {
+export function quoteBuild(featureCount: number, integrationCount: number): { tier: BuildSizeTier; credits: number; maxCredits: number; plannedFiles: number } {
   const plannedFiles = estimatePlannedFiles(featureCount, integrationCount)
   const tier = resolveBuildTier({ totalPlannedFiles: plannedFiles })
-  return { tier, credits: creditCost('saas-build', 'fast', tier), plannedFiles }
+  // A build the planner classes as complex is charged at the higher rate (generate route), so quote the range.
+  return { tier, credits: creditCost('saas-build', 'fast', tier), maxCredits: creditCost('saas-build', 'default', tier), plannedFiles }
 }
 
 /** The set DashboardClient's pending-prompt contract accepts is capped at 2000 chars. */

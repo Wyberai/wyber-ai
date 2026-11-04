@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { creditCost, IMAGE_GEN_COST } from '@/lib/credits'
 export const metadata: Metadata = { title: 'Credits & Pricing — WyberAi', description: 'Understand how WyberAi credits work and what each generation costs.' }
 
 export default function CreditsPage() {
@@ -11,15 +12,14 @@ export default function CreditsPage() {
         <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 20, letterSpacing: '-0.02em' }}>What uses credits</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {[
-            ['Web / mobile app build', '30 credits', 'Full-stack React or React Native app generated'],
-            ['App edit / iteration', '2 credits', 'Any change, fix, or refinement to an existing build'],
-            ['Build plan (Plan Mode)', '5 credits', 'Feature/flow plan you can edit before building'],
-            ['AI Agent run', '5 credits', 'Run any of the 5,000+ pre-built agents'],
-            ['AI Employee run', '5 credits', 'Scheduled autonomous employee run'],
-            ['Workflow run', '2 credits', 'Trigger a visual automation flow'],
-            ['GTM campaign action', '3 credits', 'ICP setup, sequence gen, campaign action'],
-            ['Lead enrichment', '1 credit', 'Per contact imported/enriched via Apollo'],
-            ['Image generation', '3 credits', 'AI-generated image or asset'],
+            ['App build', `${creditCost('saas-build', 'fast', 'small')}–${creditCost('saas-build', 'default', 'xl')} credits`, `Priced by size and shown before you start: ${creditCost('saas-build', 'fast', 'small')} for a small app up to ${creditCost('saas-build', 'fast', 'xl')} for a very large one. A build we classify as complex is charged at the higher rate (${creditCost('saas-build', 'default', 'medium')} / ${creditCost('saas-build', 'default', 'large')} / ${creditCost('saas-build', 'default', 'xl')}).`],
+            ['Small edit', `${creditCost('small-edit', 'fast')} credits`, 'A small change, fix, or refinement to an existing build. Larger changes are priced by size.'],
+            ['Build plan (Plan Mode)', `${creditCost('plan', 'default')} credits`, 'Feature/flow plan you can edit before building'],
+            ['Image generation', `${IMAGE_GEN_COST} credit`, 'AI-generated image during a build or from the Images panel'],
+            ['HD image regenerate', `${creditCost('hero-image-gen')} credits`, 'High-quality hero image'],
+            ['Security or SEO scan', `${creditCost('seo-scan')} credits`, 'Full checklist run against your project files'],
+            ['Voiceover', `${creditCost('audio-gen')} credits`, 'Narration generation'],
+            ['Mobile preview', `${creditCost('preview-access')} credits`, 'Per viewer, per project, per day'],
             ['Template load', '0 credits', 'Instant template loading — always free'],
             ['Auto-fix errors', '0 credits', 'Always free'],
             ['Export ZIP', '0 credits', 'Download your code — always free'],
