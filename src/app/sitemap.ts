@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { BUILD_PAGES } from './build/data'
+import { LIBRARY_TOOLS } from '@/lib/byos/slug'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = 'https://wyberai.com'
@@ -11,6 +12,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/build`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
     ...BUILD_PAGES.map(p => ({
       url: `${base}/build/${p.slug}`,
+      lastModified: now,
+      changeFrequency: 'monthly' as const,
+      priority: 0.75,
+    })),
+  ]
+
+  // /byos "replace {tool}" pages — one per pre-analyzed library tool.
+  const byosRoutes: MetadataRoute.Sitemap = [
+    { url: `${base}/byos`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.85 },
+    ...LIBRARY_TOOLS.map(t => ({
+      url: `${base}/byos/${t.slug}`,
       lastModified: now,
       changeFrequency: 'monthly' as const,
       priority: 0.75,
@@ -66,5 +78,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // client-side redirect stubs (spinner → build project → /project or /login)
   // with no indexable content, which mass-triggered "not indexed" and tanked
   // sitemap quality. The public content page is /gallery (kept above).
-  return [...staticRoutes, ...buildRoutes]
+  return [...staticRoutes, ...buildRoutes, ...byosRoutes]
 }

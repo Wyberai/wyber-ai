@@ -24,6 +24,10 @@ const DEFAULTS = [
   'freshdesk.com', 'zendesk.com', 'intercom.com', 'helpscout.com',
   // people, time, money
   'bamboohr.com', 'gusto.com', 'getharvest.com', 'toggl.com', 'freshbooks.com',
+  // scheduling, recording, whiteboards, notes, CRM, sites
+  'cal.com', 'loom.com', 'tella.tv', 'miro.com', 'notion.so', 'attio.com', 'webflow.com',
+  // more work, surveys, support, outreach
+  'basecamp.com', 'wrike.com', 'smartsheet.com', 'surveymonkey.com', 'acuityscheduling.com', 'gorgias.com', 'lemlist.com', 'activecampaign.com', 'mailerlite.com',
   // analytics and marketing
   'mixpanel.com', 'amplitude.com', 'hotjar.com', 'mailchimp.com', 'convertkit.com',
 ]
@@ -51,7 +55,10 @@ const report = []
 for (const d of domains) {
   const t0 = Date.now()
   try {
-    const { analysis, error } = await analyze(d)
+    // A transient network error (not a "can't read that site") is worth one retry.
+    let result = await analyze(d)
+    if (result.error?.startsWith('Something went wrong')) result = await analyze(d)
+    const { analysis, error } = result
     const n = analysis?.modules.reduce((s, m) => s + m.features.length, 0) ?? 0
     if (!analysis) report.push({ domain: d, result: 'FAILED', note: error })
     else if (typeof analysis.fitSummary !== 'string' || !analysis.fitSummary) report.push({ domain: d, result: 'NO FIT DATA', note: 'missing fitSummary' })

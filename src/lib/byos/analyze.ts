@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { CHEAP_MODEL, CHEAP_THINKING } from '@/lib/models'
 import { cacheKey, resolvesPublicly } from './domain'
+import { isPlatformDomain } from './platforms'
+import { reconcileFit } from './backstop'
 import { INFRA_KINDS, type ModelFit, type NeedKind } from './infra'
 
 /**
@@ -27,6 +29,8 @@ export interface ByosAnalysis {
   category: string
   /** One blunt sentence on how replaceable this product really is. */
   fitSummary: string
+  /** A platform or suite (see platforms.json) rather than a single app. Replacing it one-to-one is not on the table. */
+  isPlatform: boolean
   modules: ByosModule[]
   integrations: string[]
   /** False when no integrations page could be read — the UI then leans on the searchable picker. */
@@ -181,7 +185,7 @@ WHAT WE BUILD: a custom web app on a Postgres database with sign-in, roles and p
 fit = "build": fully buildable with the above.
 fit = "lite": only a deliberately simpler version is realistic. Examples: real-time collaboration (live presence and simple live updates only, no multiplayer document editing), frame-accurate video or audio editing, offline sync, analytics at large scale, AI that needs custom-trained models. Say in the note what is cut.
 fit = "cant": we cannot build it. Examples: the other side of a marketplace or network, payroll and tax filing, medical records as the legal system of record, banking or money-movement licences, desktop apps, browser extensions as products, recording another app's system audio, certifications such as SOC 2 or HIPAA, running video-conferencing or telephony networks themselves, search-engine scale indexing, staffed human services. Say in the note why.
-needs: an array of the outside services the feature only works by renting. Kinds: email-transactional (receipts, confirmations, reminders, alerts, invitations, password resets), email-sending (ONLY bulk campaigns, newsletters, cold outreach or inbox sync), sms-whatsapp, voice-telephony, video-calls (live meetings), video-hosting (storing or streaming video), transcription, ai-model, payments, calendar-oauth (syncing Google or Outlook calendars), sso-enterprise, maps-geo, push-notifications (phone or browser push at scale). Use [] when none applies. Add a need only when the feature itself sends, stores, streams or processes through that service; integration lists, dashboards, generic builders and settings screens are []. List every kind that applies; for example appointment booking with calendar sync and video links is ["calendar-oauth","video-calls"]. We write the code either way; "needs" means the owner must also sign up for and pay those services.
+needs: an array of the outside services the feature only works by renting. Kinds: email-transactional (receipts, confirmations, reminders, alerts, invitations, password resets), email-sending (ONLY bulk campaigns, newsletters, cold outreach or inbox sync), sms-whatsapp, voice-telephony, video-calls (live meetings), video-hosting (storing or streaming video), transcription, ai-model, payments, calendar-oauth (syncing Google or Outlook calendars), email-inbox-sync (two-way Gmail or Outlook mailbox sync), sso-enterprise, maps-geo, push-notifications (phone or browser push at scale). Use [] when none applies. Add a need only when the feature itself sends, stores, streams or processes through that service; integration lists, dashboards, generic builders and settings screens are []. List every kind that applies; for example appointment booking with calendar sync and video links is ["calendar-oauth","video-calls"]. We write the code either way; "needs" means the owner must also sign up for and pay those services.
 Never mark something "build" with empty needs if it depends on infrastructure we cannot run in a normal web app.
 fitSummary: one blunt sentence (max 160 characters) on how replaceable the whole product is, naming what part cannot be replaced.`
 
@@ -202,10 +206,10 @@ export function sanitizeExtraction(raw: unknown, domain: string, integrationsRea
     m.features.slice(0, MAX_FEATURES_PER_MODULE).forEach((f: { name?: unknown; description?: unknown; core?: unknown; fit?: unknown; needs?: unknown; note?: unknown }, fi: number) => {
       const fname = clean(f?.name, 80)
       if (!fname) return
-      const fit: ModelFit = f.fit === 'lite' || f.fit === 'cant' ? f.fit : 'build'
+      const modelFit: ModelFit = f.fit === 'lite' || f.fit === 'cant' ? f.fit : 'build'
       const needsRaw = Array.isArray(f.needs) ? f.needs.filter((n): n is NeedKind => (INFRA_KINDS as readonly unknown[]).includes(n)) : []
-      // A feature we can't build has no service to buy for it.
-      const needs: NeedKind[] = fit === 'cant' ? [] : [...new Set(needsRaw)].slice(0, 3)
+      // Rules override the model where a feature plainly rides on a service in our catalog; a real cant keeps no service.
+      const { fit, needs } = reconcileFit(fname, clean(f.description, 140), modelFit, modelFit === 'cant' ? [] : [...new Set(needsRaw)].slice(0, 3))
       features.push({ id: `${mi}-${fi}-${slug(fname)}`, name: fname, description: clean(f.description, 140), core: f.core === true, fit, needs, note: clean(f.note, 140) })
     })
     if (features.length) modules.push({ id: `${mi}-${slug(name)}`, name, features })
@@ -219,6 +223,7 @@ export function sanitizeExtraction(raw: unknown, domain: string, integrationsRea
     product: clean(r.product, 60) || domain,
     category: clean(r.category, 50) || 'business',
     fitSummary: clean(r.fitSummary, 200),
+    isPlatform: isPlatformDomain(domain),
     modules,
     integrations,
     integrationsComplete: integrationsRead,

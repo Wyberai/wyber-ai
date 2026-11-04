@@ -605,6 +605,18 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         </div>
       </Link>
 
+      {/* ── /byos cross-link: paste a tool you rent, build only the features you use.
+             English only — the strip copy has no translations yet. ── */}
+      {locale === 'en' && (
+        <Link href="/byos" onClick={() => track('homepage_byos_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
+          <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
+            <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>OWN YOUR SOFTWARE</span>
+            <span style={{ color: 'var(--brand-text)', fontSize: 15, fontWeight: 600 }}>You pay for 100 features and use 5. Paste the tool you rent and build only what you use.</span>
+            <span style={{ color: 'var(--brand-accent-hot)', fontSize: 15, fontWeight: 600 }}>Replace a tool →</span>
+          </div>
+        </Link>
+      )}
+
       {/* ── TELEMETRY STRIP — India only; US homepage omits unverifiable stats ── */}
       {inr && (
       <section style={{ borderBottom: '1px solid var(--brand-border)' }}>

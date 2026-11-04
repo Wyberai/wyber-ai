@@ -6,7 +6,8 @@ import { track } from '@/lib/track'
 import type { ByosAnalysis, Stage } from '@/lib/byos/analyze'
 import { LIVE_INTEGRATIONS, liveMatch } from '@/lib/byos/integrations'
 import { composeBuildPrompt, quoteBuild, type PickedFeature } from '@/lib/byos/quote'
-import { INFRA, featureFit, productVerdict, requiredInfra, type Fit } from '@/lib/byos/infra'
+import { INFRA, featureFit, productVerdict, requiredInfra } from '@/lib/byos/infra'
+import { FIT_STYLE, VERDICT_COPY } from '@/lib/byos/fit-copy'
 import libraryIndex from '@/lib/byos/library-index.json'
 
 type Step = 'url' | 'features' | 'connect' | 'quote'
@@ -21,17 +22,6 @@ const FEATURED = ['pipedrive.com', 'hubspot.com', 'asana.com', 'linear.app', 'ca
 const TIER_LABEL = { small: 'Small', medium: 'Medium', large: 'Large', xl: 'Extra large' } as const
 const STARTER_SET = 6
 const STATE_KEY = 'byos-state-v2'
-const FIT_STYLE: Record<Fit, { label: string; color: string } | null> = {
-  build: null,
-  provider: { label: 'Needs an outside service', color: '#f59e0b' },
-  lite: { label: 'Simplified version', color: '#38bdf8' },
-  cant: { label: "We can't build this", color: '#f87171' },
-}
-const VERDICT_COPY = {
-  good: { title: 'Good fit', color: '#22c55e', line: (p: string) => `We can build almost all of ${p}.` },
-  partial: { title: 'Partial fit', color: '#f59e0b', line: (p: string) => `We can replace the everyday parts of ${p}, not all of it.` },
-  poor: { title: 'Poor fit', color: '#f87171', line: (p: string) => `We can build some screens around ${p}, but not what makes it work.` },
-} as const
 
 const btn = (primary = true, disabled = false): React.CSSProperties => ({
   padding: '13px 26px', borderRadius: 10, border: primary ? 'none' : `1px solid ${s.border}`,
@@ -153,7 +143,7 @@ export function ByosClient() {
     [allFeatures, pickedIds],
   )
   const quote = quoteBuild(picked.length, pickedIntegrations.size)
-  const verdict = useMemo(() => productVerdict(allFeatures), [allFeatures])
+  const verdict = useMemo(() => productVerdict(allFeatures, analysis?.isPlatform), [allFeatures, analysis?.isPlatform])
   const infraNeeded = useMemo(() => requiredInfra(picked), [picked])
   const simplifiedPicks = picked.filter(f => featureFit(f) === 'lite' || f.fit === 'lite')
 

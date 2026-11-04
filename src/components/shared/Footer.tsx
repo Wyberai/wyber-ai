@@ -5,7 +5,7 @@ import { localePath } from '@/lib/i18n/hreflang';
 import { DEFAULT_LOCALE, type Locale } from '@/lib/i18n/locales';
 
 const COLS = [
-  { heading: 'Product',   links: [['Pricing','/pricing'],['Web Apps','/use-cases/no-code-web-app-builder'],['MCP Server','/mcp'],['The Journey','/space-journey'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
+  { heading: 'Product',   links: [['Pricing','/pricing'],['Replace your SaaS','/byos'],['Web Apps','/use-cases/no-code-web-app-builder'],['MCP Server','/mcp'],['The Journey','/space-journey'],['Connectors','/connectors'],['Changelog','/changelog'],['Status','/status']] },
   { heading: 'Resources', links: [['Learning Paths','/learn'],['Documentation','/docs'],['Use Cases','/use-cases'],['Blog','/blog']] },
   { heading: 'Compare',   links: [['vs Lovable','/vs/lovable'],['vs Bolt','/vs/bolt'],['vs v0','/vs/v0'],['vs Replit','/vs/replit'],['vs Cursor','/vs/cursor']] },
   { heading: 'Company',   links: [['Founders','/founders'],['Press','/press'],['Affiliates','/affiliates'],['Community','/community'],['Privacy','/privacy'],['Terms','/terms']] },

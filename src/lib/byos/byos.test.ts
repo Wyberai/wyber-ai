@@ -92,6 +92,8 @@ describe('fit rules', () => {
     expect(productVerdict([...mk('build', 7), ...mk('cant', 3)]).verdict).toBe('partial')
     expect(productVerdict([...mk('build', 5), ...mk('cant', 5)]).verdict).toBe('poor')
     expect(productVerdict([...mk('build', 5), ...mk('lite', 5)]).verdict).toBe('partial')
+    // A platform is never "good" on a feature tally, however buildable the listed features look.
+    expect(productVerdict(mk('build', 10), true).verdict).toBe('platform')
   })
 
   it('lists each needed service once, in a stable order, ignoring cant features', () => {

@@ -1,23 +1,48 @@
 [
  {
+  "domain": "activecampaign.com",
+  "product": "ActiveCampaign",
+  "category": "Marketing automation / CRM"
+ },
+ {
+  "domain": "acuityscheduling.com",
+  "product": "Acuity Scheduling",
+  "category": "Scheduling"
+ },
+ {
   "domain": "airtable.com",
   "product": "Airtable",
-  "category": "No-code app builder / relational database with wor"
+  "category": "No-code database and app-building platform"
  },
  {
   "domain": "amplitude.com",
   "product": "Amplitude",
-  "category": "Product analytics"
+  "category": "Product analytics platform"
  },
  {
   "domain": "asana.com",
   "product": "Asana",
-  "category": "Work management / project tracker"
+  "category": "Work management / project management"
+ },
+ {
+  "domain": "attio.com",
+  "product": "Attio",
+  "category": "CRM"
  },
  {
   "domain": "bamboohr.com",
   "product": "BambooHR",
-  "category": "HR platform (HRIS, payroll, benefits, time, applic"
+  "category": "HR software (HRIS, payroll, benefits, time, applic"
+ },
+ {
+  "domain": "basecamp.com",
+  "product": "Basecamp",
+  "category": "Project management / team collaboration"
+ },
+ {
+  "domain": "cal.com",
+  "product": "Cal.com",
+  "category": "Scheduling"
  },
  {
   "domain": "calendly.com",
@@ -27,7 +52,7 @@
  {
   "domain": "clickup.com",
   "product": "ClickUp",
-  "category": "Project tracker"
+  "category": "Project management and work platform (tasks, docs,"
  },
  {
   "domain": "close.com",
@@ -40,14 +65,24 @@
   "category": "CRM"
  },
  {
+  "domain": "docusign.com",
+  "product": "Docusign",
+  "category": "eSignature and agreement management (contract life"
+ },
+ {
   "domain": "freshbooks.com",
   "product": "FreshBooks",
-  "category": "Accounting and invoicing"
+  "category": "Accounting and invoicing for small businesses"
  },
  {
   "domain": "freshdesk.com",
   "product": "Freshdesk",
-  "category": "Customer support / helpdesk ticketing"
+  "category": "Customer support helpdesk / ticketing"
+ },
+ {
+  "domain": "gorgias.com",
+  "product": "Gorgias",
+  "category": "Helpdesk / customer support for ecommerce"
  },
  {
   "domain": "getharvest.com",
@@ -57,32 +92,37 @@
  {
   "domain": "helpscout.com",
   "product": "Help Scout",
-  "category": "Customer support / shared inbox help desk"
+  "category": "Customer support helpdesk (shared inbox)"
  },
  {
   "domain": "hotjar.com",
-  "product": "Hotjar",
-  "category": "Digital experience analytics (heatmaps, session re"
+  "product": "Hotjar (Contentsquare)",
+  "category": "Experience analytics (heatmaps, session replay, su"
  },
  {
   "domain": "hubspot.com",
   "product": "HubSpot",
-  "category": "CRM / marketing, sales and service platform"
+  "category": "CRM and customer platform (marketing, sales, servi"
  },
  {
   "domain": "intercom.com",
   "product": "Intercom",
-  "category": "Customer service helpdesk with AI agent (CRM-adjac"
+  "category": "Customer helpdesk / support inbox with AI agent"
  },
  {
   "domain": "jotform.com",
   "product": "Jotform",
-  "category": "Online form builder"
+  "category": "Online form builder with payments, e-signature, ta"
  },
  {
   "domain": "convertkit.com",
   "product": "Kit (formerly ConvertKit)",
-  "category": "Email marketing, newsletter and creator automation"
+  "category": "Email marketing and creator automation"
+ },
+ {
+  "domain": "lemlist.com",
+  "product": "lemlist",
+  "category": "Sales engagement / outbound prospecting platform"
  },
  {
   "domain": "linear.app",
@@ -90,9 +130,24 @@
   "category": "Project tracker / product development system"
  },
  {
+  "domain": "loom.com",
+  "product": "Loom",
+  "category": "Async video messaging / screen recorder"
+ },
+ {
   "domain": "mailchimp.com",
   "product": "Mailchimp",
   "category": "Email & SMS marketing platform"
+ },
+ {
+  "domain": "mailerlite.com",
+  "product": "MailerLite",
+  "category": "Email marketing platform"
+ },
+ {
+  "domain": "miro.com",
+  "product": "Miro",
+  "category": "Online whiteboard / visual collaboration"
  },
  {
   "domain": "mixpanel.com",
@@ -102,7 +157,7 @@
  {
   "domain": "monday.com",
   "product": "monday.com",
-  "category": "Work management / AI workspace (boards, CRM, forms"
+  "category": "Work management / CRM platform with AI agents"
  },
  {
   "domain": "pipedrive.com",
@@ -110,9 +165,29 @@
   "category": "CRM"
  },
  {
+  "domain": "slack.com",
+  "product": "Slack",
+  "category": "Team collaboration / messaging"
+ },
+ {
+  "domain": "smartsheet.com",
+  "product": "Smartsheet",
+  "category": "Work management / project tracker (collaborative w"
+ },
+ {
+  "domain": "surveymonkey.com",
+  "product": "SurveyMonkey",
+  "category": "Surveys and online forms"
+ },
+ {
   "domain": "tally.so",
   "product": "Tally",
   "category": "Forms and surveys"
+ },
+ {
+  "domain": "tella.tv",
+  "product": "Tella",
+  "category": "Video recording and editing"
  },
  {
   "domain": "toggl.com",
@@ -122,11 +197,26 @@
  {
   "domain": "typeform.com",
   "product": "Typeform",
-  "category": "Forms and surveys"
+  "category": "Forms and surveys (form builder with AI, automatio"
+ },
+ {
+  "domain": "webflow.com",
+  "product": "Webflow",
+  "category": "Website builder / CMS"
+ },
+ {
+  "domain": "wrike.com",
+  "product": "Wrike",
+  "category": "Project tracker / collaborative work management"
  },
  {
   "domain": "zendesk.com",
   "product": "Zendesk",
-  "category": "Customer service platform (CRM, helpdesk, contact "
+  "category": "Customer service platform (helpdesk, contact centr"
+ },
+ {
+  "domain": "zoom.us",
+  "product": "Zoom",
+  "category": "Video meetings and unified communications platform"
  }
 ]

@@ -1,5 +1,6 @@
 import { cacheKey } from './domain'
 import type { ByosAnalysis } from './analyze'
+import { applyNeedsBackstop } from './backstop'
 import data from './library-data.json'
 
 /**
@@ -9,7 +10,7 @@ import data from './library-data.json'
  * cache). Server-only: the client uses library-index.json for the chip list.
  */
 const LIBRARY = new Map<string, ByosAnalysis>(
-  (data as ByosAnalysis[]).map(a => [cacheKey(a.domain), a]),
+  (data as ByosAnalysis[]).map(a => [cacheKey(a.domain), applyNeedsBackstop(a)]),
 )
 
 export function getLibraryAnalysis(domain: string): ByosAnalysis | null {

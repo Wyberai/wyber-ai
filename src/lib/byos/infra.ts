@@ -19,7 +19,7 @@ export type ModelFit = 'build' | 'lite' | 'cant'
 
 export const INFRA_KINDS = [
   'email-transactional', 'email-sending', 'sms-whatsapp', 'voice-telephony', 'video-calls', 'video-hosting',
-  'transcription', 'ai-model', 'payments', 'calendar-oauth', 'sso-enterprise',
+  'transcription', 'ai-model', 'payments', 'calendar-oauth', 'email-inbox-sync', 'sso-enterprise',
   'maps-geo', 'push-notifications',
 ] as const
 export type NeedKind = (typeof INFRA_KINDS)[number]
@@ -128,6 +128,17 @@ export const INFRA: Record<NeedKind, InfraInfo> = {
     ],
     cost: 'Free to call. Your time is the cost: the review and token maintenance.',
   },
+  'email-inbox-sync': {
+    label: 'Syncing Gmail or Outlook inboxes',
+    provider: 'Gmail API and Microsoft Graph',
+    alternatives: ['Nylas', 'Unipile'],
+    weBuild: 'Connect-your-inbox screens, threading, logging emails against records, and send-from-the-app.',
+    youSetUp: [
+      'Register an app with Google and Microsoft',
+      'Google treats reading mail as a restricted permission: before the general public can connect, it requires an app review and a paid third-party security assessment',
+    ],
+    cost: 'Free to call. The review, and the yearly re-assessment Google requires, is the real cost. A sync provider like Nylas charges per connected inbox and handles the review for you.',
+  },
   'sso-enterprise': {
     label: 'Enterprise single sign-on',
     provider: 'WorkOS',
@@ -163,15 +174,20 @@ export function featureFit(f: { fit?: ModelFit; needs?: NeedKind[] }): Fit {
   return f.fit === 'lite' ? 'lite' : 'build'
 }
 
-export type Verdict = 'good' | 'partial' | 'poor'
+export type Verdict = 'good' | 'partial' | 'poor' | 'platform'
 
-export function productVerdict(features: { fit?: ModelFit; needs?: NeedKind[] }[]): { verdict: Verdict; counts: Record<Fit, number> } {
+/**
+ * `isPlatform` products (Teams, Slack, Zoom, Salesforce, Shopify...) get their own verdict regardless of
+ * the feature tally: their value is a network, infrastructure or a suite of many products, so a feature
+ * count would flatter them.
+ */
+export function productVerdict(features: { fit?: ModelFit; needs?: NeedKind[] }[], isPlatform = false): { verdict: Verdict; counts: Record<Fit, number> } {
   const counts: Record<Fit, number> = { build: 0, provider: 0, lite: 0, cant: 0 }
   for (const f of features) counts[featureFit(f)]++
   const total = features.length || 1
   const cant = counts.cant / total
   const weak = (counts.cant + counts.lite) / total
-  const verdict: Verdict = cant >= 0.4 ? 'poor' : cant >= 0.2 || weak >= 0.4 ? 'partial' : 'good'
+  const verdict: Verdict = isPlatform ? 'platform' : cant >= 0.4 ? 'poor' : cant >= 0.2 || weak >= 0.4 ? 'partial' : 'good'
   return { verdict, counts }
 }
 
