@@ -134,7 +134,14 @@ export async function POST(req: NextRequest) {
     const { allowed } = rateLimit(`deploy:${user.id}`, 10, 600_000)
     if (!allowed) return NextResponse.json({ error: 'Too many deploys in a short time. Please wait a few minutes.' }, { status: 429 })
 
-    const { projectId, userId, files, projectName, framework = 'react-vite', override = false } = await req.json();
+    // The owner is always the signed-in user, never an id from the request body: the body id picks whose saved
+    // secrets get decrypted into the deployment, so trusting it would let any user pull another user's keys.
+    const { projectId, files, projectName, framework = 'react-vite', override = false } = await req.json();
+    const userId = user.id;
+    if (projectId) {
+      const { data: owned } = await supabase.from('projects').select('id').eq('id', projectId).eq('user_id', user.id).maybeSingle();
+      if (!owned) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
 
     const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
     if (!VERCEL_TOKEN) {
@@ -257,6 +264,7 @@ export async function POST(req: NextRequest) {
     const deployEnv = (projectId && userId)
       ? await getDeployEnvVars(projectId, userId)
       : {}
+    console.log(`[deploy] project ${projectId}: passing ${Object.keys(deployEnv).length} saved settings to the deployment`)
 
     const deployRes = await fetch(deployUrl, {
       method: 'POST',
