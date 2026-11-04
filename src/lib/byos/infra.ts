@@ -107,7 +107,7 @@ export const INFRA: Record<NeedKind, InfraInfo> = {
     alternatives: [],
     weBuild: 'The prompts, screens, and the code that calls the model.',
     youSetUp: ['An API key and a spending limit you choose'],
-    cost: 'Pay per use. Billed by the model provider.',
+    cost: 'Pay per use, billed to your own account by the model provider. Our Claude credits are never used.',
   },
   payments: {
     label: 'Taking payments',
