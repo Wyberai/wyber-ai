@@ -33,7 +33,7 @@ const MIN_MODULES = 5
 const MIN_FEATURES = 15
 
 async function analyze(domain) {
-  const res = await fetch(`${BASE}/api/byos/analyze`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: domain }) })
+  const res = await fetch(`${BASE}/api/byos/analyze`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ url: domain, fresh: true }) })
   const text = await res.text()
   if ((res.headers.get('content-type') || '').includes('ndjson')) {
     for (const line of text.split('\n').filter(Boolean).map(l => JSON.parse(l))) {
@@ -54,6 +54,7 @@ for (const d of domains) {
     const { analysis, error } = await analyze(d)
     const n = analysis?.modules.reduce((s, m) => s + m.features.length, 0) ?? 0
     if (!analysis) report.push({ domain: d, result: 'FAILED', note: error })
+    else if (typeof analysis.fitSummary !== 'string' || !analysis.fitSummary) report.push({ domain: d, result: 'NO FIT DATA', note: 'missing fitSummary' })
     else if (analysis.modules.length < MIN_MODULES || n < MIN_FEATURES) report.push({ domain: d, result: 'TOO THIN', note: `${analysis.modules.length} modules, ${n} features` })
     else {
       existing.set(analysis.domain, analysis)

@@ -6,6 +6,7 @@ import { track } from '@/lib/track'
 import type { ByosAnalysis, Stage } from '@/lib/byos/analyze'
 import { LIVE_INTEGRATIONS, liveMatch } from '@/lib/byos/integrations'
 import { composeBuildPrompt, quoteBuild, type PickedFeature } from '@/lib/byos/quote'
+import { INFRA, featureFit, productVerdict, requiredInfra, type Fit } from '@/lib/byos/infra'
 import libraryIndex from '@/lib/byos/library-index.json'
 
 type Step = 'url' | 'features' | 'connect' | 'quote'
@@ -19,7 +20,18 @@ const FALLBACK_EXAMPLES = ['pipedrive.com', 'linear.app', 'calendly.com', 'typef
 const FEATURED = ['pipedrive.com', 'hubspot.com', 'asana.com', 'linear.app', 'calendly.com', 'typeform.com', 'zendesk.com', 'mailchimp.com']
 const TIER_LABEL = { small: 'Small', medium: 'Medium', large: 'Large', xl: 'Extra large' } as const
 const STARTER_SET = 6
-const STATE_KEY = 'byos-state-v1'
+const STATE_KEY = 'byos-state-v2'
+const FIT_STYLE: Record<Fit, { label: string; color: string } | null> = {
+  build: null,
+  provider: { label: 'Needs an outside service', color: '#f59e0b' },
+  lite: { label: 'Simplified version', color: '#38bdf8' },
+  cant: { label: "We can't build this", color: '#f87171' },
+}
+const VERDICT_COPY = {
+  good: { title: 'Good fit', color: '#22c55e', line: (p: string) => `We can build almost all of ${p}.` },
+  partial: { title: 'Partial fit', color: '#f59e0b', line: (p: string) => `We can replace the everyday parts of ${p}, not all of it.` },
+  poor: { title: 'Poor fit', color: '#f87171', line: (p: string) => `We can build some screens around ${p}, but not what makes it work.` },
+} as const
 
 const btn = (primary = true, disabled = false): React.CSSProperties => ({
   padding: '13px 26px', borderRadius: 10, border: primary ? 'none' : `1px solid ${s.border}`,
@@ -117,7 +129,7 @@ export function ByosClient() {
     queueMicrotask(() => {
       try {
         const saved = JSON.parse(localStorage.getItem(STATE_KEY) || 'null')
-        if (saved?.analysis?.modules && saved.step && saved.step !== 'url') {
+        if (saved?.analysis?.modules && typeof saved.analysis.fitSummary === 'string' && saved.step && saved.step !== 'url') {
           setAnalysis(saved.analysis); setPickedIds(new Set(saved.pickedIds || [])); setPickedIntegrations(new Set(saved.pickedIntegrations || []))
           setImportCsv(saved.importCsv !== false); setStep(saved.step)
         }
@@ -136,8 +148,14 @@ export function ByosClient() {
   }, [step, analysis, pickedIds, pickedIntegrations, importCsv])
 
   const allFeatures = useMemo(() => analysis?.modules.flatMap(m => m.features.map(f => ({ ...f, module: m.name }))) ?? [], [analysis])
-  const picked: PickedFeature[] = useMemo(() => allFeatures.filter(f => pickedIds.has(f.id)).map(f => ({ module: f.module, name: f.name, description: f.description })), [allFeatures, pickedIds])
+  const picked: PickedFeature[] = useMemo(
+    () => allFeatures.filter(f => pickedIds.has(f.id) && featureFit(f) !== 'cant').map(f => ({ module: f.module, name: f.name, description: f.description, fit: f.fit, needs: f.needs, note: f.note })),
+    [allFeatures, pickedIds],
+  )
   const quote = quoteBuild(picked.length, pickedIntegrations.size)
+  const verdict = useMemo(() => productVerdict(allFeatures), [allFeatures])
+  const infraNeeded = useMemo(() => requiredInfra(picked), [picked])
+  const simplifiedPicks = picked.filter(f => featureFit(f) === 'lite' || f.fit === 'lite')
 
   const toggle = <T,>(apply: React.Dispatch<React.SetStateAction<Set<T>>>, v: T) =>
     apply(prev => { const n = new Set(prev); if (n.has(v)) n.delete(v); else n.add(v); return n })
@@ -274,11 +292,22 @@ export function ByosClient() {
         {step === 'features' && analysis && (
           <>
             <h2 ref={headingRef} tabIndex={-1} style={h2}>What do you actually use in {analysis.product}?</h2>
-            <p style={{ fontSize: 16, color: s.muted, margin: '0 0 22px' }}>Pick only what your team touches. Everything else stays out.</p>
+            <p style={{ fontSize: 16, color: s.muted, margin: '0 0 18px' }}>Pick only what your team touches. Everything else stays out.</p>
+            <div role="note" style={{ padding: '14px 18px', borderRadius: 12, border: `1px solid ${VERDICT_COPY[verdict.verdict].color}`, background: s.card, marginBottom: 22 }}>
+              <div style={{ fontSize: 15, fontWeight: 800, color: VERDICT_COPY[verdict.verdict].color }}>{VERDICT_COPY[verdict.verdict].title}</div>
+              <div style={{ fontSize: 15, margin: '2px 0 6px' }}>{VERDICT_COPY[verdict.verdict].line(analysis.product)}</div>
+              {analysis.fitSummary && <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.5, marginBottom: 8 }}>{analysis.fitSummary}</div>}
+              <div style={{ fontSize: 13, color: s.dim, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <span>{verdict.counts.build} we build fully</span>
+                <span style={{ color: '#f59e0b' }}>{verdict.counts.provider} need an outside service</span>
+                <span style={{ color: '#38bdf8' }}>{verdict.counts.lite} simplified</span>
+                <span style={{ color: '#f87171' }}>{verdict.counts.cant} we can&rsquo;t build</span>
+              </div>
+            </div>
             <div style={{ position: 'sticky', top: 0, zIndex: 5, background: s.bg, padding: '12px 0', borderBottom: `1px solid ${s.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 20 }}>
               <strong style={{ fontSize: 16 }} aria-live="polite">You picked {picked.length} of {allFeatures.length}</strong>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button onClick={() => setPickedIds(new Set(allFeatures.filter(f => f.core).slice(0, STARTER_SET).map(f => f.id)))} style={{ ...btn(false), padding: '8px 14px', fontSize: 13 }}>Start with the basics</button>
+                <button onClick={() => setPickedIds(new Set(allFeatures.filter(f => f.core && featureFit(f) === 'build').slice(0, STARTER_SET).map(f => f.id)))} style={{ ...btn(false), padding: '8px 14px', fontSize: 13 }}>Start with the basics</button>
                 <button onClick={() => setPickedIds(new Set())} disabled={!picked.length} style={{ ...btn(false, !picked.length), padding: '8px 14px', fontSize: 13 }}>Clear</button>
               </div>
             </div>
@@ -287,13 +316,22 @@ export function ByosClient() {
                 <h3 style={eyebrow}>{m.name}</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(250px,1fr))', gap: 10 }}>
                   {m.features.map(f => {
-                    const on = pickedIds.has(f.id)
+                    const fit = featureFit(f)
+                    const cant = fit === 'cant'
+                    const on = !cant && pickedIds.has(f.id)
+                    const tag = FIT_STYLE[fit]
+                    const services = fit === 'provider' ? f.needs.map(n => INFRA[n]?.provider).filter(Boolean).join(' + ') : ''
                     return (
-                      <label key={f.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 10, cursor: 'pointer', border: `1px solid ${on ? s.accent : s.border}`, background: on ? 'rgba(14,165,233,0.08)' : s.card }}>
-                        <input type="checkbox" checked={on} onChange={() => toggle(setPickedIds, f.id)} style={{ marginTop: 3, accentColor: s.accent }} />
+                      <label key={f.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 10, cursor: cant ? 'not-allowed' : 'pointer', opacity: cant ? 0.6 : 1, border: `1px solid ${on ? s.accent : s.border}`, background: on ? 'rgba(14,165,233,0.08)' : s.card }}>
+                        <input type="checkbox" checked={on} disabled={cant} onChange={() => toggle(setPickedIds, f.id)} style={{ marginTop: 3, accentColor: s.accent }} />
                         <span>
                           <span style={{ display: 'block', fontSize: 15, fontWeight: 600 }}>{f.name}</span>
                           {f.description && <span style={{ display: 'block', fontSize: 13, color: s.muted, lineHeight: 1.45, marginTop: 2 }}>{f.description}</span>}
+                          {tag && (
+                            <span style={{ display: 'block', fontSize: 12, lineHeight: 1.45, marginTop: 6, color: s.muted }}>
+                              <strong style={{ color: tag.color }}>{tag.label}{services ? `: ${services}` : ''}.</strong>{f.note ? ` ${f.note}` : ''}
+                            </span>
+                          )}
                         </span>
                       </label>
                     )
@@ -355,9 +393,42 @@ export function ByosClient() {
               <div style={{ ...eyebrow, margin: 0 }}>Building it, once</div>
               <div style={{ fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>{quote.credits} credits</div>
               <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.6 }}>
-                {TIER_LABEL[quote.tier]} build, priced by size like every WyberAi build. No seats, no renewal. Changes after launch are billed separately at the normal edit price.
+                {TIER_LABEL[quote.tier]} build, priced by size like every WyberAi build. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
               </div>
             </div>
+            {(infraNeeded.length > 0 || simplifiedPicks.length > 0) && (
+              <section aria-label="What you need to bring" style={{ marginBottom: 22 }}>
+                <h3 style={{ ...eyebrow, color: '#f59e0b' }}>The honest part: what we build, and what you bring</h3>
+                <p style={{ fontSize: 15, color: s.muted, lineHeight: 1.6, margin: '0 0 14px' }}>
+                  We write all the code. A few of the features you picked only work on outside services, and those need accounts that only you can open and pay for.
+                </p>
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {infraNeeded.map(k => {
+                    const i = INFRA[k]
+                    return (
+                      <div key={k} style={{ padding: '16px 18px', borderRadius: 12, border: `1px solid ${s.border}`, background: s.card }}>
+                        <div style={{ fontSize: 16, fontWeight: 700 }}>{i.label}: you&rsquo;ll need {i.provider}</div>
+                        {i.alternatives.length > 0 && <div style={{ fontSize: 13, color: s.dim, marginTop: 2 }}>Or {i.alternatives.join(', ')}</div>}
+                        <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.55, marginTop: 10 }}><strong style={{ color: '#22c55e' }}>We build:</strong> {i.weBuild}</div>
+                        <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.55, marginTop: 8 }}>
+                          <strong style={{ color: '#f59e0b' }}>You set up:</strong>
+                          <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>{i.youSetUp.map(x => <li key={x}>{x}</li>)}</ul>
+                        </div>
+                        <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.55, marginTop: 8 }}><strong style={{ color: s.text }}>Running cost:</strong> {i.cost}</div>
+                      </div>
+                    )
+                  })}
+                  {simplifiedPicks.length > 0 && (
+                    <div style={{ padding: '16px 18px', borderRadius: 12, border: `1px solid ${s.border}`, background: s.card }}>
+                      <div style={{ fontSize: 16, fontWeight: 700 }}>Simplified versions you&rsquo;re getting</div>
+                      <ul style={{ margin: '8px 0 0', paddingLeft: 18, fontSize: 14, color: s.muted, lineHeight: 1.55 }}>
+                        {simplifiedPicks.map(f => <li key={f.module + f.name}><strong style={{ color: s.text }}>{f.name}.</strong> {f.note}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
             <div style={{ padding: '18px 24px', borderRadius: 14, border: `1px solid ${s.border}`, marginBottom: 22 }}>
               <label htmlFor="byos-spend" style={{ ...eyebrow, display: 'block' }}>What do you pay {analysis.product} each month?</label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>

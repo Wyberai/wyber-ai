@@ -29,12 +29,14 @@ const MESSAGES: Record<string, string> = {
 const failure = (r: Extract<AnalyzeResult, { ok: false }>) => ({ error: MESSAGES[r.reason], status: r.reason === 'failed' ? 502 : 422 })
 
 export async function POST(req: NextRequest) {
-  let body: { url?: unknown }
+  let body: { url?: unknown; fresh?: unknown }
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }) }
   const domain = typeof body.url === 'string' ? normalizeDomain(body.url) : null
   if (!domain) return NextResponse.json({ error: 'Enter the website of the tool you want to replace, like pipedrive.com.' }, { status: 400 })
 
-  const known = getLibraryAnalysis(domain) ?? getCached(domain)
+  // Dev-only: library seeding re-analyzes from scratch instead of being served what it already holds.
+  const fresh = process.env.NODE_ENV !== 'production' && body.fresh === true
+  const known = fresh ? null : getLibraryAnalysis(domain) ?? getCached(domain)
   if (known) return NextResponse.json({ analysis: known, cached: true })
 
   // Local seeding (scripts/byos-build-library.mjs) runs many analyses back to back.
@@ -53,7 +55,7 @@ export async function POST(req: NextRequest) {
     async start(controller) {
       const send = (o: unknown) => { try { controller.enqueue(enc.encode(JSON.stringify(o) + '\n')) } catch { /* client went away */ } }
       try {
-        const result = await analyzeDomain(domain, s => send({ type: 'stage', ...s }))
+        const result = await analyzeDomain(domain, s => send({ type: 'stage', ...s }), { fresh })
         if (result.ok) send({ type: 'result', analysis: result.analysis, cached: result.cached })
         else send({ type: 'error', ...failure(result) })
       } catch {

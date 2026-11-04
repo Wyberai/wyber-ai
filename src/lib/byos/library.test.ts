@@ -26,6 +26,16 @@ describe('byos library', () => {
     }
   })
 
+  it('every entry carries honest fit data (regenerate with scripts/byos-build-library.mjs if this fails)', () => {
+    for (const a of lib) {
+      expect(typeof a.fitSummary === 'string' && a.fitSummary.length > 0, `${a.domain} fitSummary`).toBe(true)
+      for (const f of a.modules.flatMap(m => m.features)) {
+        expect(['build', 'lite', 'cant'], `${a.domain}/${f.name} fit`).toContain(f.fit)
+        expect(Array.isArray(f.needs), `${a.domain}/${f.name} needs`).toBe(true)
+      }
+    }
+  })
+
   it('looks tools up with or without www.', () => {
     if (!lib.length) return
     const first = lib[0]
