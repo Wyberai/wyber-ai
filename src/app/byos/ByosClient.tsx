@@ -340,7 +340,7 @@ export function ByosClient() {
           <>
             <h2 ref={headingRef} tabIndex={-1} style={h2}>What should it connect to?</h2>
             <p style={{ fontSize: 16, color: s.muted, margin: '0 0 24px' }}>
-              <span style={{ color: '#22c55e' }}>Live</span> means we wire it up for real. The rest get a clearly labelled settings placeholder, so nothing pretends to work.
+              <span style={{ color: '#22c55e' }}>Live</span> means we write the real integration, and it runs on your own account and API key, never ours. The rest get a clearly labelled settings placeholder, so nothing pretends to work.
             </p>
             {analysis.integrations.length > 0 && (
               <>
