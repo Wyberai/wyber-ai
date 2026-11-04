@@ -90,8 +90,9 @@ async function apifyFetch(url: string): Promise<string | null> {
   }
 }
 
-async function gather(domain: string): Promise<{ pages: Page[]; integrationsRead: boolean }> {
+async function gather(domain: string, emit: Emit): Promise<{ pages: Page[]; integrationsRead: boolean }> {
   const base = `https://${domain}`
+  emit({ stage: 'fetching' })
   const fetched = await Promise.all(PATHS.map(async path => {
     const r = await safeFetch(base + path)
     return r ? { path: path || '/', ...r } : null
@@ -106,7 +107,9 @@ async function gather(domain: string): Promise<{ pages: Page[]; integrationsRead
     pages.push({ path: f.path, url: f.url, text: f.text, via: 'fetch', shell: f.text.length < MIN_TEXT })
   }
   // Only pages that exist but rendered empty are worth a headless crawl; cap at 2 and run together.
-  await Promise.all(pages.filter(p => p.shell).slice(0, 2).map(async p => {
+  const shells = pages.filter(p => p.shell).slice(0, 2)
+  if (shells.length) emit({ stage: 'crawling', count: shells.length })
+  await Promise.all(shells.map(async p => {
     const text = await apifyFetch(p.url)
     if (text && text.length > p.text.length) Object.assign(p, { text, via: 'apify', shell: text.length < MIN_TEXT })
   }))
@@ -194,6 +197,9 @@ export function sanitizeExtraction(raw: unknown, domain: string, integrationsRea
   }
 }
 
+export type Stage = { stage: 'fetching' } | { stage: 'crawling'; count: number } | { stage: 'extracting'; pages: number }
+type Emit = (s: Stage) => void
+
 export type AnalyzeResult =
   | { ok: true; analysis: ByosAnalysis; cached: boolean }
   | { ok: false; reason: 'unreachable' | 'unreadable' | 'failed' }
@@ -217,10 +223,11 @@ function remember(domain: string, analysis: ByosAnalysis) {
   cache.set(cacheKey(domain), { at: Date.now(), analysis })
 }
 
-async function run(domain: string): Promise<AnalyzeResult> {
+async function run(domain: string, emit: Emit): Promise<AnalyzeResult> {
   if (!(await resolvesPublicly(domain))) return { ok: false, reason: 'unreachable' }
-  const { pages, integrationsRead } = await gather(domain)
+  const { pages, integrationsRead } = await gather(domain, emit)
   if (!pages.length) return { ok: false, reason: 'unreadable' }
+  emit({ stage: 'extracting', pages: pages.length })
   const body = pages.map(p => `<page path="${p.path}">\n${p.text.slice(0, PAGE_CHARS)}\n</page>`).join('\n')
   try {
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -245,13 +252,13 @@ async function run(domain: string): Promise<AnalyzeResult> {
 }
 
 /** Concurrent pastes of the same tool share one analysis instead of paying twice. */
-export function analyzeDomain(domain: string): Promise<AnalyzeResult> {
+export function analyzeDomain(domain: string, emit: Emit = () => {}): Promise<AnalyzeResult> {
   const cached = getCached(domain)
   if (cached) return Promise.resolve({ ok: true, analysis: cached, cached: true })
   const key = cacheKey(domain)
   const existing = inflight.get(key)
   if (existing) return existing
-  const p = run(domain).finally(() => inflight.delete(key))
+  const p = run(domain, emit).finally(() => inflight.delete(key))
   inflight.set(key, p)
   return p
 }

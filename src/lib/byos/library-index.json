@@ -1,0 +1,137 @@
+[
+ {
+  "domain": "airtable.com",
+  "product": "Airtable",
+  "category": "No-code app building / relational database platfor"
+ },
+ {
+  "domain": "amplitude.com",
+  "product": "Amplitude",
+  "category": "Product analytics"
+ },
+ {
+  "domain": "asana.com",
+  "product": "Asana",
+  "category": "Work management / project management"
+ },
+ {
+  "domain": "bamboohr.com",
+  "product": "BambooHR",
+  "category": "HR software (HRIS / people platform)"
+ },
+ {
+  "domain": "calendly.com",
+  "product": "Calendly",
+  "category": "Scheduling"
+ },
+ {
+  "domain": "clickup.com",
+  "product": "ClickUp",
+  "category": "Project management / work management (all-in-one w"
+ },
+ {
+  "domain": "close.com",
+  "product": "Close",
+  "category": "CRM"
+ },
+ {
+  "domain": "hotjar.com",
+  "product": "Contentsquare (formerly Hotjar)",
+  "category": "Experience analytics (heatmaps, session replay, su"
+ },
+ {
+  "domain": "copper.com",
+  "product": "Copper",
+  "category": "CRM"
+ },
+ {
+  "domain": "docusign.com",
+  "product": "Docusign",
+  "category": "eSignature and agreement management (CLM)"
+ },
+ {
+  "domain": "freshbooks.com",
+  "product": "FreshBooks",
+  "category": "Invoicing and accounting software"
+ },
+ {
+  "domain": "freshdesk.com",
+  "product": "Freshdesk",
+  "category": "Customer support / helpdesk ticketing"
+ },
+ {
+  "domain": "getharvest.com",
+  "product": "Harvest",
+  "category": "Time tracking and invoicing"
+ },
+ {
+  "domain": "helpscout.com",
+  "product": "Help Scout",
+  "category": "Shared inbox / customer support help desk"
+ },
+ {
+  "domain": "hubspot.com",
+  "product": "HubSpot",
+  "category": "CRM (marketing, sales, customer service, content, "
+ },
+ {
+  "domain": "jotform.com",
+  "product": "Jotform",
+  "category": "Online form builder (forms, surveys, payments, wor"
+ },
+ {
+  "domain": "convertkit.com",
+  "product": "Kit (formerly ConvertKit)",
+  "category": "Email marketing"
+ },
+ {
+  "domain": "linear.app",
+  "product": "Linear",
+  "category": "Project tracker"
+ },
+ {
+  "domain": "mailchimp.com",
+  "product": "Mailchimp",
+  "category": "Email & SMS marketing platform (CRM, automation, f"
+ },
+ {
+  "domain": "mixpanel.com",
+  "product": "Mixpanel",
+  "category": "Product analytics"
+ },
+ {
+  "domain": "monday.com",
+  "product": "monday.com",
+  "category": "Work management / AI workspace (CRM, project track"
+ },
+ {
+  "domain": "pipedrive.com",
+  "product": "Pipedrive",
+  "category": "CRM"
+ },
+ {
+  "domain": "tally.so",
+  "product": "Tally",
+  "category": "Forms and surveys (form builder)"
+ },
+ {
+  "domain": "toggl.com",
+  "product": "Toggl",
+  "category": "Time tracking and capacity planning (CRM-adjacent "
+ },
+ {
+  "domain": "trello.com",
+  "product": "Trello",
+  "category": "Project tracker"
+ },
+ {
+  "domain": "typeform.com",
+  "product": "Typeform",
+  "category": "Forms and surveys with CRM, automation, and AI ana"
+ },
+ {
+  "domain": "zendesk.com",
+  "product": "Zendesk",
+  "category": "Customer service platform (CRM, ticketing, contact"
+ }
+]
