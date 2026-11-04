@@ -89,6 +89,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith('/use-cases') ||
     // Programmatic-SEO "build a ___ app" pages — public marketing surface.
     path.startsWith('/build') ||
+    // "Build your own software" — paste a tool's URL, pick features, get a quote.
+    // Top of an ad/outbound funnel, so anonymous visitors must reach it.
+    path.startsWith('/byos') ||
     // Paid-traffic / cold-email landing page — must stay public, anonymous
     // ad and outbound clicks land here before any account exists.
     path.startsWith('/ecommerce') ||
