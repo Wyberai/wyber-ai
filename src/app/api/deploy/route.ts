@@ -241,9 +241,11 @@ export async function POST(req: NextRequest) {
     });
 
     // Determine framework config
+    // vite build directly, never `npm run build`: generated package.json files run `tsc && vite build`, and tsc
+    // fails on the platform-injected helper files (wyber-ui, useConnector), which the preview never type-checks.
     const frameworkConfig = framework === 'vanilla'
       ? { framework: null }
-      : { framework: 'vite', buildCommand: 'npm run build', outputDirectory: 'dist', installCommand: 'npm install' };
+      : { framework: 'vite', buildCommand: 'npx vite build', outputDirectory: 'dist', installCommand: 'npm install' };
 
     const VERCEL_TEAM_ID = process.env.VERCEL_TEAM_ID;
     const deployUrl = VERCEL_TEAM_ID
@@ -267,9 +269,7 @@ export async function POST(req: NextRequest) {
         files: vercelFiles,
         projectSettings: frameworkConfig,
         target: 'production',
-        ssoProtectionBypass: true,
         ...(Object.keys(deployEnv).length > 0 ? { env: deployEnv } : {}),
-        ...(VERCEL_TEAM_ID ? { teamId: VERCEL_TEAM_ID } : {}),
       }),
     });
 
@@ -281,6 +281,22 @@ export async function POST(req: NextRequest) {
 
     const deploy = await deployRes.json();
     const deployedUrl = `https://${deploy.url}`;
+
+    // New Vercel projects default to Vercel Authentication, which puts a Vercel
+    // login in front of the app — a customer's app has to be public. The create
+    // call has no field for this, so switch it off on the project afterwards.
+    // Best-effort: a failure here leaves a working but login-gated deploy.
+    try {
+      const projectUrl = `https://api.vercel.com/v9/projects/${encodeURIComponent(cleanName)}${VERCEL_TEAM_ID ? `?teamId=${VERCEL_TEAM_ID}` : ''}`;
+      const unprotect = await fetch(projectUrl, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ssoProtection: null }),
+      });
+      if (!unprotect.ok) console.error('[deploy] could not disable Vercel Authentication:', (await unprotect.text()).slice(0, 300));
+    } catch (e) {
+      console.error('[deploy] could not disable Vercel Authentication:', String(e));
+    }
 
     // Save to Supabase
     try {
