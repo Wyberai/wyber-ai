@@ -73,7 +73,7 @@ describe('platform list', () => {
   })
 })
 
-import { backstopNeeds } from './backstop'
+import { backstopNeeds, reconcileFit } from './backstop'
 
 describe('needs backstop', () => {
   it('adds the unmistakable service the model missed, and never removes one', () => {
@@ -86,5 +86,12 @@ describe('needs backstop', () => {
     const pd = getLibraryAnalysis('pipedrive.com')?.modules.flatMap(m => m.features).find(f => /two-way email sync/i.test(f.name))
     // The model called it "cant"; it is buildable on a mailbox-sync service, so the library serves it as such.
     if (pd) expect(pd).toMatchObject({ fit: 'lite', needs: ['email-inbox-sync'] })
+  })
+})
+
+describe('audit logs are not impossible', () => {
+  it('turns a "cant" audit-log feature into a simplified one, and leaves real cants alone', () => {
+    expect(reconcileFit('Audit logs and compliance certifications', 'Audit APIs and SOC 2.', 'cant', [])).toEqual({ fit: 'lite', needs: [] })
+    expect(reconcileFit('SOC 2 certification', 'Independent security audit.', 'cant', [])).toEqual({ fit: 'cant', needs: [] })
   })
 })

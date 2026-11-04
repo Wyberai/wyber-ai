@@ -15,6 +15,8 @@ const RULES: [NeedKind, RegExp][] = [
   ['email-sending', /\b(bulk email|email campaigns?|newsletters?|email marketing|cold email)\b/i],
 ]
 
+const AUDIT_LOG = /\baudit (logs?|trail|logging)\b/i
+
 export function backstopNeeds(name: string, description: string, needs: NeedKind[]): NeedKind[] {
   const text = `${name} ${description}`
   const out = new Set(needs)
@@ -29,6 +31,9 @@ export function backstopNeeds(name: string, description: string, needs: NeedKind
  */
 export function reconcileFit(name: string, description: string, fit: ModelFit, needs: NeedKind[]): { fit: ModelFit; needs: NeedKind[] } {
   const matched = backstopNeeds(name, description, [])
+  // Audit logging is ordinary app code. Bundled with a certification (SOC 2 and similar) the model calls the whole
+  // feature "cant", but only the certification is out of reach, so the feature is simplified, not impossible.
+  if (fit === 'cant' && AUDIT_LOG.test(name)) return { fit: 'lite', needs: matched }
   if (fit === 'cant') return matched.length ? { fit: 'lite', needs: matched } : { fit, needs: [] }
   return { fit, needs: backstopNeeds(name, description, needs) }
 }

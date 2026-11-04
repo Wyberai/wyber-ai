@@ -130,7 +130,7 @@ Findings from our own analysis (1,073 features across 44 tools). Publish with th
 - The 8% is the interesting part: marketplaces, certifications, networks, native apps.
 
 Headline options: *"83% of what you rent is buildable. Here is the 8% that isn't."* or *"What the 44 most-replaced tools don't want you to know you can build."* (second one is slop-adjacent, prefer the first.)
-**Hold until the verified-build test (section 9) is done.** A report claiming 83% buildable is only as good as the builds.
+**Hold until a person has read every verdict (section 9).** The test builds passed (a 12-feature and two 6-feature Pipedrive builds, local and live), so the build claim is now backed. The 83% buildable figure is still only as good as the model-plus-rules classification behind it.
 
 ### 6.2 Series: "Things we can't build"
 One post per platform, weekly. Each is a page we already have.
@@ -219,16 +219,19 @@ The rule: **open with the artifact, not with "I noticed".** The artifact is the 
 | Priced like every WyberAi build | Verified | Uses the existing size tiers. Free accounts may not cover large builds, so the quote screen must stay honest about it. |
 | We tell you what needs an outside service | Verified | Fixed catalog: Amazon SES, Twilio, Stripe, etc. |
 | Code export to GitHub | Exists in code, not re-tested here | Test before claiming in ads. |
+| What a build costs | **Measured: 160 credits** | All three test builds were charged 160 (large tier, complex rate), for 6 and 12 features. Real model cost was about $0.64 to $0.76 per build; keep that internal. The quote screen now says "About 160 credits" for large picks and shows the range. Smaller picks are unmeasured. |
+| Your tools run on your own accounts and keys | **Verified** | Server code ships as `api/` functions that read the owner's own settings. A live deploy returned configured: true for SES, Twilio and the AI key. We never pass their calls through our accounts. |
+| One checklist to go live | **Verified on production, with one caveat** | Build, checklist, save, deploy, live status all worked on wyberai.com. The first production deploy came out without its settings and the retry was fine; cause not found. Treat as a possible intermittent until the new deploy log line shows otherwise. |
 | Built-in security scan | Exists in code | Same. |
 | Real sign-in and real database | **Disproved by the Nov 4 test build** | The Pipedrive test build shipped localStorage auth with demo accounts and seeded data, no Supabase, despite the prompt asking for a real database. Do not claim it. Say "working sign-in with sample data; connect your own database to go live, so your data is stored with you, never with us". Founder decisions (Nov 4): we do not host customer databases, and every connected tool runs on the customer's own account and API key. We never proxy or pay for their integrations, and that includes AI: model calls use the customer's own API key, never our Claude credits. Our job is to write the code and put it on their domain once they have entered their settings. |
 | "You pay for 100 features, you use 5" | **Rhetorical, not our data** | Our extraction finds about 24 distinct features per tool (capped by the extractor) and an average of about 8 flagged "everyday" by a model guess, not usage data. Keep it as the hook, never as a statistic. Safer: "You pay for the whole tool. You use a slice." |
 | "Most teams use about N" | **Removed** | It was a model guess. The replace pages now ask "How many does your team use?" |
-| "First version in minutes" | **Unverified for BYOS-size builds** | Measure on the test build before using any time claim. |
+| "First version in minutes" | **Verified, with a number** | Three real builds (6 and 12 features, local and live) took about 7 minutes from click to a working app: plan 25 s, main generation about 6 minutes, final wiring 30-40 s. Say "in under 10 minutes" for 6 to 12 features, not "in minutes" for anything. Bigger picks are unmeasured. |
 | "No renewal" | Careful | True of the software. Provider usage costs recur. The quote screen says so. Keep it in the ad copy only with that nuance in the landing. |
 | Anything about savings | Don't | No figure we can defend. |
 
-### Hold until the test build passes
-The report (6.1), any speed claim, and any "real database" claim in paid copy (disproved on the test build).
+### Hold until a human has read the library
+The 44-tool report (6.1): the build tests passed, but the 52 / 31 / 9 / 8% split comes from a model plus rules. Read every verdict sentence first. One wrong one (audit logs marked "cant") was already fixed in the rules. Any "real database" claim stays out of paid copy; say "sample data, then your own database".
 
 ---
 

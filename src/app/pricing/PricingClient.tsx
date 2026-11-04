@@ -122,9 +122,10 @@ const TOPUPS = [
 // to pass tier 'default' (the retired Opus 2.5x multiplier) with no build
 // size, so it advertised a 75-credit build that actually costs 30 or 80.
 const CREDIT_TABLE: { actionKey: string; icon: string; cost?: string; free?: true }[] = [
-  // One-shot builds are priced by complexity: simple = small tier, complex = large tier.
-  { actionKey: 'creditActionWebBuild',    icon: '🌐', cost: `${creditCost('web-build', 'fast', 'small')}–${creditCost('web-build', 'fast', 'large')}` },
-  { actionKey: 'creditActionMobileBuild', icon: '📱', cost: `${creditCost('mobile-build', 'fast', 'small')}–${creditCost('mobile-build', 'fast', 'large')}` },
+  // One-shot builds are priced by complexity: simple = small tier, complex = large tier. A complex new build is
+  // charged at the higher ('default') rate, so that is the top of the advertised range (measured: 160).
+  { actionKey: 'creditActionWebBuild',    icon: '🌐', cost: `${creditCost('web-build', 'fast', 'small')}–${creditCost('web-build', 'default', 'large')}` },
+  { actionKey: 'creditActionMobileBuild', icon: '📱', cost: `${creditCost('mobile-build', 'fast', 'small')}–${creditCost('mobile-build', 'default', 'large')}` },
   { actionKey: 'creditActionEdit',        icon: '✏️', cost: String(creditCost('small-edit', 'fast')) },
   // Bigger edits settle by measured size (EDIT_TIER_COSTS, medium..xl).
   { actionKey: 'creditActionComplexEdit', icon: '🧩', cost: `${estimateFeatureCost('medium', 'fast')}–${estimateFeatureCost('xl', 'fast')}` },
@@ -553,7 +554,7 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
             {[
               [t('faq1Q'), t('faq1A')
                 .replace('{simple}', String(creditCost('web-build', 'fast', 'small')))
-                .replace('{complex}', String(creditCost('web-build', 'fast', 'large')))
+                .replace('{complex}', String(creditCost('web-build', 'default', 'large')))
                 .replace('{edit}', String(creditCost('small-edit', 'fast')))],
               [t('faq2Q'), t('faq2A')],
               [t('faq3Q'), t('faq3A')],

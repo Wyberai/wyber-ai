@@ -23,11 +23,14 @@ export function estimatePlannedFiles(featureCount: number, integrationCount: num
   return 4 + featureCount * 2 + integrationCount
 }
 
-export function quoteBuild(featureCount: number, integrationCount: number): { tier: BuildSizeTier; credits: number; maxCredits: number; plannedFiles: number } {
+export function quoteBuild(featureCount: number, integrationCount: number): { tier: BuildSizeTier; credits: number; maxCredits: number; typical: number | null; plannedFiles: number } {
   const plannedFiles = estimatePlannedFiles(featureCount, integrationCount)
   const tier = resolveBuildTier({ totalPlannedFiles: plannedFiles })
   // A build the planner classes as complex is charged at the higher rate (generate route), so quote the range.
-  return { tier, credits: creditCost('saas-build', 'fast', tier), maxCredits: creditCost('saas-build', 'default', tier), plannedFiles }
+  // Large and extra-large picks were charged 160 on every measured build (6 and 12 features, local and live), because a
+  // new one-shot build is priced as the complex 'large' tier. Smaller picks are unmeasured, so they get no headline.
+  const typical = tier === 'large' || tier === 'xl' ? creditCost('saas-build', 'default', 'large') : null
+  return { tier, credits: creditCost('saas-build', 'fast', tier), maxCredits: creditCost('saas-build', 'default', tier), typical, plannedFiles }
 }
 
 /** The set DashboardClient's pending-prompt contract accepts is capped at 2000 chars. */
