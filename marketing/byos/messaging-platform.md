@@ -47,7 +47,7 @@ Sources: [Bolt on the SaaSpocalypse](https://bolt.new/blog/is-saas-dying), [UK N
 ### B. Above startups (mid-market, enterprise teams: ops, finance, IT, product)
 - **Pain:** shelfware, seat audits, renewals with a built-in increase, vendor roadmaps that aren't theirs, security reviews of every new tool.
 - **What they want to hear:** I'm not trading a vendor for a liability.
-- **Proof they need:** ownership and export of the code, a real database, a built-in security scan, and an honest account of what is not covered. Our fit check is the credibility device here. Do not claim certifications, SSO or SLAs for generated apps. The fit check itself tells them SSO needs an identity provider.
+- **Proof they need:** ownership and export of the code, a built-in security scan, and an honest account of what is not covered. Our fit check is the credibility device here. Do not claim certifications, SSO or SLAs for generated apps. The fit check itself tells them SSO needs an identity provider.
 
 ---
 
@@ -59,7 +59,7 @@ Three pillars. Each has one proof that exists in the product today.
 |---|---|---|
 | **Pick** | Pay for the slice you use, not the whole tool. | Paste a URL, get the tool's features grouped, tick what you use. 44 tools are instant. |
 | **Honest** | We tell you what we can't build, before you spend. | Every feature is tagged. Slack, Zoom and HubSpot get "not a one-to-one replacement". The quote shows the outside services you'd need (for example Amazon SES for bulk email). |
-| **Own** | It's your code and your data, with no seats. | Code export to GitHub, a real database, a built-in security scan, an estimated price before you start. |
+| **Own** | It's your code and your data, with no seats. | Code export to GitHub, working sign-in with sample data, a built-in security scan, an estimated price before you start. |
 
 ### Vocabulary (use these words)
 - "the tool you pay for" (not "legacy SaaS")
@@ -220,7 +220,7 @@ The rule: **open with the artifact, not with "I noticed".** The artifact is the 
 | We tell you what needs an outside service | Verified | Fixed catalog: Amazon SES, Twilio, Stripe, etc. |
 | Code export to GitHub | Exists in code, not re-tested here | Test before claiming in ads. |
 | Built-in security scan | Exists in code | Same. |
-| Real sign-in and real database | **Unverified end to end** | The build prompt asks for it. Run the test build first. |
+| Real sign-in and real database | **Disproved by the Nov 4 test build** | The Pipedrive test build shipped localStorage auth with demo accounts and seeded data, no Supabase, despite the prompt asking for a real database. Do not claim it. Say "working sign-in with sample data". |
 | "You pay for 100 features, you use 5" | **Rhetorical, not our data** | Our extraction finds about 24 distinct features per tool (capped by the extractor) and an average of about 8 flagged "everyday" by a model guess, not usage data. Keep it as the hook, never as a statistic. Safer: "You pay for the whole tool. You use a slice." |
 | "Most teams use about N" | **Removed** | It was a model guess. The replace pages now ask "How many does your team use?" |
 | "First version in minutes" | **Unverified for BYOS-size builds** | Measure on the test build before using any time claim. |
@@ -228,7 +228,7 @@ The rule: **open with the artifact, not with "I noticed".** The artifact is the 
 | Anything about savings | Don't | No figure we can defend. |
 
 ### Hold until the test build passes
-The report (6.1), any speed claim, and "real database and sign-in" in paid copy.
+The report (6.1), any speed claim, and any "real database" claim in paid copy (disproved on the test build).
 
 ---
 

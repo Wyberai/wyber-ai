@@ -383,7 +383,7 @@ export function ByosClient() {
               <div style={{ ...eyebrow, margin: 0 }}>Estimated cost to build, once</div>
               <div style={{ fontSize: 'clamp(34px,6vw,52px)', fontWeight: 800, letterSpacing: '-0.03em', margin: '6px 0 4px' }}>About {quote.credits}–{quote.maxCredits} credits</div>
               <div style={{ fontSize: 14, color: s.muted, lineHeight: 1.6 }}>
-                Estimated as a {TIER_LABEL[quote.tier].toLowerCase()} build from what you picked. The final size is set when your build is planned, and it is priced by size like every WyberAi build. More complex builds are charged at the upper end. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
+                Estimated as {/^[aeiou]/i.test(TIER_LABEL[quote.tier]) ? 'an' : 'a'} {TIER_LABEL[quote.tier].toLowerCase()} build from what you picked. The final size is set when your build is planned, and it is priced by size like every WyberAi build. More complex builds are charged at the upper end. No seats, no renewal. Changes after launch are billed separately at the normal edit price. Running costs go straight to the services below, never through us.
               </div>
             </div>
             {(infraNeeded.length > 0 || simplifiedPicks.length > 0) && (
@@ -437,7 +437,7 @@ export function ByosClient() {
             </div>
             <ul style={{ margin: '0 0 26px', padding: 0, listStyle: 'none', display: 'grid', gap: 8, fontSize: 15, color: s.muted }}>
               <li>You own the code, and you can export it to GitHub.</li>
-              <li>Real sign-in and a real database, not a demo.</li>
+              <li>Starts with working sign-in and sample data, so you can try it before you trust it.</li>
               <li>A security scan is built in, so you can check it before you trust it.</li>
               <li>An original design. We don&rsquo;t copy {analysis.product}&rsquo;s branding.</li>
             </ul>
