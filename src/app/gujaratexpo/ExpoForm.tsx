@@ -57,7 +57,7 @@ export function ExpoForm({ audience, onAudienceChange }: { audience: AudienceId;
       <div style={{ marginTop: 26, maxWidth: 820, padding: 34, borderRadius: 18, background: s.card, border: '1px solid rgba(14,165,233,0.5)' }}>
         <div style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 8 }}>Got it. Your slot request is in.</div>
         <p style={{ color: s.muted, fontSize: 15, lineHeight: 1.7, margin: 0 }}>
-          We&apos;ll message you on WhatsApp to confirm a time. Keep your pain point in mind. That is what we&apos;ll build.
+          We&apos;ll message you on WhatsApp to confirm a time. Find us at booth S23, and keep your pain point in mind. That is what we&apos;ll build.
         </p>
       </div>
     )

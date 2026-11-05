@@ -142,7 +142,7 @@ export function ExpoClient({ initial }: { initial?: string }) {
         <section id="book" className={`${s.section} ${s.sectionLine}`}>
           <div className={s.eyebrow}>■ AT THE BOOTH</div>
           <h2 className={s.h2}>Bring your pain point.<br /><em>We&apos;ll build it live.</em></h2>
-          <p className={s.lede}>Fifteen minutes with WyberAi at Tech Expo Gujarat (27–29 Nov, Gujarat University Convention &amp; Exhibition Centre, Ahmedabad). Tell us the one thing your current software cannot do.</p>
+          <p className={s.lede}>Fifteen minutes with WyberAi at Tech Expo Gujarat, booth S23 (27–29 Nov, Gujarat University Convention &amp; Exhibition Centre, Ahmedabad). Tell us the one thing your current software cannot do.</p>
           <ExpoForm audience={audience} onAudienceChange={setAudience} />
         </section>
 

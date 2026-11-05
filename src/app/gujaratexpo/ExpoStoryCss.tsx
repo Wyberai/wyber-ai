@@ -113,7 +113,7 @@ export function ExpoStoryCss({ audience, picker }: { audience: AudienceId; picke
 
         {/* chapter 0: clutter */}
         <div className={`${s.textBlock} ${d(s.sdCh0)}`}>
-          <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · 27–29 NOV</div>
+          <div className={s.eyebrow}><span className={s.live}>●</span> TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
           <h1 className={s.storyH1}>{copy.head}</h1>
           <p className={s.storySub}>{copy.sub}</p>
           <div className={s.pickerWrap}>{picker}</div>

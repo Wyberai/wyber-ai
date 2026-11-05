@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tech Expo Gujarat ad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#05060a;--raised:#0a0c14;--overlay:#10131f;--accent:#0ea5e9;--hot:#38bdf8;--green:#3ddc97;--red:#ef4444;
+    --text:#e6edf6;--dim:#8b94a7;--faint:#545c6e;--border:rgba(255,255,255,.16);
+    --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;font-family:var(--sans);color:var(--text)}
+  #stage{position:relative;width:100vw;height:100vh;overflow:hidden;
+    background:radial-gradient(ellipse at 50% 62%,rgba(14,165,233,.16),transparent 60%),var(--bg)}
+  .abs{position:absolute}
+  .obj{position:absolute;left:0;top:0;translate:-50% -50%;filter:drop-shadow(0 26px 36px rgba(0,0,0,.7));will-change:transform,opacity}
+  .obj img{width:100%;display:block}
+  .logo{display:flex;align-items:center;gap:calc(var(--u)*14);font-weight:800;letter-spacing:-.03em;font-size:calc(var(--u)*34)}
+  .logo img{width:calc(var(--u)*50);height:calc(var(--u)*50);border-radius:calc(var(--u)*12)}
+  .logo b{color:var(--accent)}
+  .pill{font-family:var(--mono);font-weight:700;letter-spacing:.12em;color:var(--hot);font-size:calc(var(--u)*21);white-space:nowrap;display:flex;align-items:center;gap:calc(var(--u)*10)}
+  .pill i{width:calc(var(--u)*10);height:calc(var(--u)*10);background:var(--green);border-radius:50%;display:block}
+  h1,h2{font-weight:900;letter-spacing:-.045em;line-height:.97}
+  .soft{color:var(--dim)} em{font-style:normal;color:var(--hot)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;font-weight:800;border-radius:calc(var(--u)*20);box-shadow:0 20px 50px -18px rgba(14,165,233,.8)}
+  .mono{font-family:var(--mono)}
+  /* app window */
+  .win{border:1.5px solid var(--border);border-radius:calc(var(--u)*22);background:var(--raised);overflow:hidden;box-shadow:0 60px 120px -30px rgba(14,165,233,.55)}
+  .wbar{display:flex;align-items:center;gap:calc(var(--u)*9);padding:calc(var(--u)*16) calc(var(--u)*22);border-bottom:1px solid rgba(255,255,255,.08)}
+  .wbar i{width:calc(var(--u)*13);height:calc(var(--u)*13);border-radius:50%;background:var(--overlay);border:1px solid var(--border);display:block}
+  .wbar span{margin-left:calc(var(--u)*10);font-family:var(--mono);font-size:calc(var(--u)*15);color:var(--faint);letter-spacing:.1em}
+  .wbody{padding:calc(var(--u)*22)}
+  .kpi{display:flex;align-items:baseline;gap:calc(var(--u)*14);margin-bottom:calc(var(--u)*14)}
+  .kpi b{font-size:calc(var(--u)*58);font-weight:900;letter-spacing:-.04em}
+  .kpi span{color:var(--dim);font-size:calc(var(--u)*20)}
+  .row{display:grid;grid-template-columns:1.5fr 1fr auto;gap:calc(var(--u)*14);align-items:center;padding:calc(var(--u)*16) calc(var(--u)*20);border:1px solid rgba(255,255,255,.08);border-radius:calc(var(--u)*14);background:var(--overlay);margin-top:calc(var(--u)*11);transition:none}
+  .row .n{font-weight:800;font-size:calc(var(--u)*24)}
+  .row .s{color:var(--dim);font-size:calc(var(--u)*17);margin-top:calc(var(--u)*3)}
+  .chip{font-family:var(--mono);font-weight:700;font-size:calc(var(--u)*16);letter-spacing:.06em;padding:calc(var(--u)*8) calc(var(--u)*14);border-radius:calc(var(--u)*9);border:1px solid var(--border);color:var(--dim);white-space:nowrap}
+  .chip.hot{background:var(--accent);border-color:var(--accent);color:#fff}
+  .row.warn{border-color:rgba(248,113,113,.7);background:rgba(248,113,113,.1)}
+  .row.warn .chip.hot{background:var(--red);border-color:var(--red)}
+  .rupee{color:var(--hot);font-weight:800;font-size:calc(var(--u)*22)}
+  .prompt{border:1.5px solid var(--border);border-radius:calc(var(--u)*20);background:rgba(10,12,20,.94);padding:calc(var(--u)*24) calc(var(--u)*30)}
+  .prompt b{font-family:var(--mono);font-size:calc(var(--u)*16);letter-spacing:.14em;color:var(--hot);display:block;margin-bottom:calc(var(--u)*10)}
+  .prompt p{font-family:var(--mono);font-size:calc(var(--u)*27);line-height:1.5}
+  .caret{display:inline-block;width:calc(var(--u)*14);height:calc(var(--u)*30);background:var(--hot);vertical-align:text-bottom;margin-left:4px}
+  .chat{border:1.5px solid var(--border);border-radius:calc(var(--u)*26) calc(var(--u)*26) calc(var(--u)*26) calc(var(--u)*6);background:var(--raised);padding:calc(var(--u)*20) calc(var(--u)*28);font-size:calc(var(--u)*26);line-height:1.4}
+  .chat span{display:block;font-family:var(--mono);font-size:calc(var(--u)*15);letter-spacing:.14em;color:var(--hot);margin-bottom:calc(var(--u)*6)}
+  .lock{border:1.5px solid rgba(61,220,151,.5);border-radius:calc(var(--u)*16);background:rgba(5,6,10,.96);padding:calc(var(--u)*16) calc(var(--u)*24);font-family:var(--mono);font-size:calc(var(--u)*20);display:flex;gap:calc(var(--u)*14);align-items:center}
+  .lock b{color:var(--green)}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>window.__AD={aud:'business',mode:'reel'};
+const Q = window.__AD ? new Map(Object.entries(window.__AD)) : new URLSearchParams(location.search)
+const AUD = Q.get('aud') || 'business'
+const MODE = Q.get('mode') || 'static'          // static | reel
+const W = innerWidth, H = innerHeight
+const U = W / 1080                               // design unit: everything is drawn for a 1080 wide canvas
+document.documentElement.style.setProperty('--u', U + 'px')
+const stage = document.getElementById('stage')
+const LOGO = '../../../public/brand/wyberai-icon-512.png'
+const IMG = (a, s) => `../../../public/expo/${a}/${s}.webp`
+
+const DATA = {
+  business: {
+    soft: 'Challans. Cheques.<br>GST sheets.', em: 'Sorted in a sentence.',
+    reelHead: 'Most businesses run on this.',
+    folder: 'business', objs: ['challan-pad', 'cheques', 'gstr2b-printout', 'ledger-book', 'sticky-parties', 'lr-copies'],
+    prompt: 'Build a job-work tracker. I log a challan for goods sent to a job worker, and get a warning before the one-year return limit.',
+    chat: 'Make anything close to the one-year limit red.', appName: 'JOB-WORK TRACKER',
+  },
+  software: {
+    soft: 'Timesheets. Chats.<br>Change requests.', em: 'Sorted in a sentence.',
+    reelHead: 'Most delivery teams run on this.',
+    folder: 'software', objs: ['timesheets', 'client-chat', 'sticky-tasks', 'invoice-usd', 'status-sheet', 'email-printout'],
+    prompt: 'Build a timesheet app where developers log hours per client. Create a monthly invoice in USD with the rupee value.',
+    chat: 'Show the rupee value next to every invoice.', appName: 'TIMESHEET TO INVOICE',
+  },
+}
+const D = DATA[AUD]
+
+function appHTML() {
+  if (AUD === 'business') {
+    const rows = [['Patel Dyers', '#1042 · 400 m grey cloth', '52 days out', 'PENDING', 0], ['Shah Processors', '#1038 · 250 m grey cloth', 'Returned', 'BACK', 0], ['Modi Finishers', '#1019 · 120 pcs castings', '11 months out', 'NEAR LIMIT', 1], ['Raval Works', '#1011 · 80 pcs castings', '11 months out', 'NEAR LIMIT', 1]]
+    return `<div class="win" id="win"><div class="wbar"><i></i><i></i><i></i><span>${D.appName}</span></div><div class="wbody">
+      <div class="kpi"><b>23</b><span>challans out · 4 near the one-year limit</span></div>
+      ${rows.map((r, i) => `<div class="row ${r[4] ? 'warn-cand' : ''}" data-i="${i}" data-warn="${r[4]}"><div><div class="n">${r[0]}</div><div class="s">${r[1]}</div></div><div class="s">${r[2]}</div><span class="chip ${r[4] ? 'hot' : ''}">${r[3]}</span></div>`).join('')}
+    </div></div>`
+  }
+  const rows = [['Larkspur Health', '142 h', '$4,260', '₹3.56L', 'PAID', 0], ['Cobalt Freight', '96 h', '$2,880', '₹2.40L', 'UNPAID', 1], ['Mapleton Labs', '56 h', '$1,680', '₹1.40L', 'UNPAID', 1]]
+  return `<div class="win" id="win"><div class="wbar"><i></i><i></i><i></i><span>${D.appName}</span></div><div class="wbody">
+    <div class="kpi"><b>$8,820</b><span>March invoices · 2 unpaid</span></div>
+    ${rows.map((r, i) => `<div class="row" data-i="${i}" data-warn="0" style="grid-template-columns:1.3fr .6fr .8fr auto"><div><div class="n">${r[0]}</div></div><div class="s">${r[1]}</div><div class="n">${r[2]} <span class="rupee rup" style="opacity:0">${r[3]}</span></div><span class="chip ${r[5] ? 'hot' : ''}">${r[4]}</span></div>`).join('')}
+  </div></div>`
+}
+
+const ease = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const seg = (t, a, b) => clamp((t - a) / (b - a))
+const lerp = (a, b, k) => a + (b - a) * k
+
+function mkObjs(count = D.objs.length) {
+  return D.objs.slice(0, count).map((s, i) => { const d = document.createElement('div'); d.className = 'obj'; d.style.width = (0.36 * W) + 'px'; d.innerHTML = `<img src="${IMG(D.folder, s)}">`; stage.appendChild(d); return d })
+}
+function place(el, x, y, r, s, o = 1) { el.style.transform = `translate(${x * W}px,${y * H}px) rotate(${r}deg) scale(${s})`; el.style.opacity = o }
+function headerHTML() {
+  return `<div class="abs logo" style="left:${64 * U}px;top:${(MODE === 'reel' || H > 1500 ? 250 : 58) * U}px"><img src="${LOGO}"><span>Wyber<b>Ai</b></span></div>
+  <div class="abs pill" style="right:${64 * U}px;top:${((MODE === 'reel' || H > 1500 ? 250 : 58) + 14) * U}px"><i></i>TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>`
+}
+
+/* ============================= STATIC ============================= */
+if (MODE === 'static') {
+  const story = H > 1500
+  const top = story ? 250 : 58
+  stage.innerHTML += headerHTML()
+  const hs = story ? 96 : 92
+  stage.innerHTML += `<h1 class="abs" style="left:${64 * U}px;right:${64 * U}px;top:${(top + 120) * U}px;font-size:${hs * U}px"><span class="soft">${D.soft}</span><br><em>${D.em}</em></h1>`
+  const appCy = story ? 0.575 : 0.625
+  const POSES = [[.13, appCy - .12, -11, .56], [.89, appCy - .15, 10, .5], [.1, appCy + .1, 8, .6], [.9, appCy + .12, -9, .56]]
+  const els = mkObjs(POSES.length)
+  els.forEach((e, i) => place(e, POSES[i][0], POSES[i][1], POSES[i][2], POSES[i][3]))
+  const holder = document.createElement('div')
+  holder.className = 'abs'; holder.style.cssText = `left:50%;top:${appCy * 100}%;width:${700 * U}px;transform:translate(-50%,-50%)`
+  holder.innerHTML = appHTML(); stage.appendChild(holder)
+  holder.querySelectorAll('[data-warn="1"]').forEach(r => r.classList.add('warn'))
+  holder.querySelectorAll('.rup').forEach(r => r.style.opacity = 1)
+  const ctaTop = story ? 1500 : 1172
+  stage.innerHTML += `<div class="abs" style="left:${64 * U}px;right:${64 * U}px;top:${ctaTop * U}px;text-align:center">
+    <div class="btn" style="width:100%;height:${104 * U}px;font-size:${38 * U}px">Book 15 minutes at booth S23  →</div>
+    <div class="mono" style="margin-top:${22 * U}px;font-size:${22 * U}px;letter-spacing:.1em;color:var(--dim)">FREE · WYBERAI.COM/GUJARATEXPO</div></div>`
+  window.__DURATION = 0
+}
+
+/* ============================= REEL ============================= */
+if (MODE === 'reel') {
+  window.__DURATION = 15
+  const els = mkObjs()
+  const CH = [[.8, .2, 10, .8], [.86, .62, -9, .85], [.84, .88, -8, .8], [.15, .86, 9, .8], [.5, .96, 5, .7], [.08, .62, -7, .7]]
+  const GR = [[.25, .42], [.5, .42], [.75, .42], [.25, .6], [.5, .6], [.75, .6]]
+  const APP = [.5, .56]
+  stage.insertAdjacentHTML('beforeend', headerHTML())
+  stage.insertAdjacentHTML('beforeend', `
+    <h1 id="tA" class="abs" style="left:${64 * U}px;right:${64 * U}px;top:${620 * U}px;font-size:${112 * U}px;text-align:left">${D.reelHead.replace('on this.', '<em>on this.</em>')}</h1>
+    <h1 id="tB" class="abs" style="left:0;right:0;top:${330 * U}px;font-size:${230 * U}px;text-align:center">Sorted.</h1>
+    <div id="tBs" class="abs" style="left:0;right:0;top:${590 * U}px;text-align:center;font-size:${34 * U}px;color:var(--dim)">Now say what is broken, in one sentence.</div>
+    <div id="prompt" class="abs prompt" style="left:${70 * U}px;right:${70 * U}px;top:${1230 * U}px"><b>SAY THIS</b><p><span id="typed"></span><span class="caret"></span></p></div>
+    <div id="tC" class="abs" style="left:${64 * U}px;right:${64 * U}px;top:${330 * U}px;text-align:center"><h1 style="font-size:${200 * U}px">Built.</h1><div style="margin-top:${12 * U}px;font-size:${34 * U}px;color:var(--dim)">Real code. A real database. In minutes.</div></div>
+    <div id="appH" class="abs" style="left:50%;top:${APP[1] * 100}%;width:${860 * U}px;transform:translate(-50%,-50%) scale(.7);opacity:0">${appHTML()}</div>
+    <div id="chat" class="abs chat" style="left:${120 * U}px;top:${1330 * U}px;width:${700 * U}px;opacity:0"><span>YOU</span>${D.chat}</div>
+    <div id="lock" class="abs lock" style="left:${120 * U}px;top:${1330 * U}px;opacity:0"><b>✓ LOCKED</b> RLS trust scan · 0 rows leaked</div>
+    <div id="end" class="abs" style="inset:0;background:rgba(5,6,10,.94);opacity:0">
+      <div id="e1" class="abs logo" style="left:0;right:0;top:${400 * U}px;justify-content:center;font-size:${50 * U}px"><img src="${LOGO}" style="width:${76 * U}px;height:${76 * U}px"><span>Wyber<b>Ai</b></span></div>
+      <h1 id="e2" class="abs" style="left:${64 * U}px;right:${64 * U}px;top:${560 * U}px;font-size:${92 * U}px;text-align:center">Bring your pain point.<br><em>We build it live.</em></h1>
+      <div id="e3" class="abs pill" style="left:0;right:0;top:${930 * U}px;justify-content:center;font-size:${26 * U}px"><i></i>TECH EXPO GUJARAT · BOOTH S23 · 27–29 NOV</div>
+      <div id="e4" class="abs" style="left:${64 * U}px;right:${64 * U}px;top:${1020 * U}px;text-align:center"><div class="btn" style="width:100%;height:${112 * U}px;font-size:${40 * U}px">Book 15 minutes  →</div><div class="mono" style="margin-top:${24 * U}px;font-size:${24 * U}px;letter-spacing:.1em;color:var(--dim)">WYBERAI.COM/GUJARATEXPO</div></div>
+    </div>`)
+  const $ = id => document.getElementById(id)
+  const tA = $('tA'), tB = $('tB'), tBs = $('tBs'), prompt = $('prompt'), typed = $('typed'), tC = $('tC'), appH = $('appH'), chat = $('chat'), lock = $('lock'), end = $('end')
+  const rows = [...appH.querySelectorAll('.row')], rups = [...appH.querySelectorAll('.rup')]
+  const vis = (el, o, y = 0) => { el.style.opacity = o; el.style.transform = `translateY(${y * U}px)` }
+  const tAfix = tA.style.transform
+  window.__seek = t => {
+    // objects: clutter -> grid -> absorbed into the app
+    const e1 = ease(seg(t, 3.1, 5.0)), e2 = ease(seg(t, 5.7, 6.7))
+    els.forEach((el, i) => {
+      const c = CH[i], g = GR[i]
+      let x = lerp(c[0], g[0], e1), y = lerp(c[1], g[1], e1)
+      let r = lerp(c[2], 0, e1), s = lerp(c[3], .5, e1)
+      y += Math.sin(t * 1.3 + i * 1.7) * 0.006 * (1 - e1)
+      x = lerp(x, APP[0], e2); y = lerp(y, APP[1], e2); s = lerp(s, .1, e2)
+      place(el, x, y, r, s, 1 - seg(t, 6.3, 6.8))
+    })
+    // headline A: clutter
+    vis(tA, 1 - seg(t, 2.9, 3.4), -seg(t, 2.9, 3.4) * 26)
+    tA.style.transform = `translateY(${-seg(t, 2.9, 3.4) * 26 * U}px)`
+    // B: sorted + prompt typing
+    const bo = seg(t, 3.5, 4.0) * (1 - seg(t, 6.0, 6.4))
+    vis(tB, bo, (1 - seg(t, 3.5, 4.0)) * 26); vis(tBs, bo, 0)
+    vis(prompt, seg(t, 4.2, 4.6) * (1 - seg(t, 6.1, 6.5)), 0)
+    typed.textContent = D.prompt.slice(0, Math.round(seg(t, 4.4, 5.9) * D.prompt.length))
+    // C: built + the app
+    vis(tC, seg(t, 6.6, 7.0) * (1 - seg(t, 9.4, 9.8)), 0)
+    const ap = ease(seg(t, 6.0, 6.9))
+    appH.style.opacity = ap * (1 - seg(t, 11.0, 11.5)); appH.style.transform = `translate(-50%,-50%) scale(${lerp(.7, 1, ap)})`
+    rows.forEach((r, i) => { r.style.opacity = seg(t, 6.9 + i * .18, 7.2 + i * .18) })
+    const shaped = t > 8.9
+    rows.forEach(r => r.classList.toggle('warn', shaped && r.dataset.warn === '1'))
+    rups.forEach((r, i) => { r.style.opacity = shaped ? 1 : 0 })
+    vis(chat, seg(t, 7.8, 8.2) * (1 - seg(t, 9.6, 9.9)), 0)
+    vis(lock, seg(t, 9.9, 10.3) * (1 - seg(t, 11.0, 11.4)), 0)
+    // end card
+    end.style.opacity = seg(t, 11.2, 11.8)
+    const a = (el, s0) => { const k = ease(seg(t, s0, s0 + .5)); el.style.opacity = k; el.style.transform = `translateY(${(1 - k) * 30 * U}px)` }
+    a($('e1'), 11.6); a($('e2'), 11.9); a($('e3'), 12.4); a($('e4'), 12.7)
+  }
+  window.__seek(0)
+}
+</script>
+</body>
+</html>
