@@ -1,17 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import s from './expo.module.css'
 import { AUDIENCES, USE_CASES, STEPS, WHY, CASE_IMAGE, type AudienceId } from './data'
 import { ExpoForm } from './ExpoForm'
 import { ExpoStory } from './ExpoStory'
+import { ExpoStoryCss } from './ExpoStoryCss'
 
 const AUDIENCE_PARAM: Record<string, AudienceId> = { software: 'software', it: 'software', business: 'business', student: 'student', students: 'student' }
 
 export function ExpoClient({ initial }: { initial?: string }) {
   const [audience, setAudience] = useState<AudienceId>((initial && AUDIENCE_PARAM[initial]) || 'business')
+
+  // Scroll-driven CSS animations run on the compositor in step with native scrolling, so use them wherever
+  // the browser supports them. Everything else (and visitors who ask for reduced motion) gets the JS version.
+  const [cssStory, setCssStory] = useState(true)
+  useEffect(() => {
+    const ok = typeof CSS !== 'undefined' && CSS.supports('animation-timeline', 'scroll()') && CSS.supports('width', '1cqw') && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setCssStory(ok)
+  }, [])
 
   const cases = USE_CASES[audience]
   const current = AUDIENCES.find(a => a.id === audience)!
@@ -42,7 +51,7 @@ export function ExpoClient({ initial }: { initial?: string }) {
       </div>
 
       {/* The scroll story: clutter becomes software */}
-      <ExpoStory audience={audience} picker={picker} />
+      {cssStory ? <ExpoStoryCss audience={audience} picker={picker} /> : <ExpoStory audience={audience} picker={picker} />}
 
       <div className={s.wrap}>
         {/* WHAT PEOPLE BUILD */}

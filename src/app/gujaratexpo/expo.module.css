@@ -226,3 +226,55 @@
 @media (max-width: 760px) {
   .scrim { background: linear-gradient(180deg, rgba(5, 6, 10, 0.92) 0%, rgba(5, 6, 10, 0.75) 34%, rgba(5, 6, 10, 0) 58%); }
 }
+
+/* ================= compositor-driven story (CSS scroll-driven animations) =================
+   Everything below animates only transform / scale / opacity from the document's scroll
+   position, so the browser runs it on the compositor, in step with native scrolling, with
+   no JavaScript per frame. The story starts at the top of the page, so scroll offset 0 is
+   progress 0 and the range is the story height minus one screen (--range). Keyframe
+   percentages are the same scroll fractions the JS version used. */
+.sdStory { --range: 340vh; }
+.sdStory .stage { container-type: size; }
+@media (max-width: 760px) { .sdStory { --range: 300vh; } }
+
+.sdDriven { animation-timeline: scroll(root); animation-range: 0px var(--range); animation-fill-mode: both; animation-timing-function: linear; }
+
+.sdObj { animation-name: sdObj; }
+@keyframes sdObj {
+  0%, 8% { transform: translate(calc(var(--cx) * 1cqw), calc(var(--cy) * 1cqh)) rotate(calc(var(--cr) * 1deg)) scale(var(--cs)); opacity: 1; }
+  32%, 44% { transform: translate(calc(var(--gx) * 1cqw), calc(var(--gy) * 1cqh)) rotate(0deg) scale(var(--gs)); opacity: 1; }
+  48% { opacity: 1; }
+  56%, 100% { transform: translate(calc(var(--ax) * 1cqw), calc(var(--ay) * 1cqh)) rotate(0deg) scale(0.14); opacity: 0; }
+}
+
+.sdApp { animation-name: sdApp; }
+@keyframes sdApp {
+  0%, 44% { opacity: 0; scale: 0.7; }
+  46% { opacity: 0; }
+  58% { opacity: 1; }
+  60%, 100% { opacity: 1; scale: 1; }
+}
+.sdLock { animation-name: sdLock; }
+@keyframes sdLock { 0%, 77% { opacity: 0; } 80%, 88% { opacity: 1; } 92%, 100% { opacity: 0; } }
+.sdGlow { animation-name: sdGlow; }
+@keyframes sdGlow { 0%, 30% { opacity: 0.12; } 60% { opacity: 0.5; } 100% { opacity: 0.6; } }
+.sdScrim { animation-name: sdScrim; }
+@keyframes sdScrim { 0%, 12% { opacity: 1; } 22%, 46% { opacity: 0.1; } 52%, 100% { opacity: 1; } }
+.sdCue { animation-name: sdCue; }
+@keyframes sdCue { 0% { opacity: 1; } 5%, 100% { opacity: 0; } }
+.sdPrompt { animation-name: sdPrompt; }
+@keyframes sdPrompt { 0%, 26% { opacity: 0; } 30%, 46% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+/* text chapters: fade and drift in, hold, fade and drift out; clicks only while visible */
+.sdCh0 { animation-name: sdCh0; }
+@keyframes sdCh0 { 0%, 10% { opacity: 1; transform: translateY(0); pointer-events: auto; } 20%, 100% { opacity: 0; transform: translateY(-28px); pointer-events: none; } }
+.sdCh1 { animation-name: sdCh1; }
+@keyframes sdCh1 { 0%, 18% { opacity: 0; transform: translateY(28px); pointer-events: none; } 26%, 42% { opacity: 1; transform: translateY(0); pointer-events: auto; } 50%, 100% { opacity: 0; transform: translateY(-28px); pointer-events: none; } }
+.sdCh2 { animation-name: sdCh2; }
+@keyframes sdCh2 { 0%, 50% { opacity: 0; transform: translateY(28px); pointer-events: none; } 56%, 62% { opacity: 1; transform: translateY(0); pointer-events: auto; } 66%, 100% { opacity: 0; transform: translateY(-28px); pointer-events: none; } }
+.sdCh3 { animation-name: sdCh3; }
+@keyframes sdCh3 { 0%, 64% { opacity: 0; transform: translateY(28px); pointer-events: none; } 68%, 74% { opacity: 1; transform: translateY(0); pointer-events: auto; } 78%, 100% { opacity: 0; transform: translateY(-28px); pointer-events: none; } }
+.sdCh4 { animation-name: sdCh4; }
+@keyframes sdCh4 { 0%, 76% { opacity: 0; transform: translateY(28px); pointer-events: none; } 80%, 86% { opacity: 1; transform: translateY(0); pointer-events: auto; } 90%, 100% { opacity: 0; transform: translateY(-28px); pointer-events: none; } }
+.sdCh5 { animation-name: sdCh5; }
+@keyframes sdCh5 { 0%, 88% { opacity: 0; transform: translateY(28px); pointer-events: none; } 93%, 100% { opacity: 1; transform: translateY(0); pointer-events: auto; } }

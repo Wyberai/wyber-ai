@@ -18,14 +18,14 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v))
 function useMap<T extends number | string>(p: MotionValue<number>, input: number[], output: T[]) {
   return useTransform(p, transform(input, output as never) as (v: number) => T)
 }
-const CHAPTERS = ['CLUTTER', 'SORTED', 'BUILT', 'SHAPED', 'LOCKED', 'LIVE']
-const LOCK_TABLES: Record<AudienceId, string[]> = {
+export const CHAPTERS = ['CLUTTER', 'SORTED', 'BUILT', 'SHAPED', 'LOCKED', 'LIVE']
+export const LOCK_TABLES: Record<AudienceId, string[]> = {
   business: ['challans', 'job_workers', 'users'],
   software: ['timesheets', 'invoices', 'clients'],
   student: ['companies', 'rounds', 'notes'],
 }
 
-function useIsMobile() {
+export function useIsMobile() {
   const [m, setM] = useState(false)
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 760px)')
@@ -64,7 +64,7 @@ const Obj = memo(function Obj({ src, i, p, chaos, grid, app, size, sharp }: { sr
   const scale = useMap(p, T, [chaos.s, chaos.s, grid.s, grid.s, 0.14])
   const opacity = useMap(p, [0, 0.48, 0.56], [1, 1, 0])
   return (
-    <motion.div className={`${s.obj} ${sharp ? s.objSharp : ''}`} style={{ x, y, rotate, scale, opacity, '--b': `${chaos.b}px` } as CSSProperties}>
+    <motion.div className={`${s.obj} ${sharp ? s.objSharp : ''}`} style={{ x, y, rotate, scale, opacity, '--b': `${chaos.b}px` } as unknown as CSSProperties}>
       <div className={s.float} style={{ animationDuration: `${7 + (i % 4) * 1.3}s`, animationDelay: `${-i * 0.9}s` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt="" width={720} height={720} draggable={false} decoding="async" />
