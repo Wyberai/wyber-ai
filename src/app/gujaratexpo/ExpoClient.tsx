@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import Link from 'next/link'
 import s from './expo.module.css'
-import { AUDIENCES, USE_CASES, STEPS, WHY, CASE_IMAGE, type AudienceId } from './data'
+import { AUDIENCES, USE_CASES, STEPS, WHY, TYPES, CASE_IMAGE, type AudienceId } from './data'
 import { ExpoForm } from './ExpoForm'
 import { ExpoStory } from './ExpoStory'
 import { ExpoStoryCss } from './ExpoStoryCss'
@@ -54,6 +54,21 @@ export function ExpoClient({ initial }: { initial?: string }) {
       {cssStory ? <ExpoStoryCss audience={audience} picker={picker} /> : <ExpoStory audience={audience} picker={picker} />}
 
       <div className={s.wrap}>
+        {/* WHAT YOU CAN BUILD: ties the headline to the examples */}
+        <section id="types" className={`${s.section} ${s.sectionLine}`}>
+          <div className={s.eyebrow}>■ WHAT YOU CAN BUILD</div>
+          <h2 className={s.h2}>One sentence in.<br /><em>Any digital product out.</em></h2>
+          <div className={s.types}>
+            {TYPES.map(t => (
+              <div key={t.tag} className={s.type}>
+                <div className={s.tag}>{t.tag}</div>
+                <div className={s.typeT}>{t.title}</div>
+                <p>{t.p}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* WHAT PEOPLE BUILD */}
         <section id="build" className={`${s.section} ${s.sectionLine}`}>
           <div className={s.eyebrow}>■ WHAT PEOPLE BUILD</div>
@@ -126,7 +141,7 @@ export function ExpoClient({ initial }: { initial?: string }) {
         {/* WHY WYBERAI */}
         <section className={`${s.section} ${s.sectionLine}`}>
           <div className={s.eyebrow}>■ WHY WYBERAI</div>
-          <h2 className={s.h2}>Not another<br /><em>template marketplace.</em></h2>
+          <h2 className={s.h2}>Real code.<br /><em>Yours to keep.</em></h2>
           <div className={s.why}>
             {WHY.map(w => (
               <div key={w.n} className={s.wr}>

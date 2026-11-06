@@ -62,12 +62,12 @@ export const USE_CASES: Record<AudienceId, UseCase[]> = {
       slug: 'gstr2b-match', files: '14 files', tables: '4 tables',
     },
     {
-      tag: 'WEB APP',
-      title: 'Cheque register',
-      scene: 'Post-dated cheques sit in a drawer, and you find out one has bounced only when the bank calls.',
-      gets: ['Cheques by party and date', 'A reminder on each deposit day', 'Bounced cheques tracked'],
-      say: 'Build a cheque register. I log post-dated cheques by party, get a reminder on each deposit date, and track which ones bounced and what is still owed.',
-      slug: 'cheque-register', files: '12 files', tables: '3 tables',
+      tag: 'MOBILE APP',
+      title: 'Delivery proof on a phone',
+      scene: 'The truck delivers, the driver gets a signed LR copy, and the office sees it days later as a photo on WhatsApp.',
+      gets: ['The driver photographs the LR on delivery', 'The office sees delivered or pending live', 'Payment follow-up starts the same day'],
+      say: 'Build a mobile app for my drivers. They pick a delivery, photograph the signed LR copy, and the office sees delivered or pending in one list.',
+      slug: 'delivery-proof', files: '13 files', tables: '3 tables',
     },
   ],
   student: [
@@ -97,6 +97,13 @@ export const USE_CASES: Record<AudienceId, UseCase[]> = {
     },
   ],
 }
+
+export const TYPES = [
+  { tag: 'WEBSITE', title: 'Your business, online', p: 'A shop, clinic, studio or firm, live by tonight with a WhatsApp enquiry button.' },
+  { tag: 'WEB APP', title: 'Tools for your team', p: 'Trackers, approvals, invoices and dashboards that replace sheets and chat threads.' },
+  { tag: 'MOBILE APP', title: 'An app people install', p: 'Orders, attendance or delivery proof on a phone, for your team or your customers.' },
+  { tag: 'SAAS', title: 'A product you sell', p: 'Logins, a database and a link customers can sign up on. Ready to put in front of buyers.' },
+]
 
 export const STEPS = [
   { n: 'START' },
@@ -173,7 +180,7 @@ export const CASE_IMAGE: Record<string, { audience: AudienceId; obj: string }> =
   'stockist-orders': { audience: 'software', obj: 'client-chat' },
   'job-work-tracker': { audience: 'business', obj: 'challan-pad' },
   'gstr2b-match': { audience: 'business', obj: 'gstr2b-printout' },
-  'cheque-register': { audience: 'business', obj: 'cheques' },
+  'delivery-proof': { audience: 'business', obj: 'lr-copies' },
   'wedding-rsvp': { audience: 'student', obj: 'wedding-card' },
   'tuition-manager': { audience: 'student', obj: 'tuition-diary' },
   'placement-tracker': { audience: 'student', obj: 'placement-notice' },
