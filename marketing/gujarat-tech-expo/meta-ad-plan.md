@@ -1,7 +1,8 @@
 # Meta ad plan: book meetings at Tech Expo Gujarat
 
-Event: Tech Expo Gujarat, 27–29 Nov 2026, Gujarat University Convention & Exhibition Centre, Ahmedabad (one listing source: echai.ventures. Confirm with the organiser).
+Event: Tech Expo Gujarat, 27–29 Nov 2026, from 9:30 AM, Gujarat University Convention & Exhibition Centre, Ahmedabad (booth S23) (one listing source: echai.ventures. Confirm with the organiser).
 Landing page: https://wyberai.com/gujaratexpo
+Shared spine with the homepage: promise "Build any digital product. Ship it in minutes.", tagline "Describe it. Ship it.". Ad hook may use "Looking to upgrade your business?".
 Goal: booked 15-minute booth meetings with people who can actually buy.
 
 ## Final audience
@@ -50,7 +51,7 @@ Ad copy says "most" and describes situations in general. Meta rejects ads that a
 **A1 (lead with the clutter)**
 - Primary text: Challans. Cheques. GST sheets. Most businesses run on a pile of paper and one very long Excel.
   Tell us the one thing your current software cannot do. We will build it live at booth S23, Tech Expo Gujarat, 27–29 Nov. 15 minutes, free.
-- Headline: Bring your pain point. We build it live.
+- Headline: Build any digital product. Ship it in minutes.
 - Description: Tech Expo Gujarat · Ahmedabad
 - Button: Book now
 

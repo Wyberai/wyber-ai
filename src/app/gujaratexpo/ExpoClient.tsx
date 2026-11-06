@@ -146,7 +146,7 @@ export function ExpoClient({ initial }: { initial?: string }) {
           <ExpoForm audience={audience} onAudienceChange={setAudience} />
         </section>
 
-        <footer className={s.footer}><span>wyberai.com</span><span>describe it → ship it</span></footer>
+        <footer className={s.footer}><span>wyberai.com</span><span>Describe it. Ship it.</span></footer>
       </div>
     </div>
   )

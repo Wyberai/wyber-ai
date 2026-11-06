@@ -166,7 +166,7 @@
 
 .textBlock { will-change: opacity, transform; position: absolute; left: 6vw; top: 0; bottom: 0; width: min(520px, 42vw); display: flex; flex-direction: column; justify-content: center; z-index: 5; }
 .textTop { will-change: opacity, transform; position: absolute; left: 0; right: 0; top: 11vh; text-align: center; z-index: 5; }
-.storyH1 { font-size: clamp(34px, 5.4vw, 78px); font-weight: 900; letter-spacing: -0.045em; line-height: 0.98; margin: 0; }
+.storyH1 { font-size: clamp(30px, 4.3vw, 64px); font-weight: 900; letter-spacing: -0.045em; line-height: 0.98; margin: 0; }
 .storyH2 { font-size: clamp(56px, 9vw, 132px); font-weight: 900; letter-spacing: -0.055em; line-height: 0.92; margin: 0; }
 .liveH { color: var(--hot); }
 .storySub { margin: 16px 0 0; font-size: clamp(15px, 1.7vw, 20px); line-height: 1.55; color: var(--dim); max-width: 460px; }

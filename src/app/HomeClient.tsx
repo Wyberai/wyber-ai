@@ -496,6 +496,13 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       )}
 
 
+      {/* Tech Expo Gujarat banner: India visitors only, remove after 29 Nov 2026 */}
+      {inr && (
+        <Link href="/gujaratexpo" style={{ display: 'block', textAlign: 'center', padding: '9px 16px', fontSize: 13, fontWeight: 600, color: 'var(--brand-text)', background: 'rgba(14,165,233,0.12)', borderBottom: '1px solid rgba(14,165,233,0.35)', textDecoration: 'none' }}>
+          Meet WyberAi at Tech Expo Gujarat, booth S23, 27–29 Nov, Ahmedabad <span style={{ color: '#0ea5e9' }}>→</span>
+        </Link>
+      )}
+
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
         <div className="mk-stars" aria-hidden />

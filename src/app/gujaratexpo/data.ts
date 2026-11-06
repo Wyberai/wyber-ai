@@ -118,18 +118,18 @@ export const WHY = [
 
 export const STORY_COPY: Record<AudienceId, { head: string; sub: string; chat: string }> = {
   software: {
-    head: 'Your delivery runs on all of this.',
-    sub: 'Timesheets. Chat threads. Sticky notes. A status sheet nobody trusts.',
+    head: 'Build any digital product. Ship it in minutes.',
+    sub: 'Timesheets. Chat threads. A status sheet nobody trusts. Say what is broken. Get software.',
     chat: 'Show the rupee value next to every invoice.',
   },
   business: {
-    head: 'Your business runs on all of this.',
-    sub: 'Challans. Cheques. GST printouts. A ledger only one person can read.',
+    head: 'Build any digital product. Ship it in minutes.',
+    sub: 'Challans. Cheques. GST printouts. A ledger only one can read. Say what is broken. Get software.',
     chat: 'Make anything close to the one-year limit red.',
   },
   student: {
-    head: 'Your whole semester runs on all of this.',
-    sub: 'A timetable. Sticky notes. Placement notices. Reminders in six different apps.',
+    head: 'Build any digital product. Ship it in minutes.',
+    sub: 'A timetable. Sticky notes. Placement notices. Six reminder apps. Say what you need. Get software.',
     chat: 'Add a prep notes section for every company.',
   },
 }
