@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 
 // One thin bar that ties the founder's company tools together: pipeline, quotes, agents, and the main admin.
 export const COMPANY_LINKS = [
+  { href: '/admin/ask', label: 'Ask' },
   { href: '/admin/crm', label: 'CRM' },
   { href: '/admin/quotes', label: 'Quotes' },
   { href: '/admin/agents', label: 'Agents' },
