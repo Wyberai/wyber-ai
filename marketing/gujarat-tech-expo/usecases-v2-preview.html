@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Use cases v2 preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05060a;--raised:#0a0c14;--overlay:#10131f;--accent:#0ea5e9;--hot:#38bdf8;--green:#3ddc97;
+    --text:#e6edf6;--dim:#8b94a7;--faint:#545c6e;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+    --l1:#0ea5e9;--l2:#a855f7;--l3:#e6edf6;
+    --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+  .wrap{max-width:1180px;margin:0 auto;padding:clamp(32px,6vw,80px) clamp(16px,4vw,32px)}
+  .eyebrow{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--hot);margin-bottom:16px}
+  h2{font-size:clamp(34px,6vw,76px);font-weight:900;letter-spacing:-.045em;line-height:.98}
+  h2 em{font-style:normal;color:var(--hot)}
+  .lede{color:var(--dim);font-size:clamp(15px,2vw,19px);line-height:1.6;margin-top:16px;max-width:680px}
+  .note{font-family:var(--mono);font-size:11px;color:var(--faint);border:1px dashed var(--border2);padding:9px 14px;border-radius:8px;margin-bottom:36px;line-height:1.6}
+  .note b{color:var(--hot)}
+
+  .group{margin-top:clamp(40px,6vw,72px);--c:var(--l1)}
+  .group:nth-of-type(2){--c:var(--l2)}.group:nth-of-type(3){--c:var(--l3)}
+  .gh{display:flex;align-items:baseline;gap:14px;border-bottom:2px solid var(--c);padding-bottom:12px}
+  .gh .k{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--c)}
+  .gh .t{font-size:clamp(20px,2.6vw,28px);font-weight:900;letter-spacing:-.035em}
+
+  .case{display:grid;grid-template-columns:230px 1fr 1fr;gap:clamp(16px,3vw,40px);padding:clamp(22px,3vw,34px) 0;border-bottom:1px solid var(--border);align-items:start}
+  .tag{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;color:var(--faint)}
+  .ttl{font-size:clamp(22px,2.6vw,30px);font-weight:900;letter-spacing:-.04em;line-height:1.05;margin-top:8px}
+  .scene{font-size:clamp(17px,1.9vw,22px);font-weight:600;letter-spacing:-.02em;line-height:1.35;color:var(--text)}
+  .scene::before{content:'“';color:var(--c)}.scene::after{content:'”';color:var(--c)}
+  .gets{margin-top:14px;font-size:13.5px;line-height:1.7;color:var(--dim)}
+  .gets b{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--faint);display:block;margin-bottom:4px}
+  .gets span{display:inline-block;margin-right:12px}
+  .gets span::before{content:'+ ';color:var(--green);font-family:var(--mono)}
+  .say{border:1px solid var(--border2);border-radius:12px;background:var(--raised);padding:14px 16px}
+  .say b{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;color:var(--hot);display:block;margin-bottom:8px}
+  .say p{font-family:var(--mono);font-size:13px;line-height:1.65;color:var(--text)}
+  .say p::after{content:'';display:inline-block;width:7px;height:14px;background:var(--hot);vertical-align:middle;margin-left:3px;animation:bl 1s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+  .real{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.04em}
+  .real i{font-style:normal;color:var(--green)}
+
+  .fine{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:34px;line-height:1.7}
+  @media(max-width:900px){.case{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="note"><b>PREVIEW</b> · Replaces the “What people build” section. Scenes are examples, not customer quotes. The prompt is what a visitor would say to build it.</div>
+  <div class="eyebrow">■ WHAT PEOPLE BUILD</div>
+  <h2>Software for how <em>India</em> actually works.</h2>
+  <p class="lede">Nine builds, three for each kind of visitor. Each starts with paperwork, a rule or a habit you will recognise, and a sentence you could say out loud.</p>
+
+
+  <div class="group">
+    <div class="gh"><span class="k">LINE 1</span><span class="t">If you run a software company</span></div>
+    <div class="case">
+      <div><div class="tag">WEB APP</div><div class="ttl">Timesheet to invoice</div></div>
+      <div><div class="scene">Month-end. Hours are scattered across five sheets, and the US client wants the invoice by the 1st.</div>
+        <div class="gets"><b>YOU GET</b><span>Hours per developer per client</span><span>Invoice in USD with the rupee value</span><span>Which invoices are still unpaid</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a timesheet app where developers log hours per client project, and it creates a monthly invoice in USD with the rupee value and a paid or unpaid status.</p></div></div>
+    </div>
+    <div class="case">
+      <div><div class="tag">WEB APP</div><div class="ttl">Change-request log</div></div>
+      <div><div class="scene">The client asks for a "small change" on WhatsApp. Then another. None of it was ever priced.</div>
+        <div class="gets"><b>YOU GET</b><span>Every request logged</span><span>Hours and price estimated</span><span>Client approval before you start</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a change-request tracker where I log each client request with estimated hours and price, the client approves it, and I mark it billed.</p></div></div>
+    </div>
+    <div class="case">
+      <div><div class="tag">PROTOTYPE</div><div class="ttl">Pitch prototype, on the call</div></div>
+      <div><div class="scene">A pharma stockist explains how he takes orders over WhatsApp. You send a link to a working version before the call ends.</div>
+        <div class="gets"><b>YOU GET</b><span>A clickable prototype</span><span>Real code you can keep</span><span>A reason for him to pick you</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a prototype for a pharma stockist to take retailer orders and track medicine expiry dates, with a login and an order status screen.</p></div></div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="gh"><span class="k">LINE 2</span><span class="t">If you run a business</span></div>
+    <div class="case">
+      <div><div class="tag">WEB APP</div><div class="ttl">Job-work challan tracker</div></div>
+      <div><div class="scene">You send goods to job workers every day, and nobody can say what has come back and what is still out.</div>
+        <div class="gets"><b>YOU GET</b><span>A record for every challan</span><span>Pending at each job worker</span><span>A warning before the one-year return limit</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a job-work tracker where I log challans for goods sent to job workers, record what comes back, and get a warning before the one-year return limit.</p></div></div>
+    </div>
+    <div class="case">
+      <div><div class="tag">WEB APP</div><div class="ttl">GSTR-2B reconciliation</div></div>
+      <div><div class="scene">The 11th of the month. Your accountant matches the purchase register to GSTR-2B line by line, and three supplier invoices are missing.</div>
+        <div class="gets"><b>YOU GET</b><span>Upload both files</span><span>Matches by supplier GSTIN and invoice number</span><span>A list of suppliers to chase</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a tool where I upload my purchase register and my GSTR-2B file, match them by supplier GSTIN and invoice number, and show mismatches and a list of suppliers to chase.</p></div></div>
+    </div>
+    <div class="case">
+      <div><div class="tag">WEB APP</div><div class="ttl">Cheque and collections register</div></div>
+      <div><div class="scene">Post-dated cheques sit in a drawer, and you only find out one bounced when the bank calls.</div>
+        <div class="gets"><b>YOU GET</b><span>Cheques by party and date</span><span>Deposit-day reminders</span><span>Bounced cheques tracked</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a cheque register where I log post-dated cheques by party, get a reminder on each deposit date, and track which ones bounced and what is still owed.</p></div></div>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="gh"><span class="k">LINE 3</span><span class="t">If you are a student</span></div>
+    <div class="case">
+      <div><div class="tag">SAAS</div><div class="ttl">Event pass booking</div></div>
+      <div><div class="scene">Navratri organisers sell passes as WhatsApp screenshots, and the gate turns into chaos every night.</div>
+        <div class="gets"><b>YOU GET</b><span>Pass types and booking</span><span>QR passes</span><span>A gate-scanning page</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a pass booking website for a garba event with pass types, a UPI payment link, QR passes and a page to scan them at the gate.</p></div></div>
+    </div>
+    <div class="case">
+      <div><div class="tag">WEB APP</div><div class="ttl">Tuition class manager</div></div>
+      <div><div class="scene">A tuition teacher keeps fees in a diary and batch lists in WhatsApp groups. You could fix it in a weekend.</div>
+        <div class="gets"><b>YOU GET</b><span>Batches and attendance</span><span>Monthly fee dues</span><span>Parent contact list</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a tuition class manager with batches, attendance, monthly fee dues and a parent contact list.</p></div></div>
+    </div>
+    <div class="case">
+      <div><div class="tag">MOBILE</div><div class="ttl">Placement season tracker</div></div>
+      <div><div class="scene">Twelve companies, different dates, different rounds, and your only tracker is the notes app.</div>
+        <div class="gets"><b>YOU GET</b><span>Companies and rounds</span><span>Dates and results</span><span>Prep notes per company</span></div></div>
+      <div><div class="say"><b>SAY THIS</b><p>Build a mobile app to track campus placements: companies, rounds, dates, results and prep notes.</p></div></div>
+    </div>
+  </div>
+
+  <p class="fine">Scenes are illustrative. Build each one in WyberAi before the expo so every example is a real, openable demo at the booth. Check any compliance details (GST, job-work limits, cheques) with a CA before presenting them as advice.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gujarat Tech Expo poster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* Tokens mirror src/styles/brand.css (frozen). */
+  :root {
+    --bg: #05060a;
+    --bg-overlay: #10131f;
+    --accent: #0ea5e9;
+    --accent-hot: #38bdf8;
+    --text: #e6edf6;
+    --text-dim: #8b94a7;
+    --text-faint: #545c6e;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    --sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); width: 100%; height: 100%; overflow: hidden; }
+
+  .poster {
+    --u: 1vw;
+    position: relative;
+    width: 100vw; height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: calc(var(--u) * var(--pad));
+    padding-top: calc(var(--u) * var(--padT, var(--pad)));
+    padding-bottom: calc(var(--u) * var(--padB, var(--pad)));
+    overflow: hidden;
+  }
+  .poster::after { content: ""; position: absolute; inset: 0; background-image: var(--noise); pointer-events: none; }
+
+  /* ---------- header ---------- */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 2); }
+  .brand { display: flex; align-items: center; gap: 0.3em; font-weight: 800; font-size: calc(var(--u) * var(--brand) * 1.7); letter-spacing: -0.03em; }
+  .brand img { width: 1.35em; height: 1.35em; }
+  .brand b { color: var(--accent); font-weight: 800; }
+  .pill { display: inline-flex; align-items: center; gap: calc(var(--u) * var(--pill) * 0.6); font-family: var(--mono); font-weight: 700; font-size: calc(var(--u) * var(--pill)); letter-spacing: 0.14em; color: var(--accent-hot); white-space: nowrap; }
+  .pill i { width: calc(var(--u) * var(--pill) * 0.5); height: calc(var(--u) * var(--pill) * 0.5); background: var(--accent); display: block; }
+
+  /* ---------- copy ---------- */
+  h1 { font-weight: 900; font-size: calc(var(--u) * var(--h1)); line-height: 0.98; letter-spacing: -0.045em; color: var(--text); }
+  h1 em { font-style: normal; color: var(--accent-hot); }
+  .sub { margin-top: calc(var(--u) * var(--h1) * 0.32); font-weight: 500; font-size: calc(var(--u) * var(--sub)); letter-spacing: -0.02em; color: var(--text-dim); }
+
+  /* ---------- viz ---------- */
+  .viz { width: 100%; }
+  .legend { display: flex; justify-content: space-between; font-family: var(--mono); font-weight: 500; font-size: calc(var(--u) * var(--leg)); letter-spacing: 0.12em; color: var(--text-faint); margin-bottom: calc(var(--u) * var(--leg) * 0.9); text-transform: uppercase; }
+  .legend .on { color: var(--accent-hot); }
+  .grid { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: calc(var(--u) * var(--gap)); }
+  .cell { aspect-ratio: 1; background: var(--bg-overlay); border: 1px solid var(--border); border-radius: calc(var(--u) * 0.35); }
+  .cell.on { background: var(--accent); border-color: var(--accent-hot); box-shadow: 0 0 calc(var(--u) * 1.6) rgba(14,165,233,0.45); }
+  .missing { display: flex; align-items: center; gap: calc(var(--u) * var(--mc) * 0.38); margin-top: calc(var(--u) * var(--mc) * 0.5); }
+  .mcell { flex: none; width: calc(var(--u) * var(--mc)); height: calc(var(--u) * var(--mc)); border: calc(var(--u) * 0.28) dashed var(--accent-hot); border-radius: calc(var(--u) * 0.9); display: grid; place-items: center; color: var(--accent-hot); font-weight: 800; font-size: calc(var(--u) * var(--mc) * 0.62); line-height: 1; }
+  .mtxt strong { display: block; font-weight: 800; font-size: calc(var(--u) * var(--mt1)); letter-spacing: -0.03em; color: var(--text); }
+  .mtxt span { display: block; margin-top: calc(var(--u) * var(--mt1) * 0.3); font-family: var(--mono); font-weight: 500; font-size: calc(var(--u) * var(--mt2)); letter-spacing: 0.02em; color: var(--text-dim); line-height: 1.35; }
+
+  /* ---------- cta ---------- */
+  .cta { border-top: 1px solid var(--border-strong); padding-top: calc(var(--u) * var(--ask) * 0.55); }
+  .ask { font-weight: 900; font-size: calc(var(--u) * var(--ask)); line-height: 1.02; letter-spacing: -0.04em; color: var(--text); }
+  .ask em { font-style: normal; color: var(--accent-hot); }
+  .foot { margin-top: calc(var(--u) * var(--ask) * 0.5); display: flex; justify-content: space-between; align-items: baseline; font-family: var(--mono); font-weight: 700; font-size: calc(var(--u) * var(--foot)); letter-spacing: 0.08em; }
+  .foot .url { color: var(--text); }
+  .foot .tag { color: var(--text-faint); font-weight: 500; }
+
+  /* ================= layouts ================= */
+  [data-layout="portrait"] { --pad: 6.5; --h1: 10.6; --sub: 4.4; --ask: 7.4; --brand: 3.8; --pill: 1.7; --foot: 2.1; --leg: 1.5; --cols: 20; --gap: 0.5; --mc: 8; --mt1: 3.2; --mt2: 1.9; }
+  [data-layout="tall"]     { --pad: 7;   --h1: 11.4; --sub: 4.8; --ask: 6.6; --brand: 4.2; --pill: 1.9; --foot: 2.3; --leg: 1.7; --cols: 10; --gap: 0.9; --mc: 10; --mt1: 3.8; --mt2: 2.2; }
+  [data-layout="story"]    { --pad: 7; --padT: 14; --padB: 17; --h1: 11.2; --sub: 4.8; --ask: 6.7; --brand: 4; --pill: 1.8; --foot: 2.2; --leg: 1.6; --cols: 20; --gap: 0.5; --mc: 9; --mt1: 3.4; --mt2: 2; }
+  [data-layout="feed"]     { --pad: 6;   --h1: 9.4;  --sub: 4;   --ask: 6.6; --brand: 3.5; --pill: 1.55; --foot: 1.9; --leg: 1.35; --cols: 20; --gap: 0.45; --mc: 7; --mt1: 2.9; --mt2: 1.7; }
+  [data-layout="square"]   { --pad: 5.5; --h1: 7;  --sub: 3.3; --ask: 5; --brand: 3.1; --pill: 1.4; --foot: 1.65; --leg: 1.2; --cols: 20; --gap: 0.4; --mc: 6; --mt1: 2.5; --mt2: 1.45; }
+
+  [data-layout="landscape"], [data-layout="wide"] { --u: 1vh; display: grid; align-items: start; justify-content: initial; }
+  [data-layout="landscape"] {
+    --pad: 7; --h1: 10; --sub: 4.2; --ask: 6.4; --brand: 3.6; --pill: 1.7; --foot: 2; --leg: 1.45; --cols: 10; --gap: 0.8; --mc: 8; --mt1: 2.8; --mt2: 1.7;
+    grid-template-columns: calc(var(--u) * 86) 1fr; column-gap: calc(var(--u) * 7);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "top viz" "copy viz" "cta viz";
+  }
+  [data-layout="landscape"] .viz { width: calc(var(--u) * 66); align-self: center; justify-self: center; }
+  [data-layout="landscape"] .pill { display: none; }
+  [data-layout="landscape"] .top { justify-content: flex-start; }
+  [data-layout="wide"] {
+    --pad: 8; --h1: 10; --sub: 4.2; --ask: 7; --brand: 3.6; --pill: 1.6; --foot: 2; --leg: 1.4; --cols: 10; --gap: 0.7; --mc: 8; --mt1: 2.6; --mt2: 1.6;
+    grid-template-columns: calc(var(--u) * 88) 1fr calc(var(--u) * 100); column-gap: calc(var(--u) * 8);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "top viz cta" "copy viz cta";
+  }
+  [data-layout="wide"] .viz { width: calc(var(--u) * 68); align-self: center; justify-self: center; }
+  [data-layout="wide"] .cta { align-self: center; border-top: 0; border-left: 1px solid var(--border-strong); padding-top: 0; padding-left: calc(var(--u) * 6); }
+  [data-layout="wide"] .pill { display: none; }
+  [data-layout="wide"] .top { justify-content: flex-start; }
+  .top { grid-area: top; } .copy { grid-area: copy; } .viz { grid-area: viz; } .cta { grid-area: cta; }
+  [data-layout="landscape"] .copy, [data-layout="wide"] .copy { align-self: center; }
+  [data-layout="landscape"] .cta { align-self: end; }
+</style>
+</head>
+<body>
+<div class="poster" id="poster" data-layout="portrait">
+  <header class="top">
+    <div class="brand">
+      <img src="wyberai-icon-1024.png" alt="">
+      <span>Wyber<b>Ai</b></span>
+    </div>
+  </header>
+
+  <section class="copy">
+    <h1>Your CRM has<br>100 features.<br>You use <em>5.</em></h1>
+    <p class="sub">And the one you need isn’t there.</p>
+  </section>
+
+  <section class="viz">
+    <div class="legend"><span>100 features you pay for</span><span class="on">■ 5 you use</span></div>
+    <div class="grid" id="grid"></div>
+    <div class="missing">
+      <div class="mcell">+</div>
+      <div class="mtxt"><strong>The one you actually need.</strong><span>e.g. a nudge when a customer goes quiet for 30 days</span></div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <p class="ask">Tell us your pain points.<br><em>Build your own software.</em></p>
+    <div class="foot"><span class="url">wyberai.com</span><span class="tag">describe it → ship it</span></div>
+  </section>
+</div>
+<script>
+  const layout = new URLSearchParams(location.search).get('layout') || 'portrait';
+  document.getElementById('poster').dataset.layout = layout;
+  const lit = new Set([7, 23, 41, 58, 86]);
+  const grid = document.getElementById('grid');
+  for (let i = 0; i < 100; i++) {
+    const c = document.createElement('div');
+    c.className = 'cell' + (lit.has(i) ? ' on' : '');
+    grid.appendChild(c);
+  }
+</script>
+</body>
+</html>

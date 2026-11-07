@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Use cases preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05060a; --raised: #0a0c14; --overlay: #10131f;
+    --accent: #0ea5e9; --hot: #38bdf8;
+    --text: #e6edf6; --dim: #8b94a7; --faint: #545c6e;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+    --sans: 'Inter', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: clamp(32px,6vw,72px) clamp(16px,4vw,32px); }
+
+  .note { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--faint); border: 1px dashed var(--border2); padding: 10px 14px; border-radius: 8px; margin-bottom: 40px; }
+  .note b { color: var(--hot); font-weight: 700; }
+
+  .eyebrow { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .14em; color: var(--hot); margin-bottom: 14px; }
+  h2 { font-size: clamp(30px,5vw,52px); font-weight: 900; letter-spacing: -.04em; line-height: 1.02; }
+  h2 em { font-style: normal; color: var(--hot); }
+  .lede { color: var(--dim); font-size: clamp(15px,2vw,18px); line-height: 1.6; margin-top: 14px; max-width: 620px; }
+
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; margin-top: 36px; }
+  .case { display: flex; flex-direction: column; background: var(--raised); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .case-top { padding: 22px 22px 18px; }
+  .tag { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--hot); }
+  .pain { font-size: 21px; font-weight: 800; letter-spacing: -.03em; line-height: 1.2; margin-top: 8px; }
+
+  /* mini app window */
+  .win { margin: 0 14px; border: 1px solid var(--border2); border-radius: 12px; background: var(--bg); overflow: hidden; }
+  .bar { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  .bar i { width: 8px; height: 8px; border-radius: 50%; background: var(--overlay); border: 1px solid var(--border2); display: block; }
+  .bar span { margin-left: 8px; font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: .08em; }
+  .body { padding: 12px; font-size: 12px; }
+
+  .kpi { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .kpi b { font-size: 26px; font-weight: 900; letter-spacing: -.04em; color: var(--text); }
+  .kpi span { color: var(--dim); font-size: 12px; }
+
+  .row { display: grid; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--overlay); margin-top: 6px; }
+  .r3 { grid-template-columns: 1.4fr 1fr auto; }
+  .name { font-weight: 700; color: var(--text); }
+  .sub { color: var(--dim); font-size: 11px; margin-top: 1px; }
+  .chip { font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+  .chip.on { background: var(--accent); color: #fff; }
+  .chip.off { border: 1px solid var(--border2); color: var(--dim); }
+  .amt { font-weight: 800; color: var(--text); text-align: right; }
+  .late { color: var(--hot); font-family: var(--mono); font-size: 11px; font-weight: 700; }
+
+  /* kanban */
+  .kan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .col h4 { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; color: var(--faint); font-weight: 700; margin-bottom: 6px; }
+  .card { border: 1px solid var(--border); background: var(--overlay); border-radius: 8px; padding: 8px; margin-bottom: 6px; }
+  .card .name { font-size: 12px; }
+  .card .amt { text-align: left; font-size: 12px; margin-top: 3px; color: var(--hot); }
+
+  .case-bot { padding: 18px 22px 22px; margin-top: auto; }
+  .build { font-size: 14px; color: var(--dim); line-height: 1.6; }
+  .build b { color: var(--text); font-weight: 700; }
+  .ex { margin-top: 28px; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="note"><b>PREVIEW ONLY</b> · This section would sit between “Tell us your pain points” and the booking form. Names, numbers and screens are made-up examples.</div>
+
+  <div class="eyebrow">■ WHAT WE MEAN</div>
+  <h2>Three pain points.<br><em>Three pieces of software.</em></h2>
+  <p class="lede">Each one is a small app built around a single problem. Not another tool with 100 features.</p>
+
+  <div class="cases">
+
+    <!-- 1 -->
+    <article class="case">
+      <div class="case-top">
+        <div class="tag">PAIN POINT 01</div>
+        <div class="pain">“Customers go quiet and nobody follows up.”</div>
+      </div>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>QUIET CUSTOMERS</span></div>
+        <div class="body">
+          <div class="kpi"><b>7</b><span>haven't ordered in 30+ days</span></div>
+          <div class="row r3"><div><div class="name">Patel Interiors</div><div class="sub">Last order 42 days ago</div></div><div class="sub">₹38,500 avg</div><span class="chip on">NUDGE TODAY</span></div>
+          <div class="row r3"><div><div class="name">Mehta &amp; Sons</div><div class="sub">Last order 35 days ago</div></div><div class="sub">₹21,000 avg</div><span class="chip on">NUDGE TODAY</span></div>
+          <div class="row r3"><div><div class="name">Desai Clinic</div><div class="sub">Last order 31 days ago</div></div><div class="sub">₹9,800 avg</div><span class="chip off">NUDGED</span></div>
+        </div>
+      </div>
+      <div class="case-bot"><p class="build"><b>What we'd build:</b> a list that shows who has gone quiet and reminds you to reach out, before they go to someone else.</p></div>
+    </article>
+
+    <!-- 2 -->
+    <article class="case">
+      <div class="case-top">
+        <div class="tag">PAIN POINT 02</div>
+        <div class="pain">“Quotes and orders live in WhatsApp and Excel.”</div>
+      </div>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>QUOTES &amp; ORDERS</span></div>
+        <div class="body">
+          <div class="kan">
+            <div class="col"><h4>QUOTED</h4>
+              <div class="card"><div class="name">Shah Traders</div><div class="amt">₹48,000</div></div>
+              <div class="card"><div class="name">Joshi Agency</div><div class="amt">₹15,500</div></div>
+            </div>
+            <div class="col"><h4>CONFIRMED</h4>
+              <div class="card"><div class="name">Modi Textiles</div><div class="amt">₹72,000</div></div>
+            </div>
+            <div class="col"><h4>DELIVERED</h4>
+              <div class="card"><div class="name">Trivedi Labs</div><div class="amt">₹29,000</div></div>
+              <div class="card"><div class="name">Parikh Co.</div><div class="amt">₹11,200</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="case-bot"><p class="build"><b>What we'd build:</b> one board where every quote becomes an order and nothing gets lost in a chat thread.</p></div>
+    </article>
+
+    <!-- 3 -->
+    <article class="case">
+      <div class="case-top">
+        <div class="tag">PAIN POINT 03</div>
+        <div class="pain">“I never know who still owes me money.”</div>
+      </div>
+      <div class="win">
+        <div class="bar"><i></i><i></i><i></i><span>PAYMENTS DUE</span></div>
+        <div class="body">
+          <div class="kpi"><b>₹3.2L</b><span>outstanding across 9 customers</span></div>
+          <div class="row r3"><div><div class="name">Raval Enterprises</div><div class="late">18 days overdue</div></div><div class="amt">₹84,000</div><span class="chip on">REMIND</span></div>
+          <div class="row r3"><div><div class="name">Vyas Industries</div><div class="late">9 days overdue</div></div><div class="amt">₹46,500</div><span class="chip on">REMIND</span></div>
+          <div class="row r3"><div><div class="name">Kapadia Stores</div><div class="sub">Due in 3 days</div></div><div class="amt">₹22,000</div><span class="chip off">SCHEDULED</span></div>
+        </div>
+      </div>
+      <div class="case-bot"><p class="build"><b>What we'd build:</b> a simple view of who owes what and since when, with a one-tap reminder.</p></div>
+    </article>
+
+  </div>
+  <p class="ex">Examples only. Yours will be built around your own pain point.</p>
+</div>
+</body>
+</html>

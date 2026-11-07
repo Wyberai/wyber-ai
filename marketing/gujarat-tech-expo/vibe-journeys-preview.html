@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vibe coding journeys preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05060a;--raised:#0a0c14;--overlay:#10131f;--accent:#0ea5e9;--hot:#38bdf8;
+    --text:#e6edf6;--dim:#8b94a7;--faint:#545c6e;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.16);
+    --l1:#0ea5e9;--l2:#a855f7;--l3:#e6edf6;
+    --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+  .wrap{max-width:1180px;margin:0 auto;padding:clamp(32px,6vw,80px) clamp(16px,4vw,32px)}
+  .eyebrow{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--hot);margin-bottom:16px}
+  h1{font-size:clamp(38px,7.4vw,92px);font-weight:900;letter-spacing:-.05em;line-height:.96}
+  h1 em{font-style:normal;color:var(--hot)}
+  .def{margin-top:24px;max-width:700px;font-size:clamp(16px,2.1vw,21px);line-height:1.6;color:var(--dim)}
+  .def b{color:var(--text);font-weight:700}
+  .verbs{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:22px;font-family:var(--mono);font-size:clamp(13px,1.6vw,16px);font-weight:700;letter-spacing:.06em}
+  .verbs span{color:var(--text)}.verbs span i{font-style:normal;color:var(--hot)}
+
+  /* ============ the map ============ */
+  .map{display:grid;grid-template-columns:190px repeat(5,minmax(0,1fr));margin-top:clamp(36px,6vw,72px);position:relative}
+  .bracket{grid-column:3/6;grid-row:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--hot);text-align:center;border-bottom:1px solid var(--border2);padding-bottom:8px;margin:0 8%}
+  .hd{grid-row:2;text-align:center;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--faint);padding:12px 0 6px}
+  .hd.v{color:var(--text)}
+  .ix{grid-column:3;grid-row:3/6;border:1.5px solid var(--border2);border-radius:26px;margin:0 10%;background:rgba(255,255,255,.025);pointer-events:none;z-index:0}
+  .ix::after{content:'ONE SHARED STATION';position:absolute;left:0;right:0;bottom:-26px;text-align:center;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--faint)}
+  .line{display:contents;--c:var(--l1);cursor:pointer}
+  .line[data-k="2"]{--c:var(--l2)}.line[data-k="3"]{--c:var(--l3)}
+  .lname{align-self:center;padding-right:16px;position:relative;z-index:2;transition:.25s}
+  .lname .ln{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.14em;color:var(--c)}
+  .lname .lt{font-size:19px;font-weight:800;letter-spacing:-.03em;line-height:1.15;margin-top:4px}
+  .lname .ls{font-size:12px;color:var(--dim);margin-top:4px;line-height:1.4}
+  .st{position:relative;padding:34px 8px 30px;text-align:center;z-index:1;transition:.25s}
+  .st::before{content:'';position:absolute;top:13px;left:0;right:0;height:7px;background:var(--c);border-radius:0}
+  .st.first::before{left:50%;border-radius:4px 0 0 4px}
+  .st.last::before{right:50%;border-radius:0 4px 4px 0}
+  .dot{position:absolute;top:6px;left:50%;width:22px;height:22px;transform:translateX(-50%);border-radius:50%;background:var(--bg);border:5px solid var(--c);z-index:2;transition:.25s}
+  .st.first .dot{background:var(--c)}
+  .st.last .dot{width:30px;height:30px;top:2px;background:var(--bg);box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--c)}
+  .st p{font-size:13.5px;line-height:1.4;color:var(--text);font-weight:600;letter-spacing:-.01em;margin:0 auto;max-width:150px}
+  .sn{display:none}
+  .line.dim .st,.line.dim .lname{opacity:.28}
+  .line:hover .dot{transform:translateX(-50%) scale(1.15)}
+  .line.sel .lname .lt{color:var(--c)}
+  .rowgap{grid-column:1/-1;height:6px}
+
+  /* ============ panel ============ */
+  .panel{margin-top:clamp(40px,6vw,64px);border-top:1px solid var(--border2);padding-top:26px;min-height:230px}
+  .ph{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--faint)}
+  .pt{font-size:clamp(24px,3.4vw,38px);font-weight:900;letter-spacing:-.04em;line-height:1.08;margin:10px 0 22px;max-width:760px}
+  .pt em{font-style:normal;color:var(--hot)}
+  .adv{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(18px,3vw,40px)}
+  .adv div{border-left:3px solid var(--hot);padding-left:16px}
+  .adv h4{font-size:17px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+  .adv p{font-size:14px;color:var(--dim);line-height:1.65}
+  .fine{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:26px;line-height:1.7}
+
+  @media(max-width:860px){
+    .map{display:block}
+    .bracket,.hd,.ix{display:none}
+    .line{display:block;margin:0 0 30px;padding:18px 16px;border:1px solid var(--border);border-radius:16px;background:var(--raised)}
+    .lname{padding:0 0 12px}
+    .st{display:flex;align-items:flex-start;gap:14px;text-align:left;padding:0 0 22px 36px}
+    .st::before{top:0;bottom:0;left:9px;right:auto;width:6px;height:auto}
+    .st.first::before{top:12px;left:9px;right:auto;border-radius:3px 3px 0 0}
+    .st.last::before{bottom:calc(100% - 12px);right:auto;left:9px;border-radius:0 0 3px 3px}
+    .st.last{padding-bottom:0}
+    .dot{top:0;left:0;transform:none}
+    .st.last .dot{width:24px;height:24px;top:0;left:-1px}
+    .line:hover .dot{transform:none}
+    .st p{max-width:none;margin:0}
+    .sn{display:block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--faint);margin-bottom:3px}
+    .st .tx{display:block}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">■ VIBE CODING, EXPLAINED</div>
+  <h1>Everyone starts<br>somewhere else.<br><em>Everyone builds the same way.</em></h1>
+  <p class="def"><b>Vibe coding</b> means you describe what you want in plain words and AI writes the software. You steer by talking. You do not need to know how to code.</p>
+  <div class="verbs"><span><i>01</i> SAY IT</span><span><i>02</i> SEE IT</span><span><i>03</i> SHAPE IT</span><span><i>04</i> SHIP IT</span></div>
+
+  <div class="map" id="map">
+    <div class="bracket">THE VIBE CODING PART</div>
+    <div class="hd" style="grid-column:2">START</div>
+    <div class="hd v" style="grid-column:3">SAY IT</div>
+    <div class="hd v" style="grid-column:4">SEE IT</div>
+    <div class="hd v" style="grid-column:5">SHAPE IT</div>
+    <div class="hd" style="grid-column:6">SHIP IT</div>
+    <div class="ix"></div>
+
+    <div class="line" data-k="1">
+      <div class="lname" style="grid-row:3"><div class="ln">LINE 1</div><div class="lt">Software companies</div><div class="ls">Deliver more client work with the same team</div></div>
+      <div class="st first" style="grid-row:3;grid-column:2"><i class="dot"></i><span class="tx"><b class="sn">START</b><p>A client brief lands on your desk</p></span></div>
+      <div class="st" style="grid-row:3;grid-column:3"><i class="dot"></i><span class="tx"><b class="sn">SAY IT</b><p>Paste the brief in plain words</p></span></div>
+      <div class="st" style="grid-row:3;grid-column:4"><i class="dot"></i><span class="tx"><b class="sn">SEE IT</b><p>A working prototype appears</p></span></div>
+      <div class="st" style="grid-row:3;grid-column:5"><i class="dot"></i><span class="tx"><b class="sn">SHAPE IT</b><p>Client says change this. You just say it.</p></span></div>
+      <div class="st last" style="grid-row:3;grid-column:6"><i class="dot"></i><span class="tx"><b class="sn">SHIP IT</b><p>Delivered. Real code, in your repo.</p></span></div>
+    </div>
+
+    <div class="line" data-k="2">
+      <div class="lname" style="grid-row:4"><div class="ln">LINE 2</div><div class="lt">Business owners</div><div class="ls">A website without an agency or a wait</div></div>
+      <div class="st first" style="grid-row:4;grid-column:2"><i class="dot"></i><span class="tx"><b class="sn">START</b><p>No website, or one that is years old</p></span></div>
+      <div class="st" style="grid-row:4;grid-column:3"><i class="dot"></i><span class="tx"><b class="sn">SAY IT</b><p>Describe your business in a few lines</p></span></div>
+      <div class="st" style="grid-row:4;grid-column:4"><i class="dot"></i><span class="tx"><b class="sn">SEE IT</b><p>Your website appears</p></span></div>
+      <div class="st" style="grid-row:4;grid-column:5"><i class="dot"></i><span class="tx"><b class="sn">SHAPE IT</b><p>Add a new offer, a WhatsApp button, another language</p></span></div>
+      <div class="st last" style="grid-row:4;grid-column:6"><i class="dot"></i><span class="tx"><b class="sn">SHIP IT</b><p>Live. Customers can find you.</p></span></div>
+    </div>
+
+    <div class="line" data-k="3">
+      <div class="lname" style="grid-row:5"><div class="ln">LINE 3</div><div class="lt">Students</div><div class="ls">Real projects, a real portfolio, real clients</div></div>
+      <div class="st first" style="grid-row:5;grid-column:2"><i class="dot"></i><span class="tx"><b class="sn">START</b><p>An idea and no experience</p></span></div>
+      <div class="st" style="grid-row:5;grid-column:3"><i class="dot"></i><span class="tx"><b class="sn">SAY IT</b><p>Describe the app you want</p></span></div>
+      <div class="st" style="grid-row:5;grid-column:4"><i class="dot"></i><span class="tx"><b class="sn">SEE IT</b><p>A real app appears</p></span></div>
+      <div class="st" style="grid-row:5;grid-column:5"><i class="dot"></i><span class="tx"><b class="sn">SHAPE IT</b><p>Improve it by chatting, and learn why it works</p></span></div>
+      <div class="st last" style="grid-row:5;grid-column:6"><i class="dot"></i><span class="tx"><b class="sn">SHIP IT</b><p>In your portfolio. Ready for a first client.</p></span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel"></div>
+  <p class="fine">Illustrative journeys. Timing and results depend on your project. Not a promise of income.</p>
+</div>
+
+<script>
+  const ALL={h:'WHOEVER YOU ARE',t:'Pick your line to see what vibe coding does <em>for you.</em>',a:[
+    ['You steer by talking','No syntax to learn. You describe, look, and say what to change.'],
+    ['You see it fast','A first working version appears in minutes, not after a long wait.'],
+    ['You own the code','What is generated is yours, to use however you like.']]};
+  const DATA={
+    1:{h:'LINE 1 · SOFTWARE COMPANIES',t:'Win the pitch with a <em>working prototype,</em> not a deck.',a:[
+      ['Prototype before the call ends','Turn a client brief into something they can click, while they are still in the room.'],
+      ['Developers review, not boilerplate','Your team spends its time on the hard parts and checks real code instead of typing the same screens again.'],
+      ['Your repo, your stack','The code is real and exports to GitHub, so nothing is locked inside a tool.']]},
+    2:{h:'LINE 2 · BUSINESS OWNERS',t:'Your website, <em>without the agency.</em>',a:[
+      ['No quote, no waiting','Describe your business in a few lines and see a site, instead of chasing someone for a draft.'],
+      ['Change it by asking','New offer, new photo, a WhatsApp button, another language. Say it and it changes.'],
+      ['It is yours','You own what is built and can move it, so you are never stuck with one vendor.']]},
+    3:{h:'LINE 3 · STUDENTS',t:'Build real things. <em>Learn by shipping them.</em>',a:[
+      ['A portfolio of working apps','Not screenshots and tutorials. Live projects you can show a client.'],
+      ['Learn why it works','Read the code the AI writes, change it, and understand it as you go.'],
+      ['Take client work','You can use what you generate for real clients. Start with a local business that needs a site.']]}
+  };
+  const panel=document.getElementById('panel');
+  function render(d){panel.innerHTML='<div class="ph">'+d.h+'</div><div class="pt">'+d.t+'</div><div class="adv">'+d.a.map(x=>'<div><h4>'+x[0]+'</h4><p>'+x[1]+'</p></div>').join('')+'</div>';}
+  render(ALL);
+  let sel=null;
+  document.querySelectorAll('.line').forEach(l=>l.addEventListener('click',()=>{
+    const k=l.dataset.k;sel=sel===k?null:k;
+    document.querySelectorAll('.line').forEach(x=>{x.classList.toggle('sel',x.dataset.k===sel);x.classList.toggle('dim',sel&&x.dataset.k!==sel)});
+    render(sel?DATA[sel]:ALL);
+  }));
+</script>
+</body>
+</html>

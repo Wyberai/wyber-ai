@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Use case directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#05060a; --raised:#0a0c14; --overlay:#10131f; --accent:#0ea5e9; --hot:#38bdf8;
+    --text:#e6edf6; --dim:#8b94a7; --faint:#545c6e; --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+    --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);overflow-x:hidden}
+  .switch{position:sticky;top:0;z-index:50;display:flex;gap:6px;padding:10px clamp(12px,3vw,32px);background:rgba(5,6,10,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px}
+  .switch button{background:none;border:1px solid var(--border2);color:var(--dim);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit;letter-spacing:.06em}
+  .switch button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .dir{display:none;max-width:1100px;margin:0 auto;padding:clamp(36px,6vw,80px) clamp(16px,4vw,32px)}
+  .dir.on{display:block}
+  .eyebrow{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--hot);margin-bottom:14px}
+  h2{font-size:clamp(34px,6.4vw,72px);font-weight:900;letter-spacing:-.045em;line-height:.98}
+  h2 em{font-style:normal;color:var(--hot)}
+  .lede{color:var(--dim);font-size:clamp(15px,2vw,19px);line-height:1.6;margin-top:16px;max-width:640px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin:30px 0 22px}
+  .pill{font-family:var(--sans);font-weight:700;font-size:15px;letter-spacing:-.01em;color:var(--dim);background:none;border:1px solid var(--border2);padding:11px 18px;border-radius:999px;cursor:pointer;transition:.2s}
+  .pill:hover{color:var(--text);border-color:var(--hot)}
+  .pill.on{background:var(--text);color:#05060a;border-color:var(--text)}
+  .verdict{font-family:var(--mono);font-size:12px;color:var(--faint);margin-top:34px;border-top:1px solid var(--border);padding-top:14px;line-height:1.7}
+  .verdict b{color:var(--hot)}
+
+  /* ---------- shared app window ---------- */
+  .win{border:1px solid var(--border2);border-radius:14px;background:var(--bg);overflow:hidden;box-shadow:0 30px 80px -30px rgba(14,165,233,.35)}
+  .bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--border)}
+  .bar i{width:9px;height:9px;border-radius:50%;background:var(--overlay);border:1px solid var(--border2)}
+  .bar span{margin-left:8px;font-family:var(--mono);font-size:10px;color:var(--faint);letter-spacing:.1em}
+  .wb{padding:14px;font-size:13px}
+  .kpi{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+  .kpi b{font-size:32px;font-weight:900;letter-spacing:-.04em}
+  .kpi span{color:var(--dim);font-size:12px}
+  .row{display:grid;grid-template-columns:1.5fr 1fr auto;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:var(--overlay);margin-top:7px}
+  .nm{font-weight:700}.sb{color:var(--dim);font-size:11px;margin-top:2px}
+  .amt{font-weight:800;text-align:right}
+  .late{color:var(--hot);font-family:var(--mono);font-size:11px;font-weight:700}
+  .chip{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.06em;padding:5px 9px;border-radius:6px;white-space:nowrap}
+  .chip.on{background:var(--accent);color:#fff}.chip.off{border:1px solid var(--border2);color:var(--dim)}
+  .kan{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .kan h4{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);margin-bottom:6px}
+  .kc{border:1px solid var(--border);background:var(--overlay);border-radius:8px;padding:9px;margin-bottom:7px}
+  .kc .amt{text-align:left;color:var(--hot);font-size:12px;margin-top:3px}
+
+  /* ================= A: before / after ================= */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:clamp(10px,2vw,28px);align-items:center;margin-top:8px}
+  .lab{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;margin-bottom:10px}
+  .lab.t{color:var(--faint)}.lab.n{color:var(--hot)}
+  .arrow{font-size:34px;color:var(--hot);font-weight:300}
+  .pane{display:none}.pane.on{display:contents}
+  .mess{background:#1a1a1d;border:1px solid #2a2a2e;border-radius:12px;padding:14px;color:#d9d9dc;font-size:13px;transform:rotate(-1deg)}
+  .chatrow{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #2a2a2e}
+  .chatrow small{color:#7c7c84}.chatrow .old{color:#c0584b;font-family:var(--mono);font-size:11px}
+  .sticky{display:inline-block;background:#f7e27a;color:#3a3200;font-family:'Segoe Print','Comic Sans MS',cursive;font-size:13px;padding:10px 12px;margin-top:12px;transform:rotate(3deg);box-shadow:3px 5px 0 rgba(0,0,0,.35)}
+  .xl{background:#fff;color:#222;border-radius:8px;overflow:hidden;font-family:Arial,sans-serif;font-size:12px;transform:rotate(1deg);border:1px solid #bbb}
+  .xl .t{background:#217346;color:#fff;padding:6px 10px;font-size:11px}
+  .xl table{width:100%;border-collapse:collapse}
+  .xl td,.xl th{border:1px solid #d6d6d6;padding:5px 7px;text-align:left;font-weight:400}
+  .xl th{background:#eee;color:#666}
+  .y{background:#fff59d}.r{background:#ffcdd2;color:#b71c1c;font-weight:700}
+  .bub{display:inline-block;background:#005c4b;color:#e9fff7;border-radius:10px 10px 10px 2px;padding:8px 11px;font-size:12px;margin-top:10px}
+  .ledger{background:#f3ead2;color:#3b3220;border-radius:8px;padding:14px 16px;font-family:'Segoe Print','Comic Sans MS',cursive;font-size:14px;line-height:2;background-image:repeating-linear-gradient(transparent 0 27px,#c9bd98 27px 28px);transform:rotate(-1.2deg);box-shadow:4px 6px 0 rgba(0,0,0,.35)}
+  .ledger s{opacity:.55}
+  .ledger .q{color:#a3271b}
+
+  /* ================= B: live build ================= */
+  .stage{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(12px,2vw,24px);margin-top:6px}
+  .term{background:#07080d;border:1px solid var(--border2);border-radius:14px;padding:16px;font-family:var(--mono);font-size:12.5px;line-height:1.9;min-height:300px;color:var(--dim)}
+  .term .p{color:var(--hot)}.term .ok{color:#3ddc97}.term .w{color:var(--text)}
+  .cur{display:inline-block;width:8px;height:15px;background:var(--hot);vertical-align:middle;animation:bl 1s steps(1) infinite}
+  @keyframes bl{50%{opacity:0}}
+  .app{opacity:0;transform:translateY(14px) scale(.98);transition:.6s cubic-bezier(.22,1,.36,1)}
+  .app.show{opacity:1;transform:none}
+  .app .pane{display:none}.app .pane.on{display:block}
+  .tick{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:10px}
+
+  /* ================= C: the bill ================= */
+  .billwrap{display:grid;grid-template-columns:minmax(280px,440px) 1fr;gap:clamp(24px,5vw,64px);align-items:center;margin-top:20px}
+  .receipt{background:#f4f1ea;color:#15130e;font-family:var(--mono);font-size:13px;line-height:1.75;padding:26px 24px 44px;transform:rotate(-1.4deg);box-shadow:0 40px 90px -30px rgba(0,0,0,.9);
+    -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/18px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/18px 100%}
+  .receipt h3{font-family:var(--sans);font-weight:900;font-size:22px;letter-spacing:-.04em;text-align:center}
+  .receipt .c{text-align:center;font-size:11px;letter-spacing:.1em}
+  .receipt hr{border:0;border-top:1px dashed #15130e;margin:12px 0}
+  .ln{display:flex;gap:6px}.ln i{flex:1;border-bottom:1px dotted #15130e;transform:translateY(-5px)}
+  .ln.no b{color:#b3261e}
+  .big{font-size:15px;font-weight:700}
+  .stamp{display:inline-block;border:3px solid #b3261e;color:#b3261e;font-family:var(--sans);font-weight:900;font-size:20px;letter-spacing:.04em;padding:4px 12px;transform:rotate(-6deg);margin:10px 0 2px}
+  .bar2{height:44px;margin-top:14px;background:repeating-linear-gradient(90deg,#15130e 0 2px,transparent 2px 4px,#15130e 4px 5px,transparent 5px 8px,#15130e 8px 11px,transparent 11px 12px,#15130e 12px 13px,transparent 13px 15px)}
+  .cta{font-size:clamp(26px,4vw,44px);font-weight:900;letter-spacing:-.04em;line-height:1.05}
+  .cta em{font-style:normal;color:var(--hot)}
+  .why{margin-top:18px;color:var(--dim);line-height:1.7;font-size:15px}
+  .why li{margin:8px 0 8px 18px}
+
+  @media(max-width:760px){
+    .ba{grid-template-columns:1fr}.arrow{transform:rotate(90deg);text-align:center}
+    .stage{grid-template-columns:1fr}.billwrap{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="switch">
+  <button class="on" data-d="A">A · Before / After</button>
+  <button data-d="B">B · Live build</button>
+  <button data-d="C">C · The bill</button>
+</div>
+
+<!-- ============================ A ============================ -->
+<section class="dir on" id="A">
+  <div class="eyebrow">■ DIRECTION A</div>
+  <h2>Same pain.<br><em>Two ways to live with it.</em></h2>
+  <p class="lede">Show the mess a small team recognises from its own desk, then what it becomes. The visitor does the work of finding themselves in it.</p>
+  <div class="pills" data-g="A">
+    <button class="pill on" data-k="1">Leads go cold</button>
+    <button class="pill" data-k="2">Approvals get lost</button>
+    <button class="pill" data-k="3">Project status unclear</button>
+  </div>
+  <div class="ba">
+    <!-- pain 1 -->
+    <div class="pane on" data-g="A" data-k="1">
+      <div><div class="lab t">TODAY</div>
+        <div class="xl"><div class="t">Leads_new_FINAL (2).xlsx</div>
+          <table><tr><th></th><th>A</th><th>B</th><th>C</th></tr>
+          <tr><th>1</th><td>Orbit Logistics</td><td class="y">demo sent</td><td>?</td></tr>
+          <tr><th>2</th><td>Kiran Dental Group</td><td>proposal</td><td class="r">NO REPLY</td></tr>
+          <tr><th>3</th><td>Atlas Pharma</td><td class="y">call back</td><td>when??</td></tr></table></div>
+        <div class="bub">did anyone call Orbit last week??</div>
+      </div>
+      <div class="arrow">→</div>
+      <div><div class="lab n">BUILT FOR YOU</div>
+        <div class="win"><div class="bar"><i></i><i></i><i></i><span>LEADS · FOLLOW-UP</span></div><div class="wb">
+          <div class="kpi"><b>6</b><span>leads need a follow-up today</span></div>
+          <div class="row"><div><div class="nm">Orbit Logistics</div><div class="sb">demo sent 9 days ago</div></div><div class="sb">₹2.4L deal</div><span class="chip on">FOLLOW UP</span></div>
+          <div class="row"><div><div class="nm">Kiran Dental Group</div><div class="sb">proposal sent 6 days ago</div></div><div class="sb">₹90K deal</div><span class="chip on">FOLLOW UP</span></div>
+          <div class="row"><div><div class="nm">Atlas Pharma</div><div class="sb">called yesterday</div></div><div class="sb">₹5.1L deal</div><span class="chip off">DONE</span></div>
+        </div></div></div>
+    </div>
+    <!-- pain 2 -->
+    <div class="pane" data-g="A" data-k="2">
+      <div><div class="lab t">TODAY</div>
+        <div class="mess">
+          <div class="chatrow"><div>Sir please approve PO 4471<br><small>Purchase team</small></div><span class="old">Mon</span></div>
+          <div class="chatrow"><div>Sir?<br><small>Purchase team</small></div><span class="old">Wed</span></div>
+          <div class="chatrow" style="border:0"><div>approved?? which one<br><small>Accounts</small></div><span class="old">Fri</span></div>
+        </div><div class="sticky">scroll up, it was somewhere here</div>
+      </div>
+      <div class="arrow">→</div>
+      <div><div class="lab n">BUILT FOR YOU</div>
+        <div class="win"><div class="bar"><i></i><i></i><i></i><span>REQUESTS &amp; APPROVALS</span></div><div class="wb"><div class="kan">
+          <div><h4>REQUESTED</h4><div class="kc"><div class="nm">PO 4471</div><div class="amt">₹86,000</div></div><div class="kc"><div class="nm">Leave · Neha</div><div class="amt">3 days</div></div></div>
+          <div><h4>APPROVED</h4><div class="kc"><div class="nm">Discount 12%</div><div class="amt">Orbit</div></div></div>
+          <div><h4>DONE</h4><div class="kc"><div class="nm">PO 4468</div><div class="amt">₹41,500</div></div></div>
+        </div></div></div></div>
+    </div>
+    <!-- pain 3 -->
+    <div class="pane" data-g="A" data-k="3">
+      <div><div class="lab t">TODAY</div>
+        <div class="xl"><div class="t">Project_status_MON.xlsx</div>
+          <table><tr><th></th><th>A</th><th>B</th><th>C</th></tr>
+          <tr><th>1</th><td>Atlas Pharma</td><td class="y">testing?</td><td>ask Neha</td></tr>
+          <tr><th>2</th><td>Veda Retail</td><td>design</td><td class="r">LATE??</td></tr>
+          <tr><th>3</th><td>Orbit Logistics</td><td class="y">on hold</td><td>?</td></tr></table></div>
+        <div class="sticky">ask Neha. she knows.</div>
+      </div>
+      <div class="arrow">→</div>
+      <div><div class="lab n">BUILT FOR YOU</div>
+        <div class="win"><div class="bar"><i></i><i></i><i></i><span>CLIENT PROJECTS</span></div><div class="wb">
+          <div class="kpi"><b>2</b><span>projects running late</span></div>
+          <div class="row"><div><div class="nm">Veda Retail</div><div class="late">3 days late</div></div><div class="sb">Design</div><span class="chip on">ESCALATE</span></div>
+          <div class="row"><div><div class="nm">Orbit Logistics</div><div class="late">1 day late</div></div><div class="sb">Build</div><span class="chip on">ESCALATE</span></div>
+          <div class="row"><div><div class="nm">Atlas Pharma</div><div class="sb">due 12 Nov</div></div><div class="sb">Testing</div><span class="chip off">ON TRACK</span></div>
+        </div></div></div>
+    </div>
+  </div>
+  <p class="verdict"><b>Why it works:</b> the left side is something their team did this week. No explaining needed. Cheapest to ship, strongest single image for ads.</p>
+</section>
+
+<!-- ============================ B ============================ -->
+<section class="dir" id="B">
+  <div class="eyebrow">■ DIRECTION B</div>
+  <h2>Pick a pain.<br><em>Watch it get built.</em></h2>
+  <p class="lede">The page does what the booth does. Visitors choose a problem and the software appears in front of them. It shows the product instead of describing it.</p>
+  <div class="pills" data-g="B">
+    <button class="pill on" data-k="1">Leads go cold</button>
+    <button class="pill" data-k="2">Approvals get lost</button>
+    <button class="pill" data-k="3">Project status unclear</button>
+  </div>
+  <div class="stage">
+    <div class="term" id="term"></div>
+    <div class="app" id="app">
+      <div class="win"><div class="bar"><i></i><i></i><i></i><span id="appname">YOUR SOFTWARE</span></div><div class="wb">
+        <div class="pane on" data-k="1"><div class="kpi"><b>6</b><span>leads need a follow-up today</span></div>
+          <div class="row"><div><div class="nm">Orbit Logistics</div><div class="sb">demo sent 9 days ago</div></div><div class="sb">₹2.4L deal</div><span class="chip on">FOLLOW UP</span></div>
+          <div class="row"><div><div class="nm">Kiran Dental Group</div><div class="sb">proposal sent 6 days ago</div></div><div class="sb">₹90K deal</div><span class="chip on">FOLLOW UP</span></div></div>
+        <div class="pane" data-k="2"><div class="kan">
+          <div><h4>REQUESTED</h4><div class="kc"><div class="nm">PO 4471</div><div class="amt">₹86,000</div></div></div>
+          <div><h4>APPROVED</h4><div class="kc"><div class="nm">Discount 12%</div><div class="amt">Orbit</div></div></div>
+          <div><h4>DONE</h4><div class="kc"><div class="nm">PO 4468</div><div class="amt">₹41,500</div></div></div></div></div>
+        <div class="pane" data-k="3"><div class="kpi"><b>2</b><span>projects running late</span></div>
+          <div class="row"><div><div class="nm">Veda Retail</div><div class="late">3 days late</div></div><div class="sb">Design</div><span class="chip on">ESCALATE</span></div>
+          <div class="row"><div><div class="nm">Orbit Logistics</div><div class="late">1 day late</div></div><div class="sb">Build</div><span class="chip on">ESCALATE</span></div></div>
+      </div></div>
+      <div class="tick">Example output. Bring your own pain point to the booth and we build yours live with WyberAi.</div>
+    </div>
+  </div>
+  <p class="verdict"><b>Why it works:</b> it is the product demo and the pitch in one move, and it trains the visitor to say their pain out loud. Needs a little JS, no extra assets.</p>
+</section>
+
+<!-- ============================ C ============================ -->
+<section class="dir" id="C">
+  <div class="eyebrow">■ DIRECTION C</div>
+  <div class="billwrap">
+    <div class="receipt">
+      <h3>YOUR SOFTWARE BILL</h3>
+      <div class="c">ANY CRM · ANY TOOL</div>
+      <hr>
+      <div class="ln"><span>Features you pay for</span><i></i><b>100</b></div>
+      <div class="ln"><span>Features you use</span><i></i><b>5</b></div>
+      <div class="ln"><span>Never opened</span><i></i><b>95</b></div>
+      <hr>
+      <div class="c">THINGS YOU ACTUALLY NEEDED</div>
+      <div class="ln no"><span>1 Know which leads went cold</span><i></i><b>NOT INCL.</b></div>
+      <div class="ln no"><span>2 Approvals in one place</span><i></i><b>NOT INCL.</b></div>
+      <div class="ln no"><span>3 Where each project stands</span><i></i><b>NOT INCL.</b></div>
+      <hr>
+      <div class="ln big"><span>MISSING FROM THE BOX</span><i></i><b>3</b></div>
+      <div style="text-align:center"><span class="stamp">WE BUILD THESE</span></div>
+      <div class="c" style="margin-top:8px">TELL US YOUR PAIN POINTS<br>wyberai.com/expo</div>
+      <div class="bar2"></div>
+    </div>
+    <div>
+      <h2>Your software sent you a <em>bill.</em></h2>
+      <p class="why">Anyone who runs a business knows how to read a bill. This one lists what is wrong with their software, line by line, and ends with what we do about it.</p>
+      <ul class="why">
+        <li>Works as the hero visual on the page and as an ad image.</li>
+        <li>Print it as the booth handout, in the same receipt format. People keep and read receipts.</li>
+        <li>The three “not included” lines are the three use cases. No cards needed.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="verdict"><b>Why it works:</b> an object everyone recognises, used as the argument. Nobody else's landing page looks like this, and it is the one that survives being printed.</p>
+</section>
+
+<script>
+  // direction switch
+  document.querySelectorAll('.switch button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.switch button').forEach(x=>x.classList.toggle('on',x===b));
+    document.querySelectorAll('.dir').forEach(s=>s.classList.toggle('on',s.id===b.dataset.d));
+    if(b.dataset.d==='B') build(1);
+    window.scrollTo(0,0);
+  });
+  // A: pane switch
+  const gA=document.querySelector('.pills[data-g="A"]');
+  gA.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{
+    gA.querySelectorAll('.pill').forEach(x=>x.classList.toggle('on',x===p));
+    document.querySelectorAll('.pane[data-g="A"]').forEach(x=>x.classList.toggle('on',x.dataset.k===p.dataset.k));
+  });
+  // B: live build
+  const LINES={
+    1:['leads go cold because follow-ups live in someone\'s head','importing your lead sheet','finding leads with no contact in 5+ days','adding a follow-up due list'],
+    2:['approvals get lost in chat threads','creating one board for every request','requested > approved > done','notifying the approver'],
+    3:['nobody can see where each client project stands','listing every active project','tracking stage and due date','flagging the late ones']
+  };
+  const NAMES={1:'LEADS · FOLLOW-UP',2:'REQUESTS & APPROVALS',3:'CLIENT PROJECTS'};
+  const term=document.getElementById('term'),app=document.getElementById('app');
+  let timers=[];
+  function build(k){
+    timers.forEach(clearTimeout);timers=[];
+    app.classList.remove('show');term.innerHTML='';
+    document.querySelectorAll('#app .pane').forEach(x=>x.classList.toggle('on',x.dataset.k==String(k)));
+    document.getElementById('appname').textContent=NAMES[k];
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const L=LINES[k];let html='';
+    L.forEach((t,i)=>{
+      timers.push(setTimeout(()=>{
+        html+=(i===0?'<span class="p">&gt; pain:</span> <span class="w">'+t+'</span>':'<span class="p">&gt;</span> '+t+' <span class="ok">✓</span>')+'<br>';
+        term.innerHTML=html+'<span class="cur"></span>';
+      },reduce?0:i*650));
+    });
+    timers.push(setTimeout(()=>{
+      term.innerHTML=html+'<span class="p">&gt;</span> <span class="ok">your software is ready</span> <span class="cur"></span>';
+      app.classList.add('show');
+    },reduce?0:L.length*650+300));
+  }
+  const gB=document.querySelector('.pills[data-g="B"]');
+  gB.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{
+    gB.querySelectorAll('.pill').forEach(x=>x.classList.toggle('on',x===p));build(p.dataset.k);
+  });
+</script>
+</body>
+</html>
