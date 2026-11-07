@@ -29,6 +29,13 @@ export interface IntentCopy {
   thinking: string
   unsure: string
   disclosure: string
+  planTitle: string
+  planScreens: string
+  planData: string
+  planFirstWin: string
+  planLoading: string
+  planNote: string
+  planKinds: Record<'web_app' | 'mobile_app' | 'website' | 'saas', string>
 }
 
 export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
@@ -59,6 +66,13 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     thinking: 'Understanding…',
     unsure: 'Tell us a little more?',
     disclosure: 'An AI reads what you type here so this page can adapt to you. Please do not write names, phone numbers or emails.',
+    planTitle: "What we'd build first",
+    planScreens: 'Screens',
+    planData: 'Keeps track of',
+    planFirstWin: 'First version',
+    planLoading: 'Sketching your app…',
+    planNote: 'A quick sketch from what you wrote. The real plan is made when you start building.',
+    planKinds: { web_app: 'Web app', mobile_app: 'Mobile app', website: 'Website', saas: 'SaaS' },
   },
 
   hi: {
@@ -88,6 +102,13 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     thinking: 'समझ रहे हैं…',
     unsure: 'थोड़ा और बताएँगे?',
     disclosure: 'आप यहाँ जो लिखते हैं उसे एक AI पढ़ता है ताकि यह पेज आपके हिसाब से बदले। कृपया नाम, फ़ोन नंबर या ईमेल न लिखें।',
+    planTitle: 'हम सबसे पहले यह बनाएँगे',
+    planScreens: 'स्क्रीन',
+    planData: 'इनका हिसाब रखेगा',
+    planFirstWin: 'पहला वर्ज़न',
+    planLoading: 'आपके ऐप का खाका बना रहे हैं…',
+    planNote: 'आपके लिखे के आधार पर एक छोटा खाका। असली प्लान तब बनता है जब आप बनाना शुरू करते हैं।',
+    planKinds: { web_app: 'वेब ऐप', mobile_app: 'मोबाइल ऐप', website: 'वेबसाइट', saas: 'SaaS' },
   },
 
   gu: {
@@ -117,6 +138,13 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     thinking: 'સમજી રહ્યા છીએ…',
     unsure: 'થોડું વધુ જણાવશો?',
     disclosure: 'તમે અહીં જે લખો છો તે એક AI વાંચે છે જેથી આ પેજ તમારા માટે બદલાય. કૃપા કરીને નામ, ફોન નંબર કે ઇમેઇલ ન લખો.',
+    planTitle: 'અમે સૌથી પહેલાં આ બનાવીશું',
+    planScreens: 'સ્ક્રીન',
+    planData: 'આનો હિસાબ રાખશે',
+    planFirstWin: 'પહેલું વર્ઝન',
+    planLoading: 'તમારી ઍપની રૂપરેખા બનાવી રહ્યા છીએ…',
+    planNote: 'તમે લખ્યા મુજબ એક ટૂંકી રૂપરેખા. વાસ્તવિક પ્લાન તમે બનાવવાનું શરૂ કરો ત્યારે બને છે.',
+    planKinds: { web_app: 'વેબ ઍપ', mobile_app: 'મોબાઇલ ઍપ', website: 'વેબસાઇટ', saas: 'SaaS' },
   },
 }
 

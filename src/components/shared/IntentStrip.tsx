@@ -4,10 +4,12 @@ import { copyFor, INTENT_COPY } from '@/lib/intent/copy'
 import { detectScriptLang } from '@/lib/intent/lang'
 import { isClassifiable, sanitizeVisitorText } from '@/lib/intent/classify'
 import {
-  classifyText, getAnonId, getStoredLang, getVariant, saveIntent, sendIntentEvent, storeLang,
+  classifyText, fetchPlan, getAnonId, getStoredLang, getVariant, saveIntent, sendIntentEvent, storeLang,
 } from '@/lib/intent/client'
+import type { PlanSketch } from '@/lib/intent/plan'
+import { IntentPlanCard } from '@/components/shared/IntentPlanCard'
 import { CONFIDENCE_FLOOR, DOORS, INTENT_LANGS, type Door, type Intent, type IntentLang, type Prior } from '@/lib/intent/types'
-import type { Variant } from '@/lib/intent/experiment'
+import { XP_COOKIE, XP_COOKIE_DAYS, encodeXp, type Variant } from '@/lib/intent/experiment'
 
 // Visitor-intent strip (India-only experiment, behind NEXT_PUBLIC_INTENT_EXPERIMENT).
 // Sits above the existing hero prompt box. 70% of visitors see it, 30% see the
@@ -35,6 +37,8 @@ interface Props {
 }
 
 type Readout = { status: 'idle' } | { status: 'thinking' } | { status: 'shown'; intent: Intent } | { status: 'unsure' }
+type PlanState = { status: 'idle' } | { status: 'loading' } | { status: 'shown'; plan: PlanSketch }
+const KIND_TARGET: Record<PlanSketch['kind'], Target> = { web_app: 'app', mobile_app: 'mobile', website: 'website', saas: 'saas' }
 
 export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, onLangChange }: Props) {
   const [ready, setReady] = useState(false)
@@ -43,6 +47,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
   const [offerLang, setOfferLang] = useState<IntentLang | null>(null)
   const [door, setDoor] = useState<Door>(prior.door)
   const [readout, setReadout] = useState<Readout>({ status: 'idle' })
+  const [plan, setPlan] = useState<PlanState>({ status: 'idle' })
   const pickedDoor = useRef(false)
   const lastChipPrompt = useRef<string | null>(null)
   const classifiedText = useRef<string>('')
@@ -56,7 +61,9 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     if (stored) { setLang(stored); if (stored !== 'en') onLangChange(stored) }
     else if (prior.suggestedLang !== 'en') setOfferLang(prior.suggestedLang)
     sendIntentEvent('impression', { variant: v, lang: stored ?? 'en', door: prior.door })
-    getAnonId()
+    try {
+      document.cookie = `${XP_COOKIE}=${encodeXp(getAnonId(), v)}; path=/; max-age=${60 * 60 * 24 * XP_COOKIE_DAYS}; SameSite=Lax`
+    } catch { /* cookies blocked */ }
     setReady(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -70,6 +77,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     const mine = ++seq.current
     const timer = setTimeout(async () => {
       setReadout({ status: 'thinking' })
+      setPlan({ status: 'idle' }) // the old sketch no longer matches what they are typing
       const uiLang = detectScriptLang(text) !== 'en' ? detectScriptLang(text) : lang
       const r = await classifyText(text, { variant, lang: uiLang, door })
       if (mine !== seq.current) return // a newer keystroke superseded this one
@@ -82,6 +90,15 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
       sendIntentEvent('readout_shown', { variant, lang: uiLang, door })
       saveIntent({ source: 'text', door, lang: uiLang, intent: r.intent })
       if (!pickedDoor.current && (DOORS as readonly string[]).includes(r.intent.audience)) setDoor(r.intent.audience as Door)
+
+      // Now that we understand them, sketch what we'd build first. Failure is silent.
+      setPlan({ status: 'loading' })
+      const p = await fetchPlan(text, { variant, lang: uiLang })
+      if (mine !== seq.current) return
+      if (!p) { setPlan({ status: 'idle' }); return }
+      setPlan({ status: 'shown', plan: p })
+      setHeroTarget(KIND_TARGET[p.kind])
+      sendIntentEvent('plan_shown', { variant, lang: uiLang, door })
     }, 900)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -103,6 +120,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     setHeroPrompt(prompt)
     setHeroTarget(TARGET_HINT[id] ?? 'app')
     setReadout({ status: 'idle' })
+    setPlan({ status: 'idle' })
     sendIntentEvent('chip_tapped', { variant, lang, door, chipId: id })
     saveIntent({ source: 'chip', door, lang, chipId: id })
   }
@@ -160,7 +178,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
             {c.audienceName[readout.intent.audience]} · {readout.intent.pain}{' '}
             <button
               type="button"
-              onClick={() => { sendIntentEvent('readout_corrected', { variant, lang, door }); setReadout({ status: 'idle' }); classifiedText.current = sanitizeVisitorText(heroPrompt) }}
+              onClick={() => { sendIntentEvent('readout_corrected', { variant, lang, door }); setReadout({ status: 'idle' }); setPlan({ status: 'idle' }); classifiedText.current = sanitizeVisitorText(heroPrompt) }}
               style={{ background: 'none', border: 'none', padding: 0, color: 'var(--brand-accent-hot)', cursor: 'pointer', fontSize: 12.5, fontFamily: 'inherit', textDecoration: 'underline' }}
             >
               {c.readoutFix}
@@ -168,6 +186,11 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
           </span>
         )}
       </div>
+
+      {plan.status === 'loading' && (
+        <div style={{ fontSize: 12.5, color: 'var(--brand-text-dim)' }}>{c.planLoading}</div>
+      )}
+      {plan.status === 'shown' && <IntentPlanCard plan={plan.plan} c={c} />}
 
       <p style={{ margin: 0, fontSize: 11.5, color: 'var(--brand-text-faint)', lineHeight: 1.5 }}>{c.disclosure}</p>
     </div>

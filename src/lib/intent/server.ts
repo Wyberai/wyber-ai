@@ -18,5 +18,5 @@ export const ANON_ID_RE = /^[a-zA-Z0-9-]{8,64}$/
 // Anonymous events the experiment may record (see /api/intent/event).
 export const INTENT_EVENT_KINDS = new Set([
   'impression', 'chip_tapped', 'door_changed', 'lang_changed',
-  'readout_shown', 'readout_corrected', 'submitted',
+  'readout_shown', 'readout_corrected', 'plan_shown', 'plan_expanded', 'submitted',
 ])

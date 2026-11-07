@@ -118,6 +118,41 @@ else console.log('\n(source breakdown unavailable: apply migration 2026110700000
     if (!(ev || []).length) console.log('  (no events yet: deploy the tracking, then check back)')
   }
 }
+// Visitor-intent experiment: did the intent version do better? Needs migrations
+// 20261108000000_intent_events.sql and 20261108010000_profile_intent_variant.sql.
+{
+  const { data: vp, error: vErr } = await sb.from('profiles').select('id, intent_variant, email').gte('created_at', since).not('intent_variant', 'is', null)
+  if (vErr) {
+    console.log('\n(experiment split unavailable: apply migration 20261108010000_profile_intent_variant.sql)')
+  } else {
+    const rows = (vp || []).filter(p => !isInternal(p.email))
+    console.log('\nIntent experiment: signups by variant (external accounts)')
+    if (!rows.length) console.log('  (no experiment signups yet)')
+    for (const v of ['intent', 'control']) {
+      const g = rows.filter(p => p.intent_variant === v)
+      const built = g.filter(p => (projByUser.get(p.id) || []).length).length
+      const pub = g.filter(p => (projByUser.get(p.id) || []).some(pr => pr.published_url)).length
+      if (g.length) console.log(`  ${v.padEnd(8)} signups ${String(g.length).padStart(4)}   built ${String(built).padStart(3)} (${Math.round(built / g.length * 100)}%)   published ${pub}`)
+    }
+    if (rows.length && rows.length < 60) console.log('  note: too few signups for a reliable comparison; treat as direction only.')
+  }
+  const { data: ev, error: eErr } = await sb.from('intent_events').select('anon_id, variant, kind, created_at').gte('created_at', since).limit(50000)
+  if (eErr) {
+    console.log('\n(intent events unavailable: apply migration 20261108000000_intent_events.sql)')
+  } else if (!(ev || []).length) {
+    console.log('\nIntent events: none yet (experiment off or not deployed).')
+  } else {
+    console.log('\nIntent experiment: distinct anonymous visitors who...')
+    for (const v of ['intent', 'control']) {
+      const g = ev.filter(e => e.variant === v)
+      const uniq = k => new Set(g.filter(e => e.kind === k).map(e => e.anon_id)).size
+      const seen = uniq('impression')
+      if (!seen) continue
+      const pct = n => Math.round(n / seen * 100) + '%'
+      console.log(`  ${v.padEnd(8)} saw page ${String(seen).padStart(5)}  tapped chip ${String(uniq('chip_tapped')).padStart(4)} (${pct(uniq('chip_tapped'))})  typed + understood ${String(uniq('readout_shown')).padStart(4)} (${pct(uniq('readout_shown'))})  submitted ${String(uniq('submitted')).padStart(4)} (${pct(uniq('submitted'))})`)
+    }
+  }
+}
 const excluded = profiles.length - external.length
 if (excluded) console.log(`\nExcluded ${excluded} owned/internal account(s) from all numbers above.`)
 console.log('')

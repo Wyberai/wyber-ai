@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
 import { REFERRAL_LIMIT } from '@/lib/referral';
 import { attributionToProfileColumns } from '@/lib/signup-attribution';
+import { xpToProfileColumns } from '@/lib/intent/experiment';
 
 // The post-authentication side effects every sign-in path (OAuth, clicked
 // magic link, typed OTP code) must run exactly once per real account:
@@ -27,9 +28,11 @@ export interface OnboardParams {
   fbc?: string | null;
   /** Raw wyber_attr cookie value (first-touch source), see lib/signup-attribution. */
   attribution?: string | null;
+  /** Raw wyber_xp cookie ("<anonId>.<variant>") from the visitor-intent experiment. */
+  experiment?: string | null;
 }
 
-export async function onboardUser({ user, supabase, ipCountry, refCode, origin, next, clientIp, userAgent, fbp, fbc, attribution }: OnboardParams): Promise<{ isFirstSignup: boolean }> {
+export async function onboardUser({ user, supabase, ipCountry, refCode, origin, next, clientIp, userAgent, fbp, fbc, attribution, experiment }: OnboardParams): Promise<{ isFirstSignup: boolean }> {
   const isStudent = !!(user.email?.endsWith('.edu') || user.email?.includes('.edu.'));
 
   // Backstop the handle_new_user trigger: create the row at the base 30 if it
@@ -71,6 +74,13 @@ export async function onboardUser({ user, supabase, ipCountry, refCode, origin, 
       try {
         const cols = attributionToProfileColumns(attribution);
         if (cols) await admin.from('profiles').update(cols).eq('id', user.id);
+      } catch { /* columns may not exist yet */ }
+
+      // Which experiment group they were in (separate update: a missing column
+      // here must not block the attribution columns above, or signup itself).
+      try {
+        const xp = xpToProfileColumns(experiment);
+        if (xp) await admin.from('profiles').update(xp).eq('id', user.id);
       } catch { /* columns may not exist yet */ }
 
       if (user.email) {

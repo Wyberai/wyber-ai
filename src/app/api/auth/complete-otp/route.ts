@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     fbp: cookieStore.get('_fbp')?.value || null,
     fbc: cookieStore.get('_fbc')?.value || null,
     attribution: cookieStore.get('wyber_attr')?.value || null,
+    experiment: cookieStore.get('wyber_xp')?.value || null,
   });
 
   cookieStore.set('wyber_ref', '', { maxAge: 0, path: '/' });

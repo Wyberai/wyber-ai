@@ -3,6 +3,7 @@
 import { ANON_KEY, VARIANT_KEY, LANG_KEY, INTENT_KEY, assignVariant, type Variant } from './experiment'
 import { isIntentLang } from './lang'
 import type { Door, Intent, IntentLang } from './types'
+import type { PlanSketch } from './plan'
 
 function read(key: string): string | null {
   try { return localStorage.getItem(key) } catch { return null }
@@ -40,7 +41,7 @@ export function storeLang(l: IntentLang) { write(LANG_KEY, l) }
 
 export type IntentEventKind =
   | 'impression' | 'chip_tapped' | 'door_changed' | 'lang_changed'
-  | 'readout_shown' | 'readout_corrected' | 'submitted'
+  | 'readout_shown' | 'readout_corrected' | 'plan_shown' | 'plan_expanded' | 'submitted'
 
 export function sendIntentEvent(kind: IntentEventKind, extra: { variant: Variant; lang?: IntentLang; door?: Door; chipId?: string }) {
   try {
@@ -67,6 +68,26 @@ export async function classifyText(text: string, opts: { variant: Variant; lang:
     })
     if (!res.ok) return null
     return (await res.json()) as ClassifyResult
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+export async function fetchPlan(text: string, opts: { variant: Variant; lang: IntentLang }): Promise<PlanSketch | null> {
+  const ctl = new AbortController()
+  const timer = setTimeout(() => ctl.abort(), 14_000)
+  try {
+    const res = await fetch('/api/intent/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, anonId: getAnonId(), variant: opts.variant, lang: opts.lang }),
+      signal: ctl.signal,
+    })
+    if (!res.ok) return null
+    const j = (await res.json()) as { plan?: PlanSketch | null }
+    return j.plan ?? null
   } catch {
     return null
   } finally {
