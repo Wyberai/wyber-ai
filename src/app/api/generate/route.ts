@@ -5830,7 +5830,7 @@ Do NOT add any storage-notice banner or warning about data persistence — the p
                   }
                 }
 
-                const finalMsg = await stream.finalMessage()
+                const finalMsg: Anthropic.Message = await stream.finalMessage()
                 const u = finalMsg.usage as unknown as Record<string, number>
                 totalInputTokens += u.input_tokens ?? 0
                 totalOutputTokens += u.output_tokens ?? 0
