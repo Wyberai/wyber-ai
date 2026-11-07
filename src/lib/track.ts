@@ -6,6 +6,8 @@
 // already loads. Fire-and-forget: every path is try/caught, so tracking can
 // never break product code.
 
+import { FUNNEL_EVENTS } from '@/lib/funnel-events'
+
 const DISTINCT_ID_KEY = 'wyber-did'
 
 function distinctId(): string {
@@ -22,6 +24,18 @@ export function track(event: string, props?: Record<string, unknown>) {
   try {
     ;(window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.('event', event, props || {})
   } catch { /* GA blocked */ }
+  // Own database copy of the funnel events (allowlisted), so the founder can
+  // query where signups stop even though PostHog was never shipped.
+  try {
+    if (FUNNEL_EVENTS.has(event)) {
+      fetch('/api/funnel/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event, props }),
+        keepalive: true,
+      }).catch(() => {})
+    }
+  } catch { /* never break product code */ }
   try {
     const key = process.env.NEXT_PUBLIC_POSTHOG_KEY
     if (!key) return

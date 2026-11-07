@@ -2672,6 +2672,8 @@ const storeProjectId = useEditorStore.getState().project?.id;
 I can build a **simpler version** instead: just the core screens (up to ${simple.maxFiles} files) for ${simple.cost} credits. Or add credits to build everything you asked for.`
           : `This build needs ~${estimatedCost} credits (${estimateBuildTier} tier, ${plannedFileCount} files planned) — you have ${freshCredits}. Not enough credits for this action. Add credits, upgrade, or describe something smaller and I'll check again.`;
         const msgId = uid();
+        track('editor_credit_wall_shown', { planned_files: plannedFileCount, cost: estimatedCost, credits: freshCredits, tier: estimateBuildTier });
+        if (simple) track('editor_simple_build_offered', { cost: simple.cost, max_files: simple.maxFiles });
         addMessage({ id: msgId, role: 'assistant', content: shortMsg, timestamp: Date.now(), status: 'error',
           ...(simple ? { simpleBuildOffer: { prompt: userMsg, maxFiles: simple.maxFiles, cost: simple.cost, paletteId } } : {}) });
         persistMessage('assistant', shortMsg);

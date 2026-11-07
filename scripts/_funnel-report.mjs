@@ -99,6 +99,25 @@ function breakdown(title, keyFn) {
 breakdown('By country', p => p.country)
 if (hasSource) breakdown('By first-touch source', p => p.signup_source)
 else console.log('\n(source breakdown unavailable: apply migration 20261107000000_signup_attribution.sql)')
+// Credit-wall behaviour, from first-party funnel_events (needs migration
+// 20261107010000_funnel_events.sql; empty until the tracking ships).
+{
+  const { data: ev, error: evErr } = await sb
+    .from('funnel_events')
+    .select('user_id, event, created_at')
+    .gte('created_at', since)
+    .in('user_id', extIds.length ? extIds : ['00000000-0000-0000-0000-000000000000'])
+  if (evErr) {
+    console.log('\n(credit-wall events unavailable: apply migration 20261107010000_funnel_events.sql)')
+  } else {
+    const usersFor = name => new Set((ev || []).filter(e => e.event === name).map(e => e.user_id))
+    console.log('\nCredit wall (distinct users, external accounts)')
+    for (const name of ['first_generation_started', 'editor_credit_wall_shown', 'editor_simple_build_offered', 'editor_simple_build_chosen', 'editor_out_of_credits_upgrade_clicked', 'checkout_initiated', 'app_published']) {
+      console.log(`  ${name.padEnd(42)} ${usersFor(name).size}`)
+    }
+    if (!(ev || []).length) console.log('  (no events yet: deploy the tracking, then check back)')
+  }
+}
 const excluded = profiles.length - external.length
 if (excluded) console.log(`\nExcluded ${excluded} owned/internal account(s) from all numbers above.`)
 console.log('')
