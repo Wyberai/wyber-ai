@@ -30,6 +30,10 @@
       "schedule": "30 4 * * *"
     },
     {
+      "path": "/api/cron/crm-brief",
+      "schedule": "0 3 * * *"
+    },
+    {
       "path": "/api/cron/security-rescan",
       "schedule": "0 3 * * *"
     },

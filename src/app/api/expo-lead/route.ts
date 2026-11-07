@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { normalizePhone, resolveLeadSource } from '@/lib/expo-leads'
 import { rateLimit } from '@/lib/rate-limit'
 import { deliverExpoEmail, expoSequenceDisabled } from '@/lib/expo-sequence-send'
+import { syncIncoming } from '@/lib/crm/db'
+import { expoLeadToIncoming } from '@/lib/crm/sources'
 
 const clean = (v: unknown, max: number) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -79,13 +81,25 @@ export async function POST(req: NextRequest) {
     console.error('[expo-lead] alert email failed:', err)
   }
 
-  // Instant confirmation to the visitor (first email of the sequence). Runs
-  // after the response so a slow mail server never holds up the form; the
-  // daily cron sends it later if this attempt fails.
-  if (saved && leadId && email && admin && !expoSequenceDisabled()) {
+  // Work that runs after the response so a slow mail server or database never
+  // holds up the form: (1) put the lead straight into the internal CRM so it
+  // shows up in Today with its reply deadline, (2) send the visitor the first
+  // email of the sequence (the daily cron retries it if this attempt fails).
+  // Both are best-effort and independent of each other.
+  if (saved && leadId && admin) {
     const id = leadId
     const db = admin
-    const job = () => deliverExpoEmail(db, { id, name, email, preferred_day: day, pain_point: painPoint }, 'confirmation').catch(() => {})
+    const job = async () => {
+      try {
+        await syncIncoming(db, [expoLeadToIncoming({
+          id, created_at: new Date().toISOString(), name, whatsapp, email: email || null, business: business || null,
+          audience, preferred_day: day, pain_point: painPoint, source, status: 'new',
+        })])
+      } catch (err) { console.error('[expo-lead] crm sync failed:', err instanceof Error ? err.message : err) }
+      if (email && !expoSequenceDisabled()) {
+        await deliverExpoEmail(db, { id, name, email, preferred_day: day, pain_point: painPoint }, 'confirmation').catch(() => {})
+      }
+    }
     try { after(job) } catch { void job() }
   }
 

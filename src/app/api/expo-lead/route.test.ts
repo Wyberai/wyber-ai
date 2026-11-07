@@ -5,7 +5,9 @@ const insert = vi.fn()
 let dupRows: unknown[] = []
 
 const confirm = vi.fn()
+const crmSync = vi.fn()
 let disabled = false
+vi.mock('@/lib/crm/db', () => ({ syncIncoming: (...a: unknown[]) => crmSync(...a) }))
 vi.mock('@/lib/email', () => ({ sendAdminExpoLeadAlert: (...a: unknown[]) => sendAlert(...a) }))
 vi.mock('@/lib/expo-sequence-send', () => ({
   deliverExpoEmail: (...a: unknown[]) => confirm(...a),
@@ -38,6 +40,7 @@ beforeEach(() => {
   sendAlert.mockReset().mockResolvedValue(undefined)
   insert.mockReset().mockResolvedValue({ data: { id: 'lead-1' }, error: null })
   confirm.mockReset().mockResolvedValue('sent')
+  crmSync.mockReset().mockResolvedValue({ inserted: 1, updated: 0, skippedOwned: 0, skippedInvalid: 0, errors: [] })
   disabled = false
   dupRows = []
 })
@@ -109,6 +112,35 @@ describe('POST /api/expo-lead', () => {
     await post({ ...lead, email: 'asha@example.com' })
     await new Promise(r => setTimeout(r, 0))
     expect(confirm).not.toHaveBeenCalled()
+  })
+
+  it('puts the lead into the CRM with its reply deadline, even when no email was given', async () => {
+    const res = await post(lead)
+    expect(res.status).toBe(200)
+    await new Promise(r => setTimeout(r, 0))
+    expect(crmSync).toHaveBeenCalledTimes(1)
+    const incoming = crmSync.mock.calls[0][1][0]
+    expect(incoming).toMatchObject({ source: 'expo', source_ref: 'lead-1', segment: 'business', stage: 'new', name: 'Asha' })
+    expect(incoming.nextAction).toMatch(/WhatsApp/)
+    expect(confirm).not.toHaveBeenCalled()
+  })
+
+  it('a CRM failure never blocks the confirmation email or the response', async () => {
+    crmSync.mockRejectedValue(new Error('crm down'))
+    const res = await post({ ...lead, email: 'asha@example.com' })
+    expect(res.status).toBe(200)
+    await new Promise(r => setTimeout(r, 0))
+    expect(confirm).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not touch the CRM for a duplicate submission or when the lead was not saved', async () => {
+    dupRows = [{ id: 'x' }]
+    await post({ ...lead, whatsapp: '9833333333' })
+    dupRows = []
+    insert.mockResolvedValue({ data: null, error: { message: 'down' } })
+    await post({ ...lead, whatsapp: '9844444444' })
+    await new Promise(r => setTimeout(r, 0))
+    expect(crmSync).not.toHaveBeenCalled()
   })
 
   it('rate-limits a single IP', async () => {

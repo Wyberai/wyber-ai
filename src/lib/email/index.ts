@@ -229,6 +229,17 @@ export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
 // emails, all about the event: confirmation, reminder, thanks, followup.
 // Deliberately states only what is known: booth S23, 27-29 Nov, Ahmedabad.
 // (Venue and opening hours are not confirmed by the organiser yet.)
+// Daily internal revenue brief for the founder (see lib/crm/brief.ts, /api/cron/crm-brief).
+export async function sendCrmDailyBrief(opts: { subject: string; text: string }) {
+  const paras = opts.text.split('\n').map(l => (l.trim() ? p(escHtml(l)) : '')).join('')
+  const html = wrap(`
+    ${h1('Revenue brief')}
+    ${paras}
+    <div style="text-align:center;margin:24px 0">${btn('Open the CRM →', `${APP_URL}/admin/crm`)}</div>
+  `, 'Where the pipeline stands and who to contact first')
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: opts.subject, html })
+}
+
 export interface ExpoSequenceLead { name: string; day: string | null; painPoint: string }
 
 function expoQuote(painPoint: string): string {
