@@ -43,6 +43,13 @@ const { data, error } = await q
 if (error) { console.error(error.message.includes('expo_leads') ? 'Table missing: apply migration 20261107020000_expo_leads.sql' : error.message); process.exit(1) }
 const leads = (data || []).filter(l => !isOwned(l))
 
+// Which sequence emails each lead has received (needs migration 20261107030000).
+const sentMap = new Map()
+if (leads.length) {
+  const { data: sent } = await sb.from('expo_lead_emails').select('lead_id, kind').in('lead_id', leads.map(l => l.id))
+  for (const r of sent || []) sentMap.set(r.lead_id, [...(sentMap.get(r.lead_id) || []), r.kind])
+}
+
 if (flag('--csv')) {
   const cols = ['created_at', 'status', 'name', 'whatsapp', 'email', 'business', 'audience', 'preferred_day', 'source', 'pain_point', 'notes', 'id']
   const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`
@@ -59,6 +66,7 @@ console.log('')
 for (const l of leads) {
   console.log(`${l.id.slice(0, 8)}  ${l.created_at.slice(5, 16).replace('T', ' ')}  [${l.status}]  ${l.name} · ${l.whatsapp} · ${l.preferred_day} · ${l.source}`)
   console.log(`          ${l.business ? l.business + ' — ' : ''}${l.pain_point.slice(0, 110)}`)
+  console.log(`          email: ${l.email ? (l.email_opt_out ? 'OPTED OUT' : (sentMap.get(l.id) || []).join(', ') || 'none sent yet') : 'no email given (WhatsApp only)'}`)
 }
 const stale = leads.filter(l => l.status === 'new' && Date.now() - new Date(l.created_at).getTime() > 4 * 3600_000)
 if (stale.length) console.log(`\n${stale.length} lead(s) still "new" after 4h: reply on WhatsApp.`)

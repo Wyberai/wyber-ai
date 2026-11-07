@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { sendAdminExpoLeadAlert } from '@/lib/email'
 import { createAdminClient } from '@/lib/supabase/server'
 import { normalizePhone, resolveLeadSource } from '@/lib/expo-leads'
 import { rateLimit } from '@/lib/rate-limit'
+import { deliverExpoEmail, expoSequenceDisabled } from '@/lib/expo-sequence-send'
 
 const clean = (v: unknown, max: number) => String(v ?? '').replace(/\s+/g, ' ').trim().slice(0, max)
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -49,8 +50,10 @@ export async function POST(req: NextRequest) {
   // down we still fall through to the alert email, as before.
   const phoneNorm = normalizePhone(whatsapp)
   let saved = false
+  let leadId: string | null = null
+  let admin: Awaited<ReturnType<typeof createAdminClient>> | null = null
   try {
-    const admin = await createAdminClient()
+    admin = await createAdminClient()
     const since = new Date(Date.now() - 24 * 3600_000).toISOString()
     const { data: dup } = await admin
       .from('expo_leads').select('id').eq('whatsapp_norm', phoneNorm).gte('created_at', since).limit(1)
@@ -58,12 +61,12 @@ export async function POST(req: NextRequest) {
       // Same person double-tapping or re-submitting: already recorded and alerted.
       return NextResponse.json({ ok: true })
     }
-    const { error } = await admin.from('expo_leads').insert({
+    const { data: inserted, error } = await admin.from('expo_leads').insert({
       name, whatsapp, whatsapp_norm: phoneNorm, email: email || null, business: business || null,
       audience, preferred_day: day, pain_point: painPoint, source, utm_source: utmSource, utm_campaign: utmCampaign,
-    })
+    }).select('id').single()
     if (error) console.error('[expo-lead] db insert failed:', error.message)
-    else saved = true
+    else { saved = true; leadId = inserted?.id ?? null }
   } catch (err) {
     console.error('[expo-lead] db error:', err)
   }
@@ -74,6 +77,16 @@ export async function POST(req: NextRequest) {
     alerted = true
   } catch (err) {
     console.error('[expo-lead] alert email failed:', err)
+  }
+
+  // Instant confirmation to the visitor (first email of the sequence). Runs
+  // after the response so a slow mail server never holds up the form; the
+  // daily cron sends it later if this attempt fails.
+  if (saved && leadId && email && admin && !expoSequenceDisabled()) {
+    const id = leadId
+    const db = admin
+    const job = () => deliverExpoEmail(db, { id, name, email, preferred_day: day, pain_point: painPoint }, 'confirmation').catch(() => {})
+    try { after(job) } catch { void job() }
   }
 
   // Fail only when the lead would be lost entirely.

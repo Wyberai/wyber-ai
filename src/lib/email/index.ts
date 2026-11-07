@@ -1,6 +1,7 @@
 import { memeImg } from './memes'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
+import { unsubscribeUrl } from './unsubscribe'
 
 // All sends go through Continuum (SES, with SMTP2GO fallback) via the shared
 // transport in ./transport — it retries once, logs failures under
@@ -221,6 +222,95 @@ export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
     ])}
   `, `Booth request: ${lead.name}`)
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `📅 Booth request: ${lead.name.slice(0, 60)}`, html })
+}
+
+// ── Tech Expo Gujarat: lead email sequence (see lib/expo-sequence.ts) ────────
+// Sent only to people who submitted the booth form with an email. Four
+// emails, all about the event: confirmation, reminder, thanks, followup.
+// Deliberately states only what is known: booth S23, 27-29 Nov, Ahmedabad.
+// (Venue and opening hours are not confirmed by the organiser yet.)
+export interface ExpoSequenceLead { name: string; day: string | null; painPoint: string }
+
+function expoQuote(painPoint: string): string {
+  const text = escHtml(painPoint.length > 220 ? `${painPoint.slice(0, 217)}…` : painPoint)
+  return `<div style="margin:0 0 20px;padding:14px 18px;background:#1a1a1e;border-left:3px solid #0EA5E9;border-radius:6px;font-size:14px;color:#f0f0f4;line-height:1.6">“${text}”</div>`
+}
+
+export function buildExpoSequenceEmail(
+  kind: 'confirmation' | 'reminder' | 'thanks' | 'followup',
+  to: string,
+  lead: ExpoSequenceLead,
+): { subject: string; html: string } {
+  const first = escHtml((lead.name || 'there').trim().split(/\s+/)[0] || 'there')
+  const anyDay = !lead.day || lead.day === 'Any day'
+  const dayLabel = anyDay ? 'any day of the expo (27–29 Nov)' : escHtml(lead.day as string)
+  const unsub = unsubscribeUrl(to)
+  const signup = (campaign: string) => `${APP_URL}/signup?utm_source=expo-email&utm_campaign=${campaign}`
+
+  if (kind === 'confirmation') {
+    return {
+      subject: 'Your slot request is in: booth S23, Tech Expo Gujarat',
+      html: wrap(`
+        ${h1(`Got it, ${first}.`)}
+        ${p(`Your request to meet us on ${dayLabel} is in. We&apos;ll message you on WhatsApp to confirm a time.`)}
+        ${infoBox([
+          ['Event', 'Tech Expo Gujarat, Ahmedabad'],
+          ['Booth', 'S23'],
+          ['Dates', '27–29 Nov 2026'],
+          ['Your day', anyDay ? 'Any day' : dayLabel],
+          ['Length', '15 minutes, free'],
+        ])}
+        ${p('This is the pain point you gave us. It is what we&apos;ll bring with us:')}
+        ${expoQuote(lead.painPoint)}
+        ${p('Need to change your day or add detail? Just reply to this email.')}
+      `, 'Your slot request for booth S23 is in', unsub),
+    }
+  }
+
+  if (kind === 'reminder') {
+    return {
+      subject: anyDay ? 'The expo starts tomorrow: we are at booth S23' : 'Tomorrow at Tech Expo Gujarat: booth S23',
+      html: wrap(`
+        ${h1(`See you at booth S23, ${first}`)}
+        ${p(anyDay
+          ? 'Tech Expo Gujarat starts tomorrow (27–29 Nov) and we are at booth S23. Come by whenever you are free.'
+          : `You asked to meet on ${dayLabel}, which is tomorrow. We are at booth S23.`)}
+        ${p('If you have one real example of the thing your software cannot do, bring it: a spreadsheet, a screenshot, a WhatsApp thread. It is the quickest way for us to show you something that fits.')}
+        ${expoQuote(lead.painPoint)}
+        ${p('Plans changed? Reply to this email and we will sort out another time.')}
+      `, 'Tomorrow at booth S23', unsub),
+    }
+  }
+
+  if (kind === 'thanks') {
+    return {
+      subject: 'Your pain point, and what happens next',
+      html: wrap(`
+        ${h1(`Thanks, ${first}.`)}
+        ${p('Tech Expo Gujarat is over. Whether or not we met at the booth, the pain point you sent is still with us:')}
+        ${expoQuote(lead.painPoint)}
+        ${p('Reply with one more detail, such as the screens you would want or who would use it, and we will tell you what a first version would look like.')}
+        <div style="text-align:center;margin:28px 0">${btn('Start building free →', signup('teg2026-thanks'))}</div>
+        ${p('30 free credits when you sign up. No card needed.')}
+      `, 'The pain point you sent us', unsub),
+    }
+  }
+
+  return {
+    subject: 'One last note from Tech Expo Gujarat',
+    html: wrap(`
+      ${h1(`Did you find a way around it, ${first}?`)}
+      ${p('When you asked for a slot with us, you told us:')}
+      ${expoQuote(lead.painPoint)}
+      ${p('If that is still a headache, reply and say so. If you have already solved it, ignore this. It is our last email about the expo.')}
+      <div style="text-align:center;margin:28px 0">${btn('Try it free →', signup('teg2026-followup'))}</div>
+    `, 'Our last note about the expo', unsub),
+  }
+}
+
+export async function sendExpoSequenceEmail(kind: 'confirmation' | 'reminder' | 'thanks' | 'followup', to: string, lead: ExpoSequenceLead) {
+  const { subject, html } = buildExpoSequenceEmail(kind, to, lead)
+  return sendMail({ from: FROM, to, subject, html })
 }
 
 export async function sendAdminMcpProjectAlert(userEmail: string, projectName: string, framework: string) {

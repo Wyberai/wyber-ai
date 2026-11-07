@@ -19,6 +19,9 @@ export default async function UnsubscribePage({ searchParams }: Props) {
       try {
         const admin = await createAdminClient()
         await admin.from('profiles').update({ email_opt_out: true }).eq('email', email)
+        // Also stop any Tech Expo Gujarat emails to this address. Best-effort:
+        // the column only exists once migration 20261107030000 is applied.
+        try { await admin.from('expo_leads').update({ email_opt_out: true }).ilike('email', email.replace(/[\\%_]/g, (c) => `\\${c}`)) } catch { /* ignore */ }
         state = 'done'
       } catch {
         state = 'invalid'

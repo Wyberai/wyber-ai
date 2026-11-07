@@ -99,7 +99,7 @@ export function ExpoForm({ audience, onAudienceChange }: { audience: AudienceId;
           <input id="expo-wa" name="whatsapp" type="tel" required maxLength={20} autoComplete="tel" inputMode="tel" style={field} />
         </div>
         <div>
-          <label htmlFor="expo-email" style={label}>Email (optional)</label>
+          <label htmlFor="expo-email" style={label}>Email (optional, for your confirmation and reminder)</label>
           <input id="expo-email" name="email" type="email" maxLength={120} autoComplete="email" style={field} />
         </div>
       </div>
@@ -108,7 +108,7 @@ export function ExpoForm({ audience, onAudienceChange }: { audience: AudienceId;
         {state === 'sending' ? 'Sending…' : 'Book 15 minutes at the booth'}
       </button>
       <p style={{ margin: 0, fontSize: 12, color: '#545c6e', lineHeight: 1.6 }}>
-        We only use your details to confirm your slot. No spam, no list.
+        We use your details to confirm your slot. If you add an email, you&apos;ll get a confirmation, a reminder before your day, and two short follow-ups after the expo. Every email has an unsubscribe link. We don&apos;t sell or share your details.
       </p>
     </form>
   )

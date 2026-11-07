@@ -4,12 +4,18 @@ const sendAlert = vi.fn()
 const insert = vi.fn()
 let dupRows: unknown[] = []
 
+const confirm = vi.fn()
+let disabled = false
 vi.mock('@/lib/email', () => ({ sendAdminExpoLeadAlert: (...a: unknown[]) => sendAlert(...a) }))
+vi.mock('@/lib/expo-sequence-send', () => ({
+  deliverExpoEmail: (...a: unknown[]) => confirm(...a),
+  expoSequenceDisabled: () => disabled,
+}))
 vi.mock('@/lib/supabase/server', () => ({
   createAdminClient: async () => ({
     from: () => ({
       select: () => ({ eq: () => ({ gte: () => ({ limit: async () => ({ data: dupRows }) }) }) }),
-      insert: (row: unknown) => insert(row),
+      insert: (row: unknown) => ({ select: () => ({ single: () => insert(row) }) }),
     }),
   }),
 }))
@@ -30,7 +36,9 @@ const lead = { name: 'Asha', whatsapp: '+91 98765 43210', painPoint: 'I never kn
 
 beforeEach(() => {
   sendAlert.mockReset().mockResolvedValue(undefined)
-  insert.mockReset().mockResolvedValue({ error: null })
+  insert.mockReset().mockResolvedValue({ data: { id: 'lead-1' }, error: null })
+  confirm.mockReset().mockResolvedValue('sent')
+  disabled = false
   dupRows = []
 })
 
@@ -75,6 +83,32 @@ describe('POST /api/expo-lead', () => {
     const bot = await post({ ...lead, website: 'http://spam' })
     expect(bot.status).toBe(200)
     expect(insert).not.toHaveBeenCalled()
+  })
+
+  it('sends the confirmation email for a saved lead that gave an email', async () => {
+    const res = await post({ ...lead, email: 'asha@example.com' })
+    expect(res.status).toBe(200)
+    await new Promise(r => setTimeout(r, 0))
+    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(confirm).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ id: 'lead-1', email: 'asha@example.com', preferred_day: '28 Nov' }), 'confirmation')
+  })
+
+  it('sends no confirmation when there is no email, it is switched off, or it was a duplicate', async () => {
+    await post(lead)
+    disabled = true
+    await post({ ...lead, whatsapp: '9811111111', email: 'b@example.com' })
+    disabled = false
+    dupRows = [{ id: 'x' }]
+    await post({ ...lead, whatsapp: '9822222222', email: 'c@example.com' })
+    await new Promise(r => setTimeout(r, 0))
+    expect(confirm).not.toHaveBeenCalled()
+  })
+
+  it('does not send a confirmation when the lead could not be saved', async () => {
+    insert.mockResolvedValue({ data: null, error: { message: 'down' } })
+    await post({ ...lead, email: 'asha@example.com' })
+    await new Promise(r => setTimeout(r, 0))
+    expect(confirm).not.toHaveBeenCalled()
   })
 
   it('rate-limits a single IP', async () => {
