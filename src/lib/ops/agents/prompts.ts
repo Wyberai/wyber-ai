@@ -82,7 +82,7 @@ This is an internal note: no greeting, no sign-off, no link.`,
 - Say you are checking on the payment for the project in the activity note (use its title). Offer to resend the payment details or help if anything is unclear.
 - NEVER state an amount, a due date, a late fee, a penalty or a threat. Never say you will stop work. The activity says which reminder this is: reminder 1 is light, reminder 2 a little firmer, reminder 3 asks plainly whether something is blocking payment.
 - Do not mention a payment method or bank details; you do not have them. Do not include any link.`,
-  content: `Task: write three short LinkedIn posts (channel "doc") the founder can edit and publish. Use the headings "Post 1", "Post 2", "Post 3".
+  content: `Task: write the LinkedIn posts (channel "doc") the founder can edit and publish, one per topic listed in the activity note, under the headings "Post 1", "Post 2", "Post 3". Follow each topic and use its opening line idea as the first line, lightly reworded if needed.
 - Each post is under 600 characters, plain and specific, with a first line that makes a business owner stop scrolling by naming a real problem (orders lost in chat, spreadsheets that break, tools that do not fit).
 - Use ONLY the company_facts for claims about WyberAi. You may describe common business problems in general terms, but never invent a customer, a number, a result or a quote.
 - At most two hashtags per post. No links. No emojis.`,

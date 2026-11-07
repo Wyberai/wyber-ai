@@ -158,3 +158,19 @@ describe('schedule tool', () => {
     expect(r[0].jobs.length).toBeGreaterThan(5)
   })
 })
+
+describe('growth tool', () => {
+  it('compares the last 7 days with the ramp and returns today\'s content', async () => {
+    const rows = Array.from({ length: 7 }, (_, i) => ({ email: `u${i}@x.com`, created_at: day(i), country: 'IN' }))
+    const r = await runTool(withContacts([], { profiles: rows }), 'growth', {}, NOW) as { goal_per_day: number; last7_average: number; pace: { status: string; target: number }; today_content: { channel: string }[] }
+    expect(r.goal_per_day).toBe(100)
+    expect(r.last7_average).toBe(1)
+    expect(r.pace.status).toBe('behind')
+    expect(r.today_content[0].channel).toBe('linkedin')
+  })
+  it('says so when signups cannot be read instead of inventing a pace', async () => {
+    const r = await runTool(withContacts([], { profiles: { error: 'no table' } }), 'growth', {}, NOW) as { signups_error: string; pace: unknown }
+    expect(r.signups_error).toContain('Signups unavailable')
+    expect(r.pace).toBeNull()
+  })
+})

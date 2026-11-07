@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 export const COMPANY_LINKS = [
   { href: '/admin/ask', label: 'Ask' },
   { href: '/admin/today', label: 'Schedule' },
+  { href: '/admin/growth', label: 'Growth' },
   { href: '/admin/crm', label: 'CRM' },
   { href: '/admin/quotes', label: 'Quotes' },
   { href: '/admin/agents', label: 'Agents' },

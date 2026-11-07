@@ -1,6 +1,8 @@
 import type { Contact } from '@/lib/crm/contact'
 import { buildBrief } from '@/lib/crm/brief'
 import { isOptedOut } from '@/lib/crm/patch'
+import { topicsForWeek } from '@/lib/ops/marketing/calendar'
+import { istDay } from '@/lib/ops/schedule'
 import type { AgentId, Candidate, Lang } from './types'
 
 // Which contacts each agent should work on right now. Pure: contacts, a clock and
@@ -113,7 +115,13 @@ export function selectReengage(contacts: Contact[], now: Date, have: Set<string>
 
 export function selectContent(now: Date, have: Set<string>): Candidate[] {
   const key = `posts:${weekKey(now)}`
-  return have.has(existingKey('content', null, key)) ? [] : [{ contact: null, key, reason: 'Weekly LinkedIn drafts', activities: [] }]
+  if (have.has(existingKey('content', null, key))) return []
+  // The next three days from the content calendar are what this week's posts are about.
+  const topics = topicsForWeek(istDay(now)).slice(0, 3)
+  const summary = topics.length
+    ? topics.map((t, i) => `Post ${i + 1} (for ${t.date}): topic "${t.topic}". Opening line idea: "${t.hook}"`).join('\n')
+    : 'No topics scheduled. Write three posts about common business problems that custom software solves.'
+  return [{ contact: null, key, reason: 'Weekly LinkedIn drafts', activities: [{ kind: 'system', summary, created_at: now.toISOString() }] }]
 }
 
 /** The few quote fields the collections agent needs. */

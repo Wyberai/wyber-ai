@@ -519,3 +519,16 @@ describe('opt-out is honoured by every agent that writes to people', () => {
     expect(selectCollections([tagged], [{ id: 'q', contact_id: tagged.id, title: 'T', status: 'accepted', accepted_at: hoursAgo(24 * 9), paid_at: null }], NOW, none)).toHaveLength(0)
   })
 })
+
+describe('content agent uses the calendar', () => {
+  it('gives the model the next three calendar topics and their opening lines', () => {
+    const out = selectContent(new Date('2026-11-10T06:00:00Z'), none)
+    const note = out[0].activities[0].summary
+    expect(note).toContain('Post 1 (for 2026-11-10)')
+    expect(note).toContain('The spreadsheet only one person understands')
+    expect(note.split('\n')).toHaveLength(3)
+  })
+  it('falls back to a plain brief once the calendar has run out', () => {
+    expect(selectContent(new Date('2027-03-01T06:00:00Z'), none)[0].activities[0].summary).toContain('No topics scheduled')
+  })
+})
