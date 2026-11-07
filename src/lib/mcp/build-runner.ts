@@ -3,6 +3,7 @@ import { parseGenerationOutput, parseEditBlocks } from '@/lib/file-parser'
 import { applyEdits } from '@/lib/patch-applier'
 import { internalSecret } from '@/lib/internal-auth'
 import { synthesizeAppTsx } from '@/lib/synthesize-app'
+import { sendWhatsAppText } from '@/lib/whatsapp/client'
 
 type FileVal = { path: string; content: string; language: string }
 
@@ -73,15 +74,30 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
     .update({ status: 'processing', processing_started_at: new Date().toISOString() })
     .eq('id', messageId)
     .eq('status', 'queued')
-    .select('id, project_id, user_id, message, project_type, palette_id')
+    .select('id, project_id, user_id, message, project_type, palette_id, channel, whatsapp_identity_id')
     .single()
 
   if (!claimed) return // already claimed by another tick, not queued, or another build for this project is in flight
+
+  // WhatsApp-originated builds have no chat UI polling mcp_messages for
+  // status — the phone number IS the only surface, so it needs an explicit
+  // push instead of just a row update. MCP-origin rows keep their existing
+  // silent-row-update behavior (the connector polls get_message_status).
+  const notifyWhatsApp = async (text: string) => {
+    if (claimed.channel !== 'whatsapp' || !claimed.whatsapp_identity_id) return
+    const { data: identity } = await db
+      .from('whatsapp_identities')
+      .select('phone_e164')
+      .eq('id', claimed.whatsapp_identity_id)
+      .single()
+    if (identity?.phone_e164) await sendWhatsAppText(identity.phone_e164, text)
+  }
 
   const fail = async (error: string) => {
     await db.from('mcp_messages')
       .update({ status: 'error', error: error.slice(0, 2000), processed_at: new Date().toISOString() })
       .eq('id', claimed.id)
+    await notifyWhatsApp(`❌ That build failed: ${error.slice(0, 300)}`)
   }
 
   try {
@@ -261,6 +277,12 @@ export async function processQueuedMessage(messageId: string): Promise<void> {
         processed_at: new Date().toISOString(),
       })
       .eq('id', claimed.id)
+
+    await notifyWhatsApp(
+      publishedUrl
+        ? `✅ Done! Here's your app: ${publishedUrl}\n\nReply to keep editing it, or text "new app" to start something else.`
+        : `✅ Build complete (${changed} file change${changed === 1 ? '' : 's'}), but publishing didn't produce a live link this time — text me again to retry.`
+    )
   } catch (err) {
     await fail(String(err))
   }
