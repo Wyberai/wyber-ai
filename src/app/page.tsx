@@ -1,6 +1,8 @@
 import { headers } from 'next/headers'
 import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { resolveHeroSegment } from '@/lib/hero-segments'
+import { buildPrior } from '@/lib/intent/prior'
+import { intentExperimentOn } from '@/lib/intent/experiment'
 import { HomeClient } from './HomeClient'
 import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 import { getScanStats } from '@/lib/security-stats'
@@ -42,9 +44,28 @@ export default async function HomePage({
       referer: (await headers()).get('referer'),
     })
   }
+  // Visitor-intent experiment: India-only and off unless NEXT_PUBLIC_INTENT_EXPERIMENT=1.
+  // A null prior means HomeClient renders exactly what it always has.
+  let intentPrior = null
+  if (intentExperimentOn(process.env.NEXT_PUBLIC_INTENT_EXPERIMENT) && currency === 'INR') {
+    const params = await searchParams
+    const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? null
+    const h = await headers()
+    intentPrior = buildPrior({
+      path: '/',
+      utmSource: one(params.utm_source),
+      utmCampaign: one(params.utm_campaign),
+      utmContent: one(params.utm_content),
+      forParam: one(params.for),
+      referer: h.get('referer'),
+      country: h.get('x-vercel-ip-country'),
+      region: h.get('x-vercel-ip-country-region'),
+      acceptLanguage: h.get('accept-language'),
+    })
+  }
   return (
     <>
-      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} />
+      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} />
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )

@@ -12,6 +12,10 @@ import { I18N_ENABLED, LOCALE_SPEECH_CODE, LOCALE_STORAGE_KEY, LOCALES, type Loc
 import { localePath } from '@/lib/i18n/hreflang';
 import { HOME_STRINGS, type HomeStrings } from '@/lib/i18n/home-translations';
 import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
+import { IntentStrip } from '@/components/shared/IntentStrip';
+import { HERO_GU } from '@/lib/intent/hero-gu';
+import { sendIntentEvent, getVariant } from '@/lib/intent/client';
+import type { IntentLang, Prior } from '@/lib/intent/types';
 
 const BRAND = '#0EA5E9';
 
@@ -353,7 +357,7 @@ function buildStages(t: HomeStrings) {
 interface HomeGalleryApp { id: string; name: string; category: string; preview_color: string | null; use_count: number }
 interface HomeUserBuild { id: string; title: string; category: string; preview_color: string | null; thumbnail_url: string | null; sales_count: number; sellerName: string }
 
-export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [] }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[] }) {
+export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [], intentPrior = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[]; intentPrior?: Prior | null }) {
   const inr = initialCurrency === 'INR';
   // India-only locale switch — never rendered or read for non-India visitors.
   // Starts 'en' on every render (server and first client paint match, so no
@@ -384,7 +388,17 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   }, [initialSegment]);
   // English-only override: India's local-language heroes are already adapted.
   const base = HOME_STRINGS[locale];
-  const t = segment && locale === 'en' ? { ...base, ...HERO_SEGMENT_STRINGS[segment] } : base;
+  const heroT = segment && locale === 'en' ? { ...base, ...HERO_SEGMENT_STRINGS[segment] } : base;
+  // Visitor-intent experiment (India-only, flag-gated server-side): picking Gujarati
+  // in the intent strip overlays the Gujarati hero. Null prior = experiment off = no change.
+  const [intentLang, setIntentLang] = useState<IntentLang>('en');
+  const t = intentPrior && intentLang === 'gu' ? { ...heroT, ...HERO_GU } : heroT;
+  const onIntentLang = (l: IntentLang) => {
+    setIntentLang(l);
+    const next: Locale = l === 'hi' ? 'hi' : 'en';
+    setLocale(next);
+    try { localStorage.setItem(LOCALE_STORAGE_KEY, next); } catch { /* private mode */ }
+  };
   const [user, setUser] = useState<{ id: string } | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeProduct, setActiveProduct] = useState(0);
@@ -409,6 +423,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         localStorage.setItem('wyber-pending-type', heroTarget);
       } catch { /* private mode */ }
       track('homepage_prompt_submitted', { length: p.length, target: heroTarget, segment: segment ?? 'default' });
+      if (intentPrior) sendIntentEvent('submitted', { variant: getVariant(), lang: intentLang });
     }
     window.location.href = user ? '/dashboard' : '/signup';
   };
@@ -531,6 +546,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
               {/* The prompt box IS the primary CTA: the visitor's idea rides
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
+              {inr && intentPrior && (
+                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} />
+              )}
               <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 12, marginBottom: 16, borderColor: 'var(--brand-border-strong)', borderRadius: 18 }}>
                 <textarea
                   ref={heroPromptRef}
