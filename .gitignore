@@ -95,3 +95,4 @@ scripts/template-gen/_pilot-output*/
 /marketing/uae-*
 # underscore-prefixed throwaway scripts under template-gen
 /scripts/template-gen/_*.mjs
+/marketing/gujarat-tech-expo/out/
