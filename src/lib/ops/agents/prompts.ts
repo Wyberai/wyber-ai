@@ -11,6 +11,9 @@ export const AGENTS: Record<AgentId, AgentDef> = {
   meeting_prep: { id: 'meeting_prep', name: 'Meeting prep', job: 'A one-page brief before each booked meeting: what they told us, questions to ask, a first-version idea.', model: 'cheap', channels: ['note'], maxPerRun: 10, maxTokens: 1600, mayQuotePrice: false },
   proposal: { id: 'proposal', name: 'Proposal outline', job: 'After a meeting, turns your notes into a scope outline. Price and dates are left for you.', model: 'code', channels: ['doc'], maxPerRun: 5, maxTokens: 2400, mayQuotePrice: false },
   weekly_coach: { id: 'weekly_coach', name: 'Weekly coach', job: 'Once a week, reads the pipeline and says what is stuck and what to do first.', model: 'code', channels: ['doc'], maxPerRun: 1, maxTokens: 1800, mayQuotePrice: true },
+  onboarding: { id: 'onboarding', name: 'Client onboarding', job: 'When a deal is won, writes the kickoff checklist: what to confirm with the client before building starts.', model: 'cheap', channels: ['doc'], maxPerRun: 5, maxTokens: 1500, mayQuotePrice: false },
+  reengage: { id: 'reengage', name: 'Re-engage', job: 'Once a month, one gentle message to leads that went cold, with an easy way to say no.', model: 'cheap', channels: ['whatsapp', 'email'], maxPerRun: 10, maxTokens: 700, mayQuotePrice: false },
+  content: { id: 'content', name: 'Content', job: 'Once a week, drafts three short LinkedIn posts from approved company facts only, for you to edit and post.', model: 'code', channels: ['doc'], maxPerRun: 1, maxTokens: 1800, mayQuotePrice: false },
 }
 
 export const GUARDRAILS = `Rules that always apply:
@@ -65,6 +68,18 @@ Under no heading may you state a price, a date or a number of weeks. End with th
   weekly_coach: `Task: read the pipeline summary in "activities" and write a short weekly note (channel "doc") for the founder with these headings exactly:
 Where we stand / What is stuck and why it might be / The three things to do first this week / One thing to stop doing.
 Base every statement on the numbers given. If there is too little data to say something, say so plainly. Do not invent reasons you cannot see.`,
+  onboarding: `Task: a deal with this person is won. Write a kickoff checklist (channel "doc") for the founder to use on the first call. Use these headings exactly:
+What we are building (their words) / Ten things to confirm before we start (specific to them: who will use it, what data they have today, what to import, who approves, what a good first week looks like) / Access and material to ask for / First week plan (plain steps, no dates) / Risks to raise early.
+Only use the record and notes. Mark anything unknown as "Unknown: ask". Do not state a price, a date or a number of weeks.
+This is an internal note: no greeting, no sign-off, no link.`,
+  reengage: `Task: write ONE short message to someone who went quiet a while ago. Choose "whatsapp" if the record has a phone number, otherwise "email".
+- 2 to 3 short sentences, under 380 characters in total including the way out. Do not guilt them. Do not pretend nothing happened and do not repeat the earlier pitch.
+- Refer to what they originally told us if the record has it; otherwise ask one simple question about their work.
+- Always end with an easy way out, such as "If this is not relevant now, tell me and I will not message again."`,
+  content: `Task: write three short LinkedIn posts (channel "doc") the founder can edit and publish. Use the headings "Post 1", "Post 2", "Post 3".
+- Each post is under 600 characters, plain and specific, with a first line that makes a business owner stop scrolling by naming a real problem (orders lost in chat, spreadsheets that break, tools that do not fit).
+- Use ONLY the company_facts for claims about WyberAi. You may describe common business problems in general terms, but never invent a customer, a number, a result or a quote.
+- At most two hashtags per post. No links. No emojis.`,
 }
 
 /**

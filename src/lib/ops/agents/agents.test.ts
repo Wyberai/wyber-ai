@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Contact } from '@/lib/crm/contact'
-import { selectOutreach, selectFollowup, selectMeetingPrep, selectProposal, selectWeeklyCoach, weekKey, chooseLang, existingKey } from './select'
+import { selectOutreach, selectFollowup, selectMeetingPrep, selectProposal, selectWeeklyCoach, selectOnboarding, selectReengage, selectContent, weekKey, chooseLang, existingKey } from './select'
 import { parseDraft, CHANNEL_LIMIT } from './validate'
 import { AGENTS, GUARDRAILS, TASKS, buildUserMessage, systemFor, rateCardEmpty, relationshipFor, guardrailsFor } from './prompts'
 import { runAgent, runAll } from './run'
@@ -410,5 +410,54 @@ describe('runAgent', () => {
     const db = blank(); db.contacts = [mk()]
     const res = await runAll({ admin: fakeAdmin(db), callModel: model(), now: NOW })
     expect(res.map(r => r.agent)).toEqual(AGENT_IDS as unknown as AgentId[])
+  })
+})
+
+describe('onboarding, re-engage and content agents', () => {
+  it('onboarding: only won deals, biggest first, once each', () => {
+    const big = mk({ name: 'Big', stage: 'won', value_usd: 9000 }), small = mk({ name: 'Small', stage: 'won', value_usd: 100 })
+    const open = mk({ stage: 'proposal' }), done = mk({ name: 'Done', stage: 'won' })
+    const have = new Set([existingKey('onboarding', done.id, 'kickoff')])
+    expect(selectOnboarding([small, big, open, done], have).map(c => c.contact!.name)).toEqual(['Big', 'Small'])
+  })
+
+  it('re-engage: 21+ quiet days, reachable, once a month, never someone who said no or is closed', () => {
+    const quiet = mk({ name: 'Quiet', stage: 'contacted', last_touch_at: hoursAgo(24 * 30) })
+    const recent = mk({ name: 'Recent', stage: 'contacted', last_touch_at: hoursAgo(24 * 5) })
+    const parked = mk({ name: 'Parked', stage: 'nurture', last_touch_at: hoursAgo(24 * 40) })
+    const no = mk({ name: 'No', stage: 'contacted', last_touch_at: hoursAgo(24 * 40), notes: 'Said: not interested, do not contact' })
+    const lost = mk({ name: 'Lost', stage: 'lost', last_touch_at: hoursAgo(24 * 40) })
+    const won = mk({ name: 'Won', stage: 'won', last_touch_at: hoursAgo(24 * 40) })
+    const noReach = mk({ stage: 'contacted', phone: null, phone_norm: null, email: null, last_touch_at: hoursAgo(24 * 40) })
+    const all = [quiet, recent, parked, no, lost, won, noReach]
+    expect(selectReengage(all, NOW, none).map(c => c.contact!.name).sort()).toEqual(['Parked', 'Quiet'])
+    const have = new Set([existingKey('reengage', quiet.id, 're:2026-11)')])
+    expect(selectReengage([quiet], NOW, new Set([existingKey('reengage', quiet.id, 're:2026-11')])).length).toBe(0)
+    expect(have.size).toBe(1)
+  })
+
+  it('content: one global job per week', () => {
+    expect(selectContent(NOW, none)).toHaveLength(1)
+    expect(selectContent(NOW, new Set([existingKey('content', null, `posts:${weekKey(NOW)}`)]))).toHaveLength(0)
+  })
+
+  it('internal agents get no link rule; re-engage writes to people and must offer an exit', () => {
+    for (const id of ['onboarding', 'content'] as const) expect(systemFor(id)).toContain('Do not include any link or URL.')
+    expect(systemFor('reengage')).toContain('The only link you may include')
+    expect(TASKS.reengage).toContain('I will not message again')
+    expect(AGENTS.content.mayQuotePrice).toBe(false)
+    expect(AGENTS.onboarding.channels).toEqual(['doc'])
+  })
+
+  it('the content agent drafts one global doc a week and rejects invented prices', async () => {
+    const db = blank()
+    const good = { channel: 'doc', lang: 'en', title: 'Posts', body: 'Post 1\nOrders on WhatsApp get lost. Tell us the one thing your tools cannot do.\n\nPost 2\nSpreadsheets that break.\n\nPost 3\nCustom software from a plain description.' }
+    const mkModel = (b: object) => vi.fn(async (_a: { tier: string }) => ({ text: JSON.stringify(b), inputTokens: 5, outputTokens: 5, model: 'm' }))
+    const r = await runAgent('content', { admin: fakeAdmin(db), callModel: mkModel(good), now: NOW })
+    expect(r.created).toBe(1)
+    expect(db.drafts[0]).toMatchObject({ agent: 'content', contact_id: null, channel: 'doc' })
+    const db2 = blank()
+    const bad = await runAgent('content', { admin: fakeAdmin(db2), callModel: mkModel({ ...good, body: `${good.body}\nApps from $500.` }), now: NOW })
+    expect(bad).toMatchObject({ created: 0, errors: 1 })
   })
 })

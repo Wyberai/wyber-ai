@@ -1,6 +1,6 @@
 import type { Contact } from '@/lib/crm/contact'
 
-export const AGENT_IDS = ['outreach', 'followup', 'meeting_prep', 'proposal', 'weekly_coach'] as const
+export const AGENT_IDS = ['outreach', 'followup', 'meeting_prep', 'proposal', 'weekly_coach', 'onboarding', 'reengage', 'content'] as const
 export type AgentId = (typeof AGENT_IDS)[number]
 
 export const CHANNELS = ['whatsapp', 'email', 'note', 'doc'] as const

@@ -85,3 +85,31 @@ export function selectWeeklyCoach(contacts: Contact[], now: Date, have: Set<stri
   const brief = buildBrief(contacts, now)
   return [{ contact: null, key, reason: 'Weekly pipeline read', activities: [], }].map(c => ({ ...c, activities: [{ kind: 'system', summary: brief.text, created_at: now.toISOString() }] }))
 }
+
+export function selectOnboarding(contacts: Contact[], have: Set<string>): Candidate[] {
+  return contacts
+    .filter(c => c.stage === 'won' && !have.has(existingKey('onboarding', c.id, 'kickoff')))
+    .sort((a, b) => b.value_usd - a.value_usd)
+    .map(c => ({ contact: c, key: 'kickoff', reason: 'Deal won; no kickoff checklist yet', activities: [] }))
+}
+
+const OPTED_OUT = /do not contact|don'?t contact|unsubscribe|stop messag|not interested|\bstop\b|\bdnd\b/i
+
+/** Quiet 21+ days at a contacted, replied or parked stage; one nudge per contact per month; never someone who said no. */
+export function selectReengage(contacts: Contact[], now: Date, have: Set<string>): Candidate[] {
+  const out: Candidate[] = []
+  const key = `re:${now.toISOString().slice(0, 7)}`
+  for (const c of contacts) {
+    if (!['contacted', 'replied', 'nurture'].includes(c.stage) || !hasReach(c)) continue
+    if (OPTED_OUT.test(`${c.notes ?? ''} ${c.tags.join(' ')} ${c.lost_reason ?? ''}`)) continue
+    const quietDays = (now.getTime() - new Date(c.last_touch_at ?? c.updated_at).getTime()) / DAY
+    if (quietDays < 21 || have.has(existingKey('reengage', c.id, key))) continue
+    out.push({ contact: c, key, reason: `${Math.floor(quietDays)} days since last touch at "${c.stage}"`, activities: [] })
+  }
+  return out.sort((a, b) => b.contact!.score - a.contact!.score)
+}
+
+export function selectContent(now: Date, have: Set<string>): Candidate[] {
+  const key = `posts:${weekKey(now)}`
+  return have.has(existingKey('content', null, key)) ? [] : [{ contact: null, key, reason: 'Weekly LinkedIn drafts', activities: [] }]
+}

@@ -2,7 +2,7 @@ import { loadContacts } from '@/lib/crm/db'
 import type { Contact } from '@/lib/crm/contact'
 import type { CallModel } from './llm'
 import { AGENTS, buildUserMessage, systemFor } from './prompts'
-import { chooseLang, existingKey, selectFollowup, selectMeetingPrep, selectOutreach, selectProposal, selectWeeklyCoach } from './select'
+import { chooseLang, existingKey, selectContent, selectFollowup, selectMeetingPrep, selectOnboarding, selectOutreach, selectReengage, selectProposal, selectWeeklyCoach } from './select'
 import { parseDraft } from './validate'
 import { MAX_PENDING_PER_AGENT, type ActivityLite, type AgentId, type Candidate } from './types'
 
@@ -33,6 +33,9 @@ export function pickCandidates(agent: AgentId, contacts: Contact[], now: Date, h
     case 'meeting_prep': return selectMeetingPrep(contacts, now, have)
     case 'proposal': return selectProposal(contacts, have)
     case 'weekly_coach': return selectWeeklyCoach(contacts, now, have)
+    case 'onboarding': return selectOnboarding(contacts, have)
+    case 'reengage': return selectReengage(contacts, now, have)
+    case 'content': return selectContent(now, have)
   }
 }
 
