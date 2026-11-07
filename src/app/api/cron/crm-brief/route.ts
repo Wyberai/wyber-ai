@@ -3,8 +3,22 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { collectIncoming, loadContacts, syncIncoming } from '@/lib/crm/db'
 import { buildBrief } from '@/lib/crm/brief'
 import { sendCrmDailyBrief } from '@/lib/email'
+import { agentsBriefSection } from '@/lib/ops/agents/brief-section'
 
 export const maxDuration = 120
+
+// What the agents have waiting, and money agreed but not received. Best-effort: tables may not exist yet.
+async function agentsSection(admin: Awaited<ReturnType<typeof createAdminClient>>): Promise<string> {
+  try {
+    const pend = await admin.from('ops_agent_drafts').select('agent').eq('status', 'pending')
+    const quotes = await admin.from('crm_quotes').select('accepted_at').eq('status', 'accepted').is('paid_at', null)
+    const day = 86400_000
+    return agentsBriefSection({
+      pendingAgents: pend.error ? [] : ((pend.data ?? []) as { agent: string }[]).map(d => d.agent),
+      unpaidQuoteDays: quotes.error ? [] : ((quotes.data ?? []) as { accepted_at: string | null }[]).filter(q => q.accepted_at).map(q => Math.max(0, Math.floor((Date.now() - new Date(q.accepted_at as string).getTime()) / day))),
+    }).text
+  } catch { return '' }
+}
 
 // Daily (vercel.json cron): refresh the CRM from every source, then email the
 // founder the revenue brief. Off with CRM_BRIEF_DISABLED=true. ?dry=1 returns
@@ -36,6 +50,9 @@ export async function GET(req: NextRequest) {
   if (!contacts.length) return NextResponse.json({ skipped: true, reason: 'no contacts yet' })
 
   const brief = buildBrief(contacts)
+  const extra = await agentsSection(admin)
+  if (extra) brief.text += `
+${extra}`
   const subject = `Revenue brief: $${Math.round(brief.wonMonthUsd).toLocaleString('en-US')} won this month, ${brief.overdue} overdue, ${brief.top.length} to do first`
   if (dry) return NextResponse.json({ dry: true, subject, text: brief.text })
 

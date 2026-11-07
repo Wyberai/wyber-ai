@@ -237,6 +237,7 @@ export async function sendQuoteAcceptedAlert(a: { title: string; totalLabel: str
     ${infoBox([['Quote', escHtml(a.title)], ['Total', escHtml(a.totalLabel)], ['Accepted by', escHtml(a.acceptedBy)], ['CRM contact', escHtml(a.contactName ?? 'not linked')]])}
     ${p('The deal is now marked Won in the CRM. Next: confirm payment and delivery details with them in writing.')}
     <div style="text-align:center;margin:24px 0">${btn('Open the CRM →', `${APP_URL}/admin/crm`)}</div>
+    <div style="text-align:center;margin:0 0 24px">${btn('Review agent drafts →', `${APP_URL}/admin/agents`)}</div>
   `, 'A client accepted a quote')
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `Quote accepted: ${a.title.slice(0, 60)} (${a.totalLabel})`, html })
 }
