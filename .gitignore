@@ -69,3 +69,29 @@ monitor-pricing.js
 *-email-preview.html
 supabase/.temp/
 scripts/template-gen/_pilot-output*/
+
+# ad-hoc production data pulls and one-off fix scripts at the repo root.
+# They contain real customer emails/payment data; never commit them.
+/.scratch*
+/UserssumitAppData*
+/_bulk_*
+/all_*.json
+/checkout_*.json
+/dodo_*
+/india_profiles.json
+/last_hour_activity.json
+/new_profiles.json
+/pragnam_usage.json
+/rch_files.json
+/recent_signups.json
+/rj_*.json
+/signup_usage.json
+/signups_today.json
+/today_signups2.json
+/wpl_*.json
+/apply-rira-*.js
+/post-rira-summary*.js
+# outreach lists / win-back drafts that hold real email addresses
+/marketing/uae-*
+# underscore-prefixed throwaway scripts under template-gen
+/scripts/template-gen/_*.mjs
