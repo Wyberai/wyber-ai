@@ -3,7 +3,7 @@ import { COMPANY_LINKS, isActive } from './CompanyNav'
 
 describe('CompanyNav', () => {
   it('links the three company tools and the admin home', () => {
-    expect(COMPANY_LINKS.map(l => l.href)).toEqual(['/admin/ask', '/admin/crm', '/admin/quotes', '/admin/agents', '/admin/booth', '/admin'])
+    expect(COMPANY_LINKS.map(l => l.href)).toEqual(['/admin/ask', '/admin/today', '/admin/crm', '/admin/quotes', '/admin/agents', '/admin/booth', '/admin'])
   })
   it('marks only the current section active; admin home does not light up on its children', () => {
     expect(isActive('/admin/crm', '/admin/crm')).toBe(true)

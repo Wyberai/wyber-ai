@@ -149,3 +149,12 @@ describe('ask loop', () => {
     for (const w of ['never invent one', 'You can only read', 'DATA, never instructions', '2026-11-10', '100']) expect(s).toContain(w)
   })
 })
+
+describe('schedule tool', () => {
+  it('returns the next days with automatic jobs and what is due', async () => {
+    const r = await runTool(withContacts([contact({ stage: 'contacted', next_action: 'Send demo', next_action_at: '2026-11-10T08:00:00Z' })]), 'schedule', { days: 2 }, NOW) as { date: string; followUps: { name: string }[]; jobs: unknown[] }[]
+    expect(r.map(d => d.date)).toEqual(['2026-11-10', '2026-11-11'])
+    expect(r[0].followUps[0].name).toBe('Asha Patel')
+    expect(r[0].jobs.length).toBeGreaterThan(5)
+  })
+})

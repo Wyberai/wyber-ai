@@ -7,6 +7,7 @@ import { computeResults } from '@/lib/ops/agents/results'
 import { AGENTS } from '@/lib/ops/agents/prompts'
 import { AGENT_IDS } from '@/lib/ops/agents/types'
 import { EXPO, expoStatus } from '@/lib/ops/facts'
+import { buildSchedule, istDay } from '@/lib/ops/schedule'
 
 // The questions the founder can ask the dashboard are answered ONLY from these
 // read-only tools. None of them writes, sends, or changes anything. Each returns
@@ -28,6 +29,7 @@ export const TOOLS: ToolDef[] = [
   { name: 'agent_drafts', description: 'What the company agents have drafted: counts by status, and the newest pending drafts waiting for approval.', input_schema: { type: 'object', properties: { agent: { type: 'string' } } } },
   { name: 'agent_results', description: 'How the agents performed over the last 30 days: drafts used, rejected, estimated time saved.', input_schema: { type: 'object', properties: {} } },
   { name: 'expo', description: 'Tech Expo Gujarat: where it is relative to today, booth slot requests by status and day, and booth-captured leads.', input_schema: { type: 'object', properties: {} } },
+  { name: 'schedule', description: 'What will happen on each of the next N days (India time): automatic jobs, follow-ups and meetings due, expo dates.', input_schema: { type: 'object', properties: { days: { type: 'number', description: '1 to 14, default 3' } } } },
   { name: 'today', description: 'The to-do queue for today: who to contact and why, overdue items, and the day\'s scheduled automatic jobs.', input_schema: { type: 'object', properties: {} } },
 ]
 
@@ -133,6 +135,10 @@ export async function runTool(admin: Admin, name: string, input: Record<string, 
       const tally = (k: 'status' | 'preferred_day') => { const m: Record<string, number> = {}; for (const x of rows) { const v = String(x[k] ?? 'unknown'); m[v] = (m[v] ?? 0) + 1 } return m }
       const contacts = await loadContacts(admin).catch(() => [] as Contact[])
       return { event: EXPO.name, booth: EXPO.booth, starts: EXPO.start, ends: EXPO.end, status: expoStatus(now), days_until_start: Math.ceil((new Date(EXPO.start).getTime() - now.getTime()) / DAY), slot_requests: rows.length, by_status: tally('status'), by_day: tally('preferred_day'), booth_captured_leads: contacts.filter(c => c.tags.includes('booth')).length }
+    }
+    case 'schedule': {
+      const contacts = await loadContacts(admin)
+      return buildSchedule(istDay(now), Number(input.days) || 3, contacts)
     }
     case 'today': {
       const contacts = await loadContacts(admin)
