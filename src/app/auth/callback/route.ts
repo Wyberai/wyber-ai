@@ -43,6 +43,7 @@ export async function GET(request: Request) {
         userAgent: request.headers.get('user-agent'),
         fbp: cookieStore.get('_fbp')?.value || null,
         fbc: cookieStore.get('_fbc')?.value || null,
+        attribution: cookieStore.get('wyber_attr')?.value || null,
       });
 
       // Referral is redeemed (or was absent) — clear the cookie so it can't apply

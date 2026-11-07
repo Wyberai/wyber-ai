@@ -7,6 +7,7 @@ import { WyberChatbot } from '@/components/shared/WyberChatbot'
 import { SupportChat } from '@/components/shared/SupportChat'
 import { CommandPalette } from '@/components/shared/CommandPalette'
 import { InstallPrompt } from '@/components/shared/InstallPrompt'
+import { AttributionCapture } from '@/components/shared/AttributionCapture'
 
 // Routes that serve END-USER apps (published user content). These must stay
 // 100% white-label: no WyberAi cookie banner, command palette, chat widgets,
@@ -49,6 +50,7 @@ export function PlatformChrome() {
           {`if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{})}`}
         </Script>
       )}
+      <AttributionCapture />
       <CookieBanner />
       <CommandPalette />
       <InstallPrompt />

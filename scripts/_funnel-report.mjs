@@ -16,14 +16,30 @@ const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABA
 const DAYS = Number(process.argv[2] ?? 30)
 const since = new Date(Date.now() - DAYS * 86400000).toISOString()
 
-const { data: profiles, error: pErr } = await sb
+// signup_source only exists once migration 20261107000000_signup_attribution.sql
+// is applied, so fall back to the old column set rather than failing.
+let hasSource = true
+let { data: profiles, error: pErr } = await sb
   .from('profiles')
-  .select('id, email, plan, credits, created_at')
+  .select('id, email, plan, credits, created_at, country, signup_source, signup_campaign')
   .gte('created_at', since)
+if (pErr) {
+  hasSource = false
+  ;({ data: profiles, error: pErr } = await sb
+    .from('profiles')
+    .select('id, email, plan, credits, created_at, country')
+    .gte('created_at', since))
+}
 if (pErr) { console.error('profiles error:', pErr.message); process.exit(1) }
 
 const ids = profiles.map(p => p.id)
-const isInternal = e => /@(wyberai\.com|signalpulsehq\.com)$/i.test(e || '')
+// Standing rule: never count the founder's own / test accounts. Substring
+// match, case-insensitive.
+const OWNED = ['hello@wyberai.com', 'sumeet.sutar@tryreconsignal.com', 'sumit.sutar259@gmail.com', 'reconsignal', 'continuum', 'vthaku89', 'signalpulsehq.com']
+const isInternal = e => {
+  const v = (e || '').toLowerCase()
+  return /@wyberai\.com$/.test(v) || OWNED.some(o => v.includes(o))
+}
 const external = profiles.filter(p => !isInternal(p.email))
 const extIds = external.map(p => p.id)
 
@@ -48,7 +64,7 @@ for (const p of external) {
 const externalAttempts = caErr ? [] : (attempts || []).filter(a => extIds.includes(a.user_id))
 const converted = externalAttempts.filter(a => a.converted)
 
-console.log(`\n── Funnel report — last ${DAYS}d (excluding internal @wyberai.com/@signalpulsehq.com accounts) ──\n`)
+console.log(`\n── Funnel report — last ${DAYS}d (excluding owned/internal accounts) ──\n`)
 console.log(`Signups:            ${external.length}`)
 console.log(`Activated (built):  ${activated}  (${external.length ? Math.round(activated/external.length*100) : 0}%)`)
 console.log(`Published:          ${published}  (${external.length ? Math.round(published/external.length*100) : 0}%)`)
@@ -61,4 +77,28 @@ if (externalAttempts.length) {
     console.log(`  ${a.created_at.slice(0,16).replace('T',' ')}  ${a.plan_key} (${a.currency})  converted=${a.converted}`)
   }
 }
+
+// Where do signups come from, and do they build? Rows with no source are
+// signups from before attribution existed.
+function breakdown(title, keyFn) {
+  const rows = new Map()
+  for (const p of external) {
+    const k = keyFn(p) || '(unknown)'
+    const r = rows.get(k) || { n: 0, built: 0, pub: 0 }
+    const own = projByUser.get(p.id) || []
+    r.n++
+    if (own.length) r.built++
+    if (own.some(pr => pr.published_url)) r.pub++
+    rows.set(k, r)
+  }
+  console.log(`\n${title}`)
+  for (const [k, r] of [...rows].sort((a, b) => b[1].n - a[1].n).slice(0, 12)) {
+    console.log(`  ${k.padEnd(24)} signups ${String(r.n).padStart(4)}   built ${String(r.built).padStart(3)} (${Math.round(r.built / r.n * 100)}%)   published ${r.pub}`)
+  }
+}
+breakdown('By country', p => p.country)
+if (hasSource) breakdown('By first-touch source', p => p.signup_source)
+else console.log('\n(source breakdown unavailable: apply migration 20261107000000_signup_attribution.sql)')
+const excluded = profiles.length - external.length
+if (excluded) console.log(`\nExcluded ${excluded} owned/internal account(s) from all numbers above.`)
 console.log('')

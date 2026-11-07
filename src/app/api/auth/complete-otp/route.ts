@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     userAgent: req.headers.get('user-agent'),
     fbp: cookieStore.get('_fbp')?.value || null,
     fbc: cookieStore.get('_fbc')?.value || null,
+    attribution: cookieStore.get('wyber_attr')?.value || null,
   });
 
   cookieStore.set('wyber_ref', '', { maxAge: 0, path: '/' });

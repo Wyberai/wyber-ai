@@ -2,6 +2,7 @@ import type { User } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/server';
 import { sendWelcomeEmail, sendAdminSignupAlert } from '@/lib/email';
 import { REFERRAL_LIMIT } from '@/lib/referral';
+import { attributionToProfileColumns } from '@/lib/signup-attribution';
 
 // The post-authentication side effects every sign-in path (OAuth, clicked
 // magic link, typed OTP code) must run exactly once per real account:
@@ -24,9 +25,11 @@ export interface OnboardParams {
   userAgent?: string | null;
   fbp?: string | null;
   fbc?: string | null;
+  /** Raw wyber_attr cookie value (first-touch source), see lib/signup-attribution. */
+  attribution?: string | null;
 }
 
-export async function onboardUser({ user, supabase, ipCountry, refCode, origin, next, clientIp, userAgent, fbp, fbc }: OnboardParams): Promise<{ isFirstSignup: boolean }> {
+export async function onboardUser({ user, supabase, ipCountry, refCode, origin, next, clientIp, userAgent, fbp, fbc, attribution }: OnboardParams): Promise<{ isFirstSignup: boolean }> {
   const isStudent = !!(user.email?.endsWith('.edu') || user.email?.includes('.edu.'));
 
   // Backstop the handle_new_user trigger: create the row at the base 30 if it
@@ -61,6 +64,14 @@ export async function onboardUser({ user, supabase, ipCountry, refCode, origin, 
       .maybeSingle();
     if (firstTime?.id) {
       isFirstSignup = true;
+
+      // First-touch attribution. Best-effort: the signup_* columns come from
+      // a migration, so a missing column or bad cookie must never affect the
+      // signup itself.
+      try {
+        const cols = attributionToProfileColumns(attribution);
+        if (cols) await admin.from('profiles').update(cols).eq('id', user.id);
+      } catch { /* columns may not exist yet */ }
 
       if (user.email) {
         const fullName = (user.user_metadata?.full_name as string | undefined);
