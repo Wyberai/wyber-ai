@@ -134,7 +134,7 @@ describe('GET /state', () => {
   it('returns drafts with their contact, each agent switch and last run, and whether the key is set', async () => {
     const draft = { id: ID, agent: 'outreach', contact_id: CID, status: 'pending', created_at: '2026-11-10T00:00:00Z' }
     fake.from.mockImplementation((t: string) => {
-      if (t === 'ops_agent_drafts') return { select: () => ({ in: (_c: string, st: string[]) => ({ order: () => ({ limit: async () => ({ data: st.includes('pending') ? [draft] : [], error: null }) }) }) }) }
+      if (t === 'ops_agent_drafts') return { select: () => ({ gte: () => ({ limit: async () => ({ data: [{ agent: 'outreach', status: 'sent', edited: false, created_at: new Date().toISOString() }], error: null }) }), in: (_c: string, st: string[]) => ({ order: () => ({ limit: async () => ({ data: st.includes('pending') ? [draft] : [], error: null }) }) }) }) }
       if (t === 'crm_contacts') return { select: () => ({ in: async () => ({ data: [{ id: CID, name: 'Asha' }], error: null }) }) }
       if (t === 'ops_agent_settings') return { select: async () => ({ data: [{ agent: 'followup', enabled: false }], error: null }) }
       return { select: () => ({ order: () => ({ limit: async () => ({ data: [{ agent: 'outreach', started_at: 'x', created: 2 }], error: null }) }) }) }
@@ -144,6 +144,7 @@ describe('GET /state', () => {
     expect(body.agents.find((a: { id: string }) => a.id === 'followup').enabled).toBe(false)
     expect(body.agents.find((a: { id: string }) => a.id === 'outreach').enabled).toBe(true)
     expect(body.agents.find((a: { id: string }) => a.id === 'outreach').lastRun).toMatchObject({ created: 2 })
+    expect(body.results).toMatchObject({ totalMade: 1, totalUsed: 1 })
     expect(body.aiConfigured).toBe(true)
   })
 })

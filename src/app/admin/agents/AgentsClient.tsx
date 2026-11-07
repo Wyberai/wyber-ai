@@ -12,7 +12,9 @@ interface Draft {
   contact: DraftContact | null
 }
 interface AgentInfo { id: string; name: string; job: string; model: string; enabled: boolean; lastRun: { started_at: string; considered: number; created: number; skipped: number; errors: number; note: string | null } | null }
-interface State { drafts: Draft[]; agents: AgentInfo[]; aiConfigured: boolean; allDisabled: boolean; tablesMissing?: boolean; error?: string }
+interface AgentResult { agent: string; made: number; used: number; rejected: number; pending: number; useRate: number | null; minutesSaved: number }
+interface Results { days: number; perAgent: AgentResult[]; totalMade: number; totalUsed: number; useRate: number | null; hoursSaved: number }
+interface State { results?: Results; drafts: Draft[]; agents: AgentInfo[]; aiConfigured: boolean; allDisabled: boolean; tablesMissing?: boolean; error?: string }
 
 const REJECT_REASONS = ['Too pushy', 'Sounds like a bot', 'Wrong language', 'Wrong facts about them', 'Too long', 'Not relevant to them']
 const AGENT_LABEL: Record<string, string> = { outreach: 'Outreach', followup: 'Follow-up', meeting_prep: 'Meeting prep', proposal: 'Proposal outline', weekly_coach: 'Weekly coach', onboarding: 'Client onboarding', reengage: 'Re-engage', content: 'Content', collections: 'Collections' }
@@ -85,6 +87,14 @@ export default function AgentsClient() {
         </div>
       </div>
 
+      {state.results && state.results.totalMade > 0 && (
+        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 14px', marginBottom: 12, fontSize: 13 }}>
+          <strong>Last {state.results.days} days:</strong> agents wrote {state.results.totalMade} drafts, you used {state.results.totalUsed}
+          {state.results.useRate !== null && <> ({Math.round(state.results.useRate * 100)}% of the ones you decided on)</>}. Estimated time saved: about {state.results.hoursSaved} hours.
+          <div style={{ color: C.muted, marginTop: 4 }}>{state.results.perAgent.map(a => `${AGENT_LABEL[a.agent] ?? a.agent}: ${a.used} used${a.rejected ? `, ${a.rejected} rejected` : ''}`).join(' · ')}</div>
+          <div style={{ color: C.muted, marginTop: 4, fontSize: 12 }}>Time saved is an estimate of how long each draft would take you by hand.</div>
+        </div>
+      )}
       {state.allDisabled && <div style={{ background: 'rgba(239,68,68,0.12)', border: `1px solid ${C.red}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, marginBottom: 12 }}>All agents are switched off (OPS_AGENTS_DISABLED is true on this deployment).</div>}
       {!state.aiConfigured && <div style={{ background: 'rgba(245,158,11,0.12)', border: `1px solid ${C.amber}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, marginBottom: 12 }}>ANTHROPIC_API_KEY is not set on this deployment, so agents cannot write drafts yet.</div>}
       {msg && <div role="status" style={{ background: 'rgba(14,165,233,0.12)', border: `1px solid ${C.sky}`, borderRadius: 10, padding: '10px 12px', fontSize: 13, marginBottom: 12 }}>{msg}</div>}
