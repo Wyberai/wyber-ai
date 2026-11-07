@@ -43,7 +43,9 @@ export function selectOutreach(contacts: Contact[], have: Set<string>): Candidat
 export function selectFollowup(contacts: Contact[], now: Date, have: Set<string>): Candidate[] {
   const out: Candidate[] = []
   for (const c of contacts) {
-    if (!['contacted', 'replied', 'proposal'].includes(c.stage) || !hasReach(c)) continue
+    // Booth leads sit at "met": they get a thank-you follow-up too, once a day has passed.
+    const boothLead = c.stage === 'met' && c.tags.includes('booth')
+    if (!(['contacted', 'replied', 'proposal'].includes(c.stage) || boothLead) || !hasReach(c)) continue
     const last = new Date(c.last_touch_at ?? c.updated_at).getTime()
     const overdue = c.next_action_at ? new Date(c.next_action_at).getTime() <= now.getTime() : false
     const quietDays = (now.getTime() - last) / DAY
