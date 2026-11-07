@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Contact } from '@/lib/crm/contact'
-import { selectOutreach, selectFollowup, selectMeetingPrep, selectProposal, selectWeeklyCoach, selectOnboarding, selectReengage, selectContent, weekKey, chooseLang, existingKey } from './select'
+import { selectOutreach, selectFollowup, selectMeetingPrep, selectProposal, selectWeeklyCoach, selectOnboarding, selectReengage, selectContent, selectCollections, type QuoteLite, weekKey, chooseLang, existingKey } from './select'
 import { parseDraft, CHANNEL_LIMIT } from './validate'
 import { AGENTS, GUARDRAILS, TASKS, buildUserMessage, systemFor, rateCardEmpty, relationshipFor, guardrailsFor } from './prompts'
 import { runAgent, runAll } from './run'
@@ -275,6 +275,7 @@ interface Db {
   contacts: Contact[]
   acts: Record<string, unknown>[]
   runs: Record<string, unknown>[]
+  quotes?: QuoteLite[]
 }
 function fakeAdmin(db: Db) {
   const from = (table: string) => {
@@ -283,6 +284,7 @@ function fakeAdmin(db: Db) {
       if (table === 'ops_agent_settings') return db.settingsError ? { data: null, error: { message: 'nope' } } : { data: db.settings, error: null }
       if (table === 'ops_agent_runs') { if (state.op === 'insert') db.runs.push(state.row!); return { error: null } }
       if (table === 'crm_contacts') return { data: db.contacts, error: null }
+      if (table === 'crm_quotes') return { data: db.quotes ?? [], error: null }
       if (table === 'crm_activities') return { data: db.acts, error: null }
       if (table === 'ops_agent_drafts') {
         if (state.op === 'insert') {
@@ -459,5 +461,50 @@ describe('onboarding, re-engage and content agents', () => {
     const db2 = blank()
     const bad = await runAgent('content', { admin: fakeAdmin(db2), callModel: mkModel({ ...good, body: `${good.body}\nApps from $500.` }), now: NOW })
     expect(bad).toMatchObject({ created: 0, errors: 1 })
+  })
+})
+
+describe('collections agent', () => {
+  const quote = (o: Partial<QuoteLite> = {}): QuoteLite => ({ id: 'q1', contact_id: '', title: 'Delivery tracker', status: 'accepted', accepted_at: hoursAgo(24 * 5), paid_at: null, ...o })
+
+  it('reminds only for accepted, unpaid quotes 3+ days old, to someone we can reach', () => {
+    const c = mk({ name: 'Payer' }), noReach = mk({ phone: null, phone_norm: null, email: null })
+    const ok = quote({ contact_id: c.id }), fresh = quote({ id: 'q2', contact_id: c.id, accepted_at: hoursAgo(24) })
+    const paid = quote({ id: 'q3', contact_id: c.id, paid_at: hoursAgo(2) }), sent = quote({ id: 'q4', contact_id: c.id, status: 'sent' })
+    const unreachable = quote({ id: 'q5', contact_id: noReach.id }), orphan = quote({ id: 'q6', contact_id: null })
+    const out = selectCollections([c, noReach], [ok, fresh, paid, sent, unreachable, orphan], NOW, none)
+    expect(out).toHaveLength(1)
+    expect(out[0].reason).toContain('reminder 1 of 3')
+    expect(out[0].activities[0].summary).toContain('Delivery tracker')
+  })
+
+  it('one reminder a week, three at most per quote', () => {
+    const c = mk(), q = quote({ contact_id: c.id })
+    const k = (key: string) => existingKey('collections', c.id, key)
+    expect(selectCollections([c], [q], NOW, new Set([k(`pay:q1:${weekKey(NOW)}`)]))).toHaveLength(0)
+    const two = new Set([k('pay:q1:2026-W44'), k('pay:q1:2026-W45')])
+    expect(selectCollections([c], [q], NOW, two)[0].reason).toContain('reminder 3 of 3')
+    const three = new Set([...two, k('pay:q1:2026-W43')])
+    expect(selectCollections([c], [q], NOW, three)).toHaveLength(0)
+  })
+
+  it('never gives the model an amount, and queues a clean reminder against the contact', async () => {
+    const c = mk({ name: 'Payer' }); const db = blank(); db.contacts = [c]; db.quotes = [quote({ contact_id: c.id })]
+    const cm = model()
+    await runAgent('collections', { admin: fakeAdmin(db), callModel: cm, now: NOW })
+    expect(cm.mock.calls[0][0].user).not.toMatch(/\d{3,}\s?(usd|inr)|[$₹]\s?\d/i)
+    expect(db.drafts).toHaveLength(1)
+  })
+
+  it('a reminder that states an amount is rejected by the price check', async () => {
+    const c = mk(); const db = blank(); db.contacts = [c]; db.quotes = [quote({ contact_id: c.id })]
+    const r = await runAgent('collections', { admin: fakeAdmin(db), callModel: model(() => goodReply('Hi, thanks for accepting. Just checking on the payment of $4,000 for the project. Can I resend the details?')), now: NOW })
+    expect(r).toMatchObject({ created: 0, errors: 1 })
+  })
+
+  it('missing quote table (migration not run) means nothing to do, not a crash', async () => {
+    const db = blank(); db.contacts = [mk()]
+    const r = await runAgent('collections', { admin: fakeAdmin(db), callModel: model(), now: NOW })
+    expect(r.note).toBe('nothing to do')
   })
 })

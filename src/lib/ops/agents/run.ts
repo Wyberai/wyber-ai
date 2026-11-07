@@ -2,9 +2,10 @@ import { loadContacts } from '@/lib/crm/db'
 import type { Contact } from '@/lib/crm/contact'
 import type { CallModel } from './llm'
 import { AGENTS, buildUserMessage, systemFor } from './prompts'
-import { chooseLang, existingKey, selectContent, selectFollowup, selectMeetingPrep, selectOnboarding, selectOutreach, selectReengage, selectProposal, selectWeeklyCoach } from './select'
+import { chooseLang, existingKey, loadAcceptedQuotes, selectCollections, selectContent, selectFollowup, selectMeetingPrep, selectOnboarding, selectOutreach, selectReengage, selectProposal, selectWeeklyCoach } from './select'
 import { parseDraft } from './validate'
-import { MAX_PENDING_PER_AGENT, type ActivityLite, type AgentId, type Candidate } from './types'
+import { AGENT_IDS, MAX_PENDING_PER_AGENT, type ActivityLite, type AgentId, type Candidate } from './types'
+import type { QuoteLite } from './select'
 
 // Runs one agent: find who needs work, ask the model, check the answer, and put
 // the survivors in the approval queue. NOTHING IS SENT. Safe to run repeatedly:
@@ -26,7 +27,7 @@ export interface RunSummary {
 
 export interface RunDeps { admin: Admin; callModel: CallModel; now?: Date; limit?: number }
 
-export function pickCandidates(agent: AgentId, contacts: Contact[], now: Date, have: Set<string>): Candidate[] {
+export function pickCandidates(agent: AgentId, contacts: Contact[], now: Date, have: Set<string>, quotes: QuoteLite[] = []): Candidate[] {
   switch (agent) {
     case 'outreach': return selectOutreach(contacts, have)
     case 'followup': return selectFollowup(contacts, now, have)
@@ -36,6 +37,7 @@ export function pickCandidates(agent: AgentId, contacts: Contact[], now: Date, h
     case 'onboarding': return selectOnboarding(contacts, have)
     case 'reengage': return selectReengage(contacts, now, have)
     case 'content': return selectContent(now, have)
+    case 'collections': return selectCollections(contacts, quotes, now, have)
   }
 }
 
@@ -78,7 +80,8 @@ export async function runAgent(agent: AgentId, deps: RunDeps): Promise<RunSummar
   try { contacts = await loadContacts(admin) } catch { return finish('crm unavailable') }
 
   const room = MAX_PENDING_PER_AGENT - pending
-  const candidates = pickCandidates(agent, contacts, now, have).slice(0, Math.min(def.maxPerRun, room, deps.limit ?? Infinity))
+  const quotes = agent === 'collections' ? await loadAcceptedQuotes(admin) : []
+  const candidates = pickCandidates(agent, contacts, now, have, quotes).slice(0, Math.min(def.maxPerRun, room, deps.limit ?? Infinity))
   out.considered = candidates.length
   if (!candidates.length) return finish('nothing to do')
 
@@ -124,6 +127,6 @@ export async function runAgent(agent: AgentId, deps: RunDeps): Promise<RunSummar
 
 export async function runAll(deps: RunDeps): Promise<RunSummary[]> {
   const res: RunSummary[] = []
-  for (const id of Object.keys(AGENTS) as AgentId[]) res.push(await runAgent(id, deps))
+  for (const id of AGENT_IDS) res.push(await runAgent(id, deps))
   return res
 }

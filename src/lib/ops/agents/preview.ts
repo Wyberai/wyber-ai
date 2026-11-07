@@ -1,6 +1,6 @@
 import { loadContacts } from '@/lib/crm/db'
 import { pickCandidates } from './run'
-import { existingKey } from './select'
+import { existingKey, loadAcceptedQuotes } from './select'
 import { AGENTS } from './prompts'
 import { AGENT_IDS, MAX_PENDING_PER_AGENT, type AgentId } from './types'
 
@@ -21,7 +21,7 @@ export async function previewAll(admin: Admin, now: Date = new Date()): Promise<
     const have = new Set(rows.map(d => existingKey(agent, d.contact_id, d.dedupe_key)))
     const pending = rows.filter(d => d.status === 'pending').length
     const room = Math.max(0, MAX_PENDING_PER_AGENT - pending)
-    out.push({ agent, pending, wouldDraft: Math.min(AGENTS[agent].maxPerRun, room, pickCandidates(agent, contacts, now, have).length), note: pending >= MAX_PENDING_PER_AGENT ? 'backlog' : null })
+    out.push({ agent, pending, wouldDraft: Math.min(AGENTS[agent].maxPerRun, room, pickCandidates(agent, contacts, now, have, agent === 'collections' ? await loadAcceptedQuotes(admin) : []).length), note: pending >= MAX_PENDING_PER_AGENT ? 'backlog' : null })
   }
   return out
 }

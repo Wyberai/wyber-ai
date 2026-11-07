@@ -15,7 +15,7 @@ interface AgentInfo { id: string; name: string; job: string; model: string; enab
 interface State { drafts: Draft[]; agents: AgentInfo[]; aiConfigured: boolean; allDisabled: boolean; tablesMissing?: boolean; error?: string }
 
 const REJECT_REASONS = ['Too pushy', 'Sounds like a bot', 'Wrong language', 'Wrong facts about them', 'Too long', 'Not relevant to them']
-const AGENT_LABEL: Record<string, string> = { outreach: 'Outreach', followup: 'Follow-up', meeting_prep: 'Meeting prep', proposal: 'Proposal outline', weekly_coach: 'Weekly coach', onboarding: 'Client onboarding', reengage: 'Re-engage', content: 'Content' }
+const AGENT_LABEL: Record<string, string> = { outreach: 'Outreach', followup: 'Follow-up', meeting_prep: 'Meeting prep', proposal: 'Proposal outline', weekly_coach: 'Weekly coach', onboarding: 'Client onboarding', reengage: 'Re-engage', content: 'Content', collections: 'Collections' }
 
 async function api<T = Record<string, unknown>>(method: string, url: string, body?: unknown): Promise<T & { error?: string }> {
   try {

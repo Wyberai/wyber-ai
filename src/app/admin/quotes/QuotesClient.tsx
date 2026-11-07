@@ -9,7 +9,7 @@ const STATUS_COLOR: Record<QuoteStatus, string> = { draft: C.muted, sent: C.sky,
 
 interface Quote {
   id: string; token: string; contact_id: string | null; contact_name?: string | null; title: string; currency: Currency; items: QuoteItem[]; total: number
-  scope: string | null; terms: string | null; valid_until: string | null; status: QuoteStatus; sent_at: string | null; view_count: number; accepted_at: string | null; accepted_by: string | null; created_at: string
+  scope: string | null; terms: string | null; valid_until: string | null; status: QuoteStatus; sent_at: string | null; view_count: number; accepted_at: string | null; accepted_by: string | null; paid_at?: string | null; created_at: string
 }
 interface ContactLite { id: string; name: string; company: string | null; phone: string | null }
 
@@ -87,6 +87,12 @@ export default function QuotesClient() {
     setStatus('sent'); setShare({ url: r.url, message: r.message })
     flash('Marked as sent. The deal is now at Proposal with a follow-up in 3 days.'); await load()
   }
+  async function markPaid(id: string) {
+    if (!confirm('Mark this quote as paid? Payment reminders to the client will stop.')) return
+    const r = await api('PATCH', `/api/admin/quotes/${id}`, { action: 'mark_paid' })
+    if (r.error) return flash(r.error)
+    flash('Marked as paid'); await load()
+  }
   async function withdraw(id: string) {
     if (!confirm('Withdraw this quote? The link will stop accepting.')) return
     const r = await api('PATCH', `/api/admin/quotes/${id}`, { action: 'withdraw' })
@@ -127,7 +133,7 @@ export default function QuotesClient() {
                 <span style={{ color: STATUS_COLOR[q.status], fontSize: 12, fontWeight: 700 }}>{q.status}</span>
               </div>
               <div style={{ fontSize: 12.5, color: C.muted, marginTop: 3 }}>{q.contact_name ?? 'No contact'} · {formatMoney(q.total, q.currency)} · {q.view_count} view{q.view_count === 1 ? '' : 's'} · {ago(q.created_at)}</div>
-              {q.status === 'accepted' && <div style={{ fontSize: 12.5, color: C.green, marginTop: 3 }}>Accepted by {q.accepted_by}</div>}
+              {q.status === 'accepted' && <div style={{ fontSize: 12.5, color: C.green, marginTop: 3 }}>Accepted by {q.accepted_by}{q.paid_at ? ' · Paid' : ' · Awaiting payment'}</div>}
             </button>
           ))}
         </div>
@@ -191,6 +197,10 @@ export default function QuotesClient() {
               </div>
             )}
             {form.id && locked && status !== 'accepted' && <button style={{ ...btn(false, true), justifySelf: 'start' }} onClick={() => withdraw(form.id!)}>Withdraw this quote</button>}
+
+            {form.id && status === 'accepted' && !quotes.find(x => x.id === form.id)?.paid_at && (
+              <button style={{ ...btn(true), justifySelf: 'start' }} onClick={() => markPaid(form.id!)}>Mark as paid</button>
+            )}
 
             {share && (
               <div style={{ display: 'grid', gap: 8, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: 12 }}>

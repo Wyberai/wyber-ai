@@ -55,6 +55,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ quote: data, url, message: shareMessage(quote, url, contactName) })
   }
 
+  // Record that the client has paid. This stops the collections agent reminding them.
+  if (action === 'mark_paid') {
+    if (quote.status !== 'accepted') return NextResponse.json({ error: 'Only an accepted quote can be marked paid' }, { status: 409 })
+    const { data, error } = await admin.from('crm_quotes').update({ paid_at: now, updated_at: now }).eq('id', id).is('paid_at', null).select('*').maybeSingle()
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!data) return NextResponse.json({ error: 'Already marked as paid' }, { status: 409 })
+    if (quote.contact_id) await admin.from('crm_activities').insert({ contact_id: quote.contact_id, kind: 'system', summary: `Payment received: ${quote.title}`, by: 'admin' })
+    return NextResponse.json({ quote: data })
+  }
+
   if (action === 'withdraw') {
     if (quote.status === 'accepted') return NextResponse.json({ error: 'An accepted quote cannot be withdrawn' }, { status: 409 })
     const { data, error } = await admin.from('crm_quotes').update({ status: 'expired', updated_at: now }).eq('id', id).select('*').single()

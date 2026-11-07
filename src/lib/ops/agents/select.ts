@@ -113,3 +113,40 @@ export function selectContent(now: Date, have: Set<string>): Candidate[] {
   const key = `posts:${weekKey(now)}`
   return have.has(existingKey('content', null, key)) ? [] : [{ contact: null, key, reason: 'Weekly LinkedIn drafts', activities: [] }]
 }
+
+/** The few quote fields the collections agent needs. */
+export interface QuoteLite { id: string; contact_id: string | null; title: string; status: string; accepted_at: string | null; paid_at: string | null }
+
+export const MAX_PAYMENT_REMINDERS = 3
+
+/**
+ * Accepted quotes with no payment recorded, 3+ days after acceptance: one reminder a week, at most three per quote.
+ * The amount is never given to the model, so a reminder can never state or invent one.
+ */
+export function selectCollections(contacts: Contact[], quotes: QuoteLite[], now: Date, have: Set<string>): Candidate[] {
+  const byId = new Map(contacts.map(c => [c.id, c]))
+  const out: Candidate[] = []
+  for (const q of quotes) {
+    if (q.status !== 'accepted' || q.paid_at || !q.accepted_at || !q.contact_id) continue
+    const c = byId.get(q.contact_id)
+    if (!c || !hasReach(c)) continue
+    const days = Math.floor((now.getTime() - new Date(q.accepted_at).getTime()) / DAY)
+    if (days < 3) continue
+    const prefix = `collections|${c.id}|pay:${q.id}:`
+    const sent = [...have].filter(k => k.startsWith(prefix)).length
+    if (sent >= MAX_PAYMENT_REMINDERS) continue
+    const key = `pay:${q.id}:${weekKey(now)}`
+    if (have.has(existingKey('collections', c.id, key))) continue
+    out.push({
+      contact: c, key, reason: `Quote accepted ${days} days ago, no payment recorded (reminder ${sent + 1} of ${MAX_PAYMENT_REMINDERS})`,
+      activities: [{ kind: 'system', summary: `Quote "${q.title}" was accepted ${days} days ago. No payment has been recorded yet. This is reminder number ${sent + 1}.`, created_at: q.accepted_at }],
+    })
+  }
+  return out.sort((a, b) => a.activities[0].created_at.localeCompare(b.activities[0].created_at)) // oldest acceptance first
+}
+
+export async function loadAcceptedQuotes(admin: { from: (t: string) => any }): Promise<QuoteLite[]> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const { data, error } = await admin.from('crm_quotes').select('id, contact_id, title, status, accepted_at, paid_at').eq('status', 'accepted')
+  if (error) return [] // fail soft: before the migration there is no paid_at column, and nothing to remind about
+  return (data ?? []) as QuoteLite[]
+}
