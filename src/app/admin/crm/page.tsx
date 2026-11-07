@@ -1,4 +1,5 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
+import CompanyNav from '@/components/admin/CompanyNav'
 import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -23,5 +24,5 @@ export default async function AdminCrmPage() {
   } catch (e) {
     error = e instanceof Error ? e.message : 'Could not load the CRM'
   }
-  return <CrmClient initialContacts={contacts} loadError={error} />
+  return <><CompanyNav /><CrmClient initialContacts={contacts} loadError={error} /></>
 }

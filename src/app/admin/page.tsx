@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { AdminClient } from './AdminClient';
+import CompanyNav from '@/components/admin/CompanyNav';
 
 const ADMIN_EMAILS = ['hello@wyberai.com', 'sumit@reconsignal.com', 'sumit.sutar259@gmail.com', 'admin@reconsignal.com'];
 
@@ -64,7 +65,7 @@ export default async function AdminPage() {
   });
 
   return (
-    <AdminClient data={{
+    <><CompanyNav /><AdminClient data={{
       totalUsers: totalUsers ?? 0,
       totalProjects: totalProjects ?? 0,
       totalGenerations: totalGenerations ?? 0,
@@ -84,6 +85,6 @@ export default async function AdminPage() {
       planBreakdown,
       genByDay,
       estimatedMRR: ((planBreakdown['starter'] ?? 0) * 29 + (planBreakdown['builder'] ?? 0) * 79 + (planBreakdown['pro'] ?? 0) * 199 + (planBreakdown['growth'] ?? 0) * 399 + (planBreakdown['scale'] ?? 0) * 799),
-    }} />
+    }} /></>
   );
 }

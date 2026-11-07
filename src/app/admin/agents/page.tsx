@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import CompanyNav from '@/components/admin/CompanyNav'
 import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -12,5 +13,5 @@ export default async function AdminAgentsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/admin/agents')
   if (!isAdminEmail(user.email)) redirect('/dashboard')
-  return <AgentsClient />
+  return <><CompanyNav /><AgentsClient /></>
 }
