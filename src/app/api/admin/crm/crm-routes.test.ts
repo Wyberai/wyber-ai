@@ -109,6 +109,44 @@ describe('/activities', () => {
   })
 })
 
+describe('/activities: they replied', () => {
+  const wire = (stage: string, tags: string[] = []) => {
+    const update = vi.fn().mockReturnValue({ eq: async () => ({ error: null }) })
+    const insert = vi.fn().mockReturnValue({ select: () => ({ single: async () => ({ data: { id: 1, kind: 'whatsapp', summary: 'Replied: x', created_at: '', by: 'admin' }, error: null }) }) })
+    fake.from.mockImplementation((t: string) => t === 'crm_activities' ? { insert }
+      : { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: ID, stage, tags }, error: null }) }) }), update })
+    return { update, insert }
+  }
+
+  it('records the reply, moves the deal to Replied and sets an answer task', async () => {
+    const { update, insert } = wire('contacted')
+    const r = await actPost(req('/x', { contactId: ID, reply: true, channel: 'whatsapp', summary: 'Can you also track job workers?' }))
+    expect(r.status).toBe(200)
+    expect(await r.json()).toMatchObject({ optedOut: false, stage: 'replied' })
+    expect(insert).toHaveBeenCalledWith(expect.objectContaining({ summary: 'Replied: Can you also track job workers?' }))
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ stage: 'replied', next_action: 'Answer their reply' }))
+  })
+
+  it('a request to stop tags the contact so no agent writes to them again', async () => {
+    const { update } = wire('contacted')
+    const body = await (await actPost(req('/x', { contactId: ID, reply: true, summary: 'Please stop messaging me' }))).json()
+    expect(body.optedOut).toBe(true)
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ tags: ['do-not-contact'], next_action_at: null }))
+  })
+
+  it('never drags a deal backwards: a reply from someone at Proposal keeps their stage', async () => {
+    const { update } = wire('proposal')
+    await actPost(req('/x', { contactId: ID, reply: true, summary: 'Looks good, one question' }))
+    expect(update.mock.calls[0][0]).not.toHaveProperty('stage')
+  })
+
+  it('needs text and a real contact', async () => {
+    wire('new')
+    expect((await actPost(req('/x', { contactId: ID, reply: true, summary: '  ' }))).status).toBe(400)
+    expect((await actPost(req('/x', { contactId: 'bad', reply: true, summary: 'hi' }))).status).toBe(400)
+  })
+})
+
 describe('POST /sync', () => {
   it('collects from every source and merges, reporting what was found and changed', async () => {
     const body = await (await syncPost()).json()

@@ -254,6 +254,14 @@ function Detail({ c, onClose, onSave, flash }: { c: Contact; onClose: () => void
     if (saved) { flash('Saved'); api<{ activities: Activity[] }>('GET', `/api/admin/crm/activities?contactId=${c.id}`).then(r => { if (!r.error) setActs(r.activities) }) }
   }
   const addActivity = async () => {
+    if (kind.startsWith('reply:')) {
+      const r = await api<{ activity: Activity; optedOut: boolean; stage: string }>('POST', '/api/admin/crm/activities', { contactId: c.id, reply: true, channel: kind.slice(6), summary: text })
+      if (r.error) return flash(r.error)
+      setActs(a => [r.activity, ...a]); setText('')
+      flash(r.optedOut ? 'Logged. They asked us to stop, so agents will not write to them again.' : 'Logged. Moved to Replied; the follow-up agent will draft an answer.')
+      await onSave({ stage: r.stage })
+      return
+    }
     const r = await api<{ activity: Activity }>('POST', '/api/admin/crm/activities', { contactId: c.id, kind, summary: text })
     if (r.error) return flash(r.error)
     setActs(a => [r.activity, ...a]); setText('')
@@ -294,8 +302,8 @@ function Detail({ c, onClose, onSave, flash }: { c: Contact; onClose: () => void
         <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 12, display: 'grid', gap: 8 }}>
           <div style={{ fontSize: 13, fontWeight: 700 }}>Activity</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <select style={{ ...input, width: 110 }} value={kind} onChange={e => setKind(e.target.value)}>{['note', 'call', 'whatsapp', 'email', 'meeting'].map(k => <option key={k}>{k}</option>)}</select>
-            <input style={input} placeholder="What happened?" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addActivity() }} />
+            <select style={{ ...input, width: 150 }} value={kind} onChange={e => setKind(e.target.value)}>{['note', 'call', 'whatsapp', 'email', 'meeting'].map(k => <option key={k}>{k}</option>)}<option value="reply:whatsapp">They replied (WhatsApp)</option><option value="reply:email">They replied (email)</option></select>
+            <input style={input} placeholder={kind.startsWith('reply:') ? 'Paste what they wrote' : 'What happened?'} value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addActivity() }} />
             <button style={btn()} onClick={addActivity}>Add</button>
           </div>
           {acts.length === 0 && <div style={{ fontSize: 12.5, color: C.muted }}>No activity yet.</div>}

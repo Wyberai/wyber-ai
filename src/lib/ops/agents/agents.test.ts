@@ -508,3 +508,14 @@ describe('collections agent', () => {
     expect(r.note).toBe('nothing to do')
   })
 })
+
+describe('opt-out is honoured by every agent that writes to people', () => {
+  it('a do-not-contact contact is skipped by outreach, follow-up, re-engage and collections', () => {
+    const tagged = mk({ stage: 'contacted', last_touch_at: hoursAgo(24 * 40), tags: ['do-not-contact'] })
+    const fresh = mk({ tags: ['do-not-contact'] })
+    expect(selectOutreach([fresh], none)).toHaveLength(0)
+    expect(selectFollowup([tagged], NOW, none)).toHaveLength(0)
+    expect(selectReengage([tagged], NOW, none)).toHaveLength(0)
+    expect(selectCollections([tagged], [{ id: 'q', contact_id: tagged.id, title: 'T', status: 'accepted', accepted_at: hoursAgo(24 * 9), paid_at: null }], NOW, none)).toHaveLength(0)
+  })
+})

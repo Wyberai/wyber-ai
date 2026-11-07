@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildPatch, validateActivity } from './patch'
+import { buildPatch, validateActivity, planReply, isOptedOut, DNC_TAG } from './patch'
 import type { Contact } from './contact'
 
 const NOW = new Date('2026-11-10T06:00:00Z')
@@ -69,5 +69,34 @@ describe('validateActivity', () => {
     expect(validateActivity({ contactId: id, summary: '  ' }).ok).toBe(false)
     const r = validateActivity({ contactId: id, summary: 'a'.repeat(5000) })
     expect(r.ok && r.summary.length).toBe(1000)
+  })
+})
+
+describe('planReply / isOptedOut', () => {
+  const NOW = new Date('2026-11-10T06:00:00Z')
+  it('moves early-stage deals to replied and asks for an answer now', () => {
+    const r = planReply({ stage: 'contacted' }, '  Sure, call me   tomorrow ', 'whatsapp', NOW)
+    expect(r).toMatchObject({ ok: true, kind: 'whatsapp', summary: 'Replied: Sure, call me tomorrow', optedOut: false })
+    if (r.ok) expect(r.patch).toMatchObject({ stage: 'replied', next_action: 'Answer their reply', next_action_at: NOW.toISOString(), last_touch_at: NOW.toISOString() })
+  })
+  it('does not move a deal that is further along', () => {
+    for (const stage of ['meeting_booked', 'met', 'proposal', 'won', 'lost']) {
+      const r = planReply({ stage }, 'ok', 'email', NOW)
+      expect(r.ok && 'stage' in r.patch).toBe(false)
+    }
+  })
+  it('detects a request to stop in English and keeps existing tags', () => {
+    for (const t of ['STOP', 'please unsubscribe me', 'Not interested, thanks', "don't contact me again", 'remove me from your list']) {
+      const r = planReply({ stage: 'new', tags: ['vip'] }, t, 'whatsapp', NOW)
+      expect(r.ok && r.optedOut).toBe(true)
+      if (r.ok) expect(r.patch.tags).toEqual(['vip', DNC_TAG])
+    }
+    expect((planReply({ stage: 'new' }, 'Stopped by your booth last year, tell me more', 'whatsapp', NOW) as { optedOut: boolean }).optedOut).toBe(false)
+  })
+  it('rejects an empty reply', () => { expect(planReply({ stage: 'new' }, '   ', 'email').ok).toBe(false) })
+  it('isOptedOut reads the tag and the notes', () => {
+    expect(isOptedOut({ tags: [DNC_TAG] })).toBe(true)
+    expect(isOptedOut({ notes: 'Said do not contact' })).toBe(true)
+    expect(isOptedOut({ tags: ['vip'], notes: 'Orders on WhatsApp' })).toBe(false)
   })
 })

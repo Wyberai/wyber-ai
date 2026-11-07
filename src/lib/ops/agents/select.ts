@@ -1,5 +1,6 @@
 import type { Contact } from '@/lib/crm/contact'
 import { buildBrief } from '@/lib/crm/brief'
+import { isOptedOut } from '@/lib/crm/patch'
 import type { AgentId, Candidate, Lang } from './types'
 
 // Which contacts each agent should work on right now. Pure: contacts, a clock and
@@ -29,7 +30,8 @@ export function chooseLang(c: Contact): Lang {
   return 'en'
 }
 
-const hasReach = (c: Contact) => !!(c.phone_norm || c.email)
+// Someone who asked us to stop is never written to by any agent.
+const hasReach = (c: Contact) => !!(c.phone_norm || c.email) && !isOptedOut(c)
 
 export function selectOutreach(contacts: Contact[], have: Set<string>): Candidate[] {
   return contacts
@@ -93,7 +95,6 @@ export function selectOnboarding(contacts: Contact[], have: Set<string>): Candid
     .map(c => ({ contact: c, key: 'kickoff', reason: 'Deal won; no kickoff checklist yet', activities: [] }))
 }
 
-const OPTED_OUT = /do not contact|don'?t contact|unsubscribe|stop messag|not interested|\bstop\b|\bdnd\b/i
 
 /** Quiet 21+ days at a contacted, replied or parked stage; one nudge per contact per month; never someone who said no. */
 export function selectReengage(contacts: Contact[], now: Date, have: Set<string>): Candidate[] {
@@ -101,7 +102,6 @@ export function selectReengage(contacts: Contact[], now: Date, have: Set<string>
   const key = `re:${now.toISOString().slice(0, 7)}`
   for (const c of contacts) {
     if (!['contacted', 'replied', 'nurture'].includes(c.stage) || !hasReach(c)) continue
-    if (OPTED_OUT.test(`${c.notes ?? ''} ${c.tags.join(' ')} ${c.lost_reason ?? ''}`)) continue
     const quietDays = (now.getTime() - new Date(c.last_touch_at ?? c.updated_at).getTime()) / DAY
     if (quietDays < 21 || have.has(existingKey('reengage', c.id, key))) continue
     out.push({ contact: c, key, reason: `${Math.floor(quietDays)} days since last touch at "${c.stage}"`, activities: [] })
