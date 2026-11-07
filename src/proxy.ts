@@ -115,6 +115,9 @@ export async function proxy(request: NextRequest) {
     // Tech Expo Gujarat booth-meeting landing page — Meta/LinkedIn/email ad
     // traffic, must be public. Its form posts to /api/expo-lead.
     path.startsWith('/gujaratexpo') ||
+    // A client's private quote link (/quote/<unguessable token>): clients are not
+    // signed in. The page itself 404s for anything that is not a real, sent quote.
+    path.startsWith('/quote/') ||
     // Inventory intelligence demo — live under /app/inventory, public for customer demos.
     path.startsWith('/app/inventory') ||
     path.startsWith('/complexity-guide') ||

@@ -269,7 +269,10 @@ function Detail({ c, onClose, onSave, flash }: { c: Contact; onClose: () => void
             <div style={{ fontSize: 18, fontWeight: 800 }}>{c.name}</div>
             <div style={{ fontSize: 12, color: C.muted }}>{c.source} · score {c.score} · added {ago(c.created_at)} · touched {ago(c.last_touch_at)}</div>
           </div>
-          <button style={btn()} onClick={onClose}>Close</button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <a style={{ ...btn(), textDecoration: 'none' }} href={`/admin/quotes?contact=${c.id}`}>Quote</a>
+            <button style={btn()} onClick={onClose}>Close</button>
+          </div>
         </div>
         {row('Stage', <select style={input} value={form.stage} onChange={e => set('stage', e.target.value)}>{STAGES.map(s => <option key={s} value={s}>{STAGE_LABEL[s]}</option>)}</select>)}
         {form.stage === 'lost' && row('Why was it lost?', <input style={input} value={form.lost_reason} onChange={e => set('lost_reason', e.target.value)} />)}

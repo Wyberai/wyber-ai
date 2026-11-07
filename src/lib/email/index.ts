@@ -229,6 +229,18 @@ export async function sendAdminExpoLeadAlert(lead: ExpoLeadAlert) {
 // emails, all about the event: confirmation, reminder, thanks, followup.
 // Deliberately states only what is known: booth S23, 27-29 Nov, Ahmedabad.
 // (Venue and opening hours are not confirmed by the organiser yet.)
+// A client accepted a quote from its private link. Goes to the founder.
+export async function sendQuoteAcceptedAlert(a: { title: string; totalLabel: string; acceptedBy: string; contactName: string | null }) {
+  const html = wrap(`
+    ${h1('A quote was accepted')}
+    ${p(`<strong style="color:#f0f0f4">${escHtml(a.acceptedBy)}</strong> accepted <strong style="color:#f0f0f4">${escHtml(a.title)}</strong>.`)}
+    ${infoBox([['Quote', escHtml(a.title)], ['Total', escHtml(a.totalLabel)], ['Accepted by', escHtml(a.acceptedBy)], ['CRM contact', escHtml(a.contactName ?? 'not linked')]])}
+    ${p('The deal is now marked Won in the CRM. Next: confirm payment and delivery details with them in writing.')}
+    <div style="text-align:center;margin:24px 0">${btn('Open the CRM →', `${APP_URL}/admin/crm`)}</div>
+  `, 'A client accepted a quote')
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: `Quote accepted: ${a.title.slice(0, 60)} (${a.totalLabel})`, html })
+}
+
 // Daily internal revenue brief for the founder (see lib/crm/brief.ts, /api/cron/crm-brief).
 export async function sendCrmDailyBrief(opts: { subject: string; text: string }) {
   const paras = opts.text.split('\n').map(l => (l.trim() ? p(escHtml(l)) : '')).join('')
