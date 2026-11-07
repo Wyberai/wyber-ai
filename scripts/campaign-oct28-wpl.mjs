@@ -1,0 +1,240 @@
+// WyberAi — Wyber Premier League evergreen monthly promo. Prize/rules/criteria copy
+// mirrors src/app/premier-league/page.tsx; Launch Kit tie-in for Fan Favorite.
+// Brand: tokens + logo from OneDrive\Desktop\Wyber Ai\Brand Kit\ — the icon
+// PNG is embedded as base64; fonts come from Google Fonts and are verified per render.
+// Renders 7 slides at 1080x1350 (LinkedIn multi-image post / Instagram /
+// Facebook) and a 4-slide 1080x1080 set for X.
+// Output: OneDrive\Desktop\Wyber Ai\campaign-oct28\
+import puppeteer from 'puppeteer-core'
+import QRCode from 'qrcode'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
+const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+const DESK = path.join(os.homedir(), 'OneDrive', 'Desktop', 'Wyber Ai')
+const OUT = path.join(DESK, 'campaign-oct28-wpl')
+
+// ---- brand tokens (Brand Kit reference sheet) -------------------------------
+const T = {
+  bg: '#05060a', raised: '#0a0c14', overlay: '#10131f',
+  accent: '#0ea5e9', hot: '#38bdf8', dim: '#0369a1',
+  text: '#e6edf6', textDim: '#8b94a7', faint: '#545c6e',
+  ok: '#4ade80',
+}
+const b64 = (p) => fs.readFileSync(p).toString('base64')
+// Google Fonts over the network. The sandpack Inter woff2 files fail to
+// decode in Chrome (status "error" → silent Times/Arial fallback), so local
+// embedding is not an option for Inter; render() verifies each face loaded.
+const FONT_LINK = `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=block" rel="stylesheet">`
+const ICON = `data:image/png;base64,${b64(path.join(DESK, 'Brand Kit', 'wyberai-icon-256.png'))}`
+
+const BASE = `*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;color:${T.text};background:${T.bg}}
+.mono{font-family:'JetBrains Mono',monospace;font-weight:500}
+.acc{color:${T.accent}}.hot{color:${T.hot}}.dimt{color:${T.textDim}}.faint{color:${T.faint}}.ok{color:${T.ok}}`
+
+const lockup = (m) => `<div style="display:flex;align-items:center;gap:${Math.round(m * 0.3)}px">
+  <img src="${ICON}" style="width:${m}px;height:${m}px;border-radius:${Math.round(m * 0.22)}px">
+  <div style="font-weight:800;font-size:${Math.round(m * 0.7)}px;letter-spacing:-0.04em;line-height:1">Wyber<span class="acc">Ai</span></div></div>`
+
+// Corner-tick frame — the same device as the brand's terminal UI cards.
+const ticks = (w, h, inset) => {
+  const L = 26, s = `position:absolute;width:${L}px;height:${L}px;border-color:${T.faint};border-style:solid;border-width:0`
+  return `<div style="${s};left:${inset}px;top:${inset}px;border-left-width:2px;border-top-width:2px"></div>
+<div style="${s};right:${inset}px;top:${inset}px;border-right-width:2px;border-top-width:2px"></div>
+<div style="${s};left:${inset}px;bottom:${inset}px;border-left-width:2px;border-bottom-width:2px"></div>
+<div style="${s};right:${inset}px;bottom:${inset}px;border-right-width:2px;border-bottom-width:2px"></div>`
+}
+
+const card = (k, inner, extra = '') =>
+  `<div style="background:${T.raised};border:1px solid rgba(230,237,246,0.08);border-radius:${Math.round(22 * k)}px;padding:${Math.round(30 * k)}px;${extra}">${inner}</div>`
+
+const termHead = (k, title) => `<div style="display:flex;align-items:center;gap:${Math.round(9 * k)}px;margin-bottom:${Math.round(22 * k)}px">
+  ${['#f87171', '#fbbf24', '#4ade80'].map(c => `<span style="width:${Math.round(13 * k)}px;height:${Math.round(13 * k)}px;border-radius:50%;background:${c};opacity:.85"></span>`).join('')}
+  <span class="mono faint" style="font-size:${Math.round(17 * k)}px;margin-left:${Math.round(10 * k)}px">${title}</span></div>`
+
+// ---- slide scaffold (k scales everything: 1 = 4:5, 0.84 = 1:1) -------------
+const scaffold = (w, h, k, s, index, total) => {
+  const p = Math.round(86 * k)
+  const dots = index != null ? `<div style="display:flex;gap:10px">${Array.from({ length: total }, (_, i) =>
+    `<div style="width:${i === index ? 34 : 10}px;height:10px;border-radius:5px;background:${i === index ? T.accent : 'rgba(230,237,246,0.14)'}"></div>`).join('')}</div>` : '<div></div>'
+  const right = s.cta ? '' : (index != null && index < total - 1
+    ? `<div class="mono" style="font-size:${Math.round(20 * k)}px;color:${T.textDim};letter-spacing:.08em">SWIPE →</div>`
+    : `<div class="mono faint" style="font-size:${Math.round(20 * k)}px">wyberai.com</div>`)
+  return `<!doctype html><html><head><meta charset="utf-8">${FONT_LINK}<style>${BASE}</style></head>
+<body style="width:${w}px;height:${h}px;position:relative;background:${T.bg};background-image:radial-gradient(ellipse 80% 38% at 50% 0%, rgba(14,165,233,0.13), transparent 65%)">
+${ticks(w, h, Math.round(30 * k))}
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:${p}px ${p}px ${Math.round(p * 0.82)}px">
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    ${lockup(Math.round(54 * k))}
+    ${index != null ? `<div class="mono faint" style="font-size:${Math.round(20 * k)}px">${String(index + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</div>` : ''}
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:${Math.round(30 * k)}px">
+    ${s.kicker ? `<div class="mono" style="font-size:${Math.round(21 * k)}px;letter-spacing:.18em;color:${T.accent}">${s.kicker}</div>` : ''}
+    <div style="font-weight:800;font-size:${Math.round(84 * k * (s.hk ?? 1))}px;letter-spacing:-0.04em;line-height:1.04">${s.headline}</div>
+    ${s.sub ? `<div class="dimt" style="font-size:${Math.round(32 * k)}px;line-height:1.48;max-width:${Math.round(860 * k)}px">${s.sub}</div>` : ''}
+    ${s.visual ? `<div style="margin-top:${Math.round(10 * k)}px">${s.visual(k)}</div>` : ''}
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between">${dots}${right}</div>
+</div></body></html>`
+}
+
+// ---- visuals ----------------------------------------------------------------
+const chip = (k, t, on) => `<span class="mono" style="font-size:${Math.round(17 * k)}px;color:${on ? '#fff' : T.hot};background:${on ? T.accent : 'rgba(14,165,233,0.09)'};border:1px solid ${on ? T.accent : 'rgba(14,165,233,0.25)'};border-radius:${Math.round(8 * k)}px;padding:${Math.round(7 * k)}px ${Math.round(13 * k)}px">${t}</span>`
+const label = (k, t) => `<div class="mono dimt" style="font-size:${Math.round(16 * k)}px;letter-spacing:.08em;margin-top:${Math.round(16 * k)}px">${t}</div>`
+
+// Cover: the three things, as a publish-flow checklist.
+const coverVisual = (k) => card(k, termHead(k, 'publish & share') + [
+  ['QR code', 'for your counter, poster or menu'],
+  ['Share card', 'a proper preview on WhatsApp, LinkedIn and X'],
+  ['Launch posts', 'written for 5 platforms, ready to edit'],
+].map(([a, b]) => `<div style="display:flex;align-items:baseline;gap:${Math.round(16 * k)}px;font-size:${Math.round(26 * k)}px;line-height:2.05">
+  <span class="ok mono">✓</span><span style="font-weight:700">${a}</span><span class="dimt" style="font-size:${Math.round(22 * k)}px">${b}</span></div>`).join(''))
+
+const qrVisual = async (k) => {
+  const qr = await QRCode.toString('https://wyberai.com', { type: 'svg', margin: 1, color: { dark: '#05060a', light: '#ffffff' } })
+  const q = Math.round(300 * k)
+  return `<div style="display:flex;gap:${Math.round(26 * k)}px;align-items:center">
+    ${card(k, `<div style="width:${q}px;height:${q}px;background:#fff;border-radius:${Math.round(14 * k)}px;padding:${Math.round(12 * k)}px">${qr.replace('<svg', '<svg width="100%" height="100%"')}</div>
+      <div style="text-align:center;font-weight:700;font-size:${Math.round(24 * k)}px;margin-top:${Math.round(16 * k)}px">Scan to try DayPlan</div>`, 'flex:0 0 auto')}
+    <div style="display:flex;flex-direction:column;gap:${Math.round(16 * k)}px">
+      ${['Shop counters', 'Posters & flyers', 'Menus & table cards', 'Events & stalls'].map(t => `<div style="display:flex;align-items:center;gap:${Math.round(14 * k)}px;font-size:${Math.round(25 * k)}px"><span class="acc mono">→</span>${t}</div>`).join('')}
+      ${label(k, 'DOWNLOAD · PRINT · STICK IT UP')}
+    </div></div>`
+}
+
+// Share card: a chat thread with a link preview, the way it lands on WhatsApp.
+const shareVisual = (k) => card(k, `
+  <div style="max-width:${Math.round(640 * k)}px;margin-left:auto;background:${T.overlay};border-radius:${Math.round(18 * k)}px;overflow:hidden;border:1px solid rgba(230,237,246,0.08)">
+    <div style="height:${Math.round(250 * k)}px;background:linear-gradient(135deg,${T.dim},${T.accent});padding:${Math.round(26 * k)}px;display:flex;flex-direction:column;justify-content:flex-end">
+      <div style="font-weight:800;font-size:${Math.round(46 * k)}px;letter-spacing:-0.03em">DayPlan</div>
+      <div style="font-size:${Math.round(21 * k)}px;opacity:.9;margin-top:${Math.round(6 * k)}px">Plan your day, finish what matters.</div>
+    </div>
+    <div style="padding:${Math.round(16 * k)}px ${Math.round(20 * k)}px">
+      <div style="font-weight:600;font-size:${Math.round(21 * k)}px">DayPlan</div>
+      <div class="mono faint" style="font-size:${Math.round(16 * k)}px;margin-top:${Math.round(4 * k)}px">wyberai.com/app/dayplan</div>
+    </div>
+    <div style="padding:0 ${Math.round(20 * k)}px ${Math.round(16 * k)}px;font-size:${Math.round(21 * k)}px">Just launched my planner app — try it 👇</div>
+  </div>` + label(k, 'YOUR NAME. YOUR COLOURS. NOT A RAW URL.'))
+
+// Launch posts: the platform tabs + one draft.
+const postsVisual = (k) => card(k, `
+  <div style="display:flex;flex-wrap:wrap;gap:${Math.round(10 * k)}px;margin-bottom:${Math.round(22 * k)}px">
+    ${['WhatsApp', 'LinkedIn', 'X', 'Instagram', 'Product Hunt'].map((p, i) => chip(k, p, i === 1)).join('')}</div>
+  <div style="background:${T.overlay};border-radius:${Math.round(14 * k)}px;padding:${Math.round(22 * k)}px ${Math.round(24 * k)}px;font-size:${Math.round(22 * k)}px;line-height:1.55">
+    I built DayPlan, a simple planner for getting through the day: tasks, categories and a dark mode for late nights.<br><br>
+    It's free to try, and I'd love feedback from anyone who lives in their to-do list.<br>
+    <span class="acc">wyberai.com/app/dayplan</span>
+  </div>
+  <div style="display:flex;gap:${Math.round(12 * k)}px;margin-top:${Math.round(18 * k)}px">${chip(k, 'Copy')}${chip(k, 'Copy & open LinkedIn', true)}</div>`)
+
+const queueVisual = (k) => card(k, `
+  <div style="display:flex;justify-content:flex-end;margin-bottom:${Math.round(16 * k)}px"><div style="background:${T.accent};color:#fff;border-radius:${Math.round(16 * k)}px;padding:${Math.round(14 * k)}px ${Math.round(22 * k)}px;font-size:${Math.round(23 * k)}px;font-weight:500">add a dark mode toggle</div></div>
+  <div style="display:flex;align-items:center;gap:${Math.round(12 * k)}px;margin-bottom:${Math.round(26 * k)}px;font-size:${Math.round(21 * k)}px" class="dimt">
+    <span style="width:${Math.round(16 * k)}px;height:${Math.round(16 * k)}px;border-radius:50%;border:2.5px solid rgba(14,165,233,0.22);border-top-color:${T.accent};display:inline-block"></span>Updating your app</div>
+  <div style="border:1px solid rgba(230,237,246,0.1);border-radius:${Math.round(18 * k)}px;background:${T.overlay};padding:${Math.round(16 * k)}px">
+    <div style="display:flex;align-items:center;gap:${Math.round(14 * k)}px;background:${T.raised};border:1px solid rgba(14,165,233,0.35);border-radius:${Math.round(12 * k)}px;padding:${Math.round(12 * k)}px ${Math.round(16 * k)}px;font-size:${Math.round(20 * k)}px">
+      <span class="acc" style="font-weight:700">Up next</span><span style="flex:1">add colored category tags and a filter</span><span class="faint">Edit</span><span class="faint">×</span></div>
+    <div class="faint" style="font-size:${Math.round(20 * k)}px;padding:${Math.round(18 * k)}px ${Math.round(6 * k)}px ${Math.round(6 * k)}px">Type your next change — it runs as soon as this one finishes</div>
+  </div>`)
+
+const dropVisual = (k) => {
+  const node = (sym, sub, color, dashed) => `<div style="flex:1;text-align:center">
+    <div style="margin:0 auto ${Math.round(14 * k)}px;width:${Math.round(66 * k)}px;height:${Math.round(66 * k)}px;border-radius:50%;border:2px ${dashed ? 'dashed' : 'solid'} ${color};display:flex;align-items:center;justify-content:center;font-size:${Math.round(28 * k)}px;color:${color}">${sym}</div>
+    <div class="mono" style="font-size:${Math.round(17 * k)}px;color:${T.textDim}">${sub}</div></div>`
+  const line = (dashed) => `<div style="flex:0 0 ${Math.round(70 * k)}px;height:2px;margin-top:${Math.round(33 * k)}px;background:${dashed ? `repeating-linear-gradient(90deg,${T.faint} 0 8px,transparent 8px 16px)` : T.accent}"></div>`
+  return card(k, `<div style="display:flex;align-items:flex-start">
+      ${node('↑', 'YOU ASK', T.accent)}${line(true)}${node('✕', 'SIGNAL DROPS', T.faint, true)}${line(false)}${node('⚙', 'WE KEEP BUILDING', T.accent)}${line(false)}${node('✓', 'IT LANDS', T.ok)}
+    </div>
+    <div style="margin-top:${Math.round(30 * k)}px;background:${T.overlay};border-radius:${Math.round(14 * k)}px;padding:${Math.round(20 * k)}px ${Math.round(24 * k)}px;font-size:${Math.round(22 * k)}px;line-height:1.5">
+      Built it — App, Tasks and Shell are live. Tell me what to change next.</div>`)
+}
+
+const ctaVisual = (k) => `<div style="display:flex;flex-direction:column;gap:${Math.round(26 * k)}px;align-items:flex-start">
+  <div style="background:${T.accent};color:#fff;font-weight:800;font-size:${Math.round(32 * k)}px;border-radius:${Math.round(16 * k)}px;padding:${Math.round(22 * k)}px ${Math.round(40 * k)}px;box-shadow:0 0 ${Math.round(40 * k)}px rgba(14,165,233,0.35)">Start free → wyberai.com</div>
+  <div class="mono faint" style="font-size:${Math.round(20 * k)}px;letter-spacing:.06em">FREE CREDITS ON SIGNUP · NO CARD NEEDED</div></div>`
+
+// ---- WPL visuals (prize/rules/criteria copy mirrors src/app/premier-league/page.tsx) ----
+// No prize amounts anywhere: they differ for India (₹) and everyone else ($),
+// so the creative names the three categories and the page shows the money.
+const prizeVisual = (k) => {
+  const p = (icon, title, color, by) => `<div style="flex:1;background:${T.raised};border:1px solid ${color}55;border-radius:${Math.round(20 * k)}px;padding:${Math.round(26 * k)}px ${Math.round(22 * k)}px">
+    <div style="font-size:${Math.round(46 * k)}px;line-height:1">${icon}</div>
+    <div class="mono" style="font-size:${Math.round(17 * k)}px;letter-spacing:.12em;color:${color};margin-top:${Math.round(18 * k)}px">${title}</div>
+    <div class="dimt" style="font-size:${Math.round(20 * k)}px;line-height:1.45;margin-top:${Math.round(10 * k)}px">${by}</div></div>`
+  return `<div style="display:flex;gap:${Math.round(16 * k)}px">
+    ${p('🏆', 'CHAMPION', '#f59e0b', 'The best build, picked by our team.')}
+    ${p('🥈', 'FAN FAVORITE', T.accent, 'The most-upvoted build.')}
+    ${p('🎨', 'MOST CREATIVE', '#a855f7', 'The build that made us say wow.')}
+  </div>`
+}
+
+const stepsVisual = (k) => card(k, [
+  ['01', 'Describe your app', 'Web app, website or SaaS. One sentence is enough to start.'],
+  ['02', 'Publish it', 'It goes live on its own link, ready to share.'],
+  ['03', 'Submit it', 'Free. Enter as many builds as you want this month.'],
+].map(([n, a, b], i) => `<div style="display:flex;gap:${Math.round(22 * k)}px;align-items:flex-start;${i ? `border-top:1px solid rgba(230,237,246,0.07);padding-top:${Math.round(20 * k)}px;margin-top:${Math.round(20 * k)}px` : ''}">
+  <span class="mono acc" style="font-size:${Math.round(22 * k)}px;margin-top:${Math.round(4 * k)}px">${n}</span>
+  <div><div style="font-weight:700;font-size:${Math.round(28 * k)}px">${a}</div><div class="dimt" style="font-size:${Math.round(21 * k)}px;margin-top:${Math.round(6 * k)}px;line-height:1.45">${b}</div></div></div>`).join('') +
+  `<div class="mono faint" style="font-size:${Math.round(16 * k)}px;margin-top:${Math.round(24 * k)}px;letter-spacing:.06em">🔒 ENTRIES ARE PRIVATE · YOUR IDEA STAYS YOURS</div>`)
+
+const voteVisual = (k) => card(k, `
+  <div style="display:flex;flex-wrap:wrap;gap:${Math.round(10 * k)}px;margin-bottom:${Math.round(20 * k)}px">
+    ${['WhatsApp', 'LinkedIn', 'X', 'Instagram', 'Product Hunt'].map((p, i) => chip(k, p, i === 0)).join('')}</div>
+  <div style="max-width:${Math.round(620 * k)}px;margin-left:auto;background:${T.overlay};border-radius:${Math.round(18 * k)}px;overflow:hidden;border:1px solid rgba(230,237,246,0.08)">
+    <div style="height:${Math.round(170 * k)}px;background:linear-gradient(135deg,${T.dim},${T.accent});padding:${Math.round(22 * k)}px;display:flex;flex-direction:column;justify-content:flex-end">
+      <div style="font-weight:800;font-size:${Math.round(40 * k)}px;letter-spacing:-0.03em">RoomSplit</div>
+      <div style="font-size:${Math.round(19 * k)}px;opacity:.9">Split rent and bills without the awkward chat.</div></div>
+    <div style="padding:${Math.round(16 * k)}px ${Math.round(20 * k)}px;font-size:${Math.round(21 * k)}px">Built this for the Wyber Premier League. One vote helps 👇</div>
+  </div>` + label(k, 'SHARE CARD + LAUNCH POSTS · BUILT INTO EVERY PUBLISH'))
+
+const criteriaVisual = (k) => card(k, [
+  ['30%', 'It works', 'Deploys and runs. Real features beat mockups.'],
+  ['25%', 'It’s useful', 'Solves a problem people would come back to.'],
+  ['25%', 'It looks pro', 'Polished, intuitive, professional.'],
+  ['20%', 'Wow factor', 'Makes people ask "wait, AI built that?"'],
+].map(([w, a, b], i) => `<div style="display:flex;gap:${Math.round(22 * k)}px;align-items:center;${i ? `margin-top:${Math.round(18 * k)}px` : ''}">
+  <div class="mono" style="flex:0 0 ${Math.round(92 * k)}px;height:${Math.round(64 * k)}px;border-radius:${Math.round(12 * k)}px;background:rgba(14,165,233,0.1);border:1px solid rgba(14,165,233,0.28);display:flex;align-items:center;justify-content:center;font-size:${Math.round(22 * k)}px;color:${T.hot}">${w}</div>
+  <div><div style="font-weight:700;font-size:${Math.round(26 * k)}px">${a}</div><div class="dimt" style="font-size:${Math.round(20 * k)}px;margin-top:${Math.round(3 * k)}px">${b}</div></div></div>`).join(''))
+
+const wplCta = (k) => `<div style="display:flex;flex-direction:column;gap:${Math.round(24 * k)}px;align-items:flex-start">
+  <div style="background:${T.accent};color:#fff;font-weight:800;font-size:${Math.round(32 * k)}px;border-radius:${Math.round(16 * k)}px;padding:${Math.round(22 * k)}px ${Math.round(40 * k)}px;box-shadow:0 0 ${Math.round(40 * k)}px rgba(14,165,233,0.35)">Enter free → wyberai.com/premier-league</div>
+  <div class="mono faint" style="font-size:${Math.round(20 * k)}px;letter-spacing:.06em">FREE · UNLIMITED ENTRIES · NEW WINNERS EVERY MONTH</div></div>`
+
+// ---- slides -----------------------------------------------------------------
+// Evergreen monthly push: no prize amounts (₹ vs $ by region), no deadline.
+const SLIDES = [
+  { kicker: 'WYBER PREMIER LEAGUE', headline: `Build an app.<br><span class="acc">Win every month.</span>`, sub: 'Three winners, every single month. Free to enter. No code. Enter as many builds as you want.', visual: prizeVisual, hk: 1.08 },
+  { kicker: 'HOW TO ENTER', headline: 'Three steps. No code.', sub: 'You describe it. WyberAi builds it. You hit submit.', visual: stepsVisual },
+  { kicker: 'FAN FAVORITE', headline: 'The most-shared app wins.', sub: 'Fan Favorite goes to the most-upvoted build. Every app you publish ships with a share card and launch posts. Use them.', visual: voteVisual },
+  { kicker: 'CHAMPION', headline: 'Here’s how we pick the winner.', sub: 'No popularity contest for the top prize. Our team scores every build on four things.', visual: criteriaVisual, hk: 0.95 },
+  { kicker: 'YOUR MOVE', headline: `Stop sitting on the idea.<br><span class="acc">Ship it. Enter it.</span>`, hk: 0.98, sub: 'You don’t need a team or a budget. You need one idea and an evening.', visual: wplCta, cta: true },
+]
+const X_PICKS = [0, 1, 2, 4] // winners, how, fan favorite, CTA
+
+// ---- render -----------------------------------------------------------------
+const D45 = path.join(OUT, 'linkedin-ig-fb-4x5'), D11 = path.join(OUT, 'x-1x1')
+fs.mkdirSync(D45, { recursive: true }); fs.mkdirSync(D11, { recursive: true })
+const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox', '--hide-scrollbars'] })
+const page = await browser.newPage()
+
+async function shot(html, w, h, out) {
+  await page.setViewport({ width: w, height: h, deviceScaleFactor: 1 })
+  await page.setContent(html, { waitUntil: 'load', timeout: 60000 })
+  await page.evaluate(() => document.fonts.ready)
+  const ok = await page.evaluate(() => [document.fonts.check("800 40px Inter"), document.fonts.check("400 30px Inter"), document.fonts.check("500 20px JetBrains Mono")])
+  await page.screenshot({ path: out, clip: { x: 0, y: 0, width: w, height: h } })
+  console.log('✓', path.relative(OUT, out), ok.every(Boolean) ? '(fonts ✓)' : `(FONT FALLBACK ⚠ ${ok})`)
+}
+
+for (let i = 0; i < SLIDES.length; i++) {
+  const s = { ...SLIDES[i] }
+  await shot(scaffold(1080, 1350, 1, s, i, SLIDES.length), 1080, 1350, path.join(D45, `wyberai-wpl-${String(i + 1).padStart(2, '0')}.png`))
+}
+for (const [n, i] of X_PICKS.entries()) {
+  const s = { ...SLIDES[i], kicker: SLIDES[i].kicker?.replace(/^\d+ · /, '') }
+  await shot(scaffold(1080, 1080, 0.84, s, n, X_PICKS.length), 1080, 1080, path.join(D11, `wyberai-wpl-x-${n + 1}.png`))
+}
+await browser.close()
+console.log('\nAll assets in:', OUT)
