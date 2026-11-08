@@ -1,7 +1,6 @@
 'use client'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { WyberLogo } from '@/components/shared/WyberLogo'
 import { track } from '@/lib/track'
 import type { ByosAnalysis, Stage } from '@/lib/byos/analyze'
 import { LIVE_INTEGRATIONS, liveMatch } from '@/lib/byos/integrations'
@@ -14,8 +13,8 @@ type Step = 'url' | 'features' | 'connect' | 'quote'
 type Currency = 'USD' | 'INR' | 'EUR' | 'GBP'
 
 const s = {
-  bg: 'var(--brand-bg)', card: 'var(--brand-bg-raised)', border: 'var(--brand-border)',
-  text: 'var(--brand-text)', muted: 'var(--brand-text-dim)', dim: 'var(--brand-text-faint)', accent: '#0EA5E9',
+  bg: 'var(--sg-bg)', card: 'var(--sg-card)', border: 'var(--sg-line)',
+  text: 'var(--sg-ink)', muted: 'var(--sg-ink2)', dim: 'var(--sg-ink3)', accent: '#0EA5E9',
 }
 const FALLBACK_EXAMPLES = ['pipedrive.com', 'linear.app', 'calendly.com', 'typeform.com']
 const FEATURED = ['pipedrive.com', 'hubspot.com', 'asana.com', 'linear.app', 'calendly.com', 'typeform.com', 'zendesk.com', 'mailchimp.com']
@@ -25,7 +24,7 @@ const STATE_KEY = 'byos-state-v2'
 
 const btn = (primary = true, disabled = false): React.CSSProperties => ({
   padding: '13px 26px', borderRadius: 10, border: primary ? 'none' : `1px solid ${s.border}`,
-  background: primary ? s.accent : 'transparent', color: primary ? '#fff' : s.text,
+  background: primary ? s.accent : 'transparent', color: primary ? '#03111c' : s.text,
   fontSize: 15, fontWeight: 700, cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, fontFamily: 'inherit',
 })
 const eyebrow: React.CSSProperties = { fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: s.dim, margin: '0 0 10px' }
@@ -203,18 +202,10 @@ export function ByosClient() {
   const analyzingDomain = loading ? loading.replace(/^https?:\/\//, '').replace(/\/.*$/, '') : ''
 
   return (
-    <div style={{ minHeight: '100vh', background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
-      <nav style={{ padding: '0 clamp(16px,4vw,48px)', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${s.border}` }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none', color: 'inherit' }}>
-          <WyberLogo markSize={22} wordmarkSize={14} />
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {step !== 'url' && <button onClick={startOver} style={{ background: 'none', border: 'none', color: s.muted, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Start over</button>}
-          <Link href="/pricing" style={{ fontSize: 13, color: s.muted, textDecoration: 'none' }}>Pricing</Link>
-        </div>
-      </nav>
+    <div style={{ background: s.bg, color: s.text, fontFamily: 'var(--font-display)' }}>
+      {step !== 'url' && <div style={{ maxWidth: 880, margin: '0 auto', padding: '12px clamp(16px,4vw,32px) 0', textAlign: 'right' }}><button onClick={startOver} style={{ background: 'none', border: 'none', color: s.muted, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', minHeight: 44 }}>Start over</button></div>}
 
-      <main style={{ maxWidth: 880, margin: '0 auto', padding: 'clamp(32px,6vw,72px) clamp(16px,4vw,32px) 96px' }}>
+      <div style={{ maxWidth: 880, margin: '0 auto', padding: 'clamp(32px,6vw,72px) clamp(16px,4vw,32px) 96px' }}>
         {step === 'url' && (
           <>
             <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: s.accent, margin: '0 0 14px' }}>2027 is the year of custom software</p>
@@ -448,7 +439,7 @@ export function ByosClient() {
             {!signedIn && <p style={{ fontSize: 13, color: s.dim, marginTop: 14 }}>Your picks are saved. After signing up, your build starts from them.</p>}
           </>
         )}
-      </main>
+      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { PricingClient } from './PricingClient'
+import { SignalFrame } from '@/components/signal/SignalFrame'
 import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 
 // Rendered per request from the visitor's IP country — never cached, so a
@@ -17,7 +18,7 @@ export default async function PricingPage() {
   const owner = await isOwnerPreview()
   return (
     <>
-      <PricingClient initialCurrency={currency} />
+      <SignalFrame><PricingClient initialCurrency={currency} /></SignalFrame>
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )

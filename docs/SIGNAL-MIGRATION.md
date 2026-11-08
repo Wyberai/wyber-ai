@@ -16,12 +16,12 @@ Kill switch: set `NEXT_PUBLIC_SIGNAL_DESIGN=0` and the homepage returns to the p
 | `/onboarding` | Name, optional role, and the product question only when no brief exists. With a brief it goes to `/dashboard`, where the saved prompt starts the build. "AI employees / GTM" wording removed. |
 | `/mfa` | Restyled, same logic. |
 | Dashboard | Signal palette applied through a scoped `.sg-dash` root that re-points the editor variables (logic untouched). Muted text raised to Signal ink-3, white-on-blue buttons now dark text, violet gradients replaced by the single accent. Layout is unchanged; the Clients, Usage and Settings entries from the prototype were not added. **Not viewed in a browser (login required).** |
+| `/pricing`, `/byos` | Moved into the Signal shell (shared nav and footer). Plans, prices, credit rows, checkout and the byos flow are unchanged; byos colours and button text follow Signal. The India language switch moved from the old nav to a row above the hero. The purple Premier League nav link was dropped with the old nav. Plan colours are still multi-hue (they identify plans). |
 | Copy and emails | Earlier commit `852708d`: unbacked claims removed, readable text on client colours and email buttons, shorter first-week emails. |
 
 ## Not migrated (on purpose)
 
-- **`/pricing`**: already dark and on the brand colour. Its nav carries the INR language toggle, which the Signal nav does not. Plan colours are still multi-hue.
-- **`/byos`, `/clients`, `/client/[slug]`, template families** (build, use-cases, vs, docs, blog, legal): unchanged.
+- **`/clients`, `/client/[slug]`, template families** (build, use-cases, vs, docs, blog, legal): unchanged.
 - **Non-English homepage**: still the previous design.
 - **The simulated "first build" screen from the prototype was not ported.** The real dashboard performs the build. The credit-wall behaviour is the dashboard's existing logic.
 

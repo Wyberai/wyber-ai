@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { WyberLogo } from '@/components/shared/WyberLogo'
 import { type Currency, formatPrice } from '@/lib/currency'
 import { useT } from '@/lib/i18n/useT'
 import { useLocale } from '@/lib/i18n/LocaleProvider'
@@ -357,23 +356,10 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
   const handleTopup = startCheckout
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
+    <div style={{ background: 'transparent', color: '#fafafa', fontFamily: 'var(--font-display)' }}>
 
-      {/* Nav */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, background: 'rgba(5,6,10,0.85)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center' }}>
-          <WyberLogo markSize={26} wordmarkSize={15} />
-        </Link>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center', minWidth: 0 }}>
-          <Link href="/websites" className="wyb-pnav-secondary" style={{ fontSize: 13, color: 'var(--brand-text-dim)', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 500 }}>Websites</Link>
-          <Link href="/premier-league" className="wyb-pnav-secondary" style={{ fontSize: 13, color: '#a855f7', textDecoration: 'none', padding: '6px 12px', borderRadius: 7, fontWeight: 600 }}>{t('navWeeklyChallenge')}</Link>
-          {currency === 'INR' && I18N_ENABLED && <LanguageToggle locale={locale} onChange={setLocale} />}
-          {user
-            ? <Link href="/dashboard" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t('navDashboard')}</Link>
-            : <Link href="/signup" className="mk-btn" style={{ padding: '7px 16px', fontSize: 13 }}>{t('navGetStarted')}</Link>
-          }
-        </div>
-      </nav>
+      {/* The page nav is the shared Signal nav; the language switch for the India view lives here. */}
+      {currency === 'INR' && I18N_ENABLED && <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px clamp(16px,4vw,48px) 0' }}><LanguageToggle locale={locale} onChange={setLocale} /></div>}
 
       {/* Hero */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px) 0', textAlign: 'center' }}>
@@ -646,15 +632,6 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
         </div>
       </section>
 
-      {/* Footer */}
-      <footer style={{ padding: '28px clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-        <WyberLogo markSize={20} wordmarkSize={13} />
-        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-          {[['footerPrivacy', '/privacy'], ['footerTerms', '/terms'], ['footerCommunityPrograms', '/community-programs'], ['footerBlog', '/blog']].map(([lk, h]) => (
-            <Link key={lk} href={h} style={{ fontSize: 12, color: '#52525b', textDecoration: 'none' }}>{t(lk as any)}</Link>
-          ))}
-        </div>
-      </footer>
 
       <style>{`
         
