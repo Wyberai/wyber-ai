@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
+import { readableOn } from '@/lib/color-contrast'
 
 interface DeliverableRow {
   id: string
@@ -77,7 +78,7 @@ export default async function ClientDeliveryPage({ params }: { params: Promise<{
                     {d.description && <p style={{ fontSize: 13, color: '#71717a', lineHeight: 1.6, margin: 0 }}>{d.description}</p>}
                   </div>
                   {liveUrl && (
-                    <a href={liveUrl} target="_blank" rel="noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: client.brand_color, color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                    <a href={liveUrl} target="_blank" rel="noreferrer" style={{ padding: '10px 20px', borderRadius: 9, background: client.brand_color, color: readableOn(client.brand_color), fontSize: 13, fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>
                       View live →
                     </a>
                   )}

@@ -1,4 +1,5 @@
 import { memeImg } from './memes'
+import { readableOn } from '@/lib/color-contrast'
 import { formatPrice, type Currency } from '@/lib/currency'
 import { PLAN_VALUE, PLAN_VALUE_INR } from '@/lib/pricing-values'
 import { unsubscribeUrl } from './unsubscribe'
@@ -59,7 +60,7 @@ ${preheader ? `<div style="display:none;max-height:0;overflow:hidden">${preheade
 }
 
 function btn(label: string, url: string, color = '#0EA5E9'): string {
-  return `<a href="${url}" style="display:inline-block;background:${color};color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:9px;letter-spacing:-0.01em">${label}</a>`
+  return `<a href="${url}" style="display:inline-block;background:${color};color:${readableOn(color)};text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:9px;letter-spacing:-0.01em">${label}</a>`
 }
 
 // Top-up options block. TABLE-based (not flex/grid — Gmail/Outlook strip those,
@@ -115,44 +116,42 @@ function divider(): string {
 }
 
 // ── 1. Welcome (on signup) ────────────────────────────────────────────────────
-// `source` branches the opener so a Meta-ad / referral signup doesn't read
-// identical to organic — the rest of the email (credits, feature list,
-// referral pitch) stays the same, only the hook line changes.
+// Short and specific: what they have, what it costs, what is free, who to reply to. `source` only changes
+// the first sentence for someone who was invited by a friend. (Removed: the ad-source wisecrack, the meme
+// image, the prize paragraph and "24 more integrations". Every claim below is one the product backs.)
 export type WelcomeSource = 'organic' | 'paid-ads' | 'referral'
-const WELCOME_HOOKS: Record<WelcomeSource, (name: string) => string> = {
-  organic:    (name) => `Hey ${name}, you're in. Your ideas + our AI — this is the handshake.`,
-  'paid-ads': (name) => `Hey ${name}, you're in. You clicked an ad — respect for making it this far through 2026's attention economy. Let's make it worth it.`,
-  referral:   (name) => `Hey ${name}, you're in — and someone already vouched for WyberAi by inviting you. Let's see if they were right.`,
-}
-function welcomeHook(source: WelcomeSource, name: string): string {
-  return WELCOME_HOOKS[source](name)
+function welcomeIntro(source: WelcomeSource): string {
+  return source === 'referral'
+    ? 'A friend invited you, so you are already set up with 30 free credits.'
+    : 'You have 30 free credits and no card on file.'
 }
 export async function sendWelcomeEmail(to: string, name?: string, source: WelcomeSource = 'organic') {
   const displayName = name ?? to.split('@')[0]
   const html = wrap(`
-    ${memeImg('welcome')}
-    ${h1('Welcome to WyberAi ⚡')}
-    ${p(welcomeHook(source, displayName))}
-    ${p('You have <strong style="color:#f0f0f4">30 free credits</strong> to start building — no credit card needed. Describe any app in plain English and watch WyberAi generate fresh code in real time.')}
-    ${p('Here\'s what you can do:')}
+    ${h1('Your 30 free credits are ready')}
+    ${p(`Hi ${displayName},`)}
+    ${p(`${welcomeIntro(source)} Describe what you want in plain English and watch it get built. People start with things like:`)}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">web app</strong> — just describe it in plain English</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Build a <strong style="color:#f0f0f4">mobile app</strong> — preview on your phone via QR code</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">→ &nbsp;Paste a <strong style="color:#f0f0f4">screenshot or Figma file</strong> to clone any UI</td></tr>
-      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">→ &nbsp;Connect <strong style="color:#f0f0f4">Supabase, Stripe, OpenAI</strong> and 24 more integrations</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">A waitlist page for a product launch</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38">An expense tracker split by category</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0">A booking page for a studio</td></tr>
     </table>
     <div style="text-align:center;margin:28px 0">
       ${btn('Start building →', `${APP_URL}/dashboard`)}
     </div>
+    ${p('Three things worth knowing:')}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">You see the cost first.</strong> A small build is about 30 credits.</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0;border-bottom:1px solid #2e2e38"><strong style="color:#f0f0f4">Fixing a broken build is free.</strong> So is publishing.</td></tr>
+      <tr><td style="padding:8px 0;font-size:15px;color:#8888a0"><strong style="color:#f0f0f4">The code is yours.</strong> Push it to your own GitHub any time.</td></tr>
+    </table>
     ${divider()}
-    ${p('<strong style="color:#f0f0f4">Bring a friend, you both win</strong> — share your invite link from Settings → Referrals. You get 50 credits per signup, they start with 30 free too.')}
-    ${p(`Also — <strong style="color:#f0f0f4">Wyber Premier League</strong> is running right now: build anything and enter for a shot at <strong style="color:#f0f0f4">$1,800</strong> in monthly prizes, free and unlimited entries, new winners on the 1st. <a href="${APP_URL}/premier-league" style="color:#0EA5E9">See this month's contest →</a>`)}
-    ${p(`I'm building WyberAi in the open — every feature, every number, real. <a href="${FOUNDER_X_URL}" style="color:#0EA5E9">Follow along on X</a> or <a href="${FOUNDER_LINKEDIN_URL}" style="color:#0EA5E9">LinkedIn</a> if that's useful to you.`)}
-    ${p('Questions? Just reply — this goes straight to me.')}
+    ${p('Invite a friend from Settings → Referrals and get 50 credits for each person who joins. They start with 30 free credits too.')}
+    ${p('Stuck on anything? Reply to this email and a person will read it.')}
     ${p('— Sumeet, founder')}
-  `, 'Your 30 free credits are ready')
+  `, 'Describe anything in plain English. The cost is shown before every build.')
 
-  return sendMail({ from: FROM, to, subject: 'Welcome to WyberAi ⚡', html })
+  return sendMail({ from: FROM, to, subject: 'Your 30 free credits are ready', html })
 }
 
 // ── 2. Magic link / OTP ───────────────────────────────────────────────────────
@@ -894,27 +893,24 @@ export async function sendGettingStartedNudgeEmail(to: string, name: string, uns
 export async function sendPublishNudgeEmail(to: string, projectName: string, projectId: string, unsubUrl: string, sendNumber = 1) {
   const variants = [
     {
-      subject: `${projectName} is one click from being live`,
-      heading: `${projectName} is done — but nobody can see it`,
-      meme: 'publish-nudge' as const,
-      body: `That's us, pointing at <strong style="color:#f0f0f4">${projectName}</strong>. You built a real app and it's been sitting unpublished like a movie that never premiered. Publishing is one click and completely free — you get a live link you can share anywhere.`,
+      subject: `${projectName} is built. Publishing is free.`,
+      heading: `${projectName} is built. Publishing is free.`,
+      body: `<strong style="color:#f0f0f4">${projectName}</strong> is finished, but nobody can see it yet. Publishing takes one click and costs nothing. A security check runs first. If it finds a leak, it tells you which table and how to fix it with one click, so you never publish something unsafe by accident.`,
     },
     {
-      subject: `Second reminder: ${projectName} is still unpublished`,
-      heading: `Okay, one more nudge`,
-      meme: undefined,
-      body: `${projectName} is still sitting there, finished and unpublished. Last time we'll bring it up — publishing takes one click, costs nothing, and gives you a real link to send people instead of a screen recording.`,
+      subject: `Last reminder: ${projectName} is still unpublished`,
+      heading: 'One last reminder',
+      body: `${projectName} is finished and still unpublished. Publishing takes one click, costs nothing, and gives you a real link to send people instead of a screen recording. This is the last time we will mention it.`,
     },
   ]
   const v = variants[Math.min(sendNumber - 1, variants.length - 1)]
   const html = wrap(`
-    ${v.meme ? memeImg(v.meme) : ''}
     ${h1(v.heading)}
     ${p(v.body)}
     <div style="text-align:center;margin:28px 0">
-      ${btn('Publish it now →', `${APP_URL}/project/${projectId}`)}
+      ${btn('Publish it →', `${APP_URL}/project/${projectId}`)}
     </div>
-    ${p('You can also connect your own domain, push to GitHub, or export the full source as a ZIP.')}
+    ${p('Pushing the code to your own GitHub and exporting it as a ZIP are free too. On any paid plan you can also connect your own domain.')}
   `, v.subject, unsubUrl)
   return sendMail({ from: FROM_NOTIF, to, subject: v.subject, html })
 }
@@ -1291,20 +1287,23 @@ export async function sendAIEmployeeFailedEmail(
 // Faster and lighter than the existing "still waiting" nudge (day 2–14),
 // which is now touch 2 for anyone who ignores this one.
 export async function sendQuickStartNudgeEmail(to: string, name: string, unsubUrl: string) {
+  // "About two minutes", not "60 seconds": the measured median build is about two minutes, and a promise that
+  // fails on the first try costs more trust than it earns clicks.
   const html = wrap(`
-    ${h1("You're one sentence away 👀")}
-    ${p(`Hey ${name} — you signed up but haven't built anything yet. That's the only thing standing between you and a working app: one sentence, plain English, about 60 seconds.`)}
+    ${h1('Your first app is about two minutes away')}
+    ${p(`Hi ${name},`)}
+    ${p('You signed up but have not built anything yet. People usually start with one of these:')}
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">
-      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“A waitlist page for my product launch”</td></tr>
-      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">“An expense tracker split by category”</td></tr>
-      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0">“A booking page for my studio”</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">A waitlist page for a product launch</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0;border-bottom:1px solid #2e2e38">An expense tracker split by category</td></tr>
+      <tr><td style="padding:8px 0;font-size:14px;color:#8888a0">A booking page for a studio</td></tr>
     </table>
     <div style="text-align:center;margin:28px 0">
-      ${btn('Try it now →', `${APP_URL}/dashboard`)}
+      ${btn('Describe yours →', `${APP_URL}/dashboard`)}
     </div>
-    ${p('No pressure — your 30 free credits aren\'t going anywhere. Just didn\'t want you to forget.')}
-  `, "Your first app takes about 60 seconds", unsubUrl)
-  return sendMail({ from: FROM, to, subject: 'Quick one — your first app takes about 60 seconds', html })
+    ${p('No rush. Your 30 free credits are not going anywhere.')}
+  `, 'Your 30 free credits are still there.', unsubUrl)
+  return sendMail({ from: FROM, to, subject: 'Your first app is about two minutes away', html })
 }
 
 // ── 23. Post-first-build nurture — fires the day after the aha-moment email ─

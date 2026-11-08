@@ -695,9 +695,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       <section data-sec="telemetry" style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
-            { value: appsBuiltStat ?? '2,400+', label: t.statAppsBuilt },
-            { value: '5', label: t.statAvgBuildTime },
-            { value: '99.9%', label: t.statUptimeTarget, href: '/status' },
+            // Only the real count. When the query fails, show nothing rather than a made-up "2,400+".
+            ...(appsBuiltStat ? [{ value: appsBuiltStat, label: t.statAppsBuilt, href: undefined as string | undefined }] : []),
+            { value: '5', label: t.statAvgBuildTime, href: undefined as string | undefined },
+            { value: '99.9%', label: t.statUptimeTarget, href: '/status' as string | undefined },
           ].map(s => (
             <div key={s.label}>
               <div className="mk-stat">{s.value}</div>
