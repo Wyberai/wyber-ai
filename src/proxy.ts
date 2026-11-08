@@ -92,6 +92,10 @@ export async function proxy(request: NextRequest) {
     // "Build your own software" — paste a tool's URL, pick features, get a quote.
     // Top of an ad/outbound funnel, so anonymous visitors must reach it.
     path.startsWith('/byos') ||
+    // The three answer pages behind the homepage's question (Signal design). Anonymous visitors land here.
+    path === '/solve' ||
+    path === '/create' ||
+    path === '/agencies' ||
     // Paid-traffic / cold-email landing page — must stay public, anonymous
     // ad and outbound clicks land here before any account exists.
     path.startsWith('/ecommerce') ||

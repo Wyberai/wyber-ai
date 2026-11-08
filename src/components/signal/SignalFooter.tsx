@@ -1,0 +1,35 @@
+import Link from 'next/link'
+import { WyberLogo } from '@/components/shared/WyberLogo'
+
+const COLS: { heading: string; links: [string, string][] }[] = [
+  { heading: 'Product', links: [['Pricing', '/pricing'], ['Replace your SaaS', '/byos'], ['Agencies', '/agencies'], ['Web Apps', '/use-cases/no-code-web-app-builder'], ['MCP Server', '/mcp'], ['Connectors', '/connectors'], ['Changelog', '/changelog'], ['Status', '/status']] },
+  { heading: 'Resources', links: [['Learning Paths', '/learn'], ['Documentation', '/docs'], ['Use Cases', '/use-cases'], ['Blog', '/blog'], ['Free scan', '/tools'], ['Marketplace', '/marketplace']] },
+  { heading: 'Compare', links: [['vs Lovable', '/vs/lovable'], ['vs Bolt', '/vs/bolt'], ['vs v0', '/vs/v0'], ['vs Replit', '/vs/replit'], ['vs Cursor', '/vs/cursor']] },
+  { heading: 'Company', links: [['Founders', '/founders'], ['Press', '/press'], ['Affiliates', '/affiliates'], ['Community', '/community'], ['Privacy', '/privacy'], ['Terms', '/terms']] },
+]
+
+export function SignalFooter() {
+  return (
+    <footer className="sg-footer">
+      <div className="sg-wrap">
+        <div className="sg-fcols">
+          <div>
+            <Link href="/" aria-label="WyberAi home" style={{ display: 'inline-flex', marginBottom: 14 }}><WyberLogo markSize={26} wordmarkSize={16} /></Link>
+            <p>Turn plain English into full-stack apps. Build, preview, and deploy before lunch.</p>
+            <p style={{ marginTop: 12 }}>A product by SignalPulse Technologies<br />Wyoming, USA · hello@wyberai.com</p>
+          </div>
+          {COLS.map(c => (
+            <div key={c.heading}>
+              <h4>{c.heading}</h4>
+              {c.links.map(([l, h]) => <Link key={h} href={h}>{l}</Link>)}
+            </div>
+          ))}
+        </div>
+        <div className="sg-fbase">
+          <span>© {new Date().getFullYear()} SignalPulse Technologies LLC. All rights reserved.</span>
+          <span><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · <Link href="/cookies">Cookies</Link></span>
+        </div>
+      </div>
+    </footer>
+  )
+}
