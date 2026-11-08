@@ -93,6 +93,7 @@ export async function proxy(request: NextRequest) {
     // Top of an ad/outbound funnel, so anonymous visitors must reach it.
     path.startsWith('/byos') ||
     // The three answer pages behind the homepage's question (Signal design). Anonymous visitors land here.
+    (process.env.NEXT_PUBLIC_DEV_SANDBOX === '1' && path.startsWith('/dev/')) ||
     path === '/solve' ||
     path === '/create' ||
     path === '/agencies' ||

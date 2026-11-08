@@ -161,7 +161,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   }, [initialProject?.id])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#09090b', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#09090b', overflow: 'hidden' }}>
       {/* Top bar */}
       <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#10121a', flexShrink: 0 }}>
         <a href="/dashboard" style={{ textDecoration: 'none' }}>

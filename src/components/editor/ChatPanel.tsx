@@ -299,10 +299,10 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
   return (
     <div style={{ margin:'6px 0', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-overlay)', overflow:'hidden' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 8px', borderBottom:'1px solid var(--ide-border)', background:'var(--bg-base)' }}>
-        <span style={{ fontSize:10, color:'var(--ide-text3)', fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.04em' }}>{lang || 'code'}</span>
+        <span style={{ fontSize: 12, color:'var(--ide-text3)', fontFamily:'monospace', textTransform:'uppercase', letterSpacing:'0.04em' }}>{lang || 'code'}</span>
         <button
           onClick={() => { navigator.clipboard.writeText(code).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }); }}
-          style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copied ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
+          style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copied ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
         >
           {copied ? '✓ Copied' : 'Copy'}
         </button>
@@ -712,7 +712,27 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     return () => document.removeEventListener('visibilitychange', onVisibilityChange);
   }, []);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, streamingContent]);
+  // Follow new content only while the reader is at the bottom. If they scrolled up to read, leave them there and
+  // offer a "Jump to latest" button. Instant (not smooth) so streaming does not fight the scrollbar, and so
+  // reduced-motion settings are respected by construction.
+  const listRef = useRef<HTMLDivElement>(null);
+  const stuckRef = useRef(true);
+  const [showJump, setShowJump] = useState(false);
+  const onListScroll = useCallback(() => {
+    const el = listRef.current; if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    stuckRef.current = atBottom;
+    setShowJump(prev => (prev === !atBottom ? prev : !atBottom));
+  }, []);
+  const jumpToLatest = useCallback(() => {
+    const el = listRef.current; if (!el) return;
+    el.scrollTop = el.scrollHeight; stuckRef.current = true; setShowJump(false);
+  }, []);
+  useEffect(() => {
+    const el = listRef.current; if (!el) return;
+    if (stuckRef.current) el.scrollTop = el.scrollHeight;
+    else setShowJump(true);
+  }, [messages, streamingContent]);
 
   useEffect(() => {
     const ta = textareaRef.current; if (!ta) return;
@@ -3470,7 +3490,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
   };
 
   return (
-    <div style={{ height:'100%', display:'flex', flexDirection:'column', background:'var(--bg-surface)', position:'relative' }}
+    <div className="wy-chat-root" style={{ height:'100%', display:'flex', flexDirection:'column', background:'var(--bg-surface)', position:'relative' }}
       onDragOver={e => { e.preventDefault(); setDragOver(true); }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
@@ -3481,7 +3501,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <div style={{ width:7, height:7, borderRadius:'50%', background:'var(--ide-green)', boxShadow:'0 0 6px rgba(34,197,94,0.5)' }} />
           <span style={{ fontSize:12, fontWeight:600, color:'var(--ide-text)', letterSpacing:'-0.02em' }}>WyberAi</span>
           {lastModel && lastCreditCost && (
-            <span style={{ fontSize:10, padding:'1px 6px', borderRadius:10, background:'var(--bg-overlay)', color:'var(--ide-text3)', border:'1px solid var(--ide-border)' }}>
+            <span style={{ fontSize: 12, padding:'1px 6px', borderRadius:10, background:'var(--bg-overlay)', color:'var(--ide-text3)', border:'1px solid var(--ide-border)' }}>
               {lastCreditCost}cr
             </span>
           )}
@@ -3491,7 +3511,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             <button
               onClick={handleUndo}
               title={t('undoTooltip')}
-              style={{ fontSize:10, padding:'3px 8px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
+              style={{ fontSize: 12, padding:'3px 8px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
             >
               {t('undoButton')}
             </button>
@@ -3499,7 +3519,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <button
             onClick={() => setPlanMode(v => !v)}
             title={t('planModeTooltip')}
-            style={{ fontSize:10, padding:'3px 8px', borderRadius:5, border:`1px solid ${planMode ? 'var(--accent-dim)' : 'var(--ide-border)'}`, background: planMode ? 'var(--accent-glow)' : 'transparent', color: planMode ? 'var(--accent)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
+            style={{ fontSize: 12, padding:'3px 8px', borderRadius:5, border:`1px solid ${planMode ? 'var(--accent-dim)' : 'var(--ide-border)'}`, background: planMode ? 'var(--accent-glow)' : 'transparent', color: planMode ? 'var(--accent)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600, letterSpacing:'-0.01em', transition:'var(--t)' }}
           >
             {t('planModeButton')}
           </button>
@@ -3539,7 +3559,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
             <div>
               <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>{t('planOfferTitle')}</div>
-              <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>
                 {t('planOfferDesc')}
               </div>
             </div>
@@ -3582,7 +3602,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', letterSpacing: '-0.01em', marginBottom: 3 }}>
                 {t('regulatedTitle')}
               </div>
-              <div style={{ fontSize: 11, color: '#a3a3a3', lineHeight: 1.6 }}>
+              <div style={{ fontSize: 12, color: '#a3a3a3', lineHeight: 1.6 }}>
                 {t('regulatedIntroPrefix')}{' '}
                 <strong style={{ color: '#fef3c7' }}>
                   {pendingRegulated.domains.map(d => d.label).join(' and ')}
@@ -3594,13 +3614,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5, paddingLeft: 29 }}>
             {pendingRegulated.domains.map(d => (
-              <div key={d.label} style={{ fontSize: 11, color: '#fef3c7', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 6, padding: '5px 9px', lineHeight: 1.5 }}>
+              <div key={d.label} style={{ fontSize: 12, color: '#fef3c7', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 6, padding: '5px 9px', lineHeight: 1.5 }}>
                 <strong>{d.label}:</strong> {d.requirement}
               </div>
             ))}
           </div>
 
-          <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.6, paddingLeft: 29 }}>
+          <div style={{ fontSize: 12, color: '#71717a', lineHeight: 1.6, paddingLeft: 29 }}>
             {t('regulatedFooterNotice')}
           </div>
 
@@ -3661,7 +3681,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
             <div>
               <div style={{ fontSize:12, fontWeight:700, color:'var(--ide-text)', letterSpacing:'-0.01em' }}>{t('depGateTitle')}</div>
-              <div style={{ fontSize:11, color:'var(--ide-text3)', marginTop:1 }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>
                 {t('depGateDesc')}
               </div>
             </div>
@@ -3673,7 +3693,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                 <span style={{ fontSize:14 }}>🗄</span>
                 <span style={{ fontSize:12, fontWeight:700, color:'#3FCF8E' }}>Supabase</span>
-                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>{t('supabaseSectionDesc')}</span>
+                <span style={{ fontSize: 12, color:'var(--ide-text3)' }}>{t('supabaseSectionDesc')}</span>
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                 {['SUPABASE_URL', 'SUPABASE_ANON_KEY'].map(key => (
@@ -3681,10 +3701,10 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     placeholder={key === 'SUPABASE_URL' ? 'https://xxxx.supabase.co' : 'eyJhbGci...'}
                     value={inlineSecrets[key] ?? ''}
                     onChange={e => setInlineSecrets(s => ({ ...s, [key]: e.target.value }))}
-                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(63,207,142,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(63,207,142,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize: 12, fontFamily:'monospace', outline:'none' }}
                   />
                 ))}
-                <div style={{ fontSize:10, color:'var(--ide-text3)' }}>
+                <div style={{ fontSize: 12, color:'var(--ide-text3)' }}>
                   {t('supabaseFindKeysNote')}
                 </div>
               </div>
@@ -3697,15 +3717,15 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:8 }}>
                 <span style={{ fontSize:14 }}>💳</span>
                 <span style={{ fontSize:12, fontWeight:700, color:'#635BFF' }}>Stripe</span>
-                <span style={{ fontSize:11, color:'var(--ide-text3)' }}>{t('stripeSectionDesc')}</span>
+                <span style={{ fontSize: 12, color:'var(--ide-text3)' }}>{t('stripeSectionDesc')}</span>
               </div>
               <input
                 placeholder="pk_live_... or pk_test_..."
                 value={inlineSecrets['STRIPE_PUBLISHABLE_KEY'] ?? ''}
                 onChange={e => setInlineSecrets(s => ({ ...s, 'STRIPE_PUBLISHABLE_KEY': e.target.value }))}
-                style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(99,91,255,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:'1px solid rgba(99,91,255,0.2)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize: 12, fontFamily:'monospace', outline:'none' }}
               />
-              <div style={{ fontSize:10, color:'var(--ide-text3)', marginTop:5 }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:5 }}>
                 {t('stripeFindKeysNote')}
               </div>
             </div>
@@ -3724,7 +3744,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     placeholder={k.placeholder}
                     value={inlineSecrets[k.name] ?? ''}
                     onChange={e => setInlineSecrets(s => ({ ...s, [k.name]: e.target.value }))}
-                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:`1px solid ${pendingGenArgs.customGroup!.color}33`, background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:11, fontFamily:'monospace', outline:'none' }}
+                    style={{ width:'100%', padding:'6px 9px', borderRadius:6, border:`1px solid ${pendingGenArgs.customGroup!.color}33`, background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize: 12, fontFamily:'monospace', outline:'none' }}
                   />
                 ))}
               </div>
@@ -3737,7 +3757,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               <div style={{ fontSize:12, fontWeight:700, color:'var(--blue)', marginBottom:6 }}>
                 {t('composioToolsNeeded').replace('{tools}', pendingGenArgs.composioTools.join(', '))}
               </div>
-              <div style={{ fontSize:11, color:'var(--ide-text3)' }}>
+              <div style={{ fontSize: 12, color:'var(--ide-text3)' }}>
                 {t('composioConnectNote')}
               </div>
             </div>
@@ -3785,7 +3805,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <WebsiteLaunchChecklist projectId={resolvedProjectId} />
         </AgentFeedBoundary>
       )}
-      <div style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin' }}>
+      <div style={{ flex:1, minHeight:0, position:'relative', display:'flex', flexDirection:'column' }}>
+      <div ref={listRef} onScroll={onListScroll} role="log" aria-label="Conversation" aria-relevant="additions" aria-busy={isGenerating || chatThinking} tabIndex={0} className="wy-chat-list" style={{ flex:1, overflow:'auto', padding:'8px 0', scrollbarWidth:'thin', overscrollBehavior:'contain' }}>
         {visibleMessages.map(msg => (
           <div key={msg.id} style={{ padding:'4px 12px', marginBottom:1 }}>
             {msg.role === 'user' ? (
@@ -3801,8 +3822,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       style={{ width:'100%', padding:'9px 13px', borderRadius:10, border:'1px solid var(--accent)', background:'var(--bg-elevated)', color:'var(--ide-text)', fontSize:12, lineHeight:1.55, fontFamily:'inherit', resize:'vertical', outline:'none' }}
                     />
                     <div style={{ display:'flex', gap:6, justifyContent:'flex-end' }}>
-                      <button onClick={handleCancelEdit} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>{tc('cancel')}</button>
-                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize:11, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
+                      <button onClick={handleCancelEdit} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}>{tc('cancel')}</button>
+                      <button onClick={handleSaveEdit} disabled={!editingText.trim()} style={{ fontSize: 12, padding:'4px 10px', borderRadius:6, border:'none', background:'var(--accent)', color:'#fff', cursor: editingText.trim() ? 'pointer' : 'not-allowed', fontWeight:600, opacity: editingText.trim() ? 1 : 0.5 }}>{t('saveRegenerateButton')}</button>
                     </div>
                   </div>
                 </div>
@@ -3810,7 +3831,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 <div style={{ display:'flex', justifyContent:'flex-end', alignItems:'flex-end', gap:5 }}>
                   {!isGenerating && !msg.content.startsWith('[Image:') && (
                     <button
-                      onClick={() => handleStartEdit(msg)}
+                      onClick={() => handleStartEdit(msg)} type="button" className="wy-tap" aria-label={t('editRegenerateTooltip')}
                       title={t('editRegenerateTooltip')}
                       style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:3, borderRadius:5, display:'flex', flexShrink:0 }}
                     >
@@ -3837,7 +3858,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     {msg.status === 'streaming'
                       ? <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
                           {liveReasoning && (
-                            <div style={{ fontSize:10.5, fontStyle:'italic', color:'var(--ide-text3)', maxHeight:54, overflow:'hidden', maskImage:'linear-gradient(to bottom, black 60%, transparent)', WebkitMaskImage:'linear-gradient(to bottom, black 60%, transparent)' }}>
+                            <div style={{ fontSize: 12.5, fontStyle:'italic', color:'var(--ide-text3)', maxHeight:54, overflow:'hidden', maskImage:'linear-gradient(to bottom, black 60%, transparent)', WebkitMaskImage:'linear-gradient(to bottom, black 60%, transparent)' }}>
                               🧠 {liveReasoning.slice(-260)}
                             </div>
                           )}
@@ -3850,7 +3871,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                 {progressSteps.map((step, i) => {
                                   const isLast = i === progressSteps.length - 1;
                                   return (
-                                    <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
+                                    <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize: 12, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
                                       {isLast
                                         ? <span style={{ width:9, height:9, borderRadius:'50%', border:'1.5px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block', flexShrink:0 }}/>
                                         : <span style={{ width:9, height:9, borderRadius:'50%', background:'var(--ide-green)', display:'inline-block', flexShrink:0 }}/>
@@ -3859,9 +3880,9 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                     </span>
                                   );
                                 })}
-                                <span style={{ fontSize:10, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
+                                <span style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
                               </div>
-                            : <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)', fontSize:11 }}>
+                            : <span style={{ display:'flex', alignItems:'center', gap:7, color:'var(--ide-text3)', fontSize: 12 }}>
                                 <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
                                 <span className="ide-shimmer-text">{buildMsg}</span> {elapsed > 0 && `(${elapsed}s)`}
                               </span>
@@ -3876,13 +3897,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                   if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
                                   return next;
                                 })}
-                                style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0 }}
+                                style={{ display:'flex', alignItems:'center', gap:4, fontSize: 12.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0 }}
                               >
                                 🧠 {expandedReasoning.has(msg.id) ? t('hideReasoningLabel') : t('showReasoningLabel')}
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: expandedReasoning.has(msg.id) ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
                               </button>
                               {expandedReasoning.has(msg.id) && (
-                                <div style={{ marginTop:5, padding:'8px 10px', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-elevated)', fontSize:11, fontStyle:'italic', lineHeight:1.6, color:'var(--ide-text3)', whiteSpace:'pre-wrap' }}>
+                                <div style={{ marginTop:5, padding:'8px 10px', borderRadius:8, border:'1px solid var(--ide-border)', background:'var(--bg-elevated)', fontSize: 12, fontStyle:'italic', lineHeight:1.6, color:'var(--ide-text3)', whiteSpace:'pre-wrap' }}>
                                   {msg.reasoning}
                                 </div>
                               )}
@@ -3904,7 +3925,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                                     if (next.has(msg.id)) next.delete(msg.id); else next.add(msg.id);
                                     return next;
                                   })}
-                                  style={{ display:'flex', alignItems:'center', gap:4, fontSize:10.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0, marginTop:4 }}
+                                  style={{ display:'flex', alignItems:'center', gap:4, fontSize: 12.5, fontWeight:600, color:'var(--ide-text3)', background:'transparent', border:'none', cursor:'pointer', padding:0, marginTop:4 }}
                                 >
                                   {detailsOpen ? t('hideDetailsLabel') : t('showDetailsLabel')}
                                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ transform: detailsOpen ? 'rotate(180deg)' : 'none', transition:'transform 0.15s' }}><path d="M6 9l6 6 6-6"/></svg>
@@ -3923,7 +3944,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                   {msg.filesChanged && msg.filesChanged.length > 0 && (
                     <div style={{ marginTop:6, display:'flex', flexWrap:'wrap', gap:3 }}>
                       {msg.filesChanged.map(f => (
-                        <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize:10, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
+                        <span key={f} style={{ background:'var(--accent-glow)', color:'var(--accent)', padding:'1px 6px', borderRadius:4, fontSize: 12, border:'1px solid var(--accent-dim)', fontFamily:'monospace' }}>✎ {f}</span>
                       ))}
                     </div>
                   )}
@@ -3995,16 +4016,16 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     <div style={{ marginTop:5, display:'flex', gap:4 }}>
                       <button
                         onClick={() => handleCopyMessage(msg.id, msg.content)}
-                        title={t('copyMessageTooltip')}
-                        style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copiedMessageId === msg.id ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
+                        className="wy-tap wy-act" aria-label={t('copyMessageTooltip')} title={t('copyMessageTooltip')}
+                        style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color: copiedMessageId === msg.id ? 'var(--ide-green)' : 'var(--ide-text3)', cursor:'pointer', fontWeight:600 }}
                       >
                         {copiedMessageId === msg.id ? '✓ ' + tc('copied') : tc('copy')}
                       </button>
                       {msg.status === 'error' && msg.retryPrompt && !isGenerating && (
                         <button
                           onClick={() => handleRetry(msg.id)}
-                          title={t('retryMessageTooltip')}
-                          style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:3 }}
+                          className="wy-tap wy-act" aria-label={t('retryMessageTooltip')} title={t('retryMessageTooltip')}
+                          style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', cursor:'pointer', fontWeight:600, display:'flex', alignItems:'center', gap:3 }}
                         >
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg>
                           {tc('retry')}
@@ -4044,7 +4065,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       <button
                         onClick={() => { setInput(msg.designSuggestion!.prompt); textareaRef.current?.focus(); }}
                         title={t('fillFollowUpTooltip')}
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
+                        style={{ fontSize: 12, padding: '4px 10px', borderRadius: 20, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer', fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap' }}
                         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(14,165,233,0.4)'; }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--ide-text2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--ide-border)'; }}
                       >
@@ -4105,7 +4126,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                       {progressSteps.map((step, i) => {
                         const isLast = i === progressSteps.length - 1;
                         return (
-                          <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize:11, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
+                          <span key={i} style={{ display:'flex', alignItems:'center', gap:6, fontSize: 12, color: isLast ? 'var(--ide-text2)' : 'var(--ide-text3)' }}>
                             {isLast
                               ? <span style={{ width:9, height:9, borderRadius:'50%', border:'1.5px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block', flexShrink:0 }}/>
                               : <span style={{ width:9, height:9, borderRadius:'50%', background:'var(--ide-green)', display:'inline-block', flexShrink:0 }}/>
@@ -4114,7 +4135,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                           </span>
                         );
                       })}
-                      <span style={{ fontSize:10, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
+                      <span style={{ fontSize: 12, color:'var(--ide-text3)', marginTop:1 }}>{elapsed > 0 && `${elapsed}s`}</span>
                     </div>
                   : <div style={{ display:'flex', alignItems:'center', gap:6, paddingTop:2, fontSize:12, color:'var(--ide-text3)' }}>
                       <span style={{ width:10, height:10, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', animation:'spin 0.8s linear infinite', display:'inline-block' }}/>
@@ -4141,6 +4162,13 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
         )}
         <div ref={messagesEndRef} />
       </div>
+      {showJump && (
+        <button type="button" onClick={jumpToLatest} className="wy-jump wy-tap" aria-label="Jump to latest message">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          Latest
+        </button>
+      )}
+      </div>
 
       {/* Attached files */}
       {attachedFiles.length > 0 && (
@@ -4152,7 +4180,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                 : <span style={{ fontSize:18, flexShrink:0 }}>{f.kind === 'image' ? '🖼' : f.kind === 'pdf' ? '📕' : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? '📊' : f.kind === 'text' ? '📄' : '📎'}</span>}
               <div style={{ minWidth:0 }}>
                 <div style={{ fontSize:12, color:'var(--text-primary)', fontWeight:500, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{f.name}</div>
-                <div style={{ fontSize:10, color:'var(--text-muted)' }}>{f.uploading ? t('uploadingLabel') : f.kind === 'image' ? t('imageLabel') : f.kind === 'pdf' ? t('pdfReadLabel') : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? t('spreadsheetReadLabel') : f.kind === 'text' ? t('docReadLabel') : t('attachedLabel')}</div>
+                <div style={{ fontSize: 12, color:'var(--text-muted)' }}>{f.uploading ? t('uploadingLabel') : f.kind === 'image' ? t('imageLabel') : f.kind === 'pdf' ? t('pdfReadLabel') : f.kind === 'text' && /\.xlsx?$/i.test(f.name) ? t('spreadsheetReadLabel') : f.kind === 'text' ? t('docReadLabel') : t('attachedLabel')}</div>
               </div>
               <button onClick={() => removeAttachedFile(f.localId)} style={{ background:'none', border:'none', color:'var(--text-muted)', cursor:'pointer', fontSize:16, flexShrink:0, lineHeight:1 }}>×</button>
             </div>
@@ -4206,11 +4234,11 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                     }
                   }}
                   style={isWyberCloud ? {
-                    fontSize: 10, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                    fontSize: 12, padding: '3px 9px', borderRadius: 6, cursor: 'pointer', fontFamily: 'var(--font-sans)',
                     transition: 'all 0.15s', whiteSpace: 'nowrap', border: '1px solid transparent',
                     background: 'linear-gradient(135deg, #60a5fa, #2563eb)', color: 'white', fontWeight: 600,
                   } : {
-                    fontSize: 10, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap',
+                    fontSize: 12, padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontFamily: 'var(--font-sans)', transition: 'all 0.15s', whiteSpace: 'nowrap',
                   }}
                   onMouseEnter={e => { if (!isWyberCloud) { (e.target as HTMLElement).style.borderColor = '#0EA5E9'; (e.target as HTMLElement).style.color = '#0EA5E9'; } else { (e.target as HTMLElement).style.opacity = '0.9'; } }}
                   onMouseLeave={e => { if (!isWyberCloud) { (e.target as HTMLElement).style.borderColor = 'var(--ide-border)'; (e.target as HTMLElement).style.color = 'var(--ide-text3)'; } else { (e.target as HTMLElement).style.opacity = '1'; } }}
@@ -4220,17 +4248,17 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             </div>
           )}
           {queuedMsg && (
-            <div style={{ display:'flex', alignItems:'flex-start', gap:8, margin:'8px 10px 0', padding:'6px 10px', borderRadius:8, background:'var(--bg-overlay)', border:'1px solid var(--ide-border)', fontSize:11, color:'var(--ide-text2)' }}>
+            <div style={{ display:'flex', alignItems:'flex-start', gap:8, margin:'8px 10px 0', padding:'6px 10px', borderRadius:8, background:'var(--bg-overlay)', border:'1px solid var(--ide-border)', fontSize: 12, color:'var(--ide-text2)' }}>
               <span style={{ flexShrink:0, color:'var(--accent)', fontWeight:600 }}>Up next</span>
               <span style={{ flex:1, minWidth:0, whiteSpace:'pre-wrap', wordBreak:'break-word', maxHeight:54, overflow:'hidden' }}>{queuedMsg}</span>
-              <button onClick={() => { setInput(prev => prev ? `${queuedMsg}\n${prev}` : queuedMsg); setQueuedMsg(null); }} title="Edit queued message"
-                style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:11, padding:0 }}>Edit</button>
-              <button onClick={() => setQueuedMsg(null)} title="Remove queued message"
+              <button onClick={() => { setInput(prev => prev ? `${queuedMsg}\n${prev}` : queuedMsg); setQueuedMsg(null); }} className="wy-tap" aria-label="Edit queued message" title="Edit queued message"
+                style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize: 12, padding:0 }}>Edit</button>
+              <button onClick={() => setQueuedMsg(null)} className="wy-tap" aria-label="Remove queued message" title="Remove queued message"
                 style={{ flexShrink:0, background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:13, lineHeight:1, padding:0 }}>&times;</button>
             </div>
           )}
           <textarea
-            ref={textareaRef} value={input}
+            ref={textareaRef} value={input} aria-label="Message WyberAi" className="wy-chat-input" enterKeyHint="send"
             onChange={e => {
               const v = e.target.value;
               setInput(v);
@@ -4247,7 +4275,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'5px 8px 7px', gap: 6 }}>
             <div style={{ display:'flex', gap:4, alignItems:'center', flex: 1 }}>
               <input ref={fileInputRef} type="file" multiple style={{ display:'none' }} onChange={e => { Array.from(e.target.files || []).forEach(handleFile); e.target.value=''; }} />
-              <button onClick={() => fileInputRef.current?.click()} title={t('attachFilesTooltip')}
+              <button type="button" className="wy-tap" aria-label={t('attachFilesTooltip')} onClick={() => fileInputRef.current?.click()} title={t('attachFilesTooltip')}
                 style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', padding:'3px 5px', borderRadius:5, transition:'var(--t)', display:'flex', alignItems:'center' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
               </button>
@@ -4261,7 +4289,7 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
               {(() => {
                 const est = creditCost(isFirstBuild ? 'web-build' : 'small-edit', 'fast');
                 return (
-                  <span title={t('costEstimateTooltip')} style={{ fontSize:10, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
+                  <span title={t('costEstimateTooltip')} style={{ fontSize: 12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background:'transparent', color:'var(--ide-text3)', fontFamily:'var(--font-sans)', letterSpacing:'-0.01em', display:'inline-flex', alignItems:'center', gap:3 }}>
                     ~{est}cr
                   </span>
                 );
@@ -4274,7 +4302,8 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
             return (
             <button
               onClick={showStop ? handleStop : isGenerating ? () => { const text = input.trim(); setQueuedMsg(prev => prev ? `${prev}\n${text}` : text); setInput(''); } : handleSend}
-              data-send-button="true"
+              data-send-button="true" type="button" className="wy-tap wy-send"
+              aria-label={showStop ? t('stopGeneratingTooltip') : isGenerating ? 'Queue this message' : 'Send message'}
               title={showStop ? t('stopGeneratingTooltip') : isGenerating ? 'Queue — runs when this one finishes' : undefined}
               disabled={!isGenerating && ((!input.trim() && !attachedImage && attachedFiles.length === 0) || !!pendingPlan || !!pendingGenArgs || !!pendingPlanOffer)}
               style={{

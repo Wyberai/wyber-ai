@@ -26,7 +26,7 @@
   /* Text */
   --ide-text: var(--brand-text);
   --ide-text2: var(--brand-text-dim);
-  --ide-text3: var(--brand-text-faint);
+  --ide-text3: #8391a7; /* raised from brand faint (#545c6e, ~3:1) to ~5.9:1 for readable secondary text */
 
   /* Accent */
   --accent: var(--brand-accent);
@@ -134,3 +134,17 @@
     transition: none;
   }
 }
+
+/* ---- chat panel: touch targets, phone input size, jump button, readable greys ---- */
+.wy-tap { min-width: 28px; min-height: 28px; display: inline-flex; align-items: center; justify-content: center; }
+.wy-send { min-width: 36px; min-height: 36px; }
+.wy-act { min-height: 32px; padding-left: 10px !important; padding-right: 10px !important; }
+@media (pointer: coarse), (max-width: 768px) {
+  .wy-tap, .wy-send { min-width: 44px; min-height: 44px; }
+  .wy-act { min-height: 44px; }
+  .wy-chat-input { font-size: 16px !important; }
+}
+.wy-chat-list:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.wy-jump { position: absolute; right: 14px; bottom: 12px; z-index: 5; gap: 6px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--ide-border2); background: var(--bg-elevated); color: var(--ide-text); font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px -8px rgba(0,0,0,.6); }
+.wy-jump:hover { border-color: var(--accent); }
+@media (pointer: coarse), (max-width: 768px) { .wy-chat-root button:not(.wy-tap) { min-height: 40px; } }
