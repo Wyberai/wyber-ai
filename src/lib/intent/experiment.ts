@@ -6,7 +6,7 @@ export function intentExperimentOn(value: string | undefined): boolean {
 }
 
 export type Variant = 'intent' | 'control'
-export const INTENT_SHARE = 0.7 // 70% see the intent version, 30% the current page
+export const INTENT_SHARE = 0.9 // 90% see the intent version; 10% keep the current page so the two can be compared
 
 /** r is a uniform [0,1) sample, injected so tests are deterministic. */
 export function assignVariant(r: number, share: number = INTENT_SHARE): Variant {

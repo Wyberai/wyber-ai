@@ -17,9 +17,10 @@ import { HERO_GU } from '@/lib/intent/hero-gu';
 import { sendIntentEvent, getVariant } from '@/lib/intent/client';
 import type { Door, IntentLang, Prior } from '@/lib/intent/types';
 import { HOME_HIDE, HERO_BY_DOOR, type HomeSection } from '@/lib/intent/adapt';
-import { DOOR_COOKIE, DOOR_COOKIE_DAYS, PERSONAS, personaCss, personaVars } from '@/lib/intent/persona';
+import { ASKING_CSS, DOOR_COOKIE, DOOR_COOKIE_DAYS, PERSONAS, personaCss, personaVars } from '@/lib/intent/persona';
 import { personaCopy } from '@/lib/intent/persona-i18n';
 import { IntentChooser } from '@/components/shared/IntentChooser';
+import { PersonaBlocks } from '@/components/shared/PersonaBlocks';
 
 const BRAND = '#0EA5E9';
 
@@ -147,7 +148,7 @@ function ScanReadout({ stats, t }: { stats?: { totalScans: number; cleanPct: num
 function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label: string; ctaLabel: string }) {
   if (apps.length === 0) return null;
   return (
-    <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+    <section data-sec="gallery" className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
       <Reveal>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
           <div className="mk-eyebrow">{label}</div>
@@ -182,7 +183,7 @@ function GalleryStrip({ apps, label, ctaLabel }: { apps: HomeGalleryApp[]; label
 function UserBuildsStrip({ builds, label, ctaLabel }: { builds: HomeUserBuild[]; label: string; ctaLabel: string }) {
   if (builds.length === 0) return null;
   return (
-    <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+    <section data-sec="userbuilds" className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
       <Reveal>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 28 }}>
           <div className="mk-eyebrow">{label}</div>
@@ -361,7 +362,7 @@ function buildStages(t: HomeStrings) {
 interface HomeGalleryApp { id: string; name: string; category: string; preview_color: string | null; use_count: number }
 interface HomeUserBuild { id: string; title: string; category: string; preview_color: string | null; thumbnail_url: string | null; sales_count: number; sellerName: string }
 
-export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [], intentPrior = null, initialDoor = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[]; intentPrior?: Prior | null; initialDoor?: Door | null }) {
+export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [], intentPrior = null, initialDoor = null, initialAsking = false }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[]; intentPrior?: Prior | null; initialDoor?: Door | null; initialAsking?: boolean }) {
   const inr = initialCurrency === 'INR';
   // India-only locale switch — never rendered or read for non-India visitors.
   // Starts 'en' on every render (server and first client paint match, so no
@@ -398,6 +399,13 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   const [intentLang, setIntentLang] = useState<IntentLang>('en');
   // Who the intent experiment thinks this visitor is. null = experiment off or control group: nothing is hidden.
   const [adaptDoor, setAdaptDoor] = useState<Door | null>(intentPrior ? initialDoor : null);
+  // A new visitor first sees only the question. Everything else stays hidden until they answer.
+  const [asking, setAsking] = useState<boolean>(!!intentPrior && !initialDoor && initialAsking);
+  const chooseDoor = (d: Door | null, clicked?: boolean) => {
+    setAdaptDoor(d);
+    // The page is rebuilt around the answer, so start the visitor at its top. Two frames later, after it has re-laid-out.
+    if (clicked && typeof window !== 'undefined') requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: 0 })));
+  };
   // Remember the chosen persona (whoever changed it: the chooser, or a typed sentence that revealed it),
   // so the server can render the right page on the very first paint next time.
   useEffect(() => {
@@ -480,9 +488,10 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
-    <div className="mk-page" data-theme="dark" data-persona={adaptDoor ?? undefined} style={adaptDoor ? ({ display: 'flex', flexDirection: 'column', ...personaVars(adaptDoor) } as React.CSSProperties) : undefined}>
+    <div className="mk-page" data-theme="dark" data-persona={adaptDoor ?? undefined} data-asking={!adaptDoor && asking ? '' : undefined} style={adaptDoor ? ({ display: 'flex', flexDirection: 'column', overflowAnchor: 'none', ...personaVars(adaptDoor) } as React.CSSProperties) : undefined}>
       {/* When a visitor has chosen who they are, the whole page is recoloured, reordered and trimmed for them. */}
       {adaptDoor && <style>{personaCss(adaptDoor)}</style>}
+      {!adaptDoor && asking && <style>{ASKING_CSS}</style>}
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(5,6,10,0.85)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -543,7 +552,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       )}
 
       {/* Who is this visitor? One plain question; the whole page then follows the answer. */}
-      {inr && intentPrior && <IntentChooser prior={intentPrior} current={adaptDoor} onChoose={setAdaptDoor} />}
+      {inr && intentPrior && <IntentChooser prior={intentPrior} current={adaptDoor} initialAsking={!!initialAsking && !initialDoor} onChoose={chooseDoor} onAsking={setAsking} />}
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
       <section data-sec="hero" style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
@@ -574,7 +583,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
               {inr && intentPrior && (
-                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} onDoorChange={setAdaptDoor} forcedDoor={adaptDoor} />
+                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} onDoorChange={(d) => chooseDoor(d)} forcedDoor={adaptDoor} />
               )}
               <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 12, marginBottom: 16, borderColor: 'var(--brand-border-strong)', borderRadius: 18 }}>
                 <textarea
@@ -646,6 +655,8 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           )}
         </div>
       </section>
+
+      {adaptDoor && <PersonaBlocks door={adaptDoor} lang={personaLang ?? 'en'} />}
 
       {/* ── /websites cross-link: the "rented vs owned" story for businesses
              that only have a social profile ── */}

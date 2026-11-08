@@ -56,3 +56,45 @@ describe('homepage with the intent experiment', () => {
     for (const id of ['hero', 'products', 'pricing', 'faq', 'final']) expect(html, id).toContain(`data-sec="${id}"`)
   })
 })
+
+describe('the question screen and the focused pages', () => {
+  it('a new visitor gets only the question on the very first paint, with the rest of the page hidden', () => {
+    const html = render({ initialCurrency: 'INR', intentPrior: prior, initialAsking: true })
+    expect(html).toContain('What brings you here?')
+    expect(html).toContain('Fix a problem in my business')
+    expect(html).toContain('Build a new app or product')
+    expect(html).toContain('data-asking')
+    expect(html).toContain('.mk-page[data-asking] > [data-sec]{display:none !important}')
+    expect(html).not.toContain('data-persona')
+  })
+
+  it('a visitor who has already answered never sees the question screen again, only the small "Change" bar', () => {
+    const html = render({ initialCurrency: 'INR', intentPrior: prior, initialDoor: 'software', initialAsking: true })
+    expect(html).not.toContain('data-asking')
+    expect(html).toContain('Showing the site for a builder.')
+  })
+
+  for (const door of DOORS) {
+    it(`the ${door} page carries its own how-it-works and examples, with links to real guides`, () => {
+      const p = PERSONAS[door]
+      const html = render({ initialCurrency: 'INR', intentPrior: prior, initialDoor: door })
+      expect(html).toContain(p.stepsTitle)
+      expect(html).toContain(p.examplesTitle)
+      for (const e of p.examples) expect(html, e.slug).toContain(`href="/build/${e.slug}"`)
+      expect(html).toContain('data-sec="how"')
+      expect(html).toContain('data-sec="examples"')
+    })
+  }
+
+  it('the original page has neither block and no question', () => {
+    const html = render({ initialCurrency: 'INR', intentPrior: prior })
+    expect(html).not.toContain('data-sec="how"')
+    expect(html).not.toContain('What brings you here?')
+  })
+
+  it('the experiment off means none of it, even if the page is told the visitor is asking', () => {
+    const html = render({ initialCurrency: 'INR', intentPrior: null, initialAsking: true })
+    expect(html).not.toContain('data-asking')
+    expect(html).toContain('Build any digital product.')
+  })
+})

@@ -24,6 +24,8 @@ export interface IntentCopy {
   doors: Record<Door, string>
   /** One line under each door, saying what that choice gets you. */
   doorHints: Record<Door, string>
+  /** One line under the question, promising what choosing does. */
+  askSub: string
   chips: Record<Door, Chip[]>
   readoutPrefix: string
   readoutFix: string
@@ -46,6 +48,7 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     label: 'What brings you here?',
     doors: { business: 'Fix a problem in my business', software: 'Build a new app or product', student: 'I\'m just learning or exploring' },
     doorHints: { business: 'Orders, stock, follow-ups, paperwork. Tell us what is slowing you down.', software: 'Got an idea? Describe it and see a working first version.', student: 'Projects, practice or curiosity. Start free.' },
+    askSub: 'Tell us in one tap and we will show you only what matters to you.',
     chips: {
       business: [
         { id: 'job-work', label: 'Job-work challan tracker', prompt: 'Build a job-work tracker. I log a challan for goods sent to a job worker, record what comes back, and get a warning before the one-year return limit.' },
@@ -83,6 +86,7 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     label: 'आप यहाँ किसलिए आए हैं?',
     doors: { business: 'अपने व्यवसाय की समस्या सुलझानी है', software: 'नया ऐप या प्रोडक्ट बनाना है', student: 'बस सीखना या देखना है' },
     doorHints: { business: 'ऑर्डर, स्टॉक, फ़ॉलो-अप, काग़ज़ी काम। बताइए क्या आपको धीमा कर रहा है।', software: 'कोई आइडिया है? बताइए और पहला चलता-फिरता वर्ज़न देखिए।', student: 'प्रोजेक्ट, अभ्यास या जिज्ञासा। मुफ़्त शुरू करें।' },
+    askSub: 'एक टैप में बताइए, हम आपको सिर्फ़ वही दिखाएँगे जो आपके काम का है।',
     chips: {
       business: [
         { id: 'job-work', label: 'जॉब-वर्क चालान ट्रैकर', prompt: 'एक जॉब-वर्क ट्रैकर बनाओ। मैं जॉब वर्कर को भेजे माल का चालान दर्ज करूँ, जो वापस आया उसे लिखूँ, और एक साल की वापसी सीमा से पहले चेतावनी मिले।' },
@@ -120,6 +124,7 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     label: 'તમે અહીં શા માટે આવ્યા છો?',
     doors: { business: 'મારા વ્યવસાયની સમસ્યા ઉકેલવી છે', software: 'નવી એપ કે પ્રોડક્ટ બનાવવી છે', student: 'ફક્ત શીખવું કે જોવું છે' },
     doorHints: { business: 'ઓર્ડર, સ્ટોક, ફૉલો-અપ, કાગળકામ. કહો કે તમને શું ધીમા પાડે છે.', software: 'કોઈ વિચાર છે? વર્ણવો અને પહેલું ચાલતું વર્ઝન જુઓ.', student: 'પ્રોજેક્ટ, પ્રેક્ટિસ કે જિજ્ઞાસા. મફત શરૂ કરો.' },
+    askSub: 'એક ટૅપમાં કહો, અમે તમને ફક્ત તે જ બતાવીશું જે તમારા કામનું છે.',
     chips: {
       business: [
         { id: 'job-work', label: 'જોબ-વર્ક ચલણ ટ્રેકર', prompt: 'જોબ-વર્ક ટ્રેકર બનાવો. હું જોબ વર્કરને મોકલેલા માલનું ચલણ નોંધી શકું, જે પાછું આવ્યું તે લખી શકું, અને એક વર્ષની પરત-મર્યાદા પહેલાં ચેતવણી મળે.' },

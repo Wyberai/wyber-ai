@@ -3,7 +3,7 @@ import { DOOR_COOKIE, parseDoorCookie } from '@/lib/intent/persona'
 import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { resolveHeroSegment } from '@/lib/hero-segments'
 import { buildPrior } from '@/lib/intent/prior'
-import { intentExperimentOn } from '@/lib/intent/experiment'
+import { intentExperimentOn, decodeXp, XP_COOKIE } from '@/lib/intent/experiment'
 import { HomeClient } from './HomeClient'
 import { OwnerRegionSwitcher } from '@/components/shared/OwnerRegionSwitcher'
 import { getScanStats } from '@/lib/security-stats'
@@ -48,6 +48,8 @@ export default async function HomePage({
   // Visitor-intent experiment: India-only and off unless NEXT_PUBLIC_INTENT_EXPERIMENT=1.
   // A null prior means HomeClient renders exactly what it always has.
   let intentPrior = null
+  let initialDoor: ReturnType<typeof parseDoorCookie> = null
+  let initialAsking = false
   // The owner (a browser unlocked via /api/owner-preview) always gets it on the India view, so it can be tried live
   // before it is switched on for the public.
   if ((intentExperimentOn(process.env.NEXT_PUBLIC_INTENT_EXPERIMENT) || owner) && currency === 'INR') {
@@ -65,10 +67,21 @@ export default async function HomePage({
       region: h.get('x-vercel-ip-country-region'),
       acceptLanguage: h.get('accept-language'),
     })
+    // Decide on the server what the very first paint shows, so nobody sees one page flash into another:
+    //  - a returning visitor (cookie) or a link that already says who they are: their page;
+    //  - ?xp=control, or a visitor already placed in the original group: the original page;
+    //  - anyone else: just the question.
+    const jar = await cookies()
+    const placed = decodeXp(jar.get(XP_COOKIE)?.value)?.variant
+    const forcedControl = one(params.xp) === 'control' || (placed === 'control' && one(params.xp) !== 'intent')
+    if (!forcedControl) {
+      initialDoor = parseDoorCookie(jar.get(DOOR_COOKIE)?.value) ?? (intentPrior.confidence >= 0.75 ? intentPrior.door : null)
+      initialAsking = !initialDoor
+    }
   }
   return (
     <>
-      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} initialDoor={intentPrior ? parseDoorCookie((await cookies()).get(DOOR_COOKIE)?.value) : null} />
+      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} initialDoor={initialDoor} initialAsking={initialAsking} />
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )
