@@ -29,7 +29,7 @@ export function SignalHome() {
               <p>Got an idea? Describe it and see a working first version.</p>
             </Link>
             <Link className="sg-door" href="/agencies">
-              <img className="sg-poster" src="/signal/agencies.jpg" alt="" aria-hidden="true" />
+              <video src="/signal/agencies.mp4" poster="/signal/agencies-poster.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
               <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Agency mode</span>
               <h2>Work for clients</h2>

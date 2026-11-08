@@ -38,7 +38,7 @@ Kill switch: set `NEXT_PUBLIC_SIGNAL_DESIGN=0` and the homepage returns to the p
 
 1. The tagline is still "Describe it. Watch it. Own it." (your call).
 2. `/solve` and `/create` sketches are generated from keyword rules in `src/lib/signal/guide.ts`, not by a model. They say "a sketch from your words".
-3. Higgsfield was out of credits: no agency video, the `/agencies` door uses a still.
+3. The agency door now plays a 10-second 720p clip (Seedance 2.0, text to video; the first attempt from the still was rejected by the provider with ip_detected and cost nothing). The other three clips are 15 seconds, so it is shorter than its siblings. Higgsfield has about 8.8 credits left; a 15-second 720p clip costs 67.5.
 4. Pricing, free credits and model policy were not touched.
 5. Not tested: real sign-in (needs a real code), `/onboarding` and `/mfa` in a browser (auth-gated); both type-check and build.
 
