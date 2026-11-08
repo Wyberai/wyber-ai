@@ -18,11 +18,12 @@ const SUGGESTIONS = [
   'Where do signups drop off between signing up and paying?',
   'What is going to happen over the next 3 days?',
   'Is everything that should be running actually running?',
+  'Is the adaptive homepage working better than the original?',
 ]
 
 const TOOL_LABEL: Record<string, string> = {
   pipeline_summary: 'pipeline', find_contacts: 'contacts', contact_detail: 'a contact', signups: 'signups', quotes: 'quotes',
-  contacts_download_link: 'a download', health: 'health', agent_drafts: 'agent drafts', agent_results: 'agent results', expo: 'expo', today: 'today', schedule: 'schedule', growth: 'growth plan', funnel: 'funnel', propose_action: 'a suggested action',
+  contacts_download_link: 'a download', intent_results: 'homepage experiment', health: 'health', agent_drafts: 'agent drafts', agent_results: 'agent results', expo: 'expo', today: 'today', schedule: 'schedule', growth: 'growth plan', funnel: 'funnel', propose_action: 'a suggested action',
 }
 
 export default function AskClient() {
