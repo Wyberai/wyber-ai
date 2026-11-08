@@ -16,7 +16,7 @@ import { IntentStrip } from '@/components/shared/IntentStrip';
 import { HERO_GU } from '@/lib/intent/hero-gu';
 import { sendIntentEvent, getVariant } from '@/lib/intent/client';
 import type { Door, IntentLang, Prior } from '@/lib/intent/types';
-import { HOME_HIDE, type HomeSection } from '@/lib/intent/adapt';
+import { HOME_HIDE, HERO_BY_DOOR, type HomeSection } from '@/lib/intent/adapt';
 
 const BRAND = '#0EA5E9';
 
@@ -396,7 +396,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   // Who the intent experiment thinks this visitor is. null = experiment off or control group: nothing is hidden.
   const [adaptDoor, setAdaptDoor] = useState<Door | null>(null);
   const hideFor = (section: HomeSection) => (adaptDoor ? HOME_HIDE[adaptDoor].includes(section) : false);
-  const t = intentPrior && intentLang === 'gu' ? { ...heroT, ...HERO_GU } : heroT;
+  const baseT = intentPrior && intentLang === 'gu' ? { ...heroT, ...HERO_GU } : heroT;
+  // The headline, lead and example follow who the visitor is (English only; see HERO_BY_DOOR).
+  const t = adaptDoor && locale === 'en' && intentLang === 'en' ? { ...baseT, ...HERO_BY_DOOR[adaptDoor] } : baseT;
   const onIntentLang = (l: IntentLang) => {
     setIntentLang(l);
     const next: Locale = l === 'hi' ? 'hi' : 'en';

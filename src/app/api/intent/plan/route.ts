@@ -15,7 +15,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeho
 // Never errors to the client: no usable plan => { plan: null } and the page
 // simply shows nothing extra.
 export async function POST(req: NextRequest) {
-  if (!intentAvailable(req)) return new NextResponse(null, { status: 404 })
+  if (!(await intentAvailable(req))) return new NextResponse(null, { status: 404 })
 
   if (!rateLimit(`intent-plan:${clientIp(req)}`, 10, 60_000).allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })

@@ -7,6 +7,8 @@ import { intentAvailable, clientIp, ANON_ID_RE } from '@/lib/intent/server'
 import { SYSTEM_PROMPT, buildUserMessage, parseIntent, sanitizeVisitorText, isClassifiable, noIntent } from '@/lib/intent/classify'
 import { detectScriptLang, isIntentLang } from '@/lib/intent/lang'
 import { DOORS, type Door } from '@/lib/intent/types'
+import { suggestPages } from '@/lib/intent/suggest'
+import { BUILD_PAGES } from '@/app/build/data'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeholder' })
 
@@ -16,7 +18,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY ?? 'placeho
 // Never throws to the client: on any failure it returns a zero-confidence
 // intent and the page simply keeps its default.
 export async function POST(req: NextRequest) {
-  if (!intentAvailable(req)) return new NextResponse(null, { status: 404 })
+  if (!(await intentAvailable(req))) return new NextResponse(null, { status: 404 })
 
   if (!rateLimit(`intent:${clientIp(req)}`, 20, 60_000).allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
@@ -71,5 +73,9 @@ export async function POST(req: NextRequest) {
   }
   try { after(log) } catch { void log() }
 
-  return NextResponse.json({ intent, lang: uiLang, ...(degraded ? { degraded: true } : {}) })
+  // Guides that match what they wrote (only when we actually understood them).
+  const suggestDoor: Door = (DOORS as readonly string[]).includes(intent.audience) ? (intent.audience as Door) : (priorDoor ?? 'business')
+  const pages = intent.confidence >= 0.55 ? suggestPages(BUILD_PAGES, suggestDoor, intent, text) : []
+
+  return NextResponse.json({ intent, lang: uiLang, ...(pages.length ? { pages } : {}), ...(degraded ? { degraded: true } : {}) })
 }

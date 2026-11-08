@@ -10,7 +10,7 @@ import { isIntentLang } from '@/lib/intent/lang'
 // that, so the experiment has its own allowlisted, rate-limited, always-204
 // endpoint. No text is accepted here (typed text only goes through /api/intent).
 export async function POST(req: NextRequest) {
-  if (!intentAvailable(req)) return new NextResponse(null, { status: 404 })
+  if (!(await intentAvailable(req))) return new NextResponse(null, { status: 404 })
   const none = () => new NextResponse(null, { status: 204 })
   try {
     if (!rateLimit(`intent-ev:${clientIp(req)}`, 120, 60_000).allowed) return none()

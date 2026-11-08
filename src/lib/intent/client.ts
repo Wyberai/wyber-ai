@@ -44,7 +44,7 @@ export function storeLang(l: IntentLang) { write(LANG_KEY, l) }
 
 export type IntentEventKind =
   | 'impression' | 'chip_tapped' | 'door_changed' | 'lang_changed'
-  | 'readout_shown' | 'readout_corrected' | 'plan_shown' | 'plan_expanded' | 'submitted'
+  | 'readout_shown' | 'readout_corrected' | 'plan_shown' | 'plan_expanded' | 'submitted' | 'guide_clicked'
 
 export function sendIntentEvent(kind: IntentEventKind, extra: { variant: Variant; lang?: IntentLang; door?: Door; chipId?: string }) {
   try {
@@ -57,7 +57,20 @@ export function sendIntentEvent(kind: IntentEventKind, extra: { variant: Variant
   } catch { /* never break the page */ }
 }
 
-export interface ClassifyResult { intent: Intent; lang: IntentLang; degraded?: boolean; skipped?: boolean }
+export interface ClassifyResult { intent: Intent; lang: IntentLang; degraded?: boolean; skipped?: boolean; pages?: { slug: string; title: string }[] }
+
+/** What the visitor last told us on this browser, if recent. Used to greet them when they come back. */
+export function getSavedIntent(maxAgeDays = 30): { door: Door; pain: string | null; at: number } | null {
+  try {
+    const raw = read(INTENT_KEY)
+    if (!raw) return null
+    const v = JSON.parse(raw) as { door?: string; intent?: { pain?: string }; at?: number }
+    if (!v || typeof v.at !== 'number' || Date.now() - v.at > maxAgeDays * 86400_000) return null
+    if (v.door !== 'business' && v.door !== 'software' && v.door !== 'student') return null
+    const pain = typeof v.intent?.pain === 'string' && v.intent.pain.length <= 200 ? v.intent.pain : null
+    return { door: v.door, pain, at: v.at }
+  } catch { return null }
+}
 
 export async function classifyText(text: string, opts: { variant: Variant; lang: IntentLang; door: Door }): Promise<ClassifyResult | null> {
   const ctl = new AbortController()

@@ -4,7 +4,7 @@ import { copyFor, INTENT_COPY } from '@/lib/intent/copy'
 import { detectScriptLang } from '@/lib/intent/lang'
 import { isClassifiable, sanitizeVisitorText } from '@/lib/intent/classify'
 import {
-  classifyText, fetchPlan, getAnonId, getStoredLang, getVariant, saveIntent, sendIntentEvent, storeLang,
+  classifyText, fetchPlan, getAnonId, getSavedIntent, getStoredLang, getVariant, saveIntent, sendIntentEvent, storeLang,
 } from '@/lib/intent/client'
 import type { PlanSketch } from '@/lib/intent/plan'
 import { IntentPlanCard } from '@/components/shared/IntentPlanCard'
@@ -50,6 +50,8 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
   const [door, setDoor] = useState<Door>(prior.door)
   const [readout, setReadout] = useState<Readout>({ status: 'idle' })
   const [plan, setPlan] = useState<PlanState>({ status: 'idle' })
+  const [guides, setGuides] = useState<{ slug: string; title: string }[]>([])
+  const [welcome, setWelcome] = useState<{ pain: string | null } | null>(null)
   const pickedDoor = useRef(false)
   const lastChipPrompt = useRef<string | null>(null)
   const classifiedText = useRef<string>('')
@@ -62,7 +64,10 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     const stored = getStoredLang()
     if (stored) { setLang(stored); if (stored !== 'en') onLangChange(stored) }
     else if (prior.suggestedLang !== 'en') setOfferLang(prior.suggestedLang)
-    sendIntentEvent('impression', { variant: v, lang: stored ?? 'en', door: prior.door })
+    // A returning visitor goes straight back to the door they chose last time, and is greeted with what they were working on.
+    const saved = getSavedIntent()
+    if (saved && v === 'intent') { pickedDoor.current = true; setDoor(saved.door); setWelcome({ pain: saved.pain }) }
+    sendIntentEvent('impression', { variant: v, lang: stored ?? 'en', door: saved?.door ?? prior.door })
     try {
       document.cookie = `${XP_COOKIE}=${encodeXp(getAnonId(), v)}; path=/; max-age=${60 * 60 * 24 * XP_COOKIE_DAYS}; SameSite=Lax`
     } catch { /* cookies blocked */ }
@@ -96,6 +101,8 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
         return
       }
       setReadout({ status: 'shown', intent: r.intent })
+      setGuides(r.pages ?? [])
+      setWelcome(null)
       sendIntentEvent('readout_shown', { variant, lang: uiLang, door })
       saveIntent({ source: 'text', door, lang: uiLang, intent: r.intent })
       if (!pickedDoor.current && (DOORS as readonly string[]).includes(r.intent.audience)) setDoor(r.intent.audience as Door)
@@ -192,6 +199,12 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
         ))}
       </div>
 
+      {lang === 'en' && welcome && readout.status === 'idle' && (
+        <div style={{ fontSize: 12.5, color: 'var(--brand-text-dim)' }}>
+          Welcome back.{welcome.pain ? <> Last time you were working on: <span style={{ color: 'var(--brand-text)' }}>{welcome.pain}</span></> : null}
+        </div>
+      )}
+
       <div aria-live="polite" style={{ minHeight: 20, fontSize: 12.5, color: 'var(--brand-text-dim)' }}>
         {readout.status === 'thinking' && <span>{c.thinking}</span>}
         {readout.status === 'unsure' && <span>{c.unsure}</span>}
@@ -201,7 +214,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
             {c.audienceName[readout.intent.audience]} · {readout.intent.pain}{' '}
             <button
               type="button"
-              onClick={() => { sendIntentEvent('readout_corrected', { variant, lang, door }); setReadout({ status: 'idle' }); setPlan({ status: 'idle' }); classifiedText.current = sanitizeVisitorText(heroPrompt) }}
+              onClick={() => { sendIntentEvent('readout_corrected', { variant, lang, door }); setReadout({ status: 'idle' }); setPlan({ status: 'idle' }); setGuides([]); classifiedText.current = sanitizeVisitorText(heroPrompt) }}
               style={{ background: 'none', border: 'none', padding: 0, color: 'var(--brand-accent-hot)', cursor: 'pointer', fontSize: 12.5, fontFamily: 'inherit', textDecoration: 'underline' }}
             >
               {c.readoutFix}
@@ -214,6 +227,15 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
         <div style={{ fontSize: 12.5, color: 'var(--brand-text-dim)' }}>{c.planLoading}</div>
       )}
       {plan.status === 'shown' && <IntentPlanCard plan={plan.plan} c={c} />}
+
+      {lang === 'en' && guides.length > 0 && (
+        <div style={{ display: 'grid', gap: 4 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brand-text)' }}>Guides for your kind of work</span>
+          {guides.map(g => (
+            <a key={g.slug} href={`/build/${g.slug}`} onClick={() => sendIntentEvent('guide_clicked', { variant, lang, door })} style={{ fontSize: 12.5, color: 'var(--brand-accent-hot)' }}>{g.title} →</a>
+          ))}
+        </div>
+      )}
 
       <p style={{ margin: 0, fontSize: 11.5, color: 'var(--brand-text-faint)', lineHeight: 1.5 }}>{c.disclosure}</p>
     </div>
