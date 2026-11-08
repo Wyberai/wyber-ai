@@ -27,7 +27,7 @@ export function QuickPrompt() {
     <>
       <form className="sg-quick" onSubmit={submit} noValidate>
         <label className="sg-sr" htmlFor="sg-qi">Describe what you want to build</label>
-        <input id="sg-qi" type="text" value={v} onChange={e => setV(e.target.value)} placeholder="Or just describe it, for example: track my invoices and see who has not paid" autoComplete="off" />
+        <input id="sg-qi" type="text" value={v} onChange={e => setV(e.target.value)} placeholder="Or describe it: track who has not paid me" autoComplete="off" />
         <button className="sg-btn" type="submit" disabled={busy}>{busy ? 'One moment…' : <>Start free <span aria-hidden="true">→</span></>}</button>
       </form>
       <p className="sg-note" role="status">{note}</p>

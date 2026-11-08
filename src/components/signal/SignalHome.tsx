@@ -16,28 +16,28 @@ export function SignalHome() {
           <div className="sg-doors" role="group" aria-label="What are you looking to do?">
             <Link className="sg-door" href="/solve">
               <video src="/signal/solve.mp4" poster="/signal/solve.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
-              <span className="sg-key">A</span><span className="sg-go" aria-hidden="true">→</span>
+              <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Chaos to calm</span>
               <h2>Solve a problem</h2>
               <p>Something in your business is slowing you down: orders, stock, follow-ups, paperwork, or a tool you pay for and barely use.</p>
             </Link>
             <Link className="sg-door" href="/create">
               <video src="/signal/build.mp4" poster="/signal/build.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
-              <span className="sg-key">B</span><span className="sg-go" aria-hidden="true">→</span>
+              <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Built from nothing</span>
               <h2>Build apps</h2>
               <p>Got an idea? Describe it and see a working first version.</p>
             </Link>
             <Link className="sg-door" href="/agencies">
               <img className="sg-poster" src="/signal/agencies.jpg" alt="" aria-hidden="true" />
-              <span className="sg-key">C</span><span className="sg-go" aria-hidden="true">→</span>
+              <span className="sg-go" aria-hidden="true">→</span>
               <span className="sg-meta">Agency mode</span>
               <h2>Work for clients</h2>
               <p>Deliver apps to your clients on a branded page you can share with them.</p>
             </Link>
             <a className="sg-door" href="#watch">
               <video src="/signal/explore.mp4" poster="/signal/explore.jpg" muted loop playsInline autoPlay preload="metadata" aria-hidden="true" />
-              <span className="sg-key">D</span><span className="sg-go" aria-hidden="true">↓</span>
+              <span className="sg-go" aria-hidden="true">↓</span>
               <span className="sg-meta">Everything it can do</span>
               <h2>Just scrolling</h2>
               <p>Look around first. See everything it can do. Nothing to fill in.</p>

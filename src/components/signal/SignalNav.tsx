@@ -1,27 +1,33 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { WyberLogo } from '@/components/shared/WyberLogo'
 import { useSgTheme } from './useSgTheme'
 
 /** Every destination here is a real page in the app. */
-export const NAV_LINKS: [label: string, href: string][] = [
-  ['Web Apps', '/use-cases/no-code-web-app-builder'],
-  ['Mobile Apps', '/use-cases/build-mobile-app-with-ai'],
+/** The four project types, stacked under one "Build" menu so the bar stays short. */
+export const BUILD_LINKS: [label: string, href: string][] = [
+  ['Web apps', '/use-cases/no-code-web-app-builder'],
+  ['Mobile apps', '/use-cases/build-mobile-app-with-ai'],
   ['Websites', '/websites'],
   ['SaaS', '/use-cases/build-saas-without-code'],
+]
+export const MAIN_LINKS: [label: string, href: string][] = [
   ['Replace your SaaS', '/byos'],
   ['Agencies', '/agencies'],
-  ['Free Apps', '/gallery'],
+  ['Free apps', '/gallery'],
   ['Pricing', '/pricing'],
 ]
+export const NAV_LINKS: [label: string, href: string][] = [...BUILD_LINKS, ...MAIN_LINKS]
 
 export function SignalNav({ bare = false }: { bare?: boolean }) {
   const path = usePathname()
   const [open, setOpen] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
   const { theme, toggle } = useSgTheme()
+  const [buildOpen, setBuildOpen] = useState(false)
+  const buildRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let live = true
@@ -31,7 +37,14 @@ export function SignalNav({ bare = false }: { bare?: boolean }) {
       .catch(() => { /* signed-out is the safe default */ })
     return () => { live = false }
   }, [])
-  useEffect(() => { setOpen(false) }, [path])
+  useEffect(() => { setOpen(false); setBuildOpen(false) }, [path])
+  useEffect(() => {
+    if (!buildOpen) return
+    const away = (e: MouseEvent) => { if (!buildRef.current?.contains(e.target as Node)) setBuildOpen(false) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setBuildOpen(false) }
+    document.addEventListener('mousedown', away); document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('mousedown', away); document.removeEventListener('keydown', esc) }
+  }, [buildOpen])
 
   return (
     <header className="sg-nav">
@@ -39,7 +52,17 @@ export function SignalNav({ bare = false }: { bare?: boolean }) {
         <Link href="/" className="sg-logo" aria-label="WyberAi home"><WyberLogo markSize={30} wordmarkSize={18} theme={theme === 'light' ? 'onLight' : 'onDark'} /></Link>
         {!bare && (
           <nav className="sg-links" aria-label="Main">
-            {NAV_LINKS.map(([l, h]) => <Link key={h} href={h} aria-current={path === h ? 'page' : undefined}>{l}</Link>)}
+            <div className="sg-build" ref={buildRef}>
+              <button type="button" aria-haspopup="true" aria-expanded={buildOpen} onClick={() => setBuildOpen(o => !o)}>
+                Build <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4l4 4 4-4" /></svg>
+              </button>
+              {buildOpen && (
+                <div className="sg-menu">
+                  {BUILD_LINKS.map(([l, h]) => <Link key={h} href={h} onClick={() => setBuildOpen(false)}>{l}</Link>)}
+                </div>
+              )}
+            </div>
+            {MAIN_LINKS.map(([l, h]) => <Link key={h} href={h} aria-current={path === h ? 'page' : undefined}>{l}</Link>)}
           </nav>
         )}
         <div className="sg-navr">
@@ -59,7 +82,10 @@ export function SignalNav({ bare = false }: { bare?: boolean }) {
       </div>
       {!bare && open && (
         <div id="sg-drawer" className="sg-drawer">
-          {NAV_LINKS.map(([l, h]) => <Link key={h} href={h}>{l}</Link>)}
+          <span className="sg-dgrp">Build</span>
+          {BUILD_LINKS.map(([l, h]) => <Link key={h} href={h}>{l}</Link>)}
+          <span className="sg-dgrp">Explore</span>
+          {MAIN_LINKS.map(([l, h]) => <Link key={h} href={h}>{l}</Link>)}
           {!signedIn && <Link href="/login">Sign in</Link>}
         </div>
       )}
