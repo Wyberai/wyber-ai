@@ -34,13 +34,15 @@ interface Props {
   setHeroPrompt: (v: string) => void
   setHeroTarget: (t: Target) => void
   onLangChange: (l: IntentLang) => void
+  /** Tells the page who it is talking to, so it can show what that person came for. null = control group (page unchanged). */
+  onDoorChange?: (d: Door | null) => void
 }
 
 type Readout = { status: 'idle' } | { status: 'thinking' } | { status: 'shown'; intent: Intent } | { status: 'unsure' }
 type PlanState = { status: 'idle' } | { status: 'loading' } | { status: 'shown'; plan: PlanSketch }
 const KIND_TARGET: Record<PlanSketch['kind'], Target> = { web_app: 'app', mobile_app: 'mobile', website: 'website', saas: 'saas' }
 
-export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, onLangChange }: Props) {
+export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, onLangChange, onDoorChange }: Props) {
   const [ready, setReady] = useState(false)
   const [variant, setVariant] = useState<Variant>('intent')
   const [lang, setLang] = useState<IntentLang>('en')
@@ -67,6 +69,13 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     setReady(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Whoever we think the visitor is, the rest of the page follows. The control group never changes.
+  useEffect(() => {
+    if (!ready) return
+    onDoorChange?.(variant === 'intent' ? door : null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, variant, door])
 
   // Read what the visitor types (not chip-filled text), after they pause.
   useEffect(() => {

@@ -25,7 +25,10 @@ export function getAnonId(): string {
 }
 
 /** Sticky 70/30 assignment, stored so a visitor always sees the same version. */
-export function getVariant(random: () => number = Math.random): Variant {
+export function getVariant(random: () => number = Math.random, search: string = typeof window === 'undefined' ? '' : window.location.search): Variant {
+  // ?xp=intent or ?xp=control picks a side and sticks, so the owner can look at either version on purpose.
+  const forced = new URLSearchParams(search).get('xp')
+  if (forced === 'intent' || forced === 'control') { write(VARIANT_KEY, forced); return forced }
   const stored = read(VARIANT_KEY)
   if (stored === 'intent' || stored === 'control') return stored
   const v = assignVariant(random())

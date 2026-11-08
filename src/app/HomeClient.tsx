@@ -15,7 +15,8 @@ import { HERO_SEGMENT_STRINGS, type HeroSegment } from '@/lib/hero-segments';
 import { IntentStrip } from '@/components/shared/IntentStrip';
 import { HERO_GU } from '@/lib/intent/hero-gu';
 import { sendIntentEvent, getVariant } from '@/lib/intent/client';
-import type { IntentLang, Prior } from '@/lib/intent/types';
+import type { Door, IntentLang, Prior } from '@/lib/intent/types';
+import { HOME_HIDE, type HomeSection } from '@/lib/intent/adapt';
 
 const BRAND = '#0EA5E9';
 
@@ -392,6 +393,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   // Visitor-intent experiment (India-only, flag-gated server-side): picking Gujarati
   // in the intent strip overlays the Gujarati hero. Null prior = experiment off = no change.
   const [intentLang, setIntentLang] = useState<IntentLang>('en');
+  // Who the intent experiment thinks this visitor is. null = experiment off or control group: nothing is hidden.
+  const [adaptDoor, setAdaptDoor] = useState<Door | null>(null);
+  const hideFor = (section: HomeSection) => (adaptDoor ? HOME_HIDE[adaptDoor].includes(section) : false);
   const t = intentPrior && intentLang === 'gu' ? { ...heroT, ...HERO_GU } : heroT;
   const onIntentLang = (l: IntentLang) => {
     setIntentLang(l);
@@ -547,7 +551,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
               {inr && intentPrior && (
-                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} />
+                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} onDoorChange={setAdaptDoor} />
               )}
               <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 12, marginBottom: 16, borderColor: 'var(--brand-border-strong)', borderRadius: 18 }}>
                 <textarea
@@ -622,6 +626,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
       {/* ── /websites cross-link: the "rented vs owned" story for businesses
              that only have a social profile ── */}
+      {!hideFor('websites') && (
       <Link href="/websites" className="wyb-websites-strip" onClick={() => track('homepage_websites_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
           <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>WEBSITES</span>
@@ -629,10 +634,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           <span style={{ color: 'var(--brand-accent-hot)', fontSize: 15, fontWeight: 600 }}>{t.websitesStripCta}</span>
         </div>
       </Link>
+      )}
 
       {/* ── /byos cross-link: paste a tool you rent, build only the features you use.
              English only — the strip copy has no translations yet. ── */}
-      {locale === 'en' && (
+      {locale === 'en' && !hideFor('byos') && (
         <Link href="/byos" onClick={() => track('homepage_byos_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
           <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
             <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>OWN YOUR SOFTWARE</span>
@@ -780,6 +786,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       </section>
 
       {/* ── MCP / DEVELOPERS ─────────────────────────────────────────── */}
+      {!hideFor('mcp') && (
       <section style={{ borderTop: '1px solid var(--brand-border)' }}>
         <div className="mk-section">
           <Reveal>
@@ -821,6 +828,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
           </div>
         </div>
       </section>
+      )}
 
       {/* ── PRICING PREVIEW ─────────────────────────────────────────── */}
       <section className="mk-section">
