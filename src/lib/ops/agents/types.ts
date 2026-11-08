@@ -1,6 +1,6 @@
 import type { Contact } from '@/lib/crm/contact'
 
-export const AGENT_IDS = ['outreach', 'followup', 'meeting_prep', 'proposal', 'weekly_coach', 'onboarding', 'reengage', 'content', 'collections'] as const
+export const AGENT_IDS = ['outreach', 'followup', 'meeting_prep', 'proposal', 'weekly_coach', 'onboarding', 'reengage', 'content', 'collections', 'research'] as const
 export type AgentId = (typeof AGENT_IDS)[number]
 
 export const CHANNELS = ['whatsapp', 'email', 'note', 'doc'] as const
@@ -31,6 +31,10 @@ export interface AgentDef {
   maxTokens: number
   /** Whether a draft may contain a price (only true if a rate card exists and the agent is allowed to quote). */
   mayQuotePrice: boolean
+  /** Lets the agent search the web (the research agent only). */
+  webSearch?: boolean
+  /** An internal document that must cite its sources, so web links are allowed in it (and only there). */
+  allowSourceLinks?: boolean
 }
 
 export interface DraftOut { channel: Channel; lang: Lang; title: string | null; body: string }

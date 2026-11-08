@@ -2,7 +2,7 @@ import { loadContacts } from '@/lib/crm/db'
 import type { Contact } from '@/lib/crm/contact'
 import type { CallModel } from './llm'
 import { AGENTS, buildUserMessage, systemFor } from './prompts'
-import { chooseLang, existingKey, loadAcceptedQuotes, selectCollections, selectContent, selectFollowup, selectMeetingPrep, selectOnboarding, selectOutreach, selectReengage, selectProposal, selectWeeklyCoach } from './select'
+import { chooseLang, existingKey, loadAcceptedQuotes, selectCollections, selectResearch, selectContent, selectFollowup, selectMeetingPrep, selectOnboarding, selectOutreach, selectReengage, selectProposal, selectWeeklyCoach } from './select'
 import { parseDraft } from './validate'
 import { AGENT_IDS, MAX_PENDING_PER_AGENT, type ActivityLite, type AgentId, type Candidate } from './types'
 import type { QuoteLite } from './select'
@@ -38,6 +38,7 @@ export function pickCandidates(agent: AgentId, contacts: Contact[], now: Date, h
     case 'reengage': return selectReengage(contacts, now, have)
     case 'content': return selectContent(now, have)
     case 'collections': return selectCollections(contacts, quotes, now, have)
+    case 'research': return selectResearch(contacts, have)
   }
 }
 
@@ -107,7 +108,7 @@ export async function runAgent(agent: AgentId, deps: RunDeps): Promise<RunSummar
   await pool(candidates, 3, async (cand) => {
     const lang = cand.contact ? chooseLang(cand.contact) : 'en'
     try {
-      const r = await callModel({ system, user: buildUserMessage(cand, lang), tier: def.model, maxTokens: def.maxTokens })
+      const r = await callModel({ system, user: buildUserMessage(cand, lang), tier: def.model, maxTokens: def.maxTokens, webSearch: def.webSearch })
       out.inputTokens += r.inputTokens; out.outputTokens += r.outputTokens
       const parsed = parseDraft(r.text, def, { requestedLang: lang, mayQuotePrice: def.mayQuotePrice })
       if (!parsed.ok) { out.errors++; reasons.push(parsed.reason); return }

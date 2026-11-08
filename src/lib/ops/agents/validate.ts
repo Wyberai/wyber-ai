@@ -55,7 +55,14 @@ export function parseDraft(raw: string, def: AgentDef, opts: ValidateOpts): Vali
   if (PROMISE.test(all)) return { ok: false, reason: 'makes a promise we cannot back' }
   if (!opts.mayQuotePrice && PRICE.test(all)) return { ok: false, reason: 'contains a price' }
 
-  // An internal note or document has no reason to carry a link.
+  // An internal note or document has no reason to carry a link, except a research brief that cites its sources.
+  if (def.allowSourceLinks) {
+    const links = all.match(URL_RE) ?? []
+    if (new Set(links.map(l => l.replace(/[.,;:!?)]]+$/, ''))).size > 15) return { ok: false, reason: 'too many links' }
+    if (links.some(l => !/^https:\/\//i.test(l))) return { ok: false, reason: 'source link is not https' }
+    const t = v.title ? v.title.replace(/\s+/g, ' ').trim().slice(0, 120) || null : null
+    return { ok: true, draft: { channel: v.channel, lang: v.lang, title: t, body } }
+  }
   if (internal && (all.match(URL_RE) ?? []).length) return { ok: false, reason: 'internal note contains a link' }
 
   // The only link an agent may include is wyberai.com.

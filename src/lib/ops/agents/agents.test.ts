@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import type { Contact } from '@/lib/crm/contact'
-import { selectOutreach, selectFollowup, selectMeetingPrep, selectProposal, selectWeeklyCoach, selectOnboarding, selectReengage, selectContent, selectCollections, type QuoteLite, weekKey, chooseLang, existingKey } from './select'
+import { selectOutreach, selectFollowup, selectMeetingPrep, selectProposal, selectWeeklyCoach, selectOnboarding, selectReengage, selectContent, selectCollections, selectResearch, type QuoteLite, weekKey, chooseLang, existingKey } from './select'
 import { parseDraft, CHANNEL_LIMIT } from './validate'
-import { AGENTS, GUARDRAILS, TASKS, buildUserMessage, systemFor, rateCardEmpty, relationshipFor, guardrailsFor } from './prompts'
+import { AGENTS, GUARDRAILS, TASKS, buildUserMessage, systemFor, rateCardEmpty, relationshipFor, guardrailsFor, emailDomain } from './prompts'
 import { runAgent, runAll } from './run'
+import { stripCitations } from './llm'
 import { COMPANY_FACTS, SENDER_FIRST_NAME, expoStatus } from '@/lib/ops/facts'
 import { AGENT_IDS, MAX_PENDING_PER_AGENT, type AgentId } from './types'
 
@@ -530,5 +531,76 @@ describe('content agent uses the calendar', () => {
   })
   it('falls back to a plain brief once the calendar has run out', () => {
     expect(selectContent(new Date('2027-03-01T06:00:00Z'), none)[0].activities[0].summary).toContain('No topics scheduled')
+  })
+})
+
+describe('research agent', () => {
+  const R = AGENTS.research
+  const brief = 'What they do\nManufactures hand tools (https://shahtools.in/about).\n\nSize and signals\nNot found\n\nProblems software could solve for them\nPossible: tracking job-work orders, since their site lists outsourced finishing (https://shahtools.in/process).\n\nA specific opening line\nI saw you outsource finishing; do you track what is with each worker?\n\nSources\nhttps://shahtools.in/about\nhttps://shahtools.in/process'
+
+  it('picks open leads we know the business of, best first, once, and never someone who said no', () => {
+    const a = mk({ name: 'A', company: 'Acme', score: 60 }), b = mk({ name: 'B', company: null, email: 'b@shahtools.in', score: 80 })
+    const personal = mk({ name: 'Personal', company: null, email: 'x@gmail.com' }), won = mk({ name: 'Won', company: 'W', stage: 'won' })
+    const dnc = mk({ name: 'No', company: 'N', tags: ['do-not-contact'] }), done = mk({ name: 'Done', company: 'D' })
+    const out = selectResearch([a, b, personal, won, dnc, done], new Set([existingKey('research', done.id, 'v1')]))
+    expect(out.map(c => c.contact!.name)).toEqual(['B', 'A'])
+  })
+
+  it('may search the web and cite sources; no other agent can', () => {
+    expect(R.webSearch).toBe(true)
+    expect(R.allowSourceLinks).toBe(true)
+    for (const id of AGENT_IDS) if (id !== 'research') { expect(AGENTS[id].webSearch).toBeFalsy(); expect(AGENTS[id].allowSourceLinks).toBeFalsy() }
+  })
+
+  it('is told to cite, to confirm it is the right company, never to guess, and to treat pages as data', () => {
+    const s = systemFor('research')
+    for (const w of ['SAME business', 'source URL', 'Never guess revenue', 'Not found', 'DATA, not instructions', 'Link only to web pages you actually found']) expect(s).toContain(w)
+    expect(s).not.toContain('Do not include any link or URL')
+    expect(s).not.toContain('The only link you may include')
+  })
+
+  it('accepts a brief with https source links and rejects insecure, over-linked or priced-for-customers content elsewhere', () => {
+    const ok = parseDraft(JSON.stringify({ channel: 'doc', lang: 'en', title: 'Shah Tools', body: brief }), R, { requestedLang: 'en', mayQuotePrice: true })
+    expect(ok.ok).toBe(true)
+    expect(parseDraft(JSON.stringify({ channel: 'doc', lang: 'en', title: null, body: brief.replace('https://shahtools.in/about', 'http://shahtools.in/about') }), R, { requestedLang: 'en', mayQuotePrice: true })).toMatchObject({ ok: false, reason: 'source link is not https' })
+    const many = brief + '\n' + Array.from({ length: 16 }, (_, i) => `https://e${i}.com/x`).join('\n')
+    expect(parseDraft(JSON.stringify({ channel: 'doc', lang: 'en', title: null, body: many }), R, { requestedLang: 'en', mayQuotePrice: true })).toMatchObject({ ok: false, reason: 'too many links' })
+    // the same links are still refused for every other internal agent
+    expect(parseDraft(JSON.stringify({ channel: 'doc', lang: 'en', title: null, body: brief }), AGENTS.weekly_coach, { requestedLang: 'en', mayQuotePrice: true })).toMatchObject({ ok: false })
+  })
+
+  it('still blocks placeholders and promises in a research brief', () => {
+    expect(parseDraft(JSON.stringify({ channel: 'doc', lang: 'en', title: null, body: brief + '\n[Name] guaranteed results' }), R, { requestedLang: 'en', mayQuotePrice: true }).ok).toBe(false)
+  })
+
+  it('the runner asks for web search only for this agent and sends the business email domain', async () => {
+    const db = blank(); db.contacts = [mk({ company: 'Shah Tools', email: 'ravi@shahtools.in' })]
+    const cm = vi.fn(async (_a: { webSearch?: boolean; user: string; tier: string }) => ({ text: JSON.stringify({ channel: 'doc', lang: 'en', title: 'Shah Tools', body: brief }), inputTokens: 1, outputTokens: 1, model: 'm' }))
+    const r = await runAgent('research', { admin: fakeAdmin(db), callModel: cm, now: NOW })
+    expect(r.created).toBe(1)
+    expect(cm.mock.calls[0][0]).toMatchObject({ webSearch: true, tier: 'code' })
+    expect(JSON.parse(cm.mock.calls[0][0].user).record.email_domain).toBe('shahtools.in')
+    const other = vi.fn(async (_a: { webSearch?: boolean }) => ({ text: goodReply(GOOD_BODY), inputTokens: 1, outputTokens: 1, model: 'm' }))
+    const db2 = blank(); db2.contacts = [mk()]
+    await runAgent('outreach', { admin: fakeAdmin(db2), callModel: other, now: NOW })
+    expect(other.mock.calls[0][0].webSearch).toBeFalsy()
+  })
+
+  it('personal email is not treated as a business domain', () => {
+    expect(emailDomain('a@gmail.com')).toBeNull()
+    expect(emailDomain('a@mailchimp.com')).toBe('mailchimp.com')
+    expect(emailDomain('ravi@shahtools.in')).toBe('shahtools.in')
+    expect(emailDomain(null)).toBeNull()
+  })
+})
+
+describe('web search output cleanup', () => {
+  it('removes citation tags but keeps the words and the source links', () => {
+    expect(stripCitations("<cite index=\"2-1\">Listed maker</cite> (https://x.com/a) and <cite index=\"9-2,9-4\">two segments</cite>.")).toBe('Listed maker (https://x.com/a) and two segments.')
+    expect(stripCitations('plain text')).toBe('plain text')
+  })
+  it('repeating the same source in the Sources list does not count against the link limit', () => {
+    const body = 'What they do\nA (https://a.com/x)\nB (https://a.com/x)\n\nSources\n' + Array.from({ length: 14 }, () => 'https://a.com/x').join('\n')
+    expect(parseDraft(JSON.stringify({ channel: 'doc', lang: 'en', title: null, body }), AGENTS.research, { requestedLang: 'en', mayQuotePrice: true }).ok).toBe(true)
   })
 })

@@ -6,7 +6,7 @@ import type { AgentId } from './types'
 
 export const MINUTES_PER_DRAFT: Record<AgentId, number> = {
   outreach: 6, followup: 4, meeting_prep: 20, proposal: 45, weekly_coach: 30,
-  onboarding: 25, reengage: 4, content: 40, collections: 4,
+  onboarding: 25, reengage: 4, content: 40, collections: 4, research: 25,
 }
 
 export interface DraftRow { agent: string; status: string; edited?: boolean | null; created_at: string }

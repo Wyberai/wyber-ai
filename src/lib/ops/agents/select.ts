@@ -2,6 +2,7 @@ import type { Contact } from '@/lib/crm/contact'
 import { buildBrief } from '@/lib/crm/brief'
 import { isOptedOut } from '@/lib/crm/patch'
 import { topicsForWeek } from '@/lib/ops/marketing/calendar'
+import { emailDomain } from './prompts'
 import { istDay } from '@/lib/ops/schedule'
 import type { AgentId, Candidate, Lang } from './types'
 
@@ -111,6 +112,15 @@ export function selectReengage(contacts: Contact[], now: Date, have: Set<string>
     out.push({ contact: c, key, reason: `${Math.floor(quietDays)} days since last touch at "${c.stage}"`, activities: [] })
   }
   return out.sort((a, b) => b.contact!.score - a.contact!.score)
+}
+
+/** Leads worth looking up: still open, we know what business they are (a company name or a business email), and no research yet. */
+export function selectResearch(contacts: Contact[], have: Set<string>): Candidate[] {
+  return contacts
+    .filter(c => ['new', 'contacted', 'replied', 'meeting_booked'].includes(c.stage) && !isOptedOut(c)
+      && !!((c.company ?? '').trim() || emailDomain(c.email)) && !have.has(existingKey('research', c.id, 'v1')))
+    .sort((a, b) => b.score - a.score)
+    .map(c => ({ contact: c, key: 'v1', reason: `Open lead (${c.stage}), score ${c.score}; no research yet`, activities: [] }))
 }
 
 export function selectContent(now: Date, have: Set<string>): Candidate[] {
