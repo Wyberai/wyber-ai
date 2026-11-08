@@ -16,6 +16,7 @@ export const JOBS: Job[] = [
   { path: '/api/cron/email-drip', cron: '30 10 * * *', name: 'Lifecycle emails', what: 'Sends the onboarding and nudge emails to users who are due one.', touchesCustomers: true },
   { path: '/api/cron/expo-sequence', cron: '30 4 * * *', name: 'Expo email sequence', what: 'Sends the next expo email (reminder, thanks or follow-up) to booth leads who are due one.', touchesCustomers: true },
   { path: '/api/cron/crm-brief', cron: '0 3 * * *', name: 'Daily revenue brief', what: 'Refreshes the CRM from every source, then emails you the brief with drafts waiting and unpaid quotes.', touchesCustomers: false },
+  { path: '/api/cron/weekly-report', cron: '30 3 * * 1', name: 'Weekly report', what: 'Emails you the Monday report: signups against the ramp, pipeline, agents, and the week ahead.', touchesCustomers: false },
   { path: '/api/cron/ops-agents', cron: '15 */3 * * *', name: 'Company agents', what: 'The agents write new drafts for your approval. Nothing is sent.', touchesCustomers: false },
   { path: '/api/cron/security-rescan', cron: '0 3 * * *', name: 'Security rescan', what: 'Re-checks published apps for security problems.', touchesCustomers: true },
   { path: '/api/cron/consultation-reminders', cron: '*/15 * * * *', name: 'Consultation reminders', what: 'Reminds people about consultation calls they booked.', touchesCustomers: true },
