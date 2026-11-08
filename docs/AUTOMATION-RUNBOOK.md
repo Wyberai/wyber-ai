@@ -26,7 +26,7 @@ All times India time. The full list with plain descriptions is on `/admin/today`
 |---|---|---|
 | `/api/cron/ops-agents` | every 3 hours | The agents write new drafts for your approval. Nothing is sent. |
 | `/api/cron/crm-brief` | daily 8:30 | Refreshes the CRM from every source, emails the daily brief. |
-| `/api/cron/watchdog` | daily 8:15 | Checks the automation is healthy. Emails only when something is wrong. |
+| `/api/cron/watchdog` | daily 8:15 | Checks the automation is healthy, including a tiny live test of the AI key. Emails only when something is wrong. |
 | `/api/cron/weekly-report` | Mondays 9:00 | The weekly report email. |
 | `/api/cron/expo-sequence` | daily 10:00 | The expo email sequence (reminder, thanks, follow-up) to booth leads who are due one. |
 | `/api/cron/email-drip` | daily 16:00 | Lifecycle emails to signed-up users. |

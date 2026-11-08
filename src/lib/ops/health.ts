@@ -8,6 +8,8 @@ export interface Issue { id: string; severity: Severity; what: string; fix: stri
 export interface HealthInput {
   now: Date
   aiKeySet: boolean
+  /** Result of a tiny live call to the model: 'ok', 'failed' (with a short reason), or undefined when it was not tried. */
+  aiCheck?: { ok: true } | { ok: false; reason: string }
   agentsDisabled: boolean
   /** newest ops_agent_runs.started_at, null if none, undefined if the table could not be read */
   lastAgentRun: string | null | undefined
@@ -28,6 +30,8 @@ export function evaluateHealth(i: HealthInput): Issue[] {
   const out: Issue[] = []
   if (!i.cronSecretSet) out.push({ id: 'cron_secret', severity: 'error', what: 'CRON_SECRET is not set, so every scheduled job will be refused.', fix: 'Set CRON_SECRET in Vercel environment variables and redeploy.' })
   if (!i.aiKeySet) out.push({ id: 'ai_key', severity: 'error', what: 'ANTHROPIC_API_KEY is not set, so agents and Ask cannot work.', fix: 'Add ANTHROPIC_API_KEY in Vercel environment variables and redeploy.' })
+
+  if (i.aiKeySet && i.aiCheck && !i.aiCheck.ok) out.push({ id: 'ai_unreachable', severity: 'error', what: `The AI key is set but a test call failed (${i.aiCheck.reason}). Agents and Ask will not work until this is fixed.`, fix: 'Check the key has not expired or been revoked and that the Anthropic account has credit, then replace ANTHROPIC_API_KEY in Vercel and redeploy.' })
 
   for (const t of i.unreadableTables) out.push({ id: `table_${t}`, severity: 'error', what: `The ${t} table cannot be read.`, fix: 'Run the migration that creates it, or check the Supabase connection.' })
 

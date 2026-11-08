@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { evaluateHealth, healthText, type HealthInput } from './health'
-import { loadHealth } from './health-load'
+import { loadHealth, pingModel } from './health-load'
+
+const okPing = async () => ({ ok: true as const })
 
 const NOW = new Date('2026-11-10T12:00:00Z')
 const ok: HealthInput = {
@@ -62,16 +64,51 @@ function fakeAdmin(tables: Record<string, unknown[] | { error: string }>, extra:
 describe('loadHealth', () => {
   beforeEach(() => { process.env.ANTHROPIC_API_KEY = 'k'; process.env.CRON_SECRET = 's'; delete process.env.OPS_AGENTS_DISABLED })
   it('a table that cannot be read becomes an issue, not a crash', async () => {
-    const issues = await loadHealth(fakeAdmin({ ops_agent_runs: { error: 'no' }, ops_agent_drafts: { error: 'no' }, crm_quotes: { error: 'no' }, profiles: [{ email: 'a@x.com', created_at: '2026-11-10T00:00:00Z' }] }, { __fail: true }), NOW)
+    const issues = await loadHealth(fakeAdmin({ ops_agent_runs: { error: 'no' }, ops_agent_drafts: { error: 'no' }, crm_quotes: { error: 'no' }, profiles: [{ email: 'a@x.com', created_at: '2026-11-10T00:00:00Z' }] }, { __fail: true }), NOW, okPing)
     expect(issues.map(i => i.id).sort()).toEqual(['table_crm_contacts', 'table_crm_quotes', 'table_ops_agent_drafts', 'table_ops_agent_runs'])
   })
   it('healthy data gives no issues', async () => {
-    const issues = await loadHealth(fakeAdmin({ ops_agent_runs: [{ started_at: '2026-11-10T11:00:00Z' }], ops_agent_drafts: [{ agent: 'outreach' }], crm_quotes: [], profiles: [{ email: 'a@x.com', created_at: '2026-11-09T00:00:00Z' }] }), NOW)
+    const issues = await loadHealth(fakeAdmin({ ops_agent_runs: [{ started_at: '2026-11-10T11:00:00Z' }], ops_agent_drafts: [{ agent: 'outreach' }], crm_quotes: [], profiles: [{ email: 'a@x.com', created_at: '2026-11-09T00:00:00Z' }] }), NOW, okPing)
     expect(issues).toEqual([])
   })
   it('counts pending drafts per agent and a zero-signup stretch', async () => {
     const drafts = Array.from({ length: 40 }, () => ({ agent: 'followup' }))
-    const issues = await loadHealth(fakeAdmin({ ops_agent_runs: [{ started_at: '2026-11-10T11:00:00Z' }], ops_agent_drafts: drafts, crm_quotes: [], profiles: [] }), NOW)
+    const issues = await loadHealth(fakeAdmin({ ops_agent_runs: [{ started_at: '2026-11-10T11:00:00Z' }], ops_agent_drafts: drafts, crm_quotes: [], profiles: [] }), NOW, okPing)
     expect(issues.map(i => i.id).sort()).toEqual(['backlog_followup', 'signups_zero'])
+  })
+})
+
+describe('the live AI key check', () => {
+  const base = { now: new Date('2026-11-10T12:00:00Z'), aiKeySet: true, agentsDisabled: false, cronSecretSet: true, lastAgentRun: '2026-11-10T10:15:00Z', unreadableTables: [], pendingByAgent: {}, maxPending: 40, overdueFollowUps: 0, signupsLast3Days: 5 }
+  it('a key that is set but does not work is an error with a plain fix, and never shows the key', () => {
+    const r = evaluateHealth({ ...base, aiCheck: { ok: false, reason: 'HTTP 401' } })
+    expect(r.map(i => i.id)).toEqual(['ai_unreachable'])
+    expect(r[0].severity).toBe('error')
+    expect(r[0].what).toContain('HTTP 401')
+    expect(r[0].fix).toContain('credit')
+  })
+  it('a working check, or no check at all, raises nothing', () => {
+    expect(evaluateHealth({ ...base, aiCheck: { ok: true } })).toEqual([])
+    expect(evaluateHealth({ ...base })).toEqual([])
+  })
+  it('no key is reported once, as a missing key, not also as unreachable', () => {
+    expect(evaluateHealth({ ...base, aiKeySet: false, aiCheck: { ok: false, reason: 'no key' } }).map(i => i.id)).toEqual(['ai_key'])
+  })
+  it('the loader only calls the model when there is a key, and passes the result through', async () => {
+    const ping = vi.fn(async () => ({ ok: false as const, reason: 'HTTP 401' }))
+    const admin = { from: () => { const a: Record<string, unknown> = {}; for (const m of ['select', 'order', 'limit', 'eq', 'gte']) a[m] = () => a; a.then = (ok: (v: unknown) => unknown) => Promise.resolve({ data: [], error: null }).then(ok); return a } }
+    vi.stubEnv('ANTHROPIC_API_KEY', 'k'); vi.stubEnv('CRON_SECRET', 's')
+    expect((await loadHealth(admin, new Date('2026-11-10T12:00:00Z'), ping)).map(i => i.id)).toContain('ai_unreachable')
+    expect(ping).toHaveBeenCalledTimes(1)
+    vi.stubEnv('ANTHROPIC_API_KEY', '')
+    await loadHealth(admin, new Date('2026-11-10T12:00:00Z'), ping)
+    expect(ping).toHaveBeenCalledTimes(1) // not called without a key
+    vi.unstubAllEnvs()
+  })
+  it('pingModel never throws and never returns the key', async () => {
+    expect(await pingModel('')).toEqual({ ok: false, reason: 'no key' })
+    const r = await pingModel('sk-test-not-a-real-key', 3000)
+    expect(r.ok).toBe(false)
+    expect(JSON.stringify(r)).not.toContain('sk-test')
   })
 })

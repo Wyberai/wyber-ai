@@ -5,8 +5,22 @@ import { MAX_PENDING_PER_AGENT } from '@/lib/ops/agents/types'
 import { summarizeSignups, type Admin, type SignupRow } from '@/lib/ops/ask/tools'
 import { evaluateHealth, type Issue } from './health'
 
+/** One tiny real call to the cheap model, so an expired or unfunded key is found by us before it is found by a failed run. Never throws; never includes the key. */
+export async function pingModel(apiKey: string | undefined = process.env.ANTHROPIC_API_KEY, timeoutMs = 8000): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (!apiKey) return { ok: false, reason: 'no key' }
+  try {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk')
+    const { CHEAP_MODEL, CHEAP_THINKING } = await import('@/lib/models')
+    await new Anthropic({ apiKey }).messages.create({ model: CHEAP_MODEL, max_tokens: 8, thinking: CHEAP_THINKING, messages: [{ role: 'user', content: 'Reply with the word ok.' }] }, { timeout: timeoutMs })
+    return { ok: true }
+  } catch (e) {
+    const status = (e as { status?: number })?.status
+    return { ok: false, reason: status ? `HTTP ${status}` : 'no response' }
+  }
+}
+
 // Gathers the facts for evaluateHealth. Every read is isolated: a table that cannot be read becomes an issue, never a crash.
-export async function loadHealth(admin: Admin, now: Date = new Date()): Promise<Issue[]> {
+export async function loadHealth(admin: Admin, now: Date = new Date(), ping: () => Promise<{ ok: true } | { ok: false; reason: string }> = pingModel): Promise<Issue[]> {
   const unreadableTables: string[] = []
 
   let lastAgentRun: string | null | undefined
@@ -37,8 +51,11 @@ export async function loadHealth(admin: Admin, now: Date = new Date()): Promise<
     if (!r.error) signupsLast3Days = summarizeSignups((r.data ?? []) as SignupRow[], 3, now).total
   } catch { /* signup check skipped */ }
 
+  const aiKeySet = !!process.env.ANTHROPIC_API_KEY
+  const aiCheck = aiKeySet ? await ping() : undefined
+
   return evaluateHealth({
-    now, aiKeySet: !!process.env.ANTHROPIC_API_KEY, agentsDisabled: process.env.OPS_AGENTS_DISABLED === 'true', cronSecretSet: !!process.env.CRON_SECRET,
+    now, aiKeySet, aiCheck, agentsDisabled: process.env.OPS_AGENTS_DISABLED === 'true', cronSecretSet: !!process.env.CRON_SECRET,
     lastAgentRun, unreadableTables, pendingByAgent, maxPending: MAX_PENDING_PER_AGENT, overdueFollowUps: overdue, signupsLast3Days,
   })
 }
