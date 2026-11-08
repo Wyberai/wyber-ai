@@ -18,12 +18,13 @@ Kill switch: set `NEXT_PUBLIC_SIGNAL_DESIGN=0` and the homepage returns to the p
 | Dashboard | Signal palette applied through a scoped `.sg-dash` root that re-points the editor variables (logic untouched). Muted text raised to Signal ink-3, white-on-blue buttons now dark text, violet gradients replaced by the single accent. Layout is unchanged; the Clients, Usage and Settings entries from the prototype were not added. **Not viewed in a browser (login required).** |
 | `/pricing`, `/byos` | Moved into the Signal shell (shared nav and footer). Plans, prices, credit rows, checkout and the byos flow are unchanged; byos colours and button text follow Signal. The India language switch moved from the old nav to a row above the hero. The purple Premier League nav link was dropped with the old nav. Plan colours are still multi-hue (they identify plans). |
 | Shared footer | `Footer.tsx` now renders the Signal footer (locale-aware links) on every page that used it: template, blog, legal, docs and locale pages. Added The Journey link and social links; the Turbo0 listing badge was dropped. |
-| Shared top bar | `Navbar.tsx` (about 24 template, blog, legal, docs and locale pages) takes the Signal palette through a scoped `.sgx` class on the bar and its mobile drawer; the Resources mega-menu, keyboard handling, locale links and sign-in state are untouched. White-on-blue buttons now use dark text. It still shows a "Win $1,000" link: check that this claim is backed. |
+| Shared top bar | `Navbar.tsx` (about 24 template, blog, legal, docs and locale pages) takes the Signal palette through a scoped `.sgx` class on the bar and its mobile drawer; the Resources mega-menu, keyboard handling, locale links and sign-in state are untouched. White-on-blue buttons now use dark text. The "Win $1,000" Premier League link is kept, per the earlier decision to leave the contest as it is. |
+| `/clients` | Colours mapped to the Signal palette; very faint grey text (about 2:1) raised to readable greys; white-on-blue buttons now dark text; emoji removed from the empty state. Layout and logic unchanged. Not viewed in a browser (login required). |
 | Copy and emails | Earlier commit `852708d`: unbacked claims removed, readable text on client colours and email buttons, shorter first-week emails. |
 
 ## Not migrated (on purpose)
 
-- **`/clients`, `/client/[slug]`**: unchanged. `/clients` is a signed-in tool already in a dark custom palette; the client page is deliberately the client's own brand, not Signal.
+- **`/client/[slug]`**: unchanged on purpose; it shows the client's own brand colour, not Signal.
 - **Non-English homepage**: still the previous design.
 - **The simulated "first build" screen from the prototype was not ported.** The real dashboard performs the build. The credit-wall behaviour is the dashboard's existing logic.
 

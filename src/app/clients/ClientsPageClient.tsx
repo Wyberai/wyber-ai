@@ -19,12 +19,12 @@ interface ClientRow {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', boxSizing: 'border-box', background: '#111115', border: '1px solid #2a2a35',
-  borderRadius: 9, padding: '10px 14px', fontSize: 14, color: '#e4e4e7', outline: 'none', fontFamily: 'inherit',
+  width: '100%', boxSizing: 'border-box', background: '#0d141e', border: '1px solid #2a2a35',
+  borderRadius: 9, padding: '10px 14px', fontSize: 14, color: '#e8eef7', outline: 'none', fontFamily: 'inherit',
 }
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#71717a', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, fontWeight: 600, color: '#9aa8bb', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }
 
-const STATUS_COLORS: Record<string, string> = { lead: '#a1a1aa', active: '#22c55e', paused: '#F59E0B', archived: '#52525b' }
+const STATUS_COLORS: Record<string, string> = { lead: '#9aa8bb', active: '#22c55e', paused: '#F59E0B', archived: '#8797ab' }
 
 export function ClientsPageClient({ initialClients, projects }: { initialClients: ClientRow[]; projects: ProjectLite[] }) {
   const [clients, setClients] = useState<ClientRow[]>(initialClients)
@@ -93,32 +93,31 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0b0d12', fontFamily: 'var(--font-display)', color: '#e4e4e7' }}>
+    <div style={{ minHeight: '100vh', background: '#05080d', fontFamily: 'var(--font-display)', color: '#e8eef7' }}>
       {toast && (
         <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', background: toast.ok ? '#0f2a1a' : '#2a0f0f', border: `1px solid ${toast.ok ? '#22c55e33' : '#ef444433'}`, color: toast.ok ? '#22c55e' : '#ef4444', padding: '12px 20px', borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 9999, maxWidth: 400, wordBreak: 'break-all' }}>{toast.msg}</div>
       )}
 
-      <nav style={{ borderBottom: '1px solid #1a1a22', background: '#0d0d11', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
+      <nav style={{ borderBottom: '1px solid #14202e', background: '#0a1018', padding: '0 32px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 50 }}>
         <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}><WyberLogo markSize={24} wordmarkSize={14} /></Link>
-        <button onClick={() => setShowCreate(s => !s)} style={{ fontSize: 13, fontWeight: 600, color: '#fff', padding: '7px 16px', borderRadius: 8, background: SKY, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ New client</button>
+        <button onClick={() => setShowCreate(s => !s)} style={{ fontSize: 13, fontWeight: 600, color: '#03111c', padding: '7px 16px', borderRadius: 8, background: SKY, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>+ New client</button>
       </nav>
 
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '40px 32px 80px' }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#fff', margin: '0 0 6px' }}>Clients</h1>
-        <p style={{ color: '#3f3f46', fontSize: 14, margin: '0 0 32px' }}>A shareable delivery page per client — no more one-off HTML per engagement.</p>
+        <p style={{ color: '#8797ab', fontSize: 14, margin: '0 0 32px' }}>A shareable delivery page per client — no more one-off HTML per engagement.</p>
 
         {showCreate && (
-          <form onSubmit={handleCreate} style={{ background: '#111115', border: `1px solid ${SKY}33`, borderRadius: 14, padding: 24, marginBottom: 24, display: 'flex', gap: 10 }}>
+          <form onSubmit={handleCreate} style={{ background: '#0d141e', border: `1px solid ${SKY}33`, borderRadius: 14, padding: 24, marginBottom: 24, display: 'flex', gap: 10 }}>
             <input value={newName} onChange={e => setNewName(e.target.value)} required autoFocus placeholder="Client or company name" style={{ ...inputStyle, flex: 1 }} />
-            <button type="submit" disabled={creating} style={{ padding: '10px 22px', borderRadius: 9, background: creating ? '#1a1a22' : SKY, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{creating ? 'Creating…' : 'Create'}</button>
+            <button type="submit" disabled={creating} style={{ padding: '10px 22px', borderRadius: 9, background: creating ? '#14202e' : SKY, border: 'none', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>{creating ? 'Creating…' : 'Create'}</button>
           </form>
         )}
 
         {clients.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 14 }}>🤝</div>
-            <p style={{ color: '#3f3f46', fontSize: 14, marginBottom: 20 }}>No clients yet.</p>
-            <button onClick={() => setShowCreate(true)} style={{ padding: '10px 22px', borderRadius: 9, background: SKY, border: 'none', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add your first client</button>
+            <p style={{ color: '#8797ab', fontSize: 14, marginBottom: 20 }}>No clients yet.</p>
+            <button onClick={() => setShowCreate(true)} style={{ padding: '10px 22px', borderRadius: 9, background: SKY, border: 'none', color: '#03111c', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Add your first client</button>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -127,23 +126,23 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
               const attachedIds = new Set(client.client_deliverables.map(d => d.project_id))
               const pickable = projects.filter(p => !attachedIds.has(p.id))
               return (
-                <div key={client.id} style={{ background: '#111115', border: '1px solid #1e1e26', borderRadius: 14, padding: 22 }}>
+                <div key={client.id} style={{ background: '#0d141e', border: '1px solid #1b2a3b', borderRadius: 14, padding: 22 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                         <span style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>{client.name}</span>
                         <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: `${STATUS_COLORS[client.status]}18`, color: STATUS_COLORS[client.status], textTransform: 'uppercase', letterSpacing: '0.05em' }}>{client.status}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: '#3f3f46' }}>wyberai.com/client/{client.slug} · {client.client_deliverables.length} project{client.client_deliverables.length !== 1 ? 's' : ''}</div>
+                      <div style={{ fontSize: 12, color: '#8797ab' }}>wyberai.com/client/{client.slug} · {client.client_deliverables.length} project{client.client_deliverables.length !== 1 ? 's' : ''}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                      <button onClick={() => copyLink(client.slug)} style={{ fontSize: 11, color: '#52525b', background: 'none', border: '1px solid #1e1e26', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Copy link</button>
-                      <button onClick={() => setExpanded(isOpen ? null : client.id)} style={{ fontSize: 11, color: '#52525b', background: 'none', border: '1px solid #1e1e26', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>{isOpen ? 'Close' : 'Manage'}</button>
+                      <button onClick={() => copyLink(client.slug)} style={{ fontSize: 11, color: '#8797ab', background: 'none', border: '1px solid #1b2a3b', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Copy link</button>
+                      <button onClick={() => setExpanded(isOpen ? null : client.id)} style={{ fontSize: 11, color: '#8797ab', background: 'none', border: '1px solid #1b2a3b', borderRadius: 7, padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>{isOpen ? 'Close' : 'Manage'}</button>
                     </div>
                   </div>
 
                   {isOpen && (
-                    <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #1a1a22', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #14202e', display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                         <div>
                           <label style={labelStyle}>Status</label>
@@ -162,15 +161,15 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
                       </div>
 
                       <div>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#3f3f46', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deliverables</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#8797ab', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deliverables</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                           {client.client_deliverables.sort((a, b) => a.sort_order - b.sort_order).map(d => (
-                            <div key={d.id} style={{ background: '#0d0d11', border: '1px solid #1a1a22', borderRadius: 9, padding: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <div key={d.id} style={{ background: '#0a1018', border: '1px solid #14202e', borderRadius: 9, padding: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
                               <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 13, fontWeight: 600, color: '#e4e4e7' }}>{d.projects?.name ?? 'Unknown project'}</div>
+                                <div style={{ fontSize: 13, fontWeight: 600, color: '#e8eef7' }}>{d.projects?.name ?? 'Unknown project'}</div>
                                 <input defaultValue={d.headline ?? ''} onBlur={e => updateDeliverable(client.id, d.id, { headline: e.target.value })} placeholder="Custom headline (optional)" style={{ ...inputStyle, marginTop: 6, padding: '6px 10px', fontSize: 12 }} />
                               </div>
-                              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#52525b', whiteSpace: 'nowrap' }}>
+                              <label style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#8797ab', whiteSpace: 'nowrap' }}>
                                 <input type="checkbox" checked={d.is_visible} onChange={e => updateDeliverable(client.id, d.id, { isVisible: e.target.checked })} /> Visible
                               </label>
                               <button onClick={() => removeDeliverable(client.id, d.id)} style={{ fontSize: 11, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>Remove</button>
@@ -183,7 +182,7 @@ export function ClientsPageClient({ initialClients, projects }: { initialClients
                               <option value="">Attach a project…</option>
                               {pickable.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                             </select>
-                            <button onClick={() => addDeliverable(client.id)} disabled={!pickProject[client.id]} style={{ padding: '8px 16px', borderRadius: 9, background: SKY, border: 'none', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>Add</button>
+                            <button onClick={() => addDeliverable(client.id)} disabled={!pickProject[client.id]} style={{ padding: '8px 16px', borderRadius: 9, background: SKY, border: 'none', color: '#03111c', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>Add</button>
                           </div>
                         )}
                       </div>
