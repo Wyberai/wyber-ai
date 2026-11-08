@@ -266,3 +266,21 @@
 /* nav call to action stays one line and compact on phones */
 .sg .sg-navr .sg-btn { white-space: nowrap; padding: 10px 18px; min-height: 44px; font-size: 15px; }
 @media (max-width: 480px) { .sg .sg-navr .sg-btn { padding: 10px 14px; font-size: 14px; } .sg .sg-nav .sg-wrap { gap: 8px; } }
+
+/*
+ * Dashboard in the Signal palette. The dashboard reads its colours through the editor's variables, so the
+ * whole screen follows by re-pointing those variables on its own root. Nothing outside the dashboard changes.
+ * Muted text is raised to Signal's ink-3 (the editor's #44445A is below 3:1 on these backgrounds).
+ */
+.sg-dash {
+  --bg-base: #05080d; --bg-surface: #0a1018; --bg-elevated: #0d141e;
+  --ide-border: rgba(150, 190, 235, .16); --ide-border2: rgba(150, 190, 235, .26);
+  --ide-text: #e8eef7; --ide-text2: #9aa8bb; --ide-text3: #8797ab;
+  --accent: #0ea5e9;
+  background: #05080d; color: #e8eef7; -webkit-font-smoothing: antialiased;
+}
+.sg-dash h1, .sg-dash h2, .sg-dash h3 { letter-spacing: -.02em; }
+.sg-dash :focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+.sg-dash .dash-project-card { transition: border-color .2s, transform .2s; }
+.sg-dash .dash-project-card:hover { border-color: rgba(56, 189, 248, .6) !important; transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .sg-dash .dash-project-card { transition: none; } .sg-dash .dash-project-card:hover { transform: none; } }

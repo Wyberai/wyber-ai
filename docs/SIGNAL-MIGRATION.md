@@ -15,11 +15,11 @@ Kill switch: set `NEXT_PUBLIC_SIGNAL_DESIGN=0` and the homepage returns to the p
 | `/signup`, `/login` | Rewritten UI, same Supabase logic (OAuth, email code, `next`, `ref`, `error=auth`). Six code boxes with paste and auto-verify. A reminder card of what the visitor was about to build. The unbacked "2,400+ apps / 4.9" block is gone. |
 | `/onboarding` | Name, optional role, and the product question only when no brief exists. With a brief it goes to `/dashboard`, where the saved prompt starts the build. "AI employees / GTM" wording removed. |
 | `/mfa` | Restyled, same logic. |
+| Dashboard | Signal palette applied through a scoped `.sg-dash` root that re-points the editor variables (logic untouched). Muted text raised to Signal ink-3, white-on-blue buttons now dark text, violet gradients replaced by the single accent. Layout is unchanged; the Clients, Usage and Settings entries from the prototype were not added. **Not viewed in a browser (login required).** |
 | Copy and emails | Earlier commit `852708d`: unbacked claims removed, readable text on client colours and email buttons, shorter first-week emails. |
 
 ## Not migrated (on purpose)
 
-- **Dashboard** (`DashboardClient.tsx`): already runs on theme variables and is dark. Restyling 857 lines of working code unattended was not worth the risk. Needs a design decision from you.
 - **`/pricing`**: already dark and on the brand colour. Its nav carries the INR language toggle, which the Signal nav does not. Plan colours are still multi-hue.
 - **`/byos`, `/clients`, `/client/[slug]`, template families** (build, use-cases, vs, docs, blog, legal): unchanged.
 - **Non-English homepage**: still the previous design.

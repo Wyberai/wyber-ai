@@ -456,7 +456,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
   const accentFor = (n?: string) => ACCENT_PALETTE[Math.abs((n?.charCodeAt(0) ?? 0) % ACCENT_PALETTE.length)];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
+    <div className="sg-dash" style={{ display: 'flex', height: '100vh', background: BG, color: TEXT, fontFamily: 'var(--font-display)' }}>
 
       {/* Mobile top bar */}
       {isMobile && (
@@ -513,7 +513,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
         {/* User row */}
         <button onClick={() => setSidebarExpanded(v => !v)}
           style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', border: 'none', background: 'transparent', color: TEXT, cursor: 'pointer', width: '100%', textAlign: 'left', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ width: 26, height: 26, borderRadius: 8, background: 'linear-gradient(135deg, #0EA5E9, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, background: '#0EA5E9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#03111c', flexShrink: 0 }}>
             {name[0]?.toUpperCase()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -620,7 +620,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
               <Link
                 href="/pricing"
                 onClick={() => track('dashboard_low_credits_banner_annual_clicked')}
-                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: 'linear-gradient(135deg,#0ea5e9,#7c3aed)', color: '#fff', textDecoration: 'none', whiteSpace: 'nowrap' }}
+                style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 7, background: '#0ea5e9', color: '#03111c', textDecoration: 'none', whiteSpace: 'nowrap' }}
               >
                 Get Annual Plan →
               </Link>
@@ -684,7 +684,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 <VoiceButton size={26} disabled={creating} lang={LOCALE_SPEECH_CODE[locale]}
                   onTranscript={txt => { setPromptInput(prev => (prev ? prev + ' ' + txt : txt)); textareaRef.current?.focus(); track('dashboard_voice_used', { length: txt.length }); }} />
                 <button onClick={submitPrompt} disabled={creating}
-                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#fff', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                  style={{ width: 34, height: 34, borderRadius: 9, border: 'none', background: creating ? '#27272a' : BRAND, color: '#03111c', cursor: creating ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
                   {creating
                     ? <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                     : <IconArrowUp />
@@ -803,7 +803,7 @@ export function DashboardClient({ profile, projects: initialProjects, securityBy
                 else if (view === 'app') startProject(undefined, 'app');
                 else openChooser();
               }} disabled={creating}
-                style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#fff', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                style={{ padding: '9px 20px', borderRadius: 8, border: 'none', background: BRAND, color: '#03111c', fontSize: 13, fontWeight: 700, cursor: creating ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
                 {view === 'mobile' ? t('buildMobileAppBtn') : view === 'website' ? 'Build a Website' : view === 'saas' ? 'Build a SaaS' : view === 'app' ? 'Build a Web App' : t('newProjectBtn')}
               </button>
             </div>
