@@ -14,6 +14,9 @@ const SUGGESTIONS = [
   'Which accepted quotes are still unpaid?',
   'How are the agents doing, and how much time have they saved?',
   'How many booth slot requests do we have for each expo day?',
+  'Where do signups drop off between signing up and paying?',
+  'What is going to happen over the next 3 days?',
+  'Is everything that should be running actually running?',
 ]
 
 const TOOL_LABEL: Record<string, string> = {

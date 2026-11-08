@@ -25,7 +25,8 @@ export default function GrowthClient({ initial }: { initial?: Snapshot } = {}) {
   useEffect(() => { if (initial) return; fetch('/api/admin/growth').then(r => r.json()).then(j => (j.error ? setErr(j.error) : setD(j))).catch(() => setErr('Could not load')) }, [])
   if (err) return <div style={{ background: C.bg, color: C.red, padding: 24, minHeight: '60vh', fontFamily: 'system-ui, sans-serif' }}>{err}</div>
   if (!d) return <div style={{ background: C.bg, color: C.muted, padding: 24, minHeight: '60vh', fontFamily: 'system-ui, sans-serif' }}>Loading…</div>
-  const max = Math.max(1, d.goal_per_day, ...(d.signups?.per_day.map(x => x.count) ?? [0]))
+  const target = d.pace?.target ?? 0
+  const max = Math.max(1, target, ...(d.signups?.per_day.map(x => x.count) ?? [0]))
   const st = d.pace ? STATUS[d.pace.status] : null
 
   return (
@@ -43,10 +44,20 @@ export default function GrowthClient({ initial }: { initial?: Snapshot } = {}) {
                 {d.pace && <div><span style={{ fontSize: 22, fontWeight: 700 }}>{d.pace.target}</span> <span style={{ color: C.muted }}>a day needed today</span></div>}
                 {st && <div style={{ color: st.color, fontWeight: 700 }}>{st.text}</div>}
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 90, marginTop: 14 }} aria-label="Signups per day, last 14 days">
-                {d.signups?.per_day.map(x => (
-                  <div key={x.date} title={`${x.date}: ${x.count}`} style={{ flex: 1, background: C.sky, height: `${Math.max(3, (x.count / max) * 100)}%`, borderRadius: 3, opacity: x.count ? 1 : 0.25 }} />
-                ))}
+              <div style={{ position: 'relative', marginTop: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 96 }} aria-label="Signups per day, last 14 days">
+                  {d.signups?.per_day.map(x => (
+                    <div key={x.date} title={`${x.date}: ${x.count}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', height: '100%', gap: 3 }}>
+                      <span style={{ fontSize: 10.5, color: C.muted }}>{x.count || ''}</span>
+                      <div style={{ width: '100%', background: C.sky, height: `${Math.max(x.count ? 6 : 3, (x.count / max) * 78)}%`, borderRadius: 3, opacity: x.count ? 1 : 0.25 }} />
+                    </div>
+                  ))}
+                </div>
+                {target > 0 && (
+                  <div title={`Needed today: ${target} a day`} style={{ position: 'absolute', left: 0, right: 0, bottom: `calc(${(target / max) * 78}% * 0.96 + 0px)`, borderTop: `1px dashed ${C.amber}`, pointerEvents: 'none' }}>
+                    <span style={{ position: 'absolute', right: 0, top: -16, fontSize: 10.5, color: C.amber }}>needed: {target} a day</span>
+                  </div>
+                )}
               </div>
               <div style={{ color: C.muted, fontSize: 12, marginTop: 6 }}>Last 14 days: {d.signups?.total} signups (your own and test accounts are not counted). Top source: {d.signups?.by_source[0]?.name ?? 'none yet'}; top country: {d.signups?.by_country[0]?.name ?? 'none yet'}.</div>
             </>
