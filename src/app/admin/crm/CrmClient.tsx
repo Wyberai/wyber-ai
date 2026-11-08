@@ -119,6 +119,7 @@ export default function CrmClient({ initialContacts, loadError }: { initialConta
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button style={btn()} onClick={() => setShowAdd(true)}>Add lead</button>
           <button style={btn()} onClick={() => setShowImport(true)}>Import CSV</button>
+          <a style={btn()} href="/api/admin/crm/export" download>Export CSV</a>
           <button style={btn(true)} disabled={busy} onClick={runSync}>{busy ? 'Syncing…' : 'Sync sources'}</button>
         </div>
       </div>

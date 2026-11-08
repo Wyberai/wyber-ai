@@ -91,3 +91,27 @@ export function csvToIncoming(text: string, opts: CsvImportOptions): { incoming:
   }
   return { incoming, headers, unmapped: headers.filter((_, i) => !mapped.has(i)) }
 }
+
+// ── Export ───────────────────────────────────────────────────────────────────
+// Contacts come from public forms, so any cell could be written by a stranger. A cell that starts with
+// = + - @ (or a tab/CR) is treated as a formula by spreadsheet programs; prefix it with an apostrophe
+// so opening the file can never run anything.
+export function csvCell(v: unknown): string {
+  let s = v === null || v === undefined ? '' : Array.isArray(v) ? v.join('; ') : String(v)
+  s = s.replace(/\r\n|\r/g, '\n')
+  if (/^[=+\-@\t]/.test(s)) s = `'${s}`
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+}
+
+export const EXPORT_COLUMNS = ['name', 'company', 'title', 'email', 'phone', 'country', 'stage', 'source', 'score', 'value_usd', 'tags', 'next_action', 'next_action_at', 'last_touch_at', 'created_at', 'notes'] as const
+
+export function contactsToCsv(contacts: Record<string, unknown>[]): string {
+  const head = EXPORT_COLUMNS.join(',')
+  const rows = contacts.map(c => EXPORT_COLUMNS.map(k => csvCell(c[k])).join(','))
+  return [head, ...rows].join('\r\n') + '\r\n'
+}
+
+export interface ExportFilter { stage?: string; source?: string; tag?: string; minScore?: number }
+export function filterForExport<T extends { stage: string; source: string; tags: string[]; score: number }>(contacts: T[], f: ExportFilter): T[] {
+  return contacts.filter(c => (!f.stage || c.stage === f.stage) && (!f.source || c.source === f.source) && (!f.tag || c.tags.includes(f.tag)) && (f.minScore === undefined || c.score >= f.minScore))
+}

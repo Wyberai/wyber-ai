@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { splitLinks } from '@/lib/ops/ask/linkify'
 
 const C = { sky: '#0EA5E9', green: '#22c55e', red: '#ef4444', muted: '#8b94a7', card: '#0f121c', border: 'rgba(255,255,255,0.10)', text: '#e6edf6', bg: '#07080d' }
 
@@ -21,7 +22,7 @@ const SUGGESTIONS = [
 
 const TOOL_LABEL: Record<string, string> = {
   pipeline_summary: 'pipeline', find_contacts: 'contacts', contact_detail: 'a contact', signups: 'signups', quotes: 'quotes',
-  agent_drafts: 'agent drafts', agent_results: 'agent results', expo: 'expo', today: 'today', schedule: 'schedule', growth: 'growth plan', funnel: 'funnel', propose_action: 'a suggested action',
+  contacts_download_link: 'a download', health: 'health', agent_drafts: 'agent drafts', agent_results: 'agent results', expo: 'expo', today: 'today', schedule: 'schedule', growth: 'growth plan', funnel: 'funnel', propose_action: 'a suggested action',
 }
 
 export default function AskClient() {
@@ -72,7 +73,10 @@ export default function AskClient() {
         )}
         {turns.map((t, i) => (
           <div key={i} style={{ justifySelf: t.role === 'user' ? 'end' : 'start', maxWidth: '92%', padding: '10px 14px', borderRadius: 14, whiteSpace: 'pre-wrap', lineHeight: 1.55, fontSize: 14.5, background: t.role === 'user' ? C.sky : C.card, color: t.error ? C.red : t.role === 'user' ? '#fff' : C.text, border: t.role === 'user' ? 'none' : `1px solid ${C.border}` }}>
-            {t.content}
+            {splitLinks(t.content).map((part, k) => part.href
+              ? <a key={k} href={part.href} {...(part.href.startsWith('/api/') ? { download: true } : {})} style={{ color: C.sky, textDecoration: 'underline' }}>{part.href.startsWith('/api/') ? 'Download the file' : part.text}</a>
+              : <span key={k}>{part.text}</span>)}
+            {t.role === 'assistant' && !t.error && <AnswerActions text={t.content} />}
             {t.proposals && t.proposals.length > 0 && (
               <div style={{ display: 'grid', gap: 8, marginTop: 10 }}>
                 {t.proposals.map((p, k) => (
@@ -97,6 +101,25 @@ export default function AskClient() {
           style={{ flex: 1, padding: '13px 14px', fontSize: 15, borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontFamily: 'inherit' }} />
         <button type="submit" disabled={busy || !text.trim()} style={{ padding: '0 20px', borderRadius: 12, border: 'none', background: C.sky, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', opacity: busy || !text.trim() ? 0.5 : 1 }}>Ask</button>
       </form>
+    </div>
+  )
+}
+
+// Copy the answer, or save it as a text file, so a report can leave the dashboard.
+function AnswerActions({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  const btn: React.CSSProperties = { background: 'none', border: `1px solid ${C.border}`, borderRadius: 6, padding: '3px 9px', fontSize: 11.5, color: C.muted, cursor: 'pointer', fontFamily: 'inherit' }
+  const save = () => {
+    try {
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }))
+      const a = document.createElement('a'); a.href = url; a.download = `wyberai-report-${new Date().toISOString().slice(0, 10)}.txt`; a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+    } catch { /* downloads blocked */ }
+  }
+  return (
+    <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+      <button type="button" style={btn} onClick={async () => { try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) } catch { /* clipboard blocked */ } }}>{copied ? 'Copied' : 'Copy'}</button>
+      <button type="button" style={btn} onClick={save}>Save as file</button>
     </div>
   )
 }
