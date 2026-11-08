@@ -176,11 +176,11 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
         @media(min-width:901px) { .nav-mobile-btn { display: none !important; } }
       `}</style>
 
-      <nav style={{
+      <nav className="sgx" style={{
         position: 'sticky', top: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 clamp(16px,4vw,40px)', height: 58,
-        background: scrolled ? (theme === 'dark' ? 'rgba(8,10,18,0.94)' : 'rgba(247,248,252,0.94)') : 'var(--bg)',
+        background: scrolled ? (theme === 'dark' ? 'rgba(5,8,13,0.94)' : 'rgba(247,248,252,0.94)') : 'var(--bg)',
         backdropFilter: scrolled ? 'blur(24px) saturate(1.8)' : 'none',
         borderBottom: '1px solid var(--border)',
         transition: 'all 0.3s',
@@ -308,7 +308,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
           ) : (
             <>
               <Link href="/login" className="wy-nav-link" style={{ padding: '6px 12px' }}>Sign in</Link>
-              <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 18px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em', boxShadow: '0 2px 12px var(--sky-glow)', textDecoration: 'none' }}>Start free →</Link>
+              <Link href="/signup" style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 18px', borderRadius: 9, background: 'var(--sky)', color: '#03111c', fontSize: 13, fontWeight: 700, letterSpacing: '-0.01em', boxShadow: '0 2px 12px var(--sky-glow)', textDecoration: 'none' }}>Start free →</Link>
             </>
           )}
           <button className="nav-mobile-btn" onClick={() => { setMenuOpen(o => !o); setMobileResourcesOpen(false); }}
@@ -321,7 +321,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
 
       {/* Mobile drawer */}
       {menuOpen && (
-        <div style={{
+        <div className="sgx" style={{
           position: 'fixed', top: 58, left: 0, right: 0, zIndex: 99,
           background: 'var(--card)', borderBottom: '1px solid var(--border)',
           padding: '12px 20px 20px', display: 'flex', flexDirection: 'column',
@@ -377,7 +377,7 @@ export function Navbar({ user, locale = DEFAULT_LOCALE }: Props) {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             <Link href="/login" style={{ flex: 1, textAlign: 'center', padding: '9px', borderRadius: 8, border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>Sign in</Link>
-            <Link href="/signup" style={{ flex: 1, textAlign: 'center', padding: '9px', borderRadius: 8, background: 'var(--sky)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
+            <Link href="/signup" style={{ flex: 1, textAlign: 'center', padding: '9px', borderRadius: 8, background: 'var(--sky)', color: '#03111c', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>Start free →</Link>
           </div>
         </div>
       )}

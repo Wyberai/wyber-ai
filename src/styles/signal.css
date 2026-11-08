@@ -288,3 +288,14 @@
 /* Signal tokens scoped to a single block (the shared footer on pages that are not Signal pages) */
 .sg.sg-inline { min-height: 0; }
 .sg .sg-soc { display: flex; gap: 14px; margin-top: 14px; } .sg .sg-soc a { display: inline-block; margin: 0; padding: 8px 0; min-height: 40px; }
+
+/* The shared top bar and its mobile drawer, in the Signal palette (they read these variables) */
+.sgx {
+  --bg: #05080d; --bg2: #0a1018; --card: #0d141e;
+  --border: rgba(150, 190, 235, .16); --border2: rgba(150, 190, 235, .26);
+  --text: #e8eef7; --text2: #9aa8bb; --text3: #8797ab; --sky: #0ea5e9;
+  color: #e8eef7;
+}
+.sgx a, .sgx button { min-height: 44px; }
+.sgx .wy-nav-link { display: inline-flex; align-items: center; }
+.sgx :focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; border-radius: 8px; }
