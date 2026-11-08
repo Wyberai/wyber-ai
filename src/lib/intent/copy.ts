@@ -22,6 +22,8 @@ export interface IntentCopy {
   langName: string
   label: string
   doors: Record<Door, string>
+  /** One line under each door, saying what that choice gets you. */
+  doorHints: Record<Door, string>
   chips: Record<Door, Chip[]>
   readoutPrefix: string
   readoutFix: string
@@ -41,8 +43,9 @@ export interface IntentCopy {
 export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
   en: {
     langName: 'English',
-    label: "What's slowing your work down?",
-    doors: { business: 'I run a business', software: 'I run a software company', student: "I'm a student" },
+    label: 'What brings you here?',
+    doors: { business: 'Fix a problem in my business', software: 'Build a new app or product', student: 'I\'m just learning or exploring' },
+    doorHints: { business: 'Orders, stock, follow-ups, paperwork. Tell us what is slowing you down.', software: 'Got an idea? Describe it and see a working first version.', student: 'Projects, practice or curiosity. Start free.' },
     chips: {
       business: [
         { id: 'job-work', label: 'Job-work challan tracker', prompt: 'Build a job-work tracker. I log a challan for goods sent to a job worker, record what comes back, and get a warning before the one-year return limit.' },
@@ -50,9 +53,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
         { id: 'delivery-proof', label: 'Delivery proof on a phone', prompt: 'Build a mobile app for my drivers. They pick a delivery, photograph the signed LR copy, and the office sees delivered or pending in one list.' },
       ],
       software: [
-        { id: 'timesheet-invoice', label: 'Timesheet to invoice', prompt: 'Build a timesheet app where developers log hours per client project. Create a monthly invoice in USD with the rupee value, and show paid or unpaid status.' },
-        { id: 'change-requests', label: 'Change-request log', prompt: 'Build a change-request tracker. I log each client request with estimated hours and price, the client approves it, and I mark it as billed.' },
-        { id: 'client-prototype', label: 'Prototype for a client', prompt: 'Build a prototype for a pharma stockist to take retailer orders and track medicine expiry dates, with a login and an order status screen.' },
+        { id: 'saas-plans', label: 'A subscription product', prompt: 'Build a subscription web app. A public pricing page with three monthly plans, a sign-up and login page, an account page where a customer sees their plan and billing status and can change plan, and an admin page listing every customer, their plan and when they joined.' },
+        { id: 'marketplace', label: 'A marketplace', prompt: 'Build a two-sided marketplace. Sellers sign up and list a service with photos, a description and a price. Buyers browse listings, search and filter by category, and send a booking request. An admin page shows all sellers, listings and requests.' },
+        { id: 'mobile-idea', label: 'A mobile app idea', prompt: 'Build a mobile app. A welcome screen, a sign-in screen, a home feed of items users have added, a screen to add a new item with a photo and a note, and a profile screen. Keep the design clean and simple.' },
       ],
       student: [
         { id: 'placement-tracker', label: 'Placement tracker', prompt: 'Build a mobile app to track campus placements: companies, rounds, dates, results and prep notes.' },
@@ -62,7 +65,7 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     },
     readoutPrefix: 'We understood:',
     readoutFix: 'Not right? Change',
-    audienceName: { business: 'Business owner', software: 'Software company', student: 'Student', other: 'Your work' },
+    audienceName: { business: 'Business owner', software: 'Builder', student: 'Student', other: 'Your work' },
     thinking: 'Understanding…',
     unsure: 'Tell us a little more?',
     disclosure: 'An AI reads what you type here so this page can adapt to you. Please do not write names, phone numbers or emails.',
@@ -77,8 +80,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
 
   hi: {
     langName: 'हिंदी',
-    label: 'आप क्या ठीक करना चाहते हैं?',
-    doors: { business: 'मेरा व्यवसाय है', software: 'मेरी सॉफ़्टवेयर कंपनी है', student: 'मैं विद्यार्थी हूँ' },
+    label: 'आप यहाँ किसलिए आए हैं?',
+    doors: { business: 'अपने व्यवसाय की समस्या सुलझानी है', software: 'नया ऐप या प्रोडक्ट बनाना है', student: 'बस सीखना या देखना है' },
+    doorHints: { business: 'ऑर्डर, स्टॉक, फ़ॉलो-अप, काग़ज़ी काम। बताइए क्या आपको धीमा कर रहा है।', software: 'कोई आइडिया है? बताइए और पहला चलता-फिरता वर्ज़न देखिए।', student: 'प्रोजेक्ट, अभ्यास या जिज्ञासा। मुफ़्त शुरू करें।' },
     chips: {
       business: [
         { id: 'job-work', label: 'जॉब-वर्क चालान ट्रैकर', prompt: 'एक जॉब-वर्क ट्रैकर बनाओ। मैं जॉब वर्कर को भेजे माल का चालान दर्ज करूँ, जो वापस आया उसे लिखूँ, और एक साल की वापसी सीमा से पहले चेतावनी मिले।' },
@@ -86,9 +90,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
         { id: 'delivery-proof', label: 'डिलीवरी का प्रमाण (फ़ोन पर)', prompt: 'मेरे ड्राइवरों के लिए एक मोबाइल ऐप बनाओ। वे डिलीवरी चुनें, साइन की हुई LR कॉपी की फ़ोटो लें, और ऑफ़िस एक सूची में देखे कि क्या डिलीवर हुआ और क्या बाकी है।' },
       ],
       software: [
-        { id: 'timesheet-invoice', label: 'टाइमशीट से इनवॉइस', prompt: 'एक टाइमशीट ऐप बनाओ जहाँ डेवलपर हर क्लाइंट प्रोजेक्ट पर घंटे दर्ज करें। हर महीने USD में इनवॉइस बने, रुपये की कीमत के साथ, और भुगतान हुआ या बाकी दिखे।' },
-        { id: 'change-requests', label: 'बदलाव-अनुरोध लॉग', prompt: 'एक चेंज-रिक्वेस्ट ट्रैकर बनाओ। मैं क्लाइंट का हर अनुरोध अनुमानित घंटे और कीमत के साथ दर्ज करूँ, क्लाइंट मंज़ूरी दे, और मैं उसे बिल हुआ चिह्नित करूँ।' },
-        { id: 'client-prototype', label: 'क्लाइंट के लिए प्रोटोटाइप', prompt: 'एक फ़ार्मा स्टॉकिस्ट के लिए प्रोटोटाइप बनाओ जिसमें रिटेलर ऑर्डर दें और दवाओं की एक्सपायरी ट्रैक हो, लॉगिन और ऑर्डर स्टेटस स्क्रीन के साथ।' },
+        { id: 'saas-plans', label: 'सब्सक्रिप्शन वाला प्रोडक्ट', prompt: 'एक सब्सक्रिप्शन वेब ऐप बनाओ। तीन मासिक प्लान वाला पब्लिक प्राइसिंग पेज, साइन-अप और लॉगिन पेज, एक अकाउंट पेज जहाँ ग्राहक अपना प्लान और बिलिंग की स्थिति देखे और प्लान बदल सके, और एक एडमिन पेज जिसमें हर ग्राहक, उसका प्लान और जुड़ने की तारीख दिखे।' },
+        { id: 'marketplace', label: 'मार्केटप्लेस', prompt: 'एक दो-तरफ़ा मार्केटप्लेस बनाओ। विक्रेता साइन-अप करके फ़ोटो, विवरण और कीमत के साथ अपनी सेवा लिस्ट करें। खरीदार लिस्टिंग देखें, श्रेणी से खोजें और फ़िल्टर करें, और बुकिंग अनुरोध भेजें। एडमिन पेज पर सभी विक्रेता, लिस्टिंग और अनुरोध दिखें।' },
+        { id: 'mobile-idea', label: 'मोबाइल ऐप का आइडिया', prompt: 'एक मोबाइल ऐप बनाओ। एक वेलकम स्क्रीन, साइन-इन स्क्रीन, होम स्क्रीन जिसमें यूज़र्स की जोड़ी हुई चीज़ें दिखें, फ़ोटो और नोट के साथ नई चीज़ जोड़ने की स्क्रीन, और प्रोफ़ाइल स्क्रीन। डिज़ाइन साफ़ और सरल रखो।' },
       ],
       student: [
         { id: 'placement-tracker', label: 'प्लेसमेंट ट्रैकर', prompt: 'कैंपस प्लेसमेंट ट्रैक करने के लिए एक मोबाइल ऐप बनाओ: कंपनियाँ, राउंड, तारीख़ें, नतीजे और तैयारी के नोट्स।' },
@@ -98,7 +102,7 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     },
     readoutPrefix: 'हमने समझा:',
     readoutFix: 'ठीक नहीं? बदलें',
-    audienceName: { business: 'व्यवसाय के मालिक', software: 'सॉफ़्टवेयर कंपनी', student: 'विद्यार्थी', other: 'आपका काम' },
+    audienceName: { business: 'व्यवसाय के मालिक', software: 'निर्माता', student: 'विद्यार्थी', other: 'आपका काम' },
     thinking: 'समझ रहे हैं…',
     unsure: 'थोड़ा और बताएँगे?',
     disclosure: 'आप यहाँ जो लिखते हैं उसे एक AI पढ़ता है ताकि यह पेज आपके हिसाब से बदले। कृपया नाम, फ़ोन नंबर या ईमेल न लिखें।',
@@ -113,8 +117,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
 
   gu: {
     langName: 'ગુજરાતી',
-    label: 'તમે શું સુધારવા માંગો છો?',
-    doors: { business: 'મારો વ્યવસાય છે', software: 'મારી સૉફ્ટવેર કંપની છે', student: 'હું વિદ્યાર્થી છું' },
+    label: 'તમે અહીં શા માટે આવ્યા છો?',
+    doors: { business: 'મારા વ્યવસાયની સમસ્યા ઉકેલવી છે', software: 'નવી એપ કે પ્રોડક્ટ બનાવવી છે', student: 'ફક્ત શીખવું કે જોવું છે' },
+    doorHints: { business: 'ઓર્ડર, સ્ટોક, ફૉલો-અપ, કાગળકામ. કહો કે તમને શું ધીમા પાડે છે.', software: 'કોઈ વિચાર છે? વર્ણવો અને પહેલું ચાલતું વર્ઝન જુઓ.', student: 'પ્રોજેક્ટ, પ્રેક્ટિસ કે જિજ્ઞાસા. મફત શરૂ કરો.' },
     chips: {
       business: [
         { id: 'job-work', label: 'જોબ-વર્ક ચલણ ટ્રેકર', prompt: 'જોબ-વર્ક ટ્રેકર બનાવો. હું જોબ વર્કરને મોકલેલા માલનું ચલણ નોંધી શકું, જે પાછું આવ્યું તે લખી શકું, અને એક વર્ષની પરત-મર્યાદા પહેલાં ચેતવણી મળે.' },
@@ -122,9 +127,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
         { id: 'delivery-proof', label: 'ડિલિવરીનો પુરાવો (ફોન પર)', prompt: 'મારા ડ્રાઇવરો માટે મોબાઇલ ઍપ બનાવો. તેઓ ડિલિવરી પસંદ કરે, સહી કરેલી LR કૉપીનો ફોટો લે, અને ઑફિસ એક યાદીમાં જુએ કે શું ડિલિવર થયું અને શું બાકી છે.' },
       ],
       software: [
-        { id: 'timesheet-invoice', label: 'ટાઇમશીટથી ઇન્વૉઇસ', prompt: 'ટાઇમશીટ ઍપ બનાવો જ્યાં ડેવલપર્સ દરેક ક્લાયન્ટ પ્રોજેક્ટ પર કલાકો નોંધે. દર મહિને USD માં ઇન્વૉઇસ બને, રૂપિયાની કિંમત સાથે, અને ચુકવણી થઈ કે બાકી તે દેખાય.' },
-        { id: 'change-requests', label: 'ફેરફાર-વિનંતી લૉગ', prompt: 'ચેન્જ-રિક્વેસ્ટ ટ્રેકર બનાવો. હું ક્લાયન્ટની દરેક વિનંતી અંદાજિત કલાકો અને કિંમત સાથે નોંધું, ક્લાયન્ટ મંજૂરી આપે, અને હું તેને બિલ થયેલું ચિહ્નિત કરું.' },
-        { id: 'client-prototype', label: 'ક્લાયન્ટ માટે પ્રોટોટાઇપ', prompt: 'ફાર્મા સ્ટૉકિસ્ટ માટે પ્રોટોટાઇપ બનાવો જેમાં રિટેલર્સ ઑર્ડર આપે અને દવાઓની એક્સપાયરી ટ્રૅક થાય, લૉગિન અને ઑર્ડર સ્ટેટસ સ્ક્રીન સાથે.' },
+        { id: 'saas-plans', label: 'સબ્સ્ક્રિપ્શન પ્રોડક્ટ', prompt: 'એક સબ્સ્ક્રિપ્શન વેબ એપ બનાવો. ત્રણ માસિક પ્લાન સાથેનું પબ્લિક પ્રાઇસિંગ પેજ, સાઇન-અપ અને લૉગિન પેજ, એક એકાઉન્ટ પેજ જ્યાં ગ્રાહક પોતાનો પ્લાન અને બિલિંગની સ્થિતિ જુએ અને પ્લાન બદલી શકે, અને એક એડમિન પેજ જેમાં દરેક ગ્રાહક, તેનો પ્લાન અને જોડાવાની તારીખ દેખાય.' },
+        { id: 'marketplace', label: 'માર્કેટપ્લેસ', prompt: 'એક બે-બાજુનું માર્કેટપ્લેસ બનાવો. વેચનાર સાઇન-અપ કરીને ફોટા, વર્ણન અને કિંમત સાથે પોતાની સેવા લિસ્ટ કરે. ખરીદનાર લિસ્ટિંગ જુએ, શ્રેણી પ્રમાણે શોધે અને ફિલ્ટર કરે, અને બુકિંગ વિનંતી મોકલે. એડમિન પેજ પર બધા વેચનાર, લિસ્ટિંગ અને વિનંતીઓ દેખાય.' },
+        { id: 'mobile-idea', label: 'મોબાઇલ એપનો વિચાર', prompt: 'એક મોબાઇલ એપ બનાવો. એક વેલકમ સ્ક્રીન, સાઇન-ઇન સ્ક્રીન, હોમ સ્ક્રીન જેમાં યુઝર્સે ઉમેરેલી વસ્તુઓ દેખાય, ફોટો અને નોંધ સાથે નવી વસ્તુ ઉમેરવાની સ્ક્રીન, અને પ્રોફાઇલ સ્ક્રીન. ડિઝાઇન સાફ અને સરળ રાખો.' },
       ],
       student: [
         { id: 'placement-tracker', label: 'પ્લેસમેન્ટ ટ્રેકર', prompt: 'કૅમ્પસ પ્લેસમેન્ટ ટ્રૅક કરવા માટે મોબાઇલ ઍપ બનાવો: કંપનીઓ, રાઉન્ડ, તારીખો, પરિણામ અને તૈયારીની નોંધો.' },
@@ -134,7 +139,7 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
     },
     readoutPrefix: 'અમે સમજ્યા:',
     readoutFix: 'ખોટું? બદલો',
-    audienceName: { business: 'વ્યવસાયના માલિક', software: 'સૉફ્ટવેર કંપની', student: 'વિદ્યાર્થી', other: 'તમારું કામ' },
+    audienceName: { business: 'વ્યવસાયના માલિક', software: 'નિર્માતા', student: 'વિદ્યાર્થી', other: 'તમારું કામ' },
     thinking: 'સમજી રહ્યા છીએ…',
     unsure: 'થોડું વધુ જણાવશો?',
     disclosure: 'તમે અહીં જે લખો છો તે એક AI વાંચે છે જેથી આ પેજ તમારા માટે બદલાય. કૃપા કરીને નામ, ફોન નંબર કે ઇમેઇલ ન લખો.',

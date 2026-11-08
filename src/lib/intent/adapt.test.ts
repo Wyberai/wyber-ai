@@ -40,3 +40,35 @@ describe('getVariant: the owner can pick a side on purpose', () => {
     expect(getVariant(() => 0.9, '?xp=')).toBe('control')
   })
 })
+
+import { INTENT_COPY } from './copy'
+import { INTENT_LANGS } from './types'
+
+describe('the two big choices', () => {
+  it('every language has a label and a one-line hint for every door, and the hints are different from the labels', () => {
+    for (const l of INTENT_LANGS) {
+      for (const d of DOORS) {
+        expect(INTENT_COPY[l].doors[d].trim(), `${l}.doors.${d}`).not.toBe('')
+        expect(INTENT_COPY[l].doorHints[d].trim(), `${l}.doorHints.${d}`).not.toBe('')
+        expect(INTENT_COPY[l].doorHints[d]).not.toBe(INTENT_COPY[l].doors[d])
+      }
+    }
+  })
+  it('English says it plainly: fix a problem in a business, or build a new app or product', () => {
+    expect(INTENT_COPY.en.doors.business).toBe('Fix a problem in my business')
+    expect(INTENT_COPY.en.doors.software).toBe('Build a new app or product')
+    expect(INTENT_COPY.en.label).toBe('What brings you here?')
+  })
+  it('the build-something-new door offers idea starters that name concrete screens', () => {
+    for (const l of INTENT_LANGS) {
+      expect(INTENT_COPY[l].chips.software.map(c => c.id)).toEqual(['saas-plans', 'marketplace', 'mobile-idea'])
+    }
+    for (const c of INTENT_COPY.en.chips.software) expect(/page|screen/i.test(c.prompt), c.id).toBe(true)
+  })
+  it('keeps the rules: nothing about where the company is based or that it is one person', () => {
+    for (const l of INTENT_LANGS) {
+      const all = JSON.stringify(INTENT_COPY[l])
+      expect(all).not.toMatch(/bidar|wyoming|\bsolo\b|just me|one[- ]person/i)
+    }
+  })
+})

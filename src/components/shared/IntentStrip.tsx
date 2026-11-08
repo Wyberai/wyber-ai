@@ -140,6 +140,12 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     color: active ? 'var(--brand-accent-hot)' : 'var(--brand-text-dim)',
   })
 
+  const card = (active: boolean): React.CSSProperties => ({
+    textAlign: 'left', padding: '12px 14px', borderRadius: 14, cursor: 'pointer', fontFamily: 'inherit',
+    border: `1px solid ${active ? 'var(--brand-accent)' : 'var(--brand-border-strong)'}`,
+    background: active ? 'rgba(14,165,233,0.12)' : 'rgba(255,255,255,0.03)',
+  })
+
   return (
     <div lang={lang} data-intent-strip style={{ maxWidth: 560, marginBottom: 14, display: 'grid', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
@@ -159,12 +165,20 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
         </button>
       )}
 
-      <div role="group" aria-label="Who are you" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-        {DOORS.map(d => (
-          <button key={d} type="button" aria-pressed={d === door} onClick={() => chooseDoor(d)} style={pill(d === door)}>
-            {c.doors[d]}
-          </button>
-        ))}
+      {/* Two big, plain-language choices: fix a problem in a business, or build something new.
+          "Just exploring" is deliberately a quieter third option. */}
+      <div role="group" aria-label={c.label} style={{ display: 'grid', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 8 }}>
+          {(['business', 'software'] as const).map(d => (
+            <button key={d} type="button" aria-pressed={d === door} onClick={() => chooseDoor(d)} style={card(d === door)}>
+              <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 3 }}>{c.doors[d]}</span>
+              <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.45, color: 'var(--brand-text-dim)' }}>{c.doorHints[d]}</span>
+            </button>
+          ))}
+        </div>
+        <button type="button" aria-pressed={door === 'student'} onClick={() => chooseDoor('student')} style={{ ...pill(door === 'student'), justifySelf: 'start' }}>
+          {c.doors.student}
+        </button>
       </div>
 
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
