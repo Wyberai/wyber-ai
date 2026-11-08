@@ -52,7 +52,8 @@ export default async function HomePage({
   let initialAsking = false
   // The owner (a browser unlocked via /api/owner-preview) always gets it on the India view, so it can be tried live
   // before it is switched on for the public.
-  if ((intentExperimentOn(process.env.NEXT_PUBLIC_INTENT_EXPERIMENT) || owner) && currency === 'INR') {
+  // Off for everyone, the owner included, unless the flag is set. (Earlier the owner's browser always got it.)
+  if (intentExperimentOn(process.env.NEXT_PUBLIC_INTENT_EXPERIMENT) && currency === 'INR') {
     const params = await searchParams
     const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? null
     const h = await headers()
