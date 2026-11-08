@@ -27,7 +27,7 @@ function Field({ label, hint, error, children }: { label: string; hint?: string;
       <MicroLabel>{label}</MicroLabel>
       {children}
       {(error || hint) && (
-        <span style={{ fontSize: 10.5, color: error ? 'var(--ide-error, #ef4444)' : 'var(--ide-text3)' }}>{error || hint}</span>
+        <span style={{ fontSize: 12.5, color: error ? 'var(--ide-error, #ef4444)' : 'var(--ide-text3)' }}>{error || hint}</span>
       )}
     </label>
   );
@@ -114,7 +114,7 @@ export function GrowPanel() {
       </div>
 
       <Field label="Business name">
-        <input style={inputStyle} value={cfg.businessName} onChange={e => set({ businessName: e.target.value })} placeholder="Your business name" />
+        <input aria-label="Your business name" style={inputStyle} value={cfg.businessName} onChange={e => set({ businessName: e.target.value })} placeholder="Your business name" />
       </Field>
 
       {/* WhatsApp */}
@@ -123,7 +123,7 @@ export function GrowPanel() {
         {cfg.showWhatsApp && (
           <>
             <Field label="WhatsApp number" hint="10-digit Indian numbers get +91 automatically" error={waError}>
-              <input style={inputStyle} inputMode="tel" value={cfg.whatsapp} onChange={e => set({ whatsapp: e.target.value })} placeholder="98765 43210" />
+              <input aria-label="98765 43210" style={inputStyle} inputMode="tel" value={cfg.whatsapp} onChange={e => set({ whatsapp: e.target.value })} placeholder="98765 43210" />
             </Field>
             <Field label="Message customers start with">
               <input style={inputStyle} value={cfg.whatsappMessage} onChange={e => set({ whatsappMessage: e.target.value })} />
@@ -138,10 +138,10 @@ export function GrowPanel() {
         {cfg.showUpi && (
           <>
             <Field label="UPI ID" hint="Opens GPay / PhonePe / Paytm on phones, shows a QR on computers" error={upiError}>
-              <input style={inputStyle} value={cfg.upiId} onChange={e => set({ upiId: e.target.value })} placeholder="yourname@okicici" autoCapitalize="off" spellCheck={false} />
+              <input aria-label="yourname@okicici" style={inputStyle} value={cfg.upiId} onChange={e => set({ upiId: e.target.value })} placeholder="yourname@okicici" autoCapitalize="off" spellCheck={false} />
             </Field>
             <Field label="Name customers see when paying">
-              <input style={inputStyle} value={cfg.upiName} onChange={e => set({ upiName: e.target.value })} placeholder={cfg.businessName || 'Business name'} />
+              <input aria-label={cfg.businessName || 'Business name'} style={inputStyle} value={cfg.upiName} onChange={e => set({ upiName: e.target.value })} placeholder={cfg.businessName || 'Business name'} />
             </Field>
           </>
         )}
@@ -157,14 +157,14 @@ export function GrowPanel() {
           <input style={inputStyle} inputMode="tel" value={cfg.phone} onChange={e => set({ phone: e.target.value })} />
         </Field>
         <Field label="Address">
-          <input style={inputStyle} value={cfg.address} onChange={e => set({ address: e.target.value })} placeholder="Shop no., street, area" />
+          <input aria-label="Shop no., street, area" style={inputStyle} value={cfg.address} onChange={e => set({ address: e.target.value })} placeholder="Shop no., street, area" />
         </Field>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
           <Field label="City">
             <input style={inputStyle} value={cfg.city} onChange={e => set({ city: e.target.value })} />
           </Field>
           <Field label="Hours">
-            <input style={inputStyle} value={cfg.hours} onChange={e => set({ hours: e.target.value })} placeholder="Mo-Sa 10:00-20:00" />
+            <input aria-label="Mo-Sa 10:00-20:00" style={inputStyle} value={cfg.hours} onChange={e => set({ hours: e.target.value })} placeholder="Mo-Sa 10:00-20:00" />
           </Field>
         </div>
       </div>
@@ -174,7 +174,7 @@ export function GrowPanel() {
       </GlowButton>
       {installed && (
         <button type="button" onClick={remove} disabled={!!busy}
-          style={{ background: 'none', border: 'none', color: 'var(--ide-text3)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ background: 'none', border: 'none', color: 'var(--ide-text3)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
           {busy === 'remove' ? 'Removing…' : flash === 'Removed from your app' ? flash : 'Remove Grow kit from my app'}
         </button>
       )}
@@ -188,12 +188,12 @@ export function GrowPanel() {
         <a href="https://business.google.com/create" target="_blank" rel="noopener noreferrer"
           style={{ fontSize: 12, color: 'var(--ide-text)', textDecoration: 'none', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)' }}>
           <strong>List on Google Maps</strong>
-          <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>Free Google Business Profile, add your published link as the website</div>
+          <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>Free Google Business Profile, add your published link as the website</div>
         </a>
         <button type="button" onClick={openLaunchKit}
           style={{ textAlign: 'left', fontSize: 12, color: 'var(--ide-text)', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', cursor: 'pointer', fontFamily: 'inherit' }}>
           <strong>Counter QR + WhatsApp post</strong>
-          <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>In Publish → Launch Kit once your app is live</div>
+          <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>In Publish → Launch Kit once your app is live</div>
         </button>
       </div>
     </div>

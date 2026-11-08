@@ -75,7 +75,7 @@ export function UsageDashboard({ projectId }: { projectId: string }) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Usage & Billing</h1>
+          <h3 className="text-xl font-bold text-white mb-2">Usage & Billing</h3>
           <p className="text-slate-400">Monitor compute, storage, and costs</p>
         </div>
         <div className="flex items-center gap-2">

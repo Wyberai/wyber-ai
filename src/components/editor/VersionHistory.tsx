@@ -99,7 +99,7 @@ export function VersionHistory({ projectId }: { projectId: string }) {
       {/* Name input row */}
       {naming && (
         <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ide-border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <input
+          <input aria-label={t('vhSnapshotPlaceholder')}
             autoFocus
             value={labelInput}
             onChange={e => setLabelInput(e.target.value)}

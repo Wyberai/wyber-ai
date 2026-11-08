@@ -34,23 +34,23 @@ export function FigmaImportPanel({ onImport }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '12px 0' }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('figmaImportHeader')}</div>
-      <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.6 }}>{t('figmaImportDesc')}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{t('figmaImportHeader')}</div>
+      <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.6 }}>{t('figmaImportDesc')}</div>
 
-      <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: 'var(--text2)', lineHeight: 1.6 }}>
+      <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', fontSize: 12, color: 'var(--text2)', lineHeight: 1.6 }}>
         <strong style={{ color: 'var(--sky)' }}>{t('howToGetShareLink')}</strong><br />
         {t('figmaShareLinkSteps')}
       </div>
 
-      <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.figma.com/file/..."
+      <input aria-label="https://www.figma.com/file/..." value={url} onChange={e => setUrl(e.target.value)} placeholder="https://www.figma.com/file/..."
         style={{ padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
 
       <div>
-        <button onClick={() => setShowToken(!showToken)} style={{ fontSize: 11, color: 'var(--sky)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+        <button onClick={() => setShowToken(!showToken)} style={{ fontSize: 12, color: 'var(--sky)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
           {showToken ? t('hideFigmaToken') : t('showFigmaToken')}
         </button>
         {showToken && (
-          <input value={token} onChange={e => setToken(e.target.value)} placeholder="figd_XXXX... — get from figma.com/settings" type="password"
+          <input aria-label="figd_XXXX... — get from figma.com/settings" value={token} onChange={e => setToken(e.target.value)} placeholder="figd_XXXX... — get from figma.com/settings" type="password"
             style={{ marginTop: 6, width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 12, fontFamily: 'monospace', outline: 'none' }} />
         )}
       </div>
@@ -59,20 +59,20 @@ export function FigmaImportPanel({ onImport }: Props) {
         {loading ? t('convertingDesign') : t('importFromFigma')}
       </button>
 
-      {error && <p style={{ color: '#EF4444', fontSize: 11 }}>{error}</p>}
+      {error && <p style={{ color: '#EF4444', fontSize: 12 }}>{error}</p>}
 
       {result && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ padding: '10px 12px', borderRadius: 9, background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.2)' }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#34D399', marginBottom: 4 }}>{t('convertedLabel').replace('{fileName}', result.fileName)}</div>
-            <div style={{ fontSize: 11, color: 'var(--text3)' }}>{t('linesOfCodeGenerated').replace('{count}', String(result.code.split('\n').length))}</div>
+            <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t('linesOfCodeGenerated').replace('{count}', String(result.code.split('\n').length))}</div>
           </div>
           <button onClick={() => onImport(result.code, result.fileName)} style={{ padding: '9px', borderRadius: 9, background: '#34D399', color: '#0B1627', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
             {t('addToProject')}
           </button>
-          <details style={{ fontSize: 11 }}>
+          <details style={{ fontSize: 12 }}>
             <summary style={{ cursor: 'pointer', color: 'var(--text3)', padding: '4px 0' }}>{t('previewCode')}</summary>
-            <pre style={{ marginTop: 8, padding: '10px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', fontSize: 10, overflow: 'auto', maxHeight: 200, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{result.code.slice(0, 500)}...</pre>
+            <pre style={{ marginTop: 8, padding: '10px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--border)', fontSize: 12, overflow: 'auto', maxHeight: 200, color: 'var(--text2)', whiteSpace: 'pre-wrap' }}>{result.code.slice(0, 500)}...</pre>
           </details>
         </div>
       )}

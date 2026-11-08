@@ -196,7 +196,7 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
         <ConnectorIcon logoUrl={logoUrl} emoji={c.icon} color={c.color} name={c.name} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>{c.name}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{c.desc}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{c.desc}</div>
         </div>
         <button
           onClick={() => handleAdd(c)}
@@ -205,7 +205,7 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
             padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)',
             background: connected ? 'rgba(34,197,94,0.1)' : adding === c.id ? 'rgba(14,165,233,0.1)' : 'transparent',
             color: connected ? '#22c55e' : adding === c.id ? '#0EA5E9' : 'var(--text-secondary)',
-            fontSize: 11, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'all 0.15s',
+            fontSize: 12, fontWeight: 600, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', transition: 'all 0.15s',
           }}
         >
           {connected ? `✓ ${t('connectedBadge')}` : adding === c.id ? t('addingLabel') : `+ ${t('addBtn')}`}
@@ -217,8 +217,8 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid var(--ide-border)' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('connectorsTitle')}</div>
-        <input
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{t('connectorsTitle')}</div>
+        <input aria-label={t('searchConnectorsPlaceholder')}
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={t('searchConnectorsPlaceholder')}
@@ -229,7 +229,7 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
         <GoLiveChecklist projectId={projectId} />
         {recommended.length > 0 && !search && (
           <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0EA5E9', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
               ✨ Recommended for this app
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -239,7 +239,7 @@ export function ConnectorsPanel({ projectId, onSwitchToChat }: { projectId: stri
         )}
         {categories.map(cat => (
           <div key={cat} style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{cat}</div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{cat}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {filtered.filter(c => c.category === cat).map(renderRow)}
             </div>

@@ -64,7 +64,7 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
       <div style={{ display: 'flex', gap: 6 }}>
         {RANGES.map(r => (
           <button key={r.days} onClick={() => setRange(r.days)}
-            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: range === r.days ? '#0EA5E9' : 'var(--bg-surface)', color: range === r.days ? '#fff' : 'var(--ide-text3)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: range === r.days ? '#0EA5E9' : 'var(--bg-surface)', color: range === r.days ? '#fff' : 'var(--ide-text3)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             {r.label}
           </button>
         ))}
@@ -83,14 +83,14 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
             ].map(m => (
               <div key={m.label} style={{ padding: '10px 12px', background: 'var(--bg-surface, #16181d)', borderRadius: 8, border: '1px solid var(--ide-border)' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--ide-text)' }}>{m.value}</div>
-                <div style={{ fontSize: 10, color: 'var(--ide-text3)', marginTop: 2 }}>{m.label}</div>
+                <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>{m.label}</div>
               </div>
             ))}
           </div>
 
           {summary.pageViews > 0 && (insightsLoading || insights.length > 0) && (
             <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ fontSize: 10, color: '#0EA5E9', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✨ Insights</div>
+              <div style={{ fontSize: 12, color: '#0EA5E9', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>✨ Insights</div>
               {insightsLoading ? (
                 <div style={{ fontSize: 12, color: 'var(--ide-text3)' }}>Thinking…</div>
               ) : (
@@ -109,7 +109,7 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
             <>
               {summary.daily.length > 0 && (
                 <div>
-                  <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Daily views</p>
+                  <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Daily views</p>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 60 }}>
                     {summary.daily.map(d => (
                       <div key={d.date} title={`${d.date}: ${d.count}`} style={{ flex: 1, background: '#0EA5E9', opacity: 0.8, borderRadius: '3px 3px 0 0', height: `${maxDaily ? (d.count / maxDaily) * 100 : 0}%`, minHeight: d.count > 0 ? 3 : 0 }} />
@@ -119,7 +119,7 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
               )}
 
               <div>
-                <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Top pages</p>
+                <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Top pages</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {summary.topPages.map(p => (
                     <div key={p.path} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 8px', background: 'var(--bg-surface, #16181d)', borderRadius: 6 }}>
@@ -131,7 +131,7 @@ export function AnalyticsPanel({ projectId }: { projectId: string }) {
               </div>
 
               <div>
-                <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Top sources</p>
+                <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Top sources</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   {summary.topReferrers.map(r => (
                     <div key={r.source} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '5px 8px', background: 'var(--bg-surface, #16181d)', borderRadius: 6 }}>

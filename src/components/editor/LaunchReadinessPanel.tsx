@@ -79,14 +79,14 @@ export function LaunchReadinessPanel({ projectId }: { projectId: string }) {
             <div style={{ fontSize: 36, fontWeight: 700, color: scoreColor(report.score), letterSpacing: '-0.03em' }}>{report.score}</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ide-text)' }}>{t('launchReadinessScoreTitle')}</div>
-              <div style={{ fontSize: 11, color: 'var(--ide-text3)', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 2 }}>
                 {t('issuesFoundTemplate')
                   .replace('{issues}', String(findings.length)).replace('{issuesPlural}', findings.length === 1 ? '' : 's')
                   .replace('{passed}', String(passed.length)).replace('{total}', String(report.total))}
               </div>
             </div>
             <span style={{
-              fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap',
+              fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 999, whiteSpace: 'nowrap',
               color: ready ? '#34D399' : 'var(--ide-text3)',
               background: ready ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)',
               border: `1px solid ${ready ? 'rgba(52,211,153,0.35)' : 'var(--ide-border)'}`,
@@ -97,22 +97,22 @@ export function LaunchReadinessPanel({ projectId }: { projectId: string }) {
 
           {findings.map((f, i) => (
             <div key={i} style={{ padding: '11px 13px', borderRadius: 8, border: `1px solid ${SEV_COLOR[f.severity as Exclude<Severity, 'good'>]}40`, background: `${SEV_COLOR[f.severity as Exclude<Severity, 'good'>]}0c` }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: SEV_COLOR[f.severity as Exclude<Severity, 'good'>], textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: SEV_COLOR[f.severity as Exclude<Severity, 'good'>], textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>
                 {f.severity} · {f.label}
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--ide-text)', marginBottom: 4, fontWeight: 500 }}>{f.detail}</div>
-              {f.fix && <div style={{ fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.5 }}>💡 {f.fix}</div>}
+              {f.fix && <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>💡 {f.fix}</div>}
             </div>
           ))}
 
           {passed.length > 0 && (
             <div>
-              <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 {t('passedHeaderTemplate').replace('{count}', String(passed.length))}
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {passed.map((c, i) => (
-                  <span key={i} style={{ fontSize: 11, color: '#34D399', display: 'inline-flex', gap: 4, alignItems: 'center', background: 'rgba(52,211,153,0.08)', borderRadius: 5, padding: '2px 8px' }}>✓ {c.label}</span>
+                  <span key={i} style={{ fontSize: 12, color: '#34D399', display: 'inline-flex', gap: 4, alignItems: 'center', background: 'rgba(52,211,153,0.08)', borderRadius: 5, padding: '2px 8px' }}>✓ {c.label}</span>
                 ))}
               </div>
             </div>
@@ -122,10 +122,10 @@ export function LaunchReadinessPanel({ projectId }: { projectId: string }) {
 
       {history.length > 0 && (
         <div>
-          <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('scanHistoryTitle')}</p>
+          <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: '0 0 6px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('scanHistoryTitle')}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {history.map(h => (
-              <div key={h.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 11, color: 'var(--ide-text3)', padding: '4px 0', borderTop: '1px solid var(--ide-border)' }}>
+              <div key={h.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--ide-text3)', padding: '4px 0', borderTop: '1px solid var(--ide-border)' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ color: h.score >= 85 ? '#34D399' : h.score >= 50 ? '#F5A623' : '#F0524B', fontWeight: 700 }}>{h.score}</span>
                   {h.critical_count > 0 && <span style={{ color: '#F0524B' }}>· {h.critical_count} {t('criticalSuffix')}</span>}

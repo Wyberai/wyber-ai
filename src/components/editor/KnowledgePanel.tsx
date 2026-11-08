@@ -93,7 +93,7 @@ export function KnowledgePanel({ projectId }: Props) {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-surface)' }}>
       {/* Explainer */}
       <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--ide-border)', flexShrink: 0 }}>
-        <p style={{ fontSize: 11, color: 'var(--ide-text2)', margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: 'var(--ide-text2)', margin: 0, lineHeight: 1.5 }}>
           {t('knowledgeExplainerPart1')} <strong style={{ color: 'var(--ide-text)' }}>{t('knowledgeExplainerEveryPrompt')}</strong> {t('knowledgeExplainerPart2')}
         </p>
       </div>
@@ -124,12 +124,12 @@ export function KnowledgePanel({ projectId }: Props) {
       {/* Editor */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, padding: '10px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontSize: 10, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('knowledgeLabel')}</span>
-          <span style={{ fontSize: 10, color: saveState === 'saved' ? 'var(--ide-green)' : 'var(--ide-text3)' }}>
+          <span style={{ fontSize: 12, color: 'var(--ide-text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('knowledgeLabel')}</span>
+          <span style={{ fontSize: 12, color: saveState === 'saved' ? 'var(--ide-green)' : 'var(--ide-text3)' }}>
             {saveState === 'saving' ? tc('saving') : saveState === 'saved' ? t('knowledgeSavedDone') : ''}
           </span>
         </div>
-        <textarea
+        <textarea aria-label={t('knowledgePlaceholder')}
           value={localValue}
           onChange={e => handleChange(e.target.value)}
           placeholder={t('knowledgePlaceholder')}

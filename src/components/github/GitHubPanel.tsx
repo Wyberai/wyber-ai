@@ -67,11 +67,11 @@ export function GitHubPanel({ userId, projectId, githubRepo, lastCommitSha }: Pr
     <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
       {/* Repo selector */}
       <div>
-        <label style={{ fontSize: 11, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Repository</label>
+        <label style={{ fontSize: 12, color: 'var(--text-muted)', display: 'block', marginBottom: 5 }}>Repository</label>
         {currentRepo ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 12, color: 'var(--green)', flex: 1, fontFamily: 'monospace' }}>{currentRepo}</span>
-            <a href={`https://github.com/${currentRepo}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--text-muted)', textDecoration: 'none' }}>↗</a>
+            <a href={`https://github.com/${currentRepo}`} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--text-muted)', textDecoration: 'none' }}>↗</a>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -86,7 +86,7 @@ export function GitHubPanel({ userId, projectId, githubRepo, lastCommitSha }: Pr
 
       {showNewRepo && (
         <div style={{ display: 'flex', gap: 6 }}>
-          <input value={newRepoName} onChange={e => setNewRepoName(e.target.value)} placeholder="repo-name" style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 12, outline: 'none' }} />
+          <input aria-label="repo-name" value={newRepoName} onChange={e => setNewRepoName(e.target.value)} placeholder="repo-name" style={{ flex: 1, padding: '7px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 12, outline: 'none' }} />
           <button onClick={createRepo} className="btn btn-primary" style={{ fontSize: 12 }}>Create</button>
         </div>
       )}
@@ -94,7 +94,7 @@ export function GitHubPanel({ userId, projectId, githubRepo, lastCommitSha }: Pr
       {/* Commit */}
       {currentRepo && (
         <>
-          <input value={commitMsg} onChange={e => setCommitMsg(e.target.value)} placeholder="Commit message (optional)" style={{ width: '100%', padding: '7px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 12, outline: 'none' }} />
+          <input aria-label="Commit message (optional)" value={commitMsg} onChange={e => setCommitMsg(e.target.value)} placeholder="Commit message (optional)" style={{ width: '100%', padding: '7px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-base)', color: 'var(--text-primary)', fontSize: 12, outline: 'none' }} />
           <button onClick={commit} disabled={committing} className="btn btn-primary" style={{ justifyContent: 'center', fontSize: 13 }}>
             {committing ? '⟳ Pushing...' : '↥ Push to GitHub'}
           </button>
@@ -102,11 +102,11 @@ export function GitHubPanel({ userId, projectId, githubRepo, lastCommitSha }: Pr
       )}
 
       {/* Status */}
-      {status && <p style={{ fontSize: 11, color: status.includes('ailed') ? 'var(--red)' : 'var(--green)', margin: 0 }}>{status}</p>}
+      {status && <p style={{ fontSize: 12, color: status.includes('ailed') ? 'var(--red)' : 'var(--green)', margin: 0 }}>{status}</p>}
 
       {/* Last commit */}
       {lastCommit && (
-        <div style={{ fontSize: 11, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
           <span>Last commit:</span>
           <code style={{ background: 'var(--bg-overlay)', padding: '1px 5px', borderRadius: 3 }}>{lastCommit.slice(0, 7)}</code>
         </div>

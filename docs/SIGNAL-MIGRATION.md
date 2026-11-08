@@ -63,3 +63,18 @@ Reviewed with the `/dev/editor` harness (fake project; `?m=1` for the phone layo
 - **Before:** no landmarks, no headings, no `aria-*` anywhere in the shell; the 18-icon right rail did not say which panel was open; the panel divider worked with a mouse only; 10 to 11px text in the top bar, preview, tabs, publish and history; the phone top bar wrapped "Invoice tracker", "Export code" and "100 credits" onto two lines each.
 - **Now:** banner, main (preview), complementary (assistant and tools), navigation (panel rail, `aria-current` on the open one) and a region plus an `h2` per panel. The divider is a keyboard-resizable separator (arrow keys, Shift for bigger steps) with a wider hit area. Chrome text is at least 12px (11px for the small uppercase labels). The phone top bar is one line: the project name truncates, export is icon-only, the MOBILE badge is hidden, and credits read "100 cr" at readable contrast. On touch screens, editor buttons are at least 40px.
 - **Not done:** the panels inside the rail (security, payments, connectors, SEO, analytics and so on) were not reviewed one by one; the file tree and code editor were not exercised with real files in the harness; no screen-reader test.
+
+## Right-rail panels pass
+
+All 17 panels were swept in the `/dev/editor` harness (open each, count unnamed controls, unlabelled inputs, targets under 24px and text under 12px).
+
+| | Before | After |
+|---|---|---|
+| Controls with no accessible name | 9 | 0 |
+| Inputs with no label | 11 | 0 |
+| Targets under 24px | about 30 | 6 |
+| Text under 12px | over 200 (Connectors alone 109, SEO 22) | 25 (mostly the 11px uppercase micro-labels) |
+
+- **Real bug fixed:** the WyberCloud (Database) panel was built with Tailwind spacing classes, which the site's global reset switches off, so its tabs and banners rendered with no padding. It now opts in with the site's existing `.wy-journey` escape hatch. Its emoji tab icons were removed, the double `h1` became `h2`/`h3`, and the tabs report their pressed state.
+- **Shared fixes:** 128 font sizes raised to 12px and 22 inputs given an accessible name (from their placeholder) across the panel files; the Feedback on/off control is now a labelled switch.
+- **Not done:** emoji inside some panel copy (for example the Security panel's headings) are left as they were; the remaining small targets are in the Agent, Figma, Database, Feedback, GitHub and Supabase panels; panels were seen only in their empty or error state, since the harness has no real project data or login; no screen-reader test.

@@ -101,19 +101,19 @@ export function SecurityBeastPanel({ projectId, onSwitchToChat }: { projectId: s
             🔧 Apply all fixes ({report.checks.filter(c => c.status !== 'pass').length})
           </button>
           {applyResult && (
-            <div style={{ fontSize: 11.5, color: 'var(--ide-text2)', lineHeight: 1.6 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--ide-text2)', lineHeight: 1.6 }}>
               {applyResult.filesWritten > 0 && <>✅ Wrote {applyResult.filesWritten} file{applyResult.filesWritten !== 1 ? 's' : ''} directly into the project.<br /></>}
               {applyResult.remainingPromptSent && <>✨ Asked the AI to fix the rest (the issues that need real code judgment, not a template) — check the chat.</>}
             </div>
           )}
           <details>
-            <summary style={{ fontSize: 11, color: 'var(--ide-text3)', cursor: 'pointer' }}>Fix individually instead</summary>
+            <summary style={{ fontSize: 12, color: 'var(--ide-text3)', cursor: 'pointer' }}>Fix individually instead</summary>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
               {report.checks.filter(c => c.status !== 'pass').map(c => {
                 const label = SECURITY_BEAST_CHECKLIST.find(x => x.id === c.id)?.label ?? c.id;
                 return (
                   <button key={c.id} onClick={() => fixWithAi(c.id, label)}
-                    style={{ alignSelf: 'flex-start', fontSize: 11.5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0d0e12)', color: '#F0524B', cursor: 'pointer', fontWeight: 600 }}>
+                    style={{ alignSelf: 'flex-start', fontSize: 12.5, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'var(--bg-base, #0d0e12)', color: '#F0524B', cursor: 'pointer', fontWeight: 600 }}>
                     ✨ Fix &quot;{label}&quot; with AI
                   </button>
                 );

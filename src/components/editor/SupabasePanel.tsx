@@ -139,10 +139,10 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
   }
 
   const S = {
-    label: { fontSize: 10, fontWeight: 700, color: 'var(--ide-text3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 4 },
+    label: { fontSize: 12, fontWeight: 700, color: 'var(--ide-text3)', textTransform: 'uppercase' as const, letterSpacing: '0.06em', display: 'block', marginBottom: 4 },
     input: { width: '100%', padding: '7px 10px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', color: 'var(--ide-text1)', fontSize: 12, outline: 'none', fontFamily: 'monospace', boxSizing: 'border-box' as const },
     btn: (bg = '#0EA5E9', fg = '#fff') => ({ padding: '8px 14px', borderRadius: 7, border: 'none', background: bg, color: fg, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 as const, transition: 'opacity 0.15s' }),
-    ghost: { padding: '6px 10px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' },
+    ghost: { padding: '6px 10px', borderRadius: 7, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--ide-text3)', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' },
     card: { background: 'var(--bg-surface)', border: '1px solid var(--ide-border)', borderRadius: 9, padding: 12, marginBottom: 10 },
     row: { display: 'flex', alignItems: 'center', gap: 8 },
   }
@@ -162,20 +162,20 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         <div style={{ ...S.row, justifyContent: 'space-between' }}>
           <div style={{ ...S.row }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('connectedStatusLabel')}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('connectedStatusLabel')}</span>
           </div>
-          <button onClick={disconnect} style={{ ...S.ghost, color: '#ef4444', borderColor: 'rgba(239,68,68,0.25)', fontSize: 10 }}>{t('disconnect')}</button>
+          <button onClick={disconnect} style={{ ...S.ghost, color: '#ef4444', borderColor: 'rgba(239,68,68,0.25)', fontSize: 12 }}>{t('disconnect')}</button>
         </div>
 
         {/* Project URL */}
         <div style={S.card}>
           <div style={{ ...S.row, justifyContent: 'space-between', marginBottom: 6 }}>
             <span style={S.label}>{t('projectUrlLabel')}</span>
-            <button onClick={() => copy(sbUrl, 'url')} style={{ ...S.ghost, fontSize: 10, padding: '2px 7px' }}>
+            <button onClick={() => copy(sbUrl, 'url')} style={{ ...S.ghost, fontSize: 12, padding: '2px 7px' }}>
               {copied === 'url' ? tc('copied') : tc('copy')}
             </button>
           </div>
-          <code style={{ fontSize: 10, color: '#0EA5E9', fontFamily: 'monospace', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <code style={{ fontSize: 12, color: '#0EA5E9', fontFamily: 'monospace', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {sbUrl}
           </code>
         </div>
@@ -184,15 +184,15 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         <div style={S.card}>
           <div style={{ ...S.row, justifyContent: 'space-between', marginBottom: 6 }}>
             <span style={S.label}>{t('anonKeyShortLabel')}</span>
-            <button onClick={() => copy(connected.api_key, 'key')} style={{ ...S.ghost, fontSize: 10, padding: '2px 7px' }}>
+            <button onClick={() => copy(connected.api_key, 'key')} style={{ ...S.ghost, fontSize: 12, padding: '2px 7px' }}>
               {copied === 'key' ? tc('copied') : tc('copy')}
             </button>
           </div>
-          <code style={{ fontSize: 10, color: '#a1a1aa', fontFamily: 'monospace' }}>{maskedKey}</code>
+          <code style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'monospace' }}>{maskedKey}</code>
         </div>
 
         {/* Info box */}
-        <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 11, color: 'var(--ide-text3)', lineHeight: 1.6 }}>
+        <div style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(14,165,233,0.04)', border: '1px solid rgba(14,165,233,0.12)', fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.6 }}>
           <div style={{ fontWeight: 700, color: '#0EA5E9', marginBottom: 4 }}>{t('autoWiredTitle')}</div>
           {t('autoWiredBody')}
         </div>
@@ -200,7 +200,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
         {/* Open dashboard */}
         {projectRef && (
           <a href={`https://supabase.com/dashboard/project/${projectRef}`} target="_blank" rel="noopener noreferrer"
-            style={{ ...S.btn('transparent', 'var(--ide-text3)'), border: '1px solid var(--ide-border)', textDecoration: 'none', justifyContent: 'center', fontSize: 11 }}>
+            style={{ ...S.btn('transparent', 'var(--ide-text3)'), border: '1px solid var(--ide-border)', textDecoration: 'none', justifyContent: 'center', fontSize: 12 }}>
             {t('openSupabaseDashboard')} <IcoLink />
           </a>
         )}
@@ -217,7 +217,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
       <div style={{ display: 'flex', gap: 4, background: 'var(--bg-surface)', borderRadius: 8, padding: 3, border: '1px solid var(--ide-border)' }}>
         {(['own', 'provision'] as const).map(m => (
           <button key={m} onClick={() => setMode(m)}
-            style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: mode === m ? '#0EA5E9' : 'transparent', color: mode === m ? '#fff' : 'var(--ide-text3)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
+            style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: mode === m ? '#0EA5E9' : 'transparent', color: mode === m ? '#fff' : 'var(--ide-text3)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}>
             {m === 'own' ? t('connectExistingTab') : t('createNewTab')}
           </button>
         ))}
@@ -232,7 +232,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
 
           <div>
             <label style={S.label}>{t('projectUrlLabel')}</label>
-            <input
+            <input aria-label="https://xxxxxxxxxxxx.supabase.co"
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="https://xxxxxxxxxxxx.supabase.co"
@@ -243,16 +243,16 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
 
           <div>
             <label style={S.label}>{t('anonKeyLabel')}</label>
-            <input
+            <input aria-label="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
               value={anonKey}
               onChange={e => setAnonKey(e.target.value)}
               placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-              style={{ ...S.input, fontSize: 10 }}
+              style={{ ...S.input, fontSize: 12 }}
               autoComplete="off"
             />
           </div>
 
-          {error && <div style={{ fontSize: 11, color: '#ef4444', lineHeight: 1.5 }}>{error}</div>}
+          {error && <div style={{ fontSize: 12, color: '#ef4444', lineHeight: 1.5 }}>{error}</div>}
 
           <button
             onClick={testAndSave}
@@ -264,7 +264,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
              <><IcoCheck />{t('connectAndVerifyBtn')}</>}
           </button>
 
-          <div style={{ fontSize: 10, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: 'var(--ide-text3)', lineHeight: 1.5 }}>
             {t('findKeysDashboardPrefix')}{' '}
             <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" style={{ color: '#0EA5E9' }}>
               {t('supabaseDashboardLink')}
@@ -290,7 +290,7 @@ export function SupabasePanel({ projectId }: { projectId: string }) {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 12 }}>
               {[t('featurePostgres'), t('featureAuth'), t('featureStorage'), t('featureRealtime')].map(f => (
-                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--ide-text3)' }}>
+                <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--ide-text3)' }}>
                   <IcoCheck />{f}
                 </div>
               ))}
