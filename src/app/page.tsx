@@ -1,4 +1,5 @@
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
+import { DOOR_COOKIE, parseDoorCookie } from '@/lib/intent/persona'
 import { resolveRegion, isOwnerPreview } from '@/lib/region'
 import { resolveHeroSegment } from '@/lib/hero-segments'
 import { buildPrior } from '@/lib/intent/prior'
@@ -67,7 +68,7 @@ export default async function HomePage({
   }
   return (
     <>
-      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} />
+      <HomeClient initialCurrency={currency} scanStats={stats} initialSegment={segment} appsBuiltStat={appsBuiltStat} galleryApps={galleryApps} userBuilds={userBuilds} intentPrior={intentPrior} initialDoor={intentPrior ? parseDoorCookie((await cookies()).get(DOOR_COOKIE)?.value) : null} />
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )

@@ -17,6 +17,8 @@ import { HERO_GU } from '@/lib/intent/hero-gu';
 import { sendIntentEvent, getVariant } from '@/lib/intent/client';
 import type { Door, IntentLang, Prior } from '@/lib/intent/types';
 import { HOME_HIDE, HERO_BY_DOOR, type HomeSection } from '@/lib/intent/adapt';
+import { DOOR_COOKIE, DOOR_COOKIE_DAYS, PERSONAS, personaCss, personaVars } from '@/lib/intent/persona';
+import { IntentChooser } from '@/components/shared/IntentChooser';
 
 const BRAND = '#0EA5E9';
 
@@ -358,7 +360,7 @@ function buildStages(t: HomeStrings) {
 interface HomeGalleryApp { id: string; name: string; category: string; preview_color: string | null; use_count: number }
 interface HomeUserBuild { id: string; title: string; category: string; preview_color: string | null; thumbnail_url: string | null; sales_count: number; sellerName: string }
 
-export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [], intentPrior = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[]; intentPrior?: Prior | null }) {
+export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialSegment = null, appsBuiltStat = null, galleryApps = [], userBuilds = [], intentPrior = null, initialDoor = null }: { initialCurrency?: Currency; scanStats?: { totalScans: number; cleanPct: number } | null; initialSegment?: HeroSegment | null; appsBuiltStat?: string | null; galleryApps?: HomeGalleryApp[]; userBuilds?: HomeUserBuild[]; intentPrior?: Prior | null; initialDoor?: Door | null }) {
   const inr = initialCurrency === 'INR';
   // India-only locale switch — never rendered or read for non-India visitors.
   // Starts 'en' on every render (server and first client paint match, so no
@@ -394,11 +396,22 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   // in the intent strip overlays the Gujarati hero. Null prior = experiment off = no change.
   const [intentLang, setIntentLang] = useState<IntentLang>('en');
   // Who the intent experiment thinks this visitor is. null = experiment off or control group: nothing is hidden.
-  const [adaptDoor, setAdaptDoor] = useState<Door | null>(null);
+  const [adaptDoor, setAdaptDoor] = useState<Door | null>(intentPrior ? initialDoor : null);
+  // Remember the chosen persona (whoever changed it: the chooser, or a typed sentence that revealed it),
+  // so the server can render the right page on the very first paint next time.
+  useEffect(() => {
+    if (!adaptDoor) return;
+    try { document.cookie = `${DOOR_COOKIE}=${adaptDoor}; path=/; max-age=${60 * 60 * 24 * DOOR_COOKIE_DAYS}; SameSite=Lax`; } catch { /* cookies blocked */ }
+  }, [adaptDoor]);
   const hideFor = (section: HomeSection) => (adaptDoor ? HOME_HIDE[adaptDoor].includes(section) : false);
   const baseT = intentPrior && intentLang === 'gu' ? { ...heroT, ...HERO_GU } : heroT;
   // The headline, lead and example follow who the visitor is (English only; see HERO_BY_DOOR).
-  const t = adaptDoor && locale === 'en' && intentLang === 'en' ? { ...baseT, ...HERO_BY_DOOR[adaptDoor] } : baseT;
+  // Headline, lead, example AND the closing call to action follow who the visitor is (English only for now).
+  const t = adaptDoor && locale === 'en' && intentLang === 'en' ? { ...baseT, ...HERO_BY_DOOR[adaptDoor], ...PERSONAS[adaptDoor].finalCta } : baseT;
+  // The live-build demo "builds" something that fits the visitor.
+  const heroRows = adaptDoor
+    ? WEB_BUILD_ROWS.map((r, i) => (i === 0 ? { ...r, detail: PERSONAS[adaptDoor].demo.prompt } : i === 4 ? { ...r, detail: PERSONAS[adaptDoor].demo.repo } : i === 5 ? { ...r, detail: PERSONAS[adaptDoor].demo.url } : r))
+    : WEB_BUILD_ROWS;
   const onIntentLang = (l: IntentLang) => {
     setIntentLang(l);
     const next: Locale = l === 'hi' ? 'hi' : 'en';
@@ -464,7 +477,9 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   const navLinks: [string, string][] = [[t.navWebApps, localePath('/use-cases/no-code-web-app-builder', locale)], [t.navMobileApps, localePath('/use-cases/build-mobile-app-with-ai', locale)], [t.navWebsites, '/websites'], [t.navGallery, '/gallery'], [t.navJourney, '/space-journey'], [t.navPricing, '/pricing']];
 
   return (
-    <div className="mk-page" data-theme="dark">
+    <div className="mk-page" data-theme="dark" data-persona={adaptDoor ?? undefined} style={adaptDoor ? ({ display: 'flex', flexDirection: 'column', ...personaVars(adaptDoor) } as React.CSSProperties) : undefined}>
+      {/* When a visitor has chosen who they are, the whole page is recoloured, reordered and trimmed for them. */}
+      {adaptDoor && <style>{personaCss(adaptDoor)}</style>}
 
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, padding: '0 clamp(16px,4vw,48px)', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(5,6,10,0.85)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -524,8 +539,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         </Link>
       )}
 
+      {/* Who is this visitor? One plain question; the whole page then follows the answer. */}
+      {inr && intentPrior && <IntentChooser prior={intentPrior} current={adaptDoor} onChoose={setAdaptDoor} />}
+
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
+      <section data-sec="hero" style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--brand-border)' }}>
         <div className="mk-stars" aria-hidden />
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 70% 55% at 68% 20%, rgba(14,165,233,0.10) 0%, transparent 62%)', pointerEvents: 'none' }} />
         <div className="mk-section" style={{ position: 'relative', display: 'grid', gridTemplateColumns: canPin ? '1.1fr 0.9fr' : '1fr', gap: 'clamp(32px,5vw,72px)', alignItems: 'flex-start', paddingTop: 'clamp(40px,5vw,72px)', paddingBottom: 'clamp(64px,9vw,112px)' }}>
@@ -553,7 +571,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
               {inr && intentPrior && (
-                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} onDoorChange={setAdaptDoor} />
+                <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} onDoorChange={setAdaptDoor} forcedDoor={adaptDoor} />
               )}
               <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 12, marginBottom: 16, borderColor: 'var(--brand-border-strong)', borderRadius: 18 }}>
                 <textarea
@@ -618,7 +636,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
               <div>
                 <div style={{ position: 'relative' }}>
                   <div style={{ position: 'absolute', inset: -24, background: 'radial-gradient(ellipse at center, rgba(14,165,233,0.14), transparent 70%)', pointerEvents: 'none' }} />
-                  <BuildConsole rows={WEB_BUILD_ROWS} title="wyberai.com — live build" />
+                  <BuildConsole rows={heroRows} title="wyberai.com — live build" />
                 </div>
               </div>
             </div>
@@ -629,7 +647,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {/* ── /websites cross-link: the "rented vs owned" story for businesses
              that only have a social profile ── */}
       {!hideFor('websites') && (
-      <Link href="/websites" className="wyb-websites-strip" onClick={() => track('homepage_websites_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
+      <Link href="/websites" data-sec="websites" className="wyb-websites-strip" onClick={() => track('homepage_websites_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
           <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>WEBSITES</span>
           <span style={{ color: 'var(--brand-text)', fontSize: 15, fontWeight: 600 }}>{t.websitesStripText}</span>
@@ -641,7 +659,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       {/* ── /byos cross-link: paste a tool you rent, build only the features you use.
              English only — the strip copy has no translations yet. ── */}
       {locale === 'en' && !hideFor('byos') && (
-        <Link href="/byos" onClick={() => track('homepage_byos_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
+        <Link href="/byos" data-sec="byos" onClick={() => track('homepage_byos_strip_clicked')} style={{ display: 'block', textDecoration: 'none', borderBottom: '1px solid var(--brand-border)', background: 'linear-gradient(90deg, rgba(14,165,233,0.06), transparent 70%)' }}>
           <div style={{ maxWidth: 1120, margin: '0 auto', padding: '16px clamp(20px,5vw,48px)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
             <span className="mk-mono" style={{ color: 'var(--brand-accent)', fontSize: 10 }}>OWN YOUR SOFTWARE</span>
             <span style={{ color: 'var(--brand-text)', fontSize: 15, fontWeight: 600 }}>You pay for 100 features and use 5. Paste the tool you rent and build only what you use.</span>
@@ -652,7 +670,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
       {/* ── TELEMETRY STRIP — India only; US homepage omits unverifiable stats ── */}
       {inr && (
-      <section style={{ borderBottom: '1px solid var(--brand-border)' }}>
+      <section data-sec="telemetry" style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <div style={{ maxWidth: 1120, margin: '0 auto', padding: '28px clamp(20px,5vw,48px)', display: 'flex', justifyContent: 'space-between', gap: 'clamp(20px,4vw,48px)', flexWrap: 'wrap' }}>
           {[
             { value: appsBuiltStat ?? '2,400+', label: t.statAppsBuilt },
@@ -675,7 +693,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
       {/* ── MISSION SEQUENCE — normal flow (scroll-pinning removed Jul 11:
              even 4 presses of hijacked scroll read as "the page is stuck") */}
-      <section className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
+      <section data-sec="mission" className="mk-section" style={{ borderBottom: '1px solid var(--brand-border)' }}>
         <Reveal>
           <div className="mk-eyebrow" style={{ marginBottom: 48 }}>{t.missionSequenceLabel}</div>
         </Reveal>
@@ -696,7 +714,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       </section>
 
       {/* ── PRODUCTS ─────────────────────────────────────────────────── */}
-      <section className="mk-section">
+      <section data-sec="products" className="mk-section">
         <Reveal>
           <Eyebrow>{t.productsLabel}</Eyebrow>
           <h2 className="mk-h2" style={{ marginBottom: 10 }}>{t.productsHeadingPre} <span className="mk-serif">{t.productsHeadingEmphasis}</span></h2>
@@ -750,7 +768,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       </section>
 
       {/* ── PROOF — editorial numbered rows + live scan readout ─────── */}
-      <section style={{ borderTop: '1px solid var(--brand-border)', background: 'var(--brand-bg-raised)' }}>
+      <section data-sec="proof" style={{ borderTop: '1px solid var(--brand-border)', background: 'var(--brand-bg-raised)' }}>
         <div className="mk-section">
           <Reveal>
             <Eyebrow>{t.whyWyberLabel}</Eyebrow>
@@ -789,7 +807,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
 
       {/* ── MCP / DEVELOPERS ─────────────────────────────────────────── */}
       {!hideFor('mcp') && (
-      <section style={{ borderTop: '1px solid var(--brand-border)' }}>
+      <section data-sec="mcp" style={{ borderTop: '1px solid var(--brand-border)' }}>
         <div className="mk-section">
           <Reveal>
             <Eyebrow>{t.mcpServerLabel}</Eyebrow>
@@ -833,7 +851,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       )}
 
       {/* ── PRICING PREVIEW ─────────────────────────────────────────── */}
-      <section className="mk-section">
+      <section data-sec="pricing" className="mk-section">
         <Reveal>
           <Eyebrow>{t.pricingLabel}</Eyebrow>
           <h2 className="mk-h2" style={{ marginBottom: 10 }}>{t.pricingHeading}</h2>
@@ -906,7 +924,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       </section>
 
       {/* ── SPACE JOURNEY INVITE ────────────────────────────────────── */}
-      <section style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', borderBottom: '1px solid var(--brand-border)' }}>
+      <section data-sec="journey" style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', borderBottom: '1px solid var(--brand-border)' }}>
         <div className="mk-stars" aria-hidden />
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 70% at 50% 100%, rgba(14,165,233,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
         <Link href="/space-journey" style={{ display: 'block', textDecoration: 'none', color: 'inherit', position: 'relative' }}>
@@ -922,7 +940,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       </section>
 
       {/* ── FAQ (with FAQPage schema for AEO) ───────────────────────── */}
-      <section className="mk-section" style={{ maxWidth: 820 }}>
+      <section data-sec="faq" className="mk-section" style={{ maxWidth: 820 }}>
         <Reveal>
           <Eyebrow>{t.faqLabel}</Eyebrow>
           <h2 className="mk-h2" style={{ marginBottom: 40 }}>{t.faqHeading}</h2>
@@ -950,7 +968,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       </section>
 
       {/* ── FINAL CTA ───────────────────────────────────────────────── */}
-      <section style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', textAlign: 'center' }}>
+      <section data-sec="final" style={{ position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--brand-border)', textAlign: 'center' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 60% at 50% 50%, rgba(14,165,233,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div className="mk-section" style={{ position: 'relative', maxWidth: 720, paddingTop: 'clamp(80px,10vw,140px)', paddingBottom: 'clamp(80px,10vw,140px)' }}>
           <Reveal>
@@ -982,7 +1000,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
       )}
 
       {/* Featured on Product Hunt */}
-      <section style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', display: 'flex', justifyContent: 'center' }}>
+      <section data-sec="ph" style={{ padding: '32px clamp(16px,4vw,48px)', borderTop: '1px solid var(--brand-border)', display: 'flex', justifyContent: 'center' }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <a href="https://www.producthunt.com/products/wyberai?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-wyberai" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', lineHeight: 0, opacity: 0.85 }}>
           <img width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1180538&theme=dark" alt="WyberAi - From idea to live app — no code, just one prompt. | Product Hunt" />

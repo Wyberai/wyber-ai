@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { HOME_HIDE } from './adapt'
+import { PERSONAS } from './persona'
 import { DOORS } from './types'
 import { getVariant } from './client'
 
@@ -7,18 +8,20 @@ describe('what each kind of visitor is spared', () => {
   it('covers every door', () => {
     for (const d of DOORS) expect(HOME_HIDE[d]).toBeDefined()
   })
-  it('never hides the parts every visitor needs: the hero, products, pricing, FAQ and the final call to action are not hideable at all', () => {
-    const hideable = new Set(Object.values(HOME_HIDE).flat())
-    expect([...hideable].sort()).toEqual(['byos', 'mcp', 'websites'])
+  it('never hides the parts every visitor needs: hero, products, pricing, FAQ and the closing call to action are in every persona', () => {
+    for (const d of DOORS) for (const id of ['hero', 'products', 'pricing', 'faq', 'final'] as const) expect(PERSONAS[d].sections, d + ': ' + id).toContain(id)
   })
-  it('a business owner does not see the developer section; a developer does not see the shop-website strip', () => {
+  it('a business owner does not see the developer section; a builder does not see the shop-website strip', () => {
     expect(HOME_HIDE.business).toContain('mcp')
     expect(HOME_HIDE.business).not.toContain('websites')
     expect(HOME_HIDE.software).toContain('websites')
     expect(HOME_HIDE.software).not.toContain('mcp')
   })
   it('a student sees neither business strip nor the developer section', () => {
-    expect(HOME_HIDE.student.sort()).toEqual(['byos', 'mcp', 'websites'])
+    for (const id of ['byos', 'mcp', 'websites'] as const) expect(HOME_HIDE.student).toContain(id)
+  })
+  it('nobody is shown the stats bar: it made unverifiable claims and added clutter', () => {
+    for (const d of DOORS) expect(HOME_HIDE[d]).toContain('telemetry')
   })
 })
 

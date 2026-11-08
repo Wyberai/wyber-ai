@@ -36,13 +36,15 @@ interface Props {
   onLangChange: (l: IntentLang) => void
   /** Tells the page who it is talking to, so it can show what that person came for. null = control group (page unchanged). */
   onDoorChange?: (d: Door | null) => void
+  /** The door the visitor chose in the chooser at the top of the page (null until they have). */
+  forcedDoor?: Door | null
 }
 
 type Readout = { status: 'idle' } | { status: 'thinking' } | { status: 'shown'; intent: Intent } | { status: 'unsure' }
 type PlanState = { status: 'idle' } | { status: 'loading' } | { status: 'shown'; plan: PlanSketch }
 const KIND_TARGET: Record<PlanSketch['kind'], Target> = { web_app: 'app', mobile_app: 'mobile', website: 'website', saas: 'saas' }
 
-export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, onLangChange, onDoorChange }: Props) {
+export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, onLangChange, onDoorChange, forcedDoor }: Props) {
   const [ready, setReady] = useState(false)
   const [variant, setVariant] = useState<Variant>('intent')
   const [lang, setLang] = useState<IntentLang>('en')
@@ -66,7 +68,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     else if (prior.suggestedLang !== 'en') setOfferLang(prior.suggestedLang)
     // A returning visitor goes straight back to the door they chose last time, and is greeted with what they were working on.
     const saved = getSavedIntent()
-    if (saved && v === 'intent') { pickedDoor.current = true; setDoor(saved.door); setWelcome({ pain: saved.pain }) }
+    if (saved && v === 'intent') setWelcome({ pain: saved.pain })
     sendIntentEvent('impression', { variant: v, lang: stored ?? 'en', door: saved?.door ?? prior.door })
     try {
       document.cookie = `${XP_COOKIE}=${encodeXp(getAnonId(), v)}; path=/; max-age=${60 * 60 * 24 * XP_COOKIE_DAYS}; SameSite=Lax`
@@ -75,12 +77,13 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Whoever we think the visitor is, the rest of the page follows. The control group never changes.
+  // The chooser at the top of the page decides the door; the chips below follow it.
   useEffect(() => {
-    if (!ready) return
-    onDoorChange?.(variant === 'intent' ? door : null)
+    if (!forcedDoor) return
+    pickedDoor.current = true
+    setDoor(forcedDoor)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, variant, door])
+  }, [forcedDoor])
 
   // Read what the visitor types (not chip-filled text), after they pause.
   useEffect(() => {
@@ -105,7 +108,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
       setWelcome(null)
       sendIntentEvent('readout_shown', { variant, lang: uiLang, door })
       saveIntent({ source: 'text', door, lang: uiLang, intent: r.intent })
-      if (!pickedDoor.current && (DOORS as readonly string[]).includes(r.intent.audience)) setDoor(r.intent.audience as Door)
+      if (!pickedDoor.current && (DOORS as readonly string[]).includes(r.intent.audience)) { setDoor(r.intent.audience as Door); onDoorChange?.(r.intent.audience as Door) }
 
       // Now that we understand them, sketch what we'd build first. Failure is silent.
       setPlan({ status: 'loading' })
@@ -156,7 +159,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
   return (
     <div lang={lang} data-intent-strip style={{ maxWidth: 560, marginBottom: 14, display: 'grid', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--brand-text)' }}>{c.label}</span>
+        <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--brand-text)' }}>{c.doorHints[door]}</span>
         <div role="group" aria-label="Language" style={{ display: 'flex', gap: 4 }}>
           {INTENT_LANGS.map(l => (
             <button key={l} type="button" aria-pressed={l === lang} onClick={() => chooseLang(l)} style={pill(l === lang)}>
@@ -172,22 +175,6 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
         </button>
       )}
 
-      {/* Two big, plain-language choices: fix a problem in a business, or build something new.
-          "Just exploring" is deliberately a quieter third option. */}
-      <div role="group" aria-label={c.label} style={{ display: 'grid', gap: 8 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 8 }}>
-          {(['business', 'software'] as const).map(d => (
-            <button key={d} type="button" aria-pressed={d === door} onClick={() => chooseDoor(d)} style={card(d === door)}>
-              <span style={{ display: 'block', fontSize: 15, fontWeight: 700, color: 'var(--brand-text)', marginBottom: 3 }}>{c.doors[d]}</span>
-              <span style={{ display: 'block', fontSize: 12.5, lineHeight: 1.45, color: 'var(--brand-text-dim)' }}>{c.doorHints[d]}</span>
-            </button>
-          ))}
-        </div>
-        <button type="button" aria-pressed={door === 'student'} onClick={() => chooseDoor('student')} style={{ ...pill(door === 'student'), justifySelf: 'start' }}>
-          {c.doors.student}
-        </button>
-      </div>
-
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {c.chips[door].map(chip => (
           <button
@@ -199,7 +186,7 @@ export function IntentStrip({ prior, heroPrompt, setHeroPrompt, setHeroTarget, o
         ))}
       </div>
 
-      {lang === 'en' && welcome && readout.status === 'idle' && (
+      {lang === 'en' && welcome?.pain && readout.status === 'idle' && (
         <div style={{ fontSize: 12.5, color: 'var(--brand-text-dim)' }}>
           Welcome back.{welcome.pain ? <> Last time you were working on: <span style={{ color: 'var(--brand-text)' }}>{welcome.pain}</span></> : null}
         </div>
