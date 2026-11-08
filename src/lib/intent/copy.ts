@@ -45,10 +45,10 @@ export interface IntentCopy {
 export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
   en: {
     langName: 'English',
-    label: 'What brings you here?',
-    doors: { business: 'Fix a problem in my business', software: 'Build a new app or product', student: 'I\'m just learning or exploring' },
-    doorHints: { business: 'Orders, stock, follow-ups, paperwork. Tell us what is slowing you down.', software: 'Got an idea? Describe it and see a working first version.', student: 'Projects, practice or curiosity. Start free.' },
-    askSub: 'Tell us in one tap and we will show you only what matters to you.',
+    label: 'What are you looking to do?',
+    doors: { business: 'Solve a problem', software: 'Build apps', student: 'Just scrolling' },
+    doorHints: { business: 'Something in your business is slowing you down: orders, stock, follow-ups, paperwork.', software: 'Got an idea? Describe it and see a working first version.', student: 'Look around first. Nothing to fill in.' },
+    askSub: 'One tap and we will show you only what matters to you.',
     chips: {
       business: [
         { id: 'job-work', label: 'Job-work challan tracker', prompt: 'Build a job-work tracker. I log a challan for goods sent to a job worker, record what comes back, and get a warning before the one-year return limit.' },
@@ -83,9 +83,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
 
   hi: {
     langName: 'हिंदी',
-    label: 'आप यहाँ किसलिए आए हैं?',
-    doors: { business: 'अपने व्यवसाय की समस्या सुलझानी है', software: 'नया ऐप या प्रोडक्ट बनाना है', student: 'बस सीखना या देखना है' },
-    doorHints: { business: 'ऑर्डर, स्टॉक, फ़ॉलो-अप, काग़ज़ी काम। बताइए क्या आपको धीमा कर रहा है।', software: 'कोई आइडिया है? बताइए और पहला चलता-फिरता वर्ज़न देखिए।', student: 'प्रोजेक्ट, अभ्यास या जिज्ञासा। मुफ़्त शुरू करें।' },
+    label: 'आप क्या करना चाहते हैं?',
+    doors: { business: 'कोई समस्या सुलझानी है', software: 'ऐप बनाने हैं', student: 'बस देख रहे हैं' },
+    doorHints: { business: 'आपके व्यवसाय में कुछ आपको धीमा कर रहा है: ऑर्डर, स्टॉक, फ़ॉलो-अप, काग़ज़ी काम।', software: 'कोई आइडिया है? बताइए और पहला चलता-फिरता वर्ज़न देखिए।', student: 'पहले इधर-उधर देखिए। कुछ भरना नहीं है।' },
     askSub: 'एक टैप में बताइए, हम आपको सिर्फ़ वही दिखाएँगे जो आपके काम का है।',
     chips: {
       business: [
@@ -121,9 +121,9 @@ export const INTENT_COPY: Record<IntentLang, IntentCopy> = {
 
   gu: {
     langName: 'ગુજરાતી',
-    label: 'તમે અહીં શા માટે આવ્યા છો?',
-    doors: { business: 'મારા વ્યવસાયની સમસ્યા ઉકેલવી છે', software: 'નવી એપ કે પ્રોડક્ટ બનાવવી છે', student: 'ફક્ત શીખવું કે જોવું છે' },
-    doorHints: { business: 'ઓર્ડર, સ્ટોક, ફૉલો-અપ, કાગળકામ. કહો કે તમને શું ધીમા પાડે છે.', software: 'કોઈ વિચાર છે? વર્ણવો અને પહેલું ચાલતું વર્ઝન જુઓ.', student: 'પ્રોજેક્ટ, પ્રેક્ટિસ કે જિજ્ઞાસા. મફત શરૂ કરો.' },
+    label: 'તમે શું કરવા માંગો છો?',
+    doors: { business: 'કોઈ સમસ્યા ઉકેલવી છે', software: 'એપ્સ બનાવવી છે', student: 'બસ જોઈ રહ્યા છીએ' },
+    doorHints: { business: 'તમારા વ્યવસાયમાં કંઈક તમને ધીમા પાડે છે: ઓર્ડર, સ્ટોક, ફૉલો-અપ, કાગળકામ.', software: 'કોઈ વિચાર છે? વર્ણવો અને પહેલું ચાલતું વર્ઝન જુઓ.', student: 'પહેલા આસપાસ જુઓ. કંઈ ભરવાનું નથી.' },
     askSub: 'એક ટૅપમાં કહો, અમે તમને ફક્ત તે જ બતાવીશું જે તમારા કામનું છે.',
     chips: {
       business: [

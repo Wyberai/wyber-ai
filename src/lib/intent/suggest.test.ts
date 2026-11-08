@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { suggestPages, DEFAULT_SLUGS } from './suggest'
-import { HERO_BY_DOOR } from './adapt'
+import { PERSONAS } from './persona'
 import { getSavedIntent } from './client'
 import { BUILD_PAGES } from '@/app/build/data'
 import { DOORS } from './types'
@@ -33,13 +33,14 @@ describe('suggestPages', () => {
   })
 })
 
-describe('HERO_BY_DOOR', () => {
-  it('has a headline, lead and example for every door, and says nothing that is not true', () => {
-    for (const d of DOORS) {
-      const h = HERO_BY_DOOR[d]
+describe('persona headlines', () => {
+  it('A and B each have a headline, lead and example, and say nothing that is not true; C keeps the site\'s own', () => {
+    for (const d of ['business', 'software'] as const) {
+      const h = PERSONAS[d].hero!
       for (const v of Object.values(h)) expect(v.trim().length).toBeGreaterThan(5)
       expect(JSON.stringify(h)).not.toMatch(/guarantee|100\s?%|bidar|wyoming|solo|\$\s?\d|₹\s?\d/i)
     }
+    expect(PERSONAS.student.hero).toBeNull()
   })
 })
 

@@ -16,7 +16,7 @@ import { IntentStrip } from '@/components/shared/IntentStrip';
 import { HERO_GU } from '@/lib/intent/hero-gu';
 import { sendIntentEvent, getVariant } from '@/lib/intent/client';
 import type { Door, IntentLang, Prior } from '@/lib/intent/types';
-import { HOME_HIDE, HERO_BY_DOOR, type HomeSection } from '@/lib/intent/adapt';
+import { HOME_HIDE, type HomeSection } from '@/lib/intent/adapt';
 import { ASKING_CSS, DOOR_COOKIE, DOOR_COOKIE_DAYS, PERSONAS, personaCss, personaVars } from '@/lib/intent/persona';
 import { personaCopy } from '@/lib/intent/persona-i18n';
 import { IntentChooser } from '@/components/shared/IntentChooser';
@@ -420,9 +420,17 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   const overlay = adaptDoor && personaLang ? personaCopy(adaptDoor, personaLang) : null;
   const t = overlay ? { ...baseT, ...overlay } : baseT;
   // The live-build demo "builds" something that fits the visitor.
-  const heroRows = adaptDoor
-    ? WEB_BUILD_ROWS.map((r, i) => (i === 0 ? { ...r, detail: PERSONAS[adaptDoor].demo.prompt } : i === 4 ? { ...r, detail: PERSONAS[adaptDoor].demo.repo } : i === 5 ? { ...r, detail: PERSONAS[adaptDoor].demo.url } : r))
+  const demo = adaptDoor ? PERSONAS[adaptDoor].demo : null;
+  const heroRows = demo
+    ? WEB_BUILD_ROWS.map((r, i) => (i === 0 ? { ...r, detail: demo.prompt } : i === 4 ? { ...r, detail: demo.repo } : i === 5 ? { ...r, detail: demo.url } : r))
     : WEB_BUILD_ROWS;
+  // Tapping a project-type card selects that type in the prompt box and takes the visitor back up to it.
+  const pickProject = (target: 'app' | 'mobile' | 'website' | 'saas') => {
+    setHeroTarget(target);
+    // Bring the prompt box (with the chosen type highlighted just under it) into the middle of the screen.
+    heroPromptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => heroPromptRef.current?.focus({ preventScroll: true }), 500);
+  };
   const onIntentLang = (l: IntentLang) => {
     setIntentLang(l);
     const next: Locale = l === 'hi' ? 'hi' : 'en';
@@ -582,7 +590,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
               {/* The prompt box IS the primary CTA: the visitor's idea rides
                   localStorage through signup/OAuth and becomes their first
                   project (DashboardClient consumes wyber-pending-prompt). */}
-              {inr && intentPrior && (
+              {inr && intentPrior && adaptDoor !== 'student' && (
                 <IntentStrip prior={intentPrior} heroPrompt={heroPrompt} setHeroPrompt={setHeroPrompt} setHeroTarget={setHeroTarget} onLangChange={onIntentLang} onDoorChange={(d) => chooseDoor(d)} forcedDoor={adaptDoor} />
               )}
               <form onSubmit={submitHeroPrompt} className="mk-frame" style={{ maxWidth: 560, padding: 12, marginBottom: 16, borderColor: 'var(--brand-border-strong)', borderRadius: 18 }}>
@@ -656,7 +664,7 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
         </div>
       </section>
 
-      {adaptDoor && <PersonaBlocks door={adaptDoor} lang={personaLang ?? 'en'} />}
+      {adaptDoor && <PersonaBlocks door={adaptDoor} lang={personaLang ?? 'en'} onPickProject={pickProject} />}
 
       {/* ── /websites cross-link: the "rented vs owned" story for businesses
              that only have a social profile ── */}

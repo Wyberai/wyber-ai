@@ -1,89 +1,77 @@
-import { PERSONAS, type Example, type Step } from './persona'
+import { PERSONAS, type Example, type PersonaBlocksData, type Project } from './persona'
 import type { Door } from './types'
 
-// The "how it works" and "examples" blocks for each persona, in English, Hindi and Gujarati.
-// Hindi and Gujarati are AI-drafted and not yet reviewed by a native speaker. The example slugs always come
-// from the persona itself, so the links are the same in every language.
+// The "four project types" and "examples" blocks for each persona, in English, Hindi and Gujarati.
+// Hindi and Gujarati are AI-drafted and not yet reviewed by a native speaker. The link targets (project
+// type and guide slugs) always come from the persona itself, so they are the same in every language.
 
-export interface Blocks {
-  stepsTitle: string
-  steps: [Step, Step, Step]
-  examplesTitle: string
-  examples: { slug: string; title: string; line: string }[]
-}
+export type Blocks = PersonaBlocksData
 
-type Translated = { stepsTitle: string; steps: [Step, Step, Step]; examplesTitle: string; examples: [[string, string], [string, string], [string, string], [string, string], [string, string], [string, string]] }
+type Pair = [string, string]
+type Translated = { projectsTitle: string; projects: [Pair, Pair, Pair, Pair]; examplesTitle: string; examples: [Pair, Pair, Pair, Pair, Pair, Pair] }
 
-const TR: Record<'hi' | 'gu', Record<Door, Translated>> = {
+const TR: Record<'hi' | 'gu', Partial<Record<Door, Translated>>> = {
   hi: {
     business: {
-      stepsTitle: 'समस्या से चलते सॉफ़्टवेयर तक',
-      steps: [
-        { title: 'समस्या बताइए', line: 'अपने शब्दों में बताइए कि क्या आपको धीमा कर रहा है। हिंदी, गुजराती या अंग्रेज़ी में।' },
-        { title: 'चलता देखिए', line: 'आपको असली सॉफ़्टवेयर मिलता है जिसे आप खोलकर आज़मा सकते हैं, सिर्फ़ नमूना नहीं।' },
-        { title: 'ढालते रहिए', line: 'सरल शब्दों में बदलाव माँगिए। यह हमेशा आपका रहता है।' },
+      projectsTitle: 'आपको किस तरह का हल चाहिए?',
+      projects: [
+        ['आपकी टीम के लिए एक टूल', 'ऑर्डर, स्टॉक, मंज़ूरी और रिपोर्ट एक जगह, चैट और स्प्रेडशीट की जगह।'],
+        ['चलते-फिरते लोगों के लिए ऐप', 'ड्राइवर, फ़ील्ड स्टाफ़ और सेल्स टीम फ़ोन से काम और प्रमाण दर्ज करें।'],
+        ['पूछताछ लेने वाली साइट', 'बताइए आप क्या करते हैं और ऑर्डर व पूछताछ लीजिए, ताकि चैट में कुछ खोए नहीं।'],
+        ['आपके ग्राहकों के लिए पोर्टल', 'ग्राहकों को एक लॉगिन में उनके ऑर्डर, इनवॉइस और स्टेटस दीजिए।'],
       ],
-      examplesTitle: 'आपके जैसे व्यवसाय ये बनाते हैं',
+      examplesTitle: 'आपके जैसे व्यवसायों ने ये समस्याएँ सुलझाई हैं',
       examples: [['WhatsApp ऑर्डर ट्रैकर', 'चैट के हर ऑर्डर एक सूची में, स्टेटस के साथ।'], ['डिलीवरी का प्रमाण', 'देखिए कौन-सी साइन की हुई कॉपी अभी बाकी है।'], ['GST इनवॉइस', 'क्रमांक वाले इनवॉइस, टैक्स हर पंक्ति में।'], ['बैच और एक्सपायरी ट्रैकर', 'पुराना स्टॉक पहले बेचिए।'], ['जॉब-वर्क ट्रैकर', 'आपका माल किसके पास है और कौन देरी में है।'], ['ग्राहक उधार खाता', 'किसे कितना देना है, और कब से।']],
     },
     software: {
-      stepsTitle: 'आइडिया से उपयोग लायक ऐप तक',
-      steps: [
-        { title: 'अपना आइडिया बताइए', line: 'दोस्त को बताने जैसे लिखिए कि यह क्या करता है और किसके लिए है।' },
-        { title: 'चलता देखिए', line: 'स्क्रीन और डेटा वाला असली पहला वर्ज़न, आज़माने के लिए तैयार।' },
-        { title: 'ढालिए और प्रकाशित कीजिए', line: 'माँगकर कुछ भी बदलिए, फिर उसे लाइव कीजिए।' },
+      projectsTitle: 'आप क्या बनाना चाहते हैं?',
+      projects: [
+        ['एक वेब ऐप', 'बताइए और स्क्रीन, डेटाबेस और लॉगिन वाला चलता ऐप पाइए।'],
+        ['एक मोबाइल ऐप', 'साइन-इन और होम फ़ीड वाली फ़ोन-पहले स्क्रीन, आज़माने को तैयार।'],
+        ['एक वेबसाइट', 'लैंडिंग पेज, बुकिंग या दुकान, माँगकर बदलिए।'],
+        ['बेचने लायक प्रोडक्ट', 'प्लान, साइन-अप और बिलिंग की स्थिति, ताकि यह डेमो नहीं, कारोबार हो।'],
       ],
       examplesTitle: 'लोग इन आइडियाज़ से शुरू करते हैं',
       examples: [['मार्केटप्लेस', 'विक्रेता लिस्ट करें, खरीदार खोजें और बुक करें।'], ['सब्सक्रिप्शन प्रोडक्ट', 'प्लान, साइन-अप और बिलिंग की स्थिति।'], ['कोर्स प्लेटफ़ॉर्म', 'पाठ, विद्यार्थी और प्रगति।'], ['लॉयल्टी ऐप', 'पॉइंट, इनाम और बार-बार आने वाले ग्राहक।'], ['मोबाइल हैबिट ऐप', 'रोज़ का चेक-इन और स्ट्रीक।'], ['टीम टास्क मैनेजर', 'बोर्ड, ज़िम्मेदार और अंतिम तारीख।']],
     },
-    student: {
-      stepsTitle: 'यहाँ सीखना कैसे होता है',
-      steps: [
-        { title: 'प्रोजेक्ट चुनिए', line: 'अपने पसंद के आइडिया से शुरू करें, या हमारे किसी से।' },
-        { title: 'बनते देखिए', line: 'देखिए स्क्रीन और डेटा आपस में कैसे जुड़ते हैं।' },
-        { title: 'खुद बदलिए', line: 'बदलाव माँगिए और समझिए कि हर बदलाव क्या करता है।' },
-      ],
-      examplesTitle: 'पहले प्रोजेक्ट के अच्छे विकल्प',
-      examples: [['हैबिट ट्रैकर', 'स्ट्रीक और रोज़ का चेक-इन।'], ['फ़्लैशकार्ड', 'डेक और दोहराव।'], ['क्विज़ मेकर', 'प्रश्न, स्कोर और नतीजे।'], ['बजट प्लानर', 'आमदनी, खर्च और लक्ष्य।'], ['पढ़ने की सूची', 'क्या पढ़ना है और कैसा लगा।'], ['वर्कआउट ट्रैकर', 'सेशन, सेट और प्रगति।']],
-    },
   },
   gu: {
     business: {
-      stepsTitle: 'સમસ્યાથી ચાલતા સૉફ્ટવેર સુધી',
-      steps: [
-        { title: 'સમસ્યા કહો', line: 'તમને શું ધીમા પાડે છે તે તમારા શબ્દોમાં કહો. ગુજરાતી, હિન્દી કે અંગ્રેજીમાં.' },
-        { title: 'ચાલતું જુઓ', line: 'તમને સાચું સૉફ્ટવેર મળે છે જે ખોલીને અજમાવી શકાય, ફક્ત નમૂનો નહીં.' },
-        { title: 'ઢાળતા રહો', line: 'સરળ શબ્દોમાં ફેરફાર માંગો. તે હંમેશાં તમારું રહે છે.' },
+      projectsTitle: 'તમને કેવો ઉકેલ જોઈએ છે?',
+      projects: [
+        ['તમારી ટીમ માટે એક ટૂલ', 'ઓર્ડર, સ્ટોક, મંજૂરી અને રિપોર્ટ એક જગ્યાએ, ચેટ અને સ્પ્રેડશીટની જગ્યાએ.'],
+        ['હરતા-ફરતા લોકો માટે એપ', 'ડ્રાઇવર, ફીલ્ડ સ્ટાફ અને સેલ્સ ટીમ ફોનથી કામ અને પુરાવો નોંધે.'],
+        ['પૂછપરછ લેતી સાઇટ', 'તમે શું કરો છો તે બતાવો અને ઓર્ડર તથા પૂછપરછ લો, જેથી ચેટમાં કંઈ ખોવાય નહીં.'],
+        ['તમારા ગ્રાહકો માટે પોર્ટલ', 'ગ્રાહકોને એક લૉગિનમાં તેમના ઓર્ડર, ઇન્વૉઇસ અને સ્ટેટસ આપો.'],
       ],
-      examplesTitle: 'તમારા જેવા વ્યવસાયો આ બનાવે છે',
+      examplesTitle: 'તમારા જેવા વ્યવસાયોએ આ સમસ્યાઓ ઉકેલી છે',
       examples: [['WhatsApp ઓર્ડર ટ્રેકર', 'ચેટના દરેક ઓર્ડર એક યાદીમાં, સ્ટેટસ સાથે.'], ['ડિલિવરીનો પુરાવો', 'જુઓ કઈ સહી કરેલી નકલ હજી બાકી છે.'], ['GST ઇન્વૉઇસ', 'ક્રમાંક સાથેના ઇન્વૉઇસ, ટેક્સ દરેક લાઇનમાં.'], ['બેચ અને એક્સપાયરી ટ્રેકર', 'જૂનો સ્ટોક પહેલા વેચો.'], ['જોબ-વર્ક ટ્રેકર', 'તમારો માલ કોની પાસે છે અને કોણ મોડું છે.'], ['ગ્રાહક ઉધાર ખાતું', 'કોને કેટલું આપવાનું છે, અને ક્યારથી.']],
     },
     software: {
-      stepsTitle: 'વિચારથી વાપરી શકાય તેવી એપ સુધી',
-      steps: [
-        { title: 'તમારો વિચાર કહો', line: 'મિત્રને કહો તેમ લખો કે તે શું કરે છે અને કોના માટે છે.' },
-        { title: 'ચાલતું જુઓ', line: 'સ્ક્રીન અને ડેટા સાથેનું સાચું પહેલું વર્ઝન, અજમાવવા તૈયાર.' },
-        { title: 'ઢાળો અને પ્રકાશિત કરો', line: 'માંગીને કંઈપણ બદલો, પછી તેને લાઇવ કરો.' },
+      projectsTitle: 'તમે શું બનાવવા માંગો છો?',
+      projects: [
+        ['એક વેબ એપ', 'વર્ણવો અને સ્ક્રીન, ડેટાબેઝ અને લૉગિન સાથેની ચાલતી એપ મેળવો.'],
+        ['એક મોબાઇલ એપ', 'સાઇન-ઇન અને હોમ ફીડ સાથેની ફોન-પ્રથમ સ્ક્રીન, અજમાવવા તૈયાર.'],
+        ['એક વેબસાઇટ', 'લેન્ડિંગ પેજ, બુકિંગ કે દુકાન, માંગીને બદલો.'],
+        ['વેચી શકાય તેવું પ્રોડક્ટ', 'પ્લાન, સાઇન-અપ અને બિલિંગની સ્થિતિ, જેથી તે ડેમો નહીં, ધંધો બને.'],
       ],
       examplesTitle: 'લોકો આ વિચારોથી શરૂ કરે છે',
       examples: [['માર્કેટપ્લેસ', 'વેચનાર લિસ્ટ કરે, ખરીદનાર શોધે અને બુક કરે.'], ['સબ્સ્ક્રિપ્શન પ્રોડક્ટ', 'પ્લાન, સાઇન-અપ અને બિલિંગની સ્થિતિ.'], ['કોર્સ પ્લેટફૉર્મ', 'પાઠ, વિદ્યાર્થી અને પ્રગતિ.'], ['લૉયલ્ટી એપ', 'પૉઇન્ટ, ઇનામ અને વારંવાર આવતા ગ્રાહકો.'], ['મોબાઇલ હૅબિટ એપ', 'રોજનું ચેક-ઇન અને સ્ટ્રીક.'], ['ટીમ ટાસ્ક મેનેજર', 'બોર્ડ, જવાબદાર અને છેલ્લી તારીખ.']],
     },
-    student: {
-      stepsTitle: 'અહીં શીખવાનું કેવી રીતે થાય',
-      steps: [
-        { title: 'પ્રોજેક્ટ પસંદ કરો', line: 'તમને ગમતા વિચારથી શરૂ કરો, અથવા અમારામાંથી કોઈથી.' },
-        { title: 'બનતું જુઓ', line: 'જુઓ સ્ક્રીન અને ડેટા એકબીજા સાથે કેવી રીતે જોડાય છે.' },
-        { title: 'જાતે બદલો', line: 'ફેરફાર માંગો અને સમજો કે દરેક ફેરફાર શું કરે છે.' },
-      ],
-      examplesTitle: 'પહેલા પ્રોજેક્ટ માટે સારા વિકલ્પો',
-      examples: [['હૅબિટ ટ્રેકર', 'સ્ટ્રીક અને રોજનું ચેક-ઇન.'], ['ફ્લૅશકાર્ડ', 'ડેક અને પુનરાવર્તન.'], ['ક્વિઝ મેકર', 'પ્રશ્નો, સ્કોર અને પરિણામ.'], ['બજેટ પ્લાનર', 'આવક, ખર્ચ અને લક્ષ્ય.'], ['વાંચનની યાદી', 'શું વાંચવું અને કેવું લાગ્યું.'], ['વર્કઆઉટ ટ્રેકર', 'સેશન, સેટ અને પ્રગતિ.']],
-    },
   },
 }
 
-export function blocksFor(door: Door, lang: 'en' | 'hi' | 'gu'): Blocks {
-  const p = PERSONAS[door]
-  if (lang === 'en') return { stepsTitle: p.stepsTitle, steps: p.steps, examplesTitle: p.examplesTitle, examples: p.examples }
+/** The blocks to show for a persona in a language, or null for the persona that keeps the whole page. */
+export function blocksFor(door: Door, lang: 'en' | 'hi' | 'gu'): Blocks | null {
+  const b = PERSONAS[door].blocks
+  if (!b) return null
+  if (lang === 'en') return b
   const t = TR[lang][door]
-  return { stepsTitle: t.stepsTitle, steps: t.steps, examplesTitle: t.examplesTitle, examples: p.examples.map((e, i) => ({ slug: e.slug, title: t.examples[i][0], line: t.examples[i][1] })) }
+  if (!t) return b
+  return {
+    projectsTitle: t.projectsTitle,
+    projects: b.projects.map((p, i): Project => ({ target: p.target, title: t.projects[i][0], line: t.projects[i][1] })) as Blocks['projects'],
+    examplesTitle: t.examplesTitle,
+    examples: b.examples.map((e, i): Example => ({ slug: e.slug, title: t.examples[i][0], line: t.examples[i][1] })) as Blocks['examples'],
+  }
 }

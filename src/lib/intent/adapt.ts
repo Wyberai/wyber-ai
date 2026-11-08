@@ -10,9 +10,3 @@ export const HOME_HIDE: Record<Door, SectionId[]> = {
   software: SECTION_IDS.filter(id => !PERSONAS.software.sections.includes(id)),
   student: SECTION_IDS.filter(id => !PERSONAS.student.sections.includes(id)),
 }
-
-export const HERO_BY_DOOR: Record<Door, (typeof PERSONAS)[Door]['hero']> = {
-  business: PERSONAS.business.hero,
-  software: PERSONAS.software.hero,
-  student: PERSONAS.student.hero,
-}

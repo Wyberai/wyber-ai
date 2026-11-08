@@ -1,23 +1,25 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { HOME_HIDE } from './adapt'
 import { PERSONAS } from './persona'
-import { DOORS } from './types'
+import { DOORS, INTENT_LANGS } from './types'
 import { getVariant } from './client'
 import { INTENT_COPY } from './copy'
-import { INTENT_LANGS } from './types'
 
-describe('what each kind of visitor is spared', () => {
+describe('what each answer is spared', () => {
   it('covers every door', () => {
     for (const d of DOORS) expect(HOME_HIDE[d]).toBeDefined()
   })
-  it('every persona keeps the six blocks every visitor needs: hero, how it works, examples, pricing, FAQ and the closing call to action', () => {
-    for (const d of DOORS) for (const id of ['hero', 'how', 'examples', 'pricing', 'faq', 'final'] as const) expect(PERSONAS[d].sections, d + ': ' + id).toContain(id)
+  it('every answer is spared the Free Apps and Your Builds strips, the shop-website strip and the stats bar', () => {
+    for (const d of DOORS) for (const id of ['gallery', 'userbuilds', 'websites', 'telemetry'] as const) expect(HOME_HIDE[d], `${d}: ${id}`).toContain(id)
   })
-  it('everyone is spared the developer section, the shop-website strip, the stats bar and the Free Apps strips', () => {
-    for (const d of DOORS) for (const id of ['mcp', 'websites', 'telemetry', 'gallery', 'userbuilds'] as const) expect(HOME_HIDE[d], `${d}: ${id}`).toContain(id)
+  it('A and B are also spared the developer section and the long product tour; C keeps both', () => {
+    for (const d of ['business', 'software'] as const) for (const id of ['mcp', 'products', 'mission', 'proof'] as const) expect(HOME_HIDE[d], `${d}: ${id}`).toContain(id)
+    for (const id of ['mcp', 'products', 'mission', 'proof'] as const) expect(HOME_HIDE.student, id).not.toContain(id)
   })
-  it('the six focused blocks are never hidden', () => {
-    for (const d of DOORS) for (const id of ['hero', 'how', 'examples', 'pricing', 'faq', 'final'] as const) expect(HOME_HIDE[d], `${d}: ${id}`).not.toContain(id)
+  it('the blocks every page needs are never hidden: hero, pricing, FAQ and the closing call to action', () => {
+    for (const d of DOORS) for (const id of ['hero', 'pricing', 'faq', 'final'] as const) expect(HOME_HIDE[d], `${d}: ${id}`).not.toContain(id)
+    for (const d of ['business', 'software'] as const) for (const id of ['projects', 'examples'] as const) expect(HOME_HIDE[d], `${d}: ${id}`).not.toContain(id)
+    expect(PERSONAS.business.sections).toContain('projects')
   })
 })
 
@@ -40,9 +42,10 @@ describe('getVariant: the owner can pick a side on purpose', () => {
   })
 })
 
-describe('the two big choices', () => {
-  it('every language has a label, a one-line hint and a promise line for every door', () => {
+describe('the question and its three answers', () => {
+  it('every language has the question, a promise line, and a label and hint for each answer', () => {
     for (const l of INTENT_LANGS) {
+      expect(INTENT_COPY[l].label.trim().length).toBeGreaterThan(5)
       expect(INTENT_COPY[l].askSub.trim().length).toBeGreaterThan(10)
       for (const d of DOORS) {
         expect(INTENT_COPY[l].doors[d].trim(), `${l}.doors.${d}`).not.toBe('')
@@ -51,10 +54,11 @@ describe('the two big choices', () => {
       }
     }
   })
-  it('English says it plainly: fix a problem in a business, or build a new app or product', () => {
-    expect(INTENT_COPY.en.doors.business).toBe('Fix a problem in my business')
-    expect(INTENT_COPY.en.doors.software).toBe('Build a new app or product')
-    expect(INTENT_COPY.en.label).toBe('What brings you here?')
+  it('English asks it exactly as you wrote it: what are you looking to do? A solve a problem, B build apps, C just scrolling', () => {
+    expect(INTENT_COPY.en.label).toBe('What are you looking to do?')
+    expect(INTENT_COPY.en.doors.business).toBe('Solve a problem')
+    expect(INTENT_COPY.en.doors.software).toBe('Build apps')
+    expect(INTENT_COPY.en.doors.student).toBe('Just scrolling')
   })
   it('the build-something-new door offers idea starters that name concrete screens', () => {
     for (const l of INTENT_LANGS) expect(INTENT_COPY[l].chips.software.map(c => c.id)).toEqual(['saas-plans', 'marketplace', 'mobile-idea'])

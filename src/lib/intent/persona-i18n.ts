@@ -11,7 +11,7 @@ export type PersonaCopy = {
   finalCtaLine1: string; finalCtaLine2: string; finalCtaLead: string
 }
 
-export const PERSONA_I18N: Record<'hi' | 'gu', Record<Door, PersonaCopy>> = {
+export const PERSONA_I18N: Record<'hi' | 'gu', Partial<Record<Door, PersonaCopy>>> = {
   hi: {
     business: {
       heroLine1: 'जो आपके व्यवसाय को', heroLine2: 'धीमा करे, उसे ठीक करें।',
@@ -26,13 +26,6 @@ export const PERSONA_I18N: Record<'hi' | 'gu', Record<Door, PersonaCopy>> = {
       heroPlaceholder: 'जैसे: एक मार्केटप्लेस जहाँ स्थानीय ट्यूटर क्लास डालें और विद्यार्थी बुक करें',
       finalCtaLine1: 'आपका आइडिया बस', finalCtaLine2: 'एक विवरण दूर है।',
       finalCtaLead: 'ऐप बताइए और उसे चलता देखिए। शुरू करना मुफ़्त, कार्ड नहीं चाहिए।',
-    },
-    student: {
-      heroLine1: 'बनाकर सीखिए,', heroLine2: 'असली ऐप्स।',
-      heroLead: 'मुफ़्त शुरू करें। एक प्रोजेक्ट बताइए, उसे बनते देखिए, फिर खुद बदलिए।',
-      heroPlaceholder: 'जैसे: विषय, डेडलाइन और साप्ताहिक व्यू वाला स्टडी प्लानर',
-      finalCtaLine1: 'अपना पहला', finalCtaLine2: 'प्रोजेक्ट शुरू करें।',
-      finalCtaLead: 'शुरू करना मुफ़्त, कार्ड नहीं चाहिए।',
     },
   },
   gu: {
@@ -50,21 +43,14 @@ export const PERSONA_I18N: Record<'hi' | 'gu', Record<Door, PersonaCopy>> = {
       finalCtaLine1: 'તમારો વિચાર ફક્ત', finalCtaLine2: 'એક વર્ણન દૂર છે.',
       finalCtaLead: 'એપ વર્ણવો અને તેને ચાલતી જુઓ. શરૂ કરવું મફત, કાર્ડ નહીં.',
     },
-    student: {
-      heroLine1: 'બનાવીને શીખો,', heroLine2: 'સાચી એપ્સ.',
-      heroLead: 'મફત શરૂ કરો. એક પ્રોજેક્ટ કહો, તેને બનતો જુઓ, પછી જાતે બદલો.',
-      heroPlaceholder: 'દા.ત. વિષય, ડેડલાઇન અને સાપ્તાહિક વ્યૂ સાથે સ્ટડી પ્લાનર',
-      finalCtaLine1: 'તમારો પહેલો', finalCtaLine2: 'પ્રોજેક્ટ શરૂ કરો.',
-      finalCtaLead: 'શરૂ કરવું મફત, કાર્ડ નહીં.',
-    },
   },
 }
 
-/** The copy to overlay for a persona in a language, or null when we have none (the page keeps its own text). */
+/** The copy to overlay for a persona in a language, or null when the page keeps its own text ("Just scrolling", or a language we have no copy for). */
 export function personaCopy(door: Door, lang: 'en' | 'hi' | 'gu'): PersonaCopy | null {
   if (lang === 'en') {
     const p = PERSONAS[door]
-    return { ...p.hero, ...p.finalCta }
+    return p.hero && p.finalCta ? { ...p.hero, ...p.finalCta } : null
   }
-  return PERSONA_I18N[lang][door]
+  return PERSONA_I18N[lang][door] ?? null
 }
