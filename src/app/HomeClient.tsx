@@ -18,6 +18,7 @@ import { sendIntentEvent, getVariant } from '@/lib/intent/client';
 import type { Door, IntentLang, Prior } from '@/lib/intent/types';
 import { HOME_HIDE, HERO_BY_DOOR, type HomeSection } from '@/lib/intent/adapt';
 import { DOOR_COOKIE, DOOR_COOKIE_DAYS, PERSONAS, personaCss, personaVars } from '@/lib/intent/persona';
+import { personaCopy } from '@/lib/intent/persona-i18n';
 import { IntentChooser } from '@/components/shared/IntentChooser';
 
 const BRAND = '#0EA5E9';
@@ -405,9 +406,11 @@ export function HomeClient({ initialCurrency = 'USD', scanStats = null, initialS
   }, [adaptDoor]);
   const hideFor = (section: HomeSection) => (adaptDoor ? HOME_HIDE[adaptDoor].includes(section) : false);
   const baseT = intentPrior && intentLang === 'gu' ? { ...heroT, ...HERO_GU } : heroT;
-  // The headline, lead and example follow who the visitor is (English only; see HERO_BY_DOOR).
-  // Headline, lead, example AND the closing call to action follow who the visitor is (English only for now).
-  const t = adaptDoor && locale === 'en' && intentLang === 'en' ? { ...baseT, ...HERO_BY_DOOR[adaptDoor], ...PERSONAS[adaptDoor].finalCta } : baseT;
+  // Headline, lead, example AND the closing call to action follow who the visitor is: English, Hindi or Gujarati
+  // (Kannada, Telugu and Tamil keep the page's own text until someone has written and reviewed theirs).
+  const personaLang: 'en' | 'hi' | 'gu' | null = intentLang === 'gu' ? 'gu' : locale === 'hi' ? 'hi' : locale === 'en' ? 'en' : null;
+  const overlay = adaptDoor && personaLang ? personaCopy(adaptDoor, personaLang) : null;
+  const t = overlay ? { ...baseT, ...overlay } : baseT;
   // The live-build demo "builds" something that fits the visitor.
   const heroRows = adaptDoor
     ? WEB_BUILD_ROWS.map((r, i) => (i === 0 ? { ...r, detail: PERSONAS[adaptDoor].demo.prompt } : i === 4 ? { ...r, detail: PERSONAS[adaptDoor].demo.repo } : i === 5 ? { ...r, detail: PERSONAS[adaptDoor].demo.url } : r))
