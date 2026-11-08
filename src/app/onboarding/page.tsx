@@ -1,155 +1,113 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { WyberLogo } from '@/components/shared/WyberLogo';
+'use client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { SignalFrame } from '@/components/signal/SignalFrame'
+import { readCtx, type SignalCtx } from '@/lib/signal/handoff'
 
+// The ids are what is stored in profiles.persona, so they stay as they were; only the words changed.
 const PERSONAS = [
-  { id: 'solo', icon: '🚀', label: 'Solo founder', desc: 'Just starting or building alone. I want speed and simplicity.' },
-  { id: 'team', icon: '👥', label: 'Small team (2-10)', desc: 'Building with a co-founder or small team. Collaboration matters.' },
-  { id: 'agency', icon: '🏢', label: 'Agency / freelancer', desc: 'Building for clients. I need multi-project management.' },
-  { id: 'enterprise', icon: '🏛️', label: 'Scaling business', desc: 'Growing company. I need automation, GTM, and AI employees.' },
-];
+  { id: 'solo', label: 'Solo founder', desc: 'Building alone. Speed and simplicity.' },
+  { id: 'team', label: 'Small team', desc: '2 to 10 people building together.' },
+  { id: 'agency', label: 'Agency or freelancer', desc: 'Building for clients.' },
+  { id: 'enterprise', label: 'Growing business', desc: 'Fixing how the business runs.' },
+]
 
 const PRODUCTS = [
-  { id: 'web', icon: '🖥️', label: 'Web app', desc: 'Dashboards, internal tools, CRMs — AI builds full React apps from scratch in minutes.' },
-  { id: 'mobile', icon: '📱', label: 'Mobile app', desc: 'iOS & Android apps with React Native + Expo. Preview on your phone instantly via QR code.' },
-  { id: 'website', icon: '🌐', label: 'Website', desc: 'Landing pages, marketing sites, portfolios — hero images, pricing, testimonials, SEO-ready.' },
-  { id: 'saas', icon: '🚀', label: 'SaaS product', desc: 'Full SaaS with auth, dashboard, billing, settings, and teams — production-ready from scratch.' },
-];
+  { id: 'web', label: 'Web app', desc: 'Dashboards, internal tools, CRMs.' },
+  { id: 'mobile', label: 'Mobile app', desc: 'iOS and Android with React Native and Expo.' },
+  { id: 'website', label: 'Website', desc: 'Landing pages, portfolios, marketing sites.' },
+  { id: 'saas', label: 'SaaS product', desc: 'Sign-in, dashboard, billing and settings.' },
+]
 
+const ROUTES: Record<string, string> = { web: '/dashboard', mobile: '/dashboard?new=mobile', website: '/dashboard?new=website', saas: '/dashboard?new=saas' }
+
+/**
+ * Onboarding in the Signal design. If the visitor already described what they want on the homepage, there is nothing
+ * to ask about the product: after their name (and an optional role) they go straight to the dashboard, where the saved
+ * brief starts the first build. Otherwise it asks what they are building, as before.
+ */
 export default function OnboardingPage() {
-  const [step, setStep] = useState(1);
-  const [name, setName] = useState('');
-  const [persona, setPersona] = useState('');
-  const [product, setProduct] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-  const supabase = createClient();
+  const [step, setStep] = useState(1)
+  const [name, setName] = useState('')
+  const [persona, setPersona] = useState('')
+  const [product, setProduct] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [ctx, setCtx] = useState<SignalCtx | null>(null)
+  const router = useRouter()
+  const supabase = createClient()
+  useEffect(() => { setCtx(readCtx()) }, [])
+  const total = ctx ? 2 : 3
 
-  const handleComplete = async () => {
-    setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+  const finish = async (chosen: string, skipPersona = false) => {
+    setLoading(true)
+    const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      await supabase.from('profiles').update({
-        full_name: name,
-        persona,
-        onboarded: true,
-      }).eq('id', user.id);
+      await supabase.from('profiles').update({ full_name: name, ...(skipPersona || !persona ? {} : { persona }), onboarded: true }).eq('id', user.id)
     }
-
-    const routes: Record<string, string> = {
-      web: '/dashboard',
-      mobile: '/dashboard?new=mobile',
-      website: '/dashboard?new=website',
-      saas: '/dashboard?new=saas',
-    };
-    router.push(routes[product] ?? '/dashboard');
-  };
-
-  const S = {
-    page: { minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: 'var(--font-sans)' } as const,
-    box: { width: '100%', maxWidth: 620, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 20, padding: 'clamp(32px,5vw,48px)', boxShadow: 'var(--shadow-lg)' } as const,
-    h1: { fontSize: 'clamp(24px,4vw,32px)', fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text)', marginBottom: 8, lineHeight: 1.2, fontFamily: 'var(--font-display)' } as const,
-    sub: { fontSize: 15, color: 'var(--text2)', marginBottom: 28, lineHeight: 1.6 } as const,
-    input: { width: '100%', padding: '12px 14px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--bg2)', color: 'var(--text)', fontSize: 15, outline: 'none', fontFamily: 'var(--font-sans)', marginBottom: 16, transition: 'border-color 0.15s' } as const,
-    btn: { width: '100%', padding: '14px', borderRadius: 10, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 15, border: 'none', cursor: 'pointer', letterSpacing: '-0.01em', transition: 'all 0.2s', fontFamily: 'var(--font-sans)' } as const,
-    dot: (active: boolean, done: boolean) => ({ height: 3, flex: 1, borderRadius: 2, background: done ? 'var(--sky)' : active ? 'var(--sky)' : 'var(--border)', opacity: done ? 1 : active ? 1 : 0.4 }),
-  };
+    router.push(ctx ? '/dashboard' : ROUTES[chosen] ?? '/dashboard')
+  }
 
   return (
-    <div style={S.page}>
-      <div style={S.box}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
-          <WyberLogo markSize={40} wordmarkSize={18} />
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, marginBottom: 32 }}>
-          {[1, 2, 3].map(i => <div key={i} style={S.dot(step === i, step > i)} />)}
-        </div>
-
-        {/* Step 1: Name */}
-        {step === 1 && (
-          <>
-            <h1 style={S.h1}>Welcome to WyberAi</h1>
-            <p style={S.sub}>Build web apps, mobile apps, websites, and SaaS products with AI. Let's get you set up in 30 seconds.</p>
-            <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 8, display: 'block' }}>What should we call you?</label>
-            <input
-              style={S.input}
-              placeholder="Your name"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && name.trim() && setStep(2)}
-              onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'var(--sky)'}
-              onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'var(--border)'}
-              autoFocus
-            />
-            <button style={{ ...S.btn, opacity: name.trim() ? 1 : 0.5 }} onClick={() => setStep(2)} disabled={!name.trim()}>
-              Continue
-            </button>
-          </>
-        )}
-
-        {/* Step 2: Persona */}
-        {step === 2 && (
-          <>
-            <h1 style={S.h1}>What describes you best?</h1>
-            <p style={S.sub}>This helps us tailor your experience — you'll see the features that matter most to you first.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-              {PERSONAS.map(p => (
-                <button key={p.id} onClick={() => setPersona(p.id)}
-                  style={{
-                    padding: '18px 16px', borderRadius: 14, textAlign: 'left',
-                    border: `2px solid ${persona === p.id ? 'var(--sky)' : 'var(--border)'}`,
-                    background: persona === p.id ? 'var(--sky3)' : 'var(--bg2)',
-                    cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
-                  }}>
-                  <div style={{ fontSize: 24, marginBottom: 8 }}>{p.icon}</div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: persona === p.id ? 'var(--sky)' : 'var(--text)', marginBottom: 4 }}>{p.label}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>{p.desc}</div>
-                </button>
-              ))}
+    <SignalFrame bare>
+      <div className="sg-wrap">
+        <div className="sg-auth" style={{ gridTemplateColumns: 'minmax(0, 560px)', justifyContent: 'center' }}>
+          <div className="sg-acard">
+            <div style={{ display: 'flex', gap: 6, marginBottom: 22 }} aria-hidden="true">
+              {Array.from({ length: total }, (_, i) => <i key={i} style={{ height: 3, flex: 1, borderRadius: 2, background: step > i ? 'var(--sg-hot)' : 'var(--sg-line)' }} />)}
             </div>
-            <button style={{ ...S.btn, opacity: persona ? 1 : 0.5 }} onClick={() => setStep(3)} disabled={!persona}>
-              Continue
-            </button>
-          </>
-        )}
+            <p className="sg-mono sg-lbl" style={{ margin: '0 0 8px' }}>Step {step} of {total}</p>
 
-        {/* Step 3: Starting product */}
-        {step === 3 && (
-          <>
-            <h1 style={S.h1}>What are you building?</h1>
-            <p style={S.sub}>Pick one to start — you can switch types or create any mix from the dashboard.</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 24 }}>
-              {PRODUCTS.map(p => (
-                <button key={p.id} onClick={() => setProduct(p.id)}
-                  style={{
-                    padding: '16px 14px', borderRadius: 14, textAlign: 'left',
-                    border: `2px solid ${product === p.id ? 'var(--sky)' : 'var(--border)'}`,
-                    background: product === p.id ? 'var(--sky3)' : 'var(--bg2)',
-                    cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'var(--font-sans)',
-                  }}>
-                  <div style={{ fontSize: 22, marginBottom: 6 }}>{p.icon}</div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: product === p.id ? 'var(--sky)' : 'var(--text)', marginBottom: 3 }}>{p.label}</div>
-                  <div style={{ fontSize: 10, color: 'var(--text3)', lineHeight: 1.5 }}>{p.desc}</div>
-                </button>
-              ))}
-            </div>
-            <button
-              style={{ ...S.btn, opacity: product ? 1 : 0.5 }}
-              onClick={handleComplete}
-              disabled={loading || !product}>
-              {loading ? 'Setting up...' : 'Start building'}
-            </button>
-            <p style={{ textAlign: 'center', marginTop: 16, fontSize: 13, color: 'var(--text3)' }}>
-              <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-sans)' }}>
-                Skip for now
-              </button>
-            </p>
-          </>
-        )}
+            {step === 1 && (
+              <form onSubmit={e => { e.preventDefault(); if (name.trim()) setStep(2) }}>
+                <h1>Welcome. What should we call you?</h1>
+                {ctx && <p className="sg-sub2">Your {ctx.kindLabel.toLowerCase()}, <b>{ctx.title}</b>, is ready to start.</p>}
+                <label className="sg-lb" htmlFor="sg-name">Your name</label>
+                <input id="sg-name" className="sg-field" value={name} onChange={e => setName(e.target.value)} autoComplete="given-name" autoFocus />
+                <button className="sg-btn" type="submit" style={{ width: '100%', marginTop: 18 }} disabled={!name.trim()}>Continue</button>
+              </form>
+            )}
+
+            {step === 2 && (
+              <>
+                <h1>What describes you best?</h1>
+                <p className="sg-sub2">Optional. It helps us show the features that matter most to you first.</p>
+                <div className="sg-tiles">
+                  {PERSONAS.map(p => (
+                    <button key={p.id} type="button" className="sg-tile" aria-pressed={persona === p.id} onClick={() => setPersona(persona === p.id ? '' : p.id)}>
+                      <b>{p.label}</b><span>{p.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                {ctx ? (
+                  <>
+                    <button className="sg-btn" type="button" style={{ width: '100%' }} disabled={loading} onClick={() => finish('web')}>{loading ? 'Setting up…' : 'Start my build'}</button>
+                    <p className="sg-hint">The dashboard opens with your brief and starts building.</p>
+                  </>
+                ) : (
+                  <button className="sg-btn" type="button" style={{ width: '100%' }} onClick={() => setStep(3)}>Continue</button>
+                )}
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <h1>What are you building?</h1>
+                <p className="sg-sub2">Pick one to start. You can make any mix from the dashboard.</p>
+                <div className="sg-tiles">
+                  {PRODUCTS.map(p => (
+                    <button key={p.id} type="button" className="sg-tile" aria-pressed={product === p.id} onClick={() => setProduct(p.id)}>
+                      <b>{p.label}</b><span>{p.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                <button className="sg-btn" type="button" style={{ width: '100%' }} disabled={loading || !product} onClick={() => finish(product)}>{loading ? 'Setting up…' : 'Start building'}</button>
+                <button type="button" className="sg-linkbtn" style={{ display: 'block', margin: '8px auto 0' }} onClick={() => finish('web', true)}>Skip for now</button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    </SignalFrame>
+  )
 }
