@@ -10,6 +10,7 @@ import { EXPO, expoStatus } from '@/lib/ops/facts'
 import { buildSchedule, istDay } from '@/lib/ops/schedule'
 import { growthSnapshot } from '@/lib/ops/marketing/snapshot'
 import { loadFunnel } from './funnel'
+import { loadHealth } from '@/lib/ops/health-load'
 
 // The questions the founder can ask the dashboard are answered ONLY from these
 // read-only tools. None of them writes, sends, or changes anything. Each returns
@@ -32,6 +33,7 @@ export const TOOLS: ToolDef[] = [
   { name: 'agent_results', description: 'How the agents performed over the last 30 days: drafts used, rejected, estimated time saved.', input_schema: { type: 'object', properties: {} } },
   { name: 'expo', description: 'Tech Expo Gujarat: where it is relative to today, booth slot requests by status and day, and booth-captured leads.', input_schema: { type: 'object', properties: {} } },
   { name: 'propose_action', description: 'SUGGEST an action for the founder to confirm with a click. You cannot perform it. Use only when the founder asks you to do something or a clear next step follows from what you found. kind is one of: run_agent (needs agent: one of outreach, followup, meeting_prep, proposal, weekly_coach, onboarding, reengage, content, collections), mark_quote_paid (needs quote_id from the quotes tool), set_next_action (needs contact_id, text, in_days), add_note (needs contact_id, text). After proposing, say it is waiting for their confirmation. Never say it is done.', input_schema: { type: 'object', properties: { kind: { type: 'string', enum: ['run_agent', 'mark_quote_paid', 'set_next_action', 'add_note'] }, agent: { type: 'string' }, quote_id: { type: 'string' }, contact_id: { type: 'string' }, text: { type: 'string' }, in_days: { type: 'number' } }, required: ['kind'] } },
+  { name: 'health', description: 'Is the automation healthy? Checks the agents ran recently, tables are readable, no stuck drafts, no silent signup outage. Returns a list of problems with what to do, or an empty list.', input_schema: { type: 'object', properties: {} } },
   { name: 'funnel', description: 'Where signups drop off: signed up, built something, published, tried to pay, paying plan, for the last N days, with country and source breakdowns. Founder and test accounts excluded.', input_schema: { type: 'object', properties: { days: { type: 'number', description: '1 to 180, default 30' } } } },
   { name: 'growth', description: 'The 100-signups-a-day goal: last 7 days average against what the ramp needs today, whether we are ahead or behind, the content to publish today, and the channel plan.', input_schema: { type: 'object', properties: {} } },
   { name: 'schedule', description: 'What will happen on each of the next N days (India time): automatic jobs, follow-ups and meetings due, expo dates.', input_schema: { type: 'object', properties: { days: { type: 'number', description: '1 to 14, default 3' } } } },
@@ -141,6 +143,7 @@ export async function runTool(admin: Admin, name: string, input: Record<string, 
       const contacts = await loadContacts(admin).catch(() => [] as Contact[])
       return { event: EXPO.name, booth: EXPO.booth, starts: EXPO.start, ends: EXPO.end, status: expoStatus(now), days_until_start: Math.ceil((new Date(EXPO.start).getTime() - now.getTime()) / DAY), slot_requests: rows.length, by_status: tally('status'), by_day: tally('preferred_day'), booth_captured_leads: contacts.filter(c => c.tags.includes('booth')).length }
     }
+    case 'health': { const issues = await loadHealth(admin, now); return { healthy: issues.length === 0, issues } }
     case 'funnel': return loadFunnel(admin, Number(input.days) || 30, now)
     case 'growth': return growthSnapshot(admin, now, istDay(now))
     case 'schedule': {

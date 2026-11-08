@@ -253,6 +253,17 @@ export async function sendCrmDailyBrief(opts: { subject: string; text: string })
   return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: opts.subject, html })
 }
 
+// Sent only when the daily health check finds something wrong (see lib/ops/health.ts, /api/cron/watchdog).
+export async function sendHealthAlert(opts: { subject: string; text: string }) {
+  const paras = opts.text.split('\n').map(l => (l.trim() ? p(escHtml(l)) : '')).join('')
+  const html = wrap(`
+    ${h1('Something needs attention')}
+    ${paras}
+    <div style="text-align:center;margin:24px 0">${btn('Open the dashboard →', `${APP_URL}/admin/agents`)}</div>
+  `, 'The daily health check found a problem')
+  return sendMail({ from: FROM_NOTIF, to: ADMIN_NOTIFY, subject: opts.subject, html })
+}
+
 // Monday report for the founder (see lib/ops/weekly-report.ts, /api/cron/weekly-report).
 export async function sendWeeklyReport(opts: { subject: string; text: string }) {
   const paras = opts.text.split('\n').map(l => (l.trim() ? (/^[A-Z ]+$/.test(l.trim()) ? h1(escHtml(l.trim())) : p(escHtml(l))) : '')).join('')
