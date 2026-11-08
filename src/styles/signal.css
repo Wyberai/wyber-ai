@@ -299,3 +299,5 @@
 .sgx a, .sgx button { min-height: 44px; }
 .sgx .wy-nav-link { display: inline-flex; align-items: center; }
 .sgx :focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; border-radius: 8px; }
+.sgx .wy-nav-link { white-space: nowrap; }
+@media (max-width: 600px) { nav.sgx > div:last-child > .wy-nav-link { display: none; } nav.sgx > div:last-child > a { white-space: nowrap; } }
