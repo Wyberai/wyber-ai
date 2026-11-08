@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCrmAdmin } from '@/lib/crm/admin-auth'
 import { anthropicStep, ask, cleanHistory } from '@/lib/ops/ask/run'
+import { labelFor } from '@/lib/ops/ask/actions'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -15,7 +16,8 @@ export async function POST(req: NextRequest) {
   if (!history) return NextResponse.json({ error: 'Send a question' }, { status: 400 })
   try {
     const r = await ask(history, { admin, callStep: anthropicStep() })
-    return NextResponse.json({ reply: r.reply, toolsUsed: [...new Set(r.toolsUsed)] })
+    const proposals = await Promise.all((r.proposals ?? []).map(async action => ({ action, label: await labelFor(admin, action) })))
+    return NextResponse.json({ reply: r.reply, toolsUsed: [...new Set(r.toolsUsed)], proposals })
   } catch (e) {
     console.error('[admin/ask]', e instanceof Error ? e.message : e)
     return NextResponse.json({ error: 'The assistant could not answer just now. Try again.' }, { status: 502 })

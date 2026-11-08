@@ -29,7 +29,7 @@ describe('POST /api/admin/ask', () => {
   })
   it('returns the answer and which data it looked at, without duplicates', async () => {
     const r = await call({ messages: [{ role: 'user', content: 'How many deals?' }] })
-    expect(await r.json()).toEqual({ reply: 'Five deals.', toolsUsed: ['pipeline_summary'] })
+    expect(await r.json()).toEqual({ reply: 'Five deals.', toolsUsed: ['pipeline_summary'], proposals: [] })
   })
   it('a model failure is a clean error, not a stack trace', async () => {
     askFn.mockRejectedValue(new Error('upstream 500 secret detail'))

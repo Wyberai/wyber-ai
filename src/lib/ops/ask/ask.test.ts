@@ -174,3 +174,24 @@ describe('growth tool', () => {
     expect(r.pace).toBeNull()
   })
 })
+
+describe('funnel tool', () => {
+  const profiles = [
+    { id: 'a', email: 'a@x.com', plan: 'free', created_at: day(1), country: 'IN', signup_source: 'google' },
+    { id: 'b', email: 'b@x.com', plan: 'starter', created_at: day(2), country: 'IN' },
+    { id: 'c', email: 'c@x.com', plan: 'free', created_at: day(3), country: 'US' },
+    { id: 'o', email: 'hello@wyberai.com', plan: 'pro', created_at: day(1), country: 'IN' },
+    { id: 'old', email: 'old@x.com', plan: 'free', created_at: day(80), country: 'IN' },
+  ]
+  it('counts each step for real people only, with percentages of signups', async () => {
+    const admin = withContacts([], { profiles, projects: [{ user_id: 'a', published_url: 'https://x' }, { user_id: 'b', published_url: null }, { user_id: 'o', published_url: 'https://own' }], checkout_attempts: [{ user_id: 'b', converted: true }] })
+    const r = await runTool(admin, 'funnel', { days: 30 }, NOW) as { signups: number; funnel: { step: string; users: number; percent_of_signups: number }[]; by_country: { name: string; signups: number; built: number }[] }
+    expect(r.signups).toBe(3)
+    expect(r.funnel.map(f => f.users)).toEqual([3, 2, 1, 1, 1])
+    expect(r.funnel[1].percent_of_signups).toBeCloseTo(66.7, 1)
+    expect(r.by_country[0]).toMatchObject({ name: 'IN', signups: 2, built: 2 })
+  })
+  it('reports an unreadable table instead of a made-up funnel', async () => {
+    expect(await runTool(withContacts([], { profiles: { error: 'nope' } }), 'funnel', {}, NOW)).toMatchObject({ error: expect.stringContaining('Funnel unavailable') })
+  })
+})
