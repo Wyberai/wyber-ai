@@ -7,6 +7,7 @@ import { EVENTS_PAGES } from './events'
 import { EDUCATION_PAGES } from './education'
 import { ECOMMERCE_PAGES } from './ecommerce'
 import { TRADES_PAGES } from './trades-home-services'
+import { INDIA_OPERATIONS_PAGES } from './india-operations'
 
 export type { BuildPage, BuildCategory } from './types'
 export { CATEGORY_LABELS } from './types'
@@ -23,6 +24,7 @@ export const BUILD_PAGES: BuildPage[] = [
   ...EDUCATION_PAGES,
   ...ECOMMERCE_PAGES,
   ...TRADES_PAGES,
+  ...INDIA_OPERATIONS_PAGES,
 ]
 
 export function getBuildPage(slug: string): BuildPage | undefined {

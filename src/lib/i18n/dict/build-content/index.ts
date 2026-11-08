@@ -26,3 +26,8 @@ const ALL_CONTENT: Record<Locale, Record<string, TranslatedBuildPage>> = {
 export function getTranslatedBuildPage(slug: string, locale: Locale): TranslatedBuildPage | undefined {
   return ALL_CONTENT[locale]?.[slug] ?? ALL_CONTENT.en[slug]
 }
+
+/** True only when a real translation exists for this locale. The English fallback above is not a translation. */
+export function hasBuildTranslation(slug: string, locale: Locale): boolean {
+  return !!ALL_CONTENT[locale]?.[slug]
+}

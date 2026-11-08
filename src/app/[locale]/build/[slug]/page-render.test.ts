@@ -4,7 +4,7 @@ import { createElement } from 'react'
 import LocalizedBuildPage, { generateMetadata } from './page'
 import { BUILD_PAGES } from '@/app/build/data'
 import { NON_ENGLISH_LOCALES } from '@/lib/i18n/locales'
-import { getTranslatedBuildPage } from '@/lib/i18n/dict/build-content'
+import { getTranslatedBuildPage, hasBuildTranslation } from '@/lib/i18n/dict/build-content'
 
 // Mirrors src/app/build/build-pages-render.test.ts but for the locale-prefixed
 // route: renders every /[locale]/build/[slug] combination and checks the
@@ -18,7 +18,7 @@ function expectRendered(html: string, text: string, label: string) {
 
 describe('locale build page render integrity', () => {
   for (const locale of NON_ENGLISH_LOCALES) {
-    for (const p of BUILD_PAGES) {
+    for (const p of BUILD_PAGES.filter(x => hasBuildTranslation(x.slug, locale))) {
       it(`${locale}/${p.slug}: renders translated content, valid JSON-LD, and correct metadata`, async () => {
         const content = getTranslatedBuildPage(p.slug, locale)!
         const el = await LocalizedBuildPage({ params: Promise.resolve({ locale, slug: p.slug }) })
@@ -45,6 +45,15 @@ describe('locale build page render integrity', () => {
       })
     }
   }
+
+  it('pages with no translation yet are not served under a locale (English text under /hi/ would be a thin duplicate)', async () => {
+    const untranslated = BUILD_PAGES.filter(p => NON_ENGLISH_LOCALES.some(l => !hasBuildTranslation(p.slug, l)))
+    expect(untranslated.length).toBeGreaterThan(0)
+    for (const p of untranslated) for (const l of NON_ENGLISH_LOCALES.filter(l => !hasBuildTranslation(p.slug, l))) {
+      expect(await generateMetadata({ params: Promise.resolve({ locale: l, slug: p.slug }) })).toEqual({})
+      await expect(LocalizedBuildPage({ params: Promise.resolve({ locale: l, slug: p.slug }) })).rejects.toThrow()
+    }
+  })
 
   it('404s (empty metadata + notFound) for locale=en', async () => {
     const meta = await generateMetadata({ params: Promise.resolve({ locale: 'en', slug: BUILD_PAGES[0].slug }) })

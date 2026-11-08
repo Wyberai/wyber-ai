@@ -8,7 +8,7 @@ import { NON_ENGLISH_LOCALES, isLocale, type Locale } from '@/lib/i18n/locales'
 import { localeAlternates, localePath } from '@/lib/i18n/hreflang'
 import { getT } from '@/lib/i18n/getT'
 import { BUILD_TEMPLATE_STRINGS } from '@/lib/i18n/dict/build-template'
-import { getTranslatedBuildPage } from '@/lib/i18n/dict/build-content'
+import { getTranslatedBuildPage, hasBuildTranslation } from '@/lib/i18n/dict/build-content'
 
 // Locale-prefixed sibling of app/build/[slug]/page.tsx — see that file's
 // English version for the canonical (unprefixed) route. Only 'hi'|'kn'|'te'|'ta'
@@ -20,12 +20,12 @@ import { getTranslatedBuildPage } from '@/lib/i18n/dict/build-content'
 // from dict/build-template via BUILD_TEMPLATE_STRINGS.
 
 export function generateStaticParams() {
-  return NON_ENGLISH_LOCALES.flatMap(locale => BUILD_PAGES.map(p => ({ locale, slug: p.slug })))
+  return NON_ENGLISH_LOCALES.flatMap(locale => BUILD_PAGES.filter(p => hasBuildTranslation(p.slug, locale)).map(p => ({ locale, slug: p.slug })))
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params
-  if (!isLocale(locale) || locale === 'en') return {}
+  if (!isLocale(locale) || locale === 'en' || !hasBuildTranslation(slug, locale)) return {}
   const page = getBuildPage(slug)
   const content = getTranslatedBuildPage(slug, locale)
   if (!page || !content) return {}
@@ -53,7 +53,7 @@ const CATEGORY_KEY: Record<BuildCategory, string> = {
 
 export default async function LocalizedBuildPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params
-  if (!isLocale(locale) || locale === 'en') notFound()
+  if (!isLocale(locale) || locale === 'en' || !hasBuildTranslation(slug, locale)) notFound()
   const page = getBuildPage(slug)
   const content = getTranslatedBuildPage(slug, locale)
   if (!page || !content) notFound()
