@@ -55,3 +55,11 @@ Files: `ChatPanel.tsx`, `VoiceButton.tsx`, `MobileLayout.tsx`, `agent-team/*`, `
 - **Already existed, left alone:** the agent feed, turn receipt, checkpoints and restore, retry, edit, queue, plan mode, `@file`, voice.
 - **Review harness:** `/dev/chat` renders the real panel with fake data (`?state=generating|nocredits|empty`, `?w=full`). It only exists when `NEXT_PUBLIC_DEV_SANDBOX=1` is set; in a normal build it redirects to login. Run it with `NEXT_PUBLIC_DEV_SANDBOX=1 npx next dev -p 3100`.
 - **Not done:** per-turn undo (the header's checkpoint control already covers restore), a "fix it" cost label on Retry (the real cost depends on build size, so I did not state one), and the rest of the editor screens (preview, file tree, settings panels), which were not reviewed.
+
+## Editor shell pass (beyond the chat panel)
+
+Reviewed with the `/dev/editor` harness (fake project; `?m=1` for the phone layout). Same flag as `/dev/chat`.
+
+- **Before:** no landmarks, no headings, no `aria-*` anywhere in the shell; the 18-icon right rail did not say which panel was open; the panel divider worked with a mouse only; 10 to 11px text in the top bar, preview, tabs, publish and history; the phone top bar wrapped "Invoice tracker", "Export code" and "100 credits" onto two lines each.
+- **Now:** banner, main (preview), complementary (assistant and tools), navigation (panel rail, `aria-current` on the open one) and a region plus an `h2` per panel. The divider is a keyboard-resizable separator (arrow keys, Shift for bigger steps) with a wider hit area. Chrome text is at least 12px (11px for the small uppercase labels). The phone top bar is one line: the project name truncates, export is icon-only, the MOBILE badge is hidden, and credits read "100 cr" at readable contrast. On touch screens, editor buttons are at least 40px.
+- **Not done:** the panels inside the rail (security, payments, connectors, SEO, analytics and so on) were not reviewed one by one; the file tree and code editor were not exercised with real files in the harness; no screen-reader test.

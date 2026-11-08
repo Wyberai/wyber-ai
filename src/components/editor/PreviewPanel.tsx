@@ -713,32 +713,32 @@ Change requested: ${editInstruction.trim()}`
       {/* Toolbar */}
       <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 8, borderBottom: '1px solid var(--ide-border, rgba(255,255,255,0.06))', background: 'var(--bg-surface, #111118)', flexShrink: 0 }}>
         <div style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: (building || fixing || (error && !healFailed)) ? '#f59e0b' : healFailed ? '#ef4444' : html ? '#22c55e' : '#3f3f46', boxShadow: html && !error ? '0 0 6px rgba(34,197,94,0.4)' : (building || fixing || (error && !healFailed)) ? '0 0 6px rgba(245,158,11,0.4)' : 'none', transition: 'all 0.3s', animation: (fixing || (error && !healFailed)) ? 'pulse 1s ease infinite' : 'none' }} />
-        <span style={{ flex: 1, fontSize: 11, color: 'var(--ide-text3, #52525b)', fontFamily: 'var(--brand-mono, monospace)' }}>
+        <span style={{ flex: 1, fontSize: 12, color: 'var(--ide-text3, #52525b)', fontFamily: 'var(--brand-mono, monospace)' }}>
           {/* Auto-fix is presented as a normal build step — never surfaced as "self-healing"
               or a build error unless it genuinely can't recover (healFailed). */}
           {isGenerating ? t('writingLabel') : building ? `${messages[msgIdx]} (${seconds}s)` : (fixing || (error && !healFailed)) ? messages[msgIdx] : healFailed ? t('buildFailedFallback') : elapsed ? `${t('builtInPrefix')}${elapsed}s` : hasApp ? t('readyLabel') : t('describeToBuildLabel')}
         </span>
         {html && !building && !error && (
           <button onClick={toggleEditMode} title={t('selectElementTitle')}
-            style={{ background: editMode ? 'rgba(14,165,233,0.15)' : 'none', border: `1px solid ${editMode ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, color: editMode ? '#0EA5E9' : '#52525b', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+            style={{ background: editMode ? 'rgba(14,165,233,0.15)' : 'none', border: `1px solid ${editMode ? 'rgba(14,165,233,0.4)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 5, color: editMode ? '#0EA5E9' : '#52525b', cursor: 'pointer', padding: '2px 10px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
             {editMode ? t('selectingLabel') : t('selectLabel')}
           </button>
         )}
         {html && !building && (
           <button onClick={() => build(true)} title={t('rebuildTitle')}
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11 }}>&#8634;</button>
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 12 }}>&#8634;</button>
         )}
         {/* Bundler toggle — server-side is default; WASM is the fallback */}
         <button onClick={toggleBeta} title={betaBundler ? 'Using server bundler — click to switch to in-browser WASM' : 'Using WASM bundler — click to switch back to server'}
-          style={{ background: !betaBundler ? 'rgba(245,158,11,0.1)' : 'none', border: `1px solid ${!betaBundler ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 5, color: !betaBundler ? '#fbbf24' : '#3f3f46', cursor: 'pointer', padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '0.03em' }}>
+          style={{ background: !betaBundler ? 'rgba(245,158,11,0.1)' : 'none', border: `1px solid ${!betaBundler ? 'rgba(245,158,11,0.35)' : 'rgba(255,255,255,0.07)'}`, borderRadius: 5, color: !betaBundler ? '#fbbf24' : '#3f3f46', cursor: 'pointer', padding: '2px 8px', fontSize: 12, fontWeight: 700, letterSpacing: '0.03em' }}>
           {!betaBundler ? '⚠ WASM' : '⚡'}
         </button>
         {/* Real <a>, not window.open: mobile browsers' popup blockers silently
             swallow window.open, which is why "open in new tab" never worked. */}
         {html && !building && !error && (
           <a href={html} target="_blank" rel="noopener noreferrer" title={t('openNewTabTitle')}
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 11, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, color: '#52525b', cursor: 'pointer', padding: '2px 8px', fontSize: 12, textDecoration: 'none', lineHeight: '15px' }}>&#8599;</a>
         )}
         {/* Desktop / Mobile view toggle — only once a preview exists */}
         {html && !building && !error && (
@@ -755,7 +755,7 @@ Change requested: ${editInstruction.trim()}`
             </div>
             {viewMode === 'mobile' && (
               <select value={previewDeviceId} onChange={e => setPreviewDeviceId(e.target.value)}
-                style={{ background: '#1a1a22', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 10, padding: '2px 4px', cursor: 'pointer', outline: 'none', maxWidth: 120 }}>
+                style={{ background: '#1a1a22', color: '#d4d4d8', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 5, fontSize: 12, padding: '2px 4px', cursor: 'pointer', outline: 'none', maxWidth: 120 }}>
                 {DEVICES.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             )}
@@ -763,7 +763,7 @@ Change requested: ${editInstruction.trim()}`
         )}
         {hasApp && !building && !html && !error && (
           <button onClick={() => build(true)}
-            style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 11, fontWeight: 600 }}>
+            style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.3)', borderRadius: 5, color: '#0EA5E9', cursor: 'pointer', padding: '2px 10px', fontSize: 12, fontWeight: 600 }}>
             {t('buildPreviewBtn')}
           </button>
         )}
@@ -772,13 +772,13 @@ Change requested: ${editInstruction.trim()}`
       {/* Paused-database banner — Supabase free projects pause after ~1 week
           of inactivity; without this the app just silently stops persisting. */}
       {hasSupabaseConn && dbHealth === 'paused' && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 12, color: '#fecaca' }}>
           <span>{t('dbPausedPre')}<strong>{t('dbPausedWord')}</strong>{t('dbPausedPost')}</span>
-          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>{t('restoreNowBtn')}</button>
+          <button onClick={restoreDb} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}>{t('restoreNowBtn')}</button>
         </div>
       )}
       {hasSupabaseConn && dbHealth === 'restoring' && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
           <div style={{ width: 11, height: 11, border: '2px solid rgba(251,191,36,0.25)', borderTopColor: '#fbbf24', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
           <span>{t('restoringDbMsg')}</span>
         </div>
@@ -790,11 +790,11 @@ Change requested: ${editInstruction.trim()}`
           Reload just re-navigates the iframe to the same build (cheap); if
           the loop is in the code itself, Rebuild/self-heal is the next step. */}
       {hung && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 11, color: '#fecaca' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.92)', borderBottom: '1px solid rgba(248,113,113,0.25)', fontSize: 12, color: '#fecaca' }}>
           <span>{t('hungPre')}<strong>{t('hungWord')}</strong>{t('hungPost')}</span>
           <button
             onClick={() => { setHung(false); lastHeartbeat.current = Date.now(); if (iframeRef.current && html) iframeRef.current.src = html }}
-            style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
+            style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: 'pointer', fontSize: 12, fontWeight: 700, whiteSpace: 'nowrap', padding: '4px 12px' }}
           >{t('reloadPreviewBtn')}</button>
         </div>
       )}
@@ -803,7 +803,7 @@ Change requested: ${editInstruction.trim()}`
           touches `error`/the preview; the app itself keeps running exactly as
           it would have without this banner. */}
       {corsNotice && (
-        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+        <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
           <span>{t('corsPre')}{corsNotice.url ? <code style={{ background: 'rgba(0,0,0,0.2)', padding: '1px 5px', borderRadius: 4 }}>{corsNotice.url}</code> : t('corsExternalApiFallback')}{t('corsPost')}</span>
           <button onClick={() => setCorsNotice(null)} style={{ background: 'none', border: 'none', color: '#fef3c7', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 4px', opacity: 0.7 }}>&times;</button>
         </div>
@@ -822,9 +822,9 @@ Change requested: ${editInstruction.trim()}`
         const hasBackend = allContent.includes('supabase') || allContent.includes('createClient') || allContent.includes('firebase') || allContent.includes('/api/public/cloud-insert') || allContent.includes('wyber-store')
         if (!hasData || hasBackend) return null
         return (
-          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 11, color: '#fef3c7' }}>
+          <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(120,53,15,0.9)', borderBottom: '1px solid rgba(251,191,36,0.2)', fontSize: 12, color: '#fef3c7' }}>
             <span>{t('storageWarning')}</span>
-            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>{t('connectSupabaseBtn')}</button>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-supabase'))} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', padding: 0 }}>{t('connectSupabaseBtn')}</button>
           </div>
         )
       })()}
@@ -832,8 +832,8 @@ Change requested: ${editInstruction.trim()}`
       {/* Visual-edit inspector card — direct source edits, 0 credits */}
       {editMode && selectedEl && (
         <div style={{ padding: '10px 12px', background: 'rgba(14,165,233,0.05)', borderBottom: '1px solid var(--brand-border-accent, rgba(14,165,233,0.2))', display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0, maxHeight: 260, overflowY: 'auto' }}>
-          <div style={{ fontSize: 11, color: 'var(--brand-accent, #0EA5E9)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 11 }}>&lt;{selectedEl.tag}&gt;</code>
+          <div style={{ fontSize: 12, color: 'var(--brand-accent, #0EA5E9)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <code style={{ background: 'rgba(14,165,233,0.12)', padding: '1px 6px', borderRadius: 4, fontSize: 12 }}>&lt;{selectedEl.tag}&gt;</code>
             <MicroLabel style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none' }}>
               {selectedEl.loc ?? selectedEl.selector}
             </MicroLabel>
@@ -853,7 +853,7 @@ Change requested: ${editInstruction.trim()}`
                 style={{ flex: 1, background: 'var(--bg-elevated, #18181b)', border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', borderRadius: 7, color: 'var(--ide-text, #fafafa)', fontSize: 12, padding: '6px 10px', outline: 'none' }}
               />
               <button onClick={applyText} disabled={textDraft === selectedEl.text}
-                style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
+                style={{ background: textDraft !== selectedEl.text ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: textDraft !== selectedEl.text ? 'pointer' : 'not-allowed' }}>
                 {t('setTextBtn')}
               </button>
             </div>
@@ -878,8 +878,8 @@ Change requested: ${editInstruction.trim()}`
             {([['text-size', 'sizeLabel'], ['p', 'padLabel'], ['rounded', 'radiusLabel']] as const).map(([family, labelKey]) => (
               <span key={family} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                 <MicroLabel>{t(labelKey)}</MicroLabel>
-                <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>−</button>
-                <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 11, lineHeight: 1, padding: 0 }}>+</button>
+                <button onClick={() => applyStep(family, -1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>−</button>
+                <button onClick={() => applyStep(family, 1)} style={{ width: 18, height: 18, borderRadius: 4, border: '1px solid var(--ide-border, rgba(255,255,255,0.1))', background: 'transparent', color: 'var(--ide-text2, #a1a1aa)', cursor: 'pointer', fontSize: 12, lineHeight: 1, padding: 0 }}>+</button>
               </span>
             ))}
           </div>
@@ -895,14 +895,14 @@ Change requested: ${editInstruction.trim()}`
             />
             <button onClick={sendAiEdit} disabled={!editInstruction.trim()}
               title={t('aiEditRateTitle')}
-              style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 11, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
+              style={{ background: editInstruction.trim() ? 'var(--brand-accent, #0EA5E9)' : 'var(--bg-overlay, #27272a)', color: 'white', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: editInstruction.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap' }}>
               {t('aiEditPrefix')}{creditCost('small-edit', 'fast')}cr
             </button>
           </div>
         </div>
       )}
       {editMode && !selectedEl && selectionConsumer !== 'wyberman' && (
-        <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 11, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
+        <div style={{ padding: '7px 12px', background: 'rgba(14,165,233,0.06)', borderBottom: '1px solid rgba(14,165,233,0.2)', fontSize: 12, color: '#0EA5E9', flexShrink: 0, textAlign: 'center' }}>
           {t('clickToEditHint')}
         </div>
       )}
@@ -948,24 +948,24 @@ Change requested: ${editInstruction.trim()}`
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
             <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{messages[msgIdx]}</div>
-            <div style={{ fontSize: 11, color: '#52525b' }}>Building your app…</div>
+            <div style={{ fontSize: 12, color: '#52525b' }}>Building your app…</div>
           </div>
         )}
         {(building || fixing || (error && !healFailed)) && !isGenerating && html && (
           <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
             <div style={{ width: 12, height: 12, border: '2px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <span style={{ fontSize: 11, color: '#e4e4e7', fontWeight: 600 }}>Updating preview…</span>
+            <span style={{ fontSize: 12, color: '#e4e4e7', fontWeight: 600 }}>Updating preview…</span>
           </div>
         )}
 
         {/* Heal gave up but a previous build works — keep that on screen and
             surface the failure as a strip instead of nuking the preview. */}
         {error && !building && healFailed && revertedToGood && (
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.94)', borderBottom: '1px solid rgba(248,113,113,0.3)', fontSize: 11, color: '#fecaca', zIndex: 7 }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '6px 12px', background: 'rgba(127,29,29,0.94)', borderBottom: '1px solid rgba(248,113,113,0.3)', fontSize: 12, color: '#fecaca', zIndex: 7 }}>
             <span>⚠ The latest update didn&apos;t build — showing your last working preview.</span>
             <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <button onClick={tryToFix} disabled={fixing} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: fixing ? 'wait' : 'pointer', fontSize: 11, fontWeight: 700, padding: '3px 10px' }}>{fixing ? 'Fixing…' : 'Try to fix'}</button>
-              <button onClick={() => build(true)} style={{ background: 'none', border: '1px solid rgba(254,202,202,0.35)', borderRadius: 6, color: '#fecaca', cursor: 'pointer', fontSize: 11, fontWeight: 600, padding: '3px 10px' }}>Retry</button>
+              <button onClick={tryToFix} disabled={fixing} style={{ background: '#ef4444', border: 'none', borderRadius: 6, color: 'white', cursor: fixing ? 'wait' : 'pointer', fontSize: 12, fontWeight: 700, padding: '3px 10px' }}>{fixing ? 'Fixing…' : 'Try to fix'}</button>
+              <button onClick={() => build(true)} style={{ background: 'none', border: '1px solid rgba(254,202,202,0.35)', borderRadius: 6, color: '#fecaca', cursor: 'pointer', fontSize: 12, fontWeight: 600, padding: '3px 10px' }}>Retry</button>
             </div>
           </div>
         )}
@@ -976,7 +976,7 @@ Change requested: ${editInstruction.trim()}`
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
             </div>
             <div style={{ fontSize: 13, color: '#a1a1aa', textAlign: 'center', fontWeight: 600 }}>This build hit an error</div>
-            <div style={{ fontSize: 11, color: '#71717a', textAlign: 'center', maxWidth: 420, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 120, overflow: 'auto', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 6 }}>{error.slice(0, 400)}</div>
+            <div style={{ fontSize: 12, color: '#71717a', textAlign: 'center', maxWidth: 420, fontFamily: 'monospace', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxHeight: 120, overflow: 'auto', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: 6 }}>{error.slice(0, 400)}</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={tryToFix} disabled={fixing}
                 style={{ padding: '8px 20px', borderRadius: 8, border: 'none', background: fixing ? 'var(--bg-elevated)' : '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 700, cursor: fixing ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1012,7 +1012,7 @@ Change requested: ${editInstruction.trim()}`
               {/* Status bar */}
               <div style={{ position: 'absolute', top: PHONE_BEZEL, left: PHONE_BEZEL, right: PHONE_BEZEL, height: previewDevice.insets.top, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', paddingTop: 4, fontSize: 13, fontWeight: 600, color: previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B', pointerEvents: 'none', zIndex: 9 }}>
                 <span>{previewDevice.os === 'ios' ? '9:41' : '12:30'}</span>
-                <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 11 }}>
+                <span style={{ display: 'flex', gap: 4, alignItems: 'center', fontSize: 12 }}>
                   <span>●●●</span>
                   <span>{previewDevice.os === 'ios' ? 'ᯤ' : 'WiFi'}</span>
                   <span style={{ display: 'inline-block', width: 22, height: 11, border: `1.5px solid ${previewDevice.statusBar === 'light' ? '#fff' : '#0A0A0B'}`, borderRadius: 3, position: 'relative' }}>

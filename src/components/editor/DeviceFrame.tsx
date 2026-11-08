@@ -123,8 +123,8 @@ export function DeviceFrame({ device, js, platform }: Props) {
                 <div style={{ fontSize: 12, color: '#9A9AA5', lineHeight: 1.5, maxWidth: 240 }}>{t('deviceFramePreviewUnavailableHint')}</div>
                 {runtimeError.message && (
                   <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(0,0,0,0.35)', borderRadius: 8, maxWidth: 260, textAlign: 'left' }}>
-                    <div style={{ fontFamily: 'monospace', fontSize: 10, color: '#ff8a8a', wordBreak: 'break-word', lineHeight: 1.5 }}>{runtimeError.message}</div>
-                    {runtimeError.detail && <div style={{ fontFamily: 'monospace', fontSize: 9, color: '#6b7280', marginTop: 4, wordBreak: 'break-word', maxHeight: 80, overflow: 'hidden' }}>{runtimeError.detail}</div>}
+                    <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#ff8a8a', wordBreak: 'break-word', lineHeight: 1.5 }}>{runtimeError.message}</div>
+                    {runtimeError.detail && <div style={{ fontFamily: 'monospace', fontSize: 12, color: '#6b7280', marginTop: 4, wordBreak: 'break-word', maxHeight: 80, overflow: 'hidden' }}>{runtimeError.detail}</div>}
                   </div>
                 )}
               </div>
@@ -140,7 +140,7 @@ export function DeviceFrame({ device, js, platform }: Props) {
             ) : (
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
                 <div style={{ width: 24, height: 24, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                <div style={{ fontSize: 11, color: '#52525b' }}>{t('deviceFrameLoadingPreview')}</div>
+                <div style={{ fontSize: 12, color: '#52525b' }}>{t('deviceFrameLoadingPreview')}</div>
               </div>
             )}
 
@@ -153,7 +153,7 @@ export function DeviceFrame({ device, js, platform }: Props) {
               fontFamily: '-apple-system, system-ui, sans-serif',
             }}>
               <span>{device.os === 'ios' ? '9:41' : '12:30'}</span>
-              <span style={{ display: 'flex', gap: 5, alignItems: 'center', fontSize: 11 }}>
+              <span style={{ display: 'flex', gap: 5, alignItems: 'center', fontSize: 12 }}>
                 <span>●●●</span>
                 <span>{device.os === 'ios' ? 'ᯤ' : 'Wi-Fi'}</span>
                 <span style={{ display: 'inline-block', width: 22, height: 11, border: `1px solid ${statusColor}`, borderRadius: 3, position: 'relative' }}>

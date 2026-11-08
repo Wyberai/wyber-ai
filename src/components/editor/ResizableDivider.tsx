@@ -48,6 +48,14 @@ export function ResizableDivider({ onResize, direction = 'horizontal' }: Props) 
     <div
       ref={dividerRef}
       onMouseDown={handleMouseDown}
+      role="separator" aria-orientation={direction === 'horizontal' ? 'vertical' : 'horizontal'} aria-label="Resize panels" tabIndex={0}
+      onKeyDown={e => {
+        const step = e.shiftKey ? 64 : 16;
+        const back = direction === 'horizontal' ? 'ArrowLeft' : 'ArrowUp';
+        const fwd = direction === 'horizontal' ? 'ArrowRight' : 'ArrowDown';
+        if (e.key === back) { e.preventDefault(); onResize(-step); }
+        if (e.key === fwd) { e.preventDefault(); onResize(step); }
+      }}
       style={{
         width: isH ? 4 : '100%',
         height: isH ? '100%' : 4,
@@ -73,7 +81,7 @@ export function ResizableDivider({ onResize, direction = 'horizontal' }: Props) 
         }),
         background: 'var(--border-light)', borderRadius: 2,
       }} />
-      <style>{`.divider:hover { background: var(--accent-dim) !important; }`}</style>
+      <style>{`.divider:hover, .divider:focus-visible { background: var(--accent-dim) !important; outline: none; } .divider::after { content: ''; position: absolute; inset: 0 -6px; }`}</style>
     </div>
   );
 }

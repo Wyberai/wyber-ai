@@ -87,10 +87,10 @@ export function VersionHistory({ projectId }: { projectId: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--bg-base)' }}>
       <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--ide-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('rpTabHistoryLabel')}</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('rpTabHistoryLabel')}</div>
         {!naming && (
           <button onClick={() => setNaming(true)} disabled={saving || Object.keys(files).length < 2}
-            style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: saving ? 'rgba(14,165,233,0.1)' : 'transparent', color: saving ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ padding: '4px 10px', borderRadius: 6, border: '1px solid var(--ide-border)', background: saving ? 'rgba(14,165,233,0.1)' : 'transparent', color: saving ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             {saving ? `✓ ${tc('saved')}` : t('vhSaveSnapshotBtn')}
           </button>
         )}
@@ -108,8 +108,8 @@ export function VersionHistory({ projectId }: { projectId: string }) {
             style={{ background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 7, color: 'var(--ide-text)', fontSize: 12, padding: '8px 11px', outline: 'none', fontFamily: 'inherit' }}
           />
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('save')}</button>
-            <button onClick={() => { setNaming(false); setLabelInput('') }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>{tc('cancel')}</button>
+            <button onClick={saveVersion} style={{ flex: 1, padding: '6px', borderRadius: 6, border: 'none', background: '#0EA5E9', color: 'white', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{tc('save')}</button>
+            <button onClick={() => { setNaming(false); setLabelInput('') }} style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{tc('cancel')}</button>
           </div>
         </div>
       )}
@@ -128,17 +128,17 @@ export function VersionHistory({ projectId }: { projectId: string }) {
           return (
           <div key={v.id} style={{ padding: '10px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-surface)', marginBottom: 6 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>{v.label}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>
               {new Date(v.created_at).toLocaleString()} · {Object.keys(v.files || {}).length} {t('vhFilesWord')}
               {changed > 0 && <> · {changed} different from current</>}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={() => setPreviewing(v)}
-                style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: 'transparent', color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 Preview
               </button>
               <button onClick={() => restore(v)} disabled={restoring === v.id}
-                style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: restoring === v.id ? 'rgba(14,165,233,0.1)' : 'transparent', color: restoring === v.id ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ flex: 1, padding: '5px', borderRadius: 6, border: '1px solid var(--ide-border)', background: restoring === v.id ? 'rgba(14,165,233,0.1)' : 'transparent', color: restoring === v.id ? '#0EA5E9' : 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {restoring === v.id ? t('vhRestoredLabel') : t('vhRestoreBtn')}
               </button>
             </div>

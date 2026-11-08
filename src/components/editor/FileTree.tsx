@@ -96,8 +96,8 @@ function TreeItem({ node, depth = 0 }: { node: TreeNode; depth?: number }) {
           }}
           className="file-tree-row"
         >
-          <span style={{ fontSize: 9, opacity: 0.6, width: 10 }}>{open ? '▼' : '▶'}</span>
-          <span style={{ fontSize: 10, opacity: 0.5 }}>📁</span>
+          <span style={{ fontSize: 12, opacity: 0.6, width: 10 }}>{open ? '▼' : '▶'}</span>
+          <span style={{ fontSize: 12, opacity: 0.5 }}>📁</span>
           <span>{node.name}</span>
         </div>
         {open && node.children?.map(child => (
@@ -123,7 +123,7 @@ function TreeItem({ node, depth = 0 }: { node: TreeNode; depth?: number }) {
       }}
       className="file-tree-row"
     >
-      <span style={{ fontSize: 9, fontWeight: 700, color, minWidth: 16, textAlign: 'center', fontFamily: 'monospace' }}>
+      <span style={{ fontSize: 12, fontWeight: 700, color, minWidth: 16, textAlign: 'center', fontFamily: 'monospace' }}>
         {icon}
       </span>
       <span style={{ flex: 1 }}>{node.name}</span>
@@ -144,7 +144,7 @@ export function FileTree() {
     <div style={{ height: '100%', overflow: 'auto', paddingTop: 4 }}>
       {/* Project name header */}
       <div style={{
-        padding: '8px 12px', fontSize: 11, fontWeight: 600,
+        padding: '8px 12px', fontSize: 12, fontWeight: 600,
         color: 'var(--text-muted)', textTransform: 'uppercase',
         letterSpacing: '0.08em', display: 'flex', alignItems: 'center',
         justifyContent: 'space-between',

@@ -99,27 +99,27 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
               {url.replace('https://', '')}
             </a>
           </div>
-          <button onClick={copyUrl} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+          <button onClick={copyUrl} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
             {copied ? `✓ ${tc('copied')}` : tc('copy')}
           </button>
         </div>
-        <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.5 }}>
+        <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>
           {t('pbInstallHintPrefix')} <strong style={{ color: 'var(--text2)' }}>{t('pbInstallAppLabel')}</strong>
         </div>
 
         {/* Post-publish share — turn every live build into reach + referrals */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 2, padding: '9px 10px', borderRadius: 8, background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.18)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text2)' }}>{t('pbLiveShareHeading')}</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)' }}>{t('pbLiveShareHeading')}</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => openShare('x')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('pbShareOnX')}</button>
-            <button onClick={() => openShare('linkedin')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('pbShareOnLinkedin')}</button>
+            <button onClick={() => openShare('x')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('pbShareOnX')}</button>
+            <button onClick={() => openShare('linkedin')} style={{ flex: 1, padding: '6px 8px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg2)', color: 'var(--text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>{t('pbShareOnLinkedin')}</button>
           </div>
-          <button onClick={copyInvite} style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'none', color: invCopied ? '#34D399' : 'var(--text3)', fontSize: 10.5, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+          <button onClick={copyInvite} style={{ padding: '5px 8px', borderRadius: 7, border: 'none', background: 'none', color: invCopied ? '#34D399' : 'var(--text3)', fontSize: 12.5, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
             {invCopied ? t('pbInviteCopiedLabel') : t('pbCopyInviteLabel')}
           </button>
         </div>
 
-        <button onClick={unpublish} disabled={loading} style={{ fontSize: 11, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', textAlign: 'left', fontFamily: 'inherit' }}>
+        <button onClick={unpublish} disabled={loading} style={{ fontSize: 12, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0', textAlign: 'left', fontFamily: 'inherit' }}>
           {loading ? t('pbUnpublishingBtn') : t('pbUnpublishBtn')}
         </button>
       </div>
@@ -131,17 +131,17 @@ export function PublishButton({ projectId, publishedUrl, onPublish, onUnpublish 
       <button onClick={() => publish()} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 9, background: 'var(--sky)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: loading ? 'wait' : 'pointer', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}>
         {loading ? tc('publishing') : t('pbPublishToWebBtn')}
       </button>
-      {error && <p style={{ color: '#EF4444', fontSize: 11, marginTop: 6 }}>{error}</p>}
+      {error && <p style={{ color: '#EF4444', fontSize: 12, marginTop: 6 }}>{error}</p>}
       {block && (
         <div style={{ marginTop: 8, padding: '10px 12px', borderRadius: 8, border: '1px solid rgba(240,82,75,0.35)', background: 'rgba(240,82,75,0.07)' }}>
           <div style={{ fontSize: 12, color: '#F0524B', fontWeight: 600, marginBottom: 4 }}>{t('pbPublishBlockedHeading')}</div>
-          <div style={{ fontSize: 11, color: 'var(--text2)', lineHeight: 1.5, marginBottom: block.tables.length ? 6 : 8 }}>{block.message}</div>
+          <div style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5, marginBottom: block.tables.length ? 6 : 8 }}>{block.message}</div>
           {block.tables.length > 0 && (
-            <div style={{ fontSize: 11, color: 'var(--text2)', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 8 }}>
               {block.tables.length === 1 ? t('pbLeakingTableSingular') : t('pbLeakingTablePlural')}: <strong style={{ color: '#F0524B' }}>{block.tables.join(', ')}</strong>. {t('pbOpenSecurityPrefix')} <strong>{t('rpTabSecurityLabel')}</strong> {t('pbOpenSecuritySuffix')}
             </div>
           )}
-          <button onClick={() => publish(true)} disabled={loading} style={{ fontSize: 11, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text3)', cursor: 'pointer', fontFamily: 'inherit' }}>
+          <button onClick={() => publish(true)} disabled={loading} style={{ fontSize: 12, padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text3)', cursor: 'pointer', fontFamily: 'inherit' }}>
             {loading ? tc('publishing') : t('pbPublishAnywayBtn')}
           </button>
         </div>

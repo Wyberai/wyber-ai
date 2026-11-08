@@ -161,11 +161,11 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
   return (
     <div style={{ display: 'flex', height: '100%', background: 'var(--bg-base)', borderLeft: '1px solid var(--ide-border)' }}>
       {/* Icon sidebar */}
-      <div style={{ width: 44, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--ide-border)', background: 'var(--bg-surface)', padding: '8px 0', gap: 2, flexShrink: 0 }}>
+      <div role="navigation" aria-label="Panels" style={{ width: 44, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', borderRight: '1px solid var(--ide-border)', background: 'var(--bg-surface)', padding: '8px 0', gap: 2, flexShrink: 0 }}>
         {TABS.map(tab => {
           const isCloud = tab.id === 'database';
           return (
-          <button key={tab.id} onClick={() => {
+          <button key={tab.id} type="button" aria-label={tab.label} aria-current={active === tab.id ? 'true' : undefined} onClick={() => {
             setActive(tab.id);
             if (tab.id === 'suggestions') {
               setShowSuggestionsBadge(false);
@@ -204,7 +204,7 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
         })}
         <div style={{ flex: 1 }} />
         {onClose && (
-          <button onClick={onClose} title={t('rpClosePanelTitle')}
+          <button type="button" aria-label={t('rpClosePanelTitle')} onClick={onClose} title={t('rpClosePanelTitle')}
             style={{ width: 38, height: 38, borderRadius: 9, border: 'none', background: 'transparent', color: 'var(--ide-text3)', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             ✕
           </button>
@@ -212,7 +212,7 @@ export function RightPanel({ projectId, userId, githubRepo, lastCommitSha, onClo
       </div>
 
       {/* Panel content */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div role="region" aria-label={TABS.find(tab => tab.id === active)?.label ?? 'Panel'} style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <PanelHeader
           icon={active === 'database' ? CLOUD_ICON_ACCENT : TAB_ICONS[active]}
           title={TABS.find(tab => tab.id === active)?.label ?? ''}

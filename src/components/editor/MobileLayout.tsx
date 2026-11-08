@@ -163,7 +163,7 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#09090b', overflow: 'hidden' }}>
       {/* Top bar */}
-      <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#10121a', flexShrink: 0 }}>
+      <div role="banner" style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#10121a', flexShrink: 0 }}>
         <a href="/dashboard" style={{ textDecoration: 'none' }}>
           <WyberLogo markSize={22} wordmarkSize={13} />
         </a>
@@ -181,24 +181,24 @@ export function MobileLayout({ initialProject, initialProfile }: Props) {
           <span
             onClick={() => { setNameInput(displayName); setEditingName(true); }}
             title={t('clickToRenameTitle')}
-            style={{ fontSize: 12, color: '#a1a1aa', fontFamily: 'var(--font-display)', cursor: 'pointer', padding: '1px 4px', borderRadius: 4 }}
+            style={{ fontSize: 13, color: '#a1a1aa', fontFamily: 'var(--font-display)', cursor: 'pointer', padding: '1px 4px', borderRadius: 4, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >{displayName}</span>
         )}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           <button
-            onClick={exportCode}
+            onClick={exportCode} type="button" aria-label="Export code"
             disabled={exporting || !initialProject?.id}
             title="Download the full Expo / React Native source code"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#d4d4d8', cursor: exporting ? 'wait' : 'pointer', fontFamily: 'inherit' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 7, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#d4d4d8', cursor: exporting ? 'wait' : 'pointer', fontFamily: 'inherit' }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-            {exporting ? 'Exporting…' : 'Export code'}
+            {!isNarrow && (exporting ? 'Exporting…' : 'Export code')}
           </button>
-          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', letterSpacing: '0.04em' }}>MOBILE</span>
+          {!isNarrow && <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,165,233,0.12)', color: '#0EA5E9', letterSpacing: '0.04em' }}>MOBILE</span>}
           {initialProfile && (
-            <span style={{ fontSize: 11, color: '#52525b' }}>{initialProfile.credits} credits</span>
+            <span style={{ fontSize: 12, color: '#8391a7', whiteSpace: 'nowrap' }}>{initialProfile.credits} cr</span>
           )}
         </div>
       </div>

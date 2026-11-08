@@ -187,7 +187,7 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
       {isNarrow ? (
         // Narrow: one panel at a time + bottom tab bar (preview is always reachable).
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'flex' : 'none', flexDirection: 'column' }}>
+          <div role="main" aria-label="Preview" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'preview' ? 'flex' : 'none', flexDirection: 'column' }}>
             <PreviewPanel />
           </div>
           <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: mobileView === 'chat' ? 'flex' : 'none', flexDirection: 'column' }}>
@@ -203,7 +203,7 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
           <div style={{ display: 'flex', flexShrink: 0, borderTop: '1px solid var(--ide-border)', background: 'var(--bg-base)' }}>
             {([['chat', t('ideTabChat')], ['preview', tc('preview')]] as const).map(([key, label]) => (
               <button
-                key={key}
+                key={key} type="button" aria-pressed={mobileView === key}
                 onClick={() => setMobileView(key)}
                 style={{
                   flex: 1, padding: '12px 0', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
@@ -224,12 +224,12 @@ export function IDELayout({ initialProject, initialProfile, indiaFeatures = fals
               <div style={{ flex: 1, overflow: 'hidden' }}><CodeEditor /></div>
             </div>
           )}
-          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div role="main" aria-label="Preview" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <PreviewPanel />
           </div>
         </div>
         <ResizableDivider onResize={resizeRight} />
-        <div style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--ide-border)' }}>
+        <div role="complementary" aria-label="Assistant and tools" style={{ width: rightPanelWidth, flexShrink: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--ide-border)' }}>
           <RightPanel
             projectId={initialProject?.id}
             userId={initialProfile?.id}

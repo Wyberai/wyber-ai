@@ -63,7 +63,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
   const S = {
     wrap: { height: '100%', overflow: 'auto', padding: 20, background: 'var(--bg-surface)', fontFamily: 'var(--font-sans)' },
     section: { background: 'var(--bg-elevated)', border: '1px solid var(--ide-border)', borderRadius: 12, padding: 20, marginBottom: 14 },
-    label: { fontSize: 11, fontWeight: 600, color: 'var(--ide-text2)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 8, display: 'block' },
+    label: { fontSize: 12, fontWeight: 600, color: 'var(--ide-text2)', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: 8, display: 'block' },
     input: { width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--ide-border)', background: 'var(--bg-overlay)', color: 'var(--ide-text)', fontSize: 13, outline: 'none', fontFamily: 'var(--font-sans)', transition: 'border-color 0.15s' },
     btn: { padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', fontFamily: 'var(--font-sans)', transition: 'all 0.15s' },
     title: { fontSize: 13, fontWeight: 600, color: 'var(--ide-text)', marginBottom: 14, letterSpacing: '-0.02em' },
@@ -93,7 +93,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
             </button>
           ))}
         </div>
-        <p style={{ fontSize: 11, color: 'var(--ide-text3)', margin: 0 }}>
+        <p style={{ fontSize: 12, color: 'var(--ide-text3)', margin: 0 }}>
           {isPublic ? t('visibilityPublicNote') : t('visibilityPrivateNote')}
         </p>
       </div>
@@ -101,7 +101,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
       {/* Builder type */}
       <div style={S.section}>
         <div style={S.title}>Builder type</div>
-        <p style={{ fontSize: 11, color: 'var(--ide-text3)', marginBottom: 12, marginTop: -6, lineHeight: 1.5 }}>
+        <p style={{ fontSize: 12, color: 'var(--ide-text3)', marginBottom: 12, marginTop: -6, lineHeight: 1.5 }}>
           Changing the type switches the AI system prompt for all future builds in this project.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -111,7 +111,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
               <button key={type} onClick={() => setProjectType(type)}
                 style={{ textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', border: active ? `1px solid ${color}55` : '1px solid var(--ide-border)', background: active ? `${color}18` : 'var(--bg-overlay)', transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: active ? color : 'var(--ide-text)', marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 10.5, color: 'var(--ide-text3)', lineHeight: 1.4 }}>{desc}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ide-text3)', lineHeight: 1.4 }}>{desc}</div>
               </button>
             );
           })}
@@ -123,7 +123,7 @@ export function ProjectSettings({ projectId, userId }: { projectId?: string; use
         <div style={S.section}>
           <div style={S.title}>{t('shareUrlSectionTitle')}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <input style={{ ...S.input, flex: 1, fontSize: 11, color: 'var(--ide-text2)' }} value={shareUrl} readOnly />
+            <input style={{ ...S.input, flex: 1, fontSize: 12, color: 'var(--ide-text2)' }} value={shareUrl} readOnly />
             <button onClick={copyShareUrl} style={{ ...S.btn, background: 'var(--bg-overlay)', color: 'var(--ide-text2)', border: '1px solid var(--ide-border)', padding: '8px 12px' }}>
               {tc('copy')}
             </button>
