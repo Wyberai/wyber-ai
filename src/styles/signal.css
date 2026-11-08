@@ -71,20 +71,20 @@
 @media (max-width: 1060px) { .sg .sg-links, .sg .sg-signin { display: none; } .sg .sg-burger { display: grid; } }
 
 /* ---- hero / question ---- */
-.sg .sg-question { padding: clamp(28px, 6vw, 72px) 0 clamp(40px, 7vw, 90px); text-align: center; }
+.sg .sg-question { padding: clamp(14px, 3vh, 36px) 0 clamp(24px, 5vh, 60px); text-align: center; }
 .sg .sg-eyebrow { display: inline-flex; align-items: center; gap: 10px; justify-content: center; }
 .sg .sg-eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sg-brand); box-shadow: 0 0 14px var(--sg-brand); }
-.sg .sg-question h1 { font-size: clamp(44px, 8.4vw, 112px); margin: 22px auto 0; max-width: 14ch; }
-.sg .sg-lede { color: var(--sg-ink2); margin: 18px auto 0; max-width: 48ch; font-size: clamp(17px, 2vw, 21px); }
-.sg .sg-quick { margin: 30px auto 0; max-width: 680px; display: flex; gap: 8px; padding: 8px; border-radius: 999px; border: 1px solid var(--sg-line); background: var(--sg-card); }
+.sg .sg-question h1 { font-size: clamp(34px, min(5.4vw, 8.6vh), 72px); margin: clamp(10px, 1.8vh, 18px) auto 0; max-width: 24ch; }
+.sg .sg-lede { color: var(--sg-ink2); margin: clamp(8px, 1.4vh, 14px) auto 0; max-width: 48ch; font-size: clamp(16px, 2.1vh, 19px); }
+.sg .sg-quick { margin: clamp(14px, 2.6vh, 26px) auto 0; max-width: 680px; display: flex; gap: 8px; padding: 8px; border-radius: 999px; border: 1px solid var(--sg-line); background: var(--sg-card); }
 .sg .sg-quick input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--sg-ink); font: inherit; font-size: 16px; padding: 10px 16px; }
 .sg .sg-quick input::placeholder { color: var(--sg-ink3); }
 .sg .sg-quick:focus-within { border-color: var(--sg-hot); }
 .sg .sg-note { text-align: center; color: var(--sg-ink3); font-size: 14px; margin-top: 10px; min-height: 20px; }
 
 /* ---- doors ---- */
-.sg .sg-doors { margin-top: clamp(32px, 5vw, 60px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: left; }
-.sg .sg-door { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(300px, 34vw, 440px); padding: 24px; border-radius: 28px; overflow: hidden; isolation: isolate; background: var(--sg-card); border: 1px solid var(--sg-line); color: #e8eef7; text-decoration: none; transition: transform .35s var(--sg-ease), border-color .3s, box-shadow .35s; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
+.sg .sg-doors { margin-top: clamp(16px, 3vh, 32px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: left; }
+.sg .sg-door { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-height: clamp(270px, 36vh, 360px); padding: 20px; border-radius: 28px; overflow: hidden; isolation: isolate; background: var(--sg-card); border: 1px solid var(--sg-line); color: #e8eef7; text-decoration: none; transition: transform .35s var(--sg-ease), border-color .3s, box-shadow .35s; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
 .sg .sg-door video, .sg .sg-door img.sg-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; filter: saturate(1.05) brightness(.7); transition: transform 1.2s var(--sg-ease), filter .6s; }
 .sg .sg-door::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(5, 8, 13, 0) 28%, rgba(5, 8, 13, .9) 82%); }
 .sg .sg-door:hover, .sg .sg-door:focus-visible { transform: translateY(-6px); border-color: rgba(56, 189, 248, .55); box-shadow: 0 30px 80px -30px var(--sg-glow); }
@@ -95,8 +95,8 @@
 .sg .sg-door:hover .sg-go { background: var(--sg-brand); color: #03111c; transform: rotate(-45deg); }
 .sg .sg-door .sg-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 11.5px var(--font-mono, monospace); letter-spacing: .1em; text-transform: uppercase; color: #b6c3d4; }
 .sg .sg-door .sg-meta::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; }
-.sg .sg-door h2 { font-size: clamp(26px, 2.6vw, 36px); color: #fff; }
-.sg .sg-door p { margin-top: 8px; color: #b6c3d4; font-size: 15px; max-width: 34ch; }
+.sg .sg-door h2 { font-size: clamp(22px, 2.2vw, 30px); color: #fff; }
+.sg .sg-door p { margin-top: 8px; color: #b6c3d4; font-size: 14px; max-width: 34ch; }
 @media (max-width: 1100px) { .sg .sg-doors { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 640px) { .sg .sg-doors { grid-template-columns: 1fr; } .sg .sg-door { min-height: 280px; } .sg .sg-quick { border-radius: 24px; flex-direction: column; } .sg .sg-quick .sg-btn { width: 100%; } }
 
