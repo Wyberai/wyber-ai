@@ -284,3 +284,7 @@
 .sg-dash .dash-project-card { transition: border-color .2s, transform .2s; }
 .sg-dash .dash-project-card:hover { border-color: rgba(56, 189, 248, .6) !important; transform: translateY(-2px); }
 @media (prefers-reduced-motion: reduce) { .sg-dash .dash-project-card { transition: none; } .sg-dash .dash-project-card:hover { transform: none; } }
+
+/* Signal tokens scoped to a single block (the shared footer on pages that are not Signal pages) */
+.sg.sg-inline { min-height: 0; }
+.sg .sg-soc { display: flex; gap: 14px; margin-top: 14px; } .sg .sg-soc a { display: inline-block; margin: 0; padding: 8px 0; min-height: 40px; }
