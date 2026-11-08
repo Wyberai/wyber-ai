@@ -27,15 +27,15 @@ const ago = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('en-
 interface Form { id: string | null; contact_id: string; title: string; currency: Currency; valid_until: string; items: QuoteItem[]; scope: string; terms: string }
 const emptyForm = (contact_id = ''): Form => ({ id: null, contact_id, title: '', currency: 'USD', valid_until: '', items: [blankItem()], scope: '', terms: '' })
 
-export default function QuotesClient() {
-  const [quotes, setQuotes] = useState<Quote[]>([])
-  const [contacts, setContacts] = useState<ContactLite[]>([])
-  const [outlines, setOutlines] = useState<Record<string, string>>({})
+export default function QuotesClient({ initial }: { initial?: { quotes?: Quote[]; tablesMissing?: boolean; contacts: ContactLite[]; outlines: Record<string, string> } } = {}) {
+  const [quotes, setQuotes] = useState<Quote[]>(initial?.quotes ?? [])
+  const [contacts, setContacts] = useState<ContactLite[]>(initial?.contacts ?? [])
+  const [outlines, setOutlines] = useState<Record<string, string>>(initial?.outlines ?? {})
   const [form, setForm] = useState<Form | null>(null)
   const [status, setStatus] = useState<QuoteStatus>('draft')
   const [share, setShare] = useState<{ url: string; message: string } | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
-  const [tablesMissing, setTablesMissing] = useState(false)
+  const [tablesMissing, setTablesMissing] = useState(!!initial?.tablesMissing)
 
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(null), 6000) }
 
@@ -46,6 +46,8 @@ export default function QuotesClient() {
   }, [])
 
   useEffect(() => {
+    // The page arrives with its data; only fall back to fetching it if it was opened without any.
+    if (!initial) {
     load()
     api<{ contacts: ContactLite[] }>('GET', '/api/admin/crm/contacts').then(r => { if (r.contacts) setContacts(r.contacts.map(c => ({ id: c.id, name: c.name, company: c.company, phone: c.phone }))) })
     // The proposal agent's outline for each contact, ready to drop into a quote's scope.
@@ -54,9 +56,10 @@ export default function QuotesClient() {
       for (const d of r.drafts ?? []) if (d.agent === 'proposal' && d.contact_id && (d.status === 'pending' || d.status === 'approved')) m[d.contact_id] = d.body
       setOutlines(m)
     })
+    }
     const c = new URLSearchParams(window.location.search).get('contact')
     if (c) setForm(emptyForm(c))
-  }, [load])
+  }, [load, initial])
 
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts])
   const contact = form?.contact_id ? byId.get(form.contact_id) ?? null : null

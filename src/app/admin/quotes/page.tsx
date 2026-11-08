@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { loadQuotesPage } from '@/lib/quotes/load'
 import CompanyNav from '@/components/admin/CompanyNav'
 import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
@@ -13,5 +14,6 @@ export default async function AdminQuotesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/admin/quotes')
   if (!isAdminEmail(user.email)) redirect('/dashboard')
-  return <><CompanyNav /><QuotesClient /></>
+  const initial = await loadQuotesPage(createAdminClient())
+  return <><CompanyNav /><QuotesClient initial={JSON.parse(JSON.stringify(initial))} /></>
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCrmAdmin } from '@/lib/crm/admin-auth'
 import { computeTotal, newToken, validateQuoteInput } from '@/lib/quotes/quote'
+import { loadQuotesList } from '@/lib/quotes/load'
 
 export const dynamic = 'force-dynamic'
 
@@ -8,21 +9,9 @@ export async function GET(req: NextRequest) {
   const { admin } = await getCrmAdmin()
   if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const contactId = req.nextUrl.searchParams.get('contactId')
-  let q = admin.from('crm_quotes').select('*').order('created_at', { ascending: false }).limit(200)
-  if (contactId) {
-    if (!/^[0-9a-f-]{36}$/i.test(contactId)) return NextResponse.json({ error: 'Bad contact id' }, { status: 400 })
-    q = q.eq('contact_id', contactId)
-  }
-  const { data, error } = await q
-  if (error) return NextResponse.json({ error: error.message, tablesMissing: true })
-  // Attach contact names for the list.
-  const ids = [...new Set((data ?? []).map((x: { contact_id: string | null }) => x.contact_id).filter(Boolean))] as string[]
-  const names = new Map<string, string>()
-  if (ids.length) {
-    const c = await admin.from('crm_contacts').select('id, name, company').in('id', ids)
-    for (const r of (c.data ?? []) as { id: string; name: string; company: string | null }[]) names.set(r.id, r.company ? `${r.name} (${r.company})` : r.name)
-  }
-  return NextResponse.json({ quotes: (data ?? []).map((x: { contact_id: string | null }) => ({ ...x, contact_name: x.contact_id ? names.get(x.contact_id) ?? null : null })) })
+  if (contactId && !/^[0-9a-f-]{36}$/i.test(contactId)) return NextResponse.json({ error: 'Bad contact id' }, { status: 400 })
+  const r = await loadQuotesList(admin, contactId ?? undefined)
+  return NextResponse.json('tablesMissing' in r ? { error: r.error, tablesMissing: true } : r)
 }
 
 export async function POST(req: NextRequest) {
