@@ -19,14 +19,14 @@ export function TurnReceipt({ report }: { report: NonNullable<ChatMessage['agent
       {report.agents.map(a => {
         const meta = agentMeta(a.id)
         return (
-          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5 }}>
+          <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5 }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: meta.color, flexShrink: 0 }} />
             <span style={{ fontWeight: 700, color: 'var(--ide-text2)', flexShrink: 0 }}>{meta.name}</span>
             <span style={{ color: 'var(--ide-text3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.summary}</span>
           </div>
         )
       })}
-      <div style={{ fontSize: 10, color: 'var(--ide-text3)', marginTop: 1, display: 'flex', gap: 8 }}>
+      <div style={{ fontSize: 12, color: 'var(--ide-text3)', marginTop: 1, display: 'flex', gap: 8 }}>
         {typeof report.passesUsed === 'number' && report.passesUsed > 0 && <span>{report.passesUsed + 1} {t('passesSuffix')}</span>}
         {typeof report.credits === 'number' && (
           <span>{report.credits} {report.credits === 1 ? t('creditSingular') : t('creditPlural')} {t('wholeTeamOneCharge')}</span>

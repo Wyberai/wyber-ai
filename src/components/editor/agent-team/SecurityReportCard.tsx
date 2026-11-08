@@ -34,7 +34,7 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
         style={{
           width: '100%', display: 'flex', alignItems: 'center', gap: 6,
           padding: '6px 10px', background: 'transparent', border: 'none',
-          cursor: 'pointer', fontSize: 10.5, fontWeight: 600,
+          cursor: 'pointer', fontSize: 12.5, fontWeight: 600,
           color: 'var(--ide-green, #22C55E)', textAlign: 'left',
         }}
       >
@@ -45,12 +45,12 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
       {open && (
         <div style={{ padding: '0 10px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
           {findings.length === 0 && (
-            <span style={{ fontSize: 10.5, color: 'var(--ide-text3)' }}>
+            <span style={{ fontSize: 12.5, color: 'var(--ide-text3)' }}>
               {t('everyFileReviewedDesc')}
             </span>
           )}
           {findings.map((f, i) => (
-            <div key={f.findingId || i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10.5 }}>
+            <div key={f.findingId || i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12.5 }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: SEVERITY_DOT[f.severity] || '#64748b', flexShrink: 0 }} />
               <span style={{ color: 'var(--ide-text2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{f.title}</span>
               {f.status === 'flagged' && (
@@ -60,7 +60,7 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
                   }))}
                   title={t('fillsFixRequestTooltip')}
                   style={{
-                    fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
+                    fontSize: 12.5, fontWeight: 700, padding: '2px 7px', borderRadius: 5,
                     border: '1px solid var(--ide-border)', background: 'transparent',
                     color: 'var(--ide-text2)', cursor: 'pointer', flexShrink: 0,
                   }}
@@ -68,7 +68,7 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
                   {t('askToFix')}
                 </button>
               )}
-              <span style={{ fontSize: 9.5, fontWeight: 700, color: f.status === 'fixed' ? 'var(--ide-green, #22C55E)' : 'var(--ide-text3)', flexShrink: 0 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: f.status === 'fixed' ? 'var(--ide-green, #22C55E)' : 'var(--ide-text3)', flexShrink: 0 }}>
                 {f.status === 'fixed' ? t('fixedBadge') : t('flaggedBadge')}
               </span>
             </div>
@@ -76,7 +76,7 @@ export function SecurityReportCard({ report }: { report: NonNullable<ChatMessage
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('wyber-open-panel-tab', { detail: 'security' }))}
             style={{
-              alignSelf: 'flex-start', marginTop: 2, fontSize: 10, fontWeight: 600,
+              alignSelf: 'flex-start', marginTop: 2, fontSize: 12, fontWeight: 600,
               padding: '3px 9px', borderRadius: 6, border: '1px solid var(--ide-border)',
               background: 'transparent', color: 'var(--ide-text2)', cursor: 'pointer',
             }}

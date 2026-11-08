@@ -395,6 +395,17 @@ const isTextFile = (f: File) => f.type.startsWith('text/') || f.type === 'applic
 const isPdfFile = (f: File) => f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
 const isSpreadsheetFile = (f: File) => /\.xlsx?$/i.test(f.name);
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+// Next-step prompts offered under the latest finished build. They only fill the input box (never send, never spend
+// credits) and are the same for everyone of that project type, so nothing here claims to know the user's project.
+function nextStepsFor(projectType?: string): string[] {
+  switch (projectType) {
+    case 'website': return ['Add a contact form', 'Add a pricing section', 'Improve it for search (SEO)'];
+    case 'mobile': return ['Add a profile screen', 'Add an empty state for each list', 'Make the buttons bigger and easier to tap'];
+    case 'saas': return ['Add a billing page', 'Add team members and roles', 'Add a first-time setup checklist'];
+    default: return ['Add sign-in and user accounts', 'Make it work well on a phone', 'Add a settings page'];
+  }
+}
+
 interface Props { projectId?: string; userId?: string; projectType?: string }
 
 type ModelTier = 'fast' | 'default' | 'premium' | 'fable' | 'gpt';
@@ -476,6 +487,16 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
     }
     return out;
   }, [messages]);
+  // The newest finished build (a message that changed files): the only one that offers next-step chips.
+  const nextStepMsgId = useMemo(() => {
+    for (let i = visibleMessages.length - 1; i >= 0; i--) {
+      const m = visibleMessages[i];
+      if (m.role === 'assistant' && m.status === 'done' && m.filesChanged?.length) return m.id;
+      if (m.role === 'assistant' && m.status === 'streaming') return null;
+    }
+    return null;
+  }, [visibleMessages]);
+  useEffect(() => { setDismissedNext(false); }, [nextStepMsgId]);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
   const [elapsed, setElapsed] = useState(0);
@@ -718,6 +739,8 @@ export function ChatPanel({ projectId, userId, projectType: projectTypeProp }: P
   const listRef = useRef<HTMLDivElement>(null);
   const stuckRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
+  const [feedback, setFeedback] = useState<Record<string, 'up' | 'down' | undefined>>({});
+  const [dismissedNext, setDismissedNext] = useState(false);
   const onListScroll = useCallback(() => {
     const el = listRef.current; if (!el) return;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
@@ -4031,6 +4054,29 @@ SIMPLER VERSION — the user chose a simple build that fits their credits. Build
                           {tc('retry')}
                         </button>
                       )}
+                      {msg.status === 'done' && (
+                        <span role="group" aria-label="Rate this response" style={{ display:'inline-flex', gap:4, marginLeft:'auto' }}>
+                          {(['up','down'] as const).map(v => (
+                            <button key={v} type="button" className="wy-tap wy-act" aria-pressed={feedback[msg.id] === v}
+                              aria-label={v === 'up' ? 'Good response' : 'Needs work'} title={v === 'up' ? 'Good response' : 'Needs work'}
+                              onClick={() => { setFeedback(f => ({ ...f, [msg.id]: f[msg.id] === v ? undefined as unknown as 'up' : v })); if (feedback[msg.id] !== v) track('chat_feedback', { value: v, files: msg.filesChanged?.length ?? 0, projectType: projectType || 'unknown' }); }}
+                              style={{ fontSize:12, padding:'2px 7px', borderRadius:5, border:'1px solid var(--ide-border)', background: feedback[msg.id] === v ? 'var(--accent-dim)' : 'transparent', color: feedback[msg.id] === v ? 'var(--ide-text)' : 'var(--ide-text3)', cursor:'pointer', display:'flex', alignItems:'center' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: v === 'down' ? 'rotate(180deg)' : undefined }}><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                            </button>
+                          ))}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {msg.id === nextStepMsgId && !isGenerating && !dismissedNext && (
+                    <div style={{ marginTop:8, display:'flex', flexWrap:'wrap', gap:6, alignItems:'center' }} role="group" aria-label="Suggested next steps">
+                      <span style={{ fontSize:12, color:'var(--ide-text3)' }}>Next:</span>
+                      {nextStepsFor(projectType).map(label => (
+                        <button key={label} type="button" onClick={() => { setInput(label); textareaRef.current?.focus(); track('chat_next_step_picked', { label, projectType: projectType || 'unknown' }); }}
+                          style={{ fontSize:12, padding:'5px 11px', borderRadius:999, border:'1px solid var(--ide-border2)', background:'transparent', color:'var(--ide-text2)', cursor:'pointer', fontFamily:'var(--font-sans)' }}>{label}</button>
+                      ))}
+                      <button type="button" className="wy-tap" aria-label="Hide suggestions" onClick={() => setDismissedNext(true)}
+                        style={{ background:'none', border:'none', color:'var(--ide-text3)', cursor:'pointer', fontSize:14, lineHeight:1, padding:0 }}>×</button>
                     </div>
                   )}
                   {/* Highest-intent upsell moment: they just tried to build and

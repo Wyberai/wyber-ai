@@ -41,3 +41,17 @@ Kill switch: set `NEXT_PUBLIC_SIGNAL_DESIGN=0` and the homepage returns to the p
 3. Higgsfield was out of credits: no agency video, the `/agencies` door uses a still.
 4. Pricing, free credits and model policy were not touched.
 5. Not tested: real sign-in (needs a real code), `/onboarding` and `/mfa` in a browser (auth-gated); both type-check and build.
+
+## Editor chat panel pass
+
+Files: `ChatPanel.tsx`, `VoiceButton.tsx`, `MobileLayout.tsx`, `agent-team/*`, `editor.css`.
+
+- **Accessibility:** the conversation is a labelled `role="log"` with `aria-busy` while a build runs, so a screen reader hears the finished answer rather than every streamed fragment (not tested with a real screen reader). Every icon button has a name; the composer has a label.
+- **Scroll:** follows new content only while you are at the bottom; scrolled up, it stays put and shows a "Latest" button. No more smooth-scroll on every token.
+- **Touch and phones:** 44px targets and a 16px input on touch or narrow screens (stops the iOS zoom on focus); `100dvh` and safe-area padding on the mobile editor.
+- **Readability:** secondary text raised from about 3:1 to about 5.9:1 contrast (overridden in `editor.css`; frozen `brand.css` untouched); nothing in the chat or agent-team cards under 12px.
+- **Signal palette** applied to the editor tokens (`.ide-root`), the same values as the site.
+- **New:** thumbs up/down on finished responses (tracked as `chat_feedback`), and next-step chips under the latest finished build (tracked as `chat_next_step_picked`). The chips only fill the input box; they never send or spend credits, and are the same for every project of a given type.
+- **Already existed, left alone:** the agent feed, turn receipt, checkpoints and restore, retry, edit, queue, plan mode, `@file`, voice.
+- **Review harness:** `/dev/chat` renders the real panel with fake data (`?state=generating|nocredits|empty`, `?w=full`). It only exists when `NEXT_PUBLIC_DEV_SANDBOX=1` is set; in a normal build it redirects to login. Run it with `NEXT_PUBLIC_DEV_SANDBOX=1 npx next dev -p 3100`.
+- **Not done:** per-turn undo (the header's checkpoint control already covers restore), a "fix it" cost label on Retry (the real cost depends on build size, so I did not state one), and the rest of the editor screens (preview, file tree, settings panels), which were not reviewed.

@@ -13,19 +13,20 @@
 
 .ide-root {
   /* Surfaces — deep-space blacks instead of neutral zinc */
-  --bg-base: var(--brand-bg);
-  --bg-surface: var(--brand-bg-raised);
-  --bg-elevated: var(--brand-bg-overlay);
-  --bg-overlay: #151927;
-  --bg-hover: #1c2133;
+  /* Signal palette (same values as .sg in signal.css) */
+  --bg-base: #05080d;
+  --bg-surface: #0a1018;
+  --bg-elevated: #0d141e;
+  --bg-overlay: #111b28;
+  --bg-hover: #16222f;
 
   /* Hairlines */
-  --ide-border: var(--brand-border);
-  --ide-border2: var(--brand-border-strong);
+  --ide-border: rgba(150, 190, 235, .16);
+  --ide-border2: rgba(150, 190, 235, .26);
 
   /* Text */
-  --ide-text: var(--brand-text);
-  --ide-text2: var(--brand-text-dim);
+  --ide-text: #e8eef7;
+  --ide-text2: #9aa8bb;
   --ide-text3: #8391a7; /* raised from brand faint (#545c6e, ~3:1) to ~5.9:1 for readable secondary text */
 
   /* Accent */
