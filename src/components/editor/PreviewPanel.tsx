@@ -1,4 +1,5 @@
 'use client'
+import { AnimatedMark } from '@/components/shared/WyberLoader'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useEditorStore } from '@/store/editor'
 import { Confetti } from '@/components/shared/Confetti'
@@ -913,7 +914,7 @@ Change requested: ${editInstruction.trim()}`
       }}>
         {!hasApp && !isGenerating && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <svg width="40" height="40" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="rgba(14,165,233,0.06)" stroke="rgba(14,165,233,0.12)" strokeWidth="1"/><path d="M20 7L11 16L20 25" stroke="#0EA5E9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <AnimatedMark size={40} state="idle" />
             <div style={{ fontSize: 14, fontWeight: 600, color: '#e4e4e7' }}>{t('emptyPreviewTitle')}</div>
             <div style={{ fontSize: 12, color: '#a1a1aa', maxWidth: 240, textAlign: 'center', lineHeight: 1.5 }}>{t('emptyPreviewDesc')}</div>
           </div>
@@ -946,14 +947,14 @@ Change requested: ${editInstruction.trim()}`
             with just a small pill announcing the update. */}
         {(building || fixing || (error && !healFailed)) && !isGenerating && !html && (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#09090b', zIndex: 5 }}>
-            <div style={{ width: 28, height: 28, border: '2px solid rgba(245,158,11,0.15)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-            <div style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{messages[msgIdx]}</div>
-            <div style={{ fontSize: 12, color: '#52525b' }}>Building your app…</div>
+            <AnimatedMark size={44} />
+            <div role="status" style={{ fontSize: 14, color: '#e4e4e7', fontWeight: 600 }}>{messages[msgIdx]}</div>
+            <div style={{ fontSize: 12, color: '#8797ab' }}>Building your app…</div>
           </div>
         )}
         {(building || fixing || (error && !healFailed)) && !isGenerating && html && (
           <div style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(17,17,24,0.92)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '6px 14px', zIndex: 6, animation: 'healIn 0.25s ease' }}>
-            <div style={{ width: 12, height: 12, border: '2px solid rgba(245,158,11,0.2)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ width: 12, height: 12, border: '2px solid rgba(14,165,233,0.2)', borderTopColor: '#0ea5e9', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
             <span style={{ fontSize: 12, color: '#e4e4e7', fontWeight: 600 }}>Updating preview…</span>
           </div>
         )}

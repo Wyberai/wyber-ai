@@ -3,6 +3,7 @@ import "./globals.css";
 import "@/styles/brand.css";
 import "@/styles/editor.css";
 import "@/styles/signal.css";
+import "@/styles/motion.css";
 import { ThemeProvider } from '@/lib/theme';
 import { LocaleProvider } from '@/lib/i18n/LocaleProvider';
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY } from '@/lib/i18n/locales';

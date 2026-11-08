@@ -78,3 +78,13 @@ All 17 panels were swept in the `/dev/editor` harness (open each, count unnamed 
 - **Real bug fixed:** the WyberCloud (Database) panel was built with Tailwind spacing classes, which the site's global reset switches off, so its tabs and banners rendered with no padding. It now opts in with the site's existing `.wy-journey` escape hatch. Its emoji tab icons were removed, the double `h1` became `h2`/`h3`, and the tabs report their pressed state.
 - **Shared fixes:** 128 font sizes raised to 12px and 22 inputs given an accessible name (from their placeholder) across the panel files; the Feedback on/off control is now a labelled switch.
 - **Not done:** emoji inside some panel copy (for example the Security panel's headings) are left as they were; the remaining small targets are in the Agent, Figma, Database, Feedback, GitHub and Supabase panels; panels were seen only in their empty or error state, since the harness has no real project data or login; no screen-reader test.
+
+## Motion pass
+
+- **New:** `src/styles/motion.css` (imported in `layout.tsx`) and `components/shared/WyberLoader.tsx`.
+- **Animated logo:** the mark's two chevrons draw in one after the other on a 2.4s loop while the tile breathes (`AnimatedMark`, states `loading`, `idle`, `still`). Used by the route loading screen (`src/app/loading.tsx`), the preview's empty state (idle, a slow glow) and the preview's "building" overlay, which replaces the amber spinner with the sky-blue mark and lifts its grey text from about 2.4:1.
+- **Reduced motion:** for people who ask their device for less motion, loops stop and transitions are instant across the whole site, and the logo shows fully drawn and still. Spinners and the loader bar keep moving, since they are the only sign that work is happening. Before, only 8 places respected this setting.
+- **Checked:** keyframe values at 0, 300, 720, 1200, 1872, 2200 and 2400ms; the reduced-motion rule's effect on the logo, the loader bar and an inline spinner.
+- **Not done:** the 31 copy-pasted `@keyframes spin` definitions were left alone (they all behave the same, and removing them is churn with no visible gain); the dashboard still uses its skeleton shimmer; no page transitions or scroll animations were added on purpose.
+- **Caveat:** the review browser did not advance its animation clock, so I verified the animation by seeking it to specific times rather than watching it play. Please watch it once in a normal browser.
+- **Review page:** `/dev/loader` (same `NEXT_PUBLIC_DEV_SANDBOX=1` flag).
