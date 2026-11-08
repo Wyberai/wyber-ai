@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 const C = { sky: '#0EA5E9', green: '#22c55e', red: '#ef4444', muted: '#8b94a7', card: '#0f121c', border: 'rgba(255,255,255,0.14)', text: '#e6edf6', bg: '#07080d' }
 const field: React.CSSProperties = { width: '100%', boxSizing: 'border-box', padding: '14px 14px', fontSize: 17, borderRadius: 12, border: `1px solid ${C.border}`, background: C.card, color: C.text, fontFamily: 'inherit' }
@@ -12,6 +12,11 @@ export default function BoothClient() {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [count, setCount] = useState(0)
+  const [today, setToday] = useState<{ captured: number; hot: number; recent: { id: string; name: string; company: string | null; hot: boolean; pain: string | null; whatsapp: string | null }[] } | null>(null)
+  const loadToday = useCallback(async () => {
+    try { const r = await fetch('/api/admin/crm/booth'); if (r.ok) setToday(await r.json()) } catch { /* the list is a convenience; saving still works */ }
+  }, [])
+  useEffect(() => { loadToday() }, [loadToday])
   const nameRef = useRef<HTMLInputElement>(null)
   const set = (k: string, v: string) => setF(s => ({ ...s, [k]: v }))
 
@@ -26,6 +31,7 @@ export default function BoothClient() {
       const j = await res.json().catch(() => ({})) as { error?: string; added?: boolean }
       if (!res.ok || j.error) { setMsg({ ok: false, text: j.error ?? 'Could not save. Try again.' }); return }
       setCount(n => n + 1)
+      loadToday()
       setMsg({ ok: true, text: j.added ? `Saved ${f.name}.` : `${f.name} was already in the CRM; updated.` })
       setF({ name: '', phone: '', company: '', pain: '' }); setHot(false)
       nameRef.current?.focus()
@@ -49,6 +55,25 @@ export default function BoothClient() {
         <button onClick={save} disabled={busy} style={{ padding: 16, fontSize: 18, fontWeight: 800, borderRadius: 12, border: 'none', background: C.sky, color: '#fff', cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>{busy ? 'Saving…' : 'Save'}</button>
         {msg && <div role="status" style={{ padding: '12px 14px', borderRadius: 12, fontSize: 15, border: `1px solid ${msg.ok ? C.green : C.red}`, color: msg.ok ? C.green : C.red }}>{msg.text}</div>}
       </div>
+
+      {today && (
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 8 }}>Today at the booth: {today.captured} captured{today.hot ? `, ${today.hot} hot` : ''}</div>
+          {today.recent.length === 0 && <div style={{ color: C.muted, fontSize: 14 }}>Nobody yet. The first one you save appears here.</div>}
+          <div style={{ display: 'grid', gap: 8 }}>
+            {today.recent.map(e => (
+              <div key={e.id} style={{ border: `1px solid ${C.border}`, borderRadius: 12, padding: '10px 12px', background: C.card }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                  <strong style={{ fontSize: 15 }}>{e.name}{e.company ? ` · ${e.company}` : ''}</strong>
+                  {e.hot && <span style={{ color: '#f59e0b', fontSize: 12, fontWeight: 700 }}>HOT</span>}
+                </div>
+                {e.pain && <div style={{ color: C.muted, fontSize: 13, margin: '4px 0' }}>{e.pain}</div>}
+                {e.whatsapp && <a href={e.whatsapp} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: 4, fontSize: 13, color: C.sky, textDecoration: 'underline' }}>Send a thank-you on WhatsApp</a>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

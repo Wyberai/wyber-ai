@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCrmAdmin } from '@/lib/crm/admin-auth'
-import { syncIncoming } from '@/lib/crm/db'
-import { boothIncoming } from '@/lib/crm/booth'
+import { loadContacts, syncIncoming } from '@/lib/crm/db'
+import { boothIncoming, boothThanks, boothToday } from '@/lib/crm/booth'
+import { whatsappLink } from '@/lib/ops/agents/draft-actions'
 
 export const dynamic = 'force-dynamic'
+
+// Who you have spoken to at the booth today, with a one-tap thank-you for each.
+export async function GET() {
+  const { admin } = await getCrmAdmin()
+  if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  let contacts
+  try { contacts = await loadContacts(admin) } catch { return NextResponse.json({ error: 'The CRM could not be read' }, { status: 500 }) }
+  const today = boothToday(contacts)
+  return NextResponse.json({ ...today, recent: today.recent.map(e => ({ ...e, whatsapp: whatsappLink(e.phone, boothThanks(e.name)) })) })
+}
 
 // Save one person you just spoke to at the booth. Same de-duplicating path as every other source.
 export async function POST(req: NextRequest) {

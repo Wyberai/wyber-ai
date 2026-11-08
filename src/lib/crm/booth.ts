@@ -31,3 +31,28 @@ export function boothIncoming(raw: Record<string, unknown>, now: Date = new Date
     },
   }
 }
+
+// ── The booth, live ─────────────────────────────────────────────────────────
+// While standing at the booth you want to see: how many people so far today, who is hot, and a
+// one-tap thank-you to send. Pure.
+
+export interface BoothEntry { id: string; name: string; company: string | null; hot: boolean; phone: string | null; pain: string | null }
+
+const istDate = (d: Date) => new Date(d.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10)
+
+export function boothToday(contacts: { id: string; name: string; company: string | null; phone: string | null; tags: string[]; notes: string | null; updated_at: string }[], now: Date = new Date()): { captured: number; hot: number; recent: BoothEntry[] } {
+  // Capture tags carry the UTC date of capture; accept the India date too so the day boundary never hides someone.
+  const wanted = new Set([`booth:${now.toISOString().slice(0, 10)}`, `booth:${istDate(now)}`])
+  const todays = contacts.filter(c => c.tags.some(t => wanted.has(t))).sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+  const entries = todays.map(c => ({
+    id: c.id, name: c.name, company: c.company, hot: c.tags.includes('hot'), phone: c.phone,
+    pain: (c.notes ?? '').replace(/\[booth[^\]]*\]/g, '').replace(/^Pain point:\s*/i, '').trim().slice(0, 140) || null,
+  }))
+  return { captured: entries.length, hot: entries.filter(e => e.hot).length, recent: entries.slice(0, 30) }
+}
+
+/** The thank-you the founder sends by hand: no promises, one question. */
+export function boothThanks(name: string, sender = 'Sumeet'): string {
+  const first = name.trim().split(/\s+/)[0] || 'there'
+  return `Hi ${first}, ${sender} from WyberAi. Great speaking with you at booth S23, Tech Expo Gujarat. Is this the best number to reach you on? I will follow up with next steps after the expo.`
+}
