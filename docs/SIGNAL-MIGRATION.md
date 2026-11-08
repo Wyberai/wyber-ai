@@ -25,7 +25,7 @@ Kill switch: set `NEXT_PUBLIC_SIGNAL_DESIGN=0` and the homepage returns to the p
 ## Not migrated (on purpose)
 
 - **`/client/[slug]`**: unchanged on purpose; it shows the client's own brand colour, not Signal.
-- **Non-English homepage**: still the previous design.
+- **Languages:** English only by decision (2026-11-08). `I18N_ENABLED` in `src/lib/i18n/locales.ts` is now `false`, which hides the language switch on the homepage, pricing and settings and ignores any stored non-English choice. The translations and the `/hi`, `/kn`, `/te`, `/ta` URL routes still exist and can be reached directly; flip the flag back to `true` to restore the switch.
 - **The simulated "first build" screen from the prototype was not ported.** The real dashboard performs the build. The credit-wall behaviour is the dashboard's existing logic.
 
 ## Checked

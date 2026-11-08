@@ -8,7 +8,7 @@
 // editor-panel dicts) — re-enabled 2026-07-21. Flip back to `false` if a
 // regression needs the toggle hidden again; the translation infra and
 // dictionaries stay intact either way.
-export const I18N_ENABLED = true;
+export const I18N_ENABLED = false;
 
 export const LOCALES = ['en', 'hi', 'kn', 'te', 'ta'] as const;
 export type Locale = (typeof LOCALES)[number];
