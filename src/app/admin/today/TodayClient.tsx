@@ -12,12 +12,13 @@ interface Data { today: string; days: Day[]; pendingDrafts: number | null }
 const card: React.CSSProperties = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 16px' }
 const h: React.CSSProperties = { margin: '0 0 8px', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: C.muted, fontWeight: 700 }
 
-export default function TodayClient() {
-  const [data, setData] = useState<Data | null>(null)
+export default function TodayClient({ initial }: { initial?: Data } = {}) {
+  const [data, setData] = useState<Data | null>(initial ?? null)
   const [err, setErr] = useState('')
-  const [open, setOpen] = useState<string | null>(null)
+  const [open, setOpen] = useState<string | null>(initial?.today ?? null)
 
   useEffect(() => {
+    if (initial) return
     fetch('/api/admin/schedule?days=7').then(r => r.json()).then(j => { if (j.error) setErr(j.error); else { setData(j); setOpen(j.today) } }).catch(() => setErr('Could not load the schedule'))
   }, [])
 

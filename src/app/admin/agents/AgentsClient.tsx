@@ -32,8 +32,8 @@ const ago = (iso: string | null) => {
 }
 const btn = (primary = false, danger = false): React.CSSProperties => ({ padding: '7px 12px', borderRadius: 8, border: `1px solid ${danger ? C.red : primary ? C.sky : C.border}`, background: primary ? C.sky : 'transparent', color: primary ? '#fff' : danger ? C.red : C.text, fontSize: 12.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', display: 'inline-block' })
 
-export default function AgentsClient() {
-  const [state, setState] = useState<State | null>(null)
+export default function AgentsClient({ initial }: { initial?: State } = {}) {
+  const [state, setState] = useState<State | null>(initial ?? null)
   const [tab, setTab] = useState<'review' | 'agents' | 'history'>('review')
   const [msg, setMsg] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -42,7 +42,7 @@ export default function AgentsClient() {
     const r = await api<State>('GET', '/api/admin/agents/state')
     setState(r as State)
   }, [])
-  useEffect(() => { load() }, [load])
+  useEffect(() => { if (!initial) load() }, [load, initial])
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(null), 6000) }
 
   const review = useMemo(() => (state?.drafts ?? []).filter(d => d.status === 'pending' || d.status === 'approved'), [state])

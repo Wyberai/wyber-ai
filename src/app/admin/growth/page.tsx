@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { growthSnapshot } from '@/lib/ops/marketing/snapshot'
+import { istDay } from '@/lib/ops/schedule'
 import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -13,5 +15,6 @@ export default async function AdminGrowthPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/admin/growth')
   if (!isAdminEmail(user.email)) redirect('/dashboard')
-  return <><CompanyNav /><GrowthClient /></>
+  const initial = await growthSnapshot(createAdminClient(), new Date(), istDay(new Date()))
+  return <><CompanyNav /><GrowthClient initial={JSON.parse(JSON.stringify(initial))} /></>
 }

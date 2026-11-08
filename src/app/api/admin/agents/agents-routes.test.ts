@@ -126,7 +126,11 @@ describe('PATCH /drafts/[id]', () => {
 
 describe('GET /state', () => {
   it('reports when the tables are not there yet, instead of failing', async () => {
-    fake.from.mockReturnValue({ select: () => ({ in: () => ({ order: () => ({ limit: async () => ({ data: null, error: { message: 'relation "ops_agent_drafts" does not exist' } }) }) }) }) })
+    // Every read fails the same way, however it is chained.
+    const failing: Record<string, unknown> = {}
+    for (const m of ['select', 'in', 'order', 'limit', 'gte', 'eq']) failing[m] = () => failing
+    failing.then = (ok: (v: unknown) => unknown) => Promise.resolve({ data: null, error: { message: 'relation "ops_agent_drafts" does not exist' } }).then(ok)
+    fake.from.mockReturnValue(failing)
     const body = await (await stateGet()).json()
     expect(body).toMatchObject({ tablesMissing: true })
   })

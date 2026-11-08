@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { loadSchedule } from '@/lib/ops/schedule-load'
 import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -13,5 +14,6 @@ export default async function AdminTodayPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/admin/today')
   if (!isAdminEmail(user.email)) redirect('/dashboard')
-  return <><CompanyNav /><TodayClient /></>
+  const initial = await loadSchedule(createAdminClient())
+  return <><CompanyNav /><TodayClient initial={JSON.parse(JSON.stringify(initial))} /></>
 }

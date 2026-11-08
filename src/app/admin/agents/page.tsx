@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { loadAgentsState } from '@/lib/ops/agents/state'
 import CompanyNav from '@/components/admin/CompanyNav'
 import { isAdminEmail } from '@/lib/admin'
 import { redirect } from 'next/navigation'
@@ -13,5 +14,7 @@ export default async function AdminAgentsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?next=/admin/agents')
   if (!isAdminEmail(user.email)) redirect('/dashboard')
-  return <><CompanyNav /><AgentsClient /></>
+  // Load the first screen's data here, in the same trip as the page, instead of after it loads.
+  const initial = await loadAgentsState(createAdminClient())
+  return <><CompanyNav /><AgentsClient initial={JSON.parse(JSON.stringify(initial))} /></>
 }

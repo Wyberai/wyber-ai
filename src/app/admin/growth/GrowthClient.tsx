@@ -19,10 +19,10 @@ const h: React.CSSProperties = { margin: '0 0 10px', fontSize: 12, letterSpacing
 const CHANNEL_NAME: Record<string, string> = { linkedin: 'LinkedIn post', short_video: 'Short video', community: 'Community post', newsletter: 'Newsletter' }
 const STATUS: Record<string, { text: string; color: string }> = { ahead: { text: 'Ahead of the ramp', color: C.green }, on_track: { text: 'On track', color: C.amber }, behind: { text: 'Behind the ramp', color: C.red } }
 
-export default function GrowthClient() {
-  const [d, setD] = useState<Snapshot | null>(null)
+export default function GrowthClient({ initial }: { initial?: Snapshot } = {}) {
+  const [d, setD] = useState<Snapshot | null>(initial ?? null)
   const [err, setErr] = useState('')
-  useEffect(() => { fetch('/api/admin/growth').then(r => r.json()).then(j => (j.error ? setErr(j.error) : setD(j))).catch(() => setErr('Could not load')) }, [])
+  useEffect(() => { if (initial) return; fetch('/api/admin/growth').then(r => r.json()).then(j => (j.error ? setErr(j.error) : setD(j))).catch(() => setErr('Could not load')) }, [])
   if (err) return <div style={{ background: C.bg, color: C.red, padding: 24, minHeight: '60vh', fontFamily: 'system-ui, sans-serif' }}>{err}</div>
   if (!d) return <div style={{ background: C.bg, color: C.muted, padding: 24, minHeight: '60vh', fontFamily: 'system-ui, sans-serif' }}>Loading…</div>
   const max = Math.max(1, d.goal_per_day, ...(d.signups?.per_day.map(x => x.count) ?? [0]))
