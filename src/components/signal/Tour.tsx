@@ -5,11 +5,11 @@ import { useState } from 'react'
 
 const HUB: [string, number, number][] = [['Slack', 15, 12], ['Teams', 85, 12], ['Salesforce', 6, 50], ['SAP', 94, 50], ['Workday', 15, 88], ['ServiceNow', 85, 88]]
 
-const ITEMS: { name: string; blurb: string; view: () => React.ReactNode }[] = [
+const makeItems = (usd: boolean): { name: string; blurb: string; view: () => React.ReactNode }[] => [
   { name: 'Visual editor', blurb: 'Click anything in the preview and change it.', view: () => (
     <div className="sg-mini">
-      <div className="sg-mc sg-sel"><span className="sg-tb">Edit text · Colour · Remove</span><div className="sg-mono">Overdue invoices</div><div className="sg-mn">₹ 52,150</div></div>
-      <div className="sg-mc"><div className="sg-mono">Paid this month</div><div className="sg-mn">₹ 1,84,000</div></div>
+      <div className="sg-mc sg-sel"><span className="sg-tb">Edit text · Colour · Remove</span><div className="sg-mono">Overdue invoices</div><div className="sg-mn">{usd ? '$ 5,215' : '₹ 52,150'}</div></div>
+      <div className="sg-mc"><div className="sg-mono">Paid this month</div><div className="sg-mn">{usd ? '$ 18,400' : '₹ 1,84,000'}</div></div>
     </div>) },
   { name: 'Version history', blurb: 'Go back to any earlier version of your app.', view: () => (
     <div className="sg-mini"><ol className="sg-tl">
@@ -21,7 +21,7 @@ const ITEMS: { name: string; blurb: string; view: () => React.ReactNode }[] = [
     <div className="sg-mini"><div className="sg-mc" style={{ display: 'grid', gap: 10 }}>
       <b>Pay invoice INV-1042</b>
       <div style={{ padding: 12, borderRadius: 10, border: '1px solid var(--sg-line)', color: 'var(--sg-ink3)', fontSize: 14 }}>Card number</div>
-      <div style={{ padding: 12, borderRadius: 999, background: 'var(--sg-brand)', color: 'var(--sg-btn-ink)', textAlign: 'center', fontWeight: 600 }}>Pay ₹18,400</div>
+      <div style={{ padding: 12, borderRadius: 999, background: 'var(--sg-brand)', color: 'var(--sg-btn-ink)', textAlign: 'center', fontWeight: 600 }}>Pay {usd ? '$1,840' : '₹18,400'}</div>
       <span className="sg-mono">Stripe · test mode first</span>
     </div></div>) },
   { name: '68 connectors', blurb: 'Slack, Salesforce, SAP and more, with real sign-in.', view: () => (
@@ -39,7 +39,8 @@ const ITEMS: { name: string; blurb: string; view: () => React.ReactNode }[] = [
     </div>) },
 ]
 
-export function Tour() {
+export function Tour({ usd = false }: { usd?: boolean }) {
+  const ITEMS = makeItems(usd)
   const [i, setI] = useState(0)
   return (
     <div>

@@ -6,17 +6,25 @@ import { useCallback, useEffect, useRef, useState } from 'react'
  * what the product does (an error repaired for free, a security probe, a cost shown first), but the data is sample data.
  */
 
-const TOPICS = {
+type TopicKey = 'inv' | 'stock' | 'del'
+type Topic = { label: string; title: string; rows: string[][]; err: string }
+const TOPICS_IN: Record<TopicKey, Topic> = {
   inv: { label: 'Invoices', title: 'Invoice tracker', rows: [['INV-1042', 'Sharma Traders', '18,400', 'Unpaid'], ['INV-1041', 'Patel Agro', '42,000', 'Paid'], ['INV-1040', 'Mehta and Sons', '9,750', 'Overdue']], err: 'Missing import in InvoiceList' },
   stock: { label: 'Stock', title: 'Stock tracker', rows: [['SKU-210', 'Basmati rice 25 kg', '48 left', 'Low'], ['SKU-118', 'Sugar 50 kg', '210 left', 'OK'], ['SKU-077', 'Cooking oil 15 L', '12 left', 'Low']], err: 'Missing import in StockTable' },
   del: { label: 'Deliveries', title: 'Delivery tracker', rows: [['ORD-882', 'Hardware order', 'Driver: Ravi', 'On the way'], ['ORD-881', 'Paint and tools', 'Driver: Imran', 'Delivered'], ['ORD-880', 'Pipes and fittings', 'Driver: Ravi', 'Proof missing']], err: 'Missing import in DeliveryList' },
-} as const
-type TopicKey = keyof typeof TOPICS
+}
+// The same three examples for visitors outside India: neutral names and units, no rupee-style amounts.
+const TOPICS_US: Record<TopicKey, Topic> = {
+  inv: { label: 'Invoices', title: 'Invoice tracker', rows: [['INV-1042', 'Harper Supply', '1,840', 'Unpaid'], ['INV-1041', 'Cole Hardware', '4,200', 'Paid'], ['INV-1040', 'Reyes and Sons', '975', 'Overdue']], err: 'Missing import in InvoiceList' },
+  stock: { label: 'Stock', title: 'Stock tracker', rows: [['SKU-210', 'Coffee beans 5 lb', '48 left', 'Low'], ['SKU-118', 'Sugar 25 lb', '210 left', 'OK'], ['SKU-077', 'Olive oil 1 gal', '12 left', 'Low']], err: 'Missing import in StockTable' },
+  del: { label: 'Deliveries', title: 'Delivery tracker', rows: [['ORD-882', 'Hardware order', 'Driver: Sam', 'On the way'], ['ORD-881', 'Paint and tools', 'Driver: Dana', 'Delivered'], ['ORD-880', 'Pipes and fittings', 'Driver: Sam', 'Proof missing']], err: 'Missing import in DeliveryList' },
+}
 
 const COST = 30
 type Line = { text: string; cls?: 'sg-err' | 'sg-ok' }
 
-export function Theatre() {
+export function Theatre({ usd = false }: { usd?: boolean }) {
+  const TOPICS = usd ? TOPICS_US : TOPICS_IN
   const [topic, setTopic] = useState<TopicKey>('inv')
   const [lines, setLines] = useState<Line[]>([])
   const [rowsOn, setRowsOn] = useState(0)

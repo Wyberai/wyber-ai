@@ -88,7 +88,7 @@ export default async function HomePage({
   const signalOn = process.env.NEXT_PUBLIC_SIGNAL_DESIGN !== '0'
   return (
     <>
-      {signalOn ? <HomeSwitch signal={<SignalFrame><SignalHome /></SignalFrame>} legacy={legacy} /> : legacy}
+      {signalOn ? <HomeSwitch signal={<SignalFrame><SignalHome usd={currency !== 'INR'} /></SignalFrame>} legacy={legacy} /> : legacy}
       {owner && <OwnerRegionSwitcher current={currency} />}
     </>
   )

@@ -7,6 +7,7 @@ import { useLocale } from '@/lib/i18n/LocaleProvider'
 import { I18N_ENABLED } from '@/lib/i18n/locales'
 import { PRICING_STRINGS } from '@/lib/i18n/dict/pricing'
 import { LanguageToggle } from '@/components/shared/LanguageToggle'
+import { LaunchStrip } from '@/components/shared/LaunchStrip'
 import { creditCost, estimateFeatureCost, PREVIEW_ACCESS_GAME_COST, IMAGE_GEN_COST } from '@/lib/credits'
 import { track } from '@/lib/track'
 import { PLAN_FACTS, TOPUP_PACKS } from '@/lib/plans'
@@ -361,6 +362,8 @@ export function PricingClient({ initialCurrency }: { initialCurrency: Currency }
 
       {/* The page nav is the shared Signal nav; the language switch for the India view lives here. */}
       {currency === 'INR' && I18N_ENABLED && <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px clamp(16px,4vw,48px) 0' }}><LanguageToggle locale={locale} onChange={setLocale} /></div>}
+
+      <LaunchStrip />
 
       {/* Hero */}
       <section style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,48px) 0', textAlign: 'center' }}>

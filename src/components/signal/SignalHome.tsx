@@ -1,13 +1,15 @@
 import Link from 'next/link'
+import { LaunchStrip } from '@/components/shared/LaunchStrip'
 import { QuickPrompt } from './QuickPrompt'
 import { Theatre } from './Theatre'
 import { Tour } from './Tour'
 import { Faq, FinalCta, Facts, Lanes, PricingBand, Section, TypeCards } from './sections'
 
 /** The Signal homepage: one question, four doors, then the parts of the product nobody else has. */
-export function SignalHome() {
+export function SignalHome({ usd = false }: { usd?: boolean }) {
   return (
     <>
+      <LaunchStrip />
       <div className="sg-wrap">
         <section className="sg-question" aria-labelledby="sg-q">
           <span className="sg-mono sg-eyebrow">The builder that shows its work</span>
@@ -54,11 +56,11 @@ export function SignalHome() {
       </div>
 
       <Section id="watch" label="Watch it work" title={<>Describe it. Watch it. <span className="sg-em">Own it.</span></>} sub="Pick a problem and watch a build happen. The cost, the repair and the security check are all on screen, because nothing is hidden.">
-        <Theatre />
+        <Theatre usd={usd} />
       </Section>
       <Section label="More than a builder" title="The parts nobody else has"><Lanes /></Section>
       <Section label="What you can build" title="Four kinds of project, one place" sub="Describe it in plain English. WyberAi writes the code, sets up the database and logins, and gets it ready to publish."><TypeCards /></Section>
-      <Section label="Inside the editor" title="Keeps going after the first build"><p className="sg-sub" style={{ marginTop: 0 }}>Tap a tool to see it.</p><Tour /></Section>
+      <Section label="Inside the editor" title="Keeps going after the first build"><p className="sg-sub" style={{ marginTop: 0 }}>Tap a tool to see it.</p><Tour usd={usd} /></Section>
       <Section label="Built to be trusted" title="Why people stay with it"><Facts /></Section>
       <PricingBand />
       <Faq />
